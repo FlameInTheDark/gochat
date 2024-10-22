@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #b9bbbe;
+            background-color: #2c2f33;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #313338;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .header {
+            text-align: center;
+            padding: 10px 0;
+            background-color: #5865f2;
+            color: #ffffff;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            padding: 20px;
+        }
+        .content h1 {
+            font-size: 24px;
+            color: #ffffff;
+        }
+        .content p {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #b9bbbe;
+        }
+        .footer {
+            text-align: center;
+            padding: 10px;
+            font-size: 12px;
+            color: #72767d;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #ffffff;
+            background-color: #7289da;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+      	.button:hover {
+      		background-color: #5865f2;
+      		color: white;
+      		text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Welcome to {{.AppName}}</h2>
+        </div>
+        <div class="content">
+            <h1>Hello, friend!</h1>
+            <p>Thank you for registering with {{.AppName}}. To complete your registration, please confirm your email address by clicking the button below</p>
+            <p style="text-align: center;">
+                <a href="{{.ConfirmationLink}}" class="button">Confirm Email</a>
+            </p>
+            <p>If you did not sign up for {{.AppName}}, please ignore this email.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{.Year}} {{.AppName}}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
