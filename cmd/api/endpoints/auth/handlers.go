@@ -2,8 +2,8 @@ package auth
 
 import (
 	"errors"
+	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"log/slog"
-	"strconv"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -26,24 +26,27 @@ import (
 //	@Router		/auth/login [post]
 func (e *entity) Login(c *fiber.Ctx) error {
 	var login LoginRequest
-
 	err := c.BodyParser(&login)
 	if err != nil {
+		e.log.Error("unable to parse body", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
 	auth, err := e.auth.GetAuthenticationByEmail(c.UserContext(), login.Email)
 	if err != nil {
+		e.log.Error("unable to get authentication by email", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
 	err = CompareHashAndPassword(auth.PasswordHash, login.Password)
 	if err != nil {
+		e.log.Error("unable to compare hash", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
 	user, err := e.user.GetUserById(c.UserContext(), auth.UserId)
 	if err != nil {
+		e.log.Error("unable to get user by ID", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 	if user.Blocked {
@@ -103,8 +106,9 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 	var id int64
 	reg, err := e.reg.GetRegistrationByEmail(c.UserContext(), req.Email)
 	if errors.Is(err, gocql.ErrNotFound) {
-		id = e.id.Next()
+		id = idgen.Next()
 	} else if err != nil {
+		e.log.Error("unable to get registration by email", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusUnauthorized)
 	} else {
 		if reg.CreatedAt.Add(time.Minute).After(time.Now()) {
@@ -112,7 +116,7 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 		}
 		id = reg.UserId
 	}
-	err = e.reg.CreateRegistration(c.UserContext(), id, reg.Email, token)
+	err = e.reg.CreateRegistration(c.UserContext(), id, req.Email, token)
 	if err != nil {
 		e.log.Error("unable to create registration", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusInternalServerError)
@@ -140,28 +144,30 @@ func (e *entity) Confirmation(c *fiber.Ctx) error {
 	var req ConfirmationRequest
 	err := c.BodyParser(&req)
 	if err != nil {
+		e.log.Error("unable to parse body", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 	if len(req.Password) < 8 {
+		e.log.Error("password too short")
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 	hash, err := HashPassword(req.Password)
 	if err != nil {
+		e.log.Error("unable to get password hash", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
-	i, err := strconv.ParseInt(req.Id, 10, 64)
+	reg, err := e.reg.GetRegistrationByUserId(c.UserContext(), req.Id)
 	if err != nil {
-		return c.SendStatus(fiber.StatusBadRequest)
-	}
-	reg, err := e.reg.GetRegistrationByUserId(c.UserContext(), i)
-	if err != nil {
+		e.log.Error("unable to get registration by id", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 	if reg.ConfirmationToken != req.Token {
+		e.log.Error("token is incorrect")
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 	_, err = e.user.GetUserByDeterminator(c.UserContext(), req.Determinator)
 	if err == nil {
+		e.log.Error("determinator is not unique")
 		return c.SendStatus(fiber.StatusFound)
 	}
 	err = e.reg.RemoveRegistration(c.UserContext(), reg.UserId)
@@ -169,12 +175,12 @@ func (e *entity) Confirmation(c *fiber.Ctx) error {
 		e.log.Error("unable to remove registration", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
-	err = e.user.CreateUser(c.UserContext(), i, req.Name, req.Determinator)
+	err = e.user.CreateUser(c.UserContext(), req.Id, req.Name, req.Determinator)
 	if err != nil {
 		e.log.Error("unable to create user", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
-	err = e.auth.CreateAuthentication(c.UserContext(), i, reg.Email, hash)
+	err = e.auth.CreateAuthentication(c.UserContext(), req.Id, reg.Email, hash)
 	if err != nil {
 		e.log.Error("unable to create authentication", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusInternalServerError)

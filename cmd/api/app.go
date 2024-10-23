@@ -23,7 +23,6 @@ type App struct {
 	server *server.Server
 	db     *db.CQLCon
 	mailer *mailer.Mailer
-	id     *idgen.IDGenerator
 }
 
 func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
@@ -50,14 +49,13 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
 		provider = logmailer.New(logger)
 	case "sendpulse":
 		provider = sendpulse.New(cfg.SendpulseUserId, cfg.SendpulseSecret)
+	default:
+		provider = logmailer.New(logger)
 	}
 	m := mailer.NewMailer(provider, tmpl, mailer.User{Email: cfg.EmailSource, Name: cfg.EmailName})
 
-	// ID generator
-	id, err := idgen.New(0)
-	if err != nil {
-		return nil, err
-	}
+	// ID generator setup
+	idgen.New(0)
 
 	// HTTP Server
 	s := server.NewServer()
@@ -72,14 +70,13 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
 	// HTTP Router
 	s.Register(
 		"/api/v1",
-		auth.New(id, database, m, cfg.AuthSecret, logger),
+		auth.New(database, m, cfg.AuthSecret, logger),
 		user.New(database, logger))
 
 	return &App{
 		server: s,
 		db:     database,
 		mailer: m,
-		id:     id,
 	}, nil
 }
 

@@ -2,12 +2,12 @@ package user
 
 import (
 	"errors"
-	"github.com/FlameInTheDark/gochat/internal/database/model"
-	"github.com/gocql/gocql"
 	"strconv"
 
+	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 )
 
@@ -20,6 +20,7 @@ import (
 //	@Success	200		{object}	UserResponse	"User data"
 //	@failure	400		{string}	string			"Incorrect ID"
 //	@failure	404		{string}	string			"User not found"
+//	@failure	500		{string}	string			"Something bad happened"
 //	@Router		/user/{user_id} [get]
 func (e *entity) GetUser(c *fiber.Ctx) error {
 	id := c.Params("user_id")
@@ -39,8 +40,8 @@ func (e *entity) GetUser(c *fiber.Ctx) error {
 	}
 
 	user, err := e.user.GetUserById(c.UserContext(), userId)
-	if err != nil {
-		return c.SendStatus(fiber.StatusNotFound)
+	if err := helper.HttpDbError(c, err); err != nil {
+		return err
 	}
 
 	return c.JSON(modelToUser(user))
@@ -51,10 +52,10 @@ func (e *entity) GetUser(c *fiber.Ctx) error {
 //	@Summary	Get user guilds
 //	@Produce	json
 //	@Tags		User
-//	@Param		user_id	path		string			true	"user id or @me"
 //	@Success	200		{array}		UserGuild		"Guilds list"
 //	@failure	400		{string}	string			"Incorrect ID"
 //	@failure	404		{string}	string			"User not found"
+//	@failure	500		{string}	string			"Something bad happened"
 //	@Router		/user/@me/guilds [get]
 func (e *entity) GetUserGuilds(c *fiber.Ctx) error {
 	user, err := helper.GetUser(c)

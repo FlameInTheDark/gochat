@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
+	"log"
 )
 
 const (
@@ -40,7 +41,8 @@ func (e *Entity) GetRegistrationByEmail(ctx context.Context, email string) (mode
 	return r, nil
 }
 
-func (e *Entity) CreateRegistration(ctx context.Context, userId int64, email, confirmation string) error {
+func (e *Entity) CreateRegistration(ctx context.Context, userId int64, email string, confirmation string) error {
+	log.Println("inside create reg", email)
 	err := e.c.Session().
 		Query(createRegistration).
 		WithContext(ctx).

@@ -1,22 +1,19 @@
 package idgen
 
 import (
-	"fmt"
-	"github.com/bwmarrin/snowflake"
+	"github.com/godruoyi/go-snowflake"
 )
 
-type IDGenerator struct {
-	gen *snowflake.Node
+const bucket_size = 1000 * 60 * 60 * 24 * 4
+
+func New(nodeId uint16) {
+	snowflake.SetMachineID(nodeId)
 }
 
-func New(nodeId int64) (*IDGenerator, error) {
-	node, err := snowflake.NewNode(nodeId)
-	if err != nil {
-		return nil, fmt.Errorf("unable to make id generator: %w", err)
-	}
-	return &IDGenerator{node}, nil
+func Next() int64 {
+	return int64(snowflake.ID())
 }
 
-func (g *IDGenerator) Next() int64 {
-	return g.gen.Generate().Int64()
+func GetBucket(id int64) int64 {
+	return (id >> 20) / bucket_size
 }

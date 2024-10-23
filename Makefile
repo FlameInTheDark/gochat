@@ -1,5 +1,5 @@
-compose_up:
-	docker compose up
+up:
+	docker compose up -d
 
 tools:
 	go install github.com/db-journey/journey/v2

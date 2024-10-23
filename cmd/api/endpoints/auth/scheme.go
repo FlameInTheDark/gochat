@@ -14,7 +14,7 @@ type RegisterRequest struct {
 }
 
 type ConfirmationRequest struct {
-	Id           string `json:"id"`
+	Id           int64  `json:"id"`
 	Token        string `json:"token"`
 	Name         string `json:"name"`
 	Determinator string `json:"determinator"`

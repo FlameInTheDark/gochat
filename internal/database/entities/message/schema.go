@@ -3,25 +3,26 @@ package message
 import (
 	"context"
 	"fmt"
+	"github.com/FlameInTheDark/gochat/internal/idgen"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 )
 
 const (
-	createMessage     = `INSERT INTO gochat.messages (id, channel_id, user_id, content, attachments) VALUES (?, ?, ?, ?, ?)`
-	updateMessage     = `UPDATE gochat.messages SET content = ? AND updated_at = toTimestamp(now()) WHERE id = ?`
+	createMessage     = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, attachments) VALUES (?, ?, ?, ?, ?, ?)`
+	updateMessage     = `UPDATE gochat.messages SET content = ? AND edited_at = toTimestamp(now()) WHERE id = ?`
 	deleteMessage     = `DELETE FROM gochat.messages WHERE id = ?`
-	getMessage        = `SELECT id, channel_id, user_id, content, attachments, updated_at FROM gochat.messages WHERE id = ?`
-	getLatestMessages = `SELECT id, channel_id, user_id, content, attachments, updated_at FROM gochat.messages WHERE channel_id = ? ORDER BY id DESC LIMIT 10`
-	getMessagesBefore = `SELECT id, channel_id, user_id, content, attachments, updated_at FROM gochat.messages WHERE channel_id = ? AND id < ? ORDER BY id DESC LIMIT 10`
-	getMessagesAfter  = `SELECT id, channel_id, user_id, content, attachments, updated_at FROM gochat.messages WHERE channel_id = ? AND id > ? ORDER BY id DESC LIMIT 10`
+	getMessage        = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE id = ?`
+	getLatestMessages = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? ORDER BY id DESC LIMIT 10`
+	getMessagesBefore = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND id < ? ORDER BY id DESC LIMIT 10`
+	getMessagesAfter  = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND id > ? ORDER BY id DESC LIMIT 10`
 )
 
 func (e *Entity) CreateMessage(ctx context.Context, id, channel_id, user_id int64, content string, attachments []int64) error {
 	err := e.c.Session().
 		Query(createMessage).
 		WithContext(ctx).
-		Bind(id, channel_id, user_id, content, attachments).
+		Bind(channel_id, idgen.GetBucket(id), id, user_id, content, attachments).
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to create message: %w", err)
@@ -59,7 +60,7 @@ func (e *Entity) GetMessage(ctx context.Context, id int64) (model.Message, error
 		Query(getMessage).
 		WithContext(ctx).
 		Bind(id).
-		Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.UpdatedAt)
+		Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt)
 	if err != nil {
 		return m, fmt.Errorf("unable to get message: %w", err)
 	}
@@ -74,7 +75,7 @@ func (e *Entity) GetLatestMessages(ctx context.Context, channelId int64) ([]mode
 		Bind(channelId).
 		Iter()
 	var m model.Message
-	for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.UpdatedAt) {
+	for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt) {
 		msgs = append(msgs, m)
 	}
 	err := iter.Close()
@@ -92,7 +93,7 @@ func (e *Entity) GetMessagesBefore(ctx context.Context, channelId, msgId int64) 
 		Bind(channelId, msgId).
 		Iter()
 	var m model.Message
-	for iter.Scan(m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.UpdatedAt) {
+	for iter.Scan(m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt) {
 		msgs = append(msgs, m)
 	}
 	err := iter.Close()
@@ -110,7 +111,7 @@ func (e *Entity) GetMessagesAfter(ctx context.Context, channelId, msgId int64) (
 		Bind(channelId, msgId).
 		Iter()
 	var m model.Message
-	for iter.Scan(&m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.UpdatedAt) {
+	for iter.Scan(&m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt) {
 		msgs = append(msgs, m)
 	}
 	err := iter.Close()
