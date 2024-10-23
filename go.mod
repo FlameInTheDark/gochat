@@ -5,12 +5,15 @@ go 1.23.1
 replace github.com/gocql/gocql => github.com/scylladb/gocql v1.14.4
 
 require (
-	github.com/bwmarrin/snowflake v0.3.0
 	github.com/dimuska139/sendpulse-sdk-go/v7 v7.1.3
+	github.com/go-playground/validator/v10 v10.22.1
 	github.com/gocql/gocql v0.0.0-20200203083758-81b8263d9fe5
+	github.com/godruoyi/go-snowflake v0.0.2
 	github.com/gofiber/contrib/jwt v1.0.10
+	github.com/gofiber/contrib/swagger v1.2.0
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/ilyakaznacheev/cleanenv v1.5.0
 	golang.org/x/crypto v0.28.0
 )
 
@@ -32,13 +35,9 @@ require (
 	github.com/go-openapi/validate v0.22.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.22.1 // indirect
-	github.com/godruoyi/go-snowflake v0.0.2 // indirect
-	github.com/gofiber/contrib/swagger v1.2.0 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
-	github.com/ilyakaznacheev/cleanenv v1.5.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
@@ -54,7 +53,7 @@ require (
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	go.mongodb.org/mongo-driver v1.13.1 // indirect
-	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
