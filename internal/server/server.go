@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
@@ -14,7 +14,6 @@ type Server struct {
 func NewServer() *Server {
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
 	app.Use(recover.New())
-	log.SetLevel(log.LevelTrace)
 	return &Server{app: app}
 }
 
@@ -26,6 +25,10 @@ func (s *Server) Register(base string, components ...Entity) {
 	for _, c := range components {
 		c.Init(group(c.Name()))
 	}
+}
+
+func (s *Server) WithLogger() {
+	s.app.Use(logger.New())
 }
 
 func (s *Server) WithSwagger(app string) {

@@ -9,6 +9,7 @@ import (
 )
 
 type Config struct {
+	ApiLog          bool     `yaml:"api_log" env:"API_LOG" env-default:"true"`
 	AppName         string   `yaml:"app_name" env:"APP_NAME" env-default:"GoChat"`
 	BaseUrl         string   `yaml:"base_url" env:"BASE_URL" env-default:"http://example.com" validation:"http_url"`
 	Cluster         []string `yaml:"cluster" env:"CLUSTER" env-default:""`

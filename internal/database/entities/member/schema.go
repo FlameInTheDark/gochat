@@ -45,7 +45,7 @@ func (e *Entity) GetMember(ctx context.Context, userId, guildId int64) (model.Me
 	err := e.c.Session().
 		Query(getMember).
 		WithContext(ctx).
-		Bind(userId, guildId).
+		Bind(guildId, userId).
 		Scan(&m.UserId, &m.GuildId, &m.Username, &m.Avatar, &m.JoinAt)
 	if err != nil {
 		return m, fmt.Errorf("unable to get member: %w", err)

@@ -65,6 +65,9 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
 	if cfg.Swagger {
 		s.WithSwagger("api")
 	}
+	if cfg.ApiLog {
+		s.WithLogger()
+	}
 	s.AuthMiddleware(cfg.AuthSecret)
 
 	// HTTP Router

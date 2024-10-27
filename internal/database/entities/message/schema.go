@@ -3,9 +3,9 @@ package message
 import (
 	"context"
 	"fmt"
-	"github.com/FlameInTheDark/gochat/internal/idgen"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
+	"github.com/FlameInTheDark/gochat/internal/idgen"
 )
 
 const (

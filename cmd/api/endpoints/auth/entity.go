@@ -1,11 +1,13 @@
 package auth
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"log/slog"
+
+	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/authentication"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/discriminator"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/registration"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/user"
 	"github.com/FlameInTheDark/gochat/internal/mailer"
@@ -28,6 +30,7 @@ type entity struct {
 	user   *user.Entity
 	reg    *registration.Entity
 	mailer *mailer.Mailer
+	disc   *discriminator.Entity
 }
 
 func (e *entity) Name() string {
@@ -42,6 +45,7 @@ func New(dbcon *db.CQLCon, m *mailer.Mailer, secret string, log *slog.Logger) se
 		auth:   authentication.New(dbcon),
 		user:   user.New(dbcon),
 		reg:    registration.New(dbcon),
+		disc:   discriminator.New(dbcon),
 		mailer: m,
 	}
 }

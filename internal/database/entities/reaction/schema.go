@@ -3,6 +3,7 @@ package reaction
 import (
 	"context"
 	"fmt"
+
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 )
 

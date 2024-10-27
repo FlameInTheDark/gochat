@@ -3,8 +3,9 @@ package registration
 import (
 	"context"
 	"fmt"
-	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"log"
+
+	"github.com/FlameInTheDark/gochat/internal/database/model"
 )
 
 const (

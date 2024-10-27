@@ -3,6 +3,7 @@ package role
 import (
 	"context"
 	"fmt"
+
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 )
 

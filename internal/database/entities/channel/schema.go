@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	getChannel            = `SELECT id, name, type, parent_it, permissions, created_at FROM gochat.channels WHERE id = ?`
-	getChannelThreads     = `SELECT id, name, type, parent_it, permissions, created_at FROM gochat.channels WHERE type = ? AND parent_it = ?`
+	getChannel            = `SELECT id, name, type, parent_id, permissions, created_at FROM gochat.channels WHERE id = ?`
+	getChannelThreads     = `SELECT id, name, type, parent_id, permissions, created_at FROM gochat.channels WHERE type = ? AND parent_id = ?`
 	createChannel         = `INSERT INTO gochat.channels (id, name, type, parent_id, permissions, created_at) VALUES (?, ?, ?, ?, ?, toTimestamp(now()))`
 	deleteChannel         = `DELETE FROM gochat.channels WHERE id = ?`
 	renameChannel         = `UPDATE gochat.channels SET name = ? WHERE id = ?`
@@ -47,7 +47,7 @@ func (e *Entity) GetChannelThreads(ctx context.Context, channelId int64) ([]mode
 	return channels, nil
 }
 
-func (e *Entity) CreateChannel(ctx context.Context, id int64, name, channelType string, parent int64, permissions int) error {
+func (e *Entity) CreateChannel(ctx context.Context, id int64, name string, channelType model.ChannelType, parent *int64, permissions int) error {
 	err := e.c.Session().
 		Query(createChannel).
 		WithContext(ctx).

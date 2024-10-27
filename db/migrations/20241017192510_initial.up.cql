@@ -41,14 +41,13 @@ CREATE TABLE IF NOT EXISTS gochat.registrations
 
 CREATE TABLE IF NOT EXISTS gochat.users
 (
-    id           bigint,
-    name         text,
-    determinator text,
-    about        text,
-    avatar       bigint,
-    blocked      boolean,
-    created_at   timestamp,
-    PRIMARY KEY ( id, determinator )
+    id            bigint,
+    name          text,
+    about         text,
+    avatar        bigint,
+    blocked       boolean,
+    created_at    timestamp,
+    PRIMARY KEY ( id )
 );
 
 CREATE TABLE IF NOT EXISTS gochat.guilds
@@ -121,7 +120,7 @@ CREATE TABLE IF NOT EXISTS gochat.channels
     parent_id   bigint,
     permissions bigint,
     created_at  timestamp,
-    PRIMARY KEY ( (id), parent_id, type )
+    PRIMARY KEY ( (id), type )
 );
 
 CREATE TABLE IF NOT EXISTS gochat.dm_channels
@@ -130,6 +129,20 @@ CREATE TABLE IF NOT EXISTS gochat.dm_channels
     participant_id bigint,
     channel_id     bigint,
     PRIMARY KEY ( user_id, participant_id )
+);
+
+CREATE TABLE IF NOT EXISTS gochat.group_dm_channels
+(
+    user_id    bigint,
+    channel_id bigint,
+    PRIMARY KEY ( (channel_id), user_id )
+);
+
+CREATE TABLE IF NOT EXISTS gochat.discriminators
+(
+    user_id       bigint,
+    discriminator text,
+    PRIMARY KEY ( user_id, discriminator )
 );
 
 CREATE TABLE IF NOT EXISTS gochat.messages

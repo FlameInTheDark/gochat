@@ -5,9 +5,9 @@ import "time"
 type Channel struct {
 	Id          int64
 	Name        string
-	Type        int
-	ParentID    int64
-	GuildId     int64
+	Type        ChannelType
+	ParentID    *int64
+	GuildId     *int64
 	Permissions int64
 	CreatedAt   time.Time
 }
@@ -18,5 +18,6 @@ const (
 	ChannelTypeGuild ChannelType = iota
 	ChannelTypeGuildVoice
 	ChannelTypeDM
+	ChannelTypeGroupDM
 	ChannelTypeThread
 )

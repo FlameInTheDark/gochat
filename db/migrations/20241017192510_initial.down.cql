@@ -3,6 +3,8 @@ DROP TABLE IF EXISTS gochat.blocked;
 DROP TABLE IF EXISTS gochat.friends;
 DROP TABLE IF EXISTS gochat.messages;
 DROP TABLE IF EXISTS gochat.dm_channels;
+DROP TABLE IF EXISTS gochat.group_dm_channels;
+DROP TABLE IF EXISTS gochat.discriminators;
 DROP TABLE IF EXISTS gochat.channels;
 DROP TABLE IF EXISTS gochat.channel_user_permissions;
 DROP TABLE IF EXISTS gochat.channel_role_permissions;

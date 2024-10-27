@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"log/slog"
 	"time"
 
@@ -11,11 +10,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/FlameInTheDark/gochat/internal/helper"
+	"github.com/FlameInTheDark/gochat/internal/idgen"
 )
 
 // Login
 //
-//	@Summary	Authentication using email and password
+//	@Summary	Authentication
 //	@Produce	json
 //	@Tags		Auth
 //	@Param		request	body		LoginRequest	true	"Login data"
@@ -28,29 +28,25 @@ func (e *entity) Login(c *fiber.Ctx) error {
 	var login LoginRequest
 	err := c.BodyParser(&login)
 	if err != nil {
-		e.log.Error("unable to parse body", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusBadRequest)
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
 
 	auth, err := e.auth.GetAuthenticationByEmail(c.UserContext(), login.Email)
-	if err != nil {
-		e.log.Error("unable to get authentication by email", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusUnauthorized)
+	if err := helper.HttpDbError(err, ErrUnableToGetAuthenticationByEmail); err != nil {
+		return err
 	}
 
 	err = CompareHashAndPassword(auth.PasswordHash, login.Password)
 	if err != nil {
-		e.log.Error("unable to compare hash", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusUnauthorized)
+		return fiber.NewError(fiber.StatusUnauthorized, ErrUnableToCompareHash)
 	}
 
 	user, err := e.user.GetUserById(c.UserContext(), auth.UserId)
 	if err != nil {
-		e.log.Error("unable to get user by ID", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusUnauthorized)
+		return fiber.NewError(fiber.StatusUnauthorized, ErrUnableToGetUserById)
 	}
 	if user.Blocked {
-		return c.SendStatus(fiber.StatusUnauthorized)
+		return fiber.NewError(fiber.StatusUnauthorized, ErrUserIsBanned)
 	}
 
 	// Create the Claims
@@ -66,8 +62,7 @@ func (e *entity) Login(c *fiber.Ctx) error {
 	// Generate encoded token and send it as response.
 	t, err := token.SignedString([]byte(e.secret))
 	if err != nil {
-		e.log.Error("unable to sign authentication token", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSignAuthenticationToken)
 	}
 
 	return c.JSON(LoginResponse{Token: t})
@@ -75,7 +70,7 @@ func (e *entity) Login(c *fiber.Ctx) error {
 
 // Registration
 //
-//	@Summary	Registration using email address
+//	@Summary	Registration
 //	@Produce	json
 //	@Tags		Auth
 //	@Param		request	body		RegisterRequest	true	"Login data"
@@ -89,96 +84,89 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 	var req RegisterRequest
 	err := c.BodyParser(&req)
 	if err != nil {
-		return c.SendStatus(fiber.StatusBadRequest)
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
 	token, err := helper.RandomToken(40)
 	if err != nil {
-		e.log.Error("unable to generate token", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGenerateToken)
 	}
 	_, err = e.auth.GetAuthenticationByEmail(c.UserContext(), req.Email)
 	if err == nil {
 		return c.SendStatus(fiber.StatusFound)
 	} else if !errors.Is(err, gocql.ErrNotFound) {
 		e.log.Error("unable to get authentication by email", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetAuthenticationByEmail)
 	}
 	var id int64
 	reg, err := e.reg.GetRegistrationByEmail(c.UserContext(), req.Email)
 	if errors.Is(err, gocql.ErrNotFound) {
 		id = idgen.Next()
 	} else if err != nil {
-		e.log.Error("unable to get registration by email", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusUnauthorized)
+		return fiber.NewError(fiber.StatusUnauthorized, ErrUnableToGetRegistrationByEmail)
 	} else {
 		if reg.CreatedAt.Add(time.Minute).After(time.Now()) {
-			return c.SendStatus(fiber.StatusTooManyRequests)
+			return fiber.NewError(fiber.StatusTooManyRequests, ErrEmailAlreadySent)
 		}
 		id = reg.UserId
 	}
 	err = e.reg.CreateRegistration(c.UserContext(), id, req.Email, token)
-	if err != nil {
-		e.log.Error("unable to create registration", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusInternalServerError)
+	if err := helper.HttpDbError(err, ErrUnableToCreateRegistration); err != nil {
+		return err
 	}
 	err = e.mailer.Send(c.UserContext(), id, req.Email, token)
 	if err != nil {
-		e.log.Error("unable to send email", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendEmail)
 	}
 	return c.SendStatus(fiber.StatusCreated)
 }
 
 // Confirmation
 //
-//	@Summary	Registration confirmation
+//	@Summary	Confirmation
 //	@Produce	json
 //	@Tags		Auth
 //	@Param		request	body		ConfirmationRequest	true	"Login data"
 //	@Success	201		{string}	string				"Registration completed, account created"
 //	@failure	400		{string}	string				"Incorrect request body"
 //	@failure	401		{string}	string				"Unauthorized"
+//	@failure	409		{string}	string				"Discriminator is not unique"
 //	@failure	500		{string}	string				"Something bad happened"
 //	@Router		/auth/confitmation [post]
 func (e *entity) Confirmation(c *fiber.Ctx) error {
 	var req ConfirmationRequest
 	err := c.BodyParser(&req)
 	if err != nil {
-		e.log.Error("unable to parse body", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusBadRequest)
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
 	if len(req.Password) < 8 {
-		e.log.Error("password too short")
-		return c.SendStatus(fiber.StatusBadRequest)
+		return fiber.NewError(fiber.StatusBadRequest, ErrPasswordIsTooShort)
 	}
 	hash, err := HashPassword(req.Password)
-	if err != nil {
-		e.log.Error("unable to get password hash", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusBadRequest)
+	if err := helper.HttpDbError(err, ErrUnableToGetPasswordHash); err != nil {
+		return err
 	}
 	reg, err := e.reg.GetRegistrationByUserId(c.UserContext(), req.Id)
-	if err != nil {
-		e.log.Error("unable to get registration by id", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusUnauthorized)
+	if err := helper.HttpDbError(err, ErrUnableToGetRegistrationById); err != nil {
+		return err
 	}
 	if reg.ConfirmationToken != req.Token {
-		e.log.Error("token is incorrect")
-		return c.SendStatus(fiber.StatusUnauthorized)
+		return fiber.NewError(fiber.StatusUnauthorized, ErrTokenIsIncorrect)
 	}
-	_, err = e.user.GetUserByDeterminator(c.UserContext(), req.Determinator)
+	_, err = e.disc.GetUserIdByDiscriminator(c.UserContext(), req.Discriminator)
 	if err == nil {
-		e.log.Error("determinator is not unique")
-		return c.SendStatus(fiber.StatusFound)
+		return fiber.NewError(fiber.StatusConflict, ErrDiscriminatorIsNotUnique)
 	}
 	err = e.reg.RemoveRegistration(c.UserContext(), reg.UserId)
-	if err != nil {
-		e.log.Error("unable to remove registration", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusInternalServerError)
+	if err := helper.HttpDbError(err, ErrUnableToRemoveRegistration); err != nil {
+		return err
 	}
-	err = e.user.CreateUser(c.UserContext(), req.Id, req.Name, req.Determinator)
-	if err != nil {
-		e.log.Error("unable to create user", slog.String("error", err.Error()))
-		return c.SendStatus(fiber.StatusInternalServerError)
+	err = e.user.CreateUser(c.UserContext(), req.Id, req.Name)
+	if err := helper.HttpDbError(err, ErrUnableToCreateUser); err != nil {
+		return err
+	}
+	err = e.disc.CreateDiscriminator(c.UserContext(), req.Id, req.Discriminator)
+	if err := helper.HttpDbError(err, ErrUnableToCreateDiscriminator); err != nil {
+		return err
 	}
 	err = e.auth.CreateAuthentication(c.UserContext(), req.Id, reg.Email, hash)
 	if err != nil {

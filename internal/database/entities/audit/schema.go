@@ -3,8 +3,9 @@ package audit
 import (
 	"context"
 	"fmt"
-	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"time"
+
+	"github.com/FlameInTheDark/gochat/internal/database/model"
 )
 
 const (
