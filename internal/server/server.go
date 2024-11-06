@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -8,7 +9,8 @@ import (
 )
 
 type Server struct {
-	app *fiber.App
+	app   *fiber.App
+	cache *vkc.Cache
 }
 
 func NewServer() *Server {
@@ -29,6 +31,10 @@ func (s *Server) Register(base string, components ...Entity) {
 
 func (s *Server) WithLogger() {
 	s.app.Use(logger.New())
+}
+
+func (s *Server) WithCache(c *vkc.Cache) {
+	s.cache = c
 }
 
 func (s *Server) WithSwagger(app string) {

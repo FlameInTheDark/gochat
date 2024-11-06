@@ -1,9 +1,9 @@
-package messages
+package mqmsg
 
 import "encoding/json"
 
 type EventDataMessage interface {
-	EventType() EventType
+	EventType() *EventType
 	Operation() OPCodeType
 	Marshal() ([]byte, error)
 }
@@ -15,6 +15,8 @@ const (
 	OPCodeHello
 	OPCodeHeartBeat
 	OPCodePresenceUpdate
+	OPCodeGuildUpdateSubscription
+	OPCodeChannelSubscription
 )
 
 type EventType int
@@ -46,7 +48,7 @@ const (
 type Message struct {
 	Operation OPCodeType      `json:"op"`
 	Data      json.RawMessage `json:"d"`
-	EventType EventType       `json:"t"`
+	EventType *EventType      `json:"t"`
 }
 
 func BuildEventMessage(data EventDataMessage) (msg Message, err error) {

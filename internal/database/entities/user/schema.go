@@ -9,13 +9,13 @@ import (
 )
 
 const (
-	getUserByID        = `SELECT id, name, avatar, blocked, created_at FROM gochat.users WHERE id = ?;`
-	getByDiscriminator = `SELECT id, name, avatar, blocked, created_at FROM gochat.users WHERE discriminator = ?;`
-	createUser         = `INSERT INTO gochat.users (id,  name, blocked, created_at) VALUES (?, ?, false, toTimestamp(now()));`
-	setAvatar          = `UPDATE gochat.users SET avatar = ? WHERE id = ?;`
-	setUsername        = `UPDATE gochat.users SET name = ? WHERE id = ?;`
-	setBlocked         = `UPDATE gochat.users SET blocked = ? WHERE id = ?;`
-	updateUser         = `UPDATE gochat.users SET %s WHERE id = ?`
+	getUserByID    = `SELECT id, name, avatar, blocked, upload_limit, created_at FROM gochat.users WHERE id = ?;`
+	createUser     = `INSERT INTO gochat.users (id,  name, blocked, created_at) VALUES (?, ?, false, toTimestamp(now()));`
+	setAvatar      = `UPDATE gochat.users SET avatar = ? WHERE id = ?;`
+	setUsername    = `UPDATE gochat.users SET name = ? WHERE id = ?;`
+	setBlocked     = `UPDATE gochat.users SET blocked = ? WHERE id = ?;`
+	updateUser     = `UPDATE gochat.users SET %s WHERE id = ?`
+	setUploadLimit = `UPDATE gochat.users SET upload_limit = ? WHERE id = ?`
 )
 
 func (e *Entity) ModifyUser(ctx context.Context, userId int64, name *string, avatar *int64) error {
@@ -52,6 +52,7 @@ func (e *Entity) GetUserById(ctx context.Context, id int64) (model.User, error) 
 			&user.Name,
 			&user.Avatar,
 			&user.Blocked,
+			&user.UploadLimit,
 			&user.CreatedAt,
 		)
 	if err != nil {
@@ -104,6 +105,18 @@ func (e *Entity) SetUserBlocked(ctx context.Context, id int64, blocked bool) err
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to set blocked Error: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) SetUploadLimit(ctx context.Context, id int64, limit int64) error {
+	err := e.c.Session().
+		Query(setUploadLimit).
+		WithContext(ctx).
+		Bind(limit, id).
+		Exec()
+	if err != nil {
+		return fmt.Errorf("unable to set upload limit Error: %w", err)
 	}
 	return nil
 }

@@ -268,7 +268,7 @@ func (e *entity) CreateDM(c *fiber.Ctx) error {
 	return c.JSON(dto.Channel{
 		Id:          ch.Id,
 		Type:        ch.Type,
-		GuildId:     ch.GuildId,
+		GuildId:     nil,
 		Name:        ch.Name,
 		ParentId:    ch.ParentID,
 		Permissions: ch.Permissions,
@@ -311,7 +311,7 @@ func (e *entity) CreateGroupDM(c *fiber.Ctx) error {
 			ch = dto.Channel{
 				Id:          uch.Id,
 				Type:        uch.Type,
-				GuildId:     uch.GuildId,
+				GuildId:     nil,
 				Name:        uch.Name,
 				ParentId:    uch.ParentID,
 				Permissions: uch.Permissions,

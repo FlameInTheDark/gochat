@@ -1,6 +1,6 @@
 app_name: "GoChat"
 base_url: "http://example.com"
-cluster: []
+cluster: ["scylla"]
 cluster_keyspace: "gochat"
 email_source: "email"
 email_name: "no-reply"
@@ -10,3 +10,9 @@ sendpulse_user_id: ""
 sendpulse_secret: ""
 auth_secret: "change_me_before_use_it_in_production"
 swagger: true
+keydb: "keydb:6379"
+rate_limit_time: 1
+rate_limit_requests: 10
+s3_endpoint: minio:9000
+s3_access_key_id: lF0b7V15OZCv2eGggCg5
+s3_secret_access_key: 55ug80hPgx4nFPoFJXvwBHns1XwXmZrcKli8UHoz

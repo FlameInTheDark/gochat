@@ -8,14 +8,75 @@ services:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: password
     command: server /data --console-address ":9001"
+    restart: always
+
   scylla:
-    image: scylladb/scylla:latest
+    image: scylladb/scylla:6.2
+    volumes:
+      - scylla-data:/var/lib/scylla
+      - ./init/init-scylladb.sh:/init-scylladb.sh
     ports:
       - "7000:7000"
       - "9042:9042"
       - "7199:7199"
+    environment:
+      - SCYLLA_DEVELOPER_MODE=1
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "SELECT now() FROM system.local;"]
+      interval: 10s
+      retries: 5
+    restart: always
+
   rabbitmq:
     image: rabbitmq:management
     ports:
       - "15672:15672"
       - "5672:5672"
+    restart: always
+
+  keydb:
+    image: eqalpha/keydb:alpine
+    ports:
+      - "6379:6379"
+    restart: always
+
+  api:
+    image: gochat/api
+    build:
+      dockerfile: api.Dockerfile
+    volumes:
+      - ./api_config.yaml:/dist/config.yaml
+      - ./email_notify.tmpl:/dist/email_notify.tmpl
+    ports:
+      - "3000:3000"
+    depends_on:
+      scylla:
+        condition: service_healthy
+      keydb:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+
+  ws:
+    image: gochat/ws
+    build:
+      dockerfile: ws.Dockerfile
+    volumes:
+      - ./ws_config.yaml:/dist/config.yaml
+    ports:
+      - "3100:3100"
+    depends_on:
+      rabbitmq:
+        condition: service_started
+
+  nginx:
+    image: nginx:1.27.2-alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
+
+volumes:
+  scylla-data:

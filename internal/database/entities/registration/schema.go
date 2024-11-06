@@ -3,8 +3,6 @@ package registration
 import (
 	"context"
 	"fmt"
-	"log"
-
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 )
 
@@ -43,7 +41,6 @@ func (e *Entity) GetRegistrationByEmail(ctx context.Context, email string) (mode
 }
 
 func (e *Entity) CreateRegistration(ctx context.Context, userId int64, email string, confirmation string) error {
-	log.Println("inside create reg", email)
 	err := e.c.Session().
 		Query(createRegistration).
 		WithContext(ctx).

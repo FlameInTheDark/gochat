@@ -7,8 +7,8 @@ type Channel struct {
 	Name        string
 	Type        ChannelType
 	ParentID    *int64
-	GuildId     *int64
 	Permissions int64
+	Private     bool
 	CreatedAt   time.Time
 }
 

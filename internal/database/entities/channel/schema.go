@@ -8,12 +8,13 @@ import (
 )
 
 const (
-	getChannel            = `SELECT id, name, type, parent_id, permissions, created_at FROM gochat.channels WHERE id = ?`
-	getChannelThreads     = `SELECT id, name, type, parent_id, permissions, created_at FROM gochat.channels WHERE type = ? AND parent_id = ?`
-	createChannel         = `INSERT INTO gochat.channels (id, name, type, parent_id, permissions, created_at) VALUES (?, ?, ?, ?, ?, toTimestamp(now()))`
+	getChannel            = `SELECT id, name, type, parent_id, permissions, private, created_at FROM gochat.channels WHERE id = ?`
+	getChannelThreads     = `SELECT id, name, type, parent_id, permissions, private, created_at FROM gochat.channels WHERE type = ? AND parent_id = ?`
+	createChannel         = `INSERT INTO gochat.channels (id, name, type, parent_id, permissions, private, created_at) VALUES (?, ?, ?, ?, ?, ?, toTimestamp(now()))`
 	deleteChannel         = `DELETE FROM gochat.channels WHERE id = ?`
 	renameChannel         = `UPDATE gochat.channels SET name = ? WHERE id = ?`
 	setChannelPermissions = `UPDATE gochat.channels SET permissions = ? WHERE id = ?`
+	setChannelPrivate     = `UPDATE gochat.channels SET private = ? WHERE id = ?`
 )
 
 func (e *Entity) GetChannel(ctx context.Context, id int64) (model.Channel, error) {
@@ -22,7 +23,7 @@ func (e *Entity) GetChannel(ctx context.Context, id int64) (model.Channel, error
 		Query(getChannel).
 		WithContext(ctx).
 		Bind(id).
-		Scan(&ch.Id, &ch.Name, &ch.Type, &ch.ParentID, &ch.Permissions, &ch.CreatedAt)
+		Scan(&ch.Id, &ch.Name, &ch.Type, &ch.ParentID, &ch.Permissions, &ch.Private, &ch.CreatedAt)
 	if err != nil {
 		return model.Channel{}, fmt.Errorf("unable to get channel: %w", err)
 	}
@@ -37,7 +38,7 @@ func (e *Entity) GetChannelThreads(ctx context.Context, channelId int64) ([]mode
 		Bind(model.ChannelTypeThread, channelId).
 		Iter()
 	var ch model.Channel
-	for iter.Scan(&ch.Id, &ch.Name, &ch.Type, &ch.ParentID, &ch.Permissions, &ch.CreatedAt) {
+	for iter.Scan(&ch.Id, &ch.Name, &ch.Type, &ch.ParentID, &ch.Permissions, &ch.Private, &ch.CreatedAt) {
 		channels = append(channels, ch)
 	}
 	err := iter.Close()
@@ -75,7 +76,7 @@ func (e *Entity) RenameChannel(ctx context.Context, id int64, newName string) er
 	err := e.c.Session().
 		Query(renameChannel).
 		WithContext(ctx).
-		Bind(id, newName).
+		Bind(newName, id).
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to rename channel: %w", err)
@@ -87,10 +88,22 @@ func (e *Entity) SetChannelPermissions(ctx context.Context, id int64, permission
 	err := e.c.Session().
 		Query(setChannelPermissions).
 		WithContext(ctx).
-		Bind(id, permissions).
+		Bind(permissions, id).
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to set channel permissions: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) SetChannelPrivate(ctx context.Context, id int64, private bool) error {
+	err := e.c.Session().
+		Query(setChannelPrivate).
+		WithContext(ctx).
+		Bind(private, id).
+		Exec()
+	if err != nil {
+		return fmt.Errorf("unable to set channel private: %w", err)
 	}
 	return nil
 }

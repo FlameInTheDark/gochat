@@ -14,7 +14,7 @@ const (
 	removeChannelUserPermission = `DELETE FROM gochat.channel_user_permissions WHERE channel_id = ? AND user_id = ?`
 )
 
-func (e *Entity) GetUserChannelPermission(ctx context.Context, channelId, userId int64, permissions int) (model.ChannelUserPermission, error) {
+func (e *Entity) GetUserChannelPermission(ctx context.Context, channelId, userId int64) (model.ChannelUserPermission, error) {
 	var perm model.ChannelUserPermission
 	err := e.c.Session().
 		Query(getChannelUserPermission).
