@@ -21,4 +21,3 @@ DROP TABLE IF EXISTS gochat.icons;
 DROP TABLE IF EXISTS gochat.attachments;
 DROP TABLE IF EXISTS gochat.reactions;
 DROP TABLE IF EXISTS gochat.audit_log;
-DROP TABLE IF EXISTS gochat.registrations;

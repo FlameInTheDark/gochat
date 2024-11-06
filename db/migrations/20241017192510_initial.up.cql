@@ -1,8 +1,14 @@
 CREATE TABLE IF NOT EXISTS gochat.attachments
 (
-    id     bigint,
-    object text,
-    PRIMARY KEY ( id )
+    id           bigint,
+    channel_id   bigint,
+    name         text,
+    filesize     bigint,
+    content_type text,
+    height       bigint,
+    width        bigint,
+    done         boolean,
+    PRIMARY KEY ( (channel_id), id )
 );
 
 CREATE TABLE IF NOT EXISTS gochat.icons
@@ -41,12 +47,13 @@ CREATE TABLE IF NOT EXISTS gochat.registrations
 
 CREATE TABLE IF NOT EXISTS gochat.users
 (
-    id            bigint,
-    name          text,
-    about         text,
-    avatar        bigint,
-    blocked       boolean,
-    created_at    timestamp,
+    id           bigint,
+    name         text,
+    about        text,
+    avatar       bigint,
+    blocked      boolean,
+    created_at   timestamp,
+    upload_limit bigint,
     PRIMARY KEY ( id )
 );
 
@@ -119,6 +126,7 @@ CREATE TABLE IF NOT EXISTS gochat.channels
     type        int,
     parent_id   bigint,
     permissions bigint,
+    private     boolean,
     created_at  timestamp,
     PRIMARY KEY ( (id), type )
 );
