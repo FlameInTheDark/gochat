@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	getChannel        = `SELECT id, name, type, parent_id, permissions, topic, private, created_at FROM gochat.channels WHERE id = ?`
-	getChannelsBulk   = `SELECT id, name, type, parent_id, permissions, topic, private, created_at FROM gochat.channels WHERE id IN ?`
-	getChannelThreads = `SELECT id, name, type, parent_id, permissions, topic, private, created_at FROM gochat.channels WHERE type = ? AND parent_id = ?`
-	createChannel     = `INSERT INTO gochat.channels (id, name, type, parent_id, permissions, private, created_at) VALUES (?, ?, ?, ?, ?, ?, toTimestamp(now()))`
+	getChannel        = `SELECT id, name, type, parent_id, permissions, topic, private, last_message, created_at FROM gochat.channels WHERE id = ?`
+	getChannelsBulk   = `SELECT id, name, type, parent_id, permissions, topic, private, last_message, created_at FROM gochat.channels WHERE id IN ?`
+	getChannelThreads = `SELECT id, name, type, parent_id, permissions, topic, private, last_message, created_at FROM gochat.channels WHERE type = ? AND parent_id = ?`
+	createChannel     = `INSERT INTO gochat.channels (id, name, type, parent_id, permissions, private, last_message, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, toTimestamp(now()))`
 	deleteChannel     = `DELETE FROM gochat.channels WHERE id = ?`
 	renameChannel     = `UPDATE gochat.channels SET name = ? WHERE id = ?`
 	setPermissions    = `UPDATE gochat.channels SET permissions = ? WHERE id = ?`
@@ -21,6 +21,7 @@ const (
 	setTopic          = `UPDATE gochat.channels SET topic = ? WHERE id = ?`
 	setParent         = `UPDATE gochat.channels SET parent_id = ? WHERE id = ?`
 	setParentBulk     = `UPDATE gochat.channels SET parent_id = ? WHERE id IN ?`
+	setLastMessage    = `UPDATE gochat.channels SET last_message = ? WHERE id = ? IF last_message < ?`
 )
 
 func (e *Entity) GetChannel(ctx context.Context, id int64) (model.Channel, error) {
@@ -29,7 +30,7 @@ func (e *Entity) GetChannel(ctx context.Context, id int64) (model.Channel, error
 		Query(getChannel).
 		WithContext(ctx).
 		Bind(id).
-		Scan(&ch.Id, &ch.Name, &ch.Type, &ch.ParentID, &ch.Permissions, &ch.Topic, &ch.Private, &ch.CreatedAt)
+		Scan(&ch.Id, &ch.Name, &ch.Type, &ch.ParentID, &ch.Permissions, &ch.Topic, &ch.Private, &ch.LastMessage, &ch.CreatedAt)
 	if err != nil {
 		return model.Channel{}, fmt.Errorf("unable to get channel: %w", err)
 	}
@@ -44,7 +45,7 @@ func (e *Entity) GetChannelsBulk(ctx context.Context, ids []int64) ([]model.Chan
 		Bind(ids).
 		Iter()
 	var ch model.Channel
-	for iter.Scan(&ch.Id, &ch.Name, &ch.Type, &ch.ParentID, &ch.Permissions, &ch.Topic, &ch.Private, &ch.CreatedAt) {
+	for iter.Scan(&ch.Id, &ch.Name, &ch.Type, &ch.ParentID, &ch.Permissions, &ch.Topic, &ch.Private, &ch.LastMessage, &ch.CreatedAt) {
 		chs = append(chs, ch)
 	}
 	err := iter.Close()
@@ -62,7 +63,7 @@ func (e *Entity) GetChannelThreads(ctx context.Context, channelId int64) ([]mode
 		Bind(model.ChannelTypeThread, channelId).
 		Iter()
 	var ch model.Channel
-	for iter.Scan(&ch.Id, &ch.Name, &ch.Type, &ch.ParentID, &ch.Permissions, &ch.Topic, &ch.Private, &ch.CreatedAt) {
+	for iter.Scan(&ch.Id, &ch.Name, &ch.Type, &ch.ParentID, &ch.Permissions, &ch.Topic, &ch.Private, &ch.LastMessage, &ch.CreatedAt) {
 		channels = append(channels, ch)
 	}
 	err := iter.Close()
@@ -164,6 +165,18 @@ func (e *Entity) SetChannelParentBulk(ctx context.Context, id []int64, parent *i
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to set channel parent bulk: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) SetLastMessage(ctx context.Context, id, lastMessage int64) error {
+	_, err := e.c.Session().
+		Query(setLastMessage).
+		WithContext(ctx).
+		Bind(lastMessage, id, lastMessage).
+		ScanCAS(nil)
+	if err != nil {
+		return fmt.Errorf("unable to set channel last message: %w", err)
 	}
 	return nil
 }

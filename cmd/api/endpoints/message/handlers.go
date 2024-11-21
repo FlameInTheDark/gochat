@@ -3,13 +3,14 @@ package message
 import (
 	"errors"
 	"fmt"
-	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"log/slog"
 	"strconv"
+	"time"
 
 	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
@@ -81,6 +82,11 @@ func (e *entity) Send(c *fiber.Ctx) error {
 			return err
 		}
 
+		err = e.ch.SetLastMessage(c.UserContext(), id, msgid)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
 		ats, err := e.at.SelectAttachemntsByIDs(c.UserContext(), req.Attachments)
 		if err := helper.HttpDbError(err, ErrUnableToGetAttachements); err != nil {
 			return err
@@ -88,15 +94,14 @@ func (e *entity) Send(c *fiber.Ctx) error {
 
 		resp := dto.Message{
 			Id:        msgid,
-			ChannelId: id,
+			ChannelId: ch.Id,
 			Author: dto.User{
 				Id:            user.Id,
 				Name:          user.Name,
 				Discriminator: disc.Discriminator,
 				Avatar:        user.Avatar,
 			},
-			Content:     req.Content,
-			Attachments: nil,
+			Content: req.Content,
 		}
 
 		for _, at := range ats {
@@ -136,7 +141,7 @@ func (e *entity) Send(c *fiber.Ctx) error {
 //	@failure	400			{string}	string					"Incorrect request body"
 //	@failure	401			{string}	string					"Unauthorized"
 //	@failure	500			{string}	string					"Something bad happened"
-//	@Router		/message/{message_id} [post]
+//	@Router		/message/channel/{channel_id}/{message_id} [patch]
 func (e *entity) Update(c *fiber.Ctx) error {
 	var req UpdateMessageRequest
 	err := c.BodyParser(&req)
@@ -144,89 +149,72 @@ func (e *entity) Update(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
 	channelId := c.Params("channel_id")
-	id, err := strconv.ParseInt(channelId, 10, 64)
+	chid, err := strconv.ParseInt(channelId, 10, 64)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+	}
+	messageId := c.Params("message_id")
+	msgid, err := strconv.ParseInt(messageId, 10, 64)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectMessageID)
 	}
 	u, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	ch, err := e.ch.GetChannel(c.UserContext(), id)
+	user, err := e.user.GetUserById(c.UserContext(), u.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUser)
+	}
+	msg, err := e.msg.GetMessage(c.UserContext(), msgid, chid)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
-	var ok = true
-	var guildId *int64
-	if ch.Type == model.ChannelTypeGuild {
-		gc, err := e.gc.GetGuildByChannel(c.UserContext(), id)
+	if msg.UserId == u.Id {
+		var username = user.Name
+		var gid *int64
+		gc, err := e.gc.GetGuildByChannel(c.UserContext(), chid)
 		if err != nil && !errors.Is(err, gocql.ErrNotFound) {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuild)
 		}
 		if !errors.Is(err, gocql.ErrNotFound) {
-			guildId = &gc.GuildId
-			_, _, _, ok, err = e.perm.ChannelPerm(c.UserContext(), gc.GuildId, gc.ChannelId, u.Id, permissions.PermServerManageChannels)
+			gid = &gc.GuildId
+			m, err := e.m.GetMember(c.UserContext(), u.Id, gc.GuildId)
 			if err != nil {
 				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 			}
+			if m.Username != nil {
+				username = *m.Username
+			}
 		}
-	} else if ch.Type == model.ChannelTypeGroupDM && ch.ParentID != nil && *ch.ParentID != u.Id {
-		ok = false
-	}
-	if ok {
-		user, err := e.user.GetUserById(c.UserContext(), u.Id)
-		if err := helper.HttpDbError(err, ErrUnableToGetUser); err != nil {
-			return err
+		d, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), u.Id)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
-		disc, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), u.Id)
-		if err := helper.HttpDbError(err, ErrUnableToGetUserDiscriminator); err != nil {
-			return err
+		err = e.msg.UpdateMessage(c.UserContext(), msg.Id, chid, req.Content)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
-		msgid := idgen.Next()
-		err = e.msg.CreateMessage(c.UserContext(), msgid, id, u.Id, req.Content, req.Attachments)
-		if err := helper.HttpDbError(err, ErrUnableToSendMessage); err != nil {
-			return err
-		}
-
-		ats, err := e.at.SelectAttachemntsByIDs(c.UserContext(), req.Attachments)
-		if err := helper.HttpDbError(err, ErrUnableToGetAttachements); err != nil {
-			return err
-		}
-
+		upd := time.Now()
 		resp := dto.Message{
-			Id:        msgid,
-			ChannelId: id,
+			Id:        msg.Id,
+			ChannelId: msg.ChannelId,
 			Author: dto.User{
 				Id:            user.Id,
-				Name:          user.Name,
-				Discriminator: disc.Discriminator,
+				Name:          username,
+				Discriminator: d.Discriminator,
 				Avatar:        user.Avatar,
 			},
-			Content:     req.Content,
-			Attachments: nil,
+			Content:   req.Content,
+			UpdatedAt: &upd,
 		}
-
-		for _, at := range ats {
-			resp.Attachments = append(resp.Attachments, dto.Attachment{
-				ContentType: at.ContentType,
-				Filename:    at.Name,
-				Height:      at.Height,
-				Width:       at.Width,
-				URL:         fmt.Sprintf("media/%d/%d/%s", at.ChannelId, at.Id, at.Name),
-				Size:        at.FileSize,
-			})
-		}
-
-		err = e.mqt.SendChannelMessage(id, &mqmsg.CreateMessage{
-			GuildId: guildId,
+		err = e.mqt.SendChannelMessage(chid, &mqmsg.UpdateMessage{
+			GuildId: gid,
 			Message: resp,
 		})
 		if err != nil {
-			remerr := e.msg.DeleteMessage(c.UserContext(), msgid)
-			e.log.Error("unable to send message event", slog.String("error", errors.Join(err, remerr).Error()))
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendMessage)
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
-
 		return c.JSON(resp)
 	}
 	return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)

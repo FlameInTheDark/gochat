@@ -1,9 +1,11 @@
 package message
 
 import (
-	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/database/entities/member"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
@@ -14,7 +16,6 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/discriminator"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannels"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/role"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/userrole"
@@ -28,7 +29,7 @@ const entityName = "message"
 func (e *entity) Init(router fiber.Router) {
 	router.Post("/channel/:channel_id<int>", e.Send)
 	router.Post("/channel/:channel_id<int>/attachment", e.Attachment)
-	router.Post("/:message_id<int>", e.Update)
+	router.Patch("/channel/:channel_id<int>/:message_id<int>", e.Update)
 }
 
 type entity struct {
@@ -42,6 +43,7 @@ type entity struct {
 
 	// DB entities
 	user  *user.Entity
+	m     *member.Entity
 	disc  *discriminator.Entity
 	ch    *channel.Entity
 	g     *guild.Entity
@@ -68,6 +70,7 @@ func New(dbcon *db.CQLCon, storage *s3.Client, t mq.SendTransporter, uploadLimit
 		storage:     storage,
 		mqt:         t,
 		user:        user.New(dbcon),
+		m:           member.New(dbcon),
 		disc:        discriminator.New(dbcon),
 		ch:          channel.New(dbcon),
 		g:           guild.New(dbcon),

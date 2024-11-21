@@ -182,7 +182,7 @@ func (e *entity) Create(c *fiber.Ctx) error {
 		if err == nil {
 			err = e.g.SetGuildIcon(c.UserContext(), gid, icon.Id)
 			if err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateGuild)
+				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 			}
 		}
 	}
@@ -191,23 +191,23 @@ func (e *entity) Create(c *fiber.Ctx) error {
 	chid := idgen.Next()
 	err = e.ch.CreateChannel(c.UserContext(), chcatid, "text", model.ChannelTypeGuildCategory, nil, nil, req.Public)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateGuild)
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 	err = e.ch.CreateChannel(c.UserContext(), chid, "general", model.ChannelTypeGuild, &chcatid, nil, req.Public)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateGuild)
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 	err = e.gc.AddChannel(c.UserContext(), gid, chcatid, 0)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateGuild)
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 	err = e.gc.AddChannel(c.UserContext(), gid, chid, 0)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateGuild)
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 	err = e.memb.AddMember(c.UserContext(), u.Id, gid)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateGuild)
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(dto.Guild{

@@ -7,12 +7,16 @@ const (
 	ErrUnableToCreateAttachment     = "unable to create attachment"
 	ErrUnableToCreateUploadURL      = "unable to create upload url"
 	ErrIncorrectChannelID           = "incorrect channel ID"
+	ErrIncorrectMessageID           = "incorrect message ID"
 	ErrFileIsTooBig                 = "file is too big"
 	ErrUnableToSendMessage          = "unable to send message"
+	ErrUnableToUpdateMessage        = "unable to update message"
 	ErrUnableToGetUser              = "unable to get user"
+	ErrUnableToGetGuild             = "unable to get guild"
 	ErrUnableToGetUserDiscriminator = "unable to get discriminator"
 	ErrUnableToGetAttachements      = "unable to get attachments"
 	ErrUnableToSentToThisChannel    = "unable to send to this channel"
+	ErrUnableToGetMessage           = "unable to get message"
 )
 
 type SendMessageRequest struct {

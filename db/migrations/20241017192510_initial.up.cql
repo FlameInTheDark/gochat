@@ -71,9 +71,9 @@ CREATE TABLE IF NOT EXISTS gochat.guilds
 
 CREATE TABLE IF NOT EXISTS gochat.guild_channels
 (
-    guild_id    bigint,
-    channel_id  bigint,
-    position    int,
+    guild_id   bigint,
+    channel_id bigint,
+    position   int,
     PRIMARY KEY ( guild_id, channel_id )
 );
 
@@ -126,15 +126,16 @@ CREATE TABLE IF NOT EXISTS gochat.channel_user_permissions
 
 CREATE TABLE IF NOT EXISTS gochat.channels
 (
-    id          bigint,
-    name        text,
-    type        int,
-    parent_id   bigint,
-    permissions bigint,
-    topic       text,
-    private     boolean,
-    created_at  timestamp,
-    PRIMARY KEY ( (id), type )
+    id           bigint,
+    name         text,
+    type         int,
+    parent_id    bigint,
+    permissions  bigint,
+    topic        text,
+    private      boolean,
+    last_message bigint,
+    created_at   timestamp,
+    PRIMARY KEY ( id )
 );
 
 CREATE TABLE IF NOT EXISTS gochat.dm_channels

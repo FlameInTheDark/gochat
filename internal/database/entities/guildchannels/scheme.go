@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	addChannel               = `INSERT INTO gochat.guild_channels (guild_id, channel_id, position) VALUES (?, ?, ?, ?)`
+	addChannel               = `INSERT INTO gochat.guild_channels (guild_id, channel_id, position) VALUES (?, ?, ?)`
 	removeChannel            = `DELETE FROM gochat.guild_channels WHERE guild_id = ? AND channel_id = ?`
 	getGuildChannel          = `SELECT guild_id, channel_id, position FROM gochat.guild_channels WHERE guild_id = ? AND channel_id = ?`
 	getGuildChannels         = `SELECT guild_id, channel_id, position FROM gochat.guild_channels WHERE guild_id = ?`
@@ -51,7 +51,7 @@ func (e *Entity) GetGuildChannels(ctx context.Context, guildID int64) ([]model.G
 		Bind(guildID).
 		Iter()
 	var ch model.GuildChannel
-	for iter.Scan(&ch.GuildId, &ch.ChannelId) {
+	for iter.Scan(&ch.GuildId, &ch.ChannelId, &ch.Position) {
 		chans = append(chans, ch)
 	}
 	err := iter.Close()
@@ -67,7 +67,7 @@ func (e *Entity) GetGuildByChannel(ctx context.Context, channelID int64) (model.
 		Query(getGuildByChannel).
 		WithContext(ctx).
 		Bind(channelID).
-		Scan(&ch.GuildId, &ch.ChannelId)
+		Scan(&ch.GuildId, &ch.ChannelId, &ch.Position)
 	if err != nil {
 		return model.GuildChannel{}, fmt.Errorf("unable to get guild by channel: %w", err)
 	}
