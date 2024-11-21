@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/FlameInTheDark/gochat/internal/mq"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/cmd/api/config"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/auth"
+	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/guild"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/message"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/user"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/webhook"
@@ -19,6 +19,9 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mailer"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/logmailer"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/sendpulse"
+	"github.com/FlameInTheDark/gochat/internal/mq"
+	"github.com/FlameInTheDark/gochat/internal/mq/nats"
+	"github.com/FlameInTheDark/gochat/internal/mq/rabbit"
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shut"
@@ -44,11 +47,27 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
 	}
 	sh.Up(database)
 
-	queue, err := mq.New(cfg.RabbitMQHost, cfg.RabbitMQPort, cfg.RabbitMQUsername, cfg.RabbitMQPassword)
-	if err != nil {
-		return nil, err
+	var qt mq.SendTransporter
+	switch cfg.QueueTransport {
+	case "nats":
+		nt, err := nats.New(cfg.NatsConnString)
+		if err != nil {
+			return nil, err
+		}
+		sh.Up(nt)
+		qt = nt
+	case "rabbitmq":
+		queue, err := rabbit.New(cfg.RabbitMQHost, cfg.RabbitMQPort, cfg.RabbitMQUsername, cfg.RabbitMQPassword)
+		if err != nil {
+			return nil, err
+		}
+		sh.Up(queue)
+		msgmq, err := queue.InitChannel()
+		if err != nil {
+			return nil, err
+		}
+		qt = msgmq
 	}
-	sh.Up(queue)
 
 	cache, err := vkc.New(cfg.KeyDB)
 	if err != nil {
@@ -77,6 +96,9 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
 	}
 	m := mailer.NewMailer(provider, tmpl, mailer.User{Email: cfg.EmailSource, Name: cfg.EmailName})
 
+	//solrClient := solr.New(cfg.SolrBaseURL)
+	//searchService := msgsearch.NewSearch(solrClient)
+
 	// ID generator setup
 	idgen.New(0)
 
@@ -101,8 +123,10 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
 		"/api/v1",
 		auth.New(database, m, cfg.AuthSecret, logger),
 		user.New(database, logger),
-		message.New(database, storage, queue, cfg.UploadLimit, logger),
+		message.New(database, storage, qt, cfg.UploadLimit, logger),
 		webhook.New(database, storage, logger),
+		guild.New(database, qt, logger),
+		//search.New(database, searchService, logger),
 	)
 
 	return &App{

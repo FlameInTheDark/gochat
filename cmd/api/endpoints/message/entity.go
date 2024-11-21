@@ -1,8 +1,7 @@
 package message
 
 import (
-	"fmt"
-	"github.com/FlameInTheDark/gochat/internal/mq"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
 	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
@@ -19,6 +18,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/role"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/userrole"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
 )
@@ -28,42 +28,45 @@ const entityName = "message"
 func (e *entity) Init(router fiber.Router) {
 	router.Post("/channel/:channel_id<int>", e.Send)
 	router.Post("/channel/:channel_id<int>/attachment", e.Attachment)
+	router.Post("/:message_id<int>", e.Update)
 }
 
 type entity struct {
 	name        string
 	uploadLimit int64
-	log         *slog.Logger
-	storage     *s3.Client
-	msgmq       *mq.Channel
-	user        *user.Entity
-	disc        *discriminator.Entity
-	ch          *channel.Entity
-	g           *guild.Entity
-	gc          *guildchannels.Entity
-	msg         *message.Entity
-	at          *attachment.Entity
-	uperm       *channeluserperm.Entity
-	rperm       *channelroleperm.Entity
-	role        *role.Entity
-	ur          *userrole.Entity
+
+	// Services
+	log     *slog.Logger
+	storage *s3.Client
+	mqt     mq.SendTransporter
+
+	// DB entities
+	user  *user.Entity
+	disc  *discriminator.Entity
+	ch    *channel.Entity
+	g     *guild.Entity
+	gc    *guildchannels.Entity
+	msg   *message.Entity
+	at    *attachment.Entity
+	perm  *rolecheck.Entity
+	uperm *channeluserperm.Entity
+	rperm *channelroleperm.Entity
+	role  *role.Entity
+	ur    *userrole.Entity
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, storage *s3.Client, queue *mq.Queue, uploadLimit int64, log *slog.Logger) server.Entity {
-	msgmq, err := queue.InitChannel(mq.MessagesExchange)
-	if err != nil {
-		panic(fmt.Errorf("unable to create mq channel: %w", err))
-	}
+func New(dbcon *db.CQLCon, storage *s3.Client, t mq.SendTransporter, uploadLimit int64, log *slog.Logger) server.Entity {
+
 	return &entity{
 		name:        entityName,
+		uploadLimit: uploadLimit,
 		log:         log,
 		storage:     storage,
-		msgmq:       msgmq,
-		uploadLimit: uploadLimit,
+		mqt:         t,
 		user:        user.New(dbcon),
 		disc:        discriminator.New(dbcon),
 		ch:          channel.New(dbcon),
@@ -71,6 +74,7 @@ func New(dbcon *db.CQLCon, storage *s3.Client, queue *mq.Queue, uploadLimit int6
 		gc:          guildchannels.New(dbcon),
 		msg:         message.New(dbcon),
 		at:          attachment.New(dbcon),
+		perm:        rolecheck.New(dbcon),
 		uperm:       channeluserperm.New(dbcon),
 		rperm:       channelroleperm.New(dbcon),
 		role:        role.New(dbcon),

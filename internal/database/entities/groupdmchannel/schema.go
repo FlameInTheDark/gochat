@@ -2,6 +2,7 @@ package groupdmchannel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/gocql/gocql"
@@ -95,7 +96,7 @@ func (e *Entity) IsGroupDmParticipant(ctx context.Context, channelId int64, user
 		WithContext(ctx).
 		Bind(channelId, userId).
 		Scan(&count)
-	if err == gocql.ErrNotFound {
+	if errors.Is(err, gocql.ErrNotFound) {
 		return false, nil
 	} else if err != nil {
 		return false, fmt.Errorf("check group dm participant error: %w", err)

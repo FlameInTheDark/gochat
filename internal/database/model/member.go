@@ -8,6 +8,7 @@ type Member struct {
 	Username *string
 	Avatar   *int64
 	JoinAt   time.Time
+	Timeout  time.Time
 }
 
 type UserGuild struct {

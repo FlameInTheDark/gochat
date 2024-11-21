@@ -1,9 +1,10 @@
-package mq
+package rabbit
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
@@ -13,6 +14,8 @@ type ExchangeChannel string
 
 const (
 	MessagesExchange ExchangeChannel = "gochat.messages"
+	GuildsExchange   ExchangeChannel = "gochat.guilds"
+	UsersExchange    ExchangeChannel = "gochat.users"
 )
 
 type Queue struct {
@@ -20,8 +23,8 @@ type Queue struct {
 }
 
 type Channel struct {
-	exch ExchangeChannel
-	c    *amqp.Channel
+	c       *amqp.Channel
+	msgExch ExchangeChannel
 }
 
 func (c *Channel) Close() error {
@@ -41,14 +44,42 @@ func (q *Queue) Close() error {
 	return q.c.Close()
 }
 
-func (q *Queue) InitChannel(channel ExchangeChannel) (*Channel, error) {
+func (q *Queue) InitChannel() (*Channel, error) {
 	ch, err := q.c.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("failed to open channel: %w", err)
 	}
 
 	err = ch.ExchangeDeclare(
-		string(channel),
+		string(MessagesExchange),
+		"topic",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		err = errors.Join(err, ch.Close())
+		return nil, fmt.Errorf("failed to declare exchange: %w", err)
+	}
+
+	err = ch.ExchangeDeclare(
+		string(GuildsExchange),
+		"topic",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		err = errors.Join(err, ch.Close())
+		return nil, fmt.Errorf("failed to declare exchange: %w", err)
+	}
+
+	err = ch.ExchangeDeclare(
+		string(UsersExchange),
 		"topic",
 		true,
 		false,
@@ -62,12 +93,11 @@ func (q *Queue) InitChannel(channel ExchangeChannel) (*Channel, error) {
 	}
 
 	return &Channel{
-		exch: channel,
-		c:    ch,
+		c: ch,
 	}, nil
 }
 
-func (c *Channel) PublishMessage(channel int64, message mqmsg.EventDataMessage) error {
+func (c *Channel) SendChannelMessage(channelId int64, message mqmsg.EventDataMessage) error {
 	msg, err := mqmsg.BuildEventMessage(message)
 	if err != nil {
 		return err
@@ -79,8 +109,8 @@ func (c *Channel) PublishMessage(channel int64, message mqmsg.EventDataMessage) 
 	}
 
 	return c.c.Publish(
-		string(c.exch),
-		fmt.Sprintf("channel.%d", channel),
+		string(MessagesExchange),
+		fmt.Sprintf("channel.%d", channelId),
 		false,
 		false,
 		amqp.Publishing{
@@ -90,34 +120,43 @@ func (c *Channel) PublishMessage(channel int64, message mqmsg.EventDataMessage) 
 	)
 }
 
-func (q *Queue) PublishMessage(channel int64, message mqmsg.EventDataMessage) error {
-	ch, err := q.c.Channel()
-	if err != nil {
-		return err
-	}
-	defer ch.Close()
-
-	err = ch.ExchangeDeclare(
-		string(MessagesExchange),
-		"topic",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
+func (c *Channel) SendGuildUpdate(guildId int64, message mqmsg.EventDataMessage) error {
+	msg, err := mqmsg.BuildEventMessage(message)
 	if err != nil {
 		return err
 	}
 
-	messageBody, err := json.Marshal(message)
+	messageBody, err := json.Marshal(msg)
 	if err != nil {
 		return fmt.Errorf("unable to marshal message body: %w", err)
 	}
 
-	return ch.Publish(
-		string(MessagesExchange),
-		fmt.Sprintf("channel.%d", channel),
+	return c.c.Publish(
+		string(GuildsExchange),
+		fmt.Sprintf("guild.%d", guildId),
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        messageBody,
+		},
+	)
+}
+
+func (c *Channel) SendUserUpdate(userId int64, message mqmsg.EventDataMessage) error {
+	msg, err := mqmsg.BuildEventMessage(message)
+	if err != nil {
+		return err
+	}
+
+	messageBody, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("unable to marshal message body: %w", err)
+	}
+
+	return c.c.Publish(
+		string(GuildsExchange),
+		fmt.Sprintf("user.%d", userId),
 		false,
 		false,
 		amqp.Publishing{

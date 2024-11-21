@@ -69,8 +69,12 @@ func (e *Entity) DoneAttachment(ctx context.Context, id, channelId int64, conten
 }
 
 func (e *Entity) SelectAttachemntsByIDs(ctx context.Context, ids []int64) ([]model.Attachment, error) {
+	places := make([]string, len(ids))
+	for i := range ids {
+		places[i] = "?"
+	}
 	var attachments []model.Attachment
-	q := fmt.Sprintf(getAttachmentsByID, strings.Repeat("?,", len(ids)-1)+"?")
+	q := fmt.Sprintf(getAttachmentsByID, strings.Join(places, ","))
 	args := make([]interface{}, len(ids))
 	for i := range ids {
 		args[i] = &ids[i]

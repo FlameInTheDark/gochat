@@ -119,7 +119,7 @@ func (e *entity) GetUserGuilds(c *fiber.Ctx) error {
 	} else if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetGuilds)
 	}
-	return c.JSON(guildModelToGuildMany(gs, user.Id))
+	return c.JSON(guildModelToGuildMany(gs))
 }
 
 // GetMyGuildMember
@@ -127,7 +127,7 @@ func (e *entity) GetUserGuilds(c *fiber.Ctx) error {
 //	@Summary	Get user guild member
 //	@Produce	json
 //	@Tags		User
-//	@Param		guild_id	path		string		true	"Guild id"
+//	@Param		guild_id	path		int64		true	"Guild id"
 //	@Success	200			{object}	dto.Member	"Guild member"
 //	@failure	400			{string}	string		"Incorrect ID"
 //	@failure	404			{string}	string		"User not found"
@@ -241,7 +241,7 @@ func (e *entity) CreateDM(c *fiber.Ctx) error {
 	rc, err := e.dm.GetDmChannel(c.UserContext(), user.Id, rec.Id)
 	if errors.Is(err, gocql.ErrNotFound) {
 		chId := idgen.Next()
-		err = e.ch.CreateChannel(c.UserContext(), chId, "", model.ChannelTypeDM, nil, 0)
+		err = e.ch.CreateChannel(c.UserContext(), chId, "", model.ChannelTypeDM, nil, nil, false)
 		if err := helper.HttpDbError(err, ErrUnableToCreateChannel); err != nil {
 			return err
 		}
@@ -250,13 +250,12 @@ func (e *entity) CreateDM(c *fiber.Ctx) error {
 			return err
 		}
 		return c.JSON(dto.Channel{
-			Id:          chId,
-			Type:        model.ChannelTypeDM,
-			GuildId:     nil,
-			Name:        "",
-			ParentId:    nil,
-			Permissions: 0,
-			CreatedAt:   time.Now(),
+			Id:        chId,
+			Type:      model.ChannelTypeDM,
+			GuildId:   nil,
+			Name:      "",
+			ParentId:  nil,
+			CreatedAt: time.Now(),
 		})
 	} else if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetDMChannel)
@@ -276,7 +275,7 @@ func (e *entity) CreateDM(c *fiber.Ctx) error {
 	})
 }
 
-// CreateDM
+// CreateGroupDM
 //
 //	@Summary	Create group DM channel
 //	@Produce	json
@@ -320,18 +319,17 @@ func (e *entity) CreateGroupDM(c *fiber.Ctx) error {
 		}
 	}
 	id := idgen.Next()
-	err = e.ch.CreateChannel(c.UserContext(), id, "", model.ChannelTypeGroupDM, nil, 0)
+	err = e.ch.CreateChannel(c.UserContext(), id, "", model.ChannelTypeGroupDM, nil, nil, false)
 	if err := helper.HttpDbError(err, ErrUnableToCreateChannel); err != nil {
 		return err
 	}
 	ch = dto.Channel{
-		Id:          id,
-		Type:        model.ChannelTypeGroupDM,
-		GuildId:     nil,
-		Name:        "",
-		ParentId:    nil,
-		Permissions: 0,
-		CreatedAt:   time.Now(),
+		Id:        id,
+		Type:      model.ChannelTypeGroupDM,
+		GuildId:   nil,
+		Name:      "",
+		ParentId:  nil,
+		CreatedAt: time.Now(),
 	}
 	err = e.gdm.JoinGroupDmChannelMany(c.UserContext(), id, req.RecipientsId)
 	if err := helper.HttpDbError(err, ErrUnableToJoingGroupDmChannel); err != nil {

@@ -1,25 +1,25 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/nats-io/nats.go"
 	"log"
 	"log/slog"
 	"os"
 	"strconv"
 
+	"github.com/FlameInTheDark/gochat/cmd/ws/config"
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	flog "github.com/gofiber/fiber/v2/middleware/logger"
 	recm "github.com/gofiber/fiber/v2/middleware/recover"
-	amqp "github.com/rabbitmq/amqp091-go"
-
-	"github.com/FlameInTheDark/gochat/cmd/ws/config"
-	"github.com/FlameInTheDark/gochat/internal/helper"
 )
 
-var rabbitConn *amqp.Connection
+//var rabbitConn *amqp.Connection
+
+var natsConn *nats.Conn
 
 type Message struct {
 	ID          int64        `json:"id"`
@@ -44,40 +44,40 @@ type Attachment struct {
 	Size        int    `json:"size"`
 }
 
-func publishMessage(msg Message) error {
-	ch, err := rabbitConn.Channel()
-	if err != nil {
-		return err
-	}
-	defer ch.Close()
-
-	err = ch.ExchangeDeclare(
-		"gochat.messages", // name
-		"topic",           // type
-		true,              // durable
-		false,             // auto-deleted
-		false,             // internal
-		false,             // no-wait
-		nil,               // arguments
-	)
-	if err != nil {
-		return err
-	}
-
-	routingKey := fmt.Sprintf("channel.%d", msg.ChannelID) // use channel_id as the routing key
-	messageBody, _ := json.Marshal(msg)
-
-	return ch.Publish(
-		"gochat.messages", // exchange
-		routingKey,        // routing key
-		false,             // mandatory
-		false,             // immediate
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        messageBody,
-		},
-	)
-}
+//func publishMessage(msg Message) error {
+//	ch, err := rabbitConn.Channel()
+//	if err != nil {
+//		return err
+//	}
+//	defer ch.Close()
+//
+//	err = ch.ExchangeDeclare(
+//		"gochat.messages", // name
+//		"topic",           // type
+//		true,              // durable
+//		false,             // auto-deleted
+//		false,             // internal
+//		false,             // no-wait
+//		nil,               // arguments
+//	)
+//	if err != nil {
+//		return err
+//	}
+//
+//	routingKey := fmt.Sprintf("channel.%d", msg.ChannelID) // use channel_id as the routing key
+//	messageBody, _ := json.Marshal(msg)
+//
+//	return ch.Publish(
+//		"gochat.messages", // exchange
+//		routingKey,        // routing key
+//		false,             // mandatory
+//		false,             // immediate
+//		amqp.Publishing{
+//			ContentType: "application/json",
+//			Body:        messageBody,
+//		},
+//	)
+//}
 
 func wsHandler(c *websocket.Conn) {
 	if !c.Locals("allowed").(bool) {
@@ -95,81 +95,89 @@ func wsHandler(c *websocket.Conn) {
 		}
 	}()
 
-	ch, err := rabbitConn.Channel()
-	if err != nil {
-		log.Println("Failed to open channel:", err)
-		return
-	}
+	//ch, err := rabbitConn.Channel()
+	//if err != nil {
+	//	log.Println("Failed to open channel:", err)
+	//	return
+	//}
+	//
+	//defer func() {
+	//	err := ch.Close()
+	//	if err != nil {
+	//		log.Println("Error closing RabbitMQ channel:", err)
+	//	}
+	//}()
+	//
+	//err = ch.ExchangeDeclare(
+	//	"gochat.messages",
+	//	"topic",
+	//	true,
+	//	false,
+	//	false,
+	//	false,
+	//	nil,
+	//)
+	//if err != nil {
+	//	log.Println("Failed to declare exchange:", err)
+	//	return
+	//}
+	//
+	//queue, err := ch.QueueDeclare(
+	//	"",    // let RabbitMQ generate a unique name
+	//	true,  // durable
+	//	true,  // delete when unused
+	//	true,  // exclusive
+	//	false, // no-wait
+	//	nil,   // arguments
+	//)
+	//if err != nil {
+	//	log.Println("Failed to declare queue:", err)
+	//	return
+	//}
+	//
+	//err = ch.QueueBind(
+	//	queue.Name,                           // queue name
+	//	fmt.Sprintf("channel.%d", channelId), // routing key (channel ID)
+	//	"gochat.messages",                    // exchange
+	//	false,
+	//	nil,
+	//)
+	//if err != nil {
+	//	log.Println("Failed to bind queue:", err)
+	//	return
+	//}
 
-	defer func() {
-		err := ch.Close()
+	sub, err := natsConn.Subscribe(fmt.Sprintf("channel.%d", channelId), func(msg *nats.Msg) {
+		err := c.WriteMessage(websocket.TextMessage, msg.Data)
 		if err != nil {
-			log.Println("Error closing RabbitMQ channel:", err)
-		}
-	}()
-
-	err = ch.ExchangeDeclare(
-		"gochat.messages",
-		"topic",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		log.Println("Failed to declare exchange:", err)
-		return
-	}
-
-	queue, err := ch.QueueDeclare(
-		"",    // let RabbitMQ generate a unique name
-		true,  // durable
-		true,  // delete when unused
-		true,  // exclusive
-		false, // no-wait
-		nil,   // arguments
-	)
-	if err != nil {
-		log.Println("Failed to declare queue:", err)
-		return
-	}
-
-	err = ch.QueueBind(
-		queue.Name,                           // queue name
-		fmt.Sprintf("channel.%d", channelId), // routing key (channel ID)
-		"gochat.messages",                    // exchange
-		false,
-		nil,
-	)
-	if err != nil {
-		log.Println("Failed to bind queue:", err)
-		return
-	}
-
-	go func() {
-		msgs, err := ch.Consume(
-			queue.Name,
-			"",
-			true,  // auto-ack
-			true,  // exclusive
-			false, // no-local
-			false, // no-wait
-			nil,
-		)
-		if err != nil {
-			log.Println("Failed to register consumer:", err)
+			log.Println("WebSocket send failed:", err)
 			return
 		}
+	})
+	defer sub.Unsubscribe()
 
-		for msg := range msgs {
-			err := c.WriteMessage(websocket.TextMessage, msg.Body)
-			if err != nil {
-				log.Println("WebSocket send failed:", err)
-				return
-			}
-		}
-	}()
+	//go func() {
+	//	msgs, err := ch.Consume(
+	//		queue.Name,
+	//		"",
+	//		true,  // auto-ack
+	//		true,  // exclusive
+	//		false, // no-local
+	//		false, // no-wait
+	//		nil,
+	//	)
+	//	if err != nil {
+	//		log.Println("Failed to register consumer:", err)
+	//		return
+	//	}
+	//	for msg := range msgs {
+	//		err := c.WriteMessage(websocket.TextMessage, msg.Body)
+	//		if err != nil {
+	//			log.Println("WebSocket send failed:", err)
+	//			return
+	//		}
+	//	}
+	//}()
 
 	var (
 		mt  int
@@ -202,10 +210,14 @@ func wsHandler(c *websocket.Conn) {
 			// Optional: track pong responses for connection health
 
 		case websocket.CloseMessage:
+			err := sub.Unsubscribe()
+			if err != nil {
+				log.Println("Error unsubscribing:", err)
+			}
 			// Respond with a close message and close the connection gracefully
 			closeCode := websocket.CloseNormalClosure
 			closeMessage := "Closing connection as requested"
-			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(closeCode, closeMessage))
+			err = c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(closeCode, closeMessage))
 			if err != nil {
 				log.Println("Failed to send close response:", err)
 			}
@@ -213,7 +225,6 @@ func wsHandler(c *websocket.Conn) {
 			return
 		}
 	}
-
 }
 
 func main() {
@@ -224,11 +235,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	rabbitConn, err = amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", cfg.RabbitMQUsername, cfg.RabbitMQPassword, cfg.RabbitMQHost, cfg.RabbitMQPort))
+	//rabbitConn, err = amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", cfg.RabbitMQUsername, cfg.RabbitMQPassword, cfg.RabbitMQHost, cfg.RabbitMQPort))
+	//if err != nil {
+	//	logger.Error("unable to connect to RabbitMQ", slog.String("error", err.Error()))
+	//	os.Exit(1)
+	//}
+
+	c, err := nats.Connect(cfg.NatsConnString, nats.Compression(true))
 	if err != nil {
-		logger.Error("unable to connect to RabbitMQ", slog.String("error", err.Error()))
-		os.Exit(1)
+		logger.Error("unable to connect to NATS", slog.String("error", err.Error()))
 	}
+	natsConn = c
 
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
 	app.Use(flog.New())

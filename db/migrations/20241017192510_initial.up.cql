@@ -59,12 +59,13 @@ CREATE TABLE IF NOT EXISTS gochat.users
 
 CREATE TABLE IF NOT EXISTS gochat.guilds
 (
-    id         bigint,
-    name       text,
-    owner_id   bigint,
-    icon       bigint,
-    public     boolean,
-    created_at timestamp,
+    id          bigint,
+    name        text,
+    owner_id    bigint,
+    icon        bigint,
+    public      boolean,
+    permissions bigint,
+    created_at  timestamp,
     PRIMARY KEY ( id )
 );
 
@@ -72,7 +73,7 @@ CREATE TABLE IF NOT EXISTS gochat.guild_channels
 (
     guild_id    bigint,
     channel_id  bigint,
-    permissions bigint,
+    position    int,
     PRIMARY KEY ( guild_id, channel_id )
 );
 
@@ -83,6 +84,7 @@ CREATE TABLE IF NOT EXISTS gochat.members
     username text,
     avatar   bigint,
     join_at  timestamp,
+    timeout  timestamp,
     PRIMARY KEY ( guild_id, user_id )
 );
 
@@ -108,14 +110,17 @@ CREATE TABLE IF NOT EXISTS gochat.channel_role_permissions
 (
     channel_id bigint,
     role_id    bigint,
+    accept     bigint,
+    deny       bigint,
     PRIMARY KEY ( channel_id, role_id )
 );
 
 CREATE TABLE IF NOT EXISTS gochat.channel_user_permissions
 (
-    channel_id  bigint,
-    user_id     bigint,
-    permissions bigint,
+    channel_id bigint,
+    user_id    bigint,
+    accept     bigint,
+    deny       bigint,
     PRIMARY KEY ( channel_id, user_id )
 );
 
@@ -126,6 +131,7 @@ CREATE TABLE IF NOT EXISTS gochat.channels
     type        int,
     parent_id   bigint,
     permissions bigint,
+    topic       text,
     private     boolean,
     created_at  timestamp,
     PRIMARY KEY ( (id), type )

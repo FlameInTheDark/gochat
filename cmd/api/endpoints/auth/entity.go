@@ -20,12 +20,17 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/login", e.Login)
 	router.Post("/registration", e.Registration)
 	router.Post("/confirmation", e.Confirmation)
+	// TODO: password recovery method
 }
 
 type entity struct {
 	name   string
 	secret string
-	log    *slog.Logger
+
+	// Services
+	log *slog.Logger
+
+	// DB entities
 	auth   *authentication.Entity
 	user   *user.Entity
 	reg    *registration.Entity

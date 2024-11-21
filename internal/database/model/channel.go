@@ -7,7 +7,8 @@ type Channel struct {
 	Name        string
 	Type        ChannelType
 	ParentID    *int64
-	Permissions int64
+	Permissions *int64
+	Topic       *string
 	Private     bool
 	CreatedAt   time.Time
 }
@@ -17,6 +18,7 @@ type ChannelType int
 const (
 	ChannelTypeGuild ChannelType = iota
 	ChannelTypeGuildVoice
+	ChannelTypeGuildCategory
 	ChannelTypeDM
 	ChannelTypeGroupDM
 	ChannelTypeThread

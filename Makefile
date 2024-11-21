@@ -1,6 +1,6 @@
 up:
 	docker compose up -d
-	docker compose exec scylla "./init-scylladb.sh"
+	docker compose exec scylla bash ./init-scylladb.sh
 
 down:
 	docker compose down

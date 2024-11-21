@@ -14,6 +14,7 @@ type Config struct {
 	RabbitMQPort     int    `yaml:"rabbitmq_port" env:"RABBITMQ_PORT" env-default:"5672"`
 	RabbitMQUsername string `yaml:"rabbitmq_username" env:"RABBITMQ_USERNAME" env-default:"guest"`
 	RabbitMQPassword string `yaml:"rabbitmq_password" env:"RABBITMQ_PASSWORD" env-default:"guest"`
+	NatsConnString   string `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {

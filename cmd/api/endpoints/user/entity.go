@@ -20,16 +20,21 @@ import (
 const entityName = "user"
 
 func (e *entity) Init(router fiber.Router) {
-	router.Get("/:user_id", e.GetUser)
+	router.Get("/:user_id<int>", e.GetUser)
 	router.Patch("/me", e.ModifyUser)
 	router.Get("/me/guilds", e.GetUserGuilds)
-	router.Get("/me/guilds/:guild_id/member", e.GetMyGuildMember)
-	router.Delete("/me/guilds/:guild_id", e.LeaveGuild)
+	router.Get("/me/guilds/:guild_id<int>/member", e.GetMyGuildMember)
+	router.Delete("/me/guilds/:guild_id<int>", e.LeaveGuild)
 	router.Post("/me/channels", e.CreateDM)
 }
 
 type entity struct {
-	name   string
+	name string
+
+	// Services
+	log *slog.Logger
+
+	// DB entities
 	user   *user.Entity
 	member *member.Entity
 	guild  *guild.Entity
@@ -38,7 +43,6 @@ type entity struct {
 	dm     *dmchannel.Entity
 	gdm    *groupdmchannel.Entity
 	disc   *discriminator.Entity
-	log    *slog.Logger
 }
 
 func (e *entity) Name() string {
@@ -48,6 +52,7 @@ func (e *entity) Name() string {
 func New(dbcon *db.CQLCon, log *slog.Logger) server.Entity {
 	return &entity{
 		name:   entityName,
+		log:    log,
 		user:   user.New(dbcon),
 		member: member.New(dbcon),
 		guild:  guild.New(dbcon),
@@ -56,6 +61,5 @@ func New(dbcon *db.CQLCon, log *slog.Logger) server.Entity {
 		dm:     dmchannel.New(dbcon),
 		gdm:    groupdmchannel.New(dbcon),
 		disc:   discriminator.New(dbcon),
-		log:    log,
 	}
 }

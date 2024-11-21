@@ -2,7 +2,9 @@ package userrole
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/gocql/gocql"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 )
@@ -25,7 +27,9 @@ func (e *Entity) GetUserRoles(ctx context.Context, guildID, userId int64) ([]mod
 		roles = append(roles, r)
 	}
 	err := iter.Close()
-	if err != nil {
+	if errors.Is(err, gocql.ErrNotFound) {
+		return roles, nil
+	} else if err != nil {
 		return nil, fmt.Errorf("unable to get user roles: %w", err)
 	}
 	return roles, nil

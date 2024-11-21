@@ -3,6 +3,7 @@ package member
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 )
@@ -10,10 +11,11 @@ import (
 const (
 	addMember       = `INSERT INTO gochat.members (user_id, guild_id, join_at) VALUES (?, ?, toTimestamp(now()))`
 	removeMember    = `DELETE FROM gochat.members WHERE user_id = ? AND guild_id = ?`
-	getMember       = `SELECT user_id, guild_id, username, avatar, join_at FROM gochat.members WHERE guild_id = ? AND user_id = ?`
-	getGuildMembers = `SELECT user_id, guild_id, username, avatar, join_at FROM gochat.members WHERE guild_id = ?`
+	getMember       = `SELECT user_id, guild_id, username, avatar, join_at, timeout FROM gochat.members WHERE guild_id = ? AND user_id = ?`
+	getGuildMembers = `SELECT user_id, guild_id, username, avatar, join_at, timeout FROM gochat.members WHERE guild_id = ?`
 	isGuildMember   = `SELECT count(user_id) FROM gochat.members WHERE guild_id = ? AND user_id = ? LIMIT 1`
 	getUserGuilds   = `SELECT user_id, guild_id FROM gochat.members WHERE user_id = ?`
+	setTimeout      = `UPDATE gochat.members SET timeout = ? WHERE guild_id = ? AND user_id = ?`
 )
 
 func (e *Entity) AddMember(ctx context.Context, userID, guildID int64) error {
@@ -46,7 +48,7 @@ func (e *Entity) GetMember(ctx context.Context, userId, guildId int64) (model.Me
 		Query(getMember).
 		WithContext(ctx).
 		Bind(guildId, userId).
-		Scan(&m.UserId, &m.GuildId, &m.Username, &m.Avatar, &m.JoinAt)
+		Scan(&m.UserId, &m.GuildId, &m.Username, &m.Avatar, &m.JoinAt, &m.Timeout)
 	if err != nil {
 		return m, fmt.Errorf("unable to get member: %w", err)
 	}
@@ -61,7 +63,7 @@ func (e *Entity) GetGuildMembers(ctx context.Context, guildId int64) ([]model.Me
 		Bind(guildId).
 		Iter()
 	var m model.Member
-	for iter.Scan(&m.UserId, &m.GuildId, &m.Username, &m.Avatar, &m.JoinAt) {
+	for iter.Scan(&m.UserId, &m.GuildId, &m.Username, &m.Avatar, &m.JoinAt, &m.Timeout) {
 		members = append(members, m)
 	}
 	err := iter.Close()
@@ -100,4 +102,16 @@ func (e *Entity) GetUserGuilds(ctx context.Context, userId int64) ([]model.UserG
 		return guilds, fmt.Errorf("unable to get user guilds: %w", err)
 	}
 	return guilds, nil
+}
+
+func (e *Entity) SetTimeout(ctx context.Context, userId, guildId int64, timeout *time.Time) error {
+	err := e.c.Session().
+		Query(setTimeout).
+		WithContext(ctx).
+		Bind(userId, timeout, guildId).
+		Exec()
+	if err != nil {
+		return fmt.Errorf("unable to set timeout: %w", err)
+	}
+	return nil
 }

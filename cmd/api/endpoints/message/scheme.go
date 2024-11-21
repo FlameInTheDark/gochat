@@ -12,6 +12,7 @@ const (
 	ErrUnableToGetUser              = "unable to get user"
 	ErrUnableToGetUserDiscriminator = "unable to get discriminator"
 	ErrUnableToGetAttachements      = "unable to get attachments"
+	ErrUnableToSentToThisChannel    = "unable to send to this channel"
 )
 
 type SendMessageRequest struct {

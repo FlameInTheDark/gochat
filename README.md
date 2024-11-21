@@ -2,24 +2,15 @@
 
 ## Preparation
 
-Before starting backend services need to prepare environment.
-
-### ScyllaDB
-
-Create a keyspace
-
-```cassandraql
-CREATE KEYSPACE gochat WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1};
-```
-
-If you know what to do you can change replication factor and strategy.
+Before starting the backend you need to prepare the environment.
 
 ### MinIO
 
-In WebUI or using CLI create a bucket called `media`
+In WebUI or using CLI create buckets called `media`, `icons`, `avatars`
 
-After that change access policy to be able to access files from the web
+After that change access policy for those buckets to be able to access files from the web
 
+Media bucket
 ```json
 {
     "Version": "2012-10-17",
@@ -50,6 +41,80 @@ After that change access policy to be able to access files from the web
             ],
             "Resource": [
                 "arn:aws:s3:::media/*"
+            ]
+        }
+    ]
+}
+```
+
+Icons bucket
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "*"
+                ]
+            },
+            "Action": [
+                "s3:GetBucketLocation"
+            ],
+            "Resource": [
+                "arn:aws:s3:::icons"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "*"
+                ]
+            },
+            "Action": [
+                "s3:GetObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::icons/*"
+            ]
+        }
+    ]
+}
+```
+
+Avatars bucket
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "*"
+                ]
+            },
+            "Action": [
+                "s3:GetBucketLocation"
+            ],
+            "Resource": [
+                "arn:aws:s3:::avatars"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "*"
+                ]
+            },
+            "Action": [
+                "s3:GetObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::avatars/*"
             ]
         }
     ]

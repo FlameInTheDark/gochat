@@ -2,7 +2,9 @@ package role
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/gocql/gocql"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 )
@@ -61,7 +63,9 @@ func (e *Entity) GetRolesBulk(ctx context.Context, ids []int64) ([]model.Role, e
 		roles = append(roles, r)
 	}
 	err := iter.Close()
-	if err != nil {
+	if errors.Is(err, gocql.ErrNotFound) {
+		return roles, nil
+	} else if err != nil {
 		return roles, fmt.Errorf("unable to get roles for guild %d: %w", ids, err)
 	}
 	return roles, nil

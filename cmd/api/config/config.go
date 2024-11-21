@@ -30,10 +30,13 @@ type Config struct {
 	S3SecretAccessKey string   `yaml:"s3_secret_access_key" env:"S3_SECRET_ACCESS_KEY" env-default:""`
 	S3UseSSL          bool     `yaml:"s3_use_ssl" env:"S3_USE_SSL" env-default:"false"`
 	UploadLimit       int64    `yaml:"upload_limit" env:"UPLOAD_LIMIT" env-default:"50000000"`
+	QueueTransport    string   `yaml:"queue_transport" env:"QUEUE_TRANSPORT" env-default:"nats"`
+	NatsConnString    string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 	RabbitMQHost      string   `yaml:"rabbitmq_host" env:"RABBITMQ_HOST" env-default:"rabbitmq"`
 	RabbitMQPort      int      `yaml:"rabbitmq_port" env:"RABBITMQ_PORT" env-default:"5672"`
 	RabbitMQUsername  string   `yaml:"rabbitmq_username" env:"RABBITMQ_USERNAME" env-default:"guest"`
 	RabbitMQPassword  string   `yaml:"rabbitmq_password" env:"RABBITMQ_PASSWORD" env-default:"guest"`
+	SolrBaseURL       string   `yaml:"solr_base_url" env:"SOLR_BASE_URL" env-default:"http://solr:8983"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {

@@ -30,6 +30,7 @@ const (
 	EventTypeGuildDelete
 	EventTypeChannelCreate
 	EventTypeChannelUpdate
+	EventTypeChannelOrderUpdate
 	EventTypeChannelDelete
 	EventTypeGuildRoleCreate
 	EventTypeGuildRoleUpdate

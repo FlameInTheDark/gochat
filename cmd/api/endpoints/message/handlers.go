@@ -3,29 +3,31 @@ package message
 import (
 	"errors"
 	"fmt"
-	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
-	"github.com/gocql/gocql"
+	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"log/slog"
 	"strconv"
 
+	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
+	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
 
 // Send
 //
-//	@Summary	Send message
+//	@Summary	Get message
 //	@Produce	json
 //	@Tags		Message
-//	@Param		request	body		SendMessageRequest	true	"Message data"
-//	@Success	200		{object}	dto.Message "Message"
-//	@failure	400		{string}	string	"Incorrect request body"
-//	@failure	401		{string}	string	"Unauthorized"
-//	@failure	500		{string}	string	"Something bad happened"
+//	@Param		channel_id	path		int64				true	"Channel id"
+//	@Param		request		body		SendMessageRequest	true	"Message data"
+//	@Success	200			{object}	dto.Message			"Message"
+//	@failure	400			{string}	string				"Incorrect request body"
+//	@failure	401			{string}	string				"Unauthorized"
+//	@failure	500			{string}	string				"Something bad happened"
 //	@Router		/message/channel/{channel_id} [post]
 func (e *entity) Send(c *fiber.Ctx) error {
 	var req SendMessageRequest
@@ -42,16 +44,29 @@ func (e *entity) Send(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	if e.checkChannelPermissions(c.UserContext(), u.Id, id, permissions.PermissionSendMessages) {
-		var guildId *int64
+	ch, err := e.ch.GetChannel(c.UserContext(), id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	if ch.Type == model.ChannelTypeGuildCategory || ch.Type == model.ChannelTypeGuildVoice {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSentToThisChannel)
+	}
+	var ok = true
+	var guildId *int64
+	if ch.Type == model.ChannelTypeGuild {
 		gc, err := e.gc.GetGuildByChannel(c.UserContext(), id)
-		if errors.Is(err, gocql.ErrNotFound) {
-			guildId = nil
-		} else if err == nil {
-			guildId = &gc.GuildId
-		} else {
+		if err != nil && !errors.Is(err, gocql.ErrNotFound) {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
+		if !errors.Is(err, gocql.ErrNotFound) {
+			guildId = &gc.GuildId
+			_, _, _, ok, err = e.perm.ChannelPerm(c.UserContext(), gc.GuildId, gc.ChannelId, u.Id, permissions.PermTextSendMessage)
+			if err != nil {
+				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			}
+		}
+	}
+	if ok {
 		user, err := e.user.GetUserById(c.UserContext(), u.Id)
 		if err := helper.HttpDbError(err, ErrUnableToGetUser); err != nil {
 			return err
@@ -95,7 +110,7 @@ func (e *entity) Send(c *fiber.Ctx) error {
 			})
 		}
 
-		err = e.msgmq.PublishMessage(id, &mqmsg.CreateMessage{
+		err = e.mqt.SendChannelMessage(id, &mqmsg.CreateMessage{
 			GuildId: guildId,
 			Message: resp,
 		})
@@ -115,14 +130,15 @@ func (e *entity) Send(c *fiber.Ctx) error {
 //	@Summary	Update message
 //	@Produce	json
 //	@Tags		Message
-//	@Param		request	body		SendMessageRequest	true	"Message data"
-//	@Success	200		{object}	dto.Message "Message"
-//	@failure	400		{string}	string	"Incorrect request body"
-//	@failure	401		{string}	string	"Unauthorized"
-//	@failure	500		{string}	string	"Something bad happened"
-//	@Router		/message/channel/{channel_id} [post]
+//	@Param		message_id	path		int64					true	"Message id"
+//	@Param		request		body		UpdateMessageRequest	true	"Message data"
+//	@Success	200			{object}	dto.Message				"Message"
+//	@failure	400			{string}	string					"Incorrect request body"
+//	@failure	401			{string}	string					"Unauthorized"
+//	@failure	500			{string}	string					"Something bad happened"
+//	@Router		/message/{message_id} [post]
 func (e *entity) Update(c *fiber.Ctx) error {
-	var req SendMessageRequest
+	var req UpdateMessageRequest
 	err := c.BodyParser(&req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
@@ -136,16 +152,28 @@ func (e *entity) Update(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	if e.checkChannelPermissions(c.UserContext(), u.Id, id, permissions.PermissionSendMessages) {
-		var guildId *int64
+	ch, err := e.ch.GetChannel(c.UserContext(), id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	var ok = true
+	var guildId *int64
+	if ch.Type == model.ChannelTypeGuild {
 		gc, err := e.gc.GetGuildByChannel(c.UserContext(), id)
-		if errors.Is(err, gocql.ErrNotFound) {
-			guildId = nil
-		} else if err == nil {
-			guildId = &gc.GuildId
-		} else {
+		if err != nil && !errors.Is(err, gocql.ErrNotFound) {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
+		if !errors.Is(err, gocql.ErrNotFound) {
+			guildId = &gc.GuildId
+			_, _, _, ok, err = e.perm.ChannelPerm(c.UserContext(), gc.GuildId, gc.ChannelId, u.Id, permissions.PermServerManageChannels)
+			if err != nil {
+				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			}
+		}
+	} else if ch.Type == model.ChannelTypeGroupDM && ch.ParentID != nil && *ch.ParentID != u.Id {
+		ok = false
+	}
+	if ok {
 		user, err := e.user.GetUserById(c.UserContext(), u.Id)
 		if err := helper.HttpDbError(err, ErrUnableToGetUser); err != nil {
 			return err
@@ -189,7 +217,7 @@ func (e *entity) Update(c *fiber.Ctx) error {
 			})
 		}
 
-		err = e.msgmq.PublishMessage(id, &mqmsg.CreateMessage{
+		err = e.mqt.SendChannelMessage(id, &mqmsg.CreateMessage{
 			GuildId: guildId,
 			Message: resp,
 		})
@@ -209,11 +237,12 @@ func (e *entity) Update(c *fiber.Ctx) error {
 //	@Summary	Create attachment
 //	@Produce	json
 //	@Tags		Message
-//	@Param		request	body		UploadAttachmentRequest	true	"Attachment data"
-//	@Success	200		{object}	dto.AttachmentUpload "Attachment upload data"
-//	@failure	400		{string}	string	"Incorrect request body"
-//	@failure	401		{string}	string	"Unauthorized"
-//	@failure	500		{string}	string	"Something bad happened"
+//	@Param		channel_id	path		int64					true	"Channel id"
+//	@Param		request		body		UploadAttachmentRequest	true	"Attachment data"
+//	@Success	200			{object}	dto.AttachmentUpload	"Attachment upload data"
+//	@failure	400			{string}	string					"Incorrect request body"
+//	@failure	401			{string}	string					"Unauthorized"
+//	@failure	500			{string}	string					"Something bad happened"
 //	@Router		/message/channel/{channel_id}/attachment [post]
 func (e *entity) Attachment(c *fiber.Ctx) error {
 	channelId := c.Params("channel_id")
@@ -226,16 +255,15 @@ func (e *entity) Attachment(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
-	user, err := helper.GetUser(c)
+	u, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	dbu, err := e.user.GetUserById(c.UserContext(), user.Id)
+	dbu, err := e.user.GetUserById(c.UserContext(), u.Id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUser)
 	}
-
 	switch dbu.UploadLimit == nil {
 	case true:
 		if req.FileSize > e.uploadLimit {
@@ -247,7 +275,27 @@ func (e *entity) Attachment(c *fiber.Ctx) error {
 		}
 	}
 
-	if e.checkChannelPermissions(c.UserContext(), user.Id, id, permissions.PermissionSendMessages) {
+	ch, err := e.ch.GetChannel(c.UserContext(), id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	var ok = true
+	if ch.Type == model.ChannelTypeGuild {
+		gc, err := e.gc.GetGuildByChannel(c.UserContext(), id)
+		if err != nil && !errors.Is(err, gocql.ErrNotFound) {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+		if !errors.Is(err, gocql.ErrNotFound) {
+			_, _, _, ok, err = e.perm.ChannelPerm(c.UserContext(), gc.GuildId, gc.ChannelId, u.Id, permissions.PermTextAttachFiles)
+			if err != nil {
+				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			}
+		}
+	} else if ch.Type == model.ChannelTypeGroupDM && ch.ParentID != nil && *ch.ParentID != u.Id {
+		ok = false
+	}
+
+	if ok {
 		atid := idgen.Next()
 		url, err := e.storage.MakeUploadAttachment(c.UserContext(), id, atid, req.FileSize, req.Filename)
 		if err != nil {

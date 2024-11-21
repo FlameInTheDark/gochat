@@ -50,20 +50,20 @@ func modelToUser(m model.User) dto.User {
 	}
 }
 
-func guildModelToGuild(m model.Guild, user int64) dto.Guild {
+func guildModelToGuild(m model.Guild) dto.Guild {
 	return dto.Guild{
 		Id:     m.Id,
 		Name:   m.Name,
 		Icon:   m.Icon,
-		Owner:  m.OwnerId == user,
+		Owner:  m.OwnerId,
 		Public: m.Public,
 	}
 }
 
-func guildModelToGuildMany(guilds []model.Guild, user int64) []dto.Guild {
+func guildModelToGuildMany(guilds []model.Guild) []dto.Guild {
 	models := make([]dto.Guild, len(guilds))
 	for i, g := range guilds {
-		models[i] = guildModelToGuild(g, user)
+		models[i] = guildModelToGuild(g)
 	}
 	return models
 }

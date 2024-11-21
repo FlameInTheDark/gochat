@@ -27,11 +27,12 @@ services:
       retries: 5
     restart: always
 
-  rabbitmq:
-    image: rabbitmq:management
+  nats:
+    image: nats:2.10.22-alpine3.20
     ports:
-      - "15672:15672"
-      - "5672:5672"
+      - "4222:4222"
+      - "8222:8222"
+      - "6222:6222"
     restart: always
 
   keydb:
@@ -44,6 +45,7 @@ services:
     image: gochat/api
     build:
       dockerfile: api.Dockerfile
+    restart: always
     volumes:
       - ./api_config.yaml:/dist/config.yaml
       - ./email_notify.tmpl:/dist/email_notify.tmpl
@@ -54,20 +56,32 @@ services:
         condition: service_healthy
       keydb:
         condition: service_started
-      rabbitmq:
+      nats:
         condition: service_started
 
   ws:
     image: gochat/ws
     build:
       dockerfile: ws.Dockerfile
+    restart: always
     volumes:
       - ./ws_config.yaml:/dist/config.yaml
     ports:
       - "3100:3100"
     depends_on:
-      rabbitmq:
+      nats:
         condition: service_started
+
+  solr:
+    image: solr:8
+    ports:
+      - "8983:8983"
+    volumes:
+      - solr-data:/var/solr
+    command:
+      - solr-precreate
+      - gochat
+    restart: always
 
   nginx:
     image: nginx:1.27.2-alpine
@@ -80,3 +94,4 @@ services:
 
 volumes:
   scylla-data:
+  solr-data:
