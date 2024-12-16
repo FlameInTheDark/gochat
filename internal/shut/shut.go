@@ -6,7 +6,8 @@ import (
 )
 
 type Shut struct {
-	to []Shutter
+	to  []Shutter
+	tof []func()
 
 	mx sync.Mutex
 
@@ -29,6 +30,15 @@ func (s *Shut) Up(to ...Shutter) {
 	s.to = append(s.to, to...)
 }
 
+func (s *Shut) UpFunc(f ...func()) {
+	if len(f) == 0 {
+		return
+	}
+	s.mx.Lock()
+	defer s.mx.Unlock()
+	s.tof = append(s.tof, f...)
+}
+
 // Down walks shutdown list in reverse and call Close() one by one
 func (s *Shut) Down() {
 	s.mx.Lock()
@@ -38,6 +48,9 @@ func (s *Shut) Down() {
 		if err != nil {
 			s.log.Error("Failed to stop", slog.String("error", err.Error()))
 		}
+	}
+	for i := len(s.tof) - 1; i >= 0; i-- {
+		s.tof[i]()
 	}
 }
 

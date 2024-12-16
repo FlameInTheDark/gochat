@@ -20,7 +20,7 @@ import (
 const entityName = "user"
 
 func (e *entity) Init(router fiber.Router) {
-	router.Get("/:user_id<int>", e.GetUser)
+	router.Get("/:user_id", e.GetUser)
 	router.Patch("/me", e.ModifyUser)
 	router.Get("/me/guilds", e.GetUserGuilds)
 	router.Get("/me/guilds/:guild_id<int>/member", e.GetMyGuildMember)

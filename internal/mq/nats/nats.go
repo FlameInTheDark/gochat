@@ -48,12 +48,10 @@ func (q *NatsQueue) SendGuildUpdate(guildId int64, message mqmsg.EventDataMessag
 	if err != nil {
 		return err
 	}
-
 	messageBody, err := json.Marshal(msg)
 	if err != nil {
 		return fmt.Errorf("unable to marshal message body: %w", err)
 	}
-
 	err = q.conn.Publish(fmt.Sprintf("guild.%d", guildId), messageBody)
 	if err != nil {
 		return err

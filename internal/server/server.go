@@ -1,10 +1,13 @@
 package server
 
 import (
+	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	slogfiber "github.com/samber/slog-fiber"
+	"log/slog"
 
 	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
 )
@@ -16,7 +19,9 @@ type Server struct {
 
 func NewServer() *Server {
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
-	app.Use(recover.New())
+	rc := recover.ConfigDefault
+	rc.EnableStackTrace = true
+	app.Use(recover.New(rc))
 	return &Server{app: app}
 }
 
@@ -30,8 +35,29 @@ func (s *Server) Register(base string, components ...Entity) {
 	}
 }
 
-func (s *Server) WithLogger() {
-	s.app.Use(logger.New())
+func (s *Server) WithLogger(logger *slog.Logger) {
+	logMiddleware := slogfiber.NewWithFilters(
+		logger,
+		slogfiber.IgnorePath("/metrics"),
+	)
+	s.app.Use(logMiddleware)
+}
+
+func (s *Server) WithCORS() {
+	// Initialize default config
+	s.app.Use(cors.New())
+
+	// Or extend your config for customization
+	s.app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+	}))
+}
+
+func (s *Server) WithMetrics() {
+	prom := fiberprometheus.New("gochat-api")
+	prom.RegisterAt(s.app, "/metrics")
+	prom.SetSkipPaths([]string{"/healthz"})
+	s.app.Use(prom.Middleware)
 }
 
 func (s *Server) WithCache(c *vkc.Cache) {

@@ -17,7 +17,11 @@ func GetUser(c *fiber.Ctx) (*JWTUser, error) {
 	if !ok {
 		return nil, fmt.Errorf("could not find user in context")
 	}
-	claims, ok := user.Claims.(jwt.MapClaims)
+	return GetUserFromToken(user)
+}
+
+func GetUserFromToken(token *jwt.Token) (*JWTUser, error) {
+	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, fmt.Errorf("could not get claims")
 	}

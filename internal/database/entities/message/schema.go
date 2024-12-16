@@ -81,10 +81,11 @@ func (e *Entity) GetMessage(ctx context.Context, id, channelId int64) (model.Mes
 	return m, nil
 }
 
-func (e *Entity) GetMessagesBefore(ctx context.Context, channelId, msgId int64, limit int) ([]model.Message, error) {
+func (e *Entity) GetMessagesBefore(ctx context.Context, channelId, msgId int64, limit int) ([]model.Message, []int64, error) {
 	var msgs []model.Message
+	var users = make(map[int64]bool)
 	if msgId <= channelId {
-		return msgs, nil
+		return msgs, nil, nil
 	}
 	lastBucket := idgen.GetBucket(msgId)
 	endBucket := idgen.GetBucket(channelId)
@@ -95,39 +96,61 @@ func (e *Entity) GetMessagesBefore(ctx context.Context, channelId, msgId int64, 
 			Bind(channelId, msgId, lastBucket, limit-len(msgs)).
 			Iter()
 		var m model.Message
-		for iter.Scan(m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt) {
+		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt) {
 			msgs = append(msgs, m)
+			users[m.UserId] = true
 		}
 		err := iter.Close()
 		if err != nil {
-			return nil, fmt.Errorf("unable to get messages before: %w", err)
+			return nil, nil, fmt.Errorf("unable to get messages before: %w", err)
 		}
 		if len(msgs) == limit || lastBucket <= endBucket {
 			break
 		} else {
 			lastBucket = lastBucket - 1
-
 		}
 	}
-	return msgs, nil
+	var uids []int64
+	for id, _ := range users {
+		uids = append(uids, id)
+	}
+	return msgs, uids, nil
 }
 
-func (e *Entity) GetMessagesAfter(ctx context.Context, channelId, msgId int64) ([]model.Message, error) {
+func (e *Entity) GetMessagesAfter(ctx context.Context, channelId, msgId, lastChannelMessage int64, limit int) ([]model.Message, []int64, error) {
 	var msgs []model.Message
-	iter := e.c.Session().
-		Query(getMessagesAfter).
-		WithContext(ctx).
-		Bind(channelId, msgId).
-		Iter()
-	var m model.Message
-	for iter.Scan(&m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt) {
-		msgs = append(msgs, m)
+	var users = make(map[int64]bool)
+	if msgId <= channelId {
+		return msgs, nil, nil
 	}
-	err := iter.Close()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get messages after: %w", err)
+	lastBucket := idgen.GetBucket(msgId)
+	endBucket := idgen.GetBucket(lastChannelMessage)
+	for {
+		iter := e.c.Session().
+			Query(getMessagesAfter).
+			WithContext(ctx).
+			Bind(channelId, msgId, lastBucket, limit-len(msgs)).
+			Iter()
+		var m model.Message
+		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt) {
+			msgs = append(msgs, m)
+			users[m.UserId] = true
+		}
+		err := iter.Close()
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to get messages before: %w", err)
+		}
+		if len(msgs) == limit || lastBucket >= endBucket {
+			break
+		} else {
+			lastBucket = lastBucket - 1
+		}
 	}
-	return msgs, nil
+	var uids []int64
+	for id, _ := range users {
+		uids = append(uids, id)
+	}
+	return msgs, uids, nil
 }
 
 func (e *Entity) GetMessagesList(ctx context.Context, msgIds []int64) ([]model.Message, error) {

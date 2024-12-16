@@ -16,6 +16,7 @@ const (
 	ErrUnableToGetUserDiscriminator = "unable to get discriminator"
 	ErrUnableToGetAttachements      = "unable to get attachments"
 	ErrUnableToSentToThisChannel    = "unable to send to this channel"
+	ErrUnableToReadFromThisChannel  = "unable to read from this channel"
 	ErrUnableToGetMessage           = "unable to get message"
 )
 
@@ -33,4 +34,21 @@ type UploadAttachmentRequest struct {
 	FileSize int64  `json:"file_size"`
 	Width    int64  `json:"width"`
 	Height   int64  `json:"height"`
+}
+
+type Direction string
+
+const (
+	DirectionBefore = Direction("before")
+	DirectionAfter  = Direction("after")
+)
+
+const (
+	DefaultLimit = int(50)
+)
+
+type GetMessagesRequest struct {
+	From      *int64     `query:"from" json:"from"`
+	Limit     *int       `query:"limit" json:"limit"`
+	Direction *Direction `query:"direction" json:"direction"`
 }

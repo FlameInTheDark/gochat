@@ -3,6 +3,7 @@ package member
 import (
 	"context"
 	"fmt"
+	"github.com/gocql/gocql"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -12,6 +13,7 @@ const (
 	addMember       = `INSERT INTO gochat.members (user_id, guild_id, join_at) VALUES (?, ?, toTimestamp(now()))`
 	removeMember    = `DELETE FROM gochat.members WHERE user_id = ? AND guild_id = ?`
 	getMember       = `SELECT user_id, guild_id, username, avatar, join_at, timeout FROM gochat.members WHERE guild_id = ? AND user_id = ?`
+	getMemberList   = `SELECT user_id, guild_id, username, avatar, join_at, timeout FROM gochat.members WHERE guild_id = ? AND user_id IN ?`
 	getGuildMembers = `SELECT user_id, guild_id, username, avatar, join_at, timeout FROM gochat.members WHERE guild_id = ?`
 	isGuildMember   = `SELECT count(user_id) FROM gochat.members WHERE guild_id = ? AND user_id = ? LIMIT 1`
 	getUserGuilds   = `SELECT user_id, guild_id FROM gochat.members WHERE user_id = ?`
@@ -55,6 +57,24 @@ func (e *Entity) GetMember(ctx context.Context, userId, guildId int64) (model.Me
 	return m, nil
 }
 
+func (e *Entity) GetMembersList(ctx context.Context, guildId int64, ids []int64) ([]model.Member, error) {
+	var members []model.Member
+	iter := e.c.Session().
+		Query(getMemberList).
+		WithContext(ctx).
+		Bind(guildId, ids).
+		Iter()
+	var m model.Member
+	for iter.Scan(&m.UserId, &m.GuildId, &m.Username, &m.Avatar, &m.JoinAt, &m.Timeout) {
+		members = append(members, m)
+	}
+	err := iter.Close()
+	if err != nil && err != gocql.ErrNotFound {
+		return members, fmt.Errorf("unable to get members: %w", err)
+	}
+	return members, nil
+}
+
 func (e *Entity) GetGuildMembers(ctx context.Context, guildId int64) ([]model.Member, error) {
 	var members []model.Member
 	iter := e.c.Session().
@@ -68,7 +88,7 @@ func (e *Entity) GetGuildMembers(ctx context.Context, guildId int64) ([]model.Me
 	}
 	err := iter.Close()
 	if err != nil {
-		return members, fmt.Errorf("unable to get members: %w", err)
+		return members, fmt.Errorf("unable to get guild members: %w", err)
 	}
 	return members, nil
 }

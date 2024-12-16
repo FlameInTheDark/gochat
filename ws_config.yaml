@@ -1,1 +1,3 @@
 auth_secret: "change_me_before_use_it_in_production"
+cluster: ["scylla"]
+cluster_keyspace: "gochat"

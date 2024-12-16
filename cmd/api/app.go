@@ -113,8 +113,10 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
 		s.WithSwagger("api")
 	}
 	if cfg.ApiLog {
-		s.WithLogger()
+		s.WithLogger(logger)
 	}
+	s.WithCORS()
+	s.WithMetrics()
 	s.AuthMiddleware(cfg.AuthSecret)
 	s.RateLimitMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 
@@ -139,7 +141,13 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
 
 func (app *App) Start(addr string) {
 	app.logger.Info("Starting")
-	go app.server.Start(addr)
+	go func() {
+		err := app.server.Start(addr)
+		if err != nil {
+			app.logger.Error("Error starting server", "error", err)
+			os.Exit(1)
+		}
+	}()
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
 	<-signalCh

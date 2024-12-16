@@ -1,11 +1,8 @@
 package message
 
 import (
-	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"log/slog"
 
-	"github.com/FlameInTheDark/gochat/internal/database/entities/member"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
@@ -14,9 +11,14 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/channelroleperm"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/channeluserperm"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/discriminator"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/dmchannel"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannels"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/member"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/role"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/mq"
@@ -30,6 +32,7 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/channel/:channel_id<int>", e.Send)
 	router.Post("/channel/:channel_id<int>/attachment", e.Attachment)
 	router.Patch("/channel/:channel_id<int>/:message_id<int>", e.Update)
+	router.Get("/channel/:channel_id<int>", e.GetMessages)
 }
 
 type entity struct {
@@ -48,6 +51,8 @@ type entity struct {
 	ch    *channel.Entity
 	g     *guild.Entity
 	gc    *guildchannels.Entity
+	dmc   *dmchannel.Entity
+	gdmc  *groupdmchannel.Entity
 	msg   *message.Entity
 	at    *attachment.Entity
 	perm  *rolecheck.Entity
@@ -73,6 +78,8 @@ func New(dbcon *db.CQLCon, storage *s3.Client, t mq.SendTransporter, uploadLimit
 		m:           member.New(dbcon),
 		disc:        discriminator.New(dbcon),
 		ch:          channel.New(dbcon),
+		dmc:         dmchannel.New(dbcon),
+		gdmc:        groupdmchannel.New(dbcon),
 		g:           guild.New(dbcon),
 		gc:          guildchannels.New(dbcon),
 		msg:         message.New(dbcon),

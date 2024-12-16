@@ -10,6 +10,7 @@ import (
 
 const (
 	getUserByID    = `SELECT id, name, avatar, blocked, upload_limit, created_at FROM gochat.users WHERE id = ?;`
+	getUserList    = `SELECT id, name, avatar, blocked, upload_limit, created_at FROM gochat.users WHERE id IN ?;`
 	createUser     = `INSERT INTO gochat.users (id,  name, blocked, created_at) VALUES (?, ?, false, toTimestamp(now()));`
 	setAvatar      = `UPDATE gochat.users SET avatar = ? WHERE id = ?;`
 	setUsername    = `UPDATE gochat.users SET name = ? WHERE id = ?;`
@@ -59,6 +60,29 @@ func (e *Entity) GetUserById(ctx context.Context, id int64) (model.User, error) 
 		return user, fmt.Errorf("unable to get user: %w", err)
 	}
 	return user, nil
+}
+
+func (e *Entity) GetUsersList(ctx context.Context, ids []int64) ([]model.User, error) {
+	var users []model.User
+	iter := e.c.Session().
+		Query(getUserList).
+		WithContext(ctx).
+		Bind(ids).
+		Iter()
+	var u model.User
+	for iter.Scan(&u.Id,
+		&u.Name,
+		&u.Avatar,
+		&u.Blocked,
+		&u.UploadLimit,
+		&u.CreatedAt) {
+		users = append(users, u)
+	}
+	err := iter.Close()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get users: %w", err)
+	}
+	return users, nil
 }
 
 func (e *Entity) CreateUser(ctx context.Context, id int64, name string) error {

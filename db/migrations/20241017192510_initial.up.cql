@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS gochat.dm_channels
     user_id        bigint,
     participant_id bigint,
     channel_id     bigint,
-    PRIMARY KEY ( user_id, participant_id )
+    PRIMARY KEY ( user_id, participant_id, channel_id )
 );
 
 CREATE TABLE IF NOT EXISTS gochat.group_dm_channels

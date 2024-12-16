@@ -1,0 +1,40 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 30s
+  body_size_limit: 15MB
+  sample_limit: 1500
+  target_limit: 30
+  label_limit: 30
+  label_name_length_limit: 200
+  label_value_length_limit: 200
+  query_log_file: query.log
+  scrape_failure_log_file: fail.log
+  # scrape_timeout is set to the global default (10s).
+
+  external_labels:
+    monitor: codelab
+    foo: bar
+
+runtime:
+  gogc: 42
+
+rule_files:
+  - "first.rules"
+  - "my/*.rules"
+
+scrape_configs:
+  - job_name: gochat-api
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - api:3000
+
+  - job_name: docker
+    static_configs:
+      - targets: ["host.docker.internal:9323"]
+
+storage:
+  tsdb:
+    out_of_order_time_window: 30m

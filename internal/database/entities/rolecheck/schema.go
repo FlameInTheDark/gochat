@@ -90,7 +90,7 @@ func (e *Entity) GuildPerm(ctx context.Context, guildID, userID int64, perm ...p
 		return nil, false, err
 	}
 	if userID == guild.OwnerId {
-		return nil, true, nil
+		return &guild, true, nil
 	}
 	permAll := guild.Permissions
 	ur, err := e.ur.GetUserRoles(ctx, guildID, userID)

@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
-
 	"github.com/gocql/gocql"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -15,7 +13,7 @@ const (
 	createAttachment   = `INSERT INTO gochat.attachments (id, channel_id, done, filesize, name, height, width) VALUES (?, ?, false, ?, ?, ?, ?) USING TTL 3600`
 	removeAttachment   = `DELETE FROM gochat.attachments WHERE id = ? AND channel_id = ?`
 	getAttachment      = `SELECT id, channel_id, name, filesize, content_type, height, width, done FROM gochat.attachments WHERE id = ? AND channel_id = ?`
-	getAttachmentsByID = `SELECT id, channel_id, name, filesize, content_type, height, width, done FROM gochat.attachments WHERE id IN(%s)`
+	getAttachmentsByID = `SELECT id, channel_id, name, filesize, content_type, height, width, done FROM gochat.attachments WHERE id IN ?`
 	doneAttachment     = `UPDATE gochat.attachments USING TTL 0 SET done = true, content_type = ? WHERE id = ? AND channel_id = ?`
 )
 
@@ -69,20 +67,11 @@ func (e *Entity) DoneAttachment(ctx context.Context, id, channelId int64, conten
 }
 
 func (e *Entity) SelectAttachemntsByIDs(ctx context.Context, ids []int64) ([]model.Attachment, error) {
-	places := make([]string, len(ids))
-	for i := range ids {
-		places[i] = "?"
-	}
 	var attachments []model.Attachment
-	q := fmt.Sprintf(getAttachmentsByID, strings.Join(places, ","))
-	args := make([]interface{}, len(ids))
-	for i := range ids {
-		args[i] = &ids[i]
-	}
 	iter := e.c.Session().
-		Query(q).
+		Query(getAttachmentsByID).
 		WithContext(ctx).
-		Bind(args...).
+		Bind(ids).
 		Iter()
 	var a model.Attachment
 	for iter.Scan(&a.Id, &a.ChannelId, &a.Name, &a.FileSize, &a.ContentType, &a.Height, &a.Width, &a.Done) {
