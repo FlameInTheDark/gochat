@@ -65,9 +65,8 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 		if err != nil {
 			h.log.Error("Error closing WS connection after timeout", "error", err)
 		}
-		h.closer()
 	})
-	err = h.sub.Subscribe("user", fmt.Sprintf("guild.%d", usr.Id))
+	err = h.sub.Subscribe("user", fmt.Sprintf("user.%d", usr.Id))
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()

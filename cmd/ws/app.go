@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/shut"
+	slogfiber "github.com/samber/slog-fiber"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
-	flog "github.com/gofiber/fiber/v2/middleware/logger"
 	recm "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/nats-io/nats.go"
 
@@ -54,7 +54,11 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) *App {
 	jwtauth := auth.New(cfg.AuthSecret)
 
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
-	app.Use(flog.New())
+	logMiddleware := slogfiber.NewWithFilters(
+		logger,
+		slogfiber.IgnorePath("/metrics"),
+	)
+	app.Use(logMiddleware)
 	app.Use(recm.New())
 
 	app.Use("/", func(c *fiber.Ctx) error {

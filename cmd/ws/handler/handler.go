@@ -84,8 +84,6 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 }
 
 func (h *Handler) Close() error {
-	var err error
-	err = h.sub.Close()
 	h.closer()
-	return err
+	return nil
 }

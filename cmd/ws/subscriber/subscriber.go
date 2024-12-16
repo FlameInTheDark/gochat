@@ -1,6 +1,7 @@
 package subscriber
 
 import (
+	"fmt"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/nats-io/nats.go"
 	"log"
@@ -21,8 +22,8 @@ func New(c *websocket.Conn, natsCon *nats.Conn) *Subscriber {
 }
 
 func (s *Subscriber) Subscribe(key, topic string) error {
-	if oldSub, ok := s.subs[key]; ok {
-		err := oldSub.Unsubscribe()
+	if _, ok := s.subs[key]; ok {
+		err := s.subs[key].Unsubscribe()
 		if err != nil {
 			log.Println("Unsubscribe from old error:", err)
 		}
@@ -42,10 +43,10 @@ func (s *Subscriber) Subscribe(key, topic string) error {
 }
 
 func (s *Subscriber) Unsubscribe(key string) error {
-	if sub, ok := s.subs[key]; ok {
-		err := sub.Unsubscribe()
+	if _, ok := s.subs[key]; ok {
+		err := s.subs[key].Unsubscribe()
 		if err != nil {
-			return err
+			return fmt.Errorf("Unsubscribe from '%s' error: %s\n", key, err)
 		}
 		delete(s.subs, key)
 	}
@@ -54,12 +55,12 @@ func (s *Subscriber) Unsubscribe(key string) error {
 
 func (s *Subscriber) Close() error {
 	var cerr error
-	for _, sub := range s.subs {
-		err := sub.Unsubscribe()
+	for i, _ := range s.subs {
+		err := s.subs[i].Unsubscribe()
 		if err != nil {
 			cerr = err
-			log.Println("Unsubscribe error:", err)
 		}
+		delete(s.subs, i)
 	}
 	return cerr
 }
