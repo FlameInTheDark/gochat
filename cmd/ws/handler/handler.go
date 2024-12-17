@@ -27,7 +27,7 @@ type helloResponse struct {
 
 type heartbeatMessage struct {
 	// Seconds since connection opened
-	Since int64 `json:"since"`
+	Since int64 `json:"s"`
 }
 
 type Handler struct {

@@ -13,27 +13,36 @@ import (
 
 func (a *App) wsHandler(c *websocket.Conn) {
 	defer func() {
-		err := c.Close()
-		if err != nil && websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
-			a.log.Error("Error closing WebSocket", "error", err)
+		if c.Conn != nil {
+			err := c.Close()
+			if err != nil && websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+				a.log.Error("Error closing WebSocket", "error", err)
+			}
 		}
 	}()
 
 	subs := subscriber.New(c, a.natsConn)
-	defer subs.Close()
+	defer func() {
+		cerr := subs.Close()
+		if cerr != nil {
+			a.log.Error("Error closing subscriber", "error", cerr)
+		}
+	}()
 
 	h := handler.New(a.cdb, subs, c, a.jwt, a.cfg.HearthBeatTimeout, func() {
-		err := c.WriteControl(
-			websocket.CloseMessage,
-			websocket.FormatCloseMessage(websocket.CloseNormalClosure, "Closed"),
-			time.Now().Add(1*time.Second),
-		)
-		if err != nil {
-			a.log.Error("Error writing close WebSocket message", "error", err)
-		}
-		cerr := c.Close()
-		if cerr != nil {
-			a.log.Error("Error closing WebSocket during auth timeout", "error", err)
+		if c.Conn != nil {
+			err := c.WriteControl(
+				websocket.CloseMessage,
+				websocket.FormatCloseMessage(websocket.CloseNormalClosure, "Closed"),
+				time.Now().Add(1*time.Second),
+			)
+			if err != nil {
+				a.log.Error("Error writing close WebSocket message", "error", err)
+			}
+			cerr := c.Close()
+			if cerr != nil {
+				a.log.Error("Error closing WebSocket during auth timeout", "error", err)
+			}
 		}
 	}, a.log)
 
@@ -63,11 +72,9 @@ func (a *App) wsHandler(c *websocket.Conn) {
 		case websocket.BinaryMessage:
 			a.log.Info("Received binary message", "length", len(msg))
 
+		case -1: // in case of dropped connection
+			fallthrough
 		case websocket.CloseMessage:
-			err = c.Close()
-			if err != nil {
-				a.log.Error("Error closing WebSocket", "error", err)
-			}
 			return
 		}
 	}

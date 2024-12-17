@@ -60,7 +60,7 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 		h.log.Error("Error sending hello message", "error", err)
 		return
 	}
-	h.hTimer = time.AfterFunc(time.Second*time.Duration(h.hbTimeout), func() {
+	h.hTimer = time.AfterFunc(time.Second*time.Duration(h.hbTimeout+2000), func() {
 		err := h.Close()
 		if err != nil {
 			h.log.Error("Error closing WS connection after timeout", "error", err)
