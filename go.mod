@@ -20,7 +20,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.80
 	github.com/nats-io/nats.go v1.37.0
 	github.com/rabbitmq/amqp091-go v1.10.0
-	github.com/redis/go-redis/v9 v9.7.0
+	github.com/redis/go-redis/v9 v9.7.3
 	github.com/samber/slog-fiber v1.16.5
 	github.com/scylladb/gocqlx v1.5.0
 	golang.org/x/crypto v0.35.0
