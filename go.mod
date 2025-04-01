@@ -15,7 +15,7 @@ require (
 	github.com/gofiber/contrib/swagger v1.2.0
 	github.com/gofiber/contrib/websocket v1.3.2
 	github.com/gofiber/fiber/v2 v2.52.5
-	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/minio/minio-go/v7 v7.0.80
 	github.com/nats-io/nats.go v1.37.0
