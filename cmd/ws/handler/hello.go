@@ -51,9 +51,13 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 		Id:   dbuser.Id,
 		Name: dbuser.Name,
 	}
-	err = h.ws.WriteJSON(helloResponse{
-		HeartbeatInterval: 15000,
-	})
+	hellomsg, err := mqmsg.BuildEventMessage(&mqmsg.HeartbeatInterval{HeartbeatInterval: h.hbTimeout})
+	if err != nil {
+		h.initTimer.Stop()
+		h.closer()
+		return
+	}
+	err = h.ws.WriteJSON(hellomsg)
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -27,7 +28,7 @@ type helloResponse struct {
 
 type heartbeatMessage struct {
 	// Seconds since connection opened
-	Since int64 `json:"s"`
+	LastEventId int64 `json:"e"`
 }
 
 type Handler struct {
@@ -39,14 +40,15 @@ type Handler struct {
 	jwt  *auth.Auth
 	ws   *websocket.Conn
 
-	hbTimeout int
-	hTimer    *time.Timer
-	initTimer *time.Timer
-	closer    func()
-	log       *slog.Logger
+	lastEventId int64
+	hbTimeout   int64
+	hTimer      *time.Timer
+	initTimer   *time.Timer
+	closer      func()
+	log         *slog.Logger
 }
 
-func New(c *db.CQLCon, sub *subscriber.Subscriber, ws *websocket.Conn, jwt *auth.Auth, hbTimeout int, closer func(), logger *slog.Logger) *Handler {
+func New(c *db.CQLCon, sub *subscriber.Subscriber, ws *websocket.Conn, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger) *Handler {
 	initTimer := time.AfterFunc(time.Second*5, closer)
 	return &Handler{
 		sub: sub,
@@ -77,7 +79,30 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			h.log.Warn("Error unmarshalling heart beat msg", "error", err)
 			return
 		}
-		h.hTimer.Reset(time.Second * time.Duration(h.hbTimeout))
+		if m.LastEventId >= h.lastEventId {
+			h.hTimer.Reset(time.Second * time.Duration(h.hbTimeout))
+		}
+	case mqmsg.OPCodeChannelSubscription:
+		var m mqmsg.Subscribe
+		err := json.Unmarshal(e.Data, &m)
+		if err != nil {
+			h.log.Warn("Error unmarshalling channel subscription msg", "error", err)
+			return
+		}
+		// TODO: check if user has access
+		if m.Channel != nil {
+			err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel))
+			if err != nil {
+				h.log.Warn("Error subscribing to channel", "error", err)
+			}
+		}
+		for _, g := range m.Guilds {
+			err := h.sub.Subscribe(fmt.Sprintf("guild.%d", g), fmt.Sprintf("guild.%d", g))
+			if err != nil {
+				h.log.Warn("Error subscribing to channel", "error", err)
+			}
+		}
+
 	default:
 		h.log.Warn("Unknown operation", "operation", e.Operation)
 	}

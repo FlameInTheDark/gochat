@@ -13,7 +13,7 @@ type Config struct {
 	AuthSecret        string   `yaml:"auth_secret" env:"AUTH_SECRET" env-default:"change_me_before_use_it_in_production"`
 	Cluster           []string `yaml:"cluster" env:"CLUSTER" env-default:""`
 	ClusterKeyspace   string   `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
-	HearthBeatTimeout int      `yaml:"hearth_beat_timeout" env:"HEARTH_BEAT_TIME" env-default:"15"`
+	HearthBeatTimeout int64    `yaml:"hearth_beat_timeout" env:"HEARTH_BEAT_TIME" env-default:"35000"`
 	RabbitMQHost      string   `yaml:"rabbitmq_host" env:"RABBITMQ_HOST" env-default:"rabbitmq"`
 	RabbitMQPort      int      `yaml:"rabbitmq_port" env:"RABBITMQ_PORT" env-default:"5672"`
 	RabbitMQUsername  string   `yaml:"rabbitmq_username" env:"RABBITMQ_USERNAME" env-default:"guest"`

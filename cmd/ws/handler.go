@@ -54,6 +54,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 				websocket.CloseNormalClosure,
 				websocket.CloseProtocolError,
 				websocket.CloseNoStatusReceived,
+				websocket.CloseGoingAway,
 			) {
 				return
 			}

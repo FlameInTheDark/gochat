@@ -49,7 +49,7 @@ const (
 type Message struct {
 	Operation OPCodeType      `json:"op"`
 	Data      json.RawMessage `json:"d"`
-	EventType *EventType      `json:"t"`
+	EventType *EventType      `json:"t,omitempty"`
 }
 
 func BuildEventMessage(data EventDataMessage) (msg Message, err error) {
