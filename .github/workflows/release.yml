@@ -1,34 +1,86 @@
-name: Release Installer
+name: Semantic Release Installer
 
-# Trigger the workflow on pushes to tags matching v*.*.* (e.g., v1.0.0, v1.2.3)
+# Trigger the workflow on pushes to branches matching main
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main # Trigger on push to main
 
 permissions:
-  contents: write # Needed to create releases and upload assets
+  contents: write # To push tags/commits, create releases, upload assets
+  issues: write   # Optional: semantic-release can comment on issues/PRs
+  pull-requests: write # Optional: semantic-release can comment on issues/PRs
 
 jobs:
-  build-release:
-    name: Build and Release Installer
+  release:
+    name: Semantic Release and Build
     runs-on: ubuntu-latest
+    # Prevent duplicate runs for pushes that include multiple commits
+    concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+    outputs: # Define outputs for other jobs if needed
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+
     steps:
+      # 1. Checkout code
       - name: Check out code
         uses: actions/checkout@v4
+        with:
+          # Fetch all history so semantic-release can analyze commits
+          fetch-depth: 0
+          # Persist credentials needed for the push-back step by semantic-release/git
+          persist-credentials: false
+
+      # 2. Setup Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*' # Use LTS Node version
+
+      # 3. Install semantic-release and plugins
+      # Committing package.json with these as devDeps is recommended
+      - name: Install semantic-release plugins
+        run: |
+          npm install -D \
+            semantic-release \
+            @semantic-release/commit-analyzer \
+            @semantic-release/release-notes-generator \
+            @semantic-release/changelog \
+            @semantic-release/git \
+            @semantic-release/github
+
+      # 4. Run semantic-release
+      - name: Run semantic-release
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Run semantic-release and capture outputs
+        run: npx semantic-release
+        # Continue workflow even if semantic-release determines no release is needed
+        continue-on-error: true
+
+      # Check outputs from semantic-release (these might vary slightly by version/plugins)
+      - name: Debug semantic release outputs
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          echo "New release published: ${{ steps.semantic.outputs.new_release_published }}"
+          echo "New release version: ${{ steps.semantic.outputs.new_release_version }}"
+          echo "New release tag: ${{ steps.semantic.outputs.new_release_git_tag }}"
+
+      # --- Build and Upload only if a new release was created ---
 
       - name: Set up Go
+        if: steps.semantic.outputs.new_release_published == 'true'
         uses: actions/setup-go@v5
         with:
           go-version: '1.21' # Specify your Go version
 
-      - name: Get Version from Tag
-        id: get_version
-        # Extracts the version number from the tag (e.g., v1.0.0 -> 1.0.0)
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
-
       - name: Build Go Binaries (Cross-Platform)
+        if: steps.semantic.outputs.new_release_published == 'true'
+        id: build
         run: |
+          set -e # Exit on error
           # Define targets (OS/Arch)
           targets=(
             "linux/amd64"
@@ -53,68 +105,19 @@ jobs:
             GOOS=$os GOARCH=$arch go build -ldflags="-s -w" -o "${OUTPUT_DIR}/${output_name}" "${INSTALLER_DIR}/main.go"
           done
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }} # Use the pushed tag
-          name: Release ${{ steps.get_version.outputs.VERSION }}
-          body: | # Optional: Add release notes here or use auto-generation
-            Installer binaries for GoChat version ${{ steps.get_version.outputs.VERSION }}.
-            See CHANGELOG.md for details.
-          draft: false
-          prerelease: false
-          # Optional: If using standard-version/semantic-release, they might generate release notes
-          # generate_release_notes: true
+          # List built files
+          ls -R ${OUTPUT_DIR}
 
-      - name: Upload Release Asset (Linux AMD64)
-        uses: actions/upload-release-asset@v1
+      - name: Upload Release Assets using gh CLI
+        if: steps.semantic.outputs.new_release_published == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release_builds/installer-linux-amd64
-          asset_name: installer-linux-amd64
-          asset_content_type: application/octet-stream
-
-      - name: Upload Release Asset (Linux ARM64)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release_builds/installer-linux-arm64
-          asset_name: installer-linux-arm64
-          asset_content_type: application/octet-stream
-
-      - name: Upload Release Asset (Windows AMD64 EXE)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release_builds/installer-windows-amd64.exe
-          asset_name: installer-windows-amd64.exe
-          asset_content_type: application/octet-stream
-
-      - name: Upload Release Asset (macOS AMD64)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release_builds/installer-darwin-amd64
-          asset_name: installer-darwin-amd64
-          asset_content_type: application/octet-stream
-
-      - name: Upload Release Asset (macOS ARM64)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release_builds/installer-darwin-arm64
-          asset_name: installer-darwin-arm64
-          asset_content_type: application/octet-stream
+          # Get the tag name from semantic-release outputs
+          RELEASE_TAG: ${{ steps.semantic.outputs.new_release_git_tag }}
+        run: |
+          echo "Uploading assets for tag: $RELEASE_TAG"
+          if [ -z "$RELEASE_TAG" ]; then
+            echo "Error: Release tag not found from semantic-release step."
+            exit 1
+          fi
+          gh release upload "$RELEASE_TAG" release_builds/* --clobber
