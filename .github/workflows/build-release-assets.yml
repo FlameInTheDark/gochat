@@ -25,16 +25,19 @@ jobs:
         with:
           go-version: '1.21' # Specify your Go version
 
-      # Download dependencies
+      # Download dependencies within the installer directory
       - name: Download Go Modules
+        working-directory: cmd/installer
         run: go mod download
 
-      # Tidy ensures go.mod matches source code
+      # Tidy ensures go.mod matches source code within the installer directory
       - name: Tidy Go Modules
+        working-directory: cmd/installer
         run: go mod tidy
 
       - name: Build Go Binaries (Cross-Platform)
         id: build
+        working-directory: cmd/installer
         run: |
           set -e # Exit on error
           # Define targets (OS/Arch)
@@ -46,8 +49,8 @@ jobs:
             "darwin/arm64"
           )
 
-          INSTALLER_DIR="cmd/installer" # Path to the installer code
-          OUTPUT_DIR="release_builds"   # Temporary directory for builds
+          # Output dir relative to root, need to go up two levels from cmd/installer
+          OUTPUT_DIR="../../release_builds"
           mkdir -p ${OUTPUT_DIR}
 
           for target in "${targets[@]}"; do
@@ -56,17 +59,18 @@ jobs:
             if [ "$os" = "windows" ]; then
               output_name+=".exe"
             fi
-
+            # Build main.go from the current (cmd/installer) directory
             echo "Building for $os/$arch -> ${OUTPUT_DIR}/${output_name}"
-            GOOS=$os GOARCH=$arch go build -ldflags="-s -w" -o "${OUTPUT_DIR}/${output_name}" "${INSTALLER_DIR}/main.go"
+            GOOS=$os GOARCH=$arch go build -ldflags="-s -w" -o "${OUTPUT_DIR}/${output_name}" .
           done
 
           # List built files
           ls -R ${OUTPUT_DIR}
 
       - name: Upload Release Assets using gh CLI
+        # This step runs relative to the root, so the asset path is correct
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use default token here, just needs write permission
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Get the tag name from the release event
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
