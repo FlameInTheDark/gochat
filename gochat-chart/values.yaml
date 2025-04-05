@@ -541,7 +541,7 @@ ingressWs:
   enabled: true # Set to true to create a separate Ingress for /ws
   # className should usually match the main ingress className if specified
   # className: "nginx"
-  annotations: {}
+  annotations:
     # --- Example Nginx WebSocket Annotations --- #
     # Use configuration-snippet to apply only to this Ingress's locations (/ws)
     nginx.ingress.kubernetes.io/configuration-snippet: |
