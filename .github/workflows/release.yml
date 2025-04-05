@@ -1,4 +1,4 @@
-name: Semantic Release
+name: Release Installer
 
 # Trigger the workflow on pushes to branches matching main
 on:
@@ -7,7 +7,7 @@ on:
       - main # Trigger on push to main
 
 permissions:
-  contents: write # To push tags/commits, create releases
+  contents: write # To push tags/commits, create releases, upload assets
   issues: write   # Optional: semantic-release can comment on issues/PRs
   pull-requests: write # Optional: semantic-release can comment on issues/PRs
 
@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     # Prevent duplicate runs for pushes that include multiple commits
     concurrency: ${{ github.workflow }}-${{ github.ref }}
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }} # Output if release was published
+      new_release_tag: ${{ steps.semantic.outputs.new_release_git_tag }}     # Output the tag name
 
     steps:
       # 1. Checkout code
@@ -60,3 +63,49 @@ jobs:
       - name: Debug semantic-release step outputs
         if: always() # Always run this step
         run: echo "${{ toJSON(steps.semantic.outputs) }}"
+
+  build-upload:
+    name: Build and Upload Binaries
+    needs: release # Run after the release job
+    # Only run if semantic-release actually published a release and outputted a tag
+    if: needs.release.outputs.new_release_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the specific tag created by semantic-release
+      - name: Check out code at specific tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.new_release_tag }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21' # Specify your Go version
+
+      - name: Build Go Binaries (Cross-Platform)
+        id: build
+        run: |
+          set -e # Exit on error
+          targets=(
+            "linux/amd64" "linux/arm64" "windows/amd64" "darwin/amd64" "darwin/arm64"
+          )
+          INSTALLER_DIR="cmd/installer"
+          OUTPUT_DIR="release_builds"
+          mkdir -p ${OUTPUT_DIR}
+
+          for target in ${targets[@]}; do
+            IFS='/' read -r os arch <<< "$target"
+            output_name="installer-${os}-${arch}"
+            if [ "$os" = "windows" ]; then output_name+=".exe"; fi
+            echo "Building for $os/$arch -> ${OUTPUT_DIR}/${output_name}"
+            GOOS=$os GOARCH=$arch go build -ldflags="-s -w" -o "${OUTPUT_DIR}/${output_name}" "${INSTALLER_DIR}/main.go"
+          done
+          ls -R ${OUTPUT_DIR}
+
+      - name: Upload Release Assets using gh CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.release.outputs.new_release_tag }}
+        run: |
+          echo "Uploading assets for tag: $RELEASE_TAG"
+          gh release upload "$RELEASE_TAG" release_builds/* --clobber
