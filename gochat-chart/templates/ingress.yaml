@@ -44,14 +44,17 @@ spec:
         paths:
           {{- /* Always use defaultPaths */}}
           {{- range .Values.ingress.defaultPaths }}
-          - path: {{ .path }}
-            pathType: {{ .pathType }}
-            backend:
-              service:
-                # Construct service name using fullname and the serviceName from path value
-                name: {{ $fullName }}-{{ .serviceName }}
-                port:
-                  # Use portName from path value
-                  name: {{ .portName }}
+            {{- /* Conditionally exclude /ws path if dedicated WS ingress is enabled */}}
+            {{- if not (and $.Values.ingressWs.enabled (eq .path "/ws")) }}
+            - path: {{ .path }}
+              pathType: {{ .pathType }}
+              backend:
+                service:
+                  # Construct service name using fullname and the serviceName from path value
+                  name: {{ $fullName }}-{{ .serviceName }}
+                  port:
+                    # Use portName from path value
+                    name: {{ .portName }}
+            {{- end }}
           {{- end }}
 {{- end }}

@@ -1,0 +1,72 @@
+{{- /*
+Template for dedicated WebSocket Ingress
+*/}}
+{{- if and .Values.ingress.enabled .Values.ingressWs.enabled -}}
+{{- $fullName := include "gochat.fullname" . -}}
+{{- $wsSvcPort := .Values.ws.service.port -}}
+{{- /* Determine hostname: Use override if set, otherwise first host from list, else default */}}
+{{- $hostName := .Values.ingress.hostOverride }}
+{{- if not $hostName }}
+  {{- if .Values.ingress.hosts }}
+    {{- $hostName = (first .Values.ingress.hosts).host }}
+  {{- else }}
+    {{- $hostName = printf "%s-default.%s" $fullName "local" }}
+  {{- end }}
+{{- end }}
+{{- /* Determine Ingress Class: Use specific WS one, fallback to main, else omit */}}
+{{- $ingressClassName := .Values.ingressWs.className | default .Values.ingress.className | default "" }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}-ws
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingress-ws
+  annotations:
+    # Merge annotations: Start with main ingress annotations
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    # Add/override with specific WS annotations
+    {{- with .Values.ingressWs.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if and $ingressClassName (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+  ingressClassName: {{ $ingressClassName }}
+  {{- else if .Values.ingress.annotations "kubernetes.io/ingress.class" }} 
+  # Fallback for older k8s versions using annotation if main ingress has it
+  # Note: This might not inherit the WS specific class if different
+  {{- end }}
+  {{- /* TLS Configuration: Use main ingress TLS settings if defined */}}
+  {{- if .Values.ingress.tlsSecretName }}
+  tls:
+    - hosts:
+        - {{ $hostName | quote }}
+      secretName: {{ .Values.ingress.tlsSecretName }}
+  {{- else if .Values.ingress.tls }}
+  # Fallback to manually defined TLS list in main ingress values
+  tls:
+    {{- range .Values.ingress.tls }}
+    - hosts:
+        {{- if .hosts }}
+          {{- tpl (toYaml .hosts) $ | nindent 10 }}
+        {{- else }}
+          - {{ $hostName | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ $hostName | quote }}
+      http:
+        paths:
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}-ws
+                port:
+                  # Assuming the ws service template defines a port named 'ws'
+                  name: ws
+{{- end }} 

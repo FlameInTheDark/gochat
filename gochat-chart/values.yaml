@@ -479,17 +479,28 @@ service:
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
-  enabled: true # Enabled by default
-  # Allow installer to override the primary host easily
-  hostOverride: "" # Installer will set this via --set if user provides domain
-  className: "" # Set this if your ingress controller requires an IngressClass
-  tlsSecretName: "" # Installer will set this via --set if user provides TLS secret name
-  annotations: {}
-    # --- Examples, uncomment and adjust for your ingress controller --- #
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-    # nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    # nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  enabled: true
+  hostOverride: "localhost" # Or your domain
+  className: "nginx"        # Your ingress class name
+
+  # Add Nginx specific annotations for WebSocket support
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # You might not need the server-snippet if your Nginx Ingress version
+    # handles the Upgrade/Connection headers automatically for WebSocket.
+    # Add this snippet ONLY if timeouts alone don't work.
+    # nginx.ingress.kubernetes.io/server-snippets: |
+    #   location /ws {  # Apply only to the WebSocket path if possible (might require configuration-snippet instead)
+    #     proxy_set_header Upgrade $http_upgrade;
+    #     proxy_http_version 1.1;
+    #     proxy_set_header X-Forwarded-Host $http_host;
+    #     proxy_set_header X-Forwarded-Proto $scheme;
+    #     proxy_set_header X-Forwarded-For $remote_addr;
+    #     proxy_set_header Host $host;
+    #     proxy_set_header Connection "upgrade";
+    #     proxy_cache_bypass $http_upgrade;
+    #   }
 
   # Define the default paths separately
   defaultPaths:
@@ -524,6 +535,27 @@ ingress:
   #  - secretName: gochat-tls-secret
   #    hosts:
   #      - gochat.local # Template should automatically use host from above if hosts list here is empty
+
+# NEW: Configuration for a dedicated WebSocket Ingress
+ingressWs:
+  enabled: true # Set to true to create a separate Ingress for /ws
+  # className should usually match the main ingress className if specified
+  # className: "nginx"
+  annotations: {}
+    # --- Example Nginx WebSocket Annotations --- #
+    # Use configuration-snippet to apply only to this Ingress's locations (/ws)
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_http_version 1.1;
+      proxy_set_header X-Forwarded-Host $http_host;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-For $remote_addr;
+      proxy_set_header Host $host;
+      proxy_set_header Connection "upgrade";
+      proxy_cache_bypass $http_upgrade;
+    # Timeouts might still be needed
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

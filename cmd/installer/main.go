@@ -16,6 +16,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/otiai10/copy"
 )
 
 // Define the dev flag globally or pass it down
@@ -125,6 +126,9 @@ type composeResultMsg struct {
 	err    error
 }
 
+// Message to signal a view redraw may be needed
+type redrawMsg struct{}
+
 // --- Model ---
 
 type model struct {
@@ -170,6 +174,13 @@ type model struct {
 }
 
 // --- Helper Functions ---
+
+// Command to force a redraw cycle
+func forceRedrawCmd() tea.Cmd {
+	return func() tea.Msg {
+		return redrawMsg{}
+	}
+}
 
 // generatePassword creates a secure random hex string (32 chars long)
 func generatePassword() (string, error) {
@@ -308,6 +319,27 @@ func runHelmInstallCmd(m model) tea.Cmd {
 		if selectedContext != "" {
 			args = append(args, "--kube-context", selectedContext)
 		}
+
+		// --- Copy Migrations Before Helm ---
+		migrationsSrcPath := filepath.Join(m.clonedRepoPath, "db", "migrations")
+		migrationsDestPath := filepath.Join(m.helmChartPath, "db", "migrations")
+		// Ensure parent dir exists for destination within chart
+		if err := os.MkdirAll(filepath.Dir(migrationsDestPath), 0755); err != nil {
+			return installResultMsg{output: "", err: fmt.Errorf("failed to create temp migration dir in chart: %w", err)}
+		}
+		if err := copy.Copy(migrationsSrcPath, migrationsDestPath); err != nil {
+			// Don't fail fatally if migrations aren't found in source repo, just proceed without them
+			if !os.IsNotExist(err) {
+				// Clean up potentially partially copied dir on other errors
+				_ = os.RemoveAll(migrationsDestPath)
+				return installResultMsg{output: "", err: fmt.Errorf("failed to copy migrations to chart: %w", err)}
+			}
+			// If migrations dir doesn't exist in source, migrationsDestPath won't be created by copy, so no need to clean up
+		} else {
+			// Ensure cleanup happens after Helm command runs
+			defer os.RemoveAll(migrationsDestPath)
+		}
+		// --- End Copy Migrations ---
 
 		cmd := exec.Command("helm", args...)
 		var stdout, stderr bytes.Buffer
@@ -532,7 +564,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if i, ok := m.list.SelectedItem().(item); ok {
 						m.installTarget = i.FilterValue()
 					} else {
-						return m, nil // Should not happen
+						return m, nil // Cannot select, return nil
 					}
 					m.list.Styles.Title = blurredStyle
 					if m.installTarget == "kubernetes" {
@@ -569,8 +601,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.list.Title = "Select Kubernetes Context:"
 					m.list.SetItems(m.kubeContexts)
 					m.list.Styles.Title = focusedStyle
-					m.errorMessage = "" // Clear any potential previous warning/error messages
-					return m, nil       // List focus is implicit, no specific command needed
+					m.errorMessage = ""        // Clear any potential previous warning/error messages
+					return m, forceRedrawCmd() // Force redraw
 				}
 			}
 			// If not quit and not handled enter, pass to list for navigation
@@ -643,7 +675,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, tea.Batch(m.spinner.Tick, getKubeIngressClassesCmd(m.selectedContext))
 				}
 				// Enter was handled by state change above
-				return m, nil
+				return m, nil // Input handled enter, return nil
 
 			default:
 				// Pass other keys (like characters) to the focused input
@@ -655,7 +687,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, cmd
 				}
 				// Should not happen: input focused but index is -1
-				return m, nil
+				return m, nil // Cannot process, return nil
 			}
 		}
 
@@ -801,7 +833,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.clonedRepoPath != "" {
 			_ = os.RemoveAll(m.clonedRepoPath)
 		}
-		return m, nil
+		return m, nil // Finished install, return nil
 
 	case composeResultMsg:
 		m.composeOutput = msg.output
@@ -815,7 +847,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.clonedRepoPath != "" {
 			_ = os.RemoveAll(m.clonedRepoPath)
 		}
-		return m, nil
+		return m, nil // Finished compose, return nil
 
 	case kubeIngressClassesMsg:
 		if msg.err != nil {
@@ -830,8 +862,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.list.SetItems(m.kubeIngressClasses)
 			m.list.Styles.Title = focusedStyle
 			cmds = append(cmds, m.inputs[namespaceInput].Focus())
+			m.errorMessage = "" // Clear any potential previous warning/error messages
 		}
-		return m, tea.Batch(cmds...)
+		return m, forceRedrawCmd() // Force redraw
 
 	case spinner.TickMsg:
 		// Only tick spinner in active spinner states
@@ -841,10 +874,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		}
 		return m, tea.Batch(cmds...)
+
+	// Handle the redraw message - its only purpose is to trigger the update cycle
+	case redrawMsg:
+		return m, nil
 	}
 
-	// This section is likely unreachable now due to explicit returns/batches above,
-	// but kept for safety / potential refactoring.
+	// Should generally not be reached if logic above is correct
+
 	cmd = m.updateActiveComponent(msg)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
