@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"os"
@@ -97,8 +99,11 @@ type installResultMsg struct {
 }
 
 type gitCloneResultMsg struct {
-	path string
-	err  error
+	path   string
+	err    error
+	branch string // New field
+	tag    string // New field (empty if not on a tag)
+	hash   string // New field (short hash)
 }
 
 type kubeContextsMsg struct {
@@ -134,21 +139,35 @@ type model struct {
 	selectedContext string
 
 	// Stored selections (K8s specific)
-	namespace       string
-	minioPassword   string
-	grafanaPassword string
-	domainName      string
-	tlsSecretName   string // New field for TLS secret
+	namespace            string
+	minioPassword        string
+	grafanaPassword      string
+	domainName           string
+	tlsSecretName        string // New field for TLS secret
+	minioPassGenerated   bool   // Flag to indicate if MinIO pass was generated
+	grafanaPassGenerated bool   // Flag to indicate if Grafana pass was generated
 
 	// Execution Details
 	helmChartPath  string
 	clonedRepoPath string
+	gitBranch      string // New field
+	gitTag         string // New field
+	gitHash        string // New field
 	helmOutput     string
 	composeOutput  string
 	finalError     error
 }
 
 // --- Helper Functions ---
+
+// generatePassword creates a secure random hex string (32 chars long)
+func generatePassword() (string, error) {
+	bytes := make([]byte, 16) // 16 bytes = 32 hex characters
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate random bytes: %w", err)
+	}
+	return hex.EncodeToString(bytes), nil
+}
 
 func checkCommand(name string) tea.Cmd {
 	return func() tea.Msg {
@@ -160,7 +179,7 @@ func checkCommand(name string) tea.Cmd {
 	}
 }
 
-// runGitCloneCmd clones the specified branch of the repository
+// runGitCloneCmd clones the specified branch and gets repo info
 func runGitCloneCmd(repoURL string, branch string) tea.Cmd {
 	return func() tea.Msg {
 		destPath, err := os.MkdirTemp("", "gochat-installer-*")
@@ -168,32 +187,72 @@ func runGitCloneCmd(repoURL string, branch string) tea.Cmd {
 			return gitCloneResultMsg{err: fmt.Errorf("failed to create temp dir: %w", err)}
 		}
 
-		// Base git clone command arguments
+		// --- Git Clone ---
 		args := []string{"clone", "--depth=1"}
-
-		// Add branch argument if a specific branch is requested
 		if branch != "" {
 			args = append(args, "-b", branch)
 		}
-
-		// Add repo URL and destination path
 		args = append(args, repoURL, destPath)
 
-		cmd := exec.Command("git", args...) // Use dynamic args
-		var stderr bytes.Buffer
-		cmd.Stderr = &stderr
-
-		err = cmd.Run()
+		cmdClone := exec.Command("git", args...)
+		var stderrClone bytes.Buffer
+		cmdClone.Stderr = &stderrClone
+		err = cmdClone.Run()
 		if err != nil {
 			_ = os.RemoveAll(destPath)
-			// Include branch name in error if applicable
 			errorMsg := fmt.Sprintf("git clone failed: %v", err)
 			if branch != "" {
 				errorMsg = fmt.Sprintf("git clone of branch '%s' failed: %v", branch, err)
 			}
-			return gitCloneResultMsg{err: fmt.Errorf("%s\nStderr: %s", errorMsg, stderr.String())}
+			return gitCloneResultMsg{err: fmt.Errorf("%s\nStderr: %s", errorMsg, stderrClone.String())}
 		}
-		return gitCloneResultMsg{path: destPath, err: nil}
+
+		// --- Get Git Info (from cloned repo) ---
+		var branchName, tagName, shortHash string
+		var gitErr error
+
+		// Get Branch
+		cmdBranch := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+		cmdBranch.Dir = destPath // Run in cloned dir
+		outBranch, err := cmdBranch.Output()
+		if err != nil {
+			gitErr = fmt.Errorf("failed to get branch: %w", err)
+		} else {
+			branchName = strings.TrimSpace(string(outBranch))
+		}
+
+		// Get Tag (if on exact tag) - Redirect stderr to avoid noise if not on tag
+		cmdTag := exec.Command("git", "describe", "--tags", "--exact-match")
+		cmdTag.Dir = destPath
+		cmdTag.Stderr = nil // Suppress "fatal: no tag exactly matches..." error output
+		outTag, err := cmdTag.Output()
+		// We only care if the command succeeded (exit code 0), ignore error otherwise
+		if err == nil {
+			tagName = strings.TrimSpace(string(outTag))
+		}
+
+		// Get Short Hash
+		cmdHash := exec.Command("git", "rev-parse", "--short", "HEAD")
+		cmdHash.Dir = destPath
+		outHash, err := cmdHash.Output()
+		if err != nil {
+			if gitErr != nil { // Append error if previous one exists
+				gitErr = fmt.Errorf("%w; failed to get hash: %v", gitErr, err)
+			} else {
+				gitErr = fmt.Errorf("failed to get hash: %w", err)
+			}
+		} else {
+			shortHash = strings.TrimSpace(string(outHash))
+		}
+
+		// Return result, including any error from getting git info
+		return gitCloneResultMsg{
+			path:   destPath,
+			branch: branchName,
+			tag:    tagName,
+			hash:   shortHash,
+			err:    gitErr, // Return error from git info commands if clone succeeded but info failed
+		}
 	}
 }
 
@@ -214,23 +273,24 @@ func runHelmInstallCmd(m model) tea.Cmd {
 		args := []string{
 			"upgrade", "--install", helmReleaseName, m.helmChartPath,
 			"--namespace", namespace, "--create-namespace",
+			"--force",
 			"--set", fmt.Sprintf("minio.auth.rootPassword=%s", m.minioPassword),
 			"--set", fmt.Sprintf("grafana.adminPassword=%s", m.grafanaPassword),
 		}
 
 		// Add the Ingress host override if a valid domain was provided
 		if useDomain {
-			args = append(args, "--set", fmt.Sprintf("ingress.hosts[0].host=%s", domainName))
+			args = append(args, "--set", fmt.Sprintf("ingress.hostOverride=%s", domainName))
 		}
 
 		// Configure TLS if a secret name and domain were provided
 		if useDomain && tlsSecretName != "" {
-			args = append(args, "--set", fmt.Sprintf("ingress.tls[0].hosts[0]=%s", domainName))
-			args = append(args, "--set", fmt.Sprintf("ingress.tls[0].secretName=%s", tlsSecretName))
+			args = append(args, "--set", fmt.Sprintf("ingress.tlsSecretName=%s", tlsSecretName))
 		} else {
 			// Explicitly disable TLS in values if not configured via prompt
 			// This overrides any potential default in values.yaml if user leaves secret blank
-			args = append(args, "--set", "ingress.tls={}") // Set tls to an empty list/object
+			// args = append(args, "--set", "ingress.tls={}") // Keep this? Or rely on empty tlsSecretName?
+			// Let's rely on empty tlsSecretName and the template logic. Remove the explicit disable.
 		}
 
 		// Add context flag
@@ -306,7 +366,7 @@ func initialModel() model {
 	var t textinput.Model
 
 	t = textinput.New() // Namespace (0)
-	t.Placeholder = "default"
+	t.Placeholder = "gochat"
 	t.Focus()
 	t.CharLimit = 63
 	t.Width = 30
@@ -366,6 +426,9 @@ func initialModel() model {
 		kubeContexts: []list.Item{},
 		domainName:   "gochat.local",
 		// tlsSecretName initialized to empty string by default
+		// Initialize password generation flags
+		minioPassGenerated:   false,
+		grafanaPassGenerated: false,
 	}
 }
 
@@ -400,15 +463,36 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
-			// Cleanup temp dir on quit if it exists
-			if m.clonedRepoPath != "" {
-				_ = os.RemoveAll(m.clonedRepoPath)
-			}
-			return m, tea.Quit
 
-		case "enter":
+		// --- Check if an input field is focused ---
+		inputFocused := false
+		// Only check inputs relevant to the current K8s config states
+		switch m.state {
+		case promptNamespace, promptMinioPass, promptGrafanaPass, promptDomainName, promptTlsSecret:
+			for i := range m.inputs {
+				if m.inputs[i].Focused() {
+					inputFocused = true
+					break
+				}
+			}
+		}
+		// -----------------------------------------
+
+		// Handle global quit ('q' or 'ctrl+c') ONLY if no input is focused
+		if !inputFocused {
+			switch msg.String() {
+			case "ctrl+c", "q":
+				// Cleanup temp dir on quit if it exists
+				if m.clonedRepoPath != "" {
+					_ = os.RemoveAll(m.clonedRepoPath)
+				}
+				return m, tea.Quit
+			}
+		}
+
+		// --- Handle Enter key for state transitions ---
+		// (This part remains largely the same as before)
+		if msg.String() == "enter" {
 			switch m.state {
 			case selectInstallTarget:
 				if i, ok := m.list.SelectedItem().(item); ok {
@@ -423,6 +507,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, m.spinner.Tick, checkCommand("helm"), checkCommand("kubectl"))
 				} else if m.installTarget == "docker" {
 					m.state = cloningRepo
+					// Pass the determined branch to runGitCloneCmd
 					cmds = append(cmds, m.spinner.Tick, runGitCloneCmd(gochatRepoURL, branchToClone))
 				} else {
 					m.state = prerequisitesFailed
@@ -435,25 +520,53 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 
 			case promptNamespace:
-				m.namespace = m.inputs[namespaceInput].Value()
+				// Convert to lowercase before storing
+				m.namespace = strings.ToLower(m.inputs[namespaceInput].Value())
+				// If the result is empty after trimming spaces, use the new default 'gochat'
+				if strings.TrimSpace(m.namespace) == "" {
+					m.namespace = "gochat" // Default to gochat
+				}
 				m.state = promptMinioPass
 				m.inputs[namespaceInput].Blur()
 				return m, m.inputs[minioPassInput].Focus()
 
 			case promptMinioPass:
-				if m.inputs[minioPassInput].Value() == "" {
-					return m, nil // Require password
+				pass := m.inputs[minioPassInput].Value()
+				if pass == "" {
+					// Generate password if empty
+					generatedPass, err := generatePassword()
+					if err != nil {
+						// Handle error - perhaps show an error state? For now, log and exit?
+						m.state = prerequisitesFailed // Reusing an error state for simplicity
+						m.errorMessage = fmt.Sprintf("Failed to generate MinIO password: %v", err)
+						return m, tea.Quit // Or just return m, nil to show error view
+					}
+					m.minioPassword = generatedPass
+					m.minioPassGenerated = true
+				} else {
+					m.minioPassword = pass
+					m.minioPassGenerated = false
 				}
-				m.minioPassword = m.inputs[minioPassInput].Value()
 				m.state = promptGrafanaPass
 				m.inputs[minioPassInput].Blur()
 				return m, m.inputs[grafanaPassInput].Focus()
 
 			case promptGrafanaPass:
-				if m.inputs[grafanaPassInput].Value() == "" {
-					return m, nil // Require password
+				pass := m.inputs[grafanaPassInput].Value()
+				if pass == "" {
+					// Generate password if empty
+					generatedPass, err := generatePassword()
+					if err != nil {
+						m.state = prerequisitesFailed
+						m.errorMessage = fmt.Sprintf("Failed to generate Grafana password: %v", err)
+						return m, tea.Quit
+					}
+					m.grafanaPassword = generatedPass
+					m.grafanaPassGenerated = true
+				} else {
+					m.grafanaPassword = pass
+					m.grafanaPassGenerated = false
 				}
-				m.grafanaPassword = m.inputs[grafanaPassInput].Value()
 				m.state = promptDomainName // Go to domain name prompt
 				m.inputs[grafanaPassInput].Blur()
 				return m, m.inputs[domainNameInput].Focus()
@@ -488,6 +601,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.state = cloningRepo
 				m.list.Styles.Title = blurredStyle
+				// Pass the determined branch to runGitCloneCmd
 				cmds = append(cmds, m.spinner.Tick, runGitCloneCmd(gochatRepoURL, branchToClone))
 				return m, tea.Batch(cmds...)
 
@@ -496,13 +610,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// No need to prep list items here
 				return m, m.inputs[namespaceInput].Focus()
 			}
+			// If enter was handled for state change, return now
+			if len(cmds) > 0 { // Check if cmds were added (e.g., Focus change)
+				return m, tea.Batch(cmds...)
+			}
+			// If enter didn't trigger a state change above (e.g., required field empty)
+			// AND an input is focused, let the input handle Enter if needed
+			if inputFocused {
+				cmd = m.updateActiveComponent(msg) // Let the focused input handle Enter
+				return m, cmd
+			}
+			// If enter wasn't handled by state change or input, do nothing
+			return m, nil
 		}
-		// Enter key was handled above for state changes
-		if msg.String() == "enter" && len(cmds) == 0 {
-			return m, nil // Avoid passing enter to list/input if handled
-		}
+		// --- End Enter key handling ---
 
-	// --- Other messages ---
+		// --- Handle other keys (passed to active component) ---
+		// If not quitting and not Enter, pass the key to the active component
+		cmd = m.updateActiveComponent(msg)
+		return m, cmd
+
+	// --- Other message types ---
 	case checkMsg:
 		m.prereqChecks[msg.name] = msg.ok
 		if !msg.ok {
@@ -604,8 +732,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.state = cloneError
 			m.finalError = msg.err
+			// Cleanup on error
+			if msg.path != "" { // Use path from message if available
+				_ = os.RemoveAll(msg.path)
+			}
 		} else {
 			m.clonedRepoPath = msg.path // Store path
+			// Store Git info
+			m.gitBranch = msg.branch
+			m.gitTag = msg.tag
+			m.gitHash = msg.hash
+
 			// Decide next step based on target
 			if m.installTarget == "kubernetes" {
 				m.state = installing
@@ -617,14 +754,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.state = cloneError // Should not happen
 				m.finalError = fmt.Errorf("invalid install target '%s' after clone", m.installTarget)
+				_ = os.RemoveAll(m.clonedRepoPath) // Cleanup if target invalid
 			}
 		}
-		// Cleanup function in case of error during install/compose
-		if m.state == installError || m.state == composeError || m.state == cloneError {
-			if m.clonedRepoPath != "" {
-				_ = os.RemoveAll(m.clonedRepoPath)
-			}
-		}
+		// Remove separate cleanup logic here, handled above and in success/quit states
 		return m, tea.Batch(cmds...)
 
 	case installResultMsg:
@@ -665,10 +798,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(cmds...)
 	}
 
-	// Handle updates for the active component (input field or list)
+	// This section is likely unreachable now due to explicit returns/batches above,
+	// but kept for safety / potential refactoring.
 	cmd = m.updateActiveComponent(msg)
 	cmds = append(cmds, cmd)
-
 	return m, tea.Batch(cmds...)
 }
 
@@ -680,25 +813,36 @@ func (m *model) updateActiveComponent(msg tea.Msg) tea.Cmd {
 		m.list.Styles.Title = focusedStyle
 		m.list, cmd = m.list.Update(msg)
 	case promptNamespace:
-		m.inputs[namespaceInput].PromptStyle = focusedStyle
-		m.inputs[namespaceInput].TextStyle = focusedStyle
-		m.inputs[namespaceInput], cmd = m.inputs[namespaceInput].Update(msg)
+		// Only update if focused
+		if m.inputs[namespaceInput].Focused() {
+			m.inputs[namespaceInput].PromptStyle = focusedStyle
+			m.inputs[namespaceInput].TextStyle = focusedStyle
+			m.inputs[namespaceInput], cmd = m.inputs[namespaceInput].Update(msg)
+		}
 	case promptMinioPass:
-		m.inputs[minioPassInput].PromptStyle = focusedStyle
-		m.inputs[minioPassInput].TextStyle = focusedStyle
-		m.inputs[minioPassInput], cmd = m.inputs[minioPassInput].Update(msg)
+		if m.inputs[minioPassInput].Focused() {
+			m.inputs[minioPassInput].PromptStyle = focusedStyle
+			m.inputs[minioPassInput].TextStyle = focusedStyle
+			m.inputs[minioPassInput], cmd = m.inputs[minioPassInput].Update(msg)
+		}
 	case promptGrafanaPass:
-		m.inputs[grafanaPassInput].PromptStyle = focusedStyle
-		m.inputs[grafanaPassInput].TextStyle = focusedStyle
-		m.inputs[grafanaPassInput], cmd = m.inputs[grafanaPassInput].Update(msg)
+		if m.inputs[grafanaPassInput].Focused() {
+			m.inputs[grafanaPassInput].PromptStyle = focusedStyle
+			m.inputs[grafanaPassInput].TextStyle = focusedStyle
+			m.inputs[grafanaPassInput], cmd = m.inputs[grafanaPassInput].Update(msg)
+		}
 	case promptDomainName:
-		m.inputs[domainNameInput].PromptStyle = focusedStyle
-		m.inputs[domainNameInput].TextStyle = focusedStyle
-		m.inputs[domainNameInput], cmd = m.inputs[domainNameInput].Update(msg)
-	case promptTlsSecret: // NEW state
-		m.inputs[tlsSecretInput].PromptStyle = focusedStyle
-		m.inputs[tlsSecretInput].TextStyle = focusedStyle
-		m.inputs[tlsSecretInput], cmd = m.inputs[tlsSecretInput].Update(msg)
+		if m.inputs[domainNameInput].Focused() {
+			m.inputs[domainNameInput].PromptStyle = focusedStyle
+			m.inputs[domainNameInput].TextStyle = focusedStyle
+			m.inputs[domainNameInput], cmd = m.inputs[domainNameInput].Update(msg)
+		}
+	case promptTlsSecret:
+		if m.inputs[tlsSecretInput].Focused() {
+			m.inputs[tlsSecretInput].PromptStyle = focusedStyle
+			m.inputs[tlsSecretInput].TextStyle = focusedStyle
+			m.inputs[tlsSecretInput], cmd = m.inputs[tlsSecretInput].Update(msg)
+		}
 	case selectContext:
 		m.list.Styles.Title = focusedStyle
 		m.list, cmd = m.list.Update(msg)
@@ -710,6 +854,15 @@ func (m model) View() string {
 	var b strings.Builder
 
 	b.WriteString(titleStyle.Render("GoChat Universal Installer") + "\n\n")
+
+	// Helper to format Git info string
+	formatGitInfo := func(m model) string {
+		info := fmt.Sprintf("Branch: %s, Hash: %s", m.gitBranch, m.gitHash)
+		if m.gitTag != "" {
+			info = fmt.Sprintf("Tag: %s (%s)", m.gitTag, info) // Prepend tag if it exists
+		}
+		return info
+	}
 
 	switch m.state {
 	case checkingPrerequisites:
@@ -867,7 +1020,11 @@ func (m model) View() string {
 		b.WriteString("\n" + helpStyle.Render("Press Enter to confirm, Ctrl+C or q to quit."))
 
 	case cloningRepo:
-		b.WriteString(m.spinner.View() + " Cloning GoChat repository...")
+		branchDesc := "default branch"
+		if devBranch {
+			branchDesc = "'dev' branch"
+		}
+		b.WriteString(m.spinner.View() + fmt.Sprintf(" Cloning GoChat repository (%s)...", branchDesc))
 
 	case cloneError:
 		b.WriteString(errorStyle.Render("✗ Repository Cloning Failed!\n\n"))
@@ -884,9 +1041,22 @@ func (m model) View() string {
 	// --- K8s Install States ---
 	case installing:
 		b.WriteString(m.spinner.View() + " Installing GoChat Helm chart...\n")
+		if m.gitBranch != "" || m.gitHash != "" { // Display if info is available
+			b.WriteString(helpStyle.Render(fmt.Sprintf("  (Source: %s)", formatGitInfo(m))) + "\n")
+		}
 
 	case installFinished:
-		b.WriteString(doneStyle.Render("✓ Installation Successful!\n\n"))
+		b.WriteString(doneStyle.Render("✓ Installation Successful!") + "\n\n")
+		// Display generated passwords if applicable
+		if m.minioPassGenerated {
+			b.WriteString(focusedStyle.Render(fmt.Sprintf("Generated MinIO Password: %s\n", m.minioPassword)))
+		}
+		if m.grafanaPassGenerated {
+			b.WriteString(focusedStyle.Render(fmt.Sprintf("Generated Grafana Password: %s\n", m.grafanaPassword)))
+		}
+		if m.minioPassGenerated || m.grafanaPassGenerated {
+			b.WriteString("\n") // Add a newline for separation if passwords were generated
+		}
 		b.WriteString("Helm Output:\n" + m.helmOutput + "\n\n")
 		// Cleanup on successful view
 		if m.clonedRepoPath != "" {
@@ -910,7 +1080,10 @@ func (m model) View() string {
 
 	// --- Docker Compose States ---
 	case runningCompose:
-		b.WriteString(m.spinner.View() + " Starting services with Docker Compose...")
+		b.WriteString(m.spinner.View() + " Starting services with Docker Compose...\n")
+		if m.gitBranch != "" || m.gitHash != "" { // Display if info is available
+			b.WriteString(helpStyle.Render(fmt.Sprintf("  (Source: %s)", formatGitInfo(m))) + "\n")
+		}
 
 	case composeFinished:
 		b.WriteString(doneStyle.Render("✓ Docker Compose Services Started Successfully!\n\n"))

@@ -14,34 +14,36 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  {{- if .Values.ingress.className }}
+  {{- if and .Values.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
   ingressClassName: {{ .Values.ingress.className }}
   {{- end }}
-  {{- if .Values.ingress.tls }}
-  tls:
-    {{- range .Values.ingress.tls }}
-    - hosts:
-        {{- if .hosts }}
-        {{- range .hosts }}
-        - {{ . | quote }}
-        {{- end }}
-        {{- else }}
-        # Default TLS hosts to the ingress hosts if not specified
-        {{- range $.Values.ingress.hosts }}
-        - {{ .host | quote }}
-        {{- end }}
-        {{- end }}
-      secretName: {{ .secretName }}
+  {{- /* Determine hostname: use override if set, otherwise use first host from list */}}
+  {{- $hostName := .Values.ingress.hostOverride }}
+  {{- /* If hostOverride is an empty string, fall back to hosts list or default */}}
+  {{- if eq $hostName "" }}
+    {{- if .Values.ingress.hosts }}
+      {{- $hostName = (first .Values.ingress.hosts).host }}
+    {{- else }}
+      {{/* Set a default or handle error if no host is defined anywhere */}}
+      {{- $hostName = "gochat-default.local" }}
+      {{- /* Or fail template: {{ fail "Ingress host must be defined either via ingress.hostOverride or ingress.hosts[0].host" }} */}}
     {{- end }}
   {{- end }}
+
+  {{- /* Generate TLS section only if tlsSecretName is provided */}}
+  {{- if .Values.ingress.tlsSecretName }}
+  tls:
+    - hosts:
+        - {{ $hostName | quote }}
+      secretName: {{ .Values.ingress.tlsSecretName }}
+  {{- end }}
+
   rules:
-    {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
+    - host: {{ $hostName | quote }}
       http:
-        # Use paths defined under the host if present, otherwise use defaultPaths
         paths:
-          {{- $hostPaths := .paths | default $.Values.ingress.defaultPaths -}}
-          {{- range $hostPaths }}
+          {{- /* Always use defaultPaths */}}
+          {{- range .Values.ingress.defaultPaths }}
           - path: {{ .path }}
             pathType: {{ .pathType }}
             backend:
@@ -52,5 +54,4 @@ spec:
                   # Use portName from path value
                   name: {{ .portName }}
           {{- end }}
-    {{- end }}
 {{- end }}
