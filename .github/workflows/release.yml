@@ -17,16 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     # Prevent duplicate runs for pushes that include multiple commits
     concurrency: ${{ github.workflow }}-${{ github.ref }}
-    outputs:
-      # Output the version number determined by semantic-release
-      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+    # No outputs needed anymore
 
     steps:
       # 1. Checkout code using PAT for push permissions
       - name: Check out code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }} # Use PAT
+          token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }} # Use PAT - VERIFY THIS SECRET NAME
           fetch-depth: 0
           persist-credentials: false
 
@@ -34,7 +32,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*' # Use LTS Node version
+          node-version: 'lts/*'
 
       # 3. Install semantic-release and plugins
       # Committing package.json with these as devDeps is recommended
@@ -50,69 +48,7 @@ jobs:
 
       # 4. Run semantic-release using PAT
       - name: Run semantic-release
-        id: semantic # Give the step an ID to reference its outputs
         env:
-          GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }} # Use PAT for API calls and pushing tag
-          # Optional: Configure Git user if needed by semantic-release/git plugin
-          # GIT_AUTHOR_NAME: github-actions[bot]
-          # GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-          # GIT_COMMITTER_NAME: github-actions[bot]
-          # GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }} # Use PAT - VERIFY THIS SECRET NAME
         run: npx semantic-release
-        # Continue workflow even if semantic-release determines no release is needed
-        continue-on-error: true
-
-      # Debugging step (optional but helpful)
-      - name: Debug semantic-release step outputs
-        if: always() # Always run this step
-        run: echo "Semantic Release Outputs = ${{ toJSON(steps.semantic.outputs) }}"
-
-  build-upload:
-    name: Build and Upload Binaries
-    needs: release # Run after the release job
-    # Only run if semantic-release actually outputted a version
-    if: needs.release.outputs.new_release_version != ''
-    runs-on: ubuntu-latest
-    steps:
-      # Checkout the specific tag created by semantic-release (constructed from version)
-      - name: Check out code at specific tag
-        uses: actions/checkout@v4
-        with:
-          ref: v${{ needs.release.outputs.new_release_version }}
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21' # Specify your Go version
-
-      - name: Build Go Binaries (Cross-Platform)
-        id: build
-        run: |
-          set -e # Exit on error
-          targets=(
-            "linux/amd64" "linux/arm64" "windows/amd64" "darwin/amd64" "darwin/arm64"
-          )
-          INSTALLER_DIR="cmd/installer"
-          OUTPUT_DIR="release_builds"
-          mkdir -p ${OUTPUT_DIR}
-
-          for target in ${targets[@]}; do
-            IFS='/' read -r os arch <<< "$target"
-            output_name="installer-${os}-${arch}"
-            if [ "$os" = "windows" ]; then output_name+=".exe"; fi
-            echo "Building for $os/$arch -> ${OUTPUT_DIR}/${output_name}"
-            GOOS=$os GOARCH=$arch go build -ldflags="-s -w" -o "${OUTPUT_DIR}/${output_name}" "${INSTALLER_DIR}/main.go"
-          done
-          ls -R ${OUTPUT_DIR}
-
-      - name: Upload Release Assets using gh CLI
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: v${{ needs.release.outputs.new_release_version }}
-        run: |
-          echo "Uploading assets for tag: $RELEASE_TAG"
-          if [ "$RELEASE_TAG" == "v" ]; then # Check if version was empty
-             echo "Error: Release version was empty, cannot determine tag."
-             exit 1
-          fi
-          gh release upload "$RELEASE_TAG" release_builds/* --clobber
+        # No continue-on-error: if it fails (e.g., no release needed, or actual error), the job fails.
