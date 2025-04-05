@@ -1,0 +1,56 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "gochat.fullname" . -}}
+{{- $svcPortApi := .Values.api.service.port -}}
+{{- $svcPortWs := .Values.ws.service.port -}}
+{{- $svcPortMinio := .Values.minio.service.apiPort -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- range .Values.ingress.tls }}
+    - hosts:
+        {{- if .hosts }}
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+        {{- else }}
+        # Default TLS hosts to the ingress hosts if not specified
+        {{- range $.Values.ingress.hosts }}
+        - {{ .host | quote }}
+        {{- end }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        # Use paths defined under the host if present, otherwise use defaultPaths
+        paths:
+          {{- $hostPaths := .paths | default $.Values.ingress.defaultPaths -}}
+          {{- range $hostPaths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                # Construct service name using fullname and the serviceName from path value
+                name: {{ $fullName }}-{{ .serviceName }}
+                port:
+                  # Use portName from path value
+                  name: {{ .portName }}
+          {{- end }}
+    {{- end }}
+{{- end }}

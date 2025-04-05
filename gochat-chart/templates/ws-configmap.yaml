@@ -15,7 +15,7 @@ data:
         "auth_secret" $wsConfig.authSecret
         "cluster" (list (printf "%s-%s" $fullname $wsConfig.scyllaServiceName))
         "cluster_keyspace" $wsConfig.scyllaKeyspace
-        "nats_address" (printf "nats://%s-%s:%d" $fullname $wsConfig.natsServiceName (int $wsConfig.natsServicePort))
+        "nats_conn_string" (printf "nats://%s-%s:%d" $fullname $wsConfig.natsServiceName (int $wsConfig.natsServicePort))
     -}}
     {{ $configData | toYaml | nindent 4 }}
 {{- end }} 

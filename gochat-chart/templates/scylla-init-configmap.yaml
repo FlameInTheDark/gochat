@@ -11,23 +11,46 @@ data:
     #!/bin/bash
     set -e
 
-    # Hostname will resolve to the service name for the current pod in the StatefulSet
-    SCYLLA_HOST="localhost" # Connect to localhost within the pod
+    # Use the SCYLLA_HOST environment variable passed from the Job
+    # SCYLLA_HOST="localhost" # <-- Removed hardcoded localhost
+    if [ -z "$SCYLLA_HOST" ]; then
+      echo "Error: SCYLLA_HOST environment variable is not set."
+      exit 1
+    fi
+    if [ -z "$SCYLLA_KEYSPACE" ]; then
+      echo "Error: SCYLLA_KEYSPACE environment variable is not set."
+      exit 1
+    fi
+    if [ -z "$SCYLLA_REPLICATION_FACTOR" ]; then
+      echo "Error: SCYLLA_REPLICATION_FACTOR environment variable is not set."
+      exit 1
+    fi
+
     CQLSH_COMMAND="cqlsh $SCYLLA_HOST"
 
-    echo "Waiting for ScyllaDB to be ready on localhost..."
+    echo "Waiting for ScyllaDB ($SCYLLA_HOST) to be ready..."
+
+    # Add authentication if SCYLLA_USER and SCYLLA_PASSWORD are set
+    if [ -n "$SCYLLA_USER" ] && [ -n "$SCYLLA_PASSWORD" ]; then
+      CQLSH_COMMAND="$CQLSH_COMMAND -u \"$SCYLLA_USER\" -p \"$SCYLLA_PASSWORD\""
+      echo "(Using authentication)"
+    fi
+
+    # Use the command with the correct host in the loop
     until $CQLSH_COMMAND -e "DESCRIBE KEYSPACES" > /dev/null 2>&1; do
         echo "ScyllaDB not ready yet, retrying in 5 seconds..."
         sleep 5
     done
+
     echo "ScyllaDB is ready."
 
-    echo "Creating keyspace '{{ .Values.scylla.init.keyspace }}' if it does not exist..."
-    # Use values from values.yaml for keyspace name and replication factor
-    CREATE_KEYSPACE_CQL="CREATE KEYSPACE IF NOT EXISTS {{ .Values.scylla.init.keyspace }} WITH replication = {'class': 'SimpleStrategy', 'replication_factor': {{ .Values.scylla.init.replicationFactor }}}"
+    echo "Creating keyspace '$SCYLLA_KEYSPACE' if it does not exist..."
+    # Use environment variables for keyspace name and replication factor
+    CREATE_KEYSPACE_CQL="CREATE KEYSPACE IF NOT EXISTS $SCYLLA_KEYSPACE WITH replication = {'class': 'SimpleStrategy', 'replication_factor': $SCYLLA_REPLICATION_FACTOR}"
 
+    # Execute the command
     $CQLSH_COMMAND -e "$CREATE_KEYSPACE_CQL"
-
     echo "Keyspace creation command executed."
+
     echo "ScyllaDB initialization complete."
 {{- end }} 

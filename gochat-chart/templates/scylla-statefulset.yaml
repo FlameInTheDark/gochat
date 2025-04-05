@@ -20,14 +20,6 @@ spec:
         app.kubernetes.io/component: scylla
     spec:
       terminationGracePeriodSeconds: 180 # Recommended by ScyllaDB docs
-      initContainers:
-        - name: scylla-init
-          image: {{ .Values.scylla.image.repository }}:{{ .Values.scylla.image.tag | default .Chart.AppVersion }} # Use the same Scylla image which has cqlsh
-          imagePullPolicy: {{ .Values.scylla.image.pullPolicy }}
-          command: ["/bin/bash", "/scripts/init-scylla.sh"]
-          volumeMounts:
-            - name: init-script
-              mountPath: /scripts
       containers:
         - name: scylla
           image: "{{ .Values.scylla.image.repository }}:{{ .Values.scylla.image.tag | default .Chart.AppVersion }}"
@@ -62,11 +54,6 @@ spec:
             periodSeconds: 20
           resources:
             {{- toYaml .Values.scylla.resources | nindent 12 }}
-      volumes:
-        - name: init-script
-          configMap:
-            name: {{ include "gochat.fullname" . }}-scylla-init-script
-            defaultMode: 0755 # Make script executable
       {{- with .Values.scylla.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

@@ -34,7 +34,7 @@ spec:
               mountPath: /dist/config.yaml
               subPath: config.yaml
             - name: email-template
-              mountPath: /dist/email_notify.tmpl # Mount template directly
+              mountPath: /config/email_notify.tmpl
               subPath: email_notify.tmpl
           # Add liveness/readiness probes if your API exposes health endpoints
           # livenessProbe:

@@ -257,28 +257,6 @@ solr:
     #   memory: 1Gi
   # nodeSelector, affinity, tolerations etc.
 
-nginx:
-  enabled: true
-  image:
-    repository: nginx
-    tag: 1.27.2-alpine # Match compose.yaml
-    pullPolicy: IfNotPresent
-  replicaCount: 1
-  service:
-    type: LoadBalancer # Or NodePort/ClusterIP if using Ingress
-    httpPort: 80
-    httpsPort: 443 # Config doesn't show HTTPS setup yet
-  # Add resources, nodeSelector, etc.
-  resources: {}
-  config:
-    # Static placeholders for service names/ports
-    apiServiceName: "api"
-    apiServicePort: 3000 # Reference api's default port
-    wsServiceName: "ws"
-    wsServicePort: 3100 # Reference ws's default port
-    minioServiceName: "minio"
-    minioServicePort: 9000 # Reference minio's default API port
-
 prometheus:
   enabled: true
   image:
@@ -316,52 +294,70 @@ loki:
   enabled: true
   image:
     repository: grafana/loki
-    tag: latest # Use specific version in production
+    tag: latest # Consider pinning to a specific version
     pullPolicy: IfNotPresent
   replicaCount: 1
   service:
     type: ClusterIP
     port: 3100
-  persistence:
-    enabled: true # Assuming Loki needs persistence
-    mountPath: /loki # Default data path
-    size: 10Gi # Adjust as needed
-    # storageClass: "standard"
+  # Liveness/Readiness probes can be added
   config:
-    # Basic Loki config - adjust as needed for your storage backend (e.g., S3/MinIO)
     auth_enabled: false
     server:
       http_listen_port: 3100
-    ingester:
-      lifecycler:
-        address: 127.0.0.1
-        ring:
-          kvstore:
-            store: inmemory
-          replication_factor: 1
-        final_sleep: 0s
-      chunk_idle_period: 5m
-      chunk_retain_period: 1m
-      max_transfer_retries: 0
+      grpc_listen_port: 9096
+    common:
+      path_prefix: /loki
+      storage:
+        filesystem:
+          chunks_directory: /loki/chunks
+          rules_directory: /loki/rules
+      replication_factor: 1
+      ring:
+        instance_addr: 127.0.0.1
+        kvstore:
+          store: inmemory
+    query_range:
+      results_cache:
+        cache:
+          embedded_cache:
+            enabled: true
+            max_size_mb: 100
     schema_config:
       configs:
         - from: 2020-10-24
-          store: boltdb-shipper
+          store: boltdb-shipper # Use boltdb-shipper for indexing
           object_store: filesystem
           schema: v11
           index:
             prefix: index_
             period: 24h
+    ruler:
+      alertmanager_url: http://localhost:9093 # Point to actual alertmanager if used
+    ingester:
+      lifecycler:
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+      chunk_idle_period: 1h       # Any chunk not receiving new logs in this time will be flushed
+      chunk_target_size: 1048576  # Loki will attempt to build chunks up to 1.5MB, flushing first if chunk_idle_period or max_chunk_age is reached
+      chunk_retain_period: 30s    # Must be greater than index read cache TTL if using caching (which isn't enabled here)
     storage_config:
       boltdb_shipper:
-        active_index_directory: /loki/index
-        cache_location: /loki/cache
-        shared_store: filesystem
+        active_index_directory: /loki/boltdb-shipper-active
+        cache_location: /loki/boltdb-shipper-cache
+        cache_ttl: 24h         # Can be increased for more performance over longer query periods
       filesystem:
         directory: /loki/chunks
+    # Added limits_config to disable structured metadata validation
     limits_config:
-      reject_old_samples: true
-      reject_old_samples_max_age: 168h
+      allow_structured_metadata: false
+  persistence:
+    enabled: true
+    mountPath: /loki
+    size: 10Gi
+    # storageClass: "standard"
   resources: {}
     # limits:
     #   cpu: "1"
@@ -464,20 +460,48 @@ service:
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
-  enabled: false # Disabled by default, enable and configure if needed
-  className: ""
+  enabled: true # Enabled by default
+  className: "" # Set this if your ingress controller requires an IngressClass
   annotations: {}
+    # --- Examples, uncomment and adjust for your ingress controller --- #
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
+    # nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    # nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+
+  # Define the default paths separately
+  defaultPaths:
+    - path: /api/v1
+      pathType: Prefix
+      serviceName: api # Use simple service name, template will add prefix
+      portName: http  # Use port name
+    - path: /ws
+      pathType: Prefix
+      serviceName: ws
+      portName: ws
+    # Add MinIO paths ONLY if direct access is truly needed
+    - path: /media
+      pathType: Prefix
+      serviceName: minio
+      portName: http-api # Check minio service template for actual port name
+    - path: /icons
+      pathType: Prefix
+      serviceName: minio
+      portName: http-api
+    - path: /avatars
+      pathType: Prefix
+      serviceName: minio
+      portName: http-api
+
+  # Hosts list - User primarily overrides 'host' here
   hosts:
-    - host: gochat.local # Example host
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: gochat-tls
+    - host: gochat.local # Default placeholder host
+      # paths: [] # Intentionally empty or omitted - paths come from defaultPaths or explicit host override
+
+  tls: [] # Default to no TLS. Configure in overrides.
+  #  - secretName: gochat-tls-secret
   #    hosts:
-  #      - gochat.local
+  #      - gochat.local # Template should automatically use host from above if hosts list here is empty
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
