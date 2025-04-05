@@ -77,6 +77,8 @@ minio:
       - media
       - icons
       - avatars
+    # Add hook weight
+    hookWeight: "5"
   resources: {}
     # limits:
     #   cpu: 500m
@@ -108,6 +110,23 @@ scylla:
     # Configuration for the Init Container script
     keyspace: gochat
     replicationFactor: 1
+    # Add hook weight
+    hookWeight: "5"
+  # NEW: Migration job configuration
+  migrate:
+    enabled: true
+    # Specify image containing the 'journey' binary
+    image:
+      repository: dbjourney/journey # Use the official image
+      tag: latest # Or pin to a specific version from Docker Hub
+      pullPolicy: IfNotPresent
+    # path inside the container where migration files will be mounted from ConfigMap
+    migrationsPath: "/db/migrations"
+    # Journey command expects path relative to where it's run, or use absolute path
+    commandPathArg: "/db/migrations" # Use the mount path directly for --path arg
+    hookWeight: "10" # Run after scylla-init
+    # Add resource limits/requests if needed
+    resources: {}
   resources: {}
     # limits:
     #   cpu: "2"

@@ -1,0 +1,70 @@
+{{- if and .Values.scylla.enabled .Values.scylla.migrate.enabled }}
+{{- $fullName := include "gochat.fullname" . -}}
+{{- $apiImageRepo := .Values.api.image.repository -}}
+{{- $apiImageTag := .Values.api.image.tag | default .Chart.AppVersion -}}
+{{- $apiImagePolicy := .Values.api.image.pullPolicy -}}
+{{- $migrateImageRepo := .Values.scylla.migrate.image.repository | default $apiImageRepo -}}
+{{- $migrateImageTag := .Values.scylla.migrate.image.tag | default $apiImageTag -}}
+{{- $migrateImagePolicy := .Values.scylla.migrate.image.pullPolicy | default $apiImagePolicy -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $fullName }}-scylla-migrate
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: scylla-migrate
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "{{ .Values.scylla.migrate.hookWeight | default "10" }}" # Run after init job
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      name: {{ $fullName }}-scylla-migrate
+      labels:
+        {{- include "gochat.labels" . | nindent 8 }}
+        app.kubernetes.io/component: scylla-migrate
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: scylla-migrate
+          image: "{{ $migrateImageRepo }}:{{ $migrateImageTag }}"
+          imagePullPolicy: {{ $migrateImagePolicy }}
+          command: [
+            "journey",
+            "--url",
+            "cassandra://{{ $fullName }}-scylla/{{ .Values.scylla.init.keyspace }}",
+            "--path",
+            "{{ .Values.scylla.migrate.commandPathArg | default "/db/migrations" }}",
+            "migrate",
+            "up"
+          ]
+          env:
+            # Add authentication env vars if journey binary reads them, otherwise adjust --url format
+            # - name: SCYLLA_USER
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: {{ $fullName }}-scylla-creds # Or your secret name
+            #       key: username
+            # - name: SCYLLA_PASSWORD
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: {{ $fullName }}-scylla-creds # Or your secret name
+            #       key: password
+          {{- with .Values.scylla.migrate.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: migration-files
+              mountPath: "{{ .Values.scylla.migrate.migrationsPath | default "/db/migrations" }}"
+      # Add volumes/volumeMounts if the migrate command needs access to files (e.g., .sql migration files)
+      # Example:
+      volumes:
+        - name: migration-files
+          configMap:
+            name: {{ include "gochat.fullname" . }}-scylla-migrations
+      # volumeMounts:
+      #   - name: migration-files
+      #     mountPath: /app/migrations # Path where `go run` expects files
+{{- end }} 

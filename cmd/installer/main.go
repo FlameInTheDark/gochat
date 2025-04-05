@@ -32,8 +32,9 @@ const (
 	minioPassInput   = 1
 	grafanaPassInput = 2
 	domainNameInput  = 3
-	tlsSecretInput   = 4 // New index for TLS Secret
-	numConfigFields  = 5 // Increment total text inputs
+	tlsSecretInput   = 4
+	// ingressClassInput = 5 // Removed - now using list selection
+	numConfigFields = 5 // Decrement total text inputs
 )
 
 var ( // Define globally for easy use in View
@@ -50,28 +51,30 @@ var ( // Define globally for easy use in View
 type state int
 
 const (
-	checkingPrerequisites state = iota // 0 - Check git, docker, compose
-	prerequisitesFailed                // 1
-	selectInstallTarget                // 2
-	checkingKubePrereqs                // 3 - Check helm, kubectl
-	kubePrereqsFailed                  // 4
-	fetchingContexts                   // 5
-	fetchContextError                  // 6
-	promptNamespace                    // 7
-	promptMinioPass                    // 8
-	promptGrafanaPass                  // 9
-	promptDomainName                   // 10
-	promptTlsSecret                    // 11 (New State)
-	selectContext                      // 12 (Renumbered)
-	cloningRepo                        // 13 (Renumbered)
-	cloneError                         // 14 (Renumbered)
-	installing                         // 15 (Renumbered) - K8s specific
-	installFinished                    // 16 (Renumbered) - K8s specific
-	installError                       // 17 (Renumbered) - K8s specific
-	runningCompose                     // 18 (Renumbered)
-	composeFinished                    // 19 (Renumbered)
-	composeError                       // 20 (Renumbered)
-	noKubeContextsWarning              // 21 (Renumbered)
+	checkingPrerequisites  state = iota // 0 - Check git, docker, compose
+	prerequisitesFailed                 // 1
+	selectInstallTarget                 // 2
+	checkingKubePrereqs                 // 3 - Check helm, kubectl
+	kubePrereqsFailed                   // 4
+	fetchingContexts                    // 5
+	fetchContextError                   // 6
+	promptNamespace                     // 7
+	promptMinioPass                     // 8
+	promptGrafanaPass                   // 9
+	promptDomainName                    // 10
+	promptTlsSecret                     // 11
+	fetchingIngressClasses              // 12 (New State)
+	selectIngressClass                  // 13 (New State)
+	selectContext                       // 14 (Renumbered)
+	cloningRepo                         // 15 (Renumbered)
+	cloneError                          // 16 (Renumbered)
+	installing                          // 17 (Renumbered) - K8s specific
+	installFinished                     // 18 (Renumbered) - K8s specific
+	installError                        // 19 (Renumbered) - K8s specific
+	runningCompose                      // 20 (Renumbered)
+	composeFinished                     // 21 (Renumbered)
+	composeError                        // 22 (Renumbered)
+	noKubeContextsWarning               // 23 (Renumbered)
 )
 
 // --- List Item Delegate ---
@@ -111,6 +114,12 @@ type kubeContextsMsg struct {
 	err      error
 }
 
+// New message for ingress classes
+type kubeIngressClassesMsg struct {
+	classes []string
+	err     error
+}
+
 type composeResultMsg struct {
 	output string
 	err    error
@@ -134,18 +143,20 @@ type model struct {
 	// Target
 	installTarget string // "kubernetes" or "docker"
 
-	// Kube Contexts
-	kubeContexts    []list.Item
-	selectedContext string
+	// Kube Contexts & Classes
+	kubeContexts       []list.Item
+	selectedContext    string
+	kubeIngressClasses []list.Item // New field for fetched classes
+	ingressClassName   string      // Store the selected class name
 
 	// Stored selections (K8s specific)
 	namespace            string
 	minioPassword        string
 	grafanaPassword      string
 	domainName           string
-	tlsSecretName        string // New field for TLS secret
-	minioPassGenerated   bool   // Flag to indicate if MinIO pass was generated
-	grafanaPassGenerated bool   // Flag to indicate if Grafana pass was generated
+	tlsSecretName        string
+	minioPassGenerated   bool // Flag to indicate if MinIO pass was generated
+	grafanaPassGenerated bool // Flag to indicate if Grafana pass was generated
 
 	// Execution Details
 	helmChartPath  string
@@ -286,11 +297,11 @@ func runHelmInstallCmd(m model) tea.Cmd {
 		// Configure TLS if a secret name and domain were provided
 		if useDomain && tlsSecretName != "" {
 			args = append(args, "--set", fmt.Sprintf("ingress.tlsSecretName=%s", tlsSecretName))
-		} else {
-			// Explicitly disable TLS in values if not configured via prompt
-			// This overrides any potential default in values.yaml if user leaves secret blank
-			// args = append(args, "--set", "ingress.tls={}") // Keep this? Or rely on empty tlsSecretName?
-			// Let's rely on empty tlsSecretName and the template logic. Remove the explicit disable.
+		}
+
+		// Add ingress class if one was selected
+		if m.ingressClassName != "" {
+			args = append(args, "--set", fmt.Sprintf("ingress.className=%s", m.ingressClassName))
 		}
 
 		// Add context flag
@@ -327,6 +338,35 @@ func getKubeContextsCmd() tea.Cmd {
 			contexts = []string{}
 		}
 		return kubeContextsMsg{contexts: contexts, err: nil}
+	}
+}
+
+// getKubeIngressClassesCmd fetches available Kubernetes Ingress Classes
+func getKubeIngressClassesCmd(selectedContext string) tea.Cmd {
+	return func() tea.Msg {
+		args := []string{"get", "ingressclass", "-o", "jsonpath='{.items[*].metadata.name}'"}
+		if selectedContext != "" {
+			args = append(args, "--context", selectedContext)
+		}
+		cmd := exec.Command("kubectl", args...)
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		err := cmd.Run()
+		if err != nil {
+			// Don't treat "no resources found" as a fatal error for classes
+			if strings.Contains(stderr.String(), "no resources found") {
+				return kubeIngressClassesMsg{classes: []string{}, err: nil}
+			}
+			return kubeIngressClassesMsg{err: fmt.Errorf("failed to get ingress classes: %w\nStderr: %s", err, stderr.String())}
+		}
+		// Output might have single quotes around it from jsonpath, remove them
+		output := strings.Trim(strings.TrimSpace(stdout.String()), "'")
+		classes := strings.Fields(output) // Split by space
+		if len(classes) == 1 && classes[0] == "" {
+			classes = []string{}
+		}
+		return kubeIngressClassesMsg{classes: classes, err: nil}
 	}
 }
 
@@ -392,13 +432,13 @@ func initialModel() model {
 	t.Width = 50
 	inputs[domainNameInput] = t
 
-	t = textinput.New() // TLS Secret Name (4 - NEW)
+	t = textinput.New() // TLS Secret Name (4)
 	t.Placeholder = "my-tls-secret (leave blank for HTTP)"
 	t.CharLimit = 253 // Max K8s name length
 	t.Width = 50
 	inputs[tlsSecretInput] = t
 
-	// --- List (reused for target, context) ---
+	// --- List (reused for target, context, ingress class) ---
 	delegate := list.NewDefaultDelegate()
 	delegate.SetHeight(1)
 	delegate.SetSpacing(0)
@@ -418,13 +458,14 @@ func initialModel() model {
 	listView.Styles.Title = blurredStyle
 
 	return model{
-		state:        checkingPrerequisites,
-		spinner:      s,
-		prereqChecks: make(map[string]bool),
-		inputs:       inputs,
-		list:         listView,
-		kubeContexts: []list.Item{},
-		domainName:   "gochat.local",
+		state:              checkingPrerequisites,
+		spinner:            s,
+		prereqChecks:       make(map[string]bool),
+		inputs:             inputs,
+		list:               listView,
+		kubeContexts:       []list.Item{},
+		kubeIngressClasses: []list.Item{},
+		domainName:         "gochat.local",
 		// tlsSecretName initialized to empty string by default
 		// Initialize password generation flags
 		minioPassGenerated:   false,
@@ -463,172 +504,160 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-
-		// --- Check if an input field is focused ---
+		// Determine if an input field has focus
 		inputFocused := false
-		// Only check inputs relevant to the current K8s config states
+		focusedInputIndex := -1
 		switch m.state {
 		case promptNamespace, promptMinioPass, promptGrafanaPass, promptDomainName, promptTlsSecret:
 			for i := range m.inputs {
 				if m.inputs[i].Focused() {
 					inputFocused = true
+					focusedInputIndex = i
 					break
 				}
 			}
 		}
-		// -----------------------------------------
 
-		// Handle global quit ('q' or 'ctrl+c') ONLY if no input is focused
 		if !inputFocused {
+			// Handle keys when input is NOT focused (list navigation, global quit)
 			switch msg.String() {
 			case "ctrl+c", "q":
-				// Cleanup temp dir on quit if it exists
 				if m.clonedRepoPath != "" {
 					_ = os.RemoveAll(m.clonedRepoPath)
 				}
 				return m, tea.Quit
-			}
-		}
-
-		// --- Handle Enter key for state transitions ---
-		// (This part remains largely the same as before)
-		if msg.String() == "enter" {
-			switch m.state {
-			case selectInstallTarget:
-				if i, ok := m.list.SelectedItem().(item); ok {
-					m.installTarget = i.FilterValue()
-				} else {
-					return m, nil // Should not happen
-				}
-				m.list.Styles.Title = blurredStyle
-
-				if m.installTarget == "kubernetes" {
-					m.state = checkingKubePrereqs
-					cmds = append(cmds, m.spinner.Tick, checkCommand("helm"), checkCommand("kubectl"))
-				} else if m.installTarget == "docker" {
+			case "enter":
+				switch m.state {
+				case selectInstallTarget:
+					if i, ok := m.list.SelectedItem().(item); ok {
+						m.installTarget = i.FilterValue()
+					} else {
+						return m, nil // Should not happen
+					}
+					m.list.Styles.Title = blurredStyle
+					if m.installTarget == "kubernetes" {
+						m.state = checkingKubePrereqs
+						cmds = append(cmds, m.spinner.Tick, checkCommand("helm"), checkCommand("kubectl"))
+					} else if m.installTarget == "docker" {
+						m.state = cloningRepo
+						cmds = append(cmds, m.spinner.Tick, runGitCloneCmd(gochatRepoURL, branchToClone))
+					} else {
+						m.state = prerequisitesFailed
+						m.errorMessage = "Invalid installation target selected."
+					}
+					return m, tea.Batch(cmds...)
+				case selectContext:
+					if len(m.kubeContexts) > 0 {
+						if i, ok := m.list.SelectedItem().(item); ok {
+							m.selectedContext = i.Title()
+						}
+					}
 					m.state = cloningRepo
-					// Pass the determined branch to runGitCloneCmd
+					m.list.Styles.Title = blurredStyle
 					cmds = append(cmds, m.spinner.Tick, runGitCloneCmd(gochatRepoURL, branchToClone))
-				} else {
-					m.state = prerequisitesFailed
-					m.errorMessage = "Invalid installation target selected."
+					return m, tea.Batch(cmds...)
+				case noKubeContextsWarning:
+					m.state = promptNamespace
+					return m, m.inputs[namespaceInput].Focus()
+				case selectIngressClass:
+					if i, ok := m.list.SelectedItem().(item); ok {
+						m.ingressClassName = i.Title() // Store selected class name
+					} else {
+						m.ingressClassName = "" // Explicitly set to empty if no selection/empty list
+					}
+					m.state = selectContext // Proceed to context selection
+					m.list.Title = "Select Kubernetes Context:"
+					m.list.SetItems(m.kubeContexts)
+					m.list.Styles.Title = focusedStyle
+					m.errorMessage = "" // Clear any potential previous warning/error messages
+					return m, nil       // List focus is implicit, no specific command needed
 				}
-				return m, tea.Batch(cmds...)
+			}
+			// If not quit and not handled enter, pass to list for navigation
+			m.list, cmd = m.list.Update(msg)
+			return m, cmd
 
-			case checkingKubePrereqs, fetchingContexts:
-				// Spinner states, transitions happen on msg receipt
+		} else {
+			// Handle keys when input IS focused
+			switch msg.String() {
+			case "enter":
+				switch m.state {
+				case promptNamespace:
+					m.namespace = strings.ToLower(m.inputs[namespaceInput].Value())
+					if strings.TrimSpace(m.namespace) == "" {
+						m.namespace = "gochat"
+					}
+					m.state = promptMinioPass
+					m.inputs[namespaceInput].Blur()
+					return m, m.inputs[minioPassInput].Focus()
+				case promptMinioPass:
+					pass := m.inputs[minioPassInput].Value()
+					if pass == "" {
+						generatedPass, err := generatePassword()
+						if err != nil {
+							m.state = prerequisitesFailed
+							m.errorMessage = fmt.Sprintf("Failed to generate MinIO password: %v", err)
+							return m, tea.Quit
+						}
+						m.minioPassword = generatedPass
+						m.minioPassGenerated = true
+					} else {
+						m.minioPassword = pass
+						m.minioPassGenerated = false
+					}
+					m.state = promptGrafanaPass
+					m.inputs[minioPassInput].Blur()
+					return m, m.inputs[grafanaPassInput].Focus()
+				case promptGrafanaPass:
+					pass := m.inputs[grafanaPassInput].Value()
+					if pass == "" {
+						generatedPass, err := generatePassword()
+						if err != nil {
+							m.state = prerequisitesFailed
+							m.errorMessage = fmt.Sprintf("Failed to generate Grafana password: %v", err)
+							return m, tea.Quit
+						}
+						m.grafanaPassword = generatedPass
+						m.grafanaPassGenerated = true
+					} else {
+						m.grafanaPassword = pass
+						m.grafanaPassGenerated = false
+					}
+					m.state = promptDomainName
+					m.inputs[grafanaPassInput].Blur()
+					return m, m.inputs[domainNameInput].Focus()
+				case promptDomainName:
+					enteredDomain := m.inputs[domainNameInput].Value()
+					if enteredDomain == "" {
+						// Keep default m.domainName = "gochat.local"
+					} else {
+						m.domainName = enteredDomain
+					}
+					m.state = promptTlsSecret
+					m.inputs[domainNameInput].Blur()
+					return m, m.inputs[tlsSecretInput].Focus()
+				case promptTlsSecret:
+					m.tlsSecretName = m.inputs[tlsSecretInput].Value()
+					m.state = fetchingIngressClasses
+					m.inputs[tlsSecretInput].Blur()
+					return m, tea.Batch(m.spinner.Tick, getKubeIngressClassesCmd(m.selectedContext))
+				}
+				// Enter was handled by state change above
 				return m, nil
 
-			case promptNamespace:
-				// Convert to lowercase before storing
-				m.namespace = strings.ToLower(m.inputs[namespaceInput].Value())
-				// If the result is empty after trimming spaces, use the new default 'gochat'
-				if strings.TrimSpace(m.namespace) == "" {
-					m.namespace = "gochat" // Default to gochat
+			default:
+				// Pass other keys (like characters) to the focused input
+				if focusedInputIndex != -1 {
+					m.inputs[focusedInputIndex], cmd = m.inputs[focusedInputIndex].Update(msg)
+					// Ensure styles are applied (might be redundant but safe)
+					m.inputs[focusedInputIndex].PromptStyle = focusedStyle
+					m.inputs[focusedInputIndex].TextStyle = focusedStyle
+					return m, cmd
 				}
-				m.state = promptMinioPass
-				m.inputs[namespaceInput].Blur()
-				return m, m.inputs[minioPassInput].Focus()
-
-			case promptMinioPass:
-				pass := m.inputs[minioPassInput].Value()
-				if pass == "" {
-					// Generate password if empty
-					generatedPass, err := generatePassword()
-					if err != nil {
-						// Handle error - perhaps show an error state? For now, log and exit?
-						m.state = prerequisitesFailed // Reusing an error state for simplicity
-						m.errorMessage = fmt.Sprintf("Failed to generate MinIO password: %v", err)
-						return m, tea.Quit // Or just return m, nil to show error view
-					}
-					m.minioPassword = generatedPass
-					m.minioPassGenerated = true
-				} else {
-					m.minioPassword = pass
-					m.minioPassGenerated = false
-				}
-				m.state = promptGrafanaPass
-				m.inputs[minioPassInput].Blur()
-				return m, m.inputs[grafanaPassInput].Focus()
-
-			case promptGrafanaPass:
-				pass := m.inputs[grafanaPassInput].Value()
-				if pass == "" {
-					// Generate password if empty
-					generatedPass, err := generatePassword()
-					if err != nil {
-						m.state = prerequisitesFailed
-						m.errorMessage = fmt.Sprintf("Failed to generate Grafana password: %v", err)
-						return m, tea.Quit
-					}
-					m.grafanaPassword = generatedPass
-					m.grafanaPassGenerated = true
-				} else {
-					m.grafanaPassword = pass
-					m.grafanaPassGenerated = false
-				}
-				m.state = promptDomainName // Go to domain name prompt
-				m.inputs[grafanaPassInput].Blur()
-				return m, m.inputs[domainNameInput].Focus()
-
-			case promptDomainName:
-				enteredDomain := m.inputs[domainNameInput].Value()
-				if enteredDomain == "" {
-					// Use default
-				} else {
-					m.domainName = enteredDomain
-				}
-				m.state = promptTlsSecret // Next: TLS Secret (NEW)
-				m.inputs[domainNameInput].Blur()
-				return m, m.inputs[tlsSecretInput].Focus() // Focus TLS secret input
-
-			case promptTlsSecret: // NEW state handler
-				// Store secret name (blank means no TLS)
-				m.tlsSecretName = m.inputs[tlsSecretInput].Value()
-
-				m.state = selectContext // Proceed to context selection
-				m.inputs[tlsSecretInput].Blur()
-				m.list.Title = "Select Kubernetes Context:"
-				m.list.SetItems(m.kubeContexts)
-				m.list.Styles.Title = focusedStyle
-				return m, nil // Focus list
-
-			case selectContext:
-				if len(m.kubeContexts) > 0 { // Only select if list isn't empty
-					if i, ok := m.list.SelectedItem().(item); ok {
-						m.selectedContext = i.Title()
-					}
-				}
-				m.state = cloningRepo
-				m.list.Styles.Title = blurredStyle
-				// Pass the determined branch to runGitCloneCmd
-				cmds = append(cmds, m.spinner.Tick, runGitCloneCmd(gochatRepoURL, branchToClone))
-				return m, tea.Batch(cmds...)
-
-			case noKubeContextsWarning:
-				m.state = promptNamespace // Proceed to config without context selection
-				// No need to prep list items here
-				return m, m.inputs[namespaceInput].Focus()
+				// Should not happen: input focused but index is -1
+				return m, nil
 			}
-			// If enter was handled for state change, return now
-			if len(cmds) > 0 { // Check if cmds were added (e.g., Focus change)
-				return m, tea.Batch(cmds...)
-			}
-			// If enter didn't trigger a state change above (e.g., required field empty)
-			// AND an input is focused, let the input handle Enter if needed
-			if inputFocused {
-				cmd = m.updateActiveComponent(msg) // Let the focused input handle Enter
-				return m, cmd
-			}
-			// If enter wasn't handled by state change or input, do nothing
-			return m, nil
 		}
-		// --- End Enter key handling ---
-
-		// --- Handle other keys (passed to active component) ---
-		// If not quitting and not Enter, pass the key to the active component
-		cmd = m.updateActiveComponent(msg)
-		return m, cmd
 
 	// --- Other message types ---
 	case checkMsg:
@@ -788,10 +817,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case kubeIngressClassesMsg:
+		if msg.err != nil {
+			m.state = fetchContextError
+			m.finalError = msg.err
+		} else {
+			m.kubeIngressClasses = make([]list.Item, len(msg.classes))
+			for i, class := range msg.classes {
+				m.kubeIngressClasses[i] = item{title: class, desc: ""}
+			}
+			m.state = selectIngressClass
+			m.list.SetItems(m.kubeIngressClasses)
+			m.list.Styles.Title = focusedStyle
+			cmds = append(cmds, m.inputs[namespaceInput].Focus())
+		}
+		return m, tea.Batch(cmds...)
+
 	case spinner.TickMsg:
 		// Only tick spinner in active spinner states
 		switch m.state {
-		case checkingPrerequisites, checkingKubePrereqs, fetchingContexts, cloningRepo, installing, runningCompose:
+		case checkingPrerequisites, checkingKubePrereqs, fetchingContexts, fetchingIngressClasses, cloningRepo, installing, runningCompose:
 			m.spinner, cmd = m.spinner.Update(msg)
 			cmds = append(cmds, cmd)
 		}
@@ -843,6 +888,15 @@ func (m *model) updateActiveComponent(msg tea.Msg) tea.Cmd {
 			m.inputs[tlsSecretInput].TextStyle = focusedStyle
 			m.inputs[tlsSecretInput], cmd = m.inputs[tlsSecretInput].Update(msg)
 		}
+	case fetchingIngressClasses:
+		if m.inputs[namespaceInput].Focused() {
+			m.inputs[namespaceInput].PromptStyle = focusedStyle
+			m.inputs[namespaceInput].TextStyle = focusedStyle
+			m.inputs[namespaceInput], cmd = m.inputs[namespaceInput].Update(msg)
+		}
+	case selectIngressClass:
+		m.list.Styles.Title = focusedStyle
+		m.list, cmd = m.list.Update(msg)
 	case selectContext:
 		m.list.Styles.Title = focusedStyle
 		m.list, cmd = m.list.Update(msg)
@@ -932,14 +986,14 @@ func (m model) View() string {
 		b.WriteString(helpStyle.Render("Press Enter to proceed with the installation using the default context (which might fail if not configured), or q to quit."))
 
 	// --- K8s Config Steps (Updated) ---
-	case promptNamespace, promptMinioPass, promptGrafanaPass, promptDomainName, promptTlsSecret, selectContext: // Added promptTlsSecret
+	case promptNamespace, promptMinioPass, promptGrafanaPass, promptDomainName, promptTlsSecret:
 		if m.installTarget != "kubernetes" {
 			b.WriteString(errorStyle.Render("Internal state error: Unexpected configuration step for Docker target."))
 			break // Should not happen
 		}
 		b.WriteString("Kubernetes Configuration Steps:\n")
 		// Updated list of steps
-		steps := []string{"Namespace", "MinIO Password", "Grafana Password", "Domain Name", "TLS Secret Name", "Kube Context"} // Added TLS step
+		steps := []string{"Namespace", "MinIO Password", "Grafana Password", "Domain Name", "TLS Secret Name"}
 		currentStateIndex := -1
 
 		switch m.state { // Map state to step index
@@ -952,9 +1006,7 @@ func (m model) View() string {
 		case promptDomainName:
 			currentStateIndex = 3
 		case promptTlsSecret:
-			currentStateIndex = 4 // New mapping
-		case selectContext:
-			currentStateIndex = 5 // Renumbered
+			currentStateIndex = 4
 		}
 
 		for i, step := range steps {
@@ -967,8 +1019,8 @@ func (m model) View() string {
 				switch i {
 				case 0:
 					value = fmt.Sprintf(" (%s)", m.namespace)
-					if m.namespace == "" {
-						value = " (default)"
+					if m.namespace == "" || m.namespace == "gochat" {
+						value = " (default: gochat)"
 					}
 				case 1:
 					value = " (***)" // MinIO Pass
@@ -983,12 +1035,7 @@ func (m model) View() string {
 					value = fmt.Sprintf(" (%s)", m.tlsSecretName)
 					if m.tlsSecretName == "" {
 						value = " (HTTP only)"
-					} // TLS Secret (NEW)
-				case 5:
-					value = fmt.Sprintf(" (%s)", m.selectedContext)
-					if m.selectedContext == "" {
-						value = " (default)"
-					} // Kube Context
+					} // TLS Secret
 				}
 			} else if i == currentStateIndex {
 				style = selectedItemStyle
@@ -1000,24 +1047,37 @@ func (m model) View() string {
 		// Render the active component view
 		switch m.state {
 		case promptNamespace:
-			b.WriteString("Enter Kubernetes Namespace (leave blank for 'default'):\n")
+			b.WriteString("Enter Kubernetes Namespace (leave blank for 'gochat'):\n")
 			b.WriteString(m.inputs[namespaceInput].View())
 		case promptMinioPass:
-			b.WriteString("Enter MinIO Root Password (required):\n")
+			b.WriteString("Enter MinIO Root Password (leave blank to generate):\n")
 			b.WriteString(m.inputs[minioPassInput].View())
 		case promptGrafanaPass:
-			b.WriteString("Enter Grafana Admin Password (required):\n")
+			b.WriteString("Enter Grafana Admin Password (leave blank to generate):\n")
 			b.WriteString(m.inputs[grafanaPassInput].View())
 		case promptDomainName:
 			b.WriteString("Enter Domain Name for Ingress (e.g., gochat.example.com):\n")
 			b.WriteString(m.inputs[domainNameInput].View())
-		case promptTlsSecret: // NEW view case
+		case promptTlsSecret:
 			b.WriteString("Enter Kubernetes TLS Secret Name (leave blank to disable HTTPS):\n")
 			b.WriteString(m.inputs[tlsSecretInput].View())
-		case selectContext:
-			b.WriteString(m.list.View()) // Show context list
 		}
 		b.WriteString("\n" + helpStyle.Render("Press Enter to confirm, Ctrl+C or q to quit."))
+
+	case fetchingIngressClasses:
+		b.WriteString(m.spinner.View() + " Fetching Kubernetes Ingress Classes...\n")
+		// Display error/warning message if any occurred during fetch
+		if m.errorMessage != "" {
+			b.WriteString(errorStyle.Render(m.errorMessage) + "\n")
+		}
+
+	case selectIngressClass:
+		b.WriteString(m.list.View()) // Show ingress class list
+		// Display error/warning message if any occurred during fetch
+		if m.errorMessage != "" {
+			b.WriteString(errorStyle.Render(m.errorMessage) + "\n")
+		}
+		b.WriteString("\n" + helpStyle.Render("Use arrow keys to navigate, Enter to select, q to quit."))
 
 	case cloningRepo:
 		branchDesc := "default branch"
