@@ -25,6 +25,10 @@ jobs:
         with:
           go-version: '1.21' # Specify your Go version
 
+      # Download dependencies
+      - name: Download Go Modules
+        run: go mod download
+
       - name: Build Go Binaries (Cross-Platform)
         id: build
         run: |
