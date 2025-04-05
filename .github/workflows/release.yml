@@ -61,23 +61,20 @@ jobs:
         continue-on-error: true
 
       # Check outputs from semantic-release (these might vary slightly by version/plugins)
-      - name: Debug semantic release outputs
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: |
-          echo "New release published: ${{ steps.semantic.outputs.new_release_published }}"
-          echo "New release version: ${{ steps.semantic.outputs.new_release_version }}"
-          echo "New release tag: ${{ steps.semantic.outputs.new_release_git_tag }}"
+      - name: Debug semantic-release step outputs
+        if: always() # Always run this step
+        run: echo "${{ toJSON(steps.semantic.outputs) }}"
 
       # --- Build and Upload only if a new release was created ---
 
       - name: Set up Go
-        if: steps.semantic.outputs.new_release_git_tag # Check if tag was generated
+        if: steps.semantic.outputs.new_release_published == 'true' # Revert condition
         uses: actions/setup-go@v5
         with:
           go-version: '1.21' # Specify your Go version
 
       - name: Build Go Binaries (Cross-Platform)
-        if: steps.semantic.outputs.new_release_git_tag # Check if tag was generated
+        if: steps.semantic.outputs.new_release_published == 'true' # Revert condition
         id: build
         run: |
           set -e # Exit on error
@@ -109,15 +106,15 @@ jobs:
           ls -R ${OUTPUT_DIR}
 
       - name: Upload Release Assets using gh CLI
-        if: steps.semantic.outputs.new_release_git_tag # Check if tag was generated
+        if: steps.semantic.outputs.new_release_published == 'true' # Revert condition
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Get the tag name from semantic-release outputs
-          RELEASE_TAG: ${{ steps.semantic.outputs.new_release_git_tag }}
+          # Construct tag name from version output
+          RELEASE_TAG: v${{ steps.semantic.outputs.new_release_version }}
         run: |
           echo "Uploading assets for tag: $RELEASE_TAG"
-          if [ -z "$RELEASE_TAG" ]; then
-            echo "Error: Release tag not found from semantic-release step."
+          if [ -z "$RELEASE_TAG" ] || [ "$RELEASE_TAG" == "v" ]; then
+            echo "Error: Release tag could not be determined from semantic-release step version output."
             exit 1
           fi
           gh release upload "$RELEASE_TAG" release_builds/* --clobber
