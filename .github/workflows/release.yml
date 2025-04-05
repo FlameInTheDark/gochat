@@ -1,4 +1,4 @@
-name: Release Installer
+name: Semantic Release
 
 # Trigger the workflow on pushes to branches matching main
 on:
@@ -7,7 +7,7 @@ on:
       - main # Trigger on push to main
 
 permissions:
-  contents: write # To push tags/commits, create releases, upload assets
+  contents: write # To push tags/commits, create releases
   issues: write   # Optional: semantic-release can comment on issues/PRs
   pull-requests: write # Optional: semantic-release can comment on issues/PRs
 
@@ -22,13 +22,12 @@ jobs:
       new_release_tag: ${{ steps.semantic.outputs.new_release_git_tag }}     # Output the tag name
 
     steps:
-      # 1. Checkout code
+      # 1. Checkout code using PAT for push permissions
       - name: Check out code
         uses: actions/checkout@v4
         with:
-          # Fetch all history so semantic-release can analyze commits
+          token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }} # Use PAT
           fetch-depth: 0
-          # Persist credentials needed for the push-back step by semantic-release/git
           persist-credentials: false
 
       # 2. Setup Node.js
@@ -49,12 +48,15 @@ jobs:
             @semantic-release/git \
             @semantic-release/github
 
-      # 4. Run semantic-release
+      # 4. Run semantic-release using PAT
       - name: Run semantic-release
-        id: semantic
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # Run semantic-release and capture outputs
+          GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }} # Use PAT for API calls and pushing tag
+          # Optional: Configure Git user if needed by semantic-release/git plugin
+          # GIT_AUTHOR_NAME: github-actions[bot]
+          # GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          # GIT_COMMITTER_NAME: github-actions[bot]
+          # GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         run: npx semantic-release
         # Continue workflow even if semantic-release determines no release is needed
         continue-on-error: true
