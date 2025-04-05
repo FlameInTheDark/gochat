@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,6 +15,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
+
+// Define the dev flag globally or pass it down
+var devBranch bool
 
 // --- Constants ---
 const (
@@ -156,20 +160,38 @@ func checkCommand(name string) tea.Cmd {
 	}
 }
 
-// runGitCloneCmd clones the repository
-func runGitCloneCmd(repoURL string) tea.Cmd {
+// runGitCloneCmd clones the specified branch of the repository
+func runGitCloneCmd(repoURL string, branch string) tea.Cmd {
 	return func() tea.Msg {
 		destPath, err := os.MkdirTemp("", "gochat-installer-*")
 		if err != nil {
 			return gitCloneResultMsg{err: fmt.Errorf("failed to create temp dir: %w", err)}
 		}
-		cmd := exec.Command("git", "clone", "--depth=1", repoURL, destPath)
+
+		// Base git clone command arguments
+		args := []string{"clone", "--depth=1"}
+
+		// Add branch argument if a specific branch is requested
+		if branch != "" {
+			args = append(args, "-b", branch)
+		}
+
+		// Add repo URL and destination path
+		args = append(args, repoURL, destPath)
+
+		cmd := exec.Command("git", args...) // Use dynamic args
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr
+
 		err = cmd.Run()
 		if err != nil {
 			_ = os.RemoveAll(destPath)
-			return gitCloneResultMsg{err: fmt.Errorf("git clone failed: %w\nStderr: %s", err, stderr.String())}
+			// Include branch name in error if applicable
+			errorMsg := fmt.Sprintf("git clone failed: %v", err)
+			if branch != "" {
+				errorMsg = fmt.Sprintf("git clone of branch '%s' failed: %v", branch, err)
+			}
+			return gitCloneResultMsg{err: fmt.Errorf("%s\nStderr: %s", errorMsg, stderr.String())}
 		}
 		return gitCloneResultMsg{path: destPath, err: nil}
 	}
@@ -362,6 +384,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
+	// Determine the branch to clone based on the flag
+	branchToClone := "" // Default branch (main/master)
+	if devBranch {
+		branchToClone = "dev"
+	}
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetWidth(msg.Width / 2)
@@ -395,7 +423,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, m.spinner.Tick, checkCommand("helm"), checkCommand("kubectl"))
 				} else if m.installTarget == "docker" {
 					m.state = cloningRepo
-					cmds = append(cmds, m.spinner.Tick, runGitCloneCmd(gochatRepoURL))
+					cmds = append(cmds, m.spinner.Tick, runGitCloneCmd(gochatRepoURL, branchToClone))
 				} else {
 					m.state = prerequisitesFailed
 					m.errorMessage = "Invalid installation target selected."
@@ -460,7 +488,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.state = cloningRepo
 				m.list.Styles.Title = blurredStyle
-				cmds = append(cmds, m.spinner.Tick, runGitCloneCmd(gochatRepoURL))
+				cmds = append(cmds, m.spinner.Tick, runGitCloneCmd(gochatRepoURL, branchToClone))
 				return m, tea.Batch(cmds...)
 
 			case noKubeContextsWarning:
@@ -914,6 +942,10 @@ func (m model) View() string {
 // --- Main ---
 
 func main() {
+	// Define and parse the --dev flag
+	flag.BoolVar(&devBranch, "dev", false, "Install from the dev branch instead of default")
+	flag.Parse()
+
 	// Use a model pointer
 	m := initialModel()
 	p := tea.NewProgram(&m) // Pass pointer to model
