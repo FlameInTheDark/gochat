@@ -71,13 +71,13 @@ jobs:
       # --- Build and Upload only if a new release was created ---
 
       - name: Set up Go
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.semantic.outputs.new_release_git_tag # Check if tag was generated
         uses: actions/setup-go@v5
         with:
           go-version: '1.21' # Specify your Go version
 
       - name: Build Go Binaries (Cross-Platform)
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.semantic.outputs.new_release_git_tag # Check if tag was generated
         id: build
         run: |
           set -e # Exit on error
@@ -109,7 +109,7 @@ jobs:
           ls -R ${OUTPUT_DIR}
 
       - name: Upload Release Assets using gh CLI
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.semantic.outputs.new_release_git_tag # Check if tag was generated
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Get the tag name from semantic-release outputs
