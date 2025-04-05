@@ -18,8 +18,8 @@ jobs:
     # Prevent duplicate runs for pushes that include multiple commits
     concurrency: ${{ github.workflow }}-${{ github.ref }}
     outputs:
-      new_release_published: ${{ steps.semantic.outputs.new_release_published }} # Output if release was published
-      new_release_tag: ${{ steps.semantic.outputs.new_release_git_tag }}     # Output the tag name
+      # Output the version number determined by semantic-release
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
 
     steps:
       # 1. Checkout code using PAT for push permissions
@@ -50,6 +50,7 @@ jobs:
 
       # 4. Run semantic-release using PAT
       - name: Run semantic-release
+        id: semantic # Give the step an ID to reference its outputs
         env:
           GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }} # Use PAT for API calls and pushing tag
           # Optional: Configure Git user if needed by semantic-release/git plugin
@@ -61,23 +62,23 @@ jobs:
         # Continue workflow even if semantic-release determines no release is needed
         continue-on-error: true
 
-      # Check outputs from semantic-release (these might vary slightly by version/plugins)
+      # Debugging step (optional but helpful)
       - name: Debug semantic-release step outputs
         if: always() # Always run this step
-        run: echo "${{ toJSON(steps.semantic.outputs) }}"
+        run: echo "Semantic Release Outputs = ${{ toJSON(steps.semantic.outputs) }}"
 
   build-upload:
     name: Build and Upload Binaries
     needs: release # Run after the release job
-    # Only run if semantic-release actually published a release and outputted a tag
-    if: needs.release.outputs.new_release_tag != ''
+    # Only run if semantic-release actually outputted a version
+    if: needs.release.outputs.new_release_version != ''
     runs-on: ubuntu-latest
     steps:
-      # Checkout the specific tag created by semantic-release
+      # Checkout the specific tag created by semantic-release (constructed from version)
       - name: Check out code at specific tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.release.outputs.new_release_tag }}
+          ref: v${{ needs.release.outputs.new_release_version }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -107,7 +108,11 @@ jobs:
       - name: Upload Release Assets using gh CLI
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ needs.release.outputs.new_release_tag }}
+          RELEASE_TAG: v${{ needs.release.outputs.new_release_version }}
         run: |
           echo "Uploading assets for tag: $RELEASE_TAG"
+          if [ "$RELEASE_TAG" == "v" ]; then # Check if version was empty
+             echo "Error: Release version was empty, cannot determine tag."
+             exit 1
+          fi
           gh release upload "$RELEASE_TAG" release_builds/* --clobber
