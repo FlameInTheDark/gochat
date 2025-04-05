@@ -527,6 +527,57 @@
             }
         },
         "/guild/{guild_id}/channel/{channel_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Get guild channels",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Channel",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_FlameInTheDark_gochat_internal_dto.Channel"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "produces": [
                     "application/json"
@@ -628,6 +679,68 @@
             }
         },
         "/message/channel/{channel_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Message"
+                ],
+                "summary": "Get message",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Start point for messages",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Select direction",
+                        "name": "direction",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Message count limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_FlameInTheDark_gochat_internal_dto.Message"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
             "post": {
                 "produces": [
                     "application/json"
@@ -737,8 +850,59 @@
                 }
             }
         },
-        "/message/{message_id}": {
-            "post": {
+        "/message/channel/{channel_id}/{message_id}": {
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Message"
+                ],
+                "summary": "Delete message",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Message id",
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_FlameInTheDark_gochat_internal_dto.Message"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "patch": {
                 "produces": [
                     "application/json"
                 ],
@@ -751,6 +915,13 @@
                         "type": "integer",
                         "description": "Message id",
                         "name": "message_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
                         "in": "path",
                         "required": true
                     },
@@ -1398,7 +1569,7 @@
                         "$ref": "#/definitions/github_com_FlameInTheDark_gochat_internal_dto.Attachment"
                     }
                 },
-                "author_id": {
+                "author": {
                     "$ref": "#/definitions/github_com_FlameInTheDark_gochat_internal_dto.User"
                 },
                 "channel_id": {
@@ -1409,6 +1580,9 @@
                 },
                 "id": {
                     "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },

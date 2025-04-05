@@ -16,9 +16,6 @@ func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int
 	if err != nil {
 		return nil, nil, nil, false, err
 	}
-	if userID == guild.OwnerId {
-		return nil, nil, nil, true, nil
-	}
 	gc, err := e.gc.GetGuildChannel(ctx, guildID, channelID)
 	if err != nil {
 		return nil, nil, nil, false, err
@@ -26,6 +23,9 @@ func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int
 	channel, err := e.ch.GetChannel(ctx, gc.ChannelId)
 	if err != nil {
 		return nil, nil, nil, false, err
+	}
+	if userID == guild.OwnerId {
+		return &channel, nil, nil, true, nil
 	}
 	var permAll int64
 	if channel.Permissions != nil {

@@ -12,8 +12,8 @@ import (
 const (
 	createMessage         = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, attachments) VALUES (?, ?, ?, ?, ?, ?)`
 	updateMessage         = `UPDATE gochat.messages SET content = ?, edited_at = toTimestamp(now()) WHERE channel_id = ? AND id = ? AND bucket = ?`
-	deleteMessage         = `DELETE FROM gochat.messages WHERE id = ?`
-	deleteChannelMessages = `DELETE FROM gochat.messages WHERE channel_id = ?`
+	deleteMessage         = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id = ?`
+	deleteChannelMessages = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket IN ?`
 	getMessage            = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE id = ? AND channel_id = ? AND bucket = ?`
 	getMessagesBefore     = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND id <= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
 	getMessagesAfter      = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND id >= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
@@ -44,11 +44,11 @@ func (e *Entity) UpdateMessage(ctx context.Context, id, channel_id int64, conten
 	return nil
 }
 
-func (e *Entity) DeleteMessage(ctx context.Context, id int64) error {
+func (e *Entity) DeleteMessage(ctx context.Context, id, channelId int64) error {
 	err := e.c.Session().
 		Query(deleteMessage).
 		WithContext(ctx).
-		Bind(id).
+		Bind(channelId, idgen.GetBucket(id), id).
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to delete message: %w", err)
@@ -56,11 +56,17 @@ func (e *Entity) DeleteMessage(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (e *Entity) DeleteChannelMessages(ctx context.Context, channel_id int64) error {
+func (e *Entity) DeleteChannelMessages(ctx context.Context, channel_id, lastId int64) error {
+	var first, last = idgen.GetBucket(channel_id), idgen.GetBucket(lastId)
+	length := last - first + 1
+	buckets := make([]int64, length)
+	for i := int64(0); i < length; i++ {
+		buckets[i] = first + i
+	}
 	err := e.c.Session().
 		Query(deleteChannelMessages).
 		WithContext(ctx).
-		Bind(channel_id).
+		Bind(channel_id, buckets).
 		Exec()
 	if err != nil && !errors.Is(err, gocql.ErrNotFound) {
 		return fmt.Errorf("unable to delete messages: %w", err)

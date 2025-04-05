@@ -37,7 +37,7 @@ func (e *entity) Send(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
 	channelId := c.Params("channel_id")
-	id, err := strconv.ParseInt(channelId, 10, 64)
+	chid, err := strconv.ParseInt(channelId, 10, 64)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
 	}
@@ -45,7 +45,7 @@ func (e *entity) Send(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	ch, err := e.ch.GetChannel(c.UserContext(), id)
+	ch, err := e.ch.GetChannel(c.UserContext(), chid)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -55,7 +55,7 @@ func (e *entity) Send(c *fiber.Ctx) error {
 	var ok = true
 	var guildId *int64
 	if ch.Type == model.ChannelTypeGuild {
-		gc, err := e.gc.GetGuildByChannel(c.UserContext(), id)
+		gc, err := e.gc.GetGuildByChannel(c.UserContext(), chid)
 		if err != nil && !errors.Is(err, gocql.ErrNotFound) {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
@@ -77,12 +77,12 @@ func (e *entity) Send(c *fiber.Ctx) error {
 			return err
 		}
 		msgid := idgen.Next()
-		err = e.msg.CreateMessage(c.UserContext(), msgid, id, u.Id, req.Content, req.Attachments)
+		err = e.msg.CreateMessage(c.UserContext(), msgid, chid, u.Id, req.Content, req.Attachments)
 		if err := helper.HttpDbError(err, ErrUnableToSendMessage); err != nil {
 			return err
 		}
 
-		err = e.ch.SetLastMessage(c.UserContext(), id, msgid)
+		err = e.ch.SetLastMessage(c.UserContext(), chid, msgid)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
@@ -115,12 +115,12 @@ func (e *entity) Send(c *fiber.Ctx) error {
 			})
 		}
 
-		err = e.mqt.SendChannelMessage(id, &mqmsg.CreateMessage{
+		err = e.mqt.SendChannelMessage(chid, &mqmsg.CreateMessage{
 			GuildId: guildId,
 			Message: resp,
 		})
 		if err != nil {
-			remerr := e.msg.DeleteMessage(c.UserContext(), msgid)
+			remerr := e.msg.DeleteMessage(c.UserContext(), msgid, chid)
 			e.log.Error("unable to send message event", slog.String("error", errors.Join(err, remerr).Error()))
 			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendMessage)
 		}
@@ -135,14 +135,14 @@ func (e *entity) Send(c *fiber.Ctx) error {
 //	@Summary	Get message
 //	@Produce	json
 //	@Tags		Message
-//	@Param		channel_id	path		int64				true	"Channel id"
-//	@Param		from		query		int64	false	"Start point for messages"
-//	@Param		direction		query		string	false	"Select direction"
-//	@Param		limit		query		int	false	"Message count limit"
-//	@Success	200			{object}	dto.Message			"Message"
-//	@failure	400			{string}	string				"Incorrect request body"
-//	@failure	401			{string}	string				"Unauthorized"
-//	@failure	500			{string}	string				"Something bad happened"
+//	@Param		channel_id	path		int64		true	"Channel id"
+//	@Param		from		query		int64		false	"Start point for messages"
+//	@Param		direction	query		string		false	"Select direction"
+//	@Param		limit		query		int			false	"Message count limit"
+//	@Success	200			{object}	dto.Message	"Message"
+//	@failure	400			{string}	string		"Incorrect request body"
+//	@failure	401			{string}	string		"Unauthorized"
+//	@failure	500			{string}	string		"Something bad happened"
 //	@Router		/message/channel/{channel_id} [get]
 func (e *entity) GetMessages(c *fiber.Ctx) error {
 	var req GetMessagesRequest
@@ -174,7 +174,7 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 	if ch.Type == model.ChannelTypeGuildCategory || ch.Type == model.ChannelTypeGuildVoice {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToReadFromThisChannel)
 	}
-	if ch.LastMessage == nil {
+	if ch.LastMessage == 0 {
 		return c.JSON([]dto.Message{})
 	}
 	var ok = true
@@ -203,7 +203,7 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 		switch *req.Direction {
 		case DirectionBefore:
 			if req.From == nil {
-				req.From = ch.LastMessage
+				req.From = &ch.LastMessage
 			}
 			rawmsgs, uids, err = e.msg.GetMessagesBefore(c.UserContext(), ch.Id, *req.From, *req.Limit)
 			if err != nil {
@@ -213,7 +213,7 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 			if req.From == nil {
 				return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetMessage)
 			}
-			rawmsgs, uids, err = e.msg.GetMessagesAfter(c.UserContext(), ch.Id, *req.From, *ch.LastMessage, *req.Limit)
+			rawmsgs, uids, err = e.msg.GetMessagesAfter(c.UserContext(), ch.Id, *req.From, ch.LastMessage, *req.Limit)
 		}
 
 		users, err := e.user.GetUsersList(c.UserContext(), uids)
@@ -312,6 +312,7 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 //	@Produce	json
 //	@Tags		Message
 //	@Param		message_id	path		int64					true	"Message id"
+//	@Param		channel_id	path		int64					true	"Channel id"
 //	@Param		request		body		UpdateMessageRequest	true	"Message data"
 //	@Success	200			{object}	dto.Message				"Message"
 //	@failure	400			{string}	string					"Incorrect request body"
@@ -322,6 +323,9 @@ func (e *entity) Update(c *fiber.Ctx) error {
 	var req UpdateMessageRequest
 	err := c.BodyParser(&req)
 	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	}
+	if req.Content == "" {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
 	channelId := c.Params("channel_id")
@@ -392,6 +396,54 @@ func (e *entity) Update(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 		return c.JSON(resp)
+	}
+	return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+}
+
+// Delete
+//
+//	@Summary	Delete message
+//	@Produce	json
+//	@Tags		Message
+//	@Param		message_id	path		int64		true	"Message id"
+//	@Param		channel_id	path		int64		true	"Channel id"
+//	@Success	200			{object}	dto.Message	"Message"
+//	@failure	400			{string}	string		"Incorrect request body"
+//	@failure	401			{string}	string		"Unauthorized"
+//	@failure	500			{string}	string		"Something bad happened"
+//	@Router		/message/channel/{channel_id}/{message_id} [delete]
+func (e *entity) Delete(c *fiber.Ctx) error {
+	channelId := c.Params("channel_id")
+	chid, err := strconv.ParseInt(channelId, 10, 64)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+	}
+	messageId := c.Params("message_id")
+	msgid, err := strconv.ParseInt(messageId, 10, 64)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectMessageID)
+	}
+	u, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+	msg, err := e.msg.GetMessage(c.UserContext(), msgid, chid)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	if msg.UserId == u.Id {
+		err = e.msg.DeleteMessage(c.UserContext(), msg.Id, chid)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+		err = e.mqt.SendChannelMessage(chid, &mqmsg.DeleteMessage{
+			MessageId: msgid,
+			ChannelId: chid,
+		})
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+		return c.SendStatus(fiber.StatusOK)
 	}
 	return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
 }

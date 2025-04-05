@@ -157,7 +157,7 @@ func (e *entity) GetChannels(c *fiber.Ctx) error {
 //	@Tags		Guild
 //	@Param		guild_id	path		int64		true	"Guild id"
 //	@Param		channel_id	path		int64		true	"Channel id"
-//	@Success	200			{object}		dto.Channel	"Channel"
+//	@Success	200			{object}	dto.Channel	"Channel"
 //	@failure	400			{string}	string		"Incorrect request body"
 //	@failure	401			{string}	string		"Unauthorized"
 //	@failure	500			{string}	string		"Something bad happened"
@@ -531,9 +531,11 @@ func (e *entity) DeleteChannel(c *fiber.Ctx) error {
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
-		err = e.msg.DeleteChannelMessages(c.UserContext(), chid)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		if ch.LastMessage != 0 {
+			err = e.msg.DeleteChannelMessages(c.UserContext(), chid, ch.LastMessage)
+			if err != nil {
+				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			}
 		}
 		err = e.mqt.SendGuildUpdate(gid, &mqmsg.DeleteChannel{
 			GuildId:     &gid,

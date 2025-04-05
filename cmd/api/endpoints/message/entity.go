@@ -32,6 +32,7 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/channel/:channel_id<int>", e.Send)
 	router.Post("/channel/:channel_id<int>/attachment", e.Attachment)
 	router.Patch("/channel/:channel_id<int>/:message_id<int>", e.Update)
+	router.Delete("/channel/:channel_id<int>/:message_id<int>", e.Delete)
 	router.Get("/channel/:channel_id<int>", e.GetMessages)
 }
 

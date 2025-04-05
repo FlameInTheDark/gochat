@@ -10,7 +10,7 @@ type Channel struct {
 	Permissions *int64
 	Topic       *string
 	Private     bool
-	LastMessage *int64
+	LastMessage int64
 	CreatedAt   time.Time
 }
 
