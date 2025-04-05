@@ -1,0 +1,49 @@
+{{- if and .Values.minio.enabled .Values.minio.init.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "gochat.fullname" . }}-minio-init
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: minio-init
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1" # Run after MinIO StatefulSet is ready (though readiness isn't guaranteed by weight alone)
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      name: {{ include "gochat.fullname" . }}-minio-init
+      labels:
+        {{- include "gochat.labels" . | nindent 8 }}
+        app.kubernetes.io/component: minio-init
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: minio-init
+          image: "{{ .Values.minio.init.image.repository }}:{{ .Values.minio.init.image.tag }}"
+          imagePullPolicy: {{ .Values.minio.init.image.pullPolicy }}
+          command: ["/bin/sh", "/scripts/init-minio.sh"]
+          env:
+            # Get MinIO credentials from the secret
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "gochat.fullname" . }}-minio
+                  key: MINIO_ROOT_USER
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "gochat.fullname" . }}-minio
+                  key: MINIO_ROOT_PASSWORD
+          volumeMounts:
+            - name: init-script
+              mountPath: /scripts
+      volumes:
+        - name: init-script
+          configMap:
+            name: {{ include "gochat.fullname" . }}-minio-init-script
+            defaultMode: 0755 # Make script executable
+{{- end }} 

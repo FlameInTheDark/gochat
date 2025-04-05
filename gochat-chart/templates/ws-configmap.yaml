@@ -1,0 +1,21 @@
+{{- if .Values.ws.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gochat.fullname" . }}-ws
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ws
+data:
+  # Define config.yaml structure using nested Helm templates/values
+  config.yaml: |-
+    {{- $fullname := include "gochat.fullname" . -}}
+    {{- $wsConfig := .Values.ws.config -}}
+    {{- $configData := dict
+        "auth_secret" $wsConfig.authSecret
+        "cluster" (list (printf "%s-%s" $fullname $wsConfig.scyllaServiceName))
+        "cluster_keyspace" $wsConfig.scyllaKeyspace
+        "nats_address" (printf "nats://%s-%s:%d" $fullname $wsConfig.natsServiceName (int $wsConfig.natsServicePort))
+    -}}
+    {{ $configData | toYaml | nindent 4 }}
+{{- end }} 

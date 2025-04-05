@@ -1,0 +1,74 @@
+{{- if and .Values.minio.enabled .Values.minio.init.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gochat.fullname" . }}-minio-init-script
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: minio-init
+data:
+  init-minio.sh: |-
+    #!/bin/sh
+    set -e
+
+    MC_ALIAS="local"
+
+    # MinIO service endpoint within Kubernetes
+    MINIO_SVC={{ include "gochat.fullname" . }}-minio
+    MINIO_PORT={{ .Values.minio.service.apiPort }}
+    MINIO_ENDPOINT="http://$MINIO_SVC:$MINIO_PORT"
+
+    echo "Waiting for MinIO service at $MINIO_ENDPOINT..."
+    # Wait for the service endpoint to be resolvable and the API to respond
+    # Adjust timeout and sleep duration as needed
+    apk add --no-cache curl
+    until curl -sf $MINIO_ENDPOINT/minio/health/live; do
+        echo "MinIO service not ready yet, retrying in 5 seconds..."
+        sleep 5
+    done
+    echo "MinIO service is responding."
+
+    echo "Configuring mc alias: $MC_ALIAS"
+    # Use credentials from environment variables (passed from Secret)
+    mc alias set $MC_ALIAS "$MINIO_ENDPOINT" "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+    echo "mc alias configured."
+
+    BUCKETS="{{ range .Values.minio.init.buckets }}{{ . }} {{ end }}"
+
+    POLICY_TEMPLATE='{
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"AWS": ["*"]},
+                "Action": ["s3:GetBucketLocation"],
+                "Resource": ["arn:aws:s3:::%s"]
+            },
+            {
+                "Effect": "Allow",
+                "Principal": {"AWS": ["*"]},
+                "Action": ["s3:GetObject"],
+                "Resource": ["arn:aws:s3:::%s/*"]
+            }
+        ]
+    }'
+
+    for BUCKET in $BUCKETS; do
+        BUCKET_PATH="$MC_ALIAS/$BUCKET"
+        echo "Checking bucket: $BUCKET_PATH"
+
+        if ! mc ls "$BUCKET_PATH" > /dev/null 2>&1; then
+            echo "Creating bucket: $BUCKET_PATH"
+            mc mb "$BUCKET_PATH"
+        else
+            echo "Bucket $BUCKET_PATH already exists."
+        fi
+
+        echo "Applying policy to bucket: $BUCKET_PATH"
+        POLICY_JSON=$(printf "$POLICY_TEMPLATE" "$BUCKET" "$BUCKET")
+        echo "$POLICY_JSON" | mc policy set-json - "$BUCKET_PATH"
+        echo "Policy applied to $BUCKET_PATH."
+    done
+
+    echo "MinIO initialization complete."
+{{- end }} 

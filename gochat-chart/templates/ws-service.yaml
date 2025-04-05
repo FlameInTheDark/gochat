@@ -1,0 +1,19 @@
+{{- if .Values.ws.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gochat.fullname" . }}-ws
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ws
+spec:
+  type: {{ .Values.ws.service.type }}
+  ports:
+    - port: {{ .Values.ws.service.port }}
+      targetPort: ws # Match the port name in deployment
+      protocol: TCP
+      name: ws
+  selector:
+    {{- include "gochat.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: ws
+{{- end }} 

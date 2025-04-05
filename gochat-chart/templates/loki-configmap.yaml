@@ -1,0 +1,12 @@
+{{- if .Values.loki.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gochat.fullname" . }}-loki
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: loki
+data:
+  loki-config.yaml: |-
+    {{- .Values.loki.config | toYaml | nindent 4 }}
+{{- end }} 

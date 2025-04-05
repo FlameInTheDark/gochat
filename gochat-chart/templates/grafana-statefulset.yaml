@@ -1,0 +1,108 @@
+{{- if .Values.grafana.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet # Use StatefulSet for stable identity and volume
+metadata:
+  name: {{ include "gochat.fullname" . }}-grafana
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+spec:
+  serviceName: {{ include "gochat.fullname" . }}-grafana
+  replicas: {{ .Values.grafana.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "gochat.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: grafana
+  template:
+    metadata:
+      labels:
+        {{- include "gochat.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: grafana
+    spec:
+      terminationGracePeriodSeconds: 60
+      # securityContext: # Set security context if needed (e.g., fsGroup for volume permissions)
+      #   fsGroup: 472
+      #   runAsUser: 472
+      #   runAsGroup: 472
+      containers:
+        - name: grafana
+          image: "{{ .Values.grafana.image.repository }}:{{ .Values.grafana.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.grafana.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.grafana.service.port }}
+              protocol: TCP
+          env:
+            # Admin credentials (consider using a secret)
+            - name: GF_SECURITY_ADMIN_USER
+              value: {{ .Values.grafana.adminUser | quote }}
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: {{ .Values.grafana.adminPassword | quote }}
+            # Paths for provisioning
+            - name: GF_PATHS_PROVISIONING
+              value: /etc/grafana/provisioning
+            # Add other Grafana env vars as needed
+            # - name: GF_SERVER_ROOT_URL
+            #   value: "{{ .Values.api.config.baseUrl }}" # If Grafana behind same proxy
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.grafana.persistence.mountPath }}
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources # Mount datasources config
+              readOnly: true
+            # Mount dashboards configmap if using one
+            # - name: dashboards
+            #   mountPath: /etc/grafana/provisioning/dashboards
+            #   readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 60
+            timeoutSeconds: 30
+            failureThreshold: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+          resources:
+            {{- toYaml .Values.grafana.resources | nindent 12 }}
+      volumes:
+        - name: datasources
+          configMap:
+            name: {{ include "gochat.fullname" . }}-grafana-datasources
+            defaultMode: 0644
+        # Add dashboards configmap volume if used
+        # - name: dashboards
+        #   configMap:
+        #     name: {{ include "gochat.fullname" . }}-grafana-dashboards
+      {{- with .Values.grafana.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.grafana.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.grafana.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- if .Values.grafana.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ .Values.grafana.persistence.size | quote }}
+      {{- if .Values.grafana.persistence.storageClass }}
+      {{- if (eq "-" .Values.grafana.persistence.storageClass) }}
+        storageClassName: ""
+      {{- else }}
+        storageClassName: "{{ .Values.grafana.persistence.storageClass }}"
+      {{- end }}
+      {{- end }}
+  {{- end }}
+{{- end }} 

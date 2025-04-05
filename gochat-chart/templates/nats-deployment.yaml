@@ -1,0 +1,68 @@
+{{- if .Values.nats.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gochat.fullname" . }}-nats
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+spec:
+  replicas: {{ .Values.nats.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "gochat.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: nats
+  template:
+    metadata:
+      labels:
+        {{- include "gochat.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: nats
+    spec:
+      containers:
+        - name: nats
+          image: "{{ .Values.nats.image.repository }}:{{ .Values.nats.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.nats.image.pullPolicy }}
+          ports:
+            - name: client
+              containerPort: {{ .Values.nats.service.clientPort }}
+              protocol: TCP
+            - name: monitor
+              containerPort: {{ .Values.nats.service.monitorPort }}
+              protocol: TCP
+            - name: cluster
+              containerPort: {{ .Values.nats.service.clusterPort }}
+              protocol: TCP
+          # Add NATS specific args/command if needed, e.g., for clustering
+          # args:
+          #  - "-p"
+          #  - "{{ .Values.nats.service.clientPort }}"
+          #  - "--http_port"
+          #  - "{{ .Values.nats.service.monitorPort }}"
+          #  - "--cluster_port"
+          #  - "{{ .Values.nats.service.clusterPort }}"
+          # Example readiness/liveness probes (adjust endpoint/port as needed)
+          livenessProbe:
+            tcpSocket:
+              port: client
+            initialDelaySeconds: 10
+            timeoutSeconds: 1
+          readinessProbe:
+            tcpSocket:
+              port: client
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          resources:
+            {{- toYaml .Values.nats.resources | nindent 12 }}
+      {{- with .Values.nats.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nats.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nats.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }} 

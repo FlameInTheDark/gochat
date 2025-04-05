@@ -8,7 +8,26 @@ services:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: password
     command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
     restart: always
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ENDPOINT: "http://minio:9000"
+      MINIO_ROOT_USER: admin # Match the minio service credentials
+      MINIO_ROOT_PASSWORD: password # Match the minio service credentials
+    volumes:
+      - ./init/init-minio.sh:/init-minio.sh
+    entrypoint: ["/bin/sh", "/init-minio.sh"]
+    restart: "no"
 
   scylla:
     image: scylladb/scylla:6.2

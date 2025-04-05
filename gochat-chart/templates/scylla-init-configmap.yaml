@@ -1,0 +1,33 @@
+{{- if .Values.scylla.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gochat.fullname" . }}-scylla-init-script
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: scylla-init
+data:
+  init-scylla.sh: |-
+    #!/bin/bash
+    set -e
+
+    # Hostname will resolve to the service name for the current pod in the StatefulSet
+    SCYLLA_HOST="localhost" # Connect to localhost within the pod
+    CQLSH_COMMAND="cqlsh $SCYLLA_HOST"
+
+    echo "Waiting for ScyllaDB to be ready on localhost..."
+    until $CQLSH_COMMAND -e "DESCRIBE KEYSPACES" > /dev/null 2>&1; do
+        echo "ScyllaDB not ready yet, retrying in 5 seconds..."
+        sleep 5
+    done
+    echo "ScyllaDB is ready."
+
+    echo "Creating keyspace '{{ .Values.scylla.init.keyspace }}' if it does not exist..."
+    # Use values from values.yaml for keyspace name and replication factor
+    CREATE_KEYSPACE_CQL="CREATE KEYSPACE IF NOT EXISTS {{ .Values.scylla.init.keyspace }} WITH replication = {'class': 'SimpleStrategy', 'replication_factor': {{ .Values.scylla.init.replicationFactor }}}"
+
+    $CQLSH_COMMAND -e "$CREATE_KEYSPACE_CQL"
+
+    echo "Keyspace creation command executed."
+    echo "ScyllaDB initialization complete."
+{{- end }} 

@@ -1,0 +1,530 @@
+# Default values for gochat-chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+replicaCount: 1
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+# Default image values - specific services will override these
+image:
+  repository: nginx # Default example, should be overridden per service
+  pullPolicy: IfNotPresent
+  tag: "latest" # Default tag
+
+# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+imagePullSecrets: []
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
+# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false # Start with false, enable if specific permissions are needed
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# This is for setting Kubernetes Annotations to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+podAnnotations: {}
+# This is for setting Kubernetes Labels to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# --- Service Definitions Start --- 
+
+minio:
+  enabled: true
+  image:
+    repository: minio/minio
+    tag: latest
+    pullPolicy: IfNotPresent
+  auth:
+    rootUser: "admin"         # Default user, should be changed for production
+    rootPassword: "password"  # Default password, MUST be changed for production
+  service:
+    type: ClusterIP
+    apiPort: 9000
+    consolePort: 9001
+  persistence:
+    enabled: true
+    size: 10Gi
+    # storageClass: "standard" # Optional: specify storage class
+  init:
+    enabled: true
+    image:
+      repository: minio/mc # Use the MinIO client image
+      tag: latest
+      pullPolicy: IfNotPresent
+    buckets:
+      - media
+      - icons
+      - avatars
+  resources: {}
+    # limits:
+    #   cpu: 500m
+    #   memory: 512Mi
+    # requests:
+    #   cpu: 250m
+    #   memory: 256Mi
+  # Add other minio specific values like nodeSelector etc.
+
+scylla:
+  enabled: true
+  image:
+    repository: scylladb/scylla
+    tag: "6.2"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    cqlPort: 9042
+    thriftPort: 7199 # Check if this is correct, compose uses 7199
+    # Add other ports if needed (e.g., JMX 7199 in compose)
+  environment:
+    SCYLLA_DEVELOPER_MODE: "1"
+  persistence:
+    enabled: true
+    size: 20Gi # Adjust size as needed
+    mountPath: /var/lib/scylla
+    # storageClass: "standard"
+  init:
+    # Configuration for the Init Container script
+    keyspace: gochat
+    replicationFactor: 1
+  resources: {}
+    # limits:
+    #   cpu: "2"
+    #   memory: 4Gi
+    # requests:
+    #   cpu: "1"
+    #   memory: 2Gi
+  # nodeSelector, affinity, tolerations etc.
+
+nats:
+  enabled: true
+  image:
+    repository: nats
+    tag: 2.10.22-alpine3.20
+    pullPolicy: IfNotPresent
+  replicaCount: 1 # Adjust if NATS clustering is needed
+  service:
+    type: ClusterIP
+    clientPort: 4222
+    monitorPort: 8222
+    clusterPort: 6222
+  resources: {}
+    # limits:
+    #   cpu: 200m
+    #   memory: 256Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  # Add nodeSelector, affinity, tolerations etc.
+
+keydb:
+  enabled: true
+  image:
+    repository: eqalpha/keydb
+    tag: alpine # Using the same tag as compose
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 6379
+  # KeyDB might benefit from persistence, add if needed
+  persistence:
+    enabled: false # Default to false, user can enable
+    size: 5Gi
+    mountPath: /data
+    # storageClass: "standard"
+  resources: {}
+    # limits:
+    #   cpu: 500m
+    #   memory: 512Mi
+    # requests:
+    #   cpu: 250m
+    #   memory: 256Mi
+  # Add nodeSelector, affinity, tolerations etc.
+
+api:
+  enabled: true
+  replicaCount: 1
+  image:
+    # Assuming you build a gochat/api image. Replace if needed.
+    repository: gochat/api
+    tag: latest # Use a specific version tag in production
+    pullPolicy: IfNotPresent # Or Always if using :latest
+  service:
+    type: ClusterIP
+    port: 3000
+  config:
+    appName: "GoChat" # Corresponds to app_name
+    baseUrl: "http://gochat.local" # Replace with actual external URL if using Ingress
+    # Static placeholders for service addresses - templates will construct the full name
+    scyllaServiceName: "scylla"
+    scyllaKeyspace: "gochat"
+    keydbServiceName: "keydb"
+    keydbServicePort: 6379 # Reference keydb's default port
+    minioServiceName: "minio"
+    minioServicePort: 9000 # Reference minio's default API port
+    # Email settings
+    emailSource: "email"
+    emailName: "no-reply"
+    emailTemplatePath: "/config/email_notify.tmpl" # Path inside the container
+    emailProvider: "log" # Or "sendpulse", etc.
+    sendpulseUserId: "" # Keep empty or manage via Secret
+    sendpulseSecret: "" # Keep empty or manage via Secret
+    # Auth secret - **IMPORTANT**: Manage this via K8s Secret in production
+    authSecret: "change_me_in_values_or_secret"
+    # Swagger UI toggle
+    swaggerEnabled: true
+    # Rate limiting
+    rateLimitTimeSeconds: 1
+    rateLimitRequests: 10
+    # S3 credentials - **IMPORTANT**: Manage credentials via K8s Secret in production
+    s3AccessKeyId: "lF0b7V15OZCv2eGggCg5" # Placeholder/default, manage via Secret
+    s3SecretAccessKey: "55ug80hPgx4nFPoFJXvwBHns1XwXmZrcKli8UHoz" # Placeholder/default, manage via Secret
+  # Define resources, probes, nodeSelector etc. for the API pod
+  resources: {}
+  # livenessProbe: ...
+  # readinessProbe: ...
+
+ws:
+  enabled: true
+  replicaCount: 1
+  image:
+    # Assuming you build a gochat/ws image. Replace if needed.
+    repository: gochat/ws
+    tag: latest # Use a specific version tag in production
+    pullPolicy: IfNotPresent # Or Always if using :latest
+  service:
+    type: ClusterIP
+    port: 3100
+  config:
+    # Auth secret - **IMPORTANT**: Manage this via K8s Secret in production
+    # Should ideally be the same secret key as the API service uses
+    authSecret: "change_me_in_values_or_secret"
+    # Static placeholders for service addresses
+    natsServiceName: "nats"
+    natsServicePort: 4222 # Reference nats' default client port
+    scyllaServiceName: "scylla"
+    scyllaKeyspace: "gochat"
+  # Define resources, probes, nodeSelector etc. for the WS pod
+  resources: {}
+  # livenessProbe: ...
+  # readinessProbe: ...
+
+solr:
+  enabled: true
+  image:
+    repository: solr
+    tag: "8" # Match compose.yaml
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8983
+  persistence:
+    enabled: true
+    mountPath: /var/solr
+    size: 10Gi # Adjust as needed
+    # storageClass: "standard"
+  init:
+    coreName: gochat # Name of the core to precreate
+  resources: {}
+    # limits:
+    #   cpu: "1"
+    #   memory: 2Gi
+    # requests:
+    #   cpu: 500m
+    #   memory: 1Gi
+  # nodeSelector, affinity, tolerations etc.
+
+nginx:
+  enabled: true
+  image:
+    repository: nginx
+    tag: 1.27.2-alpine # Match compose.yaml
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: LoadBalancer # Or NodePort/ClusterIP if using Ingress
+    httpPort: 80
+    httpsPort: 443 # Config doesn't show HTTPS setup yet
+  # Add resources, nodeSelector, etc.
+  resources: {}
+  config:
+    # Static placeholders for service names/ports
+    apiServiceName: "api"
+    apiServicePort: 3000 # Reference api's default port
+    wsServiceName: "ws"
+    wsServicePort: 3100 # Reference ws's default port
+    minioServiceName: "minio"
+    minioServicePort: 9000 # Reference minio's default API port
+
+prometheus:
+  enabled: true
+  image:
+    repository: prom/prometheus
+    tag: latest # Use specific version in production
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 9090
+  persistence:
+    enabled: true
+    mountPath: /prometheus
+    size: 8Gi # Adjust as needed
+    # storageClass: "standard"
+  config:
+    # Global settings (adjust as needed)
+    scrapeInterval: 15s
+    evaluationInterval: 30s
+    # Static placeholders for target service names/ports
+    apiServiceName: "api"
+    apiServicePort: 3000 # Reference api's default port
+    # Docker exporter target - Adjust this based on how you expose docker metrics in K8s
+    dockerExporterTarget: "host.docker.internal:9323" # Placeholder
+  resources: {}
+    # limits:
+    #   cpu: "1"
+    #   memory: 2Gi
+    # requests:
+    #   cpu: 500m
+    #   memory: 1Gi
+  # nodeSelector, affinity, tolerations etc.
+
+loki:
+  enabled: true
+  image:
+    repository: grafana/loki
+    tag: latest # Use specific version in production
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 3100
+  persistence:
+    enabled: true # Assuming Loki needs persistence
+    mountPath: /loki # Default data path
+    size: 10Gi # Adjust as needed
+    # storageClass: "standard"
+  config:
+    # Basic Loki config - adjust as needed for your storage backend (e.g., S3/MinIO)
+    auth_enabled: false
+    server:
+      http_listen_port: 3100
+    ingester:
+      lifecycler:
+        address: 127.0.0.1
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+        final_sleep: 0s
+      chunk_idle_period: 5m
+      chunk_retain_period: 1m
+      max_transfer_retries: 0
+    schema_config:
+      configs:
+        - from: 2020-10-24
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /loki/index
+        cache_location: /loki/cache
+        shared_store: filesystem
+      filesystem:
+        directory: /loki/chunks
+    limits_config:
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+  resources: {}
+    # limits:
+    #   cpu: "1"
+    #   memory: 1Gi
+    # requests:
+    #   cpu: 200m
+    #   memory: 512Mi
+  # nodeSelector, affinity, tolerations etc.
+
+promtail:
+  enabled: true
+  image:
+    repository: grafana/promtail
+    tag: latest # Use specific version in production
+    pullPolicy: IfNotPresent
+  service:
+    # Usually not needed unless scraping promtail metrics
+    enabled: false
+    port: 9080
+  config:
+    # Static placeholder for Loki service name/port
+    lokiServiceName: "loki"
+    lokiServicePort: 3100 # Reference loki's default port
+    positionsFilename: /run/promtail/positions.yaml # Use path writable by promtail user
+    # Docker socket path might vary depending on K8s node OS / setup
+    dockerSocketPath: /var/run/docker.sock
+  # Mount paths for Docker socket and container logs from the host node
+  volumes:
+    dockerSocket:
+      name: docker-socket
+      hostPath: /var/run/docker.sock
+    logs:
+      name: logs
+      hostPath: /var/log/pods # Standard K8s path for pod logs
+      # Alternatively, use /var/lib/docker/containers for direct docker logs
+      # hostPath: /var/lib/docker/containers
+  resources: {}
+    # limits:
+    #   cpu: 200m
+    #   memory: 256Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  # Tolerations might be needed to run on all nodes (e.g., master nodes)
+  # tolerations:
+  # - key: node-role.kubernetes.io/master
+  #   operator: Exists
+  #   effect: NoSchedule
+
+grafana:
+  enabled: true
+  image:
+    repository: grafana/grafana-oss
+    tag: latest # Use specific version in production
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: LoadBalancer # Or NodePort/ClusterIP if using Ingress
+    port: 3000
+  persistence:
+    enabled: true
+    mountPath: /var/lib/grafana
+    size: 5Gi # Adjust as needed
+    # storageClass: "standard"
+  # Environment variables for admin user (change defaults!)
+  adminUser: admin
+  adminPassword: password # CHANGE THIS or use a secret
+  # Configuration for datasources (will be put in grafana-datasources.yaml configmap)
+  datasources:
+    prometheus:
+      name: Prometheus
+      type: prometheus
+      # Static placeholders for datasource URLs
+      serviceName: "prometheus"
+      servicePort: 9090 # Reference prometheus' default port
+      access: proxy
+      isDefault: true
+    loki:
+      name: Loki
+      type: loki
+      serviceName: "loki"
+      servicePort: 3100 # Reference loki's default port
+      access: proxy
+      isDefault: false
+  resources: {}
+    # limits:
+    #   cpu: 500m
+    #   memory: 512Mi
+    # requests:
+    #   cpu: 200m
+    #   memory: 256Mi
+  # nodeSelector, affinity, tolerations etc.
+
+# --- Service Definitions End --- 
+
+# Generic service placeholder (might remove if not needed)
+service:
+  type: ClusterIP
+  port: 80
+
+# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+ingress:
+  enabled: false # Disabled by default, enable and configure if needed
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: gochat.local # Example host
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: gochat-tls
+  #    hosts:
+  #      - gochat.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+# Specific probes will be defined per service template
+# livenessProbe:
+#   httpGet:
+#     path: /
+#     port: http
+# readinessProbe:
+#   httpGet:
+#     path: /
+#     port: http
+
+# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

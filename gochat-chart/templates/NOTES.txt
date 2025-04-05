@@ -1,0 +1,76 @@
+{{/*
+NOTES.txt template for gochat chart.
+*/}}
+{{- define "gochat.notes" -}}
+
+GoChat has been deployed!
+
+{{- if contains "LoadBalancer" .Values.nginx.service.type }}
+  {{- if .Values.nginx.enabled }}
+Access the GoChat application via the Nginx LoadBalancer:
+
+NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+      You can watch the status of the service using:
+      kubectl get svc {{ include "gochat.fullname" . }}-nginx --namespace {{ .Release.Namespace }} -w
+
+  export NGINX_SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "gochat.fullname" . }}-nginx --template "{{`{{ range .status.loadBalancer.ingress }}{{ .ip }}{{ end }}`}}")
+  echo "GoChat Nginx URL: http://$NGINX_SERVICE_IP:{{ .Values.nginx.service.httpPort }}"
+  {{- end }}
+{{- else if contains "NodePort" .Values.nginx.service.type }}
+  {{- if .Values.nginx.enabled }}
+Access the GoChat application via the Nginx NodePort:
+
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{{`{ .spec.ports[0].nodePort }`}}" services {{ include "gochat.fullname" . }}-nginx)
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{{`{ .items[0].status.addresses[0].address }`}}")
+  echo "GoChat Nginx URL: http://$NODE_IP:$NODE_PORT"
+  {{- end }}
+{{- else }}
+  {{- if .Values.nginx.enabled }}
+Access the GoChat application via the Nginx ClusterIP service.
+
+You may need to setup port-forwarding or an Ingress controller:
+
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "gochat.fullname" . }}-nginx {{ .Values.nginx.service.httpPort }}:{{ .Values.nginx.service.httpPort }}
+
+  Then access via http://localhost:{{ .Values.nginx.service.httpPort }}
+  {{- end }}
+{{- end }}
+
+{{- if .Values.grafana.enabled }}
+  {{- if contains "LoadBalancer" .Values.grafana.service.type }}
+Grafana LoadBalancer:
+
+NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+      You can watch the status of the service using:
+      kubectl get svc {{ include "gochat.fullname" . }}-grafana --namespace {{ .Release.Namespace }} -w
+
+  export GRAFANA_SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "gochat.fullname" . }}-grafana --template "{{`{{ range .status.loadBalancer.ingress }}{{ .ip }}{{ end }}`}}")
+  echo "Grafana URL: http://$GRAFANA_SERVICE_IP:{{ .Values.grafana.service.port }}"
+  echo "Grafana Admin User: {{ .Values.grafana.adminUser }}"
+  echo "Grafana Admin Password: {{ .Values.grafana.adminPassword }}" # Consider using a secret!
+
+  {{- else if contains "NodePort" .Values.grafana.service.type }}
+Grafana NodePort:
+
+  export GRAFANA_NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{{`{ .spec.ports[0].nodePort }`}}" services {{ include "gochat.fullname" . }}-grafana)
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{{`{ .items[0].status.addresses[0].address }`}}")
+  echo "Grafana URL: http://$NODE_IP:$GRAFANA_NODE_PORT"
+  echo "Grafana Admin User: {{ .Values.grafana.adminUser }}"
+  echo "Grafana Admin Password: {{ .Values.grafana.adminPassword }}" # Consider using a secret!
+
+  {{- else }}
+Grafana ClusterIP:
+
+  You may need to setup port-forwarding:
+
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "gochat.fullname" . }}-grafana {{ .Values.grafana.service.port }}:{{ .Values.grafana.service.port }}
+
+  Then access via http://localhost:{{ .Values.grafana.service.port }}
+  Admin User: {{ .Values.grafana.adminUser }}
+  Admin Password: {{ .Values.grafana.adminPassword }} # Consider using a secret!
+  {{- end }}
+{{- end }}
+
+{{- end }}
+
+{{- template "gochat.notes" . -}}

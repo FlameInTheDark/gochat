@@ -1,0 +1,27 @@
+{{- if .Values.nats.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gochat.fullname" . }}-nats
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+spec:
+  type: {{ .Values.nats.service.type }}
+  ports:
+    - port: {{ .Values.nats.service.clientPort }}
+      targetPort: client
+      protocol: TCP
+      name: client
+    - port: {{ .Values.nats.service.monitorPort }}
+      targetPort: monitor
+      protocol: TCP
+      name: monitor
+    - port: {{ .Values.nats.service.clusterPort }}
+      targetPort: cluster
+      protocol: TCP
+      name: cluster
+  selector:
+    {{- include "gochat.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+{{- end }} 

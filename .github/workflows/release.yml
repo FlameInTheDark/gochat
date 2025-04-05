@@ -1,0 +1,120 @@
+name: Release Installer
+
+# Trigger the workflow on pushes to tags matching v*.*.* (e.g., v1.0.0, v1.2.3)
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write # Needed to create releases and upload assets
+
+jobs:
+  build-release:
+    name: Build and Release Installer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21' # Specify your Go version
+
+      - name: Get Version from Tag
+        id: get_version
+        # Extracts the version number from the tag (e.g., v1.0.0 -> 1.0.0)
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Build Go Binaries (Cross-Platform)
+        run: |
+          # Define targets (OS/Arch)
+          targets=(
+            "linux/amd64"
+            "linux/arm64"
+            "windows/amd64"
+            "darwin/amd64"
+            "darwin/arm64"
+          )
+
+          INSTALLER_DIR="cmd/installer" # Path to the installer code
+          OUTPUT_DIR="release_builds"   # Temporary directory for builds
+          mkdir -p ${OUTPUT_DIR}
+
+          for target in "${targets[@]}"; do
+            IFS='/' read -r os arch <<< "$target"
+            output_name="installer-${os}-${arch}"
+            if [ "$os" = "windows" ]; then
+              output_name+=".exe"
+            fi
+
+            echo "Building for $os/$arch -> ${OUTPUT_DIR}/${output_name}"
+            GOOS=$os GOARCH=$arch go build -ldflags="-s -w" -o "${OUTPUT_DIR}/${output_name}" "${INSTALLER_DIR}/main.go"
+          done
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }} # Use the pushed tag
+          name: Release ${{ steps.get_version.outputs.VERSION }}
+          body: | # Optional: Add release notes here or use auto-generation
+            Installer binaries for GoChat version ${{ steps.get_version.outputs.VERSION }}.
+            See CHANGELOG.md for details.
+          draft: false
+          prerelease: false
+          # Optional: If using standard-version/semantic-release, they might generate release notes
+          # generate_release_notes: true
+
+      - name: Upload Release Asset (Linux AMD64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release_builds/installer-linux-amd64
+          asset_name: installer-linux-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Linux ARM64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release_builds/installer-linux-arm64
+          asset_name: installer-linux-arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Windows AMD64 EXE)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release_builds/installer-windows-amd64.exe
+          asset_name: installer-windows-amd64.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (macOS AMD64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release_builds/installer-darwin-amd64
+          asset_name: installer-darwin-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (macOS ARM64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release_builds/installer-darwin-arm64
+          asset_name: installer-darwin-arm64
+          asset_content_type: application/octet-stream
