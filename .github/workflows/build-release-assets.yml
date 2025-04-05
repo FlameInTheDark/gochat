@@ -29,6 +29,10 @@ jobs:
       - name: Download Go Modules
         run: go mod download
 
+      # Tidy ensures go.mod matches source code
+      - name: Tidy Go Modules
+        run: go mod tidy
+
       - name: Build Go Binaries (Cross-Platform)
         id: build
         run: |
