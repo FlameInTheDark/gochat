@@ -53,6 +53,23 @@ for BUCKET in $BUCKETS; do
     POLICY_JSON=$(printf "$POLICY_TEMPLATE" "$BUCKET" "$BUCKET")
     echo "$POLICY_JSON" | mc policy set-json - "$BUCKET_PATH"
     echo "Policy applied to $BUCKET_PATH."
+
+    # Configure webhook notification for this bucket
+    WEBHOOK_TARGET_URL="http://api:3000/api/v1/webhook/storage/events" # Corrected URL
+    WEBHOOK_QUEUE_ARN="arn:minio:sqs::${BUCKET}:webhook" # Use bucket name in ARN for uniqueness
+
+    echo "Configuring webhook for bucket: $BUCKET_PATH to target $WEBHOOK_TARGET_URL"
+
+    # Add event notification configuration
+    # Send events for object creation (PUT, POST, COPY, CompleteMultipartUpload) and deletion
+    # NOTE: Current API handler only processes 'media' bucket events. Sending for others might be noisy.
+    # Removed suffix filter to trigger for all file types
+    mc event add "$BUCKET_PATH" "$WEBHOOK_QUEUE_ARN" --event "s3:ObjectCreated:*,s3:ObjectRemoved:*" --webhook "$WEBHOOK_TARGET_URL" || echo "WARN: Failed to add webhook event listener for $BUCKET_PATH. Continuing..."
+
+    # Add a check to see if the configuration was successful (optional but good practice)
+    echo "Verifying webhook configuration for $BUCKET_PATH..."
+    mc event list "$BUCKET_PATH" "$WEBHOOK_QUEUE_ARN"
+
 done
 
 echo "MinIO initialization complete."

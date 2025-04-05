@@ -43,7 +43,7 @@ func (e *entity) Search(c *fiber.Ctx) error {
 	//		return err
 	//	}
 	//
-	//	ats, err := e.at.SelectAttachemntsByIDs(c.UserContext(), req.Attachments)
+	//	ats, err := e.at.SelectAttachmentByIDs(c.UserContext(), req.Attachments)
 	//	if err := helper.HttpDbError(err, ErrUnableToGetAttachements); err != nil {
 	//		return err
 	//	}
@@ -126,7 +126,7 @@ func (e *entity) Update(c *fiber.Ctx) error {
 	//		return err
 	//	}
 	//
-	//	ats, err := e.at.SelectAttachemntsByIDs(c.UserContext(), req.Attachments)
+	//	ats, err := e.at.SelectAttachmentByIDs(c.UserContext(), req.Attachments)
 	//	if err := helper.HttpDbError(err, ErrUnableToGetAttachements); err != nil {
 	//		return err
 	//	}
