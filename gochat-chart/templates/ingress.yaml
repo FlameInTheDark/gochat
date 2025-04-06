@@ -45,7 +45,7 @@ spec:
           {{- /* Always use defaultPaths */}}
           {{- range .Values.ingress.defaultPaths }}
             {{- /* Conditionally exclude /ws path if dedicated WS ingress is enabled */}}
-            {{- if not (and $.Values.ingressWs.enabled (eq .path "/ws")) }}
+            {{- /* if not (and $.Values.ingressWs.enabled (eq .path "/ws")) */}}
             - path: {{ .path }}
               pathType: {{ .pathType }}
               backend:
@@ -55,6 +55,6 @@ spec:
                   port:
                     # Use portName from path value
                     name: {{ .portName }}
-            {{- end }}
+            {{- /* end */}}
           {{- end }}
 {{- end }}

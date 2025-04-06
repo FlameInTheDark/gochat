@@ -26,6 +26,20 @@ spec:
         app.kubernetes.io/component: scylla-migrate
     spec:
       restartPolicy: OnFailure
+      # Add initContainer to wait for Scylla service
+      initContainers:
+        - name: wait-for-scylla
+          image: busybox:latest # Small image with nc (netcat)
+          command: ['sh', '-c']
+          args:
+            - |
+              echo "Waiting for ScyllaDB service {{ $fullName }}-scylla..."
+              until nc -z -w 2 "{{ $fullName }}-scylla" {{ .Values.scylla.service.cqlPort }};
+              do
+                echo "ScyllaDB not ready yet, sleeping...";
+                sleep 2;
+              done;
+              echo "ScyllaDB service ready."
       containers:
         - name: scylla-migrate
           image: "{{ $migrateImageRepo }}:{{ $migrateImageTag }}"
