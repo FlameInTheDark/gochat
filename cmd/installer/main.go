@@ -14,6 +14,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/otiai10/copy"
@@ -134,8 +135,14 @@ type redrawMsg struct{}
 type model struct {
 	state   state
 	spinner spinner.Model
-	list    list.Model // Reused for target, context
-	inputs  []textinput.Model
+	// list    list.Model // Removed
+	// Use separate lists for each selection context
+	targetList       list.Model
+	ingressClassList list.Model
+	contextList      list.Model
+	errorViewport    viewport.Model // For scrollable errors
+	ready            bool           // For initial sizing
+	inputs           []textinput.Model
 	// Prereqs
 	gitOk        bool
 	dockerOk     bool
@@ -148,10 +155,10 @@ type model struct {
 	installTarget string // "kubernetes" or "docker"
 
 	// Kube Contexts & Classes
-	kubeContexts       []list.Item
-	selectedContext    string
-	kubeIngressClasses []list.Item // New field for fetched classes
-	ingressClassName   string      // Store the selected class name
+	// kubeContexts        []list.Item // Removed - data stored directly in contextList
+	selectedContext string
+	// kubeIngressClasses  []list.Item // Removed - data stored directly in ingressClassList
+	ingressClassName string // Store the selected class name
 
 	// Stored selections (K8s specific)
 	namespace            string
@@ -490,14 +497,14 @@ func initialModel() model {
 	listView.Styles.Title = blurredStyle
 
 	return model{
-		state:              checkingPrerequisites,
-		spinner:            s,
-		prereqChecks:       make(map[string]bool),
-		inputs:             inputs,
-		list:               listView,
-		kubeContexts:       []list.Item{},
-		kubeIngressClasses: []list.Item{},
-		domainName:         "gochat.local",
+		state:            checkingPrerequisites,
+		spinner:          s,
+		prereqChecks:     make(map[string]bool),
+		inputs:           inputs,
+		targetList:       listView,
+		ingressClassList: list.New([]list.Item{}, delegate, 40, 5),
+		contextList:      list.New([]list.Item{}, delegate, 40, 5),
+		domainName:       "gochat.local",
 		// tlsSecretName initialized to empty string by default
 		// Initialize password generation flags
 		minioPassGenerated:   false,
@@ -528,7 +535,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.list.SetWidth(msg.Width / 2)
+		m.targetList.SetWidth(msg.Width / 2)
+		m.ingressClassList.SetWidth(msg.Width / 2)
+		m.contextList.SetWidth(msg.Width / 2)
 		// Resize inputs too if needed
 		// for i := range m.inputs {
 		//     m.inputs[i].Width = msg.Width / 3
@@ -561,12 +570,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter":
 				switch m.state {
 				case selectInstallTarget:
-					if i, ok := m.list.SelectedItem().(item); ok {
+					if i, ok := m.targetList.SelectedItem().(item); ok {
 						m.installTarget = i.FilterValue()
 					} else {
 						return m, nil // Cannot select, return nil
 					}
-					m.list.Styles.Title = blurredStyle
+					m.targetList.Styles.Title = blurredStyle
 					if m.installTarget == "kubernetes" {
 						m.state = checkingKubePrereqs
 						cmds = append(cmds, m.spinner.Tick, checkCommand("helm"), checkCommand("kubectl"))
@@ -579,34 +588,40 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					return m, tea.Batch(cmds...)
 				case selectContext:
-					if len(m.kubeContexts) > 0 {
-						if i, ok := m.list.SelectedItem().(item); ok {
+					if len(m.contextList.Items()) > 0 {
+						if i, ok := m.contextList.SelectedItem().(item); ok {
 							m.selectedContext = i.Title()
 						}
 					}
 					m.state = cloningRepo
-					m.list.Styles.Title = blurredStyle
+					m.contextList.Styles.Title = blurredStyle
 					cmds = append(cmds, m.spinner.Tick, runGitCloneCmd(gochatRepoURL, branchToClone))
 					return m, tea.Batch(cmds...)
 				case noKubeContextsWarning:
 					m.state = promptNamespace
 					return m, m.inputs[namespaceInput].Focus()
 				case selectIngressClass:
-					if i, ok := m.list.SelectedItem().(item); ok {
+					if i, ok := m.ingressClassList.SelectedItem().(item); ok {
 						m.ingressClassName = i.Title() // Store selected class name
 					} else {
 						m.ingressClassName = "" // Explicitly set to empty if no selection/empty list
 					}
 					m.state = selectContext // Proceed to context selection
-					m.list.Title = "Select Kubernetes Context:"
-					m.list.SetItems(m.kubeContexts)
-					m.list.Styles.Title = focusedStyle
-					m.errorMessage = ""        // Clear any potential previous warning/error messages
-					return m, forceRedrawCmd() // Force redraw
+					m.contextList.Title = "Select Kubernetes Context:"
+					m.contextList.Styles.Title = focusedStyle
+					m.errorMessage = "" // Clear any potential previous warning/error messages
+					return m, forceRedrawCmd()
 				}
 			}
-			// If not quit and not handled enter, pass to list for navigation
-			m.list, cmd = m.list.Update(msg)
+			// If not quit and not handled enter, pass to the list relevant to the current state
+			switch m.state {
+			case selectInstallTarget:
+				m.targetList, cmd = m.targetList.Update(msg)
+			case selectIngressClass:
+				m.ingressClassList, cmd = m.ingressClassList.Update(msg)
+			case selectContext:
+				m.contextList, cmd = m.contextList.Update(msg)
+			}
 			return m, cmd
 
 		} else {
@@ -734,9 +749,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						item{title: "Kubernetes (Helm)", desc: "Install into a Kubernetes cluster using Helm", filterValue: "kubernetes"},
 						item{title: "Docker Compose", desc: "Run locally using Docker Compose", filterValue: "docker"},
 					}
-					m.list.Title = "Select Installation Target:"
-					m.list.SetItems(targetItems)
-					m.list.Styles.Title = focusedStyle
+					m.targetList.Title = "Select Installation Target:"
+					m.targetList.SetItems(targetItems)
+					m.targetList.Styles.Title = focusedStyle
 				} else {
 					m.state = prerequisitesFailed
 				}
@@ -778,10 +793,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					items[i] = item{title: ctx, desc: ""}
 				}
 			}
-			m.kubeContexts = items
+			m.contextList.SetItems(items)
 			// Don't change state here, wait for config steps
-			// Prepare list model for later use in selectContext state
-			m.list.SetItems(m.kubeContexts)
+			// No need to prepare targetList here
+			// m.targetList.SetItems(m.contextList.Items())
 
 			// Start K8s config flow
 			m.state = promptNamespace
@@ -854,17 +869,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.state = fetchContextError
 			m.finalError = msg.err
 		} else {
-			m.kubeIngressClasses = make([]list.Item, len(msg.classes))
+			ingressItems := make([]list.Item, len(msg.classes))
 			for i, class := range msg.classes {
-				m.kubeIngressClasses[i] = item{title: class, desc: ""}
+				ingressItems[i] = item{title: class, desc: ""}
 			}
-			m.state = selectIngressClass
-			m.list.SetItems(m.kubeIngressClasses)
-			m.list.Styles.Title = focusedStyle
-			cmds = append(cmds, m.inputs[namespaceInput].Focus())
-			m.errorMessage = "" // Clear any potential previous warning/error messages
+
+			// If no classes found, still proceed but don't show the selection list
+			if len(ingressItems) == 0 {
+				m.errorMessage = "Warning: No Kubernetes IngressClasses found in the selected context.\n"
+				m.ingressClassName = "" // Ensure name is empty
+				m.state = selectContext
+				m.contextList.Title = "Select Kubernetes Context:" // Update contextList title
+				// m.contextList.SetItems(m.contextList.Items()) // No need to set items
+				m.contextList.Styles.Title = focusedStyle
+			} else {
+				// Classes found, proceed to selection
+				m.state = selectIngressClass
+				m.ingressClassList.Title = "Select Kubernetes IngressClass:" // Update ingressClassList
+				m.ingressClassList.SetItems(ingressItems)
+				m.errorMessage = "" // Clear any potential previous error/warning messages
+				m.ingressClassList.Styles.Title = focusedStyle
+			}
 		}
-		return m, forceRedrawCmd() // Force redraw
+		// Return force redraw command instead of nil
+		return m, forceRedrawCmd()
 
 	case spinner.TickMsg:
 		// Only tick spinner in active spinner states
@@ -892,8 +920,8 @@ func (m *model) updateActiveComponent(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch m.state {
 	case selectInstallTarget:
-		m.list.Styles.Title = focusedStyle
-		m.list, cmd = m.list.Update(msg)
+		m.targetList.Styles.Title = focusedStyle
+		m.targetList, cmd = m.targetList.Update(msg)
 	case promptNamespace:
 		// Only update if focused
 		if m.inputs[namespaceInput].Focused() {
@@ -932,11 +960,11 @@ func (m *model) updateActiveComponent(msg tea.Msg) tea.Cmd {
 			m.inputs[namespaceInput], cmd = m.inputs[namespaceInput].Update(msg)
 		}
 	case selectIngressClass:
-		m.list.Styles.Title = focusedStyle
-		m.list, cmd = m.list.Update(msg)
+		m.ingressClassList.Styles.Title = focusedStyle
+		m.ingressClassList, cmd = m.ingressClassList.Update(msg)
 	case selectContext:
-		m.list.Styles.Title = focusedStyle
-		m.list, cmd = m.list.Update(msg)
+		m.contextList.Styles.Title = focusedStyle
+		m.contextList, cmd = m.contextList.Update(msg)
 	}
 	return cmd
 }
@@ -984,7 +1012,7 @@ func (m model) View() string {
 		b.WriteString("  " + doneStyle.Render("✓ docker found") + "\n")
 		b.WriteString("  " + doneStyle.Render("✓ docker compose / docker-compose found") + "\n\n")
 		b.WriteString("Select Installation Target:\n")
-		b.WriteString(m.list.View())
+		b.WriteString(m.targetList.View())
 		b.WriteString("\n" + helpStyle.Render("Use arrow keys to navigate, Enter to select, q to quit."))
 
 	case checkingKubePrereqs:
@@ -1109,8 +1137,16 @@ func (m model) View() string {
 		}
 
 	case selectIngressClass:
-		b.WriteString(m.list.View()) // Show ingress class list
+		b.WriteString(m.ingressClassList.View()) // Show ingress class list
 		// Display error/warning message if any occurred during fetch
+		if m.errorMessage != "" {
+			b.WriteString(errorStyle.Render(m.errorMessage) + "\n")
+		}
+		b.WriteString("\n" + helpStyle.Render("Use arrow keys to navigate, Enter to select, q to quit."))
+
+	case selectContext:
+		b.WriteString(m.contextList.View()) // Render the context list
+		// Display error/warning message if any occurred during fetch (e.g., no contexts)
 		if m.errorMessage != "" {
 			b.WriteString(errorStyle.Render(m.errorMessage) + "\n")
 		}
@@ -1163,11 +1199,17 @@ func (m model) View() string {
 		b.WriteString(helpStyle.Render("Installation complete. Check Helm output for details. Press q to quit."))
 
 	case installError:
-		b.WriteString(errorStyle.Render("✗ Installation Failed!\n\n"))
+		b.WriteString(errorStyle.Render("✗ Installation Failed!") + "\n\n")
 		if m.finalError != nil {
-			b.WriteString("Error: " + m.finalError.Error() + "\n\n")
+			b.WriteString(errorStyle.Render(fmt.Sprintf("Command Error: %s\n\n", m.finalError.Error())))
 		}
-		b.WriteString("Helm Output:\n" + m.helmOutput + "\n\n")
+		// Display the combined stdout and stderr from the Helm command, line by line
+		b.WriteString("Helm Command Output (stdout + stderr):\n")
+		outputLines := strings.Split(strings.ReplaceAll(m.helmOutput, "\r\n", "\n"), "\n")
+		for _, line := range outputLines {
+			b.WriteString("  " + line + "\n") // Indent each line slightly
+		}
+		b.WriteString("\n") // Add a final newline
 		// Attempt cleanup on error view
 		if m.clonedRepoPath != "" {
 			_ = os.RemoveAll(m.clonedRepoPath)

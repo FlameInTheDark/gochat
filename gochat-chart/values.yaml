@@ -543,8 +543,16 @@ ingressWs:
   # className: "nginx"
   annotations:
     # --- Example Nginx WebSocket Annotations --- #
-    # Use configuration-snippet to apply only to this Ingress's locations (/ws)
-    nginx.ingress.kubernetes.io/configuration-snippet: |
+    # Use server-snippets instead of configuration-snippet
+    # nginx.ingress.kubernetes.io/configuration-snippet: |
+    #  proxy_set_header Upgrade $http_upgrade;
+    # ... (rest of commented out config snippet) ...
+
+    # Using server-snippets (ensure snippets are enabled in controller config)
+    nginx.ingress.kubernetes.io/server-snippets: |
+      # These headers will apply to the entire server block for this Ingress
+      # Note: Original example had "location / {", but server-snippets doesn't automatically create locations.
+      # Applying headers directly in the server block is common for WebSocket support.
       proxy_set_header Upgrade $http_upgrade;
       proxy_http_version 1.1;
       proxy_set_header X-Forwarded-Host $http_host;
@@ -553,7 +561,8 @@ ingressWs:
       proxy_set_header Host $host;
       proxy_set_header Connection "upgrade";
       proxy_cache_bypass $http_upgrade;
-    # Timeouts might still be needed
+
+    # Timeouts are likely still needed and generally allowed
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
 
