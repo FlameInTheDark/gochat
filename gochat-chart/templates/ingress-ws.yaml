@@ -56,7 +56,7 @@ spec:
         paths:
           # Path definition modified for rewrite-target
           - path: /ws(/|$)(.*)
-            pathType: Prefix
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: {{ $fullName }}-ws
