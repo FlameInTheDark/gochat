@@ -107,6 +107,7 @@ scylla:
     mountPath: /var/lib/scylla
     # storageClass: "standard"
   init:
+    enabled: true
     # Configuration for the Init Container script
     keyspace: gochat
     replicationFactor: 1
@@ -538,15 +539,15 @@ ingress:
     - path: /media
       pathType: Prefix
       serviceName: minio
-      portName: http-api # Check minio service template for actual port name
+      portName: api # Corrected: Match service port name
     - path: /icons
       pathType: Prefix
       serviceName: minio
-      portName: http-api
+      portName: api # Corrected: Match service port name
     - path: /avatars
       pathType: Prefix
       serviceName: minio
-      portName: http-api
+      portName: api # Corrected: Match service port name
 
   # Hosts list - User primarily overrides 'host' here
   hosts:

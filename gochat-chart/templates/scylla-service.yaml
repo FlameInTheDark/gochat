@@ -19,7 +19,6 @@ spec:
       port: {{ .Values.scylla.service.thriftPort }}
       targetPort: thrift
       protocol: TCP
-    # Add other ports like internode, JMX if needed for clustering/monitoring
   selector:
     {{- include "gochat.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: scylla

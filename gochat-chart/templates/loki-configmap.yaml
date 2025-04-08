@@ -8,6 +8,5 @@ metadata:
     app.kubernetes.io/component: loki
 data:
   loki-config.yaml: |-
-    # Convert structured values to YAML string
     {{- .Values.loki.config | toYaml | nindent 4 }}
 {{- end }} 

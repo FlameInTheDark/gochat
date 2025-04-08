@@ -26,9 +26,6 @@ spec:
             - name: http
               containerPort: {{ .Values.api.service.port }}
               protocol: TCP
-          # Assuming the Go app reads config from /dist/config.yaml like in compose.yaml
-          # and the template from /dist/email_notify.tmpl
-          # Adjust paths if the app expects them elsewhere.
           volumeMounts:
             - name: config
               mountPath: /dist/config.yaml
@@ -36,15 +33,6 @@ spec:
             - name: email-template
               mountPath: /config/email_notify.tmpl
               subPath: email_notify.tmpl
-          # Add liveness/readiness probes if your API exposes health endpoints
-          # livenessProbe:
-          #   httpGet:
-          #     path: /healthz
-          #     port: http
-          # readinessProbe:
-          #   httpGet:
-          #     path: /readyz
-          #     port: http
           resources:
             {{- toYaml .Values.api.resources | nindent 12 }}
       volumes:

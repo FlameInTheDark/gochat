@@ -1,6 +1,3 @@
-{{/*
-NOTES.txt template for gochat chart.
-*/}}
 {{- define "gochat.notes" -}}
 
 GoChat has been deployed!
@@ -45,7 +42,7 @@ Grafana Access:
     echo "  Then access via http://localhost:8081"
   {{- end }}
   echo "Grafana Admin User: {{ .Values.grafana.adminUser }}"
-  echo "Grafana Admin Password: {{ .Values.grafana.adminPassword }}" # Consider using a secret!
+  echo "Grafana Admin Password: {{ .Values.grafana.adminPassword }}"
 {{- end }}
 
 {{- end }}

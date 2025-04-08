@@ -7,7 +7,7 @@ metadata:
     {{- include "gochat.labels" . | nindent 4 }}
     app.kubernetes.io/component: prometheus
 spec:
-  serviceName: {{ include "gochat.fullname" . }}-prometheus # Regular service is sufficient for Prometheus usually
+  serviceName: {{ include "gochat.fullname" . }}-prometheus
   replicas: {{ .Values.prometheus.replicaCount }}
   selector:
     matchLabels:
@@ -19,8 +19,7 @@ spec:
         {{- include "gochat.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: prometheus
     spec:
-      # serviceAccountName: {{ include "gochat.serviceAccountName" . }}-prometheus # If specific SA is needed
-      terminationGracePeriodSeconds: 300 # Allow time for shutdown
+      terminationGracePeriodSeconds: 300
       containers:
         - name: prometheus
           image: "{{ .Values.prometheus.image.repository }}:{{ .Values.prometheus.image.tag | default .Chart.AppVersion }}"
@@ -30,7 +29,6 @@ spec:
             - --storage.tsdb.path={{ .Values.prometheus.persistence.mountPath }}
             - --web.console.libraries=/usr/share/prometheus/console_libraries
             - --web.console.templates=/usr/share/prometheus/consoles
-            # Add other args like --web.enable-lifecycle for reload via API
           ports:
             - name: http
               containerPort: {{ .Values.prometheus.service.port }}

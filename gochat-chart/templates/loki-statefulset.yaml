@@ -38,7 +38,7 @@ spec:
               mountPath: {{ .Values.loki.persistence.mountPath }}
           livenessProbe:
             httpGet:
-              path: /ready # Loki readiness endpoint
+              path: /ready
               port: http
             initialDelaySeconds: 45
           readinessProbe:

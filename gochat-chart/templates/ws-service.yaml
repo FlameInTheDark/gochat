@@ -10,7 +10,7 @@ spec:
   type: {{ .Values.ws.service.type }}
   ports:
     - port: {{ .Values.ws.service.port }}
-      targetPort: ws # Match the port name in deployment
+      targetPort: ws
       protocol: TCP
       name: ws
   selector:

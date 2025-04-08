@@ -7,7 +7,6 @@ metadata:
     {{- include "gochat.labels" . | nindent 4 }}
     app.kubernetes.io/component: api
 data:
-  # Define config.yaml structure using nested Helm templates/values
   config.yaml: |-
     {{- $fullname := include "gochat.fullname" . -}}
     {{- $apiConfig := .Values.api.config -}}
@@ -36,7 +35,6 @@ data:
     -}}
     {{ $configData | toYaml | nindent 4 }}
 
-  # email_notify.tmpl content
   email_notify.tmpl: |-
     <!DOCTYPE html>
     <html lang="en">

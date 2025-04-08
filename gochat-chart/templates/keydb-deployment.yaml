@@ -23,11 +23,9 @@ spec:
           image: "{{ .Values.keydb.image.repository }}:{{ .Values.keydb.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.keydb.image.pullPolicy }}
           ports:
-            - name: redis # Standard Redis/KeyDB port name
+            - name: redis
               containerPort: {{ .Values.keydb.service.port }}
               protocol: TCP
-          # Add KeyDB specific args/command if needed
-          # Define readiness/liveness probes for KeyDB
           livenessProbe:
             tcpSocket:
               port: redis
@@ -42,19 +40,6 @@ spec:
             periodSeconds: 5
           resources:
             {{- toYaml .Values.keydb.resources | nindent 12 }}
-          # Add volumeMounts if persistence is enabled
-          # volumeMounts:
-          #   {{- if .Values.keydb.persistence.enabled }}
-          #   - name: data
-          #     mountPath: {{ .Values.keydb.persistence.mountPath }}
-          #   {{- end }}
-      # Add volumes if persistence is enabled
-      # volumes:
-      #   {{- if .Values.keydb.persistence.enabled }}
-      #   - name: data
-      #     persistentVolumeClaim:
-      #       claimName: {{ include "gochat.fullname" . }}-keydb
-      #   {{- end }}
       {{- with .Values.keydb.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

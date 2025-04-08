@@ -7,8 +7,8 @@ metadata:
     {{- include "gochat.labels" . | nindent 4 }}
     app.kubernetes.io/component: minio
 spec:
-  serviceName: {{ include "gochat.fullname" . }}-minio-headless # Required for StatefulSet
-  replicas: 1 # MinIO standalone mode
+  serviceName: {{ include "gochat.fullname" . }}-minio-headless
+  replicas: 1
   selector:
     matchLabels:
       {{- include "gochat.selectorLabels" . | nindent 6 }}
@@ -53,15 +53,13 @@ spec:
           livenessProbe:
             httpGet:
               path: /minio/health/live
-              port: api # Use the name of the port
+              port: api
             initialDelaySeconds: 5
-            periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /minio/health/ready
-              port: api # Use the name of the port
+              port: api
             initialDelaySeconds: 5
-            periodSeconds: 10
           resources:
             {{- toYaml .Values.minio.resources | nindent 12 }}
       {{- with .Values.minio.nodeSelector }}

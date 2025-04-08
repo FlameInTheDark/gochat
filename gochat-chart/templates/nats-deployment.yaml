@@ -32,15 +32,6 @@ spec:
             - name: cluster
               containerPort: {{ .Values.nats.service.clusterPort }}
               protocol: TCP
-          # Add NATS specific args/command if needed, e.g., for clustering
-          # args:
-          #  - "-p"
-          #  - "{{ .Values.nats.service.clientPort }}"
-          #  - "--http_port"
-          #  - "{{ .Values.nats.service.monitorPort }}"
-          #  - "--cluster_port"
-          #  - "{{ .Values.nats.service.clusterPort }}"
-          # Example readiness/liveness probes (adjust endpoint/port as needed)
           livenessProbe:
             tcpSocket:
               port: client

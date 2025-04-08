@@ -15,7 +15,7 @@ metadata:
     app.kubernetes.io/component: scylla-migrate
   annotations:
     "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "{{ .Values.scylla.migrate.hookWeight | default "10" }}" # Run after init job
+    "helm.sh/hook-weight": "{{ .Values.scylla.migrate.hookWeight | default "10" }}"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   template:
@@ -26,10 +26,9 @@ spec:
         app.kubernetes.io/component: scylla-migrate
     spec:
       restartPolicy: OnFailure
-      # Add initContainer to wait for Scylla service
       initContainers:
         - name: wait-for-scylla
-          image: busybox:latest # Small image with nc (netcat)
+          image: busybox:latest
           command: ['sh', '-c']
           args:
             - |
@@ -54,17 +53,6 @@ spec:
             "up"
           ]
           env:
-            # Add authentication env vars if journey binary reads them, otherwise adjust --url format
-            # - name: SCYLLA_USER
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: {{ $fullName }}-scylla-creds # Or your secret name
-            #       key: username
-            # - name: SCYLLA_PASSWORD
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: {{ $fullName }}-scylla-creds # Or your secret name
-            #       key: password
           {{- with .Values.scylla.migrate.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -72,13 +60,8 @@ spec:
           volumeMounts:
             - name: migration-files
               mountPath: "{{ .Values.scylla.migrate.migrationsPath | default "/db/migrations" }}"
-      # Add volumes/volumeMounts if the migrate command needs access to files (e.g., .sql migration files)
-      # Example:
       volumes:
         - name: migration-files
           configMap:
             name: {{ include "gochat.fullname" . }}-scylla-migrations
-      # volumeMounts:
-      #   - name: migration-files
-      #     mountPath: /app/migrations # Path where `go run` expects files
 {{- end }} 

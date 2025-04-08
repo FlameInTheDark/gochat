@@ -35,16 +35,21 @@ HELM_NAMESPACE ?= default
 HELM_MIGRATIONS_SRC ?= ./db/migrations
 HELM_MIGRATIONS_DEST ?= $(HELM_CHART_PATH)/db/migrations
 
+# Windows-compatible path variables
+WIN_SRC := $(subst /,\,${HELM_MIGRATIONS_SRC})
+WIN_DEST := $(subst /,\,${HELM_MIGRATIONS_DEST})
+
 .PHONY: helm-lint helm-template helm-install helm-upgrade helm-uninstall copy-migrations-to-chart clean-migrations-from-chart
 
 copy-migrations-to-chart:
 	@echo "Copying migrations to Helm chart directory..."
-	@mkdir -p $(dir $(HELM_MIGRATIONS_DEST)) # Ensure parent dir exists
-	@cp -r $(HELM_MIGRATIONS_SRC) $(HELM_MIGRATIONS_DEST)
+	@rem xcopy will create destination directories if /I is used and source has >1 file/dir
+	@xcopy "${WIN_SRC}" "${WIN_DEST}\\" /E /I /Y /Q
 
 clean-migrations-from-chart:
 	@echo "Cleaning up copied migrations from Helm chart directory..."
-	@rm -rf $(HELM_MIGRATIONS_DEST)
+	@rem Remove directory recursively and quietly, only if it exists
+	@if exist "${WIN_DEST}" ( rmdir /S /Q "${WIN_DEST}" )
 
 helm-lint:
 	$(MAKE) copy-migrations-to-chart

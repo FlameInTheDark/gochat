@@ -6,8 +6,6 @@ metadata:
   labels:
     {{- include "gochat.labels" . | nindent 4 }}
     app.kubernetes.io/component: grafana
-    # Label required by Grafana sidecar discovery if used
-    # grafana_datasource: "1"
 data:
   grafana-datasources.yaml: |-
     {{- $fullname := include "gochat.fullname" . -}}

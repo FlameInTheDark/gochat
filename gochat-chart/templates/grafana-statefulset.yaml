@@ -1,6 +1,6 @@
 {{- if .Values.grafana.enabled }}
 apiVersion: apps/v1
-kind: StatefulSet # Use StatefulSet for stable identity and volume
+kind: StatefulSet
 metadata:
   name: {{ include "gochat.fullname" . }}-grafana
   labels:
@@ -20,10 +20,6 @@ spec:
         app.kubernetes.io/component: grafana
     spec:
       terminationGracePeriodSeconds: 60
-      # securityContext: # Set security context if needed (e.g., fsGroup for volume permissions)
-      #   fsGroup: 472
-      #   runAsUser: 472
-      #   runAsGroup: 472
       containers:
         - name: grafana
           image: "{{ .Values.grafana.image.repository }}:{{ .Values.grafana.image.tag | default .Chart.AppVersion }}"
@@ -33,27 +29,16 @@ spec:
               containerPort: {{ .Values.grafana.service.port }}
               protocol: TCP
           env:
-            # Admin credentials (consider using a secret)
             - name: GF_SECURITY_ADMIN_USER
               value: {{ .Values.grafana.adminUser | quote }}
-            - name: GF_SECURITY_ADMIN_PASSWORD
-              value: {{ .Values.grafana.adminPassword | quote }}
-            # Paths for provisioning
             - name: GF_PATHS_PROVISIONING
               value: /etc/grafana/provisioning
-            # Add other Grafana env vars as needed
-            # - name: GF_SERVER_ROOT_URL
-            #   value: "{{ .Values.api.config.baseUrl }}" # If Grafana behind same proxy
           volumeMounts:
             - name: data
               mountPath: {{ .Values.grafana.persistence.mountPath }}
             - name: datasources
-              mountPath: /etc/grafana/provisioning/datasources # Mount datasources config
+              mountPath: /etc/grafana/provisioning/datasources
               readOnly: true
-            # Mount dashboards configmap if using one
-            # - name: dashboards
-            #   mountPath: /etc/grafana/provisioning/dashboards
-            #   readOnly: true
           livenessProbe:
             httpGet:
               path: /api/health
@@ -72,10 +57,6 @@ spec:
           configMap:
             name: {{ include "gochat.fullname" . }}-grafana-datasources
             defaultMode: 0644
-        # Add dashboards configmap volume if used
-        # - name: dashboards
-        #   configMap:
-        #     name: {{ include "gochat.fullname" . }}-grafana-dashboards
       {{- with .Values.grafana.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

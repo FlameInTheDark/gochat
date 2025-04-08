@@ -9,7 +9,6 @@ metadata:
     app.kubernetes.io/component: minio
 spec:
   type: ClusterIP
-  clusterIP: None # Indicates headless service
   ports:
     - port: {{ .Values.minio.service.apiPort }}
       targetPort: api

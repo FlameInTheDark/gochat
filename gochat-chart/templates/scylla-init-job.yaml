@@ -1,4 +1,4 @@
-{{- if and .Values.scylla.enabled .Values.scylla.init.keyspace }} # Check if Scylla and init are enabled
+{{- if and $.Values.scylla.enabled $.Values.scylla.init.enabled -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -8,8 +8,7 @@ metadata:
     app.kubernetes.io/component: scylla-init
   annotations:
     "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "{{ .Values.scylla.init.hookWeight | default "5" }}" # Use value from values.yaml
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    "helm.sh/hook-weight": "7"
 spec:
   template:
     metadata:
@@ -19,39 +18,58 @@ spec:
         app.kubernetes.io/component: scylla-init
     spec:
       restartPolicy: OnFailure
+      serviceAccountName: {{ include "gochat.fullname" . }}-scylla-init
+      initContainers:
+        - name: wait-for-scylla-ready
+          image: bitnami/kubectl:latest
+          env:
+            - name: SCYLLA_HOST
+              value: "{{ include "gochat.fullname" . }}-scylla-headless"
+          command: ["/bin/bash", "-ec"]
+          args:
+            - |
+              echo "InitContainer: Waiting for ScyllaDB pod to become Ready..."
+              SCYLLA_POD_NAME=$(echo "$SCYLLA_HOST" | sed 's/-headless$//')-0
+              NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+              echo "InitContainer: Target pod $SCYLLA_POD_NAME in namespace $NAMESPACE"
+              if ! kubectl wait --for=condition=Ready pod/$SCYLLA_POD_NAME -n $NAMESPACE --timeout=300s; then
+                echo "InitContainer ERROR: Timed out waiting for ScyllaDB pod $SCYLLA_POD_NAME to become Ready."
+                exit 1
+              fi
+              echo "InitContainer: ScyllaDB pod $SCYLLA_POD_NAME is Ready."
+              exit 0
       containers:
         - name: scylla-init
-          # Use the same Scylla image as the main deployment, as it includes cqlsh
-          image: "{{ .Values.scylla.image.repository }}:{{ .Values.scylla.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.scylla.image.pullPolicy }}
-          command: ["/bin/bash", "/scripts/init-scylla.sh"]
+          image: "{{ $.Values.scylla.image.repository }}:{{ $.Values.scylla.image.tag | default $.Chart.AppVersion }}"
+          imagePullPolicy: {{ $.Values.scylla.image.pullPolicy }}
+          command: ["/bin/bash", "-ec"]
+          args:
+            - |-
+              echo "MainContainer: ScyllaDB reported as Ready by InitContainer."
+              echo "MainContainer: Adding short delay (5s) before creating keyspace..."
+              sleep 5
+              echo "MainContainer: Attempting to create keyspace '$SCYLLA_KEYSPACE' with RF $SCYLLA_REPLICATION_FACTOR..."
+              CQL_COMMAND="CREATE KEYSPACE IF NOT EXISTS ${SCYLLA_KEYSPACE} WITH replication = {'class': 'SimpleStrategy', 'replication_factor': ${SCYLLA_REPLICATION_FACTOR}};"
+              echo "MainContainer: Executing: $CQL_COMMAND on host $SCYLLA_HOST"
+              retry_count=0
+              max_retries=5
+              until cqlsh $SCYLLA_HOST -e "$CQL_COMMAND"; do
+                  retry_count=$((retry_count+1))
+                  if [[ $retry_count -ge $max_retries ]]; then
+                      echo "MainContainer ERROR: Failed to create keyspace using cqlsh after $max_retries attempts."
+                      exit 1
+                  fi
+                  echo "MainContainer: cqlsh command failed, retrying in 5 seconds (${retry_count}/${max_retries})..."
+                  sleep 5
+              done
+              echo "MainContainer: Keyspace created (or already existed)."
+              echo "MainContainer: SCYLLA INIT JOB SCRIPT FINISHED Successfully"
+              exit 0
           env:
-            # Pass necessary values to the script
             - name: SCYLLA_HOST
-              # Use the headless service name for StatefulSet pods
               value: "{{ include "gochat.fullname" . }}-scylla-headless"
             - name: SCYLLA_KEYSPACE
-              value: "{{ .Values.scylla.init.keyspace }}"
+              value: "{{ $.Values.scylla.init.keyspace }}"
             - name: SCYLLA_REPLICATION_FACTOR
-              value: "{{ .Values.scylla.init.replicationFactor }}"
-            # Add SCYLLA_USER/PASSWORD if authentication is enabled
-            # - name: SCYLLA_USER
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: {{ include "gochat.fullname" . }}-scylla
-            #       key: username
-            # - name: SCYLLA_PASSWORD
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: {{ include "gochat.fullname" . }}-scylla
-            #       key: password
-          volumeMounts:
-            - name: init-script
-              mountPath: /scripts
-      volumes:
-        - name: init-script
-          configMap:
-            # Ensure this ConfigMap contains the init-scylla.sh script
-            name: {{ include "gochat.fullname" . }}-scylla-init-script
-            defaultMode: 0755 # Make script executable
+              value: "{{ $.Values.scylla.init.replicationFactor }}"
 {{- end }}

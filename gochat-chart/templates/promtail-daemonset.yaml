@@ -17,7 +17,6 @@ spec:
         {{- include "gochat.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: promtail
     spec:
-      # serviceAccountName: {{ include "gochat.serviceAccountName" . }}-promtail # If specific SA is needed for hostPath access
       terminationGracePeriodSeconds: 30
       containers:
         - name: promtail
@@ -30,7 +29,7 @@ spec:
               mountPath: /etc/promtail
               readOnly: true
             - name: positions
-              mountPath: "{{ .Values.promtail.config.positionsFilename | dir }}" # Mount directory for positions file
+              mountPath: "{{ .Values.promtail.config.positionsFilename | dir }}"
               readOnly: false
             - name: {{ .Values.promtail.volumes.logs.name }}
               mountPath: {{ .Values.promtail.volumes.logs.hostPath }}
@@ -50,11 +49,6 @@ spec:
               containerPort: {{ .Values.promtail.service.port }}
               protocol: TCP
             {{- end }}
-          # Security context might be needed depending on hostPath permissions
-          # securityContext:
-          #   readOnlyRootFilesystem: true
-          #   runAsGroup: 0
-          #   runAsUser: 0
           resources:
             {{- toYaml .Values.promtail.resources | nindent 12 }}
       volumes:
@@ -63,7 +57,7 @@ spec:
             name: {{ include "gochat.fullname" . }}-promtail
         - name: positions
           hostPath:
-            path: "{{ .Values.promtail.config.positionsFilename | dir }}" # Use hostPath for positions across restarts
+            path: "{{ .Values.promtail.config.positionsFilename | dir }}"
             type: DirectoryOrCreate
         - name: {{ .Values.promtail.volumes.logs.name }}
           hostPath:

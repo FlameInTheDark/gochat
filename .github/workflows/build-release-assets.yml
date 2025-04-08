@@ -94,8 +94,8 @@ jobs:
       - name: Build and push API image
         uses: docker/build-push-action@v5
         with:
-          context: ./cmd/api # Context for API build
-          file: ./cmd/api/Dockerfile # Assuming Dockerfile exists here
+          context: . # Build context is the repository root
+          file: ./api.Dockerfile # Dockerfile is in the root
           push: true
           tags: ${{ steps.meta_api.outputs.tags }}
           labels: ${{ steps.meta_api.outputs.labels }}
@@ -115,8 +115,8 @@ jobs:
       - name: Build and push WS image
         uses: docker/build-push-action@v5
         with:
-          context: ./cmd/ws # Context for WS build
-          file: ./cmd/ws/Dockerfile # Assuming Dockerfile exists here
+          context: . # Build context is the repository root
+          file: ./ws.Dockerfile # Dockerfile is in the root
           push: true
           tags: ${{ steps.meta_ws.outputs.tags }}
           labels: ${{ steps.meta_ws.outputs.labels }}

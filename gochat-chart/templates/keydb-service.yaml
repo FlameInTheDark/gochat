@@ -10,7 +10,7 @@ spec:
   type: {{ .Values.keydb.service.type }}
   ports:
     - port: {{ .Values.keydb.service.port }}
-      targetPort: redis # Match the port name in the deployment
+      targetPort: redis
       protocol: TCP
       name: redis
   selector:

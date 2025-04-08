@@ -31,13 +31,4 @@ data:
     -}}
     {{ $configData | toYaml | nindent 4 }}
 
-    # Original docker_sd_config (may work if Docker socket is mounted and accessible)
-    # - job_name: containers
-    #   docker_sd_configs:
-    #     - host: unix://{{ .Values.promtail.config.dockerSocketPath }}
-    #       refresh_interval: 5s
-    #   relabel_configs:
-    #     - source_labels: [ '__meta_docker_container_name' ]
-    #       regex: '/(.*)'
-    #       target_label: 'container'
 {{- end }} 

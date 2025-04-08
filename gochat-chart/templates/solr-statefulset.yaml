@@ -28,7 +28,6 @@ spec:
             - name: http
               containerPort: {{ .Values.solr.service.port }}
               protocol: TCP
-          # Command modified to precreate the core and then start Solr
           command:
             - sh
             - -c
@@ -38,7 +37,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: {{ .Values.solr.persistence.mountPath }}
-          # Add Solr specific probes (e.g., hitting the admin API)
           livenessProbe:
             httpGet:
               path: /solr/admin/cores?action=STATUS

@@ -7,10 +7,8 @@ metadata:
     {{- include "gochat.labels" . | nindent 4 }}
     app.kubernetes.io/component: minio-init
   annotations:
-    # This is what defines this resource as a hook. Without this line, the
-    # job is considered part of the release.
     "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "1" # Run after MinIO StatefulSet is ready (though readiness isn't guaranteed by weight alone)
+    "helm.sh/hook-weight": "1"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   template:
@@ -27,10 +25,8 @@ spec:
           imagePullPolicy: {{ .Values.minio.init.image.pullPolicy }}
           command: ["/bin/sh", "/scripts/init-minio.sh"]
           env:
-            # Set MinIO Endpoint explicitly using the service name
             - name: MINIO_ENDPOINT
               value: "http://{{ include "gochat.fullname" . }}-minio:{{ .Values.minio.service.port }}"
-            # Get MinIO credentials from the secret
             - name: MINIO_ROOT_USER
               valueFrom:
                 secretKeyRef:
@@ -48,5 +44,5 @@ spec:
         - name: init-script
           configMap:
             name: {{ include "gochat.fullname" . }}-minio-init-script
-            defaultMode: 0755 # Make script executable
+            defaultMode: 0755
 {{- end }} 

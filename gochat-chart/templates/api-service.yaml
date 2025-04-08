@@ -10,7 +10,7 @@ spec:
   type: {{ .Values.api.service.type }}
   ports:
     - port: {{ .Values.api.service.port }}
-      targetPort: http # Match the port name in deployment
+      targetPort: http
       protocol: TCP
       name: http
   selector:

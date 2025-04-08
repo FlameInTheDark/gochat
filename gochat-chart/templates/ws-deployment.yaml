@@ -26,18 +26,10 @@ spec:
             - name: ws
               containerPort: {{ .Values.ws.service.port }}
               protocol: TCP
-          # Assuming the Go app reads config from /dist/config.yaml like in compose.yaml
           volumeMounts:
             - name: config
               mountPath: /dist/config.yaml
               subPath: config.yaml
-          # Add liveness/readiness probes if your WS app exposes health endpoints
-          # livenessProbe:
-          #   tcpSocket:
-          #     port: ws
-          # readinessProbe:
-          #   tcpSocket:
-          #     port: ws
           resources:
             {{- toYaml .Values.ws.resources | nindent 12 }}
       volumes:
