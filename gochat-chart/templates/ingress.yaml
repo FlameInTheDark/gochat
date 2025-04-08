@@ -63,4 +63,14 @@ spec:
                     name: {{ .portName }}
             {{- end }}
           {{- end }}
+          {{- /* Add rule for UI service at the root path */}}
+          {{- if .Values.ui.enabled }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}-ui
+                port:
+                  name: http
+          {{- end }}
 {{- end }}

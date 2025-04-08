@@ -60,23 +60,23 @@ const (
 	kubePrereqsFailed                   // 4
 	fetchingContexts                    // 5
 	fetchContextError                   // 6
-	promptNamespace                     // 7
-	promptMinioPass                     // 8
-	promptGrafanaPass                   // 9
-	promptDomainName                    // 10
-	promptTlsSecret                     // 11
-	fetchingIngressClasses              // 12 (New State)
-	selectIngressClass                  // 13 (New State)
-	selectContext                       // 14 (Renumbered)
-	cloningRepo                         // 15 (Renumbered)
-	cloneError                          // 16 (Renumbered)
-	installing                          // 17 (Renumbered) - K8s specific
-	installFinished                     // 18 (Renumbered) - K8s specific
-	installError                        // 19 (Renumbered) - K8s specific
-	runningCompose                      // 20 (Renumbered)
-	composeFinished                     // 21 (Renumbered)
-	composeError                        // 22 (Renumbered)
-	noKubeContextsWarning               // 23 (Renumbered)
+	selectContext                       // 7
+	noKubeContextsWarning               // 8 - Separate state for this case
+	fetchingIngressClasses              // 9
+	selectIngressClass                  // 10
+	promptNamespace                     // 11
+	promptMinioPass                     // 12
+	promptGrafanaPass                   // 13
+	promptDomainName                    // 14
+	promptTlsSecret                     // 15
+	cloningRepo                         // 16 - Clone backend repo
+	cloneError                          // 17
+	installing                          // 18 - K8s specific
+	installFinished                     // 19 - K8s specific
+	installError                        // 20 - K8s specific
+	runningCompose                      // 21
+	composeFinished                     // 22
+	composeError                        // 23
 )
 
 // --- List Item Delegate ---
@@ -130,6 +130,10 @@ type composeResultMsg struct {
 // Message to signal a view redraw may be needed
 type redrawMsg struct{}
 
+// Add messages for UI repo clone and UI docker build
+// type gitCloneUiResultMsg struct { ... }
+// type dockerBuildUiResultMsg struct { ... }
+
 // --- Model ---
 
 type model struct {
@@ -172,12 +176,14 @@ type model struct {
 	// Execution Details
 	helmChartPath  string
 	clonedRepoPath string
-	gitBranch      string // New field
-	gitTag         string // New field
-	gitHash        string // New field
-	helmOutput     string
-	composeOutput  string
-	finalError     error
+	// clonedUiRepoPath string // REMOVED
+	// builtUiImageName string // REMOVED
+	gitBranch     string
+	gitTag        string // New field
+	gitHash       string // New field
+	helmOutput    string
+	composeOutput string
+	finalError    error
 }
 
 // --- Helper Functions ---
@@ -285,7 +291,10 @@ func runGitCloneCmd(repoURL string, branch string) tea.Cmd {
 	}
 }
 
-// runHelmInstallCmd includes domain name and TLS secret settings
+// runDockerBuildUiCmd builds the UI Docker image locally
+// func runDockerBuildUiCmd(uiRepoPath string) tea.Cmd { ... }
+
+// runHelmInstallCmd simplified - no longer sets UI image overrides
 func runHelmInstallCmd(m model) tea.Cmd {
 	return func() tea.Msg {
 		namespace := m.namespace
@@ -305,6 +314,10 @@ func runHelmInstallCmd(m model) tea.Cmd {
 			"--force",
 			"--set", fmt.Sprintf("minio.auth.rootPassword=%s", m.minioPassword),
 			"--set", fmt.Sprintf("grafana.adminPassword=%s", m.grafanaPassword),
+			// REMOVED UI image overrides
+			// "--set", fmt.Sprintf("ui.image.repository=%s", localUiImageRepo),
+			// "--set", fmt.Sprintf("ui.image.tag=%s", localUiImageTag),
+			// "--set", "ui.image.pullPolicy=IfNotPresent",
 		}
 
 		// Add the Ingress host override if a valid domain was provided
@@ -327,7 +340,7 @@ func runHelmInstallCmd(m model) tea.Cmd {
 			args = append(args, "--kube-context", selectedContext)
 		}
 
-		// --- Copy Migrations Before Helm ---
+		// --- Copy Migrations Before Helm (Keep this logic) ---
 		migrationsSrcPath := filepath.Join(m.clonedRepoPath, "db", "migrations")
 		migrationsDestPath := filepath.Join(m.helmChartPath, "db", "migrations")
 		// Ensure parent dir exists for destination within chart
@@ -566,6 +579,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.clonedRepoPath != "" {
 					_ = os.RemoveAll(m.clonedRepoPath)
 				}
+				// REMOVED UI repo cleanup
+				// if m.clonedUiRepoPath != "" { ... }
 				return m, tea.Quit
 			case "enter":
 				switch m.state {
@@ -808,33 +823,37 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.state = cloneError
 			m.finalError = msg.err
-			// Cleanup on error
-			if msg.path != "" { // Use path from message if available
-				_ = os.RemoveAll(msg.path)
-			}
-		} else {
-			m.clonedRepoPath = msg.path // Store path
-			// Store Git info
-			m.gitBranch = msg.branch
-			m.gitTag = msg.tag
-			m.gitHash = msg.hash
-
-			// Decide next step based on target
-			if m.installTarget == "kubernetes" {
-				m.state = installing
-				m.helmChartPath = filepath.Join(m.clonedRepoPath, "gochat-chart")
-				cmds = append(cmds, m.spinner.Tick, runHelmInstallCmd(m))
-			} else if m.installTarget == "docker" {
-				m.state = runningCompose
-				cmds = append(cmds, m.spinner.Tick, runDockerComposeCmd(m.clonedRepoPath))
-			} else {
-				m.state = cloneError // Should not happen
-				m.finalError = fmt.Errorf("invalid install target '%s' after clone", m.installTarget)
-				_ = os.RemoveAll(m.clonedRepoPath) // Cleanup if target invalid
-			}
+			return m, tea.Quit // Quit on clone error
 		}
-		// Remove separate cleanup logic here, handled above and in success/quit states
+		m.clonedRepoPath = msg.path
+		m.helmChartPath = filepath.Join(m.clonedRepoPath, "gochat-chart") // chart is inside backend repo
+		m.gitBranch = msg.branch
+		m.gitTag = msg.tag
+		m.gitHash = msg.hash
+
+		// After backend repo clone, decide next step based on target
+		if m.installTarget == "kubernetes" {
+			// Proceed directly to Helm install
+			m.state = installing
+			cmds = append(cmds, m.spinner.Tick, runHelmInstallCmd(m))
+		} else if m.installTarget == "docker" {
+			// Proceed directly to compose for Docker install
+			m.state = runningCompose
+			cmds = append(cmds, m.spinner.Tick, runDockerComposeCmd(m.clonedRepoPath))
+		} else {
+			// Should not happen if target selection logic is correct
+			m.state = prerequisitesFailed
+			m.errorMessage = "Invalid installation target after clone."
+		}
 		return m, tea.Batch(cmds...)
+
+	// REMOVED gitCloneUiResultMsg handler
+	// case gitCloneUiResultMsg:
+	// ...
+
+	// REMOVED dockerBuildUiResultMsg handler
+	// case dockerBuildUiResultMsg:
+	// ...
 
 	case installResultMsg:
 		m.helmOutput = msg.output
@@ -844,11 +863,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.state = installFinished
 		}
-		// Cleanup successful clone dir
+		// Cleanup backend repo path
 		if m.clonedRepoPath != "" {
 			_ = os.RemoveAll(m.clonedRepoPath)
 		}
-		return m, nil // Finished install, return nil
+		// REMOVED UI repo cleanup
+		return m, tea.Quit
 
 	case composeResultMsg:
 		m.composeOutput = msg.output
@@ -858,11 +878,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.state = composeFinished
 		}
-		// Cleanup successful clone dir
+		// Cleanup backend repo path
 		if m.clonedRepoPath != "" {
 			_ = os.RemoveAll(m.clonedRepoPath)
 		}
-		return m, nil // Finished compose, return nil
+		// REMOVED UI repo cleanup
+		return m, tea.Quit
 
 	case kubeIngressClassesMsg:
 		if msg.err != nil {
@@ -1157,7 +1178,7 @@ func (m model) View() string {
 		if devBranch {
 			branchDesc = "'dev' branch"
 		}
-		b.WriteString(m.spinner.View() + fmt.Sprintf(" Cloning GoChat repository (%s)...", branchDesc))
+		b.WriteString(m.spinner.View() + fmt.Sprintf(" Cloning GoChat repository (%s) for Helm chart & migrations...", branchDesc))
 
 	case cloneError:
 		b.WriteString(errorStyle.Render("✗ Repository Cloning Failed!\n\n"))
@@ -1191,11 +1212,11 @@ func (m model) View() string {
 			b.WriteString("\n") // Add a newline for separation if passwords were generated
 		}
 		b.WriteString("Helm Output:\n" + m.helmOutput + "\n\n")
-		// Cleanup on successful view
+		// Cleanup backend repo
 		if m.clonedRepoPath != "" {
 			_ = os.RemoveAll(m.clonedRepoPath)
-			m.clonedRepoPath = ""
 		}
+		// REMOVED UI repo cleanup message
 		b.WriteString(helpStyle.Render("Installation complete. Check Helm output for details. Press q to quit."))
 
 	case installError:
@@ -1210,11 +1231,11 @@ func (m model) View() string {
 			b.WriteString("  " + line + "\n") // Indent each line slightly
 		}
 		b.WriteString("\n") // Add a final newline
-		// Attempt cleanup on error view
+		// Attempt cleanup backend repo
 		if m.clonedRepoPath != "" {
 			_ = os.RemoveAll(m.clonedRepoPath)
-			m.clonedRepoPath = ""
 		}
+		// REMOVED UI repo cleanup message
 		b.WriteString(helpStyle.Render("Installation failed. Check output for details. Press q to quit."))
 
 	// --- Docker Compose States ---
@@ -1227,11 +1248,11 @@ func (m model) View() string {
 	case composeFinished:
 		b.WriteString(doneStyle.Render("✓ Docker Compose Services Started Successfully!\n\n"))
 		b.WriteString("Compose Output:\n" + m.composeOutput + "\n\n")
-		// Cleanup on successful view
+		// Cleanup backend repo
 		if m.clonedRepoPath != "" {
 			_ = os.RemoveAll(m.clonedRepoPath)
-			m.clonedRepoPath = ""
 		}
+		// REMOVED UI repo cleanup message
 		b.WriteString(helpStyle.Render("Services should be running in the background. Use 'docker compose logs -f' or 'docker ps' to check status. Press q to quit."))
 
 	case composeError:
@@ -1240,11 +1261,11 @@ func (m model) View() string {
 			b.WriteString("Error: " + m.finalError.Error() + "\n\n")
 		}
 		b.WriteString("Compose Output:\n" + m.composeOutput + "\n\n")
-		// Attempt cleanup on error view
+		// Attempt cleanup backend repo
 		if m.clonedRepoPath != "" {
 			_ = os.RemoveAll(m.clonedRepoPath)
-			m.clonedRepoPath = ""
 		}
+		// REMOVED UI repo cleanup message
 		b.WriteString(helpStyle.Render("Docker Compose failed. Check output for details. Press q to quit."))
 	}
 

@@ -186,10 +186,10 @@ api:
   enabled: true
   replicaCount: 1
   image:
-    # Assuming you build a gochat/api image. Replace if needed.
-    repository: gochat/api
-    tag: latest # Use a specific version tag in production
-    pullPolicy: IfNotPresent # Or Always if using :latest
+    # Point to GHCR by default
+    repository: ghcr.io/flameinthedark/gochat-api
+    tag: "" # Default to Chart.AppVersion
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 3000
@@ -229,10 +229,10 @@ ws:
   enabled: true
   replicaCount: 1
   image:
-    # Assuming you build a gochat/ws image. Replace if needed.
-    repository: gochat/ws
-    tag: latest # Use a specific version tag in production
-    pullPolicy: IfNotPresent # Or Always if using :latest
+    # Point to GHCR by default
+    repository: ghcr.io/flameinthedark/gochat-ws
+    tag: "" # Default to Chart.AppVersion
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 3100
@@ -471,6 +471,38 @@ grafana:
   # nodeSelector, affinity, tolerations etc.
 
 # --- Service Definitions End --- 
+
+# NEW UI Service Definition
+ui:
+  enabled: true
+  replicaCount: 1
+  image:
+    # Point to GHCR by default
+    repository: ghcr.io/flameinthedark/gochat-ui
+    tag: "" # Default to Chart.AppVersion
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000 # Matches the default PORT in the UI's Dockerfile/env
+  config:
+    # Environment variables for the UI container
+    host: "0.0.0.0" # Listen on all interfaces within the container
+    port: 3000      # Port the Node.js server listens on
+    # origin, publicApiBaseUrl, publicWebsocketUrl will be templated in the ConfigMap
+  # Define resources, probes, nodeSelector etc. for the UI pod
+  resources: {}
+  # livenessProbe:
+  #   httpGet:
+  #     path: /health # Assuming your UI app has a health check endpoint
+  #     port: http
+  #   initialDelaySeconds: 15
+  #   periodSeconds: 20
+  # readinessProbe:
+  #   httpGet:
+  #     path: /health # Assuming your UI app has a health check endpoint
+  #     port: http
+  #   initialDelaySeconds: 5
+  #   periodSeconds: 10
 
 # Generic service placeholder (might remove if not needed)
 service:
