@@ -66,7 +66,7 @@ func (e *Entity) DoneAttachment(ctx context.Context, id, channelId int64, conten
 	return nil
 }
 
-func (e *Entity) SelectAttachemntsByIDs(ctx context.Context, ids []int64) ([]model.Attachment, error) {
+func (e *Entity) SelectAttachmentByIDs(ctx context.Context, ids []int64) ([]model.Attachment, error) {
 	var attachments []model.Attachment
 	iter := e.c.Session().
 		Query(getAttachmentsByID).

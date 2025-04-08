@@ -22,6 +22,8 @@ func (s *Server) AuthMiddleware(secret string) {
 				fallthrough
 			case "/api/v1/auth/registration":
 				fallthrough
+			case "/docs/swagger":
+				fallthrough
 			case "/api/v1/auth/confirmation":
 				return true
 			}
@@ -44,6 +46,8 @@ func (s *Server) RateLimitMiddleware(limit, exp int) {
 			case "/api/v1/auth/login":
 				fallthrough
 			case "/api/v1/auth/registration":
+				fallthrough
+			case "/docs/swagger":
 				fallthrough
 			case "/api/v1/auth/confirmation":
 				return true

@@ -10,7 +10,7 @@ const (
 	ErrUnableToExtractID        = "unable to extract ID"
 	ErrAttachmentNotFount       = "attachment not found"
 	ErrUnableToDoneAttachment   = "unable to done attachment"
-	ErrUnableToRemoveAttachemnt = "unable to remove attachment"
+	ErrUnableToRemoveAttachment = "unable to remove attachment"
 	ErrIncorrectFileSize        = "incorrect file size"
 )
 

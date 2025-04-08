@@ -26,3 +26,6 @@ go.work.sum
 
 .idea
 .data
+.cursor
+
+my-values.yaml

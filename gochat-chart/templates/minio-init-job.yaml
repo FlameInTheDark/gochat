@@ -27,6 +27,9 @@ spec:
           imagePullPolicy: {{ .Values.minio.init.image.pullPolicy }}
           command: ["/bin/sh", "/scripts/init-minio.sh"]
           env:
+            # Set MinIO Endpoint explicitly using the service name
+            - name: MINIO_ENDPOINT
+              value: "http://{{ include "gochat.fullname" . }}-minio:{{ .Values.minio.service.port }}"
             # Get MinIO credentials from the secret
             - name: MINIO_ROOT_USER
               valueFrom:

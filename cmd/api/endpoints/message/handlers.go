@@ -87,7 +87,7 @@ func (e *entity) Send(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 
-		ats, err := e.at.SelectAttachemntsByIDs(c.UserContext(), req.Attachments)
+		ats, err := e.at.SelectAttachmentByIDs(c.UserContext(), req.Attachments)
 		if err := helper.HttpDbError(err, ErrUnableToGetAttachements); err != nil {
 			return err
 		}
@@ -248,7 +248,7 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 			atids = append(atids, id)
 		}
 
-		ats, err := e.at.SelectAttachemntsByIDs(c.UserContext(), atids)
+		ats, err := e.at.SelectAttachmentByIDs(c.UserContext(), atids)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}

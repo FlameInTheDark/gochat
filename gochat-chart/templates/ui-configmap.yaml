@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gochat.fullname" . }}-ui
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+data:
+  HOST: {{ .Values.ui.config.host | quote }}
+  PORT: {{ .Values.ui.config.port | quote }}
+
+  {{- /* Determine the base hostname (override or first host) */}}
+  {{- $hostName := .Values.ingress.hostOverride }}
+  {{- if not $hostName }}
+    {{- if .Values.ingress.hosts }}
+      {{- $hostName = (first .Values.ingress.hosts).host }}
+    {{- else }}
+      {{- /* Default or error if no host is defined */}}
+      {{- $hostName = printf "%s-default.%s" (include "gochat.fullname" .) "local" }}
+    {{- end }}
+  {{- end }}
+
+  {{- /* Determine protocol based on TLS config */}}
+  {{- $protocol := "http" }}
+  {{- $wsProtocol := "ws" }}
+  {{- if or .Values.ingress.tlsSecretName .Values.ingress.tls }}
+    {{- $protocol = "https" }}
+    {{- $wsProtocol = "wss" }}
+  {{- end }}
+
+  {{- /* Construct the full URLs */}}
+  {{- $origin := printf "%s://%s" $protocol $hostName }}
+  {{- $apiBaseUrl := printf "%s/api/v1" $origin }}
+  {{- $websocketUrl := printf "%s://%s/ws/subscribe" $wsProtocol $hostName }}
+
+  ORIGIN: {{ $origin | quote }}
+  PUBLIC_API_BASE_URL: {{ $apiBaseUrl | quote }}
+  PUBLIC_WEBSOCKET_URL: {{ $websocketUrl | quote }} 

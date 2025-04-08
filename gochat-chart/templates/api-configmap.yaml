@@ -30,6 +30,9 @@ data:
         "s3_endpoint" (printf "%s-%s:%d" $fullname $apiConfig.minioServiceName (int $apiConfig.minioServicePort))
         "s3_access_key_id" $apiConfig.s3AccessKeyId
         "s3_secret_access_key" $apiConfig.s3SecretAccessKey
+        "nats_conn_string" (printf "nats://%s-nats:%d" $fullname (int .Values.nats.service.clientPort))
+        "queue_transport" $apiConfig.queueTransport
+        "solr_base_url" (printf "http://%s-solr:%d/solr" $fullname (int .Values.solr.service.port))
     -}}
     {{ $configData | toYaml | nindent 4 }}
 

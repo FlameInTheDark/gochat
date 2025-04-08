@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
@@ -22,11 +23,11 @@ func (e *entity) StorageEvents(c *fiber.Ctx) error {
 	err := c.BodyParser(&event)
 	if err != nil {
 		e.log.Error("unable to parse s3 event message", slog.String("error", err.Error()))
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
+		return errors.New(ErrUnableToParseRequestBody)
 	}
 
 	if len(event.Records) == 0 {
-		return fiber.NewError(fiber.StatusBadRequest, ErrNoEventsProvided)
+		return errors.New(ErrNoEventsProvided)
 	}
 
 	switch event.EventName {
@@ -47,54 +48,57 @@ func (e *entity) StorageEvents(c *fiber.Ctx) error {
 			}
 		}
 	}
-	return c.SendStatus(fiber.StatusOK)
+	return nil
 }
 
-func (e *entity) putAttachment(ctx context.Context, event *S3Event) *fiber.Error {
+func (e *entity) putAttachment(ctx context.Context, event *S3Event) error {
 	objectId, channelId, err := extractAttachmentID(&event.Records[0].S3)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToExtractID)
+		return errors.New(ErrUnableToExtractID)
 	}
 	at, err := e.at.GetAttachment(ctx, objectId, channelId)
 	if err != nil {
-		err := e.storage.RemoveAttachment(context.Background(), event.Key, event.Records[0].S3.Bucket.Name)
-		if err != nil {
-			e.log.Error("unable to get and remove attachment", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId))
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		cleanupErr := e.storage.RemoveAttachment(context.Background(), event.Key, event.Records[0].S3.Bucket.Name)
+		if cleanupErr != nil {
+			e.log.Error("failed to get attachment and also failed to cleanup S3 object", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.String("get_error", err.Error()), slog.String("cleanup_error", cleanupErr.Error()))
+		} else {
+			e.log.Error("unable to get attachment, S3 object cleaned up", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.String("error", err.Error()))
 		}
-		e.log.Error("unable to get attachment", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId))
-		return fiber.NewError(fiber.StatusNotFound, ErrAttachmentNotFount)
+		return errors.New(ErrAttachmentNotFount)
 	}
+
 	if at.FileSize != event.Records[0].S3.Object.Size {
-		err := e.storage.RemoveAttachment(context.Background(), event.Key, event.Records[0].S3.Bucket.Name)
-		if err != nil {
-			e.log.Error("incorrect filesize, unable to remove object", slog.String("error", err.Error()), slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.Int64("expected", at.FileSize), slog.Int64("actual", event.Records[0].S3.Object.Size))
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		cleanupErr := e.storage.RemoveAttachment(context.Background(), event.Key, event.Records[0].S3.Bucket.Name)
+		if cleanupErr != nil {
+			e.log.Error("incorrect filesize and also failed to cleanup S3 object", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.Int64("expected", at.FileSize), slog.Int64("actual", event.Records[0].S3.Object.Size), slog.String("cleanup_error", cleanupErr.Error()))
+		} else {
+			e.log.Error("incorrect filesize, S3 object cleaned up", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.Int64("expected", at.FileSize), slog.Int64("actual", event.Records[0].S3.Object.Size))
 		}
-		e.log.Error("incorrect filesize", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.Int64("expected", at.FileSize), slog.Int64("actual", event.Records[0].S3.Object.Size))
-		return fiber.NewError(fiber.StatusInternalServerError, ErrIncorrectFileSize)
+		return errors.New(ErrIncorrectFileSize)
 	}
+
 	err = e.at.DoneAttachment(ctx, objectId, channelId, event.Records[0].S3.Object.ContentType)
 	if err != nil {
-		err := e.storage.RemoveAttachment(context.Background(), event.Key, event.Records[0].S3.Bucket.Name)
-		if err != nil {
-			e.log.Error("incorrect filesize, unable to remove object", slog.String("error", err.Error()), slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.Int64("expected", at.FileSize), slog.Int64("actual", event.Records[0].S3.Object.Size))
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		cleanupErr := e.storage.RemoveAttachment(context.Background(), event.Key, event.Records[0].S3.Bucket.Name)
+		if cleanupErr != nil {
+			e.log.Error("failed to mark attachment done and also failed to cleanup S3 object", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.String("done_error", err.Error()), slog.String("cleanup_error", cleanupErr.Error()))
+		} else {
+			e.log.Error("unable to mark attachment done, S3 object cleaned up", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.String("error", err.Error()))
 		}
-		e.log.Error("unable to complete attachment", slog.String("error", err.Error()))
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToDoneAttachment)
+		return errors.New(ErrUnableToDoneAttachment)
 	}
 	return nil
 }
 
-func (e *entity) deleteAttachment(ctx context.Context, event *S3Event) *fiber.Error {
+func (e *entity) deleteAttachment(ctx context.Context, event *S3Event) error {
 	objectId, channelId, err := extractAttachmentID(&event.Records[0].S3)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToExtractID)
+		return errors.New(ErrUnableToExtractID)
 	}
 	err = e.at.RemoveAttachment(ctx, objectId, channelId)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToRemoveAttachemnt)
+		e.log.Error("unable to remove attachment from database", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.String("error", err.Error()))
+		return errors.New(ErrUnableToRemoveAttachment)
 	}
 	return nil
 }

@@ -19,19 +19,18 @@ data:
     MINIO_ENDPOINT="http://$MINIO_SVC:$MINIO_PORT"
 
     echo "Waiting for MinIO service at $MINIO_ENDPOINT..."
-    # Wait for the service endpoint to be resolvable and the API to respond
-    # Adjust timeout and sleep duration as needed
-    apk add --no-cache curl
-    until curl -sf $MINIO_ENDPOINT/minio/health/live; do
-        echo "MinIO service not ready yet, retrying in 5 seconds..."
-        sleep 5
-    done
-    echo "MinIO service is responding."
 
     echo "Configuring mc alias: $MC_ALIAS"
-    # Use credentials from environment variables (passed from Secret)
-    mc alias set $MC_ALIAS "$MINIO_ENDPOINT" "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
-    echo "mc alias configured."
+    # Configure alias first. This might fail initially if MinIO isn't up, but we check readiness next.
+    mc alias set $MC_ALIAS "$MINIO_ENDPOINT" "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" || echo "mc alias set command failed initially, will retry check..."
+
+    echo "Waiting for MinIO server ($MC_ALIAS) to report readiness..."
+    # Use mc admin info to wait for the server to be ready
+    until mc admin info $MC_ALIAS --json > /dev/null 2>&1; do
+         echo "MinIO server not ready yet (mc admin info failed). Retrying in 5 seconds..."
+         sleep 5
+    done
+    echo "MinIO server is ready."
 
     BUCKETS="{{ range .Values.minio.init.buckets }}{{ . }} {{ end }}"
 
