@@ -1,3 +1,22 @@
+## [1.0.1](https://github.com/FlameInTheDark/gochat/compare/v1.0.0...v1.0.1) (2025-04-08)
+
+
+### Bug Fixes
+
+* **api:** fixed s3 event webhook panic ([6f87c86](https://github.com/FlameInTheDark/gochat/commit/6f87c86beec258a4a27c31a3adc12d9c9b6d082f))
+* **helm:** fixed helm chart, added deployment with ingress ([924d840](https://github.com/FlameInTheDark/gochat/commit/924d8406d277671fed562c70b544f6181fe15e57))
+* **installer:** added ability to install version from the dev branch ([ae7aa1f](https://github.com/FlameInTheDark/gochat/commit/ae7aa1faab0fcc551f1613815173cba0f3995862))
+* **installer:** changed ws annotations ([cfa053f](https://github.com/FlameInTheDark/gochat/commit/cfa053f86e9023077fcb730ba16920df20754207))
+* **installer:** changed ws annotations ([bca62cb](https://github.com/FlameInTheDark/gochat/commit/bca62cb394089bce4314ec90ac71c3c7635ffb2f))
+* **installer:** deployment fixes ([2f792f3](https://github.com/FlameInTheDark/gochat/commit/2f792f3314c3fb597c657e89d943bbb9ee6ed837))
+* **installer:** fixed ingress and database migration ([3f69e02](https://github.com/FlameInTheDark/gochat/commit/3f69e027f4d7989017caff7e14482af3bfff79da))
+* **installer:** fixed installer context selection and server-snippets in values.yaml ([2e5fdb5](https://github.com/FlameInTheDark/gochat/commit/2e5fdb5a077a2f729b55d16f81ca98e535d9976d))
+* **installer:** fixed websocket upgrade for ingress ([3b1980c](https://github.com/FlameInTheDark/gochat/commit/3b1980c519a01d233259a8c65836bfb91f666bac))
+* **installer:** fixed ws routing issue ([75454be](https://github.com/FlameInTheDark/gochat/commit/75454bec6aab9680c0aafb3f85bda6fb48a03647))
+* **installer:** fixed ws routing issue ([1a65ddc](https://github.com/FlameInTheDark/gochat/commit/1a65ddccdc1404109896a45d08623c054dd0fbf1))
+* **installer:** values fix ([2a37bf8](https://github.com/FlameInTheDark/gochat/commit/2a37bf87cf3806b820344688922c1129777c2c5c))
+* new deployment ([6352446](https://github.com/FlameInTheDark/gochat/commit/6352446211b97b0ea003d804df9ccc9423ccbf52))
+
 # 1.0.0 (2025-04-05)
 
 
