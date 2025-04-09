@@ -12,11 +12,14 @@ metadata:
     {{- end }}
     kubernetes.io/ingress.class: {{ .Values.minioConsoleIngress.className | quote }}
 spec:
-  {{- if and .Values.minioConsoleIngress.tls.enabled .Values.minioConsoleIngress.tls.secretName }}
+  {{- if and .Values.ingress.tls (gt (len .Values.ingress.tls) 0) }}
+  {{- $mainTls := first .Values.ingress.tls }}
+  {{- if $mainTls.secretName }}
   tls:
     - hosts:
         - {{ .Values.minioConsoleIngress.host | quote }}
-      secretName: {{ .Values.minioConsoleIngress.tls.secretName }}
+      secretName: {{ $mainTls.secretName }}
+  {{- end }}
   {{- end }}
   rules:
     - host: {{ .Values.minioConsoleIngress.host | quote }}

@@ -576,6 +576,26 @@ ingressWs:
     #  proxy_set_header Upgrade $http_upgrade;
     #  ...
 
+# NEW: Configuration for MinIO Console Ingress
+minioConsoleIngress:
+  enabled: true
+  # Use the same className as the main ingress unless specifically needed otherwise
+  className: "{{ .Values.ingress.className }}"
+  # Use the same host as the main application
+  host: "{{ .Values.ingress.hostOverride }}"
+  path: /minio
+  pathType: Prefix
+  # Annotations specific to MinIO console rewrite
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: / # Rewrite /minio to / for the backend
+    # Add other annotations if needed (e.g., backend protocol)
+    # nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+  tls:
+    # Default to false. Template will enable if main ingress TLS is set.
+    enabled: false
+    # Secret name will be determined in the template based on main ingress TLS
+    secretName: "" # Keep empty or remove this line
+
 resources: {}
 
 # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
