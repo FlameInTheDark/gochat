@@ -84,10 +84,12 @@ func initialModel(dev bool, debug bool) model {
 	inputs[tlsSecretInput] = t
 
 	delegate := list.NewDefaultDelegate()
-	delegate.SetHeight(1)
-	delegate.SetSpacing(0)
+	// REMOVED: delegate.SetHeight(1)
+	// REMOVED: delegate.SetSpacing(0)
+	// Revert to default multi-line delegate
 
-	listView := list.New([]list.Item{}, delegate, 40, 5)
+	// Set excessive height for target list as a diagnostic step
+	listView := list.New([]list.Item{}, delegate, 40, 10) // Height set to 10
 	listView.SetShowHelp(false)
 	listView.SetShowStatusBar(false)
 	listView.SetFilteringEnabled(false)
@@ -101,15 +103,29 @@ func initialModel(dev bool, debug bool) model {
 	ti.Width = 60                      // INCREASED width for longer placeholders
 
 	return model{
-		state:                   checkingBasePrereqs,
-		spinner:                 s,
-		prereqChecks:            make(map[string]bool),
-		inputs:                  inputs,
-		targetList:              listView,
-		textInput:               ti,
-		ingressClassList:        list.New([]list.Item{}, delegate, 40, 5),
-		contextList:             list.New([]list.Item{}, delegate, 40, 5),
-		domainName:              "gochat.local",
+		state:        checkingBasePrereqs,
+		spinner:      s,
+		prereqChecks: make(map[string]bool),
+		inputs:       inputs,
+		targetList:   listView, // Use the list with height 10
+		textInput:    ti,
+		// Use the default delegate, keep height 10 for these lists
+		// Explicitly disable filter, pagination, status bar for consistency
+		ingressClassList: func() list.Model {
+			l := list.New([]list.Item{}, delegate, 40, 10)
+			l.SetFilteringEnabled(false)
+			l.SetShowPagination(false)
+			l.SetShowStatusBar(false)
+			return l
+		}(),
+		contextList: func() list.Model {
+			l := list.New([]list.Item{}, delegate, 40, 10)
+			l.SetFilteringEnabled(false)
+			l.SetShowPagination(false)
+			l.SetShowStatusBar(false)
+			return l
+		}(),
+		domainName:              "gochat.local", // Default value
 		minioPassGenerated:      false,
 		grafanaPassGenerated:    false,
 		devBranch:               dev,

@@ -24,7 +24,6 @@ func generatePassword() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-// --- ADDED: Helper to build Helm args --- //
 func buildHelmCommandArgs(m model) []string {
 	args := []string{
 		// Base args from stored values
@@ -43,6 +42,14 @@ func buildHelmCommandArgs(m model) []string {
 		args = append(args, "--set", fmt.Sprintf("ingress.className=%s", m.ingressClassName))
 	}
 
-	// Dev tags are NOT added here anymore based on previous changes
+	if m.devBranch {
+		devTag := "dev"
+		args = append(args,
+			"--set", fmt.Sprintf("api.image.tag=%s", devTag),
+			"--set", fmt.Sprintf("ui.image.tag=%s", devTag),
+			"--set", fmt.Sprintf("scylla.migrate.image.tag=%s", devTag),
+		)
+	}
+
 	return args
 }

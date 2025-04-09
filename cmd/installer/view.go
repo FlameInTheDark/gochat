@@ -20,9 +20,6 @@ var (
 )
 
 func (m *model) View() string {
-	// Remove debug print
-	// fmt.Printf("DEBUG: Rendering View for state: %v\n", m.state)
-
 	var b strings.Builder
 	b.WriteString(titleStyle.Render("GoChat Universal Installer") + "\n\n")
 
@@ -51,18 +48,27 @@ func (m *model) View() string {
 		b.WriteString(helpStyle.Render("Please install missing commands and try again. Press q to quit."))
 
 	case selectInstallTarget:
-		// Show only the target list
-		b.WriteString("Base Prerequisites Met. Choose Installation Target:\n")
+		// Show only the target list itself, no preceding text
 		b.WriteString(m.targetList.View())
 		b.WriteString("\n" + helpStyle.Render("Use arrow keys, Enter to select, q to quit."))
 
 	// --- Kubernetes Path States --- //
-	case checkingKubePrereqs, fetchingKubeContexts, selectKubeContext, promptNamespace, promptDomain, promptTLSSecret, fetchingIngressClasses, selectIngressClass, promptIngressClass, promptMinioPassword, promptGrafanaPassword, installingHelm:
+	case checkingKubePrereqs, fetchingKubeContexts, promptNamespace, promptDomain, promptTLSSecret, fetchingIngressClasses, promptIngressClass, promptMinioPassword, promptGrafanaPassword, installingHelm:
 		if m.installTarget == "kubernetes" {
 			m.viewKubernetesSteps(&b)
 		} else {
 			b.WriteString(errorStyle.Render("Internal Error: Unexpected K8s state for non-K8s target."))
 		}
+
+	// NEW: Dedicated case for Context Selection List
+	case selectKubeContext:
+		b.WriteString(m.contextList.View())
+		b.WriteString("\n" + helpStyle.Render("Use arrow keys, Enter to select. q to quit."))
+
+	// NEW: Dedicated case for Ingress Class Selection List
+	case selectIngressClass:
+		b.WriteString(m.ingressClassList.View())
+		b.WriteString("\n" + helpStyle.Render("Use arrows, Enter to select (or skip). q to quit."))
 
 	// --- Docker Path States --- //
 	case checkingDockerPrereqs:
@@ -169,15 +175,14 @@ func (m *model) viewKubernetesSteps(b *strings.Builder) {
 		currentStepIndex = 5
 	case fetchingIngressClasses:
 		currentStepIndex = 6
-	case selectIngressClass, promptIngressClass:
+	case promptIngressClass:
 		currentStepIndex = 7
 	case promptMinioPassword:
 		currentStepIndex = 8
 	case promptGrafanaPassword:
 		currentStepIndex = 9
-	// NOTE: Cloning Repo is now a shared state, handled outside this helper
 	case installingHelm:
-		currentStepIndex = 10 // Index adjusted
+		currentStepIndex = 10
 	}
 
 	// Render the steps list...
@@ -227,13 +232,15 @@ func (m *model) viewKubernetesSteps(b *strings.Builder) {
 		b.WriteString(m.textInput.View())
 		b.WriteString("\n" + helpStyle.Render("Enter value, press Enter to confirm. Esc to quit."))
 
-	// Selection states use lists
-	case selectKubeContext: // ADDED
-		b.WriteString(m.contextList.View())
-		b.WriteString("\n" + helpStyle.Render("Use arrows, Enter to select. q to quit."))
-	case selectIngressClass:
-		b.WriteString(m.ingressClassList.View())
-		b.WriteString("\n" + helpStyle.Render("Use arrows, Enter to select (or skip). q to quit."))
+		// Selection states now handled in the main view switch, not here
+		/*
+			case selectKubeContext:
+				b.WriteString(m.contextList.View())
+				b.WriteString("\n" + helpStyle.Render("Use arrows, Enter to select. q to quit."))
+			case selectIngressClass:
+				b.WriteString(m.ingressClassList.View())
+				b.WriteString("\n" + helpStyle.Render("Use arrows, Enter to select (or skip). q to quit."))
+		*/
 
 		// Other states (checking, fetching, installing) show spinner via the steps list above
 	}
