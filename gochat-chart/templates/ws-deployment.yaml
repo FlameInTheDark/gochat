@@ -6,6 +6,9 @@ metadata:
   labels:
     {{- include "gochat.labels" . | nindent 4 }}
     app.kubernetes.io/component: ws
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "15"
 spec:
   replicas: {{ .Values.ws.replicaCount }}
   selector:

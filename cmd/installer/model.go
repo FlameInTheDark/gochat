@@ -173,9 +173,10 @@ type model struct {
 	// clonedUiRepoPath string // REMOVED
 	// builtUiImageName string // REMOVED
 	gitBranch      string
-	gitTag         string // New field
-	gitHash        string // New field
-	helmOutput     string // Stored output for install/debug
+	gitTag         string   // New field
+	gitHash        string   // New field
+	helmOutput     string   // Stored output for install/debug
+	helmArgs       []string // ADDED: Store calculated args for actual install
 	composeOutput  string
 	finalError     error
 	successMessage string // ADDED: For completion messages

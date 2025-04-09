@@ -19,35 +19,15 @@ spec:
     spec:
       restartPolicy: OnFailure
       serviceAccountName: {{ include "gochat.fullname" . }}-scylla-init
-      initContainers:
-        - name: wait-for-scylla-ready
-          image: bitnami/kubectl:latest
-          env:
-            - name: SCYLLA_HOST
-              value: "{{ include "gochat.fullname" . }}-scylla-headless"
-          command: ["/bin/bash", "-ec"]
-          args:
-            - |
-              echo "InitContainer: Waiting for ScyllaDB pod to become Ready..."
-              SCYLLA_POD_NAME=$(echo "$SCYLLA_HOST" | sed 's/-headless$//')-0
-              NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
-              echo "InitContainer: Target pod $SCYLLA_POD_NAME in namespace $NAMESPACE"
-              if ! kubectl wait --for=condition=Ready pod/$SCYLLA_POD_NAME -n $NAMESPACE --timeout=300s; then
-                echo "InitContainer ERROR: Timed out waiting for ScyllaDB pod $SCYLLA_POD_NAME to become Ready."
-                exit 1
-              fi
-              echo "InitContainer: ScyllaDB pod $SCYLLA_POD_NAME is Ready."
-              exit 0
       containers:
         - name: scylla-init
           image: "{{ $.Values.scylla.image.repository }}:{{ $.Values.scylla.image.tag | default $.Chart.AppVersion }}"
           imagePullPolicy: {{ $.Values.scylla.image.pullPolicy }}
           command: ["/bin/bash", "-ec"]
           args:
-            - |-
-              echo "MainContainer: ScyllaDB reported as Ready by InitContainer."
-              echo "MainContainer: Adding short delay (5s) before creating keyspace..."
-              sleep 5
+            - |
+              echo "MainContainer: Waiting 15 seconds for Scylla to stabilize..."
+              sleep 15
               echo "MainContainer: Attempting to create keyspace '$SCYLLA_KEYSPACE' with RF $SCYLLA_REPLICATION_FACTOR..."
               CQL_COMMAND="CREATE KEYSPACE IF NOT EXISTS ${SCYLLA_KEYSPACE} WITH replication = {'class': 'SimpleStrategy', 'replication_factor': ${SCYLLA_REPLICATION_FACTOR}};"
               echo "MainContainer: Executing: $CQL_COMMAND on host $SCYLLA_HOST"
@@ -59,8 +39,8 @@ spec:
                       echo "MainContainer ERROR: Failed to create keyspace using cqlsh after $max_retries attempts."
                       exit 1
                   fi
-                  echo "MainContainer: cqlsh command failed, retrying in 5 seconds (${retry_count}/${max_retries})..."
-                  sleep 5
+                  echo "MainContainer: cqlsh command failed, retrying in 10 seconds (${retry_count}/${max_retries})..."
+                  sleep 10
               done
               echo "MainContainer: Keyspace created (or already existed)."
               echo "MainContainer: SCYLLA INIT JOB SCRIPT FINISHED Successfully"

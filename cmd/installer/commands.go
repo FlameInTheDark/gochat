@@ -126,41 +126,26 @@ func runHelmInstallCmd(m *model) tea.Cmd {
 	return func() tea.Msg {
 		// Access fields directly via the pointer m.fieldName
 		namespace := m.namespace
-		domainName := m.domainName
-		tlsSecretName := m.tlsSecretName // Get TLS secret name
 		selectedContext := m.selectedContext
 
 		// Set defaults
 		if namespace == "" {
 			namespace = "default"
 		}
-		useDomain := domainName != "" && domainName != "gochat.local"
 
+		// Build the base command arguments
 		args := []string{
 			"upgrade", "--install", helmReleaseName, m.helmChartPath,
 			"--namespace", namespace, "--create-namespace",
 			"--force",
 			"--timeout", "10m",
-			"--set", fmt.Sprintf("minio.auth.rootPassword=%s", m.minioPassword),
-			"--set", fmt.Sprintf("grafana.adminPassword=%s", m.grafanaPassword),
+			"--wait",
 		}
 
-		// Add the Ingress host override if a valid domain was provided
-		if useDomain {
-			args = append(args, "--set", fmt.Sprintf("ingress.hostOverride=%s", domainName))
-		}
+		// Append the dynamically calculated arguments (includes passwords, domain, tls, dev tags etc.)
+		args = append(args, m.helmArgs...)
 
-		// Configure TLS if a secret name and domain were provided
-		if useDomain && tlsSecretName != "" {
-			args = append(args, "--set", fmt.Sprintf("ingress.tlsSecretName=%s", tlsSecretName))
-		}
-
-		// Add ingress class if one was selected
-		if m.ingressClassName != "" {
-			args = append(args, "--set", fmt.Sprintf("ingress.className=%s", m.ingressClassName))
-		}
-
-		// Add context flag
+		// Add context flag (must be added *after* potentially stored args from helmArgs)
 		if selectedContext != "" {
 			args = append(args, "--kube-context", selectedContext)
 		}

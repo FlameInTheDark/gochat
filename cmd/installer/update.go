@@ -348,13 +348,16 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.textInput.Blur()
 
 						// --- Debug Check --- //
+						helmArgs := buildHelmCommandArgs(*m) // Calculate args regardless
 						if m.debugMode {
-							helmArgs := buildHelmCommandArgs(*m) // Pass model value
-							// Construct the command string (chart path is not known yet)
+							// Construct the command string for debug output
 							m.helmOutput = fmt.Sprintf("helm upgrade --install %s <chart-path> --namespace %s [other args: %s]",
 								helmReleaseName, m.namespace, strings.Join(helmArgs, " "))
-							m.state = installationComplete // Use final state for debug exit
-							return m, tea.Quit             // Quit immediately
+							m.state = installationComplete
+							return m, tea.Quit
+						} else {
+							// Store args for actual install
+							m.helmArgs = helmArgs
 						}
 						// --- End Debug Check --- //
 
@@ -374,13 +377,16 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.textInput.Blur()
 
 						// --- Debug Check --- //
+						helmArgs := buildHelmCommandArgs(*m) // Calculate args regardless
 						if m.debugMode {
-							helmArgs := buildHelmCommandArgs(*m) // Pass model value
-							// Construct the command string (chart path is not known yet)
+							// Construct the command string for debug output
 							m.helmOutput = fmt.Sprintf("helm upgrade --install %s <chart-path> --namespace %s [other args: %s]",
 								helmReleaseName, m.namespace, strings.Join(helmArgs, " "))
-							m.state = installationComplete // Use final state for debug exit
-							return m, tea.Quit             // Quit immediately
+							m.state = installationComplete
+							return m, tea.Quit
+						} else {
+							// Store args for actual install
+							m.helmArgs = helmArgs
 						}
 						// --- End Debug Check --- //
 

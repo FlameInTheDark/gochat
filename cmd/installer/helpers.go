@@ -47,7 +47,7 @@ func buildHelmCommandArgs(m model) []string {
 		args = append(args,
 			"--set", fmt.Sprintf("api.image.tag=%s", devTag),
 			"--set", fmt.Sprintf("ui.image.tag=%s", devTag),
-			"--set", fmt.Sprintf("scylla.migrate.image.tag=%s", devTag),
+			"--set", fmt.Sprintf("ws.image.tag=%s", devTag),
 		)
 	}
 
