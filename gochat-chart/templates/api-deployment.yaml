@@ -29,6 +29,17 @@ spec:
             - name: http
               containerPort: {{ .Values.api.service.port }}
               protocol: TCP
+          env:
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "gochat.fullname" . }}-minio
+                  key: rootUser
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "gochat.fullname" . }}-minio
+                  key: rootPassword
           volumeMounts:
             - name: config
               mountPath: /dist/config.yaml

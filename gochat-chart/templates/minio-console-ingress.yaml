@@ -1,0 +1,34 @@
+{{- if and .Values.minio.enabled .Values.minioConsoleIngress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "gochat.fullname" . }}-minio-console
+  labels:
+    {{- include "gochat.labels" . | nindent 4 }}
+    app.kubernetes.io/component: minio-console-ingress
+  annotations:
+    {{- with .Values.minioConsoleIngress.annotations }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    kubernetes.io/ingress.class: {{ .Values.minioConsoleIngress.className | quote }}
+spec:
+  {{- if and .Values.minioConsoleIngress.tls.enabled .Values.minioConsoleIngress.tls.secretName }}
+  tls:
+    - hosts:
+        - {{ .Values.minioConsoleIngress.host | quote }}
+      secretName: {{ .Values.minioConsoleIngress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.minioConsoleIngress.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.minioConsoleIngress.path }}
+            pathType: {{ .Values.minioConsoleIngress.pathType }}
+            backend:
+              service:
+                # Target the main MinIO service created by the subchart/template
+                name: {{ include "gochat.fullname" . }}-minio
+                port:
+                  # Target the console port number
+                  number: {{ .Values.minio.service.consolePort }}
+{{- end }}
