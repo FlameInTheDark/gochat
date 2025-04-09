@@ -48,6 +48,9 @@ func buildHelmCommandArgs(m model) []string {
 			"--set", fmt.Sprintf("api.image.tag=%s", devTag),
 			"--set", fmt.Sprintf("ui.image.tag=%s", devTag),
 			"--set", fmt.Sprintf("ws.image.tag=%s", devTag),
+			"--set", "api.image.pullPolicy=Always",
+			"--set", "ui.image.pullPolicy=Always",
+			"--set", "ws.image.pullPolicy=Always",
 		)
 	}
 
