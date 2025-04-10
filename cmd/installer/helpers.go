@@ -42,6 +42,27 @@ func buildHelmCommandArgs(m model) []string {
 		args = append(args, "--set", fmt.Sprintf("ingress.className=%s", m.ingressClassName))
 	}
 
+	// ADDED: Pass dedicated MinIO API creds
+	if m.minioAccessKey != "" {
+		args = append(args, "--set", fmt.Sprintf("minio.apiAccessKey=%s", m.minioAccessKey))
+	}
+	if m.minioSecretKey != "" {
+		args = append(args, "--set", fmt.Sprintf("minio.apiSecretKey=%s", m.minioSecretKey))
+	}
+
+	// ADDED: Set MinIO Console Ingress host if provided
+	if m.minioConsoleDomain != "" {
+		args = append(args, "--set", fmt.Sprintf("minioConsoleIngress.enabled=true"))
+		args = append(args, "--set", fmt.Sprintf("minioConsoleIngress.host=%s", m.minioConsoleDomain))
+		// ADDED: Set class name only if provided in TUI
+		if m.minioConsoleIngressClass != "" {
+			args = append(args, "--set", fmt.Sprintf("minioConsoleIngress.className=%s", m.minioConsoleIngressClass))
+		}
+	} else {
+		// Explicitly disable console ingress if domain is blank
+		args = append(args, "--set", fmt.Sprintf("minioConsoleIngress.enabled=false"))
+	}
+
 	if m.devBranch {
 		devTag := "dev"
 		args = append(args,

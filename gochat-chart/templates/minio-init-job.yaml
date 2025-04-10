@@ -37,6 +37,12 @@ spec:
                 secretKeyRef:
                   name: {{ include "gochat.fullname" . }}-minio
                   key: MINIO_ROOT_PASSWORD
+            - name: API_ACCESS_KEY
+              value: {{ .Values.minio.apiAccessKey | default "" | quote }}
+            - name: API_SECRET_KEY
+              value: {{ .Values.minio.apiSecretKey | default "" | quote }}
+            - name: API_SERVICE_URL
+              value: "http://{{ include "gochat.fullname" . }}-api:{{ .Values.api.service.port }}"
           volumeMounts:
             - name: init-script
               mountPath: /scripts

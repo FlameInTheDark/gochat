@@ -10,28 +10,30 @@ metadata:
     {{- with .Values.minioConsoleIngress.annotations }}
       {{- toYaml . | nindent 4 }}
     {{- end }}
+    {{- if .Values.minioConsoleIngress.className }}
     kubernetes.io/ingress.class: {{ .Values.minioConsoleIngress.className | quote }}
+    {{- end }}
 spec:
-  {{- if and .Values.ingress.tls (gt (len .Values.ingress.tls) 0) }}
-  {{- $mainTls := first .Values.ingress.tls }}
-  {{- if $mainTls.secretName }}
+  {{- if and .Values.minioConsoleIngress.tls.enabled .Values.minioConsoleIngress.tls.secretName }}
   tls:
     - hosts:
         - {{ .Values.minioConsoleIngress.host | quote }}
-      secretName: {{ $mainTls.secretName }}
-  {{- end }}
+      secretName: {{ .Values.minioConsoleIngress.tls.secretName }}
+  {{- else if and .Values.ingress.tlsSecretName }} # Fallback to main ingress TLS if console TLS not explicitly set
+  tls:
+    - hosts:
+        - {{ .Values.minioConsoleIngress.host | quote }}
+      secretName: {{ .Values.ingress.tlsSecretName }}
   {{- end }}
   rules:
     - host: {{ .Values.minioConsoleIngress.host | quote }}
       http:
         paths:
-          - path: {{ .Values.minioConsoleIngress.path }}
-            pathType: {{ .Values.minioConsoleIngress.pathType }}
+          - path: /
+            pathType: Prefix # Console runs at the root of its host
             backend:
               service:
-                # Target the main MinIO service created by the subchart/template
                 name: {{ include "gochat.fullname" . }}-minio
                 port:
-                  # Target the console port number
-                  number: {{ .Values.minio.service.consolePort }}
-{{- end }}
+                  name: console # Target the named console port
+{{- end }} 

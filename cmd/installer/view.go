@@ -53,7 +53,20 @@ func (m *model) View() string {
 		b.WriteString("\n" + helpStyle.Render("Use arrow keys, Enter to select, q to quit."))
 
 	// --- Kubernetes Path States --- //
-	case checkingKubePrereqs, fetchingKubeContexts, promptNamespace, promptDomain, promptTLSSecret, fetchingIngressClasses, promptIngressClass, promptMinioPassword, promptGrafanaPassword, installingHelm:
+	case checkingKubePrereqs,
+		fetchingKubeContexts,
+		promptNamespace,
+		promptDomain,
+		promptTLSSecret,
+		fetchingIngressClasses,
+		promptIngressClass,
+		promptMinioPassword,
+		promptMinioAccessKey,
+		promptMinioSecretKey,
+		promptMinioConsoleDomain,
+		promptMinioConsoleIngressClass,
+		promptGrafanaPassword,
+		installingHelm:
 		if m.installTarget == "kubernetes" {
 			m.viewKubernetesSteps(&b)
 		} else {
@@ -145,17 +158,21 @@ func (m *model) View() string {
 func (m *model) viewKubernetesSteps(b *strings.Builder) {
 	b.WriteString("Kubernetes Configuration:\n")
 	steps := []string{
-		"Check Kube Prereqs",    // checkingKubePrereqs
-		"Fetch Kube Contexts",   // fetchingKubeContexts
-		"Select Kube Context",   // ADDED: selectKubeContext
-		"Namespace",             // promptNamespace
-		"Domain Name",           // promptDomain
-		"TLS Secret Name",       // promptTLSSecret
-		"Fetch Ingress Classes", // fetchingIngressClasses
-		"Select Ingress Class",  // selectIngressClass / promptIngressClass
-		"MinIO Password",        // promptMinioPassword
-		"Grafana Password",      // promptGrafanaPassword
-		"Install Helm Chart",    // installingHelm
+		"Check Kube Prereqs",          // checkingKubePrereqs
+		"Fetch Kube Contexts",         // fetchingKubeContexts
+		"Select Kube Context",         // ADDED: selectKubeContext
+		"Namespace",                   // promptNamespace
+		"Domain Name",                 // promptDomain
+		"TLS Secret Name",             // promptTLSSecret
+		"Fetch Ingress Classes",       // fetchingIngressClasses
+		"Select Ingress Class",        // selectIngressClass / promptIngressClass
+		"MinIO Root Password",         // promptMinioPassword
+		"MinIO API Access Key",        // ADDED: promptMinioAccessKey
+		"MinIO API Secret Key",        // ADDED: promptMinioSecretKey
+		"MinIO Console Domain",        // ADDED: 14
+		"MinIO Console Ingress Class", // ADDED: 15
+		"Grafana Password",            // promptGrafanaPassword (now 16)
+		"Install Helm Chart",          // installingHelm (now 17)
 	}
 
 	currentStepIndex := -1
@@ -166,7 +183,7 @@ func (m *model) viewKubernetesSteps(b *strings.Builder) {
 	case fetchingKubeContexts:
 		currentStepIndex = 1
 	case selectKubeContext:
-		currentStepIndex = 2 // ADDED
+		currentStepIndex = 2
 	case promptNamespace:
 		currentStepIndex = 3
 	case promptDomain:
@@ -175,14 +192,22 @@ func (m *model) viewKubernetesSteps(b *strings.Builder) {
 		currentStepIndex = 5
 	case fetchingIngressClasses:
 		currentStepIndex = 6
-	case promptIngressClass:
+	case selectIngressClass, promptIngressClass:
 		currentStepIndex = 7
 	case promptMinioPassword:
 		currentStepIndex = 8
-	case promptGrafanaPassword:
+	case promptMinioAccessKey:
 		currentStepIndex = 9
-	case installingHelm:
+	case promptMinioSecretKey:
 		currentStepIndex = 10
+	case promptMinioConsoleDomain:
+		currentStepIndex = 11
+	case promptMinioConsoleIngressClass:
+		currentStepIndex = 12
+	case promptGrafanaPassword:
+		currentStepIndex = 13
+	case installingHelm:
+		currentStepIndex = 14
 	}
 
 	// Render the steps list...
@@ -196,19 +221,39 @@ func (m *model) viewKubernetesSteps(b *strings.Builder) {
 			// Add captured value based on step index
 			switch i {
 			case 2:
-				value = fmt.Sprintf(" (%s)", m.selectedContext) // Show selected context
+				value = fmt.Sprintf(" (%s)", m.selectedContext)
 			case 3:
 				value = fmt.Sprintf(" (%s)", m.namespace)
 			case 4:
 				value = fmt.Sprintf(" (%s)", m.domainName)
 			case 5:
-				value = fmt.Sprintf(" (%s)", m.tlsSecretName) // Check if empty
+				if m.tlsSecretName != "" {
+					value = fmt.Sprintf(" (%s)", m.tlsSecretName)
+				} else {
+					value = " (None)"
+				}
 			case 7:
-				value = fmt.Sprintf(" (%s)", m.ingressClassName) // Check if empty
-			case 8:
-				value = " (set)" // Or indicate generated
-			case 9:
-				value = " (set)" // Or indicate generated
+				if m.ingressClassName != "" {
+					value = fmt.Sprintf(" (%s)", m.ingressClassName)
+				} else {
+					value = " (None)"
+				}
+			case 8, 9, 10: // MinIO Pass, AccessKey, SecretKey
+				value = " (set)"
+			case 11:
+				if m.minioConsoleDomain != "" {
+					value = fmt.Sprintf(" (%s)", m.minioConsoleDomain)
+				} else {
+					value = " (Disabled)"
+				}
+			case 12: // MinIO Console Ingress Class
+				if m.minioConsoleIngressClass != "" {
+					value = fmt.Sprintf(" (%s)", m.minioConsoleIngressClass)
+				} else {
+					value = " (Default)" // Indicate default will be used
+				}
+			case 13: // Grafana Pass (shifted)
+				value = " (set)"
 			}
 		} else if currentStepIndex == i {
 			style = selectedItemStyle
@@ -216,10 +261,9 @@ func (m *model) viewKubernetesSteps(b *strings.Builder) {
 			if m.state == checkingKubePrereqs || m.state == fetchingKubeContexts || m.state == fetchingIngressClasses || m.state == installingHelm {
 				status = m.spinner.View()
 			} else {
-				// Show prompt indicator for interactive steps (lists or text input)
 				status = ">"
 			}
-		} // Else status remains " "
+		}
 
 		b.WriteString(style.Render(fmt.Sprintf("%s %s%s", status, step, value)) + "\n")
 	}
@@ -228,20 +272,10 @@ func (m *model) viewKubernetesSteps(b *strings.Builder) {
 	// --- Render Active Component for Current K8s State --- //
 	switch m.state {
 	// Prompt states use textInput
-	case promptNamespace, promptDomain, promptTLSSecret, promptMinioPassword, promptGrafanaPassword, promptIngressClass:
+	case promptNamespace, promptDomain, promptTLSSecret, promptMinioPassword, promptMinioAccessKey, promptMinioSecretKey, promptMinioConsoleDomain, promptMinioConsoleIngressClass, promptGrafanaPassword, promptIngressClass:
 		b.WriteString(m.textInput.View())
 		b.WriteString("\n" + helpStyle.Render("Enter value, press Enter to confirm. Esc to quit."))
 
-		// Selection states now handled in the main view switch, not here
-		/*
-			case selectKubeContext:
-				b.WriteString(m.contextList.View())
-				b.WriteString("\n" + helpStyle.Render("Use arrows, Enter to select. q to quit."))
-			case selectIngressClass:
-				b.WriteString(m.ingressClassList.View())
-				b.WriteString("\n" + helpStyle.Render("Use arrows, Enter to select (or skip). q to quit."))
-		*/
-
-		// Other states (checking, fetching, installing) show spinner via the steps list above
+		// Selection states handled in main view switch
 	}
 }

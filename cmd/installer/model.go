@@ -15,30 +15,31 @@ var k8sNameRegex = regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
 type state int
 
 const (
-	welcome             state = iota // 0
-	checkingBasePrereqs              // 1 (git, docker, compose)
-	prereqsFailed                    // 2
-	selectInstallTarget              // 3
-	// Kubernetes Path
-	checkingKubePrereqs    // 4 (helm, kubectl)
-	fetchingKubeContexts   // 5
-	selectKubeContext      // ADDED: State for selecting Kube context
-	promptNamespace        // 6 (Adjust iota)
-	promptDomain           // 7
-	promptTLSSecret        // 8
-	fetchingIngressClasses // 9
-	selectIngressClass     // 10
-	promptIngressClass     // ADDED: Define state for this prompt (might be combined with select?)
-	promptMinioPassword    // 11 (Adjust iota values)
-	promptGrafanaPassword  // 12
-	// Docker Path
-	checkingDockerPrereqs // 13 (Redundant? Already checked in base)
-	// Shared Path
-	cloningRepo          // 14
-	installingHelm       // 15 (K8s)
-	runningCompose       // 16 (Docker)
-	installationComplete // 17
-	showError            // 18 (Generic error state)
+	welcome                        state = iota // 0
+	checkingBasePrereqs                         // 1 (git, docker, compose)
+	prereqsFailed                               // 2
+	selectInstallTarget                         // 3
+	checkingKubePrereqs                         // 4 (helm, kubectl)
+	fetchingKubeContexts                        // 5
+	selectKubeContext                           // ADDED: State for selecting Kube context
+	promptNamespace                             // 6 (Adjust iota)
+	promptDomain                                // 7
+	promptTLSSecret                             // 8
+	fetchingIngressClasses                      // 9
+	selectIngressClass                          // 10
+	promptIngressClass                          // ADDED: Define state for this prompt (might be combined with select?)
+	promptMinioPassword                         // 11 (Adjust iota values)
+	promptMinioAccessKey                        // 12
+	promptMinioSecretKey                        // 13
+	promptMinioConsoleDomain                    // ADDED: 14
+	promptMinioConsoleIngressClass              // ADDED: 15
+	promptGrafanaPassword                       // 16 (Adjust subsequent iota values)
+	checkingDockerPrereqs                       // 17
+	cloningRepo                                 // 18
+	installingHelm                              // 19 (K8s)
+	runningCompose                              // 20 (Docker)
+	installationComplete                        // 21
+	showError                                   // 22 (Generic error state)
 
 	// Removed/Old states (keep for reference?)
 	// kubePrereqsFailed
@@ -159,13 +160,17 @@ type model struct {
 	ingressClassName        string   // Store the selected class name
 
 	// Stored selections (K8s specific)
-	namespace            string
-	minioPassword        string
-	grafanaPassword      string
-	domainName           string
-	tlsSecretName        string
-	minioPassGenerated   bool // Flag to indicate if MinIO pass was generated
-	grafanaPassGenerated bool // Flag to indicate if Grafana pass was generated
+	namespace                string
+	minioPassword            string // Root password
+	minioAccessKey           string // ADDED: Dedicated API Access Key
+	minioSecretKey           string // ADDED: Dedicated API Secret Key
+	grafanaPassword          string
+	domainName               string
+	minioConsoleDomain       string // ADDED
+	minioConsoleIngressClass string // ADDED
+	tlsSecretName            string
+	minioPassGenerated       bool // Flag to indicate if MinIO pass was generated
+	grafanaPassGenerated     bool // Flag to indicate if Grafana pass was generated
 
 	// Execution Details
 	helmChartPath  string

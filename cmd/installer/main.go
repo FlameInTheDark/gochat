@@ -14,14 +14,16 @@ import (
 
 // --- Constants ---
 const (
-	helmReleaseName  = "gochat"
-	gochatRepoURL    = "https://github.com/FlameInTheDark/gochat.git"
-	namespaceInput   = 0
-	minioPassInput   = 1
-	grafanaPassInput = 2
-	domainNameInput  = 3
-	tlsSecretInput   = 4
-	numConfigFields  = 5
+	helmReleaseName               = "gochat"
+	gochatRepoURL                 = "https://github.com/FlameInTheDark/gochat.git"
+	namespaceInput                = 0
+	minioPassInput                = 1
+	grafanaPassInput              = 2
+	domainNameInput               = 3
+	tlsSecretInput                = 4
+	minioConsoleDomainInput       = 5
+	minioConsoleIngressClassInput = 6
+	numConfigFields               = 7
 )
 
 // initialModel no longer needs temporary style redefinitions
@@ -83,6 +85,25 @@ func initialModel(dev bool, debug bool) model {
 	}
 	inputs[tlsSecretInput] = t
 
+	t = textinput.New()
+	t.Placeholder = "minio.localhost (leave blank to disable console ingress)"
+	t.CharLimit = 253
+	t.Width = 50
+	t.Validate = func(s string) error {
+		if s != "" && !strings.Contains(s, ".") {
+			return fmt.Errorf("invalid domain name format")
+		}
+		return nil
+	}
+	inputs[minioConsoleDomainInput] = t
+
+	// ADDED: MinIO Console Ingress Class Input (6)
+	t = textinput.New()
+	t.Placeholder = "nginx (or leave blank to use main ingress class)"
+	t.CharLimit = 253
+	t.Width = 50
+	inputs[minioConsoleIngressClassInput] = t
+
 	delegate := list.NewDefaultDelegate()
 	// REMOVED: delegate.SetHeight(1)
 	// REMOVED: delegate.SetSpacing(0)
@@ -125,14 +146,16 @@ func initialModel(dev bool, debug bool) model {
 			l.SetShowStatusBar(false)
 			return l
 		}(),
-		domainName:              "gochat.local", // Default value
-		minioPassGenerated:      false,
-		grafanaPassGenerated:    false,
-		devBranch:               dev,
-		debugMode:               debug,
-		k8sFormFocusIndex:       0,
-		k8sFormValidationErrors: make(map[int]string),
-		debug:                   debug,
+		domainName:               "gochat.local", // Default value
+		minioPassGenerated:       false,
+		grafanaPassGenerated:     false,
+		devBranch:                dev,
+		debugMode:                debug,
+		k8sFormFocusIndex:        0,
+		k8sFormValidationErrors:  make(map[int]string),
+		debug:                    debug,
+		minioConsoleDomain:       "", // Default empty
+		minioConsoleIngressClass: "", // Default empty
 	}
 }
 

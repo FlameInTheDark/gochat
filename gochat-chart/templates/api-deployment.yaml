@@ -31,15 +31,9 @@ spec:
               protocol: TCP
           env:
             - name: S3_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "gochat.fullname" . }}-minio
-                  key: rootUser
+              value: {{ .Values.minio.apiAccessKey | default "" | quote }}
             - name: S3_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "gochat.fullname" . }}-minio
-                  key: rootPassword
+              value: {{ .Values.minio.apiSecretKey | default "" | quote }}
           volumeMounts:
             - name: config
               mountPath: /dist/config.yaml

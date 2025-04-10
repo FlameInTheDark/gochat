@@ -48,6 +48,16 @@ spec:
                   name: {{ .portName }}
             {{- end }}
           {{- end }}
+          # {{- if .Values.minio.enabled }}
+          # # Added MinIO Console Path
+          # - path: /minio
+          #   pathType: Prefix
+          #   backend:
+          #     service:
+          #       name: {{ $fullName }}-minio
+          #       port:
+          #         name: console # Target the named console port
+          # {{- end }}
           {{- if .Values.ui.enabled }}
           - path: /
             pathType: Prefix

@@ -580,21 +580,18 @@ ingressWs:
 minioConsoleIngress:
   enabled: true
   # Use the same className as the main ingress unless specifically needed otherwise
-  className: "{{ .Values.ingress.className }}"
-  # Use the same host as the main application
-  host: "{{ .Values.ingress.hostOverride }}"
-  path: /minio
-  pathType: Prefix
-  # Annotations specific to MinIO console rewrite
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: / # Rewrite /minio to / for the backend
+  className: "nginx"
+  # Set the dedicated host for the console
+  host: "minio.localhost" # Use a dedicated subdomain
+  # path: /minio # Path is no longer needed when using a separate host
+  annotations: {} # Remove rewrite and regex annotations
     # Add other annotations if needed (e.g., backend protocol)
     # nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
   tls:
     # Default to false. Template will enable if main ingress TLS is set.
+    # You might need a separate cert or wildcard cert for this host.
     enabled: false
-    # Secret name will be determined in the template based on main ingress TLS
-    secretName: "" # Keep empty or remove this line
+    secretName: "" # Keep empty or let template handle based on main TLS
 
 resources: {}
 

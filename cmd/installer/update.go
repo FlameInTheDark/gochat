@@ -19,7 +19,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Check if any text input is focused
 	switch m.state {
-	case promptNamespace, promptDomain, promptTLSSecret, promptIngressClass, promptMinioPassword, promptGrafanaPassword:
+	case promptNamespace, promptDomain, promptTLSSecret, promptIngressClass, promptMinioPassword, promptGrafanaPassword, promptMinioConsoleDomain, promptMinioConsoleIngressClass:
 		if m.textInput.Focused() {
 			inputFocused = true
 		}
@@ -312,9 +312,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.state = showError
 					} else {
 						m.minioPassword = genPass
-						m.state = promptGrafanaPassword
+						// Transition to prompt for Access Key
+						m.state = promptMinioAccessKey
 						m.textInput.Reset()
-						m.textInput.Placeholder = "Enter Grafana password (or press Enter to generate)"
+						m.textInput.Placeholder = "Enter MinIO API Access Key (e.g., gochatapi)"
+						m.textInput.EchoMode = textinput.EchoNormal // Ensure echo is normal
 					}
 				} else {
 					if len(password) < 8 {
@@ -322,11 +324,102 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.textInput.SetValue("")
 					} else {
 						m.minioPassword = password
-						m.state = promptGrafanaPassword
+						// Transition to prompt for Access Key
+						m.state = promptMinioAccessKey
 						m.textInput.Reset()
-						m.textInput.Placeholder = "Enter Grafana password (or press Enter to generate)"
+						m.textInput.Placeholder = "Enter MinIO API Access Key (e.g., gochatapi)"
+						m.textInput.EchoMode = textinput.EchoNormal // Ensure echo is normal
 					}
 				}
+			}
+		}
+
+	// ADDED: Handle MinIO Access Key prompt
+	case promptMinioAccessKey:
+		m.textInput, cmd = m.textInput.Update(msg)
+		cmds = append(cmds, cmd)
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.Type {
+			case tea.KeyEnter:
+				val := strings.TrimSpace(m.textInput.Value())
+				if val == "" {
+					m.textInput.Placeholder = "Access Key cannot be empty. Enter MinIO API Access Key"
+				} else {
+					m.minioAccessKey = val
+					// Transition to prompt for Secret Key
+					m.state = promptMinioSecretKey
+					m.textInput.Reset()
+					m.textInput.Placeholder = "Enter MinIO API Secret Key"
+					m.textInput.EchoMode = textinput.EchoPassword // Hide secret key
+				}
+			}
+		}
+
+	// ADDED: Handle MinIO Secret Key prompt
+	case promptMinioSecretKey:
+		m.textInput, cmd = m.textInput.Update(msg)
+		cmds = append(cmds, cmd)
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.Type {
+			case tea.KeyEnter:
+				val := m.textInput.Value() // Don't trim, secrets can have spaces
+				if val == "" {
+					m.textInput.Placeholder = "Secret Key cannot be empty. Enter MinIO API Secret Key"
+				} else if len(val) < 8 { // Basic length check
+					m.textInput.Placeholder = "Secret Key too short (min 8 chars). Enter MinIO API Secret Key"
+					m.textInput.SetValue("")
+				} else {
+					m.minioSecretKey = val
+					// Transition to MinIO Console Domain prompt
+					m.state = promptMinioConsoleDomain
+					m.textInput.Reset()
+					m.textInput.Placeholder = "Enter MinIO Console domain (e.g., minio.localhost, or leave blank)"
+					m.textInput.EchoMode = textinput.EchoNormal // CHANGED
+				}
+			}
+		}
+
+	// ADDED: Handle MinIO Console Domain prompt
+	case promptMinioConsoleDomain:
+		m.textInput, cmd = m.textInput.Update(msg)
+		cmds = append(cmds, cmd)
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.Type {
+			case tea.KeyEnter:
+				domain := strings.TrimSpace(m.textInput.Value())
+				// Validate domain format if not empty
+				if domain != "" && !strings.Contains(domain, ".") {
+					m.textInput.Placeholder = "Invalid domain format. Enter MinIO Console domain (or leave blank)"
+					m.textInput.SetValue("")
+				} else {
+					m.minioConsoleDomain = domain // Store the domain (can be blank)
+					// Transition to MinIO Console Ingress Class prompt
+					m.state = promptMinioConsoleIngressClass
+					m.textInput.Reset()
+					m.textInput.Placeholder = "Enter MinIO Console Ingress Class (or leave blank)"
+				}
+			}
+		}
+
+	// ADDED: Handle MinIO Console Ingress Class prompt
+	case promptMinioConsoleIngressClass:
+		m.textInput, cmd = m.textInput.Update(msg)
+		cmds = append(cmds, cmd)
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.Type {
+			case tea.KeyEnter:
+				// Class name validation is less strict, just trim space
+				className := strings.TrimSpace(m.textInput.Value())
+				m.minioConsoleIngressClass = className // Store the class name (can be blank)
+				// Transition to Grafana password prompt
+				m.state = promptGrafanaPassword
+				m.textInput.Reset()
+				m.textInput.Placeholder = "Enter Grafana password (or press Enter to generate)"
+				m.textInput.EchoMode = textinput.EchoPassword
 			}
 		}
 
