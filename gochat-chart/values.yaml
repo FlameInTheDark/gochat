@@ -521,6 +521,8 @@ ingress:
     # Timeouts for long connections (good for WS and potentially others)
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # ADDED: Preserve original Host header for MinIO
+    nginx.ingress.kubernetes.io/proxy-set-header-Host: "$http_host"
     # Remove websocket and rewrite annotations from main ingress
     # nginx.ingress.kubernetes.io/websocket-services: "gochat-ws"
     # nginx.ingress.kubernetes.io/rewrite-target: /$2

@@ -3,6 +3,7 @@ package nats
 import (
 	"encoding/json"
 	"fmt"
+
 	nq "github.com/nats-io/nats.go"
 
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"

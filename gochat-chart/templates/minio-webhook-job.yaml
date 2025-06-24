@@ -48,7 +48,8 @@ spec:
           command: ["/bin/sh", "-cex"]
           env:
             - name: MINIO_ENDPOINT
-              value: "http://{{ include "gochat.fullname" . }}-minio:{{ .Values.minio.service.port }}"
+              # Use the API port, not the console port
+              value: "http://{{ include "gochat.fullname" . }}-minio:{{ .Values.minio.service.apiPort }}"
             - name: MINIO_ROOT_USER
               valueFrom:
                 secretKeyRef:
@@ -71,18 +72,19 @@ spec:
               WEBHOOK_TARGET_NAME="gochatwebhook"
 
               echo "Setting MinIO config for webhook target '$WEBHOOK_TARGET_NAME' -> $WEBHOOK_ENDPOINT..."
+              # Step 1: Set the config
               mc admin config set local notify_webhook:$WEBHOOK_TARGET_NAME endpoint="$WEBHOOK_ENDPOINT" queue_limit="1000" queue_dir="" || echo "WARN: Failed to set webhook config."
 
-              echo "Applying MinIO config changes (non-interactive)..."
-              mc admin service update local || echo "WARN: Failed to apply MinIO config update."
-              # Brief sleep to allow config update to settle?
-              sleep 5
-              echo "Waiting for MinIO server (local) to report readiness after update..."
-              until mc ready local; do sleep 2; done
-              echo "MinIO server is ready after update."
+              # Applying config changes / restart is not reliably possible non-interactively.
+              # Attempting to add event rule directly after setting config.
 
               echo "Adding event notification rule for target '$WEBHOOK_TARGET_NAME'..."
+              # Step 2: Add the event rule, hoping Step 1 was sufficient
               mc event add local/ "arn:minio:sqs::${WEBHOOK_TARGET_NAME}:webhook" --event "put,delete" || echo "WARN: Failed to add webhook event notification rule."
+
+              # Attempt restart, expecting it might fail due to lack of TTY
+              echo "Attempting MinIO service restart (may fail in non-TTY)..."
+              mc admin service restart local || echo "WARN: 'mc admin service restart' failed (expected in non-TTY environment)."
 
               echo "Webhook configuration process complete."
 {{- end }} 

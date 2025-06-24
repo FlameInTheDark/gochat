@@ -23,6 +23,7 @@ const (
 type SendMessageRequest struct {
 	Content     string  `json:"content"`
 	Attachments []int64 `json:"attachments"`
+	Mentions    []int64 `json:"mentions"`
 }
 
 type UpdateMessageRequest struct {

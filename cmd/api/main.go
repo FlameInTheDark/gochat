@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/FlameInTheDark/gochat/internal/shut"
+	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
 
 //	@title			GoChat API
@@ -21,10 +21,10 @@ import (
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	shutter := shut.NewShutter(logger)
-	defer shutter.Down()
+	shut := shutter.NewShutter(logger)
+	defer shut.Down()
 
-	app, err := NewApp(shutter, logger)
+	app, err := NewApp(shut, logger)
 	if err != nil {
 		logger.Error("Unable to create app", slog.String("error", err.Error()))
 		return

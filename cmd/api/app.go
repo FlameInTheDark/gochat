@@ -16,15 +16,15 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
+	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mailer"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/logmailer"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/sendpulse"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/nats"
-	"github.com/FlameInTheDark/gochat/internal/mq/rabbit"
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
-	"github.com/FlameInTheDark/gochat/internal/shut"
+	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
 
 type App struct {
@@ -34,7 +34,7 @@ type App struct {
 	logger *slog.Logger
 }
 
-func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
+func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	cfg, err := config.LoadConfig(logger)
 	if err != nil {
 		return nil, err
@@ -45,35 +45,26 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	sh.Up(database)
+	shut.Up(database)
 
 	var qt mq.SendTransporter
-	switch cfg.QueueTransport {
-	case "nats":
-		nt, err := nats.New(cfg.NatsConnString)
-		if err != nil {
-			return nil, err
-		}
-		sh.Up(nt)
-		qt = nt
-	case "rabbitmq":
-		queue, err := rabbit.New(cfg.RabbitMQHost, cfg.RabbitMQPort, cfg.RabbitMQUsername, cfg.RabbitMQPassword)
-		if err != nil {
-			return nil, err
-		}
-		sh.Up(queue)
-		msgmq, err := queue.InitChannel()
-		if err != nil {
-			return nil, err
-		}
-		qt = msgmq
+	nt, err := nats.New(cfg.NatsConnString)
+	if err != nil {
+		return nil, err
+	}
+	shut.Up(nt)
+	qt = nt
+
+	imq, err := indexmq.NewIndexMQ(cfg.IndexerNatsConnString)
+	if err != nil {
+		return nil, err
 	}
 
 	cache, err := vkc.New(cfg.KeyDB)
 	if err != nil {
 		return nil, err
 	}
-	sh.Up(cache)
+	shut.Up(cache)
 
 	storage, err := s3.NewClient(cfg.S3Endpoint, cfg.S3AccessKeyID, cfg.S3SecretAccessKey, cfg.S3UseSSL)
 	if err != nil {
@@ -104,7 +95,7 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
 
 	// HTTP Server
 	s := server.NewServer()
-	sh.Up(s)
+	shut.Up(s)
 
 	s.WithCache(cache)
 
@@ -125,7 +116,7 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) (*App, error) {
 		"/api/v1",
 		auth.New(database, m, cfg.AuthSecret, logger),
 		user.New(database, logger),
-		message.New(database, storage, qt, cfg.UploadLimit, logger),
+		message.New(database, storage, qt, imq, cfg.UploadLimit, logger),
 		webhook.New(database, storage, logger),
 		guild.New(database, qt, logger),
 		//search.New(database, searchService, logger),

@@ -1,4 +1,4 @@
-package shut
+package shutter
 
 import (
 	"log/slog"

@@ -1,6 +1,6 @@
 module github.com/FlameInTheDark/gochat
 
-go 1.23.1
+go 1.24.4
 
 replace github.com/gocql/gocql => github.com/scylladb/gocql v1.14.4
 
@@ -68,6 +68,8 @@ require (
 	github.com/nats-io/nkeys v0.4.7 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
+	github.com/opensearch-project/opensearch-go v1.1.0 // indirect
+	github.com/opensearch-project/opensearch-go/v4 v4.5.0 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/prometheus/client_golang v1.19.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect

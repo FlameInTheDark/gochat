@@ -54,6 +54,14 @@ services:
       - "6222:6222"
     restart: always
 
+  indexer-nats:
+    image: nats:2.10.22-alpine3.20
+    ports:
+      - "4333:4222"
+      - "8333:8222"
+      - "6333:6222"
+    restart: always
+
   keydb:
     image: eqalpha/keydb:alpine
     ports:
@@ -91,16 +99,47 @@ services:
       nats:
         condition: service_started
 
-  solr:
-    image: solr:8
-    ports:
-      - "8983:8983"
-    volumes:
-      - solr-data:/var/solr
-    command:
-      - solr-precreate
-      - gochat
+  indexer:
+    image: gochat/indexer
+    build:
+      dockerfile: indexer.Dockerfile
     restart: always
+    volumes:
+      - ./indexer_config.yaml:/dist/config.yaml
+    depends_on:
+      indexer-nats:
+        condition: service_started
+      opensearch:
+        condition: service_started
+
+  opensearch:
+    image: opensearchproject/opensearch:2.13.0
+    container_name: opensearch
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=CustOM-Pa55w0Rd
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+
+  dashboards:
+    image: opensearchproject/opensearch-dashboards:2.13.0
+    container_name: dashboards
+    ports:
+      - "5601:5601"
+    environment:
+      - OPENSEARCH_HOSTS=http://opensearch:9200
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    depends_on:
+      - opensearch
 
   nginx:
     image: nginx:1.27.2-alpine
@@ -147,3 +186,4 @@ volumes:
   solr-data:
   prometheus-data:
   grafana-data:
+  opensearch-data:

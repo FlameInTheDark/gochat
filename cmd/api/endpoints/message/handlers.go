@@ -104,6 +104,11 @@ func (e *entity) Send(c *fiber.Ctx) error {
 			Content: req.Content,
 		}
 
+		var hasTypes []string
+		if HasURL(req.Content) {
+			hasTypes = append(hasTypes, "url")
+		}
+
 		for _, at := range ats {
 			resp.Attachments = append(resp.Attachments, dto.Attachment{
 				ContentType: at.ContentType,
@@ -113,6 +118,9 @@ func (e *entity) Send(c *fiber.Ctx) error {
 				URL:         fmt.Sprintf("media/%d/%d/%s", at.ChannelId, at.Id, at.Name),
 				Size:        at.FileSize,
 			})
+			if at.ContentType != nil {
+				hasTypes = append(hasTypes, GetAttachmentType(*at.ContentType))
+			}
 		}
 
 		err = e.mqt.SendChannelMessage(chid, &mqmsg.CreateMessage{
@@ -123,6 +131,19 @@ func (e *entity) Send(c *fiber.Ctx) error {
 			remerr := e.msg.DeleteMessage(c.UserContext(), msgid, chid)
 			e.log.Error("unable to send message event", slog.String("error", errors.Join(err, remerr).Error()))
 			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendMessage)
+		}
+
+		err = e.imq.IndexMessage(dto.IndexMessage{
+			MessageId: msgid,
+			UserId:    user.Id,
+			ChannelId: ch.Id,
+			GuildId:   guildId,
+			Mentions:  req.Mentions,
+			Has:       UniqueAttachmentTypes(hasTypes),
+			Content:   resp.Content,
+		})
+		if err != nil {
+			e.log.Error("unable to send index message event", slog.String("error", err.Error()))
 		}
 
 		return c.JSON(resp)

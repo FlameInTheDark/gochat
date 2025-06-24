@@ -3,6 +3,7 @@ package message
 import (
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
@@ -44,6 +45,7 @@ type entity struct {
 	log     *slog.Logger
 	storage *s3.Client
 	mqt     mq.SendTransporter
+	imq     *indexmq.IndexMQ
 
 	// DB entities
 	user  *user.Entity
@@ -67,7 +69,7 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, storage *s3.Client, t mq.SendTransporter, uploadLimit int64, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, storage *s3.Client, t mq.SendTransporter, imq *indexmq.IndexMQ, uploadLimit int64, log *slog.Logger) server.Entity {
 
 	return &entity{
 		name:        entityName,
@@ -75,6 +77,7 @@ func New(dbcon *db.CQLCon, storage *s3.Client, t mq.SendTransporter, uploadLimit
 		log:         log,
 		storage:     storage,
 		mqt:         t,
+		imq:         imq,
 		user:        user.New(dbcon),
 		m:           member.New(dbcon),
 		disc:        discriminator.New(dbcon),
