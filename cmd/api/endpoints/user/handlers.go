@@ -112,12 +112,10 @@ func (e *entity) GetUserGuilds(c *fiber.Ctx) error {
 	for i, m := range ms {
 		ids[i] = m.GuildId
 	}
-	var guilds []model.Guild
 	gs, err := e.guild.GetGuildsList(c.UserContext(), ids)
-	if errors.Is(err, gocql.ErrNotFound) {
-		return c.JSON(guilds)
-	} else if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetGuilds)
+	if err != nil {
+		e.log.Error(err.Error())
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUserGuilds)
 	}
 	return c.JSON(guildModelToGuildMany(gs))
 }

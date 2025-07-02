@@ -33,6 +33,8 @@ type Config struct {
 	NatsConnString        string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 	IndexerNatsConnString string   `yaml:"indexer_nats_conn_string" env:"INDEX_NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`
 	SolrBaseURL           string   `yaml:"solr_base_url" env:"SOLR_BASE_URL" env-default:"http://solr:8983"`
+	PGDSN                 string   `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
+	PGRetries             int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {

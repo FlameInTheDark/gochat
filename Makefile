@@ -2,6 +2,9 @@ up:
 	docker compose up -d
 	docker compose exec scylla bash ./init-scylladb.sh
 
+scylla_init:
+	docker compose exec scylla bash ./init-scylladb.sh
+
 down:
 	docker compose down
 
@@ -15,11 +18,21 @@ run:
 run_ws:
 	go run ./cmd/ws
 
-migrate:
+migrate: migrate_pg migrate_scylla
+
+migrate_down: migrate_pg_down migrate_scylla_down
+
+migrate_scylla:
 	journey --url cassandra://127.0.0.1/gochat --path ./db/migrations migrate up
 
-migrate_down:
+migrate_pg:
+	journey --url postgres://postgres@127.0.0.1/gochat --path ./db/pgmigrations migrate up
+
+migrate_scylla_down:
 	journey --url cassandra://127.0.0.1/gochat --path ./db/migrations migrate down
+
+migrate_pg_down:
+	journey --url postgres://postgres@127.0.0.1/gochat --path ./db/pgmigrations migrate down
 
 swag:
 	swag fmt

@@ -3,6 +3,7 @@ package guild
 import (
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
@@ -11,7 +12,6 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/channelroleperm"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/channeluserperm"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/discriminator"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/member"
@@ -20,6 +20,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/userrole"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/server"
 )
@@ -66,7 +67,7 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, mqt mq.SendTransporter, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, log *slog.Logger) server.Entity {
 	return &entity{
 		name:  entityName,
 		log:   log,
@@ -74,11 +75,11 @@ func New(dbcon *db.CQLCon, mqt mq.SendTransporter, log *slog.Logger) server.Enti
 		user:  user.New(dbcon),
 		disc:  discriminator.New(dbcon),
 		ch:    channel.New(dbcon),
-		g:     guild.New(dbcon),
+		g:     guild.New(pg.Conn()),
 		gc:    guildchannels.New(dbcon),
 		msg:   message.New(dbcon),
 		at:    attachment.New(dbcon),
-		perm:  rolecheck.New(dbcon),
+		perm:  rolecheck.New(dbcon, pg),
 		uperm: channeluserperm.New(dbcon),
 		rperm: channelroleperm.New(dbcon),
 		role:  role.New(dbcon),

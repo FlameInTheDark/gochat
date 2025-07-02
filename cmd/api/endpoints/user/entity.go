@@ -10,10 +10,11 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/discriminator"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/dmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/groupdmchannel"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/userrole"
+	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/server"
 )
 
@@ -49,13 +50,13 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, log *slog.Logger) server.Entity {
 	return &entity{
 		name:   entityName,
 		log:    log,
 		user:   user.New(dbcon),
 		member: member.New(dbcon),
-		guild:  guild.New(dbcon),
+		guild:  guild.New(pg.Conn()),
 		urole:  userrole.New(dbcon),
 		ch:     channel.New(dbcon),
 		dm:     dmchannel.New(dbcon),

@@ -114,7 +114,6 @@ services:
 
   opensearch:
     image: opensearchproject/opensearch:2.13.0
-    container_name: opensearch
     environment:
       - discovery.type=single-node
       - plugins.security.disabled=true
@@ -132,7 +131,6 @@ services:
 
   dashboards:
     image: opensearchproject/opensearch-dashboards:2.13.0
-    container_name: dashboards
     ports:
       - "5601:5601"
     environment:

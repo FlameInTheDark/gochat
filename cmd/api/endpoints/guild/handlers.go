@@ -2,6 +2,7 @@ package guild
 
 import (
 	"errors"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -264,6 +265,7 @@ func (e *entity) Create(c *fiber.Ctx) error {
 	gid := idgen.Next()
 	err = e.g.CreateGuild(c.UserContext(), gid, req.Name, u.Id, permissions.DefaultPermissions)
 	if err != nil {
+		e.log.Error("unable to create guild", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateGuild)
 	}
 

@@ -15,6 +15,7 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/webhook"
 	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
+	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mailer"
@@ -46,6 +47,12 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 	shut.Up(database)
+
+	pg := pgdb.NewDB(logger)
+	err = pg.Connect(cfg.PGDSN, cfg.PGRetries)
+	if err != nil {
+		return nil, err
+	}
 
 	var qt mq.SendTransporter
 	nt, err := nats.New(cfg.NatsConnString)
@@ -115,10 +122,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.Register(
 		"/api/v1",
 		auth.New(database, m, cfg.AuthSecret, logger),
-		user.New(database, logger),
-		message.New(database, storage, qt, imq, cfg.UploadLimit, logger),
+		user.New(database, pg, logger),
+		message.New(database, pg, storage, qt, imq, cfg.UploadLimit, logger),
 		webhook.New(database, storage, logger),
-		guild.New(database, qt, logger),
+		guild.New(database, pg, qt, logger),
 		//search.New(database, searchService, logger),
 	)
 
