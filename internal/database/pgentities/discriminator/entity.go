@@ -1,4 +1,4 @@
-package guildchannels
+package discriminator
 
 import (
 	"github.com/jmoiron/sqlx"

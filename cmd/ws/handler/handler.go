@@ -12,11 +12,12 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/ws/auth"
 	"github.com/FlameInTheDark/gochat/cmd/ws/subscriber"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/guild"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannels"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/user"
+	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
@@ -58,15 +59,15 @@ type Handler struct {
 	log    *slog.Logger
 }
 
-func New(c *db.CQLCon, sub *subscriber.Subscriber, ws *websocket.Conn, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger) *Handler {
+func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, ws *websocket.Conn, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger) *Handler {
 	initTimer := time.AfterFunc(time.Second*5, closer)
 	return &Handler{
 		sub:  sub,
-		g:    guild.New(c),
-		m:    member.New(c),
-		u:    user.New(c),
-		gc:   guildchannels.New(c),
-		perm: rolecheck.New(c),
+		g:    guild.New(pg.Conn()),
+		m:    member.New(pg.Conn()),
+		u:    user.New(pg.Conn()),
+		gc:   guildchannels.New(pg.Conn()),
+		perm: rolecheck.New(c, pg),
 		jwt:  jwt,
 		ws:   ws,
 

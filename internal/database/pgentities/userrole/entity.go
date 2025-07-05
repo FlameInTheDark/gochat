@@ -1,4 +1,4 @@
-package guildchannels
+package userrole
 
 import (
 	"github.com/jmoiron/sqlx"

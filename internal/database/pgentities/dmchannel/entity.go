@@ -1,4 +1,4 @@
-package guildchannels
+package dmchannel
 
 import (
 	"github.com/jmoiron/sqlx"

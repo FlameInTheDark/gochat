@@ -1,11 +1,11 @@
 package auth
 
 import (
+	"database/sql"
 	"errors"
 	"log/slog"
 	"time"
 
-	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 
@@ -93,13 +93,13 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 	_, err = e.auth.GetAuthenticationByEmail(c.UserContext(), req.Email)
 	if err == nil {
 		return c.SendStatus(fiber.StatusFound)
-	} else if !errors.Is(err, gocql.ErrNotFound) {
+	} else if !errors.Is(err, sql.ErrNoRows) {
 		e.log.Error("unable to get authentication by email", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetAuthenticationByEmail)
 	}
 	var id int64
 	reg, err := e.reg.GetRegistrationByEmail(c.UserContext(), req.Email)
-	if errors.Is(err, gocql.ErrNotFound) {
+	if errors.Is(err, sql.ErrNoRows) {
 		id = idgen.Next()
 	} else if err != nil {
 		return fiber.NewError(fiber.StatusUnauthorized, ErrUnableToGetRegistrationByEmail)

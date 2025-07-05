@@ -1,3 +1,4 @@
 auth_secret: "change_me_before_use_it_in_production"
 cluster: ["scylla"]
 cluster_keyspace: "gochat"
+pg_dsn: "host=citus-master port=5432 user=postgres dbname=gochat sslmode=disable"

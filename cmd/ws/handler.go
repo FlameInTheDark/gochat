@@ -29,7 +29,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 		}
 	}()
 
-	h := handler.New(a.cdb, subs, c, a.jwt, a.cfg.HearthBeatTimeout, func() {
+	h := handler.New(a.cdb, a.pg, subs, c, a.jwt, a.cfg.HearthBeatTimeout, func() {
 		if c.Conn != nil {
 			err := c.WriteControl(
 				websocket.CloseMessage,

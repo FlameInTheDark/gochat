@@ -6,8 +6,8 @@ CREATE TABLE users
     name         TEXT   NOT NULL,
     avatar       BIGINT,
     blocked      BOOL   NOT NULL,
-    upload_limit BIGINT NOT NULL,
-    created_at   TIMESTAMPTZ DEFAULT now()
+    upload_limit BIGINT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_users_id_name ON users (id, name);
 SELECT create_distributed_table('users', 'id');
@@ -17,7 +17,7 @@ CREATE TABLE authentications
     user_id       BIGINT NOT NULL,
     email         TEXT NOT NULL,
     password_hash TEXT NOT NULL,
-    created_at    TIMESTAMPTZ DEFAULT now()
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_authentication_id_email ON authentications (user_id, email);
 SELECT create_distributed_table('authentications', 'user_id');
@@ -27,10 +27,18 @@ CREATE TABLE registrations
     user_id            BIGINT PRIMARY KEY,
     email              TEXT        NOT NULL,
     confirmation_token TEXT        NOT NULL,
-    created_at         TIMESTAMPTZ NOT NULL
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_registration_user_id ON registrations (user_id);
 SELECT create_distributed_table('registrations', 'user_id');
+
+CREATE TABLE discriminators
+(
+    user_id BIGINT NOT NULL,
+    discriminator TEXT NOT NULL
+);
+CREATE INDEX idx_discriminator ON discriminators (discriminator);
+SELECT create_distributed_table('discriminators', 'discriminator');
 
 CREATE TABLE guilds
 (
@@ -40,7 +48,7 @@ CREATE TABLE guilds
     icon        BIGINT,
     public      BOOL   NOT NULL DEFAULT false,
     permissions BIGINT NOT NULL,
-    created_at  TIMESTAMPTZ DEFAULT now()
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_guilds_id ON guilds (id);
 SELECT create_distributed_table('guilds', 'id');
@@ -55,7 +63,7 @@ CREATE TABLE channels
     topic        TEXT,
     private      BOOL NOT NULL,
     last_message BIGINT,
-    created_at   TIMESTAMPTZ DEFAULT now()
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_channels_id ON channels (id);
 SELECT create_distributed_table('channels', 'id');
@@ -73,7 +81,7 @@ CREATE TABLE friends
 (
     user_id    BIGINT NOT NULL,
     friend_id  BIGINT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_user_friend_ids ON friends (user_id, friend_id);
 SELECT create_distributed_table('friends', 'user_id');
@@ -102,8 +110,8 @@ CREATE TABLE members
     guild_id BIGINT      NOT NULL,
     username TEXT,
     avatar   BIGINT,
-    join_at  TIMESTAMPTZ NOT NULL,
-    timeout  TIMESTAMPTZ
+    join_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    timeout  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_guild_members ON members (user_id, guild_id);
 SELECT create_distributed_table('members', 'guild_id');
@@ -125,7 +133,7 @@ CREATE TABLE user_roles
     user_id  BIGINT NOT NULL,
     role_id  BIGINT NOT NULL
 );
-CREATE INDEX idx_user_roles ON user_role (user_id, guild_id);
+CREATE INDEX idx_user_roles ON user_roles (user_id, guild_id);
 SELECT create_distributed_table('user_roles', 'guild_id');
 
 CREATE TABLE channel_roles_permissions
@@ -152,7 +160,7 @@ CREATE TABLE audit
 (
     guild_id   BIGINT      NOT NULL,
     changes    JSONB       NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_audit_guild_id ON audit (guild_id);
 SELECT create_distributed_table('audit', 'guild_id');

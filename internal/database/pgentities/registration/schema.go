@@ -25,3 +25,67 @@ func (e *Entity) GetRegistrationByUserId(ctx context.Context, userId int64) (mod
 	}
 	return r, nil
 }
+
+func (e *Entity) GetRegistrationByEmail(ctx context.Context, email string) (model.Registration, error) {
+	var r model.Registration
+	q := squirrel.Select("*").
+		PlaceholderFormat(squirrel.Dollar).
+		From("registrations").
+		Where(squirrel.Eq{"email": email})
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return model.Registration{}, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	err = e.c.GetContext(ctx, &r, sql, args...)
+	if err != nil {
+		return r, fmt.Errorf("unable to get registration by email: %w", err)
+	}
+	return r, nil
+}
+
+func (e *Entity) CreateRegistration(ctx context.Context, userId int64, email string, confirmation string) error {
+	q := squirrel.Insert("registrations").
+		PlaceholderFormat(squirrel.Dollar).
+		Columns("user_id", "email", "confirmation_token").
+		Values(userId, email, confirmation)
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	_, err = e.c.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("unable to create registration: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) RemoveRegistration(ctx context.Context, userId int64) error {
+	q := squirrel.Delete("registrations").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"user_id": userId})
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	_, err = e.c.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("unable to remove registration: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) SetRegistrationToken(ctx context.Context, userId int64, token string) error {
+	q := squirrel.Update("registrations").
+		PlaceholderFormat(squirrel.Dollar).
+		Set("token", token).
+		Where(squirrel.Eq{"user_id": userId})
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	_, err = e.c.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("unable to set registration token: %w", err)
+	}
+	return nil
+}

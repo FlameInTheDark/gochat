@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
+	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 	slogfiber "github.com/samber/slog-fiber"
 
@@ -25,6 +26,7 @@ type App struct {
 	natsConn *nats.Conn
 	app      *fiber.App
 	cdb      *db.CQLCon
+	pg       *pgdb.DB
 
 	shut *shutter.Shut
 	cfg  *config.Config
@@ -52,6 +54,14 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	}
 	shut.Up(dbcon)
 
+	pg := pgdb.NewDB(logger)
+	err = pg.Connect(cfg.PGDSN, cfg.PGRetries)
+	if err != nil {
+		logger.Error("unable to connect to pg", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	shut.Up(pg)
+
 	jwtauth := auth.New(cfg.AuthSecret)
 
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
@@ -74,6 +84,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 		natsConn: natsCon,
 		app:      app,
 		cdb:      dbcon,
+		pg:       pg,
 		cfg:      cfg,
 		log:      logger,
 		shut:     shut,

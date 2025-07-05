@@ -53,6 +53,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	shut.Up(pg)
 
 	var qt mq.SendTransporter
 	nt, err := nats.New(cfg.NatsConnString)
@@ -121,8 +122,8 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	// HTTP Router
 	s.Register(
 		"/api/v1",
-		auth.New(database, m, cfg.AuthSecret, logger),
-		user.New(database, pg, logger),
+		auth.New(pg, m, cfg.AuthSecret, logger),
+		user.New(pg, logger),
 		message.New(database, pg, storage, qt, imq, cfg.UploadLimit, logger),
 		webhook.New(database, storage, logger),
 		guild.New(database, pg, qt, logger),

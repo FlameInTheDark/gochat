@@ -5,16 +5,15 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/FlameInTheDark/gochat/internal/database/db"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/channel"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/discriminator"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/dmchannel"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/groupdmchannel"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/member"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/user"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/server"
 )
 
@@ -50,17 +49,17 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, pg *pgdb.DB, log *slog.Logger) server.Entity {
+func New(pg *pgdb.DB, log *slog.Logger) server.Entity {
 	return &entity{
 		name:   entityName,
 		log:    log,
-		user:   user.New(dbcon),
-		member: member.New(dbcon),
+		user:   user.New(pg.Conn()),
+		member: member.New(pg.Conn()),
 		guild:  guild.New(pg.Conn()),
-		urole:  userrole.New(dbcon),
-		ch:     channel.New(dbcon),
-		dm:     dmchannel.New(dbcon),
-		gdm:    groupdmchannel.New(dbcon),
-		disc:   discriminator.New(dbcon),
+		urole:  userrole.New(pg.Conn()),
+		ch:     channel.New(pg.Conn()),
+		dm:     dmchannel.New(pg.Conn()),
+		gdm:    groupdmchannel.New(pg.Conn()),
+		disc:   discriminator.New(pg.Conn()),
 	}
 }

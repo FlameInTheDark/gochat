@@ -1,6 +1,7 @@
 up:
 	docker compose up -d
 	docker compose exec scylla bash ./init-scylladb.sh
+	docker compose -p gochat up --scale citus-worker=3 -d
 
 scylla_init:
 	docker compose exec scylla bash ./init-scylladb.sh
@@ -17,6 +18,9 @@ run:
 
 run_ws:
 	go run ./cmd/ws
+
+citus_up:
+	docker compose -p gochat up --scale citus-worker=3 -d
 
 migrate: migrate_pg migrate_scylla
 

@@ -68,10 +68,11 @@ func (db *DB) Conn() *sqlx.DB {
 	return db.conn
 }
 
-func (db *DB) Close() {
+func (db *DB) Close() error {
 	if db.conn != nil {
-		_ = db.conn.Close()
+		return db.conn.Close()
 	}
+	return nil
 }
 
 func (db *DB) Ping(timeout time.Duration) error {

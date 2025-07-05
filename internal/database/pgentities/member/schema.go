@@ -73,7 +73,7 @@ func (e *Entity) GetMembersList(ctx context.Context, guildId int64, ids []int64)
 		Where(
 			squirrel.And{
 				squirrel.Eq{"guild_id": guildId},
-				squirrel.Eq{"id": ids},
+				squirrel.Eq{"user_id": ids},
 			},
 		)
 

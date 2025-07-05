@@ -1,4 +1,4 @@
-package guild
+package guildchannels
 
 import (
 	"context"
@@ -29,7 +29,12 @@ func (e *Entity) GetGuildChannel(ctx context.Context, guildID, channelID int64) 
 	q := squirrel.Select("*").
 		PlaceholderFormat(squirrel.Dollar).
 		From("guild_channels").
-		Where(squirrel.Eq{"guild_id": guildID, "channel_id": channelID})
+		Where(
+			squirrel.And{
+				squirrel.Eq{"guild_id": guildID},
+				squirrel.Eq{"channel_id": channelID},
+			},
+		)
 	sql, args, err := q.ToSql()
 	if err != nil {
 		return model.GuildChannel{}, fmt.Errorf("unable to create SQL query: %w", err)
@@ -63,7 +68,7 @@ func (e *Entity) GetGuildByChannel(ctx context.Context, channelID int64) (model.
 	q := squirrel.Select("*").
 		PlaceholderFormat(squirrel.Dollar).
 		From("guild_channels").
-		Where(squirrel.Eq{"guild_id": channelID}).
+		Where(squirrel.Eq{"channel_id": channelID}).
 		Limit(1)
 	sql, args, err := q.ToSql()
 	if err != nil {
@@ -78,7 +83,12 @@ func (e *Entity) GetGuildByChannel(ctx context.Context, channelID int64) (model.
 
 func (e *Entity) RemoveChannel(ctx context.Context, guildID, channelID string) error {
 	q := squirrel.Delete("guild_channels").
-		Where(squirrel.Eq{"guild_id": guildID, "channel_id": channelID})
+		Where(
+			squirrel.And{
+				squirrel.Eq{"guild_id": guildID},
+				squirrel.Eq{"channel_id": channelID},
+			},
+		)
 	sql, args, err := q.ToSql()
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)

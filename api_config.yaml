@@ -16,4 +16,4 @@ rate_limit_requests: 10
 s3_endpoint: minio:9000
 s3_access_key_id: lF0b7V15OZCv2eGggCg5
 s3_secret_access_key: 55ug80hPgx4nFPoFJXvwBHns1XwXmZrcKli8UHoz
-pg_dsn: "host=192.168.1.80 port=5432 user=postgres dbname=gochat sslmode=disable"
+pg_dsn: "host=citus-master port=5432 user=postgres dbname=gochat sslmode=disable"

@@ -1,4 +1,4 @@
-package guildchannels
+package authentication
 
 import (
 	"github.com/jmoiron/sqlx"

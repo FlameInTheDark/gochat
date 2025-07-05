@@ -1,4 +1,4 @@
-package guildchannels
+package channelroleperm
 
 import (
 	"github.com/jmoiron/sqlx"
