@@ -6,6 +6,8 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channeluserperm"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
@@ -23,6 +25,8 @@ type Entity struct {
 	gc   *guildchannels.Entity
 	ch   *channel.Entity
 	m    *member.Entity
+	dm   *dmchannel.Entity
+	gdm  *groupdmchannel.Entity
 }
 
 func New(c *db.CQLCon, pg *pgdb.DB) *Entity {
@@ -36,5 +40,7 @@ func New(c *db.CQLCon, pg *pgdb.DB) *Entity {
 		gc:   guildchannels.New(pg.Conn()),
 		ch:   channel.New(pg.Conn()),
 		m:    member.New(pg.Conn()),
+		dm:   dmchannel.New(pg.Conn()),
+		gdm:  groupdmchannel.New(pg.Conn()),
 	}
 }

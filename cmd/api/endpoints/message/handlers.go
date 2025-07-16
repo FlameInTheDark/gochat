@@ -36,6 +36,9 @@ func (e *entity) Send(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
 	channelId := c.Params("channel_id")
 	chid, err := strconv.ParseInt(channelId, 10, 64)
 	if err != nil {
@@ -169,6 +172,9 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 	var req GetMessagesRequest
 	err := c.QueryParser(&req)
 	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	if err := req.Validate(); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 	if req.Limit == nil {
@@ -346,8 +352,8 @@ func (e *entity) Update(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
-	if req.Content == "" {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 	channelId := c.Params("channel_id")
 	chid, err := strconv.ParseInt(channelId, 10, 64)

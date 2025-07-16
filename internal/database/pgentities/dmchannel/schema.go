@@ -2,6 +2,8 @@ package dmchannel
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -70,4 +72,28 @@ func (e *Entity) CreateDmChannel(ctx context.Context, userId, participantId, cha
 		return fmt.Errorf("unable to create dm channel: %w", err)
 	}
 	return nil
+}
+
+func (e *Entity) IsDmChannelParticipant(ctx context.Context, channelId, userId int64) (bool, error) {
+	var count int64
+	q := squirrel.Select("count(*)").
+		PlaceholderFormat(squirrel.Dollar).
+		From("dm_channels").
+		Where(
+			squirrel.And{
+				squirrel.Eq{"channel_id": channelId},
+				squirrel.Eq{"user_id": userId},
+			},
+		)
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return false, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	err = e.c.GetContext(ctx, &count, raw, args...)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("check dm participant error: %w", err)
+	}
+	return count > 0, nil
 }

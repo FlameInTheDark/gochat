@@ -25,18 +25,20 @@ import (
 //	@failure	500		{string}	string	"Something bad happened"
 //	@Router		/auth/login [post]
 func (e *entity) Login(c *fiber.Ctx) error {
-	var login LoginRequest
-	err := c.BodyParser(&login)
+	var req LoginRequest
+	err := c.BodyParser(&req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
-
-	auth, err := e.auth.GetAuthenticationByEmail(c.UserContext(), login.Email)
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	auth, err := e.auth.GetAuthenticationByEmail(c.UserContext(), req.Email)
 	if err := helper.HttpDbError(err, ErrUnableToGetAuthenticationByEmail); err != nil {
 		return err
 	}
 
-	err = CompareHashAndPassword(auth.PasswordHash, login.Password)
+	err = CompareHashAndPassword(auth.PasswordHash, req.Password)
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnauthorized, ErrUnableToCompareHash)
 	}
@@ -86,6 +88,9 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
 	token, err := helper.RandomToken(40)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGenerateToken)
@@ -131,15 +136,15 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 //	@failure	401		{string}	string				"Unauthorized"
 //	@failure	409		{string}	string				"Discriminator is not unique"
 //	@failure	500		{string}	string				"Something bad happened"
-//	@Router		/auth/confitmation [post]
+//	@Router		/auth/confirmation [post]
 func (e *entity) Confirmation(c *fiber.Ctx) error {
 	var req ConfirmationRequest
 	err := c.BodyParser(&req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
-	if len(req.Password) < 8 {
-		return fiber.NewError(fiber.StatusBadRequest, ErrPasswordIsTooShort)
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 	hash, err := HashPassword(req.Password)
 	if err := helper.HttpDbError(err, ErrUnableToGetPasswordHash); err != nil {

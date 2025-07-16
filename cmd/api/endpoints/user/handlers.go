@@ -75,6 +75,9 @@ func (e *entity) ModifyUser(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
 	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
 
 	user, err := helper.GetUser(c)
 	if err != nil {
@@ -228,6 +231,9 @@ func (e *entity) CreateDM(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
 	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
 	user, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
@@ -289,6 +295,9 @@ func (e *entity) CreateGroupDM(c *fiber.Ctx) error {
 	err := c.BodyParser(&req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
+	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 	user, err := helper.GetUser(c)
 	if err != nil {

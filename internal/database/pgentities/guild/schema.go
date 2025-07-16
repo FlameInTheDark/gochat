@@ -149,7 +149,7 @@ func (e *Entity) SetGuildPermissions(ctx context.Context, id int64, permissions 
 	return nil
 }
 
-func (e *Entity) UpdateGuild(ctx context.Context, id int64, name *string, icon *int64, public *bool) error {
+func (e *Entity) UpdateGuild(ctx context.Context, id int64, name *string, icon *int64, public *bool, permissions *int64) error {
 	q := squirrel.Update("guilds").
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{"id": id})
@@ -161,6 +161,9 @@ func (e *Entity) UpdateGuild(ctx context.Context, id int64, name *string, icon *
 	}
 	if public != nil {
 		q = q.Set("public", *public)
+	}
+	if permissions != nil {
+		q = q.Set("permissions", *permissions)
 	}
 
 	sql, args, err := q.ToSql()

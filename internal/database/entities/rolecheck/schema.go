@@ -2,7 +2,9 @@ package rolecheck
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/gocql/gocql"
 
@@ -14,7 +16,7 @@ import (
 // Returns a slice of role IDs and an error if any
 func (e *Entity) getUserRoleIDs(ctx context.Context, guildID, userID int64) ([]int64, error) {
 	userRoles, err := e.ur.GetUserRoles(ctx, guildID, userID)
-	if err != nil && !errors.Is(err, gocql.ErrNotFound) {
+	if err != nil {
 		return nil, err
 	}
 
@@ -32,98 +34,133 @@ func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int
 	// Administrator permission is always checked
 	perm = append(perm, permissions.PermAdministrator)
 
-	// Get guild information
-	guild, err := e.g.GetGuildById(ctx, guildID)
-	if err != nil {
-		return nil, nil, nil, false, err
-	}
-
-	// Get guild channel information
-	gc, err := e.gc.GetGuildChannel(ctx, guildID, channelID)
-	if err != nil {
-		return nil, nil, nil, false, err
-	}
-
 	// Get channel information
-	channel, err := e.ch.GetChannel(ctx, gc.ChannelId)
+	channel, err := e.ch.GetChannel(ctx, channelID)
 	if err != nil {
 		return nil, nil, nil, false, err
 	}
 
-	// Guild owner has all permissions
-	if userID == guild.OwnerId {
-		return &channel, &gc, &guild, true, nil
-	}
-
-	// Determine base permissions
-	var permAll int64
-	if channel.Permissions != nil {
-		permAll = *channel.Permissions
-	} else {
-		permAll = guild.Permissions
-	}
-
-	// Get user role IDs
-	roleIDs, err := e.getUserRoleIDs(ctx, guildID, userID)
-	if err != nil {
-		return nil, nil, nil, false, err
-	}
-
-	// Get role information
-	roles, err := e.role.GetRolesBulk(ctx, roleIDs)
-	if err != nil && !errors.Is(err, gocql.ErrNotFound) {
-		return nil, nil, nil, false, err
-	}
-
-	// Private channel access flag
-	var allowPrivate = !channel.Private
-
-	// Get channel role permissions
-	channelRolePerms, err := e.chrp.GetChannelRolePermissions(ctx, channelID)
-	if err != nil && !errors.Is(err, gocql.ErrNotFound) {
-		return nil, nil, nil, false, err
-	}
-
-	// Create a map for faster lookup
-	channelRolePermsMap := make(map[int64]*model.ChannelRolesPermission)
-	for i, p := range channelRolePerms {
-		channelRolePermsMap[p.RoleId] = &channelRolePerms[i]
-	}
-
-	// Process role permissions
-	for _, role := range roles {
-		if channelRolePerm, ok := channelRolePermsMap[role.Id]; ok {
-			allowPrivate = true
-			role.Permissions = permissions.AddRoles(role.Permissions, channelRolePerm.Accept)
-			role.Permissions = permissions.SubtractRoles(role.Permissions, channelRolePerm.Deny)
+	// Handle different channel types
+	switch channel.Type {
+	case model.ChannelTypeDM:
+		// For DM channels, check if the user is a participant
+		isParticipant, err := e.dm.IsDmChannelParticipant(ctx, channelID, userID)
+		if err != nil {
+			return nil, nil, nil, false, err
 		}
-		permAll = permissions.AddRoles(permAll, role.Permissions)
-	}
+		if isParticipant {
+			return &channel, nil, nil, true, nil
+		}
+		return nil, nil, nil, false, nil
 
-	// Get user-specific channel permissions
-	userChannelPerm, err := e.chup.GetUserChannelPermission(ctx, channelID, userID)
-	if err != nil && !errors.Is(err, gocql.ErrNotFound) {
-		return nil, nil, nil, false, err
-	}
+	case model.ChannelTypeGroupDM:
+		// For group DM channels, check if the user is a participant
+		isParticipant, err := e.gdm.IsGroupDmParticipant(ctx, channelID, userID)
+		if err != nil {
+			return nil, nil, nil, false, err
+		}
+		if isParticipant {
+			return &channel, nil, nil, true, nil
+		}
+		return nil, nil, nil, false, nil
 
-	// Apply user-specific permissions if found
-	if !errors.Is(err, gocql.ErrNotFound) { // User has specific permissions
-		allowPrivate = true
-		permAll = permissions.AddRoles(permAll, userChannelPerm.Accept)
-		permAll = permissions.SubtractRoles(permAll, userChannelPerm.Deny)
-	}
+	case model.ChannelTypeThread:
+		// For thread channels, inherit parent channel permissions
+		if channel.ParentID == nil {
+			return nil, nil, nil, false, fmt.Errorf("thread channel has no parent")
+		}
+		// Recursively check permissions on the parent channel
+		return e.ChannelPerm(ctx, guildID, *channel.ParentID, userID, perm...)
 
-	// Check if user can access private channel
-	if !allowPrivate {
+	default:
+		// For guild channels, check specific permissions
+		// Get guild information
+		guild, err := e.g.GetGuildById(ctx, guildID)
+		if err != nil {
+			return nil, nil, nil, false, err
+		}
+
+		// Get guild channel information
+		gc, err := e.gc.GetGuildChannel(ctx, guildID, channelID)
+		if err != nil {
+			return nil, nil, nil, false, err
+		}
+
+		// Guild owner has all permissions
+		if userID == guild.OwnerId {
+			return &channel, &gc, &guild, true, nil
+		}
+
+		// Determine base permissions
+		var permAll int64
+		if channel.Permissions != nil {
+			permAll = *channel.Permissions
+		} else {
+			permAll = guild.Permissions
+		}
+
+		// Get user role IDs
+		roleIDs, err := e.getUserRoleIDs(ctx, guildID, userID)
+		if err != nil {
+			return nil, nil, nil, false, err
+		}
+
+		// Get role information
+		roles, err := e.role.GetRolesBulk(ctx, roleIDs)
+		if err != nil {
+			return nil, nil, nil, false, err
+		}
+
+		// Private channel access flag
+		var allowPrivate = !channel.Private
+
+		// Get channel role permissions
+		channelRolePerms, err := e.chrp.GetChannelRolePermissions(ctx, channelID)
+		if err != nil {
+			return nil, nil, nil, false, err
+		}
+
+		// Create a map for faster lookup
+		channelRolePermsMap := make(map[int64]*model.ChannelRolesPermission)
+		for i, p := range channelRolePerms {
+			channelRolePermsMap[p.RoleId] = &channelRolePerms[i]
+		}
+
+		// Process role permissions
+		for _, role := range roles {
+			if channelRolePerm, ok := channelRolePermsMap[role.Id]; ok {
+				allowPrivate = true
+				role.Permissions = permissions.AddRoles(role.Permissions, channelRolePerm.Accept)
+				role.Permissions = permissions.SubtractRoles(role.Permissions, channelRolePerm.Deny)
+			}
+			permAll = permissions.AddRoles(permAll, role.Permissions)
+		}
+
+		// Get user-specific channel permissions
+		userChannelPerm, err := e.chup.GetUserChannelPermission(ctx, channelID, userID)
+		if err != nil {
+			return nil, nil, nil, false, err
+		}
+
+		// Apply user-specific permissions if found
+		if !errors.Is(err, sql.ErrNoRows) { // User has specific permissions
+			allowPrivate = true
+			permAll = permissions.AddRoles(permAll, userChannelPerm.Accept)
+			permAll = permissions.SubtractRoles(permAll, userChannelPerm.Deny)
+		}
+
+		// Check if user can access private channel
+		if !allowPrivate {
+			return nil, nil, nil, false, nil
+		}
+
+		// Check if user has all required permissions
+		if permissions.CheckPermissions(permAll, perm...) {
+			return &channel, &gc, &guild, true, nil
+		}
+
 		return nil, nil, nil, false, nil
 	}
-
-	// Check if user has all required permissions
-	if permissions.CheckPermissions(permAll, perm...) {
-		return &channel, &gc, &guild, true, nil
-	}
-
-	return nil, nil, nil, false, nil
 }
 
 // GuildPerm checks if a user has the specified permissions for a guild

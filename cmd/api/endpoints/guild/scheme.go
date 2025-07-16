@@ -1,6 +1,10 @@
 package guild
 
 import (
+	"regexp"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 )
@@ -24,6 +28,23 @@ const (
 	ErrUnableToUpdateGuild          = "unable to update guild"
 	ErrUnableToGetRoles             = "unable to get roles"
 	ErrUnableToCreateChannelGroup   = "unable to create channel group"
+
+	// Validation error messages
+	ErrGuildNameRequired   = "guild name is required"
+	ErrGuildNameTooShort   = "guild name must be at least 2 characters"
+	ErrGuildNameTooLong    = "guild name must be less than 100 characters"
+	ErrChannelNameRequired = "channel name is required"
+	ErrChannelNameTooShort = "channel name must be at least 2 characters"
+	ErrChannelNameTooLong  = "channel name must be less than 100 characters"
+	ErrChannelNameInvalid  = "channel name can only contain letters, numbers, hyphens, and underscores"
+	ErrChannelTypeInvalid  = "invalid channel type"
+	ErrIconIdInvalid       = "icon ID must be positive"
+	ErrParentIdInvalid     = "parent ID must be positive"
+	ErrPermissionsInvalid  = "permissions must be non-negative"
+)
+
+var (
+	channelNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 )
 
 type CreateGuildRequest struct {
@@ -32,10 +53,41 @@ type CreateGuildRequest struct {
 	Public bool   `json:"public"`
 }
 
+func (r CreateGuildRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.Required.Error(ErrGuildNameRequired),
+			validation.RuneLength(2, 0).Error(ErrGuildNameTooShort),
+			validation.RuneLength(0, 100).Error(ErrGuildNameTooLong),
+		),
+		validation.Field(&r.IconId,
+			validation.When(r.IconId != nil, validation.Min(int64(1)).Error(ErrIconIdInvalid)),
+		),
+	)
+}
+
 type UpdateGuildRequest struct {
-	Name   *string `json:"name"`
-	IconId *int64  `json:"icon_id"`
-	Public *bool   `json:"public"`
+	Name        *string `json:"name"`
+	IconId      *int64  `json:"icon_id"`
+	Public      *bool   `json:"public"`
+	Permissions *int64  `json:"permissions"`
+}
+
+func (r UpdateGuildRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.When(r.Name != nil,
+				validation.RuneLength(2, 0).Error(ErrGuildNameTooShort),
+				validation.RuneLength(0, 100).Error(ErrGuildNameTooLong),
+			),
+		),
+		validation.Field(&r.IconId,
+			validation.When(r.IconId != nil, validation.Min(int64(1)).Error(ErrIconIdInvalid)),
+		),
+		validation.Field(&r.Permissions,
+			validation.When(r.Permissions != nil, validation.Min(int64(0)).Error(ErrPermissionsInvalid)),
+		),
+	)
 }
 
 type CreateGuildChannelCategoryRequest struct {
@@ -43,11 +95,47 @@ type CreateGuildChannelCategoryRequest struct {
 	Private bool   `json:"private"`
 }
 
+func (r CreateGuildChannelCategoryRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.Required.Error(ErrChannelNameRequired),
+			validation.RuneLength(2, 0).Error(ErrChannelNameTooShort),
+			validation.RuneLength(0, 100).Error(ErrChannelNameTooLong),
+			validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
+		),
+	)
+}
+
 type CreateGuildChannelRequest struct {
 	Name     string            `json:"name"`
 	Type     model.ChannelType `json:"type"`
 	ParentId *int64            `json:"parent_id"`
 	Private  bool              `json:"private"`
+}
+
+func (r CreateGuildChannelRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.Required.Error(ErrChannelNameRequired),
+			validation.RuneLength(2, 0).Error(ErrChannelNameTooShort),
+			validation.RuneLength(0, 100).Error(ErrChannelNameTooLong),
+			validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
+		),
+		validation.Field(&r.Type,
+			validation.Required,
+			validation.In(
+				model.ChannelTypeGuild,
+				model.ChannelTypeGuildVoice,
+				model.ChannelTypeGuildCategory,
+				model.ChannelTypeDM,
+				model.ChannelTypeGroupDM,
+				model.ChannelTypeThread,
+			).Error(ErrChannelTypeInvalid),
+		),
+		validation.Field(&r.ParentId,
+			validation.When(r.ParentId != nil, validation.Min(int64(1)).Error(ErrParentIdInvalid)),
+		),
+	)
 }
 
 func channelModelToDTO(c *model.Channel, guildId *int64, position int) dto.Channel {

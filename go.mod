@@ -49,6 +49,7 @@ require (
 	github.com/go-openapi/strfmt v0.21.8 // indirect
 	github.com/go-openapi/swag v0.22.4 // indirect
 	github.com/go-openapi/validate v0.22.3 // indirect
+	github.com/go-ozzo/ozzo-validation/v4 v4.3.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect

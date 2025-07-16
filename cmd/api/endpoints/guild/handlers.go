@@ -47,11 +47,12 @@ func (e *entity) Get(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(dto.Guild{
-		Id:     guild.Id,
-		Name:   guild.Name,
-		Icon:   guild.Icon,
-		Owner:  guild.OwnerId,
-		Public: guild.Public,
+		Id:          guild.Id,
+		Name:        guild.Name,
+		Icon:        guild.Icon,
+		Owner:       guild.OwnerId,
+		Public:      guild.Public,
+		Permissions: guild.Permissions,
 	})
 }
 
@@ -258,6 +259,9 @@ func (e *entity) Create(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
 	u, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
@@ -303,11 +307,12 @@ func (e *entity) Create(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(dto.Guild{
-		Id:     gid,
-		Name:   req.Name,
-		Icon:   req.IconId,
-		Owner:  u.Id,
-		Public: req.Public,
+		Id:          gid,
+		Name:        req.Name,
+		Icon:        req.IconId,
+		Owner:       u.Id,
+		Public:      req.Public,
+		Permissions: permissions.DefaultPermissions,
 	})
 }
 
@@ -329,6 +334,9 @@ func (e *entity) Update(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
 	guildId := c.Params("guild_id")
 	id, err := strconv.ParseInt(guildId, 10, 64)
 	if err != nil {
@@ -343,7 +351,7 @@ func (e *entity) Update(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 	}
 	if ok {
-		err = e.g.UpdateGuild(c.UserContext(), g.Id, req.Name, req.IconId, req.Public)
+		err = e.g.UpdateGuild(c.UserContext(), g.Id, req.Name, req.IconId, req.Public, req.Permissions)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUpdateGuild)
 		}
@@ -353,11 +361,12 @@ func (e *entity) Update(c *fiber.Ctx) error {
 		}
 		err = e.mqt.SendGuildUpdate(id, &mqmsg.UpdateGuild{
 			Guild: dto.Guild{
-				Id:     ug.Id,
-				Name:   ug.Name,
-				Icon:   ug.Icon,
-				Owner:  ug.OwnerId,
-				Public: ug.Public,
+				Id:          ug.Id,
+				Name:        ug.Name,
+				Icon:        ug.Icon,
+				Owner:       ug.OwnerId,
+				Public:      ug.Public,
+				Permissions: ug.Permissions,
 			},
 		})
 		if err != nil {
@@ -385,6 +394,9 @@ func (e *entity) CreateCategory(c *fiber.Ctx) error {
 	err := c.BodyParser(&req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 	guildId := c.Params("guild_id")
 	id, err := strconv.ParseInt(guildId, 10, 64)
@@ -450,6 +462,9 @@ func (e *entity) CreateChannel(c *fiber.Ctx) error {
 	err := c.BodyParser(&req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 	guildId := c.Params("guild_id")
 	id, err := strconv.ParseInt(guildId, 10, 64)
