@@ -116,6 +116,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 	s.WithCORS()
 	s.WithMetrics()
+	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
 	s.AuthMiddleware(cfg.AuthSecret)
 	s.RateLimitMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 

@@ -21,41 +21,89 @@ import (
 //	@Tags		User
 //	@Param		user_id	path		string		true	"User ID or 'me'"
 //	@Success	200		{object}	dto.User	"User data"
-//	@failure	400		{string}	string		"Incorrect ID"
+//	@failure	400		{string}	string		"Bad request"
 //	@failure	404		{string}	string		"User not found"
-//	@failure	500		{string}	string		"Something bad happened"
+//	@failure	500		{string}	string		"Internal server error"
 //	@Router		/user/{user_id} [get]
 func (e *entity) GetUser(c *fiber.Ctx) error {
-	id := c.Params("user_id")
-	var userId int64
-	if id == "me" {
+	// Parse user ID from path parameter
+	userId, err := e.parseUserIdParam(c, "user_id")
+	if err != nil {
+		return err
+	}
+
+	// Fetch user data concurrently
+	userDTO, err := e.fetchUserWithDiscriminator(c, userId)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(userDTO)
+}
+
+// parseUserIdParam handles parsing user ID from path parameters, supporting "me"
+func (e *entity) parseUserIdParam(c *fiber.Ctx, paramName string) (int64, error) {
+	idStr := c.Params(paramName)
+
+	if idStr == "me" {
 		user, err := helper.GetUser(c)
 		if err != nil {
-			return c.SendStatus(fiber.StatusBadRequest)
+			return 0, fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 		}
-		userId = user.Id
-	} else {
-		i, err := strconv.ParseInt(id, 10, 64)
-		if err != nil {
-			return c.SendStatus(fiber.StatusBadRequest)
-		}
-		userId = i
+		return user.Id, nil
 	}
 
-	user, err := e.user.GetUserById(c.UserContext(), userId)
-	if err := helper.HttpDbError(err, ErrUnableToGetUser); err != nil {
-		return err
+	userId, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return 0, fiber.NewError(fiber.StatusBadRequest, "invalid user ID format")
 	}
 
-	disc, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), userId)
-	if err := helper.HttpDbError(err, ErrUnableToGetDiscriminator); err != nil {
-		return err
+	return userId, nil
+}
+
+// fetchUserWithDiscriminator fetches user data and discriminator concurrently
+func (e *entity) fetchUserWithDiscriminator(c *fiber.Ctx, userId int64) (dto.User, error) {
+	type userResult struct {
+		user *model.User
+		err  error
+	}
+	type discResult struct {
+		disc *model.Discriminator
+		err  error
 	}
 
-	u := modelToUser(user)
-	u.Discriminator = disc.Discriminator
+	userCh := make(chan userResult, 1)
+	discCh := make(chan discResult, 1)
 
-	return c.JSON(u)
+	// Fetch user data
+	go func() {
+		user, err := e.user.GetUserById(c.UserContext(), userId)
+		userCh <- userResult{&user, err}
+	}()
+
+	// Fetch discriminator
+	go func() {
+		disc, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), userId)
+		discCh <- discResult{&disc, err}
+	}()
+
+	// Collect results
+	userRes := <-userCh
+	discRes := <-discCh
+
+	// Check for errors
+	if userRes.err != nil {
+		return dto.User{}, helper.HttpDbError(userRes.err, ErrUnableToGetUser)
+	}
+	if discRes.err != nil {
+		return dto.User{}, helper.HttpDbError(discRes.err, ErrUnableToGetDiscriminator)
+	}
+
+	// Build and return user DTO
+	userDTO := modelToUser(*userRes.user)
+	userDTO.Discriminator = discRes.disc.Discriminator
+
+	return userDTO, nil
 }
 
 // ModifyUser
@@ -97,30 +145,57 @@ func (e *entity) ModifyUser(c *fiber.Ctx) error {
 //	@Produce	json
 //	@Tags		User
 //	@Success	200	{array}		dto.Guild	"Guilds list"
-//	@failure	400	{string}	string		"Incorrect ID"
+//	@failure	400	{string}	string		"Bad request"
 //	@failure	404	{string}	string		"User not found"
-//	@failure	500	{string}	string		"Something bad happened"
+//	@failure	500	{string}	string		"Internal server error"
 //	@Router		/user/me/guilds [get]
 func (e *entity) GetUserGuilds(c *fiber.Ctx) error {
+	// Get authenticated user
 	user, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	ms, err := e.member.GetUserGuilds(c.UserContext(), user.Id)
-	if err := helper.HttpDbError(err, ErrUnableToGetUserGuilds); err != nil {
+	// Fetch user's guilds
+	guilds, err := e.fetchUserGuilds(c, user.Id)
+	if err != nil {
 		return err
 	}
-	var ids = make([]int64, len(ms))
-	for i, m := range ms {
-		ids[i] = m.GuildId
-	}
-	gs, err := e.guild.GetGuildsList(c.UserContext(), ids)
+
+	return c.JSON(guilds)
+}
+
+// fetchUserGuilds retrieves all guilds for a user with proper error handling
+func (e *entity) fetchUserGuilds(c *fiber.Ctx, userId int64) ([]dto.Guild, error) {
+	// Get user's guild memberships
+	memberships, err := e.member.GetUserGuilds(c.UserContext(), userId)
 	if err != nil {
-		e.log.Error(err.Error())
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUserGuilds)
+		return nil, helper.HttpDbError(err, ErrUnableToGetUserGuilds)
 	}
-	return c.JSON(guildModelToGuildMany(gs))
+
+	// Handle case where user has no guilds
+	if len(memberships) == 0 {
+		return []dto.Guild{}, nil
+	}
+
+	// Extract guild IDs
+	guildIds := make([]int64, len(memberships))
+	for i, membership := range memberships {
+		guildIds[i] = membership.GuildId
+	}
+
+	// Fetch guild details
+	guilds, err := e.guild.GetGuildsList(c.UserContext(), guildIds)
+	if err != nil {
+		e.log.Error("failed to fetch guild details",
+			"user_id", userId,
+			"guild_count", len(guildIds),
+			"error", err.Error())
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUserGuilds)
+	}
+
+	// Convert to DTOs
+	return guildModelToGuildMany(guilds), nil
 }
 
 // GetMyGuildMember
@@ -130,52 +205,130 @@ func (e *entity) GetUserGuilds(c *fiber.Ctx) error {
 //	@Tags		User
 //	@Param		guild_id	path		int64		true	"Guild id"
 //	@Success	200			{object}	dto.Member	"Guild member"
-//	@failure	400			{string}	string		"Incorrect ID"
-//	@failure	404			{string}	string		"User not found"
-//	@failure	500			{string}	string		"Something bad happened"
+//	@failure	400			{string}	string		"Bad request"
+//	@failure	404			{string}	string		"Member not found"
+//	@failure	500			{string}	string		"Internal server error"
 //	@Router		/user/me/guilds/{guild_id}/member [get]
 func (e *entity) GetMyGuildMember(c *fiber.Ctx) error {
+	// Parse and validate request
+	user, guildId, err := e.parseGuildMemberRequest(c)
+	if err != nil {
+		return err
+	}
+
+	// Fetch member data concurrently
+	member, err := e.fetchGuildMemberData(c, user.Id, guildId)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(member)
+}
+
+// parseGuildMemberRequest handles request parsing and user authentication
+func (e *entity) parseGuildMemberRequest(c *fiber.Ctx) (*helper.JWTUser, int64, error) {
 	user, err := helper.GetUser(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+		return nil, 0, fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	id := c.Params("guild_id")
-	guildId, err := strconv.ParseInt(id, 10, 64)
+
+	guildIdStr := c.Params("guild_id")
+	guildId, err := strconv.ParseInt(guildIdStr, 10, 64)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrBadRequest)
+		return nil, 0, fiber.NewError(fiber.StatusBadRequest, ErrBadRequest)
 	}
-	m, err := e.member.GetMember(c.UserContext(), user.Id, guildId)
-	if err := helper.HttpDbError(err, ErrUnableToGetMember); err != nil {
-		return err
+
+	return user, guildId, nil
+}
+
+// fetchGuildMemberData fetches all member-related data concurrently
+func (e *entity) fetchGuildMemberData(c *fiber.Ctx, userId, guildId int64) (dto.Member, error) {
+	// Use channels for concurrent data fetching
+	type memberResult struct {
+		member *model.Member
+		err    error
 	}
-	u, err := e.user.GetUserById(c.UserContext(), user.Id)
-	if err := helper.HttpDbError(err, ErrUnableToGetUser); err != nil {
-		return err
+	type userResult struct {
+		user *model.User
+		err  error
 	}
-	disc, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), user.Id)
-	if err := helper.HttpDbError(err, ErrUnableToGetDiscriminator); err != nil {
-		return err
+	type discResult struct {
+		disc *model.Discriminator
+		err  error
 	}
-	r, err := e.urole.GetUserRoles(c.UserContext(), guildId, user.Id)
-	if err := helper.HttpDbError(err, ErrUnableToGetRoles); err != nil {
-		return err
+	type rolesResult struct {
+		roles []model.UserRole
+		err   error
 	}
-	ids := make([]int64, len(r))
-	for i, r := range r {
-		ids[i] = r.RoleId
+
+	memberCh := make(chan memberResult, 1)
+	userCh := make(chan userResult, 1)
+	discCh := make(chan discResult, 1)
+	rolesCh := make(chan rolesResult, 1)
+
+	// Fetch member data
+	go func() {
+		member, err := e.member.GetMember(c.UserContext(), userId, guildId)
+		memberCh <- memberResult{&member, err}
+	}()
+
+	// Fetch user data
+	go func() {
+		user, err := e.user.GetUserById(c.UserContext(), userId)
+		userCh <- userResult{&user, err}
+	}()
+
+	// Fetch discriminator
+	go func() {
+		disc, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), userId)
+		discCh <- discResult{&disc, err}
+	}()
+
+	// Fetch user roles
+	go func() {
+		roles, err := e.urole.GetUserRoles(c.UserContext(), guildId, userId)
+		rolesCh <- rolesResult{roles, err}
+	}()
+
+	// Collect results
+	memberRes := <-memberCh
+	userRes := <-userCh
+	discRes := <-discCh
+	rolesRes := <-rolesCh
+
+	// Check for errors
+	if memberRes.err != nil {
+		return dto.Member{}, helper.HttpDbError(memberRes.err, ErrUnableToGetMember)
 	}
-	return c.JSON(dto.Member{
+	if userRes.err != nil {
+		return dto.Member{}, helper.HttpDbError(userRes.err, ErrUnableToGetUser)
+	}
+	if discRes.err != nil {
+		return dto.Member{}, helper.HttpDbError(discRes.err, ErrUnableToGetDiscriminator)
+	}
+	if rolesRes.err != nil {
+		return dto.Member{}, helper.HttpDbError(rolesRes.err, ErrUnableToGetRoles)
+	}
+
+	// Extract role IDs
+	roleIds := make([]int64, len(rolesRes.roles))
+	for i, role := range rolesRes.roles {
+		roleIds[i] = role.RoleId
+	}
+
+	// Build and return member DTO
+	return dto.Member{
 		User: dto.User{
-			Id:            u.Id,
-			Name:          u.Name,
-			Discriminator: disc.Discriminator,
-			Avatar:        u.Avatar,
+			Id:            userRes.user.Id,
+			Name:          userRes.user.Name,
+			Discriminator: discRes.disc.Discriminator,
+			Avatar:        userRes.user.Avatar,
 		},
-		Username: m.Username,
-		Avatar:   m.Avatar,
-		JoinAt:   m.JoinAt,
-		Roles:    ids,
-	})
+		Username: memberRes.member.Username,
+		Avatar:   memberRes.member.Avatar,
+		JoinAt:   memberRes.member.JoinAt,
+		Roles:    roleIds,
+	}, nil
 }
 
 // LeaveGuild
@@ -185,33 +338,60 @@ func (e *entity) GetMyGuildMember(c *fiber.Ctx) error {
 //	@Tags		User
 //	@Param		guild_id	path		string	true	"Guild id"
 //	@Success	200			{string}	string	"ok"
-//	@failure	400			{string}	string	"Incorrect ID"
-//	@failure	404			{string}	string	"User not found"
-//	@failure	406			{string}	string	"Unable to leave your guild"
-//	@failure	500			{string}	string	"Something bad happened"
+//	@failure	400			{string}	string	"Bad request"
+//	@failure	404			{string}	string	"Guild not found"
+//	@failure	406			{string}	string	"Cannot leave own guild"
+//	@failure	500			{string}	string	"Internal server error"
 //	@Router		/user/me/guilds/{guild_id} [delete]
 func (e *entity) LeaveGuild(c *fiber.Ctx) error {
+	// Parse and validate request
+	user, guildId, err := e.parseLeaveGuildRequest(c)
+	if err != nil {
+		return err
+	}
+
+	// Validate guild exists and user can leave it
+	if err := e.validateGuildLeavePermission(c, user.Id, guildId); err != nil {
+		return err
+	}
+
+	// Remove user from guild
+	if err := e.member.RemoveMember(c.UserContext(), user.Id, guildId); err != nil {
+		return helper.HttpDbError(err, ErrUnableToRemoveMember)
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+// parseLeaveGuildRequest handles request parsing and user authentication
+func (e *entity) parseLeaveGuildRequest(c *fiber.Ctx) (*helper.JWTUser, int64, error) {
 	user, err := helper.GetUser(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUser)
+		return nil, 0, fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	id := c.Params("guild_id")
-	guildId, err := strconv.ParseInt(id, 10, 64)
+
+	guildIdStr := c.Params("guild_id")
+	guildId, err := strconv.ParseInt(guildIdStr, 10, 64)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseID)
+		return nil, 0, fiber.NewError(fiber.StatusBadRequest, "invalid guild ID format")
 	}
-	g, err := e.guild.GetGuildById(c.UserContext(), guildId)
-	if err := helper.HttpDbError(err, ErrUnableToGetGuildByID); err != nil {
-		return err
+
+	return user, guildId, nil
+}
+
+// validateGuildLeavePermission checks if user can leave the guild
+func (e *entity) validateGuildLeavePermission(c *fiber.Ctx, userId, guildId int64) error {
+	guild, err := e.guild.GetGuildById(c.UserContext(), guildId)
+	if err != nil {
+		return helper.HttpDbError(err, ErrUnableToGetGuildByID)
 	}
-	if g.OwnerId == user.Id {
+
+	// Prevent guild owner from leaving their own guild
+	if guild.OwnerId == userId {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrUnableToLeaveOwnServer)
 	}
-	err = e.member.RemoveMember(c.UserContext(), user.Id, guildId)
-	if err := helper.HttpDbError(err, ErrUnableToRemoveMember); err != nil {
-		return err
-	}
-	return c.SendStatus(fiber.StatusOK)
+
+	return nil
 }
 
 // CreateDM
@@ -220,63 +400,135 @@ func (e *entity) LeaveGuild(c *fiber.Ctx) error {
 //	@Produce	json
 //	@Tags		User
 //	@Param		request	body		CreateDMRequest	true	"Recipient data"
-//	@Success	200		{string}	string			"ok"
-//	@failure	400		{string}	string			"Incorrect ID"
+//	@Success	200		{object}	dto.Channel		"Created DM channel"
+//	@failure	400		{string}	string			"Bad request"
 //	@failure	404		{string}	string			"User not found"
-//	@failure	500		{string}	string			"Something bad happened"
+//	@failure	500		{string}	string			"Internal server error"
 //	@Router		/user/me/channels [post]
 func (e *entity) CreateDM(c *fiber.Ctx) error {
-	var req CreateDMRequest
-	err := c.BodyParser(&req)
+	// Parse and validate request
+	req, user, err := e.parseDMRequest(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
+		return err
 	}
+
+	// Validate recipient exists
+	recipient, err := e.validateRecipient(c, req.RecipientId)
+	if err != nil {
+		return err
+	}
+
+	// Check if DM channel already exists
+	existingChannel, err := e.findExistingDMChannel(c, user.Id, recipient.Id)
+	if err != nil {
+		return err
+	}
+	if existingChannel != nil {
+		return c.JSON(*existingChannel)
+	}
+
+	// Create new DM channel
+	newChannel, err := e.createNewDMChannel(c, user.Id, req.RecipientId)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(newChannel)
+}
+
+// parseDMRequest handles request parsing and user authentication
+func (e *entity) parseDMRequest(c *fiber.Ctx) (*CreateDMRequest, *helper.JWTUser, error) {
+	var req CreateDMRequest
+	if err := c.BodyParser(&req); err != nil {
+		return nil, nil, fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
+	}
+
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
+
 	user, err := helper.GetUser(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+		return nil, nil, fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	rec, err := e.user.GetUserById(c.UserContext(), req.RecipientId)
-	if err := helper.HttpDbError(err, ErrUnableToGetUser); err != nil {
-		return err
+
+	return &req, user, nil
+}
+
+// validateRecipient ensures the recipient user exists
+func (e *entity) validateRecipient(c *fiber.Ctx, recipientId int64) (*model.User, error) {
+	recipient, err := e.user.GetUserById(c.UserContext(), recipientId)
+	if err != nil {
+		if errors.Is(err, gocql.ErrNotFound) {
+			return nil, fiber.NewError(fiber.StatusNotFound, "recipient user not found")
+		}
+		return nil, helper.HttpDbError(err, ErrUnableToGetUser)
 	}
-	rc, err := e.dm.GetDmChannel(c.UserContext(), user.Id, rec.Id)
+	return &recipient, nil
+}
+
+// findExistingDMChannel checks if a DM channel already exists between users
+func (e *entity) findExistingDMChannel(c *fiber.Ctx, userId, recipientId int64) (*dto.Channel, error) {
+	dmChannel, err := e.dm.GetDmChannel(c.UserContext(), userId, recipientId)
 	if errors.Is(err, gocql.ErrNotFound) {
-		chId := idgen.Next()
-		err = e.ch.CreateChannel(c.UserContext(), chId, "", model.ChannelTypeDM, nil, nil, false)
-		if err := helper.HttpDbError(err, ErrUnableToCreateChannel); err != nil {
-			return err
-		}
-		err = e.dm.CreateDmChannel(c.UserContext(), user.Id, req.RecipientId, chId)
-		if err := helper.HttpDbError(err, ErrUnableToCreateDMChannel); err != nil {
-			return err
-		}
-		return c.JSON(dto.Channel{
-			Id:        chId,
-			Type:      model.ChannelTypeDM,
-			GuildId:   nil,
-			Name:      "",
-			ParentId:  nil,
-			CreatedAt: time.Now(),
-		})
-	} else if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetDMChannel)
+		return nil, nil // No existing channel
 	}
-	ch, err := e.ch.GetChannel(c.UserContext(), rc.ChannelId)
-	if err := helper.HttpDbError(err, ErrUnableToGetChannel); err != nil {
-		return err
+	if err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetDMChannel)
 	}
-	return c.JSON(dto.Channel{
-		Id:          ch.Id,
-		Type:        ch.Type,
+
+	// Get the actual channel details
+	channel, err := e.ch.GetChannel(c.UserContext(), dmChannel.ChannelId)
+	if err != nil {
+		return nil, helper.HttpDbError(err, ErrUnableToGetChannel)
+	}
+
+	// Convert to DTO
+	channelDTO := dto.Channel{
+		Id:          channel.Id,
+		Type:        channel.Type,
 		GuildId:     nil,
-		Name:        ch.Name,
-		ParentId:    ch.ParentID,
-		Permissions: ch.Permissions,
-		CreatedAt:   ch.CreatedAt,
-	})
+		Name:        channel.Name,
+		ParentId:    channel.ParentID,
+		Permissions: channel.Permissions,
+		CreatedAt:   channel.CreatedAt,
+	}
+
+	return &channelDTO, nil
+}
+
+// createNewDMChannel creates a new DM channel with proper cleanup
+func (e *entity) createNewDMChannel(c *fiber.Ctx, userId, recipientId int64) (dto.Channel, error) {
+	channelId := idgen.Next()
+
+	// Create the channel
+	if err := e.ch.CreateChannel(c.UserContext(), channelId, "", model.ChannelTypeDM, nil, nil, false); err != nil {
+		return dto.Channel{}, helper.HttpDbError(err, ErrUnableToCreateChannel)
+	}
+
+	// Create DM channel association
+	if err := e.dm.CreateDmChannel(c.UserContext(), userId, recipientId, channelId); err != nil {
+		// Cleanup: delete the channel if DM association creation fails
+		if cleanupErr := e.ch.DeleteChannel(c.UserContext(), channelId); cleanupErr != nil {
+			e.log.Error("failed to cleanup channel after DM creation failure",
+				"channel_id", channelId,
+				"user_id", userId,
+				"recipient_id", recipientId,
+				"cleanup_error", cleanupErr.Error(),
+				"original_error", err.Error())
+		}
+		return dto.Channel{}, helper.HttpDbError(err, ErrUnableToCreateDMChannel)
+	}
+
+	// Return the successfully created channel
+	return dto.Channel{
+		Id:        channelId,
+		Type:      model.ChannelTypeDM,
+		GuildId:   nil,
+		Name:      "",
+		ParentId:  nil,
+		CreatedAt: time.Now(),
+	}, nil
 }
 
 // CreateGroupDM
@@ -285,62 +537,160 @@ func (e *entity) CreateDM(c *fiber.Ctx) error {
 //	@Produce	json
 //	@Tags		User
 //	@Param		request	body		CreateDMManyRequest	true	"Group DM data"
-//	@Success	200		{string}	string				"ok"
-//	@failure	400		{string}	string				"Incorrect ID"
+//	@Success	200		{object}	dto.Channel			"Created group DM channel"
+//	@failure	400		{string}	string				"Bad request"
+//	@failure	403		{string}	string				"Forbidden"
 //	@failure	404		{string}	string				"Not found"
-//	@failure	500		{string}	string				"Something bad happened"
+//	@failure	500		{string}	string				"Internal server error"
 //	@Router		/user/me/channels/group [post]
 func (e *entity) CreateGroupDM(c *fiber.Ctx) error {
-	var req CreateDMManyRequest
-	err := c.BodyParser(&req)
+	// Parse and validate request
+	req, user, err := e.parseGroupDMRequest(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
-	}
-	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
-	}
-	user, err := helper.GetUser(c)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
-	}
-	var ch dto.Channel
-	if req.ChannelId != nil {
-		is, err := e.gdm.IsGroupDmParticipant(c.UserContext(), *req.ChannelId, user.Id)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGroupDMChannel)
-		}
-		if is {
-			uch, err := e.ch.GetChannel(c.UserContext(), *req.ChannelId)
-			if err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
-			}
-			ch = dto.Channel{
-				Id:          uch.Id,
-				Type:        uch.Type,
-				GuildId:     nil,
-				Name:        uch.Name,
-				ParentId:    uch.ParentID,
-				Permissions: uch.Permissions,
-				CreatedAt:   uch.CreatedAt,
-			}
-		}
-	}
-	id := idgen.Next()
-	err = e.ch.CreateChannel(c.UserContext(), id, "", model.ChannelTypeGroupDM, nil, nil, false)
-	if err := helper.HttpDbError(err, ErrUnableToCreateChannel); err != nil {
 		return err
 	}
-	ch = dto.Channel{
-		Id:        id,
+
+	// Validate recipient users exist
+	if err := e.validateRecipients(c, req.RecipientsId); err != nil {
+		return err
+	}
+
+	// Handle existing group DM vs new group DM
+	if req.ChannelId != nil {
+		return e.addUsersToExistingGroupDM(c, *req.ChannelId, user.Id, req.RecipientsId)
+	}
+
+	return e.createNewGroupDM(c, user.Id, req.RecipientsId)
+}
+
+// parseGroupDMRequest handles request parsing and user authentication
+func (e *entity) parseGroupDMRequest(c *fiber.Ctx) (*CreateDMManyRequest, *helper.JWTUser, error) {
+	var req CreateDMManyRequest
+	if err := c.BodyParser(&req); err != nil {
+		return nil, nil, fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
+	}
+
+	if err := req.Validate(); err != nil {
+		return nil, nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return nil, nil, fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+
+	return &req, user, nil
+}
+
+// validateRecipients ensures all recipient users exist and are valid
+func (e *entity) validateRecipients(c *fiber.Ctx, recipientIds []int64) error {
+	for _, recipientId := range recipientIds {
+		if _, err := e.user.GetUserById(c.UserContext(), recipientId); err != nil {
+			if errors.Is(err, gocql.ErrNotFound) {
+				return fiber.NewError(fiber.StatusNotFound, "recipient user not found")
+			}
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUser)
+		}
+	}
+	return nil
+}
+
+// addUsersToExistingGroupDM handles adding users to an existing group DM
+func (e *entity) addUsersToExistingGroupDM(c *fiber.Ctx, channelId, userId int64, recipientIds []int64) error {
+	// Verify user permissions and get channel in one operation
+	channel, err := e.validateGroupDMAccess(c, channelId, userId)
+	if err != nil {
+		return err
+	}
+
+	// Add new participants
+	if err := e.gdm.JoinGroupDmChannelMany(c.UserContext(), channelId, recipientIds); err != nil {
+		return helper.HttpDbError(err, ErrUnableToJoingGroupDmChannel)
+	}
+
+	return c.JSON(e.channelToDTO(channel))
+}
+
+// validateGroupDMAccess checks if user can access the group DM and returns the channel
+func (e *entity) validateGroupDMAccess(c *fiber.Ctx, channelId, userId int64) (*model.Channel, error) {
+	// Get channel first to ensure it exists
+	channel, err := e.ch.GetChannel(c.UserContext(), channelId)
+	if err != nil {
+		return nil, fiber.NewError(fiber.StatusNotFound, ErrUnableToGetChannel)
+	}
+
+	// Verify it's actually a group DM
+	if channel.Type != model.ChannelTypeGroupDM {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "channel is not a group DM")
+	}
+
+	// Verify user is participant
+	isParticipant, err := e.gdm.IsGroupDmParticipant(c.UserContext(), channelId, userId)
+	if err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGroupDMChannel)
+	}
+
+	if !isParticipant {
+		return nil, fiber.NewError(fiber.StatusForbidden, "not a participant in this group DM")
+	}
+
+	return &channel, nil
+}
+
+// createNewGroupDM handles creating a new group DM channel with transaction-like behavior
+func (e *entity) createNewGroupDM(c *fiber.Ctx, userId int64, recipientIds []int64) error {
+	channelId := idgen.Next()
+	allParticipants := append([]int64{userId}, recipientIds...)
+
+	// Create channel and add participants atomically
+	channel, err := e.createGroupDMWithParticipants(c, channelId, allParticipants)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(channel)
+}
+
+// createGroupDMWithParticipants creates a group DM channel and adds participants with proper cleanup
+func (e *entity) createGroupDMWithParticipants(c *fiber.Ctx, channelId int64, participants []int64) (dto.Channel, error) {
+	// Create the channel
+	if err := e.ch.CreateChannel(c.UserContext(), channelId, "", model.ChannelTypeGroupDM, nil, nil, false); err != nil {
+		return dto.Channel{}, helper.HttpDbError(err, ErrUnableToCreateChannel)
+	}
+
+	// Add all participants
+	if err := e.gdm.JoinGroupDmChannelMany(c.UserContext(), channelId, participants); err != nil {
+		// Cleanup: delete the channel if adding participants fails
+		if cleanupErr := e.ch.DeleteChannel(c.UserContext(), channelId); cleanupErr != nil {
+			// Log cleanup failure but return original error
+			e.log.Error("failed to cleanup channel after participant join failure",
+				"channel_id", channelId,
+				"cleanup_error", cleanupErr.Error(),
+				"original_error", err.Error())
+		}
+		return dto.Channel{}, helper.HttpDbError(err, ErrUnableToJoingGroupDmChannel)
+	}
+
+	// Return the successfully created channel
+	return dto.Channel{
+		Id:        channelId,
 		Type:      model.ChannelTypeGroupDM,
 		GuildId:   nil,
 		Name:      "",
 		ParentId:  nil,
 		CreatedAt: time.Now(),
+	}, nil
+}
+
+// channelToDTO converts a model.Channel to dto.Channel for group DMs
+func (e *entity) channelToDTO(channel *model.Channel) dto.Channel {
+	return dto.Channel{
+		Id:          channel.Id,
+		Type:        channel.Type,
+		GuildId:     nil, // Group DMs don't belong to guilds
+		Name:        channel.Name,
+		ParentId:    channel.ParentID,
+		Permissions: channel.Permissions,
+		CreatedAt:   channel.CreatedAt,
 	}
-	err = e.gdm.JoinGroupDmChannelMany(c.UserContext(), id, req.RecipientsId)
-	if err := helper.HttpDbError(err, ErrUnableToJoingGroupDmChannel); err != nil {
-		return err
-	}
-	return c.JSON(ch)
 }

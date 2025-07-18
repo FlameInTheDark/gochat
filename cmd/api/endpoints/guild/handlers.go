@@ -17,6 +17,153 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
 
+// Helper functions for common operations
+
+// parseGuildID extracts and validates guild ID from URL parameters
+func (e *entity) parseGuildID(c *fiber.Ctx) (int64, error) {
+	guildIdStr := c.Params("guild_id")
+	guildId, err := strconv.ParseInt(guildIdStr, 10, 64)
+	if err != nil {
+		return 0, fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
+	}
+	return guildId, nil
+}
+
+// parseChannelID extracts and validates channel ID from URL parameters
+func (e *entity) parseChannelID(c *fiber.Ctx) (int64, error) {
+	channelIdStr := c.Params("channel_id")
+	channelId, err := strconv.ParseInt(channelIdStr, 10, 64)
+	if err != nil {
+		return 0, fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+	}
+	return channelId, nil
+}
+
+// parseCategoryID extracts and validates category ID from URL parameters
+func (e *entity) parseCategoryID(c *fiber.Ctx) (int64, error) {
+	categoryIdStr := c.Params("category_id")
+	categoryId, err := strconv.ParseInt(categoryIdStr, 10, 64)
+	if err != nil {
+		return 0, fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+	}
+	return categoryId, nil
+}
+
+// validateGuildAccess validates user access to guild and returns guild context
+func (e *entity) validateGuildAccess(c *fiber.Ctx, guildId int64) (*guildContext, error) {
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return nil, fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+
+	member, err := e.memb.GetMember(c.UserContext(), user.Id, guildId)
+	if err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
+	}
+
+	guild, err := e.g.GetGuildById(c.UserContext(), member.GuildId)
+	if err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	return &guildContext{
+		User:   user,
+		Guild:  &guild,
+		Member: &member,
+	}, nil
+}
+
+// getUserRoles fetches user roles for a guild
+func (e *entity) getUserRoles(c *fiber.Ctx, guildId, userId int64) (map[int64]*model.Role, error) {
+	userRoles, err := e.ur.GetUserRoles(c.UserContext(), guildId, userId)
+	if err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	var roleIds []int64
+	for _, ur := range userRoles {
+		roleIds = append(roleIds, ur.RoleId)
+	}
+
+	roles, err := e.role.GetRolesBulk(c.UserContext(), roleIds)
+	if err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	roleMap := make(map[int64]*model.Role)
+	for i, role := range roles {
+		roleMap[role.Id] = &roles[i]
+	}
+
+	return roleMap, nil
+}
+
+// checkChannelPermissions validates if user can view a private channel
+func (e *entity) checkChannelPermissions(c *fiber.Ctx, channel *model.Channel, guild *model.Guild, user *helper.JWTUser, roles map[int64]*model.Role) (bool, error) {
+	if !channel.Private || guild.OwnerId == user.Id {
+		return true, nil
+	}
+
+	// Check user-specific channel permissions
+	userPerm, err := e.uperm.GetUserChannelPermission(c.UserContext(), channel.Id, user.Id)
+	if err != nil && !errors.Is(err, gocql.ErrNotFound) {
+		return false, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	if errors.Is(err, gocql.ErrNotFound) {
+		// Check role-based permissions
+		rolePerms, err := e.rperm.GetChannelRolePermissions(c.UserContext(), channel.Id)
+		if err != nil {
+			return false, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		var combinedRole int64
+		for _, rp := range rolePerms {
+			if role, exists := roles[rp.RoleId]; exists {
+				combinedRole = permissions.AddRoles(combinedRole, role.Permissions)
+			}
+		}
+
+		return permissions.CheckPermissions(combinedRole, permissions.PermServerViewChannels), nil
+	}
+
+	// Calculate final permissions
+	basePerms := *channel.Permissions
+	if channel.Permissions == nil {
+		basePerms = guild.Permissions
+	}
+	finalPerms := permissions.SubtractRoles(permissions.AddRoles(basePerms, userPerm.Accept), userPerm.Deny)
+
+	return permissions.CheckPermissions(finalPerms, permissions.PermServerViewChannels), nil
+}
+
+// createDefaultChannels creates default text category and general channel for new guild
+func (e *entity) createDefaultChannels(c *fiber.Ctx, guildId int64, isPublic bool) error {
+	categoryId := idgen.Next()
+	channelId := idgen.Next()
+
+	// Create text category
+	if err := e.ch.CreateChannel(c.UserContext(), categoryId, "text", model.ChannelTypeGuildCategory, nil, nil, isPublic); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	// Create general channel
+	if err := e.ch.CreateChannel(c.UserContext(), channelId, "general", model.ChannelTypeGuild, &categoryId, nil, isPublic); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	// Add channels to guild
+	if err := e.gc.AddChannel(c.UserContext(), guildId, categoryId, 0); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	if err := e.gc.AddChannel(c.UserContext(), guildId, channelId, 0); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	return nil
+}
+
 // Get
 //
 //	@Summary	Get guild
@@ -29,31 +176,17 @@ import (
 //	@failure	500			{string}	string		"Something bad happened"
 //	@Router		/guild/{guild_id} [get]
 func (e *entity) Get(c *fiber.Ctx) error {
-	guildId := c.Params("guild_id")
-	id, err := strconv.ParseInt(guildId, 10, 64)
+	guildId, err := e.parseGuildID(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
+		return err
 	}
-	u, err := helper.GetUser(c)
+
+	guildCtx, err := e.validateGuildAccess(c, guildId)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+		return err
 	}
-	m, err := e.memb.GetMember(c.UserContext(), u.Id, id)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
-	}
-	guild, err := e.g.GetGuildById(c.UserContext(), m.GuildId)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	return c.JSON(dto.Guild{
-		Id:          guild.Id,
-		Name:        guild.Name,
-		Icon:        guild.Icon,
-		Owner:       guild.OwnerId,
-		Public:      guild.Public,
-		Permissions: guild.Permissions,
-	})
+
+	return c.JSON(buildGuildDTO(guildCtx.Guild))
 }
 
 // GetChannels
@@ -68,93 +201,69 @@ func (e *entity) Get(c *fiber.Ctx) error {
 //	@failure	500			{string}	string		"Something bad happened"
 //	@Router		/guild/{guild_id}/channel [get]
 func (e *entity) GetChannels(c *fiber.Ctx) error {
-	guildId := c.Params("guild_id")
-	id, err := strconv.ParseInt(guildId, 10, 64)
+	guildId, err := e.parseGuildID(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
-	}
-	u, err := helper.GetUser(c)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
-	}
-	m, err := e.memb.GetMember(c.UserContext(), u.Id, id)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
-	}
-	guild, err := e.g.GetGuildById(c.UserContext(), m.GuildId)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	urs, err := e.ur.GetUserRoles(c.UserContext(), guild.Id, u.Id)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	var rids []int64
-	for _, ur := range urs {
-		rids = append(rids, ur.RoleId)
-	}
-	roles, err := e.role.GetRolesBulk(c.UserContext(), rids)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	var rm = make(map[int64]*model.Role)
-	for i, ur := range roles {
-		rm[ur.Id] = &roles[i]
-	}
-	gch, err := e.gc.GetGuildChannels(c.UserContext(), guild.Id)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	var chids []int64
-	var chm = make(map[int64]*model.GuildChannel)
-	for i, ch := range gch {
-		chm[ch.ChannelId] = &gch[i]
-		chids = append(chids, ch.ChannelId)
+		return err
 	}
 
-	chs, err := e.ch.GetChannelsBulk(c.UserContext(), chids)
+	guildCtx, err := e.validateGuildAccess(c, guildId)
+	if err != nil {
+		return err
+	}
+
+	roles, err := e.getUserRoles(c, guildCtx.Guild.Id, guildCtx.User.Id)
+	if err != nil {
+		return err
+	}
+
+	return e.fetchAndFilterChannels(c, guildCtx, roles)
+}
+
+// fetchAndFilterChannels retrieves guild channels and filters based on permissions
+func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext, roles map[int64]*model.Role) error {
+	guildChannels, err := e.gc.GetGuildChannels(c.UserContext(), guildCtx.Guild.Id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	var channels []dto.Channel
-	for _, ch := range chs {
-		if gc, ok := chm[ch.Id]; ok {
+	var channelIds []int64
+	channelMap := make(map[int64]*model.GuildChannel)
+	for i, gch := range guildChannels {
+		channelMap[gch.ChannelId] = &guildChannels[i]
+		channelIds = append(channelIds, gch.ChannelId)
+	}
+
+	channels, err := e.ch.GetChannelsBulk(c.UserContext(), channelIds)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	var visibleChannels []dto.Channel
+	for _, ch := range channels {
+		if guildChannel, exists := channelMap[ch.Id]; exists {
+			// Set default permissions if not set
 			if ch.Permissions == nil {
-				ch.Permissions = &guild.Permissions
+				ch.Permissions = &guildCtx.Guild.Permissions
 			}
-			if ch.Private && guild.OwnerId != u.Id {
-				cr, err := e.uperm.GetUserChannelPermission(c.UserContext(), ch.Id, u.Id)
-				if err != nil {
-					return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-				} else if errors.Is(err, gocql.ErrNotFound) {
-					crs, err := e.rperm.GetChannelRolePermissions(c.UserContext(), ch.Id)
-					if err != nil {
-						return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-					}
-					var role int64
-					for _, r := range crs {
-						if ur, ok := rm[r.RoleId]; ok {
-							role = permissions.AddRoles(role, ur.Permissions)
-						}
-					}
-					if !permissions.CheckPermissions(role, permissions.PermServerViewChannels) {
-						continue
-					}
-				}
-				if !permissions.CheckPermissions(permissions.SubtractRoles(permissions.AddRoles(*ch.Permissions, cr.Accept), cr.Deny), permissions.PermServerViewChannels) {
-					continue
-				}
+
+			// Check if user can view this channel
+			canView, err := e.checkChannelPermissions(c, &ch, guildCtx.Guild, guildCtx.User, roles)
+			if err != nil {
+				return err
 			}
-			channels = append(channels, channelModelToDTO(&ch, &id, gc.Position))
+
+			if canView {
+				visibleChannels = append(visibleChannels, channelModelToDTO(&ch, &guildCtx.Guild.Id, guildChannel.Position))
+			}
 		}
 	}
-	return c.JSON(channels)
+
+	return c.JSON(visibleChannels)
 }
 
 // GetChannel
 //
-//	@Summary	Get guild channels
+//	@Summary	Get guild channel
 //	@Produce	json
 //	@Tags		Guild
 //	@Param		guild_id	path		int64		true	"Guild id"
@@ -165,81 +274,57 @@ func (e *entity) GetChannels(c *fiber.Ctx) error {
 //	@failure	500			{string}	string		"Something bad happened"
 //	@Router		/guild/{guild_id}/channel/{channel_id} [get]
 func (e *entity) GetChannel(c *fiber.Ctx) error {
-	guildId := c.Params("guild_id")
-	id, err := strconv.ParseInt(guildId, 10, 64)
+	guildId, err := e.parseGuildID(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
+		return err
 	}
-	channelId := c.Params("channel_id")
-	chid, err := strconv.ParseInt(channelId, 10, 64)
+
+	channelId, err := e.parseChannelID(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
+		return err
 	}
-	u, err := helper.GetUser(c)
+
+	guildCtx, err := e.validateGuildAccess(c, guildId)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+		return err
 	}
-	m, err := e.memb.GetMember(c.UserContext(), u.Id, id)
+
+	roles, err := e.getUserRoles(c, guildCtx.Guild.Id, guildCtx.User.Id)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
+		return err
 	}
-	guild, err := e.g.GetGuildById(c.UserContext(), m.GuildId)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	urs, err := e.ur.GetUserRoles(c.UserContext(), guild.Id, u.Id)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	var rids []int64
-	for _, ur := range urs {
-		rids = append(rids, ur.RoleId)
-	}
-	roles, err := e.role.GetRolesBulk(c.UserContext(), rids)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	var rm = make(map[int64]*model.Role)
-	for i, ur := range roles {
-		rm[ur.Id] = &roles[i]
-	}
-	gch, err := e.gc.GetGuildChannel(c.UserContext(), guild.Id, chid)
+
+	return e.fetchSingleChannel(c, guildCtx, channelId, roles)
+}
+
+// fetchSingleChannel retrieves and validates access to a specific channel
+func (e *entity) fetchSingleChannel(c *fiber.Ctx, guildCtx *guildContext, channelId int64, roles map[int64]*model.Role) error {
+	guildChannel, err := e.gc.GetGuildChannel(c.UserContext(), guildCtx.Guild.Id, channelId)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	ch, err := e.ch.GetChannel(c.UserContext(), gch.ChannelId)
+	channel, err := e.ch.GetChannel(c.UserContext(), guildChannel.ChannelId)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	if ch.Permissions == nil {
-		ch.Permissions = &guild.Permissions
+	// Set default permissions if not set
+	if channel.Permissions == nil {
+		channel.Permissions = &guildCtx.Guild.Permissions
 	}
-	if ch.Private && guild.OwnerId != u.Id {
-		cr, err := e.uperm.GetUserChannelPermission(c.UserContext(), ch.Id, u.Id)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		} else if errors.Is(err, gocql.ErrNotFound) {
-			crs, err := e.rperm.GetChannelRolePermissions(c.UserContext(), ch.Id)
-			if err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-			}
-			var role int64
-			for _, r := range crs {
-				if ur, ok := rm[r.RoleId]; ok {
-					role = permissions.AddRoles(role, ur.Permissions)
-				}
-			}
-			if !permissions.CheckPermissions(role, permissions.PermServerViewChannels) {
-				return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
-			}
-		}
-		if !permissions.CheckPermissions(permissions.SubtractRoles(permissions.AddRoles(*ch.Permissions, cr.Accept), cr.Deny), permissions.PermServerViewChannels) {
-			return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
-		}
+
+	// Check if user can view this channel
+	canView, err := e.checkChannelPermissions(c, &channel, guildCtx.Guild, guildCtx.User, roles)
+	if err != nil {
+		return err
 	}
-	return c.JSON(channelModelToDTO(&ch, &id, gch.Position))
+
+	if !canView {
+		return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
+	}
+
+	return c.JSON(channelModelToDTO(&channel, &guildCtx.Guild.Id, guildChannel.Position))
 }
 
 // Create
@@ -247,7 +332,7 @@ func (e *entity) GetChannel(c *fiber.Ctx) error {
 //	@Summary	Create guild
 //	@Produce	json
 //	@Tags		Guild
-//	@Param		request	body		UpdateGuildRequest	true	"Guild data"
+//	@Param		request	body		CreateGuildRequest	true	"Guild data"
 //	@Success	200		{object}	dto.Guild			"Guild"
 //	@failure	400		{string}	string				"Incorrect request body"
 //	@failure	401		{string}	string				"Unauthorized"
@@ -255,65 +340,74 @@ func (e *entity) GetChannel(c *fiber.Ctx) error {
 //	@Router		/guild [post]
 func (e *entity) Create(c *fiber.Ctx) error {
 	var req CreateGuildRequest
-	err := c.BodyParser(&req)
-	if err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
+
 	if err := req.Validate(); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	u, err := helper.GetUser(c)
+
+	user, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	gid := idgen.Next()
-	err = e.g.CreateGuild(c.UserContext(), gid, req.Name, u.Id, permissions.DefaultPermissions)
-	if err != nil {
+
+	return e.createGuildWithDefaults(c, &req, user)
+}
+
+// createGuildWithDefaults creates a new guild with default channels and settings
+func (e *entity) createGuildWithDefaults(c *fiber.Ctx, req *CreateGuildRequest, user *helper.JWTUser) error {
+	guildId := idgen.Next()
+
+	// Create the guild
+	if err := e.g.CreateGuild(c.UserContext(), guildId, req.Name, user.Id, permissions.DefaultPermissions); err != nil {
 		e.log.Error("unable to create guild", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateGuild)
 	}
 
-	if req.IconId != nil {
-		icon, err := e.icon.GetIcon(c.UserContext(), *req.IconId)
-		if err == nil {
-			err = e.g.SetGuildIcon(c.UserContext(), gid, icon.Id)
-			if err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-			}
-		}
+	// Set guild icon if provided
+	if err := e.setGuildIconIfProvided(c, guildId, req.IconId); err != nil {
+		return err
 	}
 
-	chcatid := idgen.Next()
-	chid := idgen.Next()
-	err = e.ch.CreateChannel(c.UserContext(), chcatid, "text", model.ChannelTypeGuildCategory, nil, nil, req.Public)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	// Create default channels
+	if err := e.createDefaultChannels(c, guildId, req.Public); err != nil {
+		return err
 	}
-	err = e.ch.CreateChannel(c.UserContext(), chid, "general", model.ChannelTypeGuild, &chcatid, nil, req.Public)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	err = e.gc.AddChannel(c.UserContext(), gid, chcatid, 0)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	err = e.gc.AddChannel(c.UserContext(), gid, chid, 0)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	err = e.memb.AddMember(c.UserContext(), u.Id, gid)
-	if err != nil {
+
+	// Add creator as member
+	if err := e.memb.AddMember(c.UserContext(), user.Id, guildId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(dto.Guild{
-		Id:          gid,
+		Id:          guildId,
 		Name:        req.Name,
 		Icon:        req.IconId,
-		Owner:       u.Id,
+		Owner:       user.Id,
 		Public:      req.Public,
 		Permissions: permissions.DefaultPermissions,
 	})
+}
+
+// setGuildIconIfProvided sets guild icon if icon ID is provided and valid
+func (e *entity) setGuildIconIfProvided(c *fiber.Ctx, guildId int64, iconId *int64) error {
+	if iconId == nil {
+		return nil
+	}
+
+	icon, err := e.icon.GetIcon(c.UserContext(), *iconId)
+	if err != nil {
+		// Icon not found or error - continue without setting icon
+		return nil
+	}
+
+	if err := e.g.SetGuildIcon(c.UserContext(), guildId, icon.Id); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	return nil
 }
 
 // Update
@@ -330,51 +424,65 @@ func (e *entity) Create(c *fiber.Ctx) error {
 //	@Router		/guild/{guild_id} [patch]
 func (e *entity) Update(c *fiber.Ctx) error {
 	var req UpdateGuildRequest
-	err := c.BodyParser(&req)
-	if err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
+
 	if err := req.Validate(); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	guildId := c.Params("guild_id")
-	id, err := strconv.ParseInt(guildId, 10, 64)
+
+	guildId, err := e.parseGuildID(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
+		return err
 	}
-	u, err := helper.GetUser(c)
+
+	user, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	g, ok, err := e.perm.GuildPerm(c.UserContext(), id, u.Id, permissions.PermServerManage)
+
+	return e.updateGuildWithPermissionCheck(c, guildId, user.Id, &req)
+}
+
+// updateGuildWithPermissionCheck validates permissions and updates guild
+func (e *entity) updateGuildWithPermissionCheck(c *fiber.Ctx, guildId, userId int64, req *UpdateGuildRequest) error {
+	guild, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, userId, permissions.PermServerManage)
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 	}
-	if ok {
-		err = e.g.UpdateGuild(c.UserContext(), g.Id, req.Name, req.IconId, req.Public, req.Permissions)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUpdateGuild)
-		}
-		ug, err := e.g.GetGuildById(c.UserContext(), g.Id)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUpdateGuild)
-		}
-		err = e.mqt.SendGuildUpdate(id, &mqmsg.UpdateGuild{
-			Guild: dto.Guild{
-				Id:          ug.Id,
-				Name:        ug.Name,
-				Icon:        ug.Icon,
-				Owner:       ug.OwnerId,
-				Public:      ug.Public,
-				Permissions: ug.Permissions,
-			},
-		})
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
-		}
-		return c.SendStatus(fiber.StatusOK)
+
+	if !hasPermission {
+		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
 	}
-	return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+
+	// Update guild
+	if err := e.g.UpdateGuild(c.UserContext(), guild.Id, req.Name, req.IconId, req.Public, req.Permissions); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUpdateGuild)
+	}
+
+	// Get updated guild for response
+	updatedGuild, err := e.g.GetGuildById(c.UserContext(), guild.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUpdateGuild)
+	}
+
+	// Send update event
+	if err := e.sendGuildUpdateEvent(guildId, &updatedGuild); err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+// sendGuildUpdateEvent sends guild update message to message queue
+func (e *entity) sendGuildUpdateEvent(guildId int64, guild *model.Guild) error {
+	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateGuild{
+		Guild: buildGuildDTO(guild),
+	}); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
+	}
+	return nil
 }
 
 // CreateCategory
@@ -391,125 +499,111 @@ func (e *entity) Update(c *fiber.Ctx) error {
 //	@Router		/guild/{guild_id}/category [post]
 func (e *entity) CreateCategory(c *fiber.Ctx) error {
 	var req CreateGuildChannelCategoryRequest
-	err := c.BodyParser(&req)
-	if err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
+
 	if err := req.Validate(); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	guildId := c.Params("guild_id")
-	id, err := strconv.ParseInt(guildId, 10, 64)
+
+	guildId, err := e.parseGuildID(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
+		return err
 	}
-	u, err := helper.GetUser(c)
+
+	user, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	g, ok, err := e.perm.GuildPerm(c.UserContext(), id, u.Id, permissions.PermServerManageChannels)
+
+	return e.createChannelWithPermissionCheck(c, guildId, user.Id, req.Name, model.ChannelTypeGuildCategory, nil, req.Private)
+}
+
+// createChannelWithPermissionCheck validates permissions and creates a channel
+func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId int64, name string, channelType model.ChannelType, parentId *int64, isPrivate bool) error {
+	guild, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, userId, permissions.PermServerManageChannels)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	if ok {
-		chid := idgen.Next()
-		err := e.ch.CreateChannel(c.UserContext(), chid, req.Name, model.ChannelTypeGuildCategory, nil, nil, req.Private)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
-		}
-
-		err = e.gc.AddChannel(c.UserContext(), g.Id, chid, 0)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
-		}
-
-		err = e.mqt.SendGuildUpdate(id, &mqmsg.CreateChannel{
-			GuildId: &g.Id,
-			Channel: dto.Channel{
-				Id:        chid,
-				Type:      model.ChannelTypeGuildCategory,
-				GuildId:   &g.Id,
-				Name:      req.Name,
-				ParentId:  nil,
-				Position:  0,
-				Topic:     nil,
-				CreatedAt: time.Now(),
-			},
-		})
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
-		}
-		return c.SendStatus(fiber.StatusCreated)
+	if !hasPermission {
+		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
 	}
-	return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+
+	channelId := idgen.Next()
+
+	// Create the channel
+	if err := e.ch.CreateChannel(c.UserContext(), channelId, name, channelType, parentId, nil, isPrivate); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
+	}
+
+	// Add channel to guild
+	if err := e.gc.AddChannel(c.UserContext(), guild.Id, channelId, 0); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
+	}
+
+	// Send create channel event
+	if err := e.sendCreateChannelEvent(guildId, guild.Id, channelId, name, channelType, parentId); err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusCreated)
+}
+
+// sendCreateChannelEvent sends channel creation message to message queue
+func (e *entity) sendCreateChannelEvent(guildId, guildModelId, channelId int64, name string, channelType model.ChannelType, parentId *int64) error {
+	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.CreateChannel{
+		GuildId: &guildModelId,
+		Channel: dto.Channel{
+			Id:        channelId,
+			Type:      channelType,
+			GuildId:   &guildModelId,
+			Name:      name,
+			ParentId:  parentId,
+			Position:  0,
+			Topic:     nil,
+			CreatedAt: time.Now(),
+		},
+	}); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
+	}
+	return nil
 }
 
 // CreateChannel
 //
-//	@Summary	Add guild channel category
+//	@Summary	Create guild channel
 //	@Produce	json
 //	@Tags		Guild
-//	@Param		request		body		CreateGuildChannelCategoryRequest	true	"Create category data"
-//	@Param		guild_id	path		int64								true	"Guild ID"
-//	@Success	201			{object}	string								"Created"
-//	@failure	400			{string}	string								"Incorrect request body"
-//	@failure	401			{string}	string								"Unauthorized"
-//	@failure	500			{string}	string								"Something bad happened"
+//	@Param		request		body		CreateGuildChannelRequest	true	"Create channel data"
+//	@Param		guild_id	path		int64						true	"Guild ID"
+//	@Success	201			{object}	string						"Created"
+//	@failure	400			{string}	string						"Incorrect request body"
+//	@failure	401			{string}	string						"Unauthorized"
+//	@failure	500			{string}	string						"Something bad happened"
 //	@Router		/guild/{guild_id}/channel [post]
 func (e *entity) CreateChannel(c *fiber.Ctx) error {
 	var req CreateGuildChannelRequest
-	err := c.BodyParser(&req)
-	if err != nil {
+	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
+
 	if err := req.Validate(); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	guildId := c.Params("guild_id")
-	id, err := strconv.ParseInt(guildId, 10, 64)
+
+	guildId, err := e.parseGuildID(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
+		return err
 	}
-	u, err := helper.GetUser(c)
+
+	user, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	g, ok, err := e.perm.GuildPerm(c.UserContext(), id, u.Id, permissions.PermServerManageChannels)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	if ok {
-		chid := idgen.Next()
-		err := e.ch.CreateChannel(c.UserContext(), chid, req.Name, req.Type, req.ParentId, nil, req.Private)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
-		}
 
-		err = e.gc.AddChannel(c.UserContext(), g.Id, chid, 0)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
-		}
-
-		err = e.mqt.SendGuildUpdate(id, &mqmsg.CreateChannel{
-			GuildId: &g.Id,
-			Channel: dto.Channel{
-				Id:        chid,
-				Type:      req.Type,
-				GuildId:   &g.Id,
-				Name:      req.Name,
-				ParentId:  req.ParentId,
-				Position:  0,
-				Topic:     nil,
-				CreatedAt: time.Now(),
-			},
-		})
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
-		}
-		return c.SendStatus(fiber.StatusCreated)
-	}
-	return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+	return e.createChannelWithPermissionCheck(c, guildId, user.Id, req.Name, req.Type, req.ParentId, req.Private)
 }
 
 // DeleteChannel
@@ -525,46 +619,53 @@ func (e *entity) CreateChannel(c *fiber.Ctx) error {
 //	@failure	500			{string}	string	"Something bad happened"
 //	@Router		/guild/{guild_id}/channel/{channel_id} [delete]
 func (e *entity) DeleteChannel(c *fiber.Ctx) error {
-	guild := c.Params("guild_id")
-	gid, err := strconv.ParseInt(guild, 10, 64)
+	guildId, err := e.parseGuildID(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
+		return err
 	}
-	channelId := c.Params("channel_id")
-	chid, err := strconv.ParseInt(channelId, 10, 64)
+
+	channelId, err := e.parseChannelID(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+		return err
 	}
-	u, err := helper.GetUser(c)
+
+	user, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	ch, _, _, ok, err := e.perm.ChannelPerm(c.UserContext(), gid, chid, u.Id, permissions.PermServerManageChannels)
+
+	return e.deleteChannelWithPermissionCheck(c, guildId, channelId, user.Id)
+}
+
+// deleteChannelWithPermissionCheck validates permissions and deletes a channel
+func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channelId, userId int64) error {
+	channel, _, _, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, channelId, userId, permissions.PermServerManageChannels)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
-	if ok && ch.Type != model.ChannelTypeGuildCategory {
-		err = e.ch.DeleteChannel(c.UserContext(), chid)
-		if err != nil {
+
+	if !hasPermission || channel.Type == model.ChannelTypeGuildCategory {
+		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+	}
+
+	// Delete the channel
+	if err := e.ch.DeleteChannel(c.UserContext(), channelId); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	// Delete channel messages if any exist
+	if channel.LastMessage != 0 {
+		if err := e.msg.DeleteChannelMessages(c.UserContext(), channelId, channel.LastMessage); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
-		if ch.LastMessage != 0 {
-			err = e.msg.DeleteChannelMessages(c.UserContext(), chid, ch.LastMessage)
-			if err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-			}
-		}
-		err = e.mqt.SendGuildUpdate(gid, &mqmsg.DeleteChannel{
-			GuildId:     &gid,
-			ChannelType: ch.Type,
-			ChannelId:   ch.Id,
-		})
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
-		}
-		return c.SendStatus(fiber.StatusOK)
 	}
-	return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+
+	// Send delete channel event
+	if err := e.sendDeleteChannelEvent(guildId, channel); err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // DeleteCategory
@@ -580,66 +681,100 @@ func (e *entity) DeleteChannel(c *fiber.Ctx) error {
 //	@failure	500			{string}	string	"Something bad happened"
 //	@Router		/guild/{guild_id}/category/{category_id} [delete]
 func (e *entity) DeleteCategory(c *fiber.Ctx) error {
-	guild := c.Params("guild_id")
-	gid, err := strconv.ParseInt(guild, 10, 64)
+	guildId, err := e.parseGuildID(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
+		return err
 	}
-	channelId := c.Params("category_id")
-	chid, err := strconv.ParseInt(channelId, 10, 64)
+
+	categoryId, err := e.parseCategoryID(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+		return err
 	}
-	u, err := helper.GetUser(c)
+
+	user, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	ch, _, g, ok, err := e.perm.ChannelPerm(c.UserContext(), gid, chid, u.Id, permissions.PermServerManageChannels)
+
+	return e.deleteCategoryWithPermissionCheck(c, guildId, categoryId, user.Id)
+}
+
+// deleteCategoryWithPermissionCheck validates permissions and deletes a category
+func (e *entity) deleteCategoryWithPermissionCheck(c *fiber.Ctx, guildId, categoryId, userId int64) error {
+	channel, _, guild, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, categoryId, userId, permissions.PermServerManageChannels)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
-	if ok && ch.Type == model.ChannelTypeGuildCategory {
-		gch, err := e.gc.GetGuildChannels(c.UserContext(), g.Id)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-		var chids []int64
-		for _, ch := range gch {
-			chids = append(chids, ch.ChannelId)
-		}
-		chans, err := e.ch.GetChannelsBulk(c.UserContext(), chids)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-		chids = []int64{}
-		for _, ch := range chans {
-			if ch.ParentID != nil && *ch.ParentID == chid {
-				chids = append(chids, ch.Id)
-			}
-		}
-		if len(chids) > 0 {
-			err = e.ch.SetChannelParentBulk(c.UserContext(), chids, nil)
-			if err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-			}
-			err = e.gc.ResetGuildChannelPositionBulk(c.UserContext(), chids, g.Id)
-			if err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-			}
-		}
-		err = e.ch.DeleteChannel(c.UserContext(), ch.Id)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-		err = e.mqt.SendGuildUpdate(g.Id, &mqmsg.DeleteChannel{
-			GuildId:     &gid,
-			ChannelType: ch.Type,
-			ChannelId:   ch.Id,
-		})
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
-		}
-		return c.SendStatus(fiber.StatusOK)
+
+	if !hasPermission || channel.Type != model.ChannelTypeGuildCategory {
+		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
 	}
-	return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+
+	// Handle child channels - move them out of the category
+	if err := e.handleCategoryChildChannels(c, guild.Id, categoryId); err != nil {
+		return err
+	}
+
+	// Delete the category
+	if err := e.ch.DeleteChannel(c.UserContext(), channel.Id); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	// Send delete channel event
+	if err := e.sendDeleteChannelEvent(guildId, channel); err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+// handleCategoryChildChannels moves child channels out of a category before deletion
+func (e *entity) handleCategoryChildChannels(c *fiber.Ctx, guildId, categoryId int64) error {
+	guildChannels, err := e.gc.GetGuildChannels(c.UserContext(), guildId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	var channelIds []int64
+	for _, gch := range guildChannels {
+		channelIds = append(channelIds, gch.ChannelId)
+	}
+
+	channels, err := e.ch.GetChannelsBulk(c.UserContext(), channelIds)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	var childChannelIds []int64
+	for _, ch := range channels {
+		if ch.ParentID != nil && *ch.ParentID == categoryId {
+			childChannelIds = append(childChannelIds, ch.Id)
+		}
+	}
+
+	if len(childChannelIds) > 0 {
+		// Remove parent from child channels
+		if err := e.ch.SetChannelParentBulk(c.UserContext(), childChannelIds, nil); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		// Reset positions for child channels
+		if err := e.gc.ResetGuildChannelPositionBulk(c.UserContext(), childChannelIds, guildId); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+	}
+
+	return nil
+}
+
+// sendDeleteChannelEvent sends channel deletion message to message queue
+func (e *entity) sendDeleteChannelEvent(guildId int64, channel *model.Channel) error {
+	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.DeleteChannel{
+		GuildId:     &guildId,
+		ChannelType: channel.Type,
+		ChannelId:   channel.Id,
+	}); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
+	}
+	return nil
 }

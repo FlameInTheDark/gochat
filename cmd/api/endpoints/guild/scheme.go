@@ -7,6 +7,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/FlameInTheDark/gochat/internal/helper"
 )
 
 const (
@@ -138,6 +139,22 @@ func (r CreateGuildChannelRequest) Validate() error {
 	)
 }
 
+// Common data structures for guild operations
+type guildContext struct {
+	User   *helper.JWTUser
+	Guild  *model.Guild
+	Member *model.Member
+}
+
+type channelPermissionContext struct {
+	User    *helper.JWTUser
+	Guild   *model.Guild
+	Channel *model.Channel
+	Roles   map[int64]*model.Role
+}
+
+// DTO conversion functions
+
 func channelModelToDTO(c *model.Channel, guildId *int64, position int) dto.Channel {
 	return dto.Channel{
 		Id:          c.Id,
@@ -149,5 +166,17 @@ func channelModelToDTO(c *model.Channel, guildId *int64, position int) dto.Chann
 		Topic:       c.Topic,
 		Permissions: c.Permissions,
 		CreatedAt:   c.CreatedAt,
+	}
+}
+
+// buildGuildDTO creates a guild DTO from model
+func buildGuildDTO(guild *model.Guild) dto.Guild {
+	return dto.Guild{
+		Id:          guild.Id,
+		Name:        guild.Name,
+		Icon:        guild.Icon,
+		Owner:       guild.OwnerId,
+		Public:      guild.Public,
+		Permissions: guild.Permissions,
 	}
 }

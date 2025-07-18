@@ -6,7 +6,9 @@ import (
 
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/FlameInTheDark/gochat/internal/helper"
 )
@@ -63,5 +65,21 @@ func (s *Server) RateLimitMiddleware(limit, exp int) {
 		},
 		Expiration: time.Second * time.Duration(exp),
 		Storage:    cs,
+	}))
+}
+
+func (s *Server) WithIdempotency(client *redis.Client, lifetimeMinutes int64) {
+	s.Use(idempotency.New(idempotency.Config{
+		Lifetime:  time.Duration(lifetimeMinutes) * time.Minute,
+		KeyHeader: "X-Idempotency-Key",
+		KeyHeaderValidate: func(k string) error {
+			if l, wl := len(k), 36; l != wl {
+				return fmt.Errorf("invalid idempotency key: invalid length: %d != %d", l, wl)
+			}
+
+			return nil
+		},
+		Storage: NewRedisIdempotency(client),
+		Lock:    NewRedisLocker(client),
 	}))
 }
