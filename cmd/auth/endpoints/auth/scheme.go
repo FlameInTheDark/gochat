@@ -26,6 +26,9 @@ const (
 	ErrUnableToSignAuthenticationToken  = "unable to sign authentication token"
 	ErrUserIsBanned                     = "user is banned"
 	ErrUnableToCompareHash              = "unable to compare hash"
+	ErrEmailNotFound                    = "email not found"
+	ErrUnableToSetPasswordHash          = "unable to set password hash"
+	ErrRecoveryEmailAlreadySent         = "recovery email already sent"
 
 	// Validation error messages
 	ErrNameRequired               = "name is required"
@@ -113,6 +116,43 @@ func (r ConfirmationRequest) Validate() error {
 			validation.RuneLength(4, 0).Error(ErrDiscriminatorTooShort),
 			validation.RuneLength(0, 20).Error(ErrDiscriminatorTooLong),
 			validation.Match(discriminatorRegex).Error(ErrDiscriminatorInvalidFormat),
+		),
+		validation.Field(&r.Id,
+			validation.Required.Error(ErrIdRequired),
+			validation.Min(int64(1)).Error(ErrIdInvalid),
+		),
+	)
+}
+
+type PasswordRecoveryRequest struct {
+	Email string `json:"email"`
+}
+
+func (r PasswordRecoveryRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Email,
+			validation.Required.Error(ErrEmailRequired),
+			validation.Match(emailRegex).Error(ErrEmailInvalidFormat),
+		),
+	)
+}
+
+type PasswordResetRequest struct {
+	Id       int64  `json:"id"`
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
+func (r PasswordResetRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Password,
+			validation.Required,
+			validation.RuneLength(8, 0).Error(ErrPasswordIsTooShort),
+			validation.RuneLength(0, 50).Error(ErrPasswordTooLong),
+		),
+		validation.Field(&r.Token,
+			validation.Required.Error(ErrTokenRequired),
+			validation.Length(40, 40).Error(ErrTokenInvalidLength),
 		),
 		validation.Field(&r.Id,
 			validation.Required.Error(ErrIdRequired),

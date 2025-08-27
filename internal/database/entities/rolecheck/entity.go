@@ -1,7 +1,10 @@
 package rolecheck
 
 import (
+	"context"
+
 	"github.com/FlameInTheDark/gochat/internal/database/db"
+	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
@@ -13,23 +16,30 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/role"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
+	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
+
+type RoleCheck interface {
+	getUserRoleIDs(ctx context.Context, guildID, userID int64) ([]int64, error)
+	ChannelPerm(ctx context.Context, guildID, channelID, userID int64, perm ...permissions.RolePermission) (*model.Channel, *model.GuildChannel, *model.Guild, bool, error)
+	GuildPerm(ctx context.Context, guildID, userID int64, perm ...permissions.RolePermission) (*model.Guild, bool, error)
+}
 
 type Entity struct {
 	c    *db.CQLCon
-	role *role.Entity
-	chrp *channelroleperm.Entity
-	chup *channeluserperm.Entity
-	ur   *userrole.Entity
-	g    *guild.Entity
-	gc   *guildchannels.Entity
-	ch   *channel.Entity
-	m    *member.Entity
-	dm   *dmchannel.Entity
-	gdm  *groupdmchannel.Entity
+	role role.Role
+	chrp channelroleperm.ChannelRolePerm
+	chup channeluserperm.ChannelUserPerm
+	ur   userrole.UserRole
+	g    guild.Guild
+	gc   guildchannels.GuildChannels
+	ch   channel.Channel
+	m    member.Member
+	dm   dmchannel.DmChannel
+	gdm  groupdmchannel.GroupDMChannel
 }
 
-func New(c *db.CQLCon, pg *pgdb.DB) *Entity {
+func New(c *db.CQLCon, pg *pgdb.DB) RoleCheck {
 	return &Entity{
 		c:    c,
 		role: role.New(pg.Conn()),

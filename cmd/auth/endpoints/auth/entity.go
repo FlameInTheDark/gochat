@@ -20,7 +20,8 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/login", e.Login)
 	router.Post("/registration", e.Registration)
 	router.Post("/confirmation", e.Confirmation)
-	// TODO: password recovery method
+	router.Post("/recovery", e.PasswordRecovery)
+	router.Post("/reset", e.PasswordReset)
 }
 
 type entity struct {
@@ -31,11 +32,11 @@ type entity struct {
 	log *slog.Logger
 
 	// DB entities
-	auth   *authentication.Entity
-	user   *user.Entity
-	reg    *registration.Entity
+	auth   authentication.Authentication
+	user   user.User
+	reg    registration.Registration
 	mailer *mailer.Mailer
-	disc   *discriminator.Entity
+	disc   discriminator.Discriminator
 }
 
 func (e *entity) Name() string {

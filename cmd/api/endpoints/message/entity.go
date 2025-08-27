@@ -49,21 +49,21 @@ type entity struct {
 	imq     *indexmq.IndexMQ
 
 	// DB entities
-	user  *user.Entity
-	m     *member.Entity
-	disc  *discriminator.Entity
-	ch    *channel.Entity
-	g     *guild.Entity
-	gc    *guildchannels.Entity
-	dmc   *dmchannel.Entity
-	gdmc  *groupdmchannel.Entity
-	msg   *message.Entity
-	at    *attachment.Entity
-	perm  *rolecheck.Entity
-	uperm *channeluserperm.Entity
-	rperm *channelroleperm.Entity
-	role  *role.Entity
-	ur    *userrole.Entity
+	user  user.User
+	m     member.Member
+	disc  discriminator.Discriminator
+	ch    channel.Channel
+	g     guild.Guild
+	gc    guildchannels.GuildChannels
+	dmc   dmchannel.DmChannel
+	gdmc  groupdmchannel.GroupDMChannel
+	msg   message.Message
+	at    attachment.Attachment
+	perm  rolecheck.RoleCheck
+	uperm channeluserperm.ChannelUserPerm
+	rperm channelroleperm.ChannelRolePerm
+	role  role.Role
+	ur    userrole.UserRole
 }
 
 func (e *entity) Name() string {

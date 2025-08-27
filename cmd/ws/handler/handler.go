@@ -39,11 +39,11 @@ type heartbeatMessage struct {
 type Handler struct {
 	user *dto.User
 	sub  *subscriber.Subscriber
-	g    *guild.Entity
-	m    *member.Entity
-	u    *user.Entity
-	gc   *guildchannels.Entity
-	perm *rolecheck.Entity
+	g    guild.Guild
+	m    member.Member
+	u    user.User
+	gc   guildchannels.GuildChannels
+	perm rolecheck.RoleCheck
 	jwt  *auth.Auth
 	ws   *websocket.Conn
 

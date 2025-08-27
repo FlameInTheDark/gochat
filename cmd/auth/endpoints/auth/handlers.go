@@ -11,6 +11,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
+	"github.com/FlameInTheDark/gochat/internal/mailer"
 )
 
 // Login
@@ -118,7 +119,7 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 	if err := helper.HttpDbError(err, ErrUnableToCreateRegistration); err != nil {
 		return err
 	}
-	err = e.mailer.Send(c.UserContext(), id, req.Email, token)
+	err = e.mailer.Send(c.UserContext(), id, req.Email, token, mailer.EmailTypeRegistration)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendEmail)
 	}
@@ -179,4 +180,127 @@ func (e *entity) Confirmation(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 	return c.SendStatus(fiber.StatusCreated)
+}
+
+// PasswordRecovery
+//
+//	@Summary	Password Recovery
+//	@Produce	json
+//	@Tags		Auth
+//	@Param		request	body		PasswordRecoveryRequest	true	"Email for password recovery"
+//	@Success	202		{string}	string					"Recovery email sent"
+//	@failure	400		{string}	string					"Incorrect request body"
+//	@failure	404		{string}	string					"Email not found"
+//	@failure	429		{string}	string					"Try again later"
+//	@failure	500		{string}	string					"Something bad happened"
+//	@Router		/auth/recovery [post]
+func (e *entity) PasswordRecovery(c *fiber.Ctx) error {
+	var req PasswordRecoveryRequest
+	err := c.BodyParser(&req)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	// Check if the email exists in the authentication table
+	auth, err := e.auth.GetAuthenticationByEmail(c.UserContext(), req.Email)
+	if errors.Is(err, sql.ErrNoRows) {
+		return fiber.NewError(fiber.StatusNotFound, ErrEmailNotFound)
+	}
+	if err != nil {
+		e.log.Error("unable to get authentication by email", slog.String("error", err.Error()))
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetAuthenticationByEmail)
+	}
+
+	// Generate a token for password reset
+	token, err := helper.RandomToken(40)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGenerateToken)
+	}
+
+	// Check if there's already a recovery record for this user
+	rec, err := e.auth.GetRecoveryByUserId(c.UserContext(), auth.UserId)
+	if err == nil {
+		// If recovery exists and was created less than a minute ago, return error
+		if rec.CreatedAt.Add(time.Minute).After(time.Now()) {
+			return fiber.NewError(fiber.StatusTooManyRequests, ErrRecoveryEmailAlreadySent)
+		}
+		// Remove the existing recovery
+		err = e.auth.RemoveRecovery(c.UserContext(), auth.UserId)
+		if err := helper.HttpDbError(err, ErrUnableToRemoveRegistration); err != nil {
+			return err
+		}
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRegistrationById)
+	}
+
+	// Create a new recovery record with the reset token
+	err = e.auth.CreateRecovery(c.UserContext(), auth.UserId, req.Email, token)
+	if err := helper.HttpDbError(err, ErrUnableToCreateRegistration); err != nil {
+		return err
+	}
+
+	// Send the password reset email
+	err = e.mailer.Send(c.UserContext(), auth.UserId, req.Email, token, mailer.EmailTypePasswordReset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendEmail)
+	}
+
+	return c.SendStatus(fiber.StatusAccepted)
+}
+
+// PasswordReset
+//
+//	@Summary	Password Reset
+//	@Produce	json
+//	@Tags		Auth
+//	@Param		request	body		PasswordResetRequest	true	"Password reset data"
+//	@Success	200		{string}	string					"Password reset successful"
+//	@failure	400		{string}	string					"Incorrect request body"
+//	@failure	401		{string}	string					"Unauthorized"
+//	@failure	500		{string}	string					"Something bad happened"
+//	@Router		/auth/reset [post]
+func (e *entity) PasswordReset(c *fiber.Ctx) error {
+	var req PasswordResetRequest
+	err := c.BodyParser(&req)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	// Get the registration record for the user
+	reg, err := e.reg.GetRegistrationByUserId(c.UserContext(), req.Id)
+	if err := helper.HttpDbError(err, ErrUnableToGetRegistrationById); err != nil {
+		return err
+	}
+
+	// Verify the token
+	if reg.ConfirmationToken != req.Token {
+		return fiber.NewError(fiber.StatusUnauthorized, ErrTokenIsIncorrect)
+	}
+
+	// Hash the new password
+	hash, err := HashPassword(req.Password)
+	if err := helper.HttpDbError(err, ErrUnableToGetPasswordHash); err != nil {
+		return err
+	}
+
+	// Update the password hash in the authentication table
+	err = e.auth.SetPasswordHash(c.UserContext(), req.Id, hash)
+	if err != nil {
+		e.log.Error("unable to set password hash", slog.String("error", err.Error()))
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetPasswordHash)
+	}
+
+	// Remove the registration record
+	err = e.reg.RemoveRegistration(c.UserContext(), req.Id)
+	if err := helper.HttpDbError(err, ErrUnableToRemoveRegistration); err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusOK)
 }

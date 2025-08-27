@@ -25,7 +25,7 @@ type entity struct {
 	storage *s3.Client
 
 	// DB entities
-	at *attachment.Entity
+	at attachment.Attachment
 }
 
 func (e *entity) Name() string {

@@ -35,14 +35,14 @@ type entity struct {
 	log *slog.Logger
 
 	// DB entities
-	user   *user.Entity
-	member *member.Entity
-	guild  *guild.Entity
-	urole  *userrole.Entity
-	ch     *channel.Entity
-	dm     *dmchannel.Entity
-	gdm    *groupdmchannel.Entity
-	disc   *discriminator.Entity
+	user   user.User
+	member member.Member
+	guild  guild.Guild
+	urole  userrole.UserRole
+	ch     channel.Channel
+	dm     dmchannel.DmChannel
+	gdm    groupdmchannel.GroupDMChannel
+	disc   discriminator.Discriminator
 }
 
 func (e *entity) Name() string {

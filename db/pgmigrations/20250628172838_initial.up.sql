@@ -3,9 +3,9 @@ CREATE EXTENSION IF NOT EXISTS citus;
 CREATE TABLE users
 (
     id           BIGINT PRIMARY KEY,
-    name         TEXT   NOT NULL,
+    name         TEXT        NOT NULL,
     avatar       BIGINT,
-    blocked      BOOL   NOT NULL,
+    blocked      BOOL        NOT NULL,
     upload_limit BIGINT,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -14,9 +14,9 @@ SELECT create_distributed_table('users', 'id');
 
 CREATE TABLE authentications
 (
-    user_id       BIGINT NOT NULL,
-    email         TEXT NOT NULL,
-    password_hash TEXT NOT NULL,
+    user_id       BIGINT      NOT NULL,
+    email         TEXT        NOT NULL,
+    password_hash TEXT        NOT NULL,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_authentication_id_email ON authentications (user_id, email);
@@ -32,10 +32,22 @@ CREATE TABLE registrations
 CREATE INDEX idx_registration_user_id ON registrations (user_id);
 SELECT create_distributed_table('registrations', 'user_id');
 
+CREATE TABLE IF NOT EXISTS recoveries
+(
+    user_id    BIGINT PRIMARY KEY,
+    token      VARCHAR(64) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_recoveries_user_id ON recoveries (user_id);
+CREATE INDEX IF NOT EXISTS idx_recoveries_token ON recoveries (token);
+SELECT create_distributed_table('recoveries', 'user_id');
+
 CREATE TABLE discriminators
 (
-    user_id BIGINT NOT NULL,
-    discriminator TEXT NOT NULL
+    user_id       BIGINT NOT NULL,
+    discriminator TEXT   NOT NULL
 );
 CREATE INDEX idx_discriminator ON discriminators (discriminator);
 SELECT create_distributed_table('discriminators', 'discriminator');
@@ -43,11 +55,11 @@ SELECT create_distributed_table('discriminators', 'discriminator');
 CREATE TABLE guilds
 (
     id          BIGINT PRIMARY KEY,
-    name        TEXT   NOT NULL,
-    owner_id    BIGINT NOT NULL,
+    name        TEXT        NOT NULL,
+    owner_id    BIGINT      NOT NULL,
     icon        BIGINT,
-    public      BOOL   NOT NULL DEFAULT false,
-    permissions BIGINT NOT NULL,
+    public      BOOL        NOT NULL DEFAULT false,
+    permissions BIGINT      NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_guilds_id ON guilds (id);
@@ -56,12 +68,12 @@ SELECT create_distributed_table('guilds', 'id');
 CREATE TABLE channels
 (
     id           BIGINT PRIMARY KEY,
-    name         TEXT NOT NULL,
-    type         INT  NOT NULL,
+    name         TEXT        NOT NULL,
+    type         INT         NOT NULL,
     parent_id    BIGINT,
     permissions  BIGINT,
     topic        TEXT,
-    private      BOOL NOT NULL,
+    private      BOOL        NOT NULL,
     last_message BIGINT,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -79,8 +91,8 @@ SELECT create_distributed_table('guild_channels', 'guild_id');
 
 CREATE TABLE friends
 (
-    user_id    BIGINT NOT NULL,
-    friend_id  BIGINT NOT NULL,
+    user_id    BIGINT      NOT NULL,
+    friend_id  BIGINT      NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_user_friend_ids ON friends (user_id, friend_id);

@@ -47,20 +47,20 @@ type entity struct {
 	mqt mq.SendTransporter
 
 	// DB entities
-	user  *user.Entity
-	disc  *discriminator.Entity
-	ch    *channel.Entity
-	g     *guild.Entity
-	gc    *guildchannels.Entity
-	msg   *message.Entity
-	at    *attachment.Entity
-	perm  *rolecheck.Entity
-	uperm *channeluserperm.Entity
-	rperm *channelroleperm.Entity
-	role  *role.Entity
-	ur    *userrole.Entity
-	icon  *icon.Entity
-	memb  *member.Entity
+	user  user.User
+	disc  discriminator.Discriminator
+	ch    channel.Channel
+	g     guild.Guild
+	gc    guildchannels.GuildChannels
+	msg   message.Message
+	at    attachment.Attachment
+	perm  rolecheck.RoleCheck
+	uperm channeluserperm.ChannelUserPerm
+	rperm channelroleperm.ChannelRolePerm
+	role  role.Role
+	ur    userrole.UserRole
+	icon  icon.Icon
+	memb  member.Member
 }
 
 func (e *entity) Name() string {

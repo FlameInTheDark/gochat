@@ -68,6 +68,30 @@ services:
       - "6379:6379"
     restart: always
 
+  auth:
+    image: gochat/auth
+    build:
+      dockerfile: auth.Dockerfile
+    restart: always
+    volumes:
+      - ./auth_config.yaml:/dist/config.yaml
+      - ./email_notify.tmpl:/dist/email_notify.tmpl
+      - ./password_reset.tmpl:/dist/password_reset.tmpl
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=PathPrefix(`/api/v1/auth`)"
+      - "traefik.http.routers.auth.service=auth"
+      - "traefik.http.services.auth.loadbalancer.server.port=3100"
+      - "traefik.docker.network=gochat_traefik"
+    depends_on:
+      keydb:
+        condition: service_started
+      citus-master:
+        condition: service_started
+    networks:
+      - traefik
+      - default
+
   api:
     image: gochat/api
     build:
@@ -75,14 +99,12 @@ services:
     restart: always
     volumes:
       - ./api_config.yaml:/dist/config.yaml
-      - ./email_notify.tmpl:/dist/email_notify.tmpl
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.api.rule=PathPrefix(`/api/v1`)"
       - "traefik.http.routers.api.service=api"
-      - "traefik.http.services.api.loadbalancer.server.port=3000"
-    ports:
-      - "3000:3000"
+      - "traefik.http.services.api.loadbalancer.server.port=3100"
+      - "traefik.docker.network=gochat_traefik"
     depends_on:
       scylla:
         condition: service_healthy
@@ -90,6 +112,11 @@ services:
         condition: service_started
       nats:
         condition: service_started
+      auth:
+        condition: service_started
+    networks:
+      - traefik
+      - default
 
   ws:
     image: gochat/ws
@@ -103,11 +130,13 @@ services:
       - "traefik.http.routers.ws.rule=PathPrefix(`/ws`)"
       - "traefik.http.routers.ws.service=ws"
       - "traefik.http.services.ws.loadbalancer.server.port=3100"
-    ports:
-      - "3100:3100"
+      - "traefik.docker.network=gochat_traefik"
     depends_on:
       nats:
         condition: service_started
+    networks:
+      - traefik
+      - default
 
   indexer:
     image: gochat/indexer
@@ -154,12 +183,15 @@ services:
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
+      - "--providers.docker.exposedByDefault=false"
       - "--entrypoints.web.address=:80"
     ports:
       - "80:80"
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - traefik
 
   prometheus:
     image: prom/prometheus
@@ -199,10 +231,17 @@ services:
     labels: [ "com.citusdata.role=Master" ]
     environment: &AUTH
       POSTGRES_USER: "${POSTGRES_USER:-postgres}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
       PGUSER: "${POSTGRES_USER:-postgres}"
-      PGPASSWORD: "${POSTGRES_PASSWORD}"
+      PGPASSWORD: "${POSTGRES_PASSWORD:-postgres}"
       POSTGRES_HOST_AUTH_METHOD: "${POSTGRES_HOST_AUTH_METHOD:-trust}"
+    networks:
+      default:
+        aliases:
+          - master
+      citus:
+        aliases:
+          - master
   citus-worker:
     image: "citusdata/citus:13.0.3"
     labels: [ "com.citusdata.role=Worker" ]
@@ -211,6 +250,9 @@ services:
     command: "/wait-for-manager.sh"
     volumes:
       - healthcheck-volume:/healthcheck
+    networks:
+      - default
+      - citus
   citus-manager:
     container_name: "${COMPOSE_PROJECT_NAME:-citus}_manager"
     image: "citusdata/membership-manager:0.3.0"
@@ -219,6 +261,13 @@ services:
       - healthcheck-volume:/healthcheck
     depends_on: [ citus-master ]
     environment: *AUTH
+    networks:
+      default:
+        aliases:
+          - manager
+      citus:
+        aliases:
+          - manager
 
 volumes:
   scylla-data:
@@ -227,3 +276,9 @@ volumes:
   grafana-data:
   opensearch-data:
   healthcheck-volume:
+
+networks:
+  traefik:
+    name: gochat_traefik
+  citus:
+    name: gochat_citus

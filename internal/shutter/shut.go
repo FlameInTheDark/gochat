@@ -14,13 +14,17 @@ type Shut struct {
 	log *slog.Logger
 }
 
+// NewShutter creates a new shutter instance. If the log is nil, then discard logger will be used.
 func NewShutter(log *slog.Logger) *Shut {
+	if log == nil {
+		log = slog.New(slog.DiscardHandler)
+	}
 	return &Shut{
 		log: log.With(slog.String("module", "shutter")),
 	}
 }
 
-// Add thing that requires shutdown
+// Up add thing that requires shutdown
 func (s *Shut) Up(to ...Shutter) {
 	if len(to) == 0 {
 		return
@@ -30,6 +34,7 @@ func (s *Shut) Up(to ...Shutter) {
 	s.to = append(s.to, to...)
 }
 
+// UpFunc add blank shutdown function
 func (s *Shut) UpFunc(f ...func()) {
 	if len(f) == 0 {
 		return
@@ -39,7 +44,7 @@ func (s *Shut) UpFunc(f ...func()) {
 	s.tof = append(s.tof, f...)
 }
 
-// Down walks shutdown list in reverse and call Close() one by one
+// Down walks a shutdown list in reverse and call Close() one by one
 func (s *Shut) Down() {
 	s.mx.Lock()
 	defer s.mx.Unlock()
@@ -54,6 +59,7 @@ func (s *Shut) Down() {
 	}
 }
 
+// Shutter is an interface for something that can be shutdown. Same as io.Closer interface.
 type Shutter interface {
 	Close() error
 }

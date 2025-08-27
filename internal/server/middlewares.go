@@ -42,26 +42,29 @@ func (s *Server) RateLimitMiddleware(limit, exp int) {
 	s.app.Use(limiter.New(limiter.Config{
 		Max: limit,
 		Next: func(c *fiber.Ctx) bool {
+			// Skip rate limiting for public endpoints (handle both with and without /api/v1 prefix)
 			switch string(c.Request().RequestURI()) {
-			case "/api/v1/webhook/storage/events":
-				fallthrough
-			case "/api/v1/auth/login":
-				fallthrough
-			case "/api/v1/auth/registration":
-				fallthrough
+			case "/api/v1/webhook/storage/events", "/webhook/storage/events":
+				return true
+			case "/api/v1/auth/login", "/auth/login":
+				return true
+			case "/api/v1/auth/registration", "/auth/registration":
+				return true
+			case "/api/v1/auth/confirmation", "/auth/confirmation":
+				return true
 			case "/docs/swagger":
-				fallthrough
-			case "/api/v1/auth/confirmation":
 				return true
 			}
 			return false
 		},
 		KeyGenerator: func(c *fiber.Ctx) string {
-			user, err := helper.GetUser(c)
-			if err != nil {
-				panic("invalid user")
+			// Prefer user-scoped rate limiting when authenticated; otherwise, fall back to IP + path
+			if user, err := helper.GetUser(c); err == nil && user != nil {
+				return fmt.Sprintf("user:%d:rateLimit", user.Id)
 			}
-			return fmt.Sprintf("user:%d:rateLimit", user.Id)
+			ip := c.IP()
+			path := c.Path()
+			return fmt.Sprintf("ip:%s:%s:rateLimit", ip, path)
 		},
 		Expiration: time.Second * time.Duration(exp),
 		Storage:    cs,

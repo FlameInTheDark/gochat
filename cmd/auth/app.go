@@ -5,30 +5,24 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"github.com/FlameInTheDark/gochat/cmd/api/config"
-	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/guild"
-	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/message"
-	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/user"
-	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/webhook"
+	"github.com/FlameInTheDark/gochat/cmd/auth/config"
+	"github.com/FlameInTheDark/gochat/cmd/auth/endpoints/auth"
 	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
-	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
-	"github.com/FlameInTheDark/gochat/internal/indexmq"
-	"github.com/FlameInTheDark/gochat/internal/mq"
-	"github.com/FlameInTheDark/gochat/internal/mq/nats"
-	"github.com/FlameInTheDark/gochat/internal/s3"
+	"github.com/FlameInTheDark/gochat/internal/mailer"
+	"github.com/FlameInTheDark/gochat/internal/mailer/providers/logmailer"
+	"github.com/FlameInTheDark/gochat/internal/mailer/providers/sendpulse"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
 
 type App struct {
 	server *server.Server
-	db     *db.CQLCon
 	logger *slog.Logger
-
-	addr string
+	addr   string
 }
 
 func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
@@ -37,13 +31,6 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
-	// Database connection
-	database, err := db.NewCQLCon(cfg.ClusterKeyspace, db.NewDBLogger(logger), cfg.Cluster...)
-	if err != nil {
-		return nil, err
-	}
-	shut.Up(database)
-
 	pg := pgdb.NewDB(logger)
 	err = pg.Connect(cfg.PGDSN, cfg.PGRetries)
 	if err != nil {
@@ -51,32 +38,27 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 	shut.Up(pg)
 
-	var qt mq.SendTransporter
-	nt, err := nats.New(cfg.NatsConnString)
-	if err != nil {
-		return nil, err
-	}
-	shut.Up(nt)
-	qt = nt
-
-	imq, err := indexmq.NewIndexMQ(cfg.IndexerNatsConnString)
-	if err != nil {
-		return nil, err
-	}
-
 	cache, err := vkc.New(cfg.KeyDB)
 	if err != nil {
 		return nil, err
 	}
 	shut.Up(cache)
 
-	storage, err := s3.NewClient(cfg.S3Endpoint, cfg.S3AccessKeyID, cfg.S3SecretAccessKey, cfg.S3UseSSL)
+	// Email notifier
+	tmpl, err := mailer.NewEmailTemplate(cfg.EmailTemplate, cfg.PasswordResetTemplate, cfg.BaseUrl, cfg.AppName, time.Now().Year())
 	if err != nil {
 		return nil, err
 	}
-
-	//solrClient := solr.New(cfg.SolrBaseURL)
-	//searchService := msgsearch.NewSearch(solrClient)
+	var provider mailer.Provider
+	switch cfg.EmailProvider {
+	case "log":
+		provider = logmailer.New(logger)
+	case "sendpulse":
+		provider = sendpulse.New(cfg.SendpulseUserId, cfg.SendpulseSecret)
+	default:
+		provider = logmailer.New(logger)
+	}
+	m := mailer.NewMailer(provider, tmpl, mailer.User{Email: cfg.EmailSource, Name: cfg.EmailName})
 
 	// ID generator setup
 	idgen.New(0)
@@ -89,7 +71,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 
 	// HTTP Middlewares
 	if cfg.Swagger {
-		s.WithSwagger("api")
+		s.WithSwagger("auth")
 	}
 	if cfg.ApiLog {
 		s.WithLogger(logger)
@@ -97,29 +79,23 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.WithCORS()
 	s.WithMetrics()
 	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
-	s.AuthMiddleware(cfg.AuthSecret)
 	s.RateLimitMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 
 	// HTTP Router
 	s.Register(
 		"/api/v1",
-		user.New(pg, logger),
-		message.New(database, pg, storage, qt, imq, cfg.UploadLimit, logger),
-		webhook.New(database, storage, logger),
-		guild.New(database, pg, qt, logger),
-		//search.New(database, searchService, logger),
+		auth.New(pg, m, cfg.AuthSecret, logger),
 	)
 
 	return &App{
 		server: s,
-		db:     database,
 		logger: logger,
 		addr:   cfg.ServerAddress,
 	}, nil
 }
 
 func (app *App) Start() {
-	app.logger.Info("Starting")
+	app.logger.Info("Starting Auth Service")
 	go func() {
 		err := app.server.Start(app.addr)
 		if err != nil {

@@ -29,5 +29,5 @@ func main() {
 		logger.Error("Unable to create app", slog.String("error", err.Error()))
 		return
 	}
-	app.Start(":3000")
+	app.Start()
 }

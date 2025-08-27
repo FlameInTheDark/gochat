@@ -90,3 +90,70 @@ func (e *Entity) SetPasswordHash(ctx context.Context, userId int64, hash string)
 	}
 	return nil
 }
+
+func (e *Entity) CreateRecovery(ctx context.Context, userId int64, email, token string) error {
+	q := squirrel.Insert("recoveries").
+		PlaceholderFormat(squirrel.Dollar).
+		Columns("user_id", "email", "token").
+		Values(userId, email, token)
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	_, err = e.c.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("unable to create recovery: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) RemoveRecovery(ctx context.Context, userId int64) error {
+	q := squirrel.Delete("recoveries").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"user_id": userId})
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	_, err = e.c.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("unable to remove recovery: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) GetRecoveryByUserId(ctx context.Context, userId int64) (model.Recovery, error) {
+	var r model.Recovery
+	q := squirrel.Select("*").
+		PlaceholderFormat(squirrel.Dollar).
+		From("recoveries").
+		Where(squirrel.Eq{"user_id": userId}).
+		Limit(1)
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return model.Recovery{}, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	err = e.c.GetContext(ctx, &r, sql, args...)
+	if err != nil {
+		return r, fmt.Errorf("unable to get recovery by user id: %w", err)
+	}
+	return r, nil
+}
+
+func (e *Entity) GetRecovery(ctx context.Context, userId int64, token string) (model.Recovery, error) {
+	var r model.Recovery
+	q := squirrel.Select("*").
+		PlaceholderFormat(squirrel.Dollar).
+		From("recoveries").
+		Where(squirrel.And{squirrel.Eq{"token": token}, squirrel.Eq{"expired": false}, squirrel.Eq{"user_id": userId}}).
+		Limit(1)
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return model.Recovery{}, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	err = e.c.GetContext(ctx, &r, sql, args...)
+	if err != nil {
+		return r, fmt.Errorf("unable to get recovery by token: %w", err)
+	}
+	return r, nil
+}
