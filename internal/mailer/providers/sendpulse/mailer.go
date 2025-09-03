@@ -3,8 +3,9 @@ package sendpulse
 import (
 	"context"
 	"encoding/base64"
-	"github.com/FlameInTheDark/gochat/internal/mailer"
 	"net/http"
+
+	"github.com/FlameInTheDark/gochat/internal/mailer"
 
 	sendpulse "github.com/dimuska139/sendpulse-sdk-go/v7"
 )
@@ -24,6 +25,7 @@ func New(userId, secret string) *SendpulseMailer {
 
 func (m *SendpulseMailer) Send(ctx context.Context, notify mailer.MailNotification) error {
 	params := sendpulse.SendEmailParams{
+		Subject: notify.Subject,
 		From: sendpulse.User{
 			Name:  notify.From.Name,
 			Email: notify.From.Email,

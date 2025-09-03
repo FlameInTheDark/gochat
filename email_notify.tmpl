@@ -69,7 +69,7 @@
             <h1>Hello, friend!</h1>
             <p>Thank you for registering with {{.AppName}}. To complete your registration, please confirm your email address by clicking the button below</p>
             <p style="text-align: center;">
-                <a href="{{.ConfirmationLink}}" class="button">Confirm Email</a>
+                <a href="{{.BaseURL}}/confirmation/{{.UserId}}/{{.Token}}" class="button">Confirm Email</a>
             </p>
             <p>If you did not sign up for {{.AppName}}, please ignore this email.</p>
         </div>

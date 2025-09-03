@@ -271,7 +271,6 @@ services:
 
 volumes:
   scylla-data:
-  solr-data:
   prometheus-data:
   grafana-data:
   opensearch-data:

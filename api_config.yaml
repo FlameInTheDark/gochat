@@ -2,12 +2,6 @@ app_name: "GoChat"
 base_url: "http://example.com"
 cluster: ["scylla"]
 cluster_keyspace: "gochat"
-email_source: "email"
-email_name: "no-reply"
-email_template: "./email_notify.tmpl"
-email_provider: "log"
-sendpulse_user_id: ""
-sendpulse_secret: ""
 auth_secret: "change_me_before_use_it_in_production"
 swagger: true
 keydb: "keydb:6379"
