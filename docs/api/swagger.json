@@ -13,7 +13,7 @@
     "host": "localhost:3000",
     "basePath": "/api/v1",
     "paths": {
-        "/auth/confitmation": {
+        "/auth/confirmation": {
             "post": {
                 "produces": [
                     "application/json"
@@ -29,7 +29,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/cmd_api_endpoints_auth.ConfirmationRequest"
+                            "$ref": "#/definitions/auth.ConfirmationRequest"
                         }
                     }
                 ],
@@ -83,7 +83,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/cmd_api_endpoints_auth.LoginRequest"
+                            "$ref": "#/definitions/auth.LoginRequest"
                         }
                     }
                 ],
@@ -91,7 +91,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/cmd_api_endpoints_auth.LoginResponse"
+                            "$ref": "#/definitions/auth.LoginResponse"
                         }
                     },
                     "400": {
@@ -102,6 +102,60 @@
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/recovery": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Password Recovery",
+                "parameters": [
+                    {
+                        "description": "Email for password recovery",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.PasswordRecoveryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Recovery email sent",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Email not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "429": {
+                        "description": "Try again later",
                         "schema": {
                             "type": "string"
                         }
@@ -131,7 +185,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/cmd_api_endpoints_auth.RegisterRequest"
+                            "$ref": "#/definitions/auth.RegisterRequest"
                         }
                     }
                 ],
@@ -169,6 +223,54 @@
                 }
             }
         },
+        "/auth/reset": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Password Reset",
+                "parameters": [
+                    {
+                        "description": "Password reset data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.PasswordResetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password reset successful",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/guild": {
             "post": {
                 "produces": [
@@ -185,7 +287,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/cmd_api_endpoints_guild.UpdateGuildRequest"
+                            "$ref": "#/definitions/cmd_api_endpoints_guild.CreateGuildRequest"
                         }
                     }
                 ],
@@ -229,6 +331,7 @@
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Guild id",
                         "name": "guild_id",
                         "in": "path",
@@ -282,6 +385,7 @@
                     },
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -337,6 +441,7 @@
                     },
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -383,6 +488,7 @@
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -390,6 +496,7 @@
                     },
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Category ID (actually a channel with special type)",
                         "name": "category_id",
                         "in": "path",
@@ -436,6 +543,7 @@
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Guild id",
                         "name": "guild_id",
                         "in": "path",
@@ -479,19 +587,20 @@
                 "tags": [
                     "Guild"
                 ],
-                "summary": "Add guild channel category",
+                "summary": "Create guild channel",
                 "parameters": [
                     {
-                        "description": "Create category data",
+                        "description": "Create channel data",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/cmd_api_endpoints_guild.CreateGuildChannelCategoryRequest"
+                            "$ref": "#/definitions/cmd_api_endpoints_guild.CreateGuildChannelRequest"
                         }
                     },
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -534,10 +643,11 @@
                 "tags": [
                     "Guild"
                 ],
-                "summary": "Get guild channels",
+                "summary": "Get guild channel",
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Guild id",
                         "name": "guild_id",
                         "in": "path",
@@ -545,6 +655,7 @@
                     },
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Channel id",
                         "name": "channel_id",
                         "in": "path",
@@ -589,6 +700,7 @@
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -596,6 +708,7 @@
                     },
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Channel ID",
                         "name": "channel_id",
                         "in": "path",
@@ -686,10 +799,11 @@
                 "tags": [
                     "Message"
                 ],
-                "summary": "Get message",
+                "summary": "Get messages",
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Channel id",
                         "name": "channel_id",
                         "in": "path",
@@ -697,6 +811,7 @@
                     },
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Start point for messages",
                         "name": "from",
                         "in": "query"
@@ -716,25 +831,34 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Message",
+                        "description": "Messages",
                         "schema": {
-                            "$ref": "#/definitions/github_com_FlameInTheDark_gochat_internal_dto.Message"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_FlameInTheDark_gochat_internal_dto.Message"
+                            }
                         }
                     },
                     "400": {
-                        "description": "Incorrect request body",
+                        "description": "Bad request",
                         "schema": {
                             "type": "string"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Something bad happened",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -748,10 +872,11 @@
                 "tags": [
                     "Message"
                 ],
-                "summary": "Get message",
+                "summary": "Send message",
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Channel id",
                         "name": "channel_id",
                         "in": "path",
@@ -775,7 +900,7 @@
                         }
                     },
                     "400": {
-                        "description": "Incorrect request body",
+                        "description": "Bad request",
                         "schema": {
                             "type": "string"
                         }
@@ -786,8 +911,14 @@
                             "type": "string"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
-                        "description": "Something bad happened",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -807,6 +938,7 @@
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Channel id",
                         "name": "channel_id",
                         "in": "path",
@@ -830,19 +962,25 @@
                         }
                     },
                     "400": {
-                        "description": "Incorrect request body",
+                        "description": "Bad request",
                         "schema": {
                             "type": "string"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "413": {
+                        "description": "File too large",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Something bad happened",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -862,6 +1000,7 @@
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Message id",
                         "name": "message_id",
                         "in": "path",
@@ -869,6 +1008,7 @@
                     },
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Channel id",
                         "name": "channel_id",
                         "in": "path",
@@ -877,25 +1017,31 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Message",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_FlameInTheDark_gochat_internal_dto.Message"
-                        }
-                    },
-                    "400": {
-                        "description": "Incorrect request body",
+                        "description": "OK",
                         "schema": {
                             "type": "string"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Something bad happened",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -913,6 +1059,7 @@
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Message id",
                         "name": "message_id",
                         "in": "path",
@@ -920,6 +1067,7 @@
                     },
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Channel id",
                         "name": "channel_id",
                         "in": "path",
@@ -943,7 +1091,72 @@
                         }
                     },
                     "400": {
-                        "description": "Incorrect request body",
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/guild/{guild_id}": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Search messages",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "Channel id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Search request data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/cmd_api_endpoints_search.MessageSearchRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Messages",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cmd_api_endpoints_search.MessageSearchResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
                         "schema": {
                             "type": "string"
                         }
@@ -954,8 +1167,14 @@
                             "type": "string"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
-                        "description": "Something bad happened",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -985,13 +1204,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "ok",
+                        "description": "Created DM channel",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/github_com_FlameInTheDark_gochat_internal_dto.Channel"
                         }
                     },
                     "400": {
-                        "description": "Incorrect ID",
+                        "description": "Bad request",
                         "schema": {
                             "type": "string"
                         }
@@ -1003,7 +1222,7 @@
                         }
                     },
                     "500": {
-                        "description": "Something bad happened",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -1033,13 +1252,19 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "ok",
+                        "description": "Created group DM channel",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_FlameInTheDark_gochat_internal_dto.Channel"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
                         "schema": {
                             "type": "string"
                         }
                     },
-                    "400": {
-                        "description": "Incorrect ID",
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "type": "string"
                         }
@@ -1051,7 +1276,7 @@
                         }
                     },
                     "500": {
-                        "description": "Something bad happened",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -1079,7 +1304,7 @@
                         }
                     },
                     "400": {
-                        "description": "Incorrect ID",
+                        "description": "Bad request",
                         "schema": {
                             "type": "string"
                         }
@@ -1091,7 +1316,7 @@
                         }
                     },
                     "500": {
-                        "description": "Something bad happened",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -1125,25 +1350,25 @@
                         }
                     },
                     "400": {
-                        "description": "Incorrect ID",
+                        "description": "Bad request",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "Guild not found",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "406": {
-                        "description": "Unable to leave your guild",
+                        "description": "Cannot leave own guild",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Something bad happened",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -1163,6 +1388,7 @@
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Guild id",
                         "name": "guild_id",
                         "in": "path",
@@ -1177,19 +1403,19 @@
                         }
                     },
                     "400": {
-                        "description": "Incorrect ID",
+                        "description": "Bad request",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "Member not found",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Something bad happened",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -1223,7 +1449,7 @@
                         }
                     },
                     "400": {
-                        "description": "Incorrect ID",
+                        "description": "Bad request",
                         "schema": {
                             "type": "string"
                         }
@@ -1235,7 +1461,7 @@
                         }
                     },
                     "500": {
-                        "description": "Something bad happened",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -1282,7 +1508,7 @@
         }
     },
     "definitions": {
-        "cmd_api_endpoints_auth.ConfirmationRequest": {
+        "auth.ConfirmationRequest": {
             "type": "object",
             "properties": {
                 "discriminator": {
@@ -1302,7 +1528,7 @@
                 }
             }
         },
-        "cmd_api_endpoints_auth.LoginRequest": {
+        "auth.LoginRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -1313,7 +1539,7 @@
                 }
             }
         },
-        "cmd_api_endpoints_auth.LoginResponse": {
+        "auth.LoginResponse": {
             "type": "object",
             "properties": {
                 "token": {
@@ -1321,7 +1547,29 @@
                 }
             }
         },
-        "cmd_api_endpoints_auth.RegisterRequest": {
+        "auth.PasswordRecoveryRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.PasswordResetRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.RegisterRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -1340,6 +1588,37 @@
                 }
             }
         },
+        "cmd_api_endpoints_guild.CreateGuildChannelRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                },
+                "private": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_FlameInTheDark_gochat_internal_database_model.ChannelType"
+                }
+            }
+        },
+        "cmd_api_endpoints_guild.CreateGuildRequest": {
+            "type": "object",
+            "properties": {
+                "icon_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "public": {
+                    "type": "boolean"
+                }
+            }
+        },
         "cmd_api_endpoints_guild.UpdateGuildRequest": {
             "type": "object",
             "properties": {
@@ -1348,6 +1627,9 @@
                 },
                 "name": {
                     "type": "string"
+                },
+                "permissions": {
+                    "type": "integer"
                 },
                 "public": {
                     "type": "boolean"
@@ -1365,6 +1647,12 @@
                 },
                 "content": {
                     "type": "string"
+                },
+                "mentions": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -1389,6 +1677,49 @@
                     "type": "integer"
                 },
                 "width": {
+                    "type": "integer"
+                }
+            }
+        },
+        "cmd_api_endpoints_search.MessageSearchRequest": {
+            "type": "object",
+            "properties": {
+                "author_id": {
+                    "type": "integer"
+                },
+                "channel_id": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "has": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "mentions": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                }
+            }
+        },
+        "cmd_api_endpoints_search.MessageSearchResponse": {
+            "type": "object",
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "pages": {
                     "type": "integer"
                 }
             }
@@ -1418,11 +1749,11 @@
         "cmd_api_endpoints_user.ModifyUserRequest": {
             "type": "object",
             "properties": {
-                "Name": {
-                    "type": "string"
-                },
                 "avatar": {
                     "type": "integer"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -1530,6 +1861,9 @@
                     "type": "string"
                 },
                 "owner": {
+                    "type": "integer"
+                },
+                "permissions": {
                     "type": "integer"
                 },
                 "public": {

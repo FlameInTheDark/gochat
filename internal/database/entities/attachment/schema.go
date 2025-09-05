@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/gocql/gocql"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"

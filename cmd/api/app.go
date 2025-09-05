@@ -9,6 +9,7 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/api/config"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/guild"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/message"
+	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/search"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/user"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/webhook"
 	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
@@ -18,6 +19,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/nats"
+	"github.com/FlameInTheDark/gochat/internal/msgsearch"
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
@@ -75,8 +77,11 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
-	//solrClient := solr.New(cfg.SolrBaseURL)
-	//searchService := msgsearch.NewSearch(solrClient)
+	// Initialize message search service
+	searchService, err := msgsearch.NewSearch(cfg.OSAddresses, cfg.OSInsecureSkipVerify, cfg.OSUsername, cfg.OSPassword)
+	if err != nil {
+		return nil, err
+	}
 
 	// ID generator setup
 	idgen.New(0)
@@ -107,7 +112,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		message.New(database, pg, storage, qt, imq, cfg.UploadLimit, logger),
 		webhook.New(database, storage, logger),
 		guild.New(database, pg, qt, logger),
-		//search.New(database, searchService, logger),
+		search.New(database, pg, searchService, logger),
 	)
 
 	return &App{

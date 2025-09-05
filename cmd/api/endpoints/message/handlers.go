@@ -303,15 +303,15 @@ func (e *entity) sendMessageEvents(channelId int64, guildId *int64, message dto.
 //	@Summary	Get messages
 //	@Produce	json
 //	@Tags		Message
-//	@Param		channel_id	path		int64			true	"Channel id"
-//	@Param		from		query		int64			false	"Start point for messages"
-//	@Param		direction	query		string			false	"Select direction"
-//	@Param		limit		query		int				false	"Message count limit"
-//	@Success	200			{array}		dto.Message		"Messages"
-//	@failure	400			{string}	string			"Bad request"
-//	@failure	403			{string}	string			"Forbidden"
-//	@failure	404			{string}	string			"Not found"
-//	@failure	500			{string}	string			"Internal server error"
+//	@Param		channel_id	path		int64		true	"Channel id"
+//	@Param		from		query		int64		false	"Start point for messages"
+//	@Param		direction	query		string		false	"Select direction"
+//	@Param		limit		query		int			false	"Message count limit"
+//	@Success	200			{array}		dto.Message	"Messages"
+//	@failure	400			{string}	string		"Bad request"
+//	@failure	403			{string}	string		"Forbidden"
+//	@failure	404			{string}	string		"Not found"
+//	@failure	500			{string}	string		"Internal server error"
 //	@Router		/message/channel/{channel_id} [get]
 func (e *entity) GetMessages(c *fiber.Ctx) error {
 	// Parse and validate request
@@ -879,13 +879,13 @@ func (e *entity) sendUpdateEvent(channelId int64, guildId *int64, message dto.Me
 //	@Summary	Delete message
 //	@Produce	json
 //	@Tags		Message
-//	@Param		message_id	path		int64		true	"Message id"
-//	@Param		channel_id	path		int64		true	"Channel id"
-//	@Success	200			{string}	string		"OK"
-//	@failure	400			{string}	string		"Bad request"
-//	@failure	403			{string}	string		"Forbidden"
-//	@failure	404			{string}	string		"Not found"
-//	@failure	500			{string}	string		"Internal server error"
+//	@Param		message_id	path		int64	true	"Message id"
+//	@Param		channel_id	path		int64	true	"Channel id"
+//	@Success	200			{string}	string	"OK"
+//	@failure	400			{string}	string	"Bad request"
+//	@failure	403			{string}	string	"Forbidden"
+//	@failure	404			{string}	string	"Not found"
+//	@failure	500			{string}	string	"Internal server error"
 //	@Router		/message/channel/{channel_id}/{message_id} [delete]
 func (e *entity) Delete(c *fiber.Ctx) error {
 	// Parse request parameters

@@ -12,3 +12,7 @@ s3_access_key_id: lF0b7V15OZCv2eGggCg5
 s3_secret_access_key: 55ug80hPgx4nFPoFJXvwBHns1XwXmZrcKli8UHoz
 pg_dsn: "host=citus-master port=5432 user=postgres dbname=gochat sslmode=disable"
 server_address: ":3100"
+os_insecure_skip_verify: true
+os_addresses: ["http://opensearch:9200"]
+os_username: "admin"
+os_password: "CustOM-Pa55w0Rd"

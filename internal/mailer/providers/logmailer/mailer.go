@@ -2,9 +2,10 @@ package logmailer
 
 import (
 	"context"
-	"github.com/FlameInTheDark/gochat/internal/mailer"
 	"log/slog"
 	"os"
+
+	"github.com/FlameInTheDark/gochat/internal/mailer"
 )
 
 type LogMailer struct {

@@ -30,6 +30,10 @@ type Config struct {
 	IndexerNatsConnString      string   `yaml:"indexer_nats_conn_string" env:"INDEX_NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`
 	PGDSN                      string   `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
 	PGRetries                  int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
+	OSInsecureSkipVerify       bool     `yaml:"os_insecure_skip_verify" env:"OS_INSECURE_SKIP_VERIFY"`
+	OSAddresses                []string `yaml:"os_addresses" env:"OS_ADDRESSES"`
+	OSUsername                 string   `yaml:"os_username" env:"OS_USERNAME"`
+	OSPassword                 string   `yaml:"os_password" env:"OS_PASSWORD"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {

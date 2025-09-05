@@ -2,6 +2,7 @@ package helper
 
 import (
 	"errors"
+
 	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
 )

@@ -8,6 +8,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
@@ -34,6 +35,7 @@ type entity struct {
 	// Services
 	log    *slog.Logger
 	search *msgsearch.Search
+	perm   rolecheck.RoleCheck
 
 	// DB entities
 	user  user.User
@@ -58,6 +60,7 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, search *msgsearch.Search, log *slog.Logg
 		name:   entityName,
 		log:    log,
 		search: search,
+		perm:   rolecheck.New(dbcon, pg),
 		user:   user.New(pg.Conn()),
 		disc:   discriminator.New(pg.Conn()),
 		ch:     channel.New(pg.Conn()),
