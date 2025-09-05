@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/opensearch-project/opensearch-go"
@@ -44,27 +43,16 @@ func (s *Search) Search(ctx context.Context, req SearchRequest) (results *Result
 		return nil, fmt.Errorf("opensearch client is not initialized")
 	}
 	// Build query body with from/size using map-based builder
-	q := buildOSQuery(req)
-	body := map[string]any{
-		"from": req.From,
-		"size": 10,
-	}
-	if q != nil {
-		body["query"] = q
-	} else {
-		body["query"] = map[string]any{"match_all": map[string]any{}}
-	}
-	queryBytes, err := json.Marshal(body)
+	q, err := buildOSQuery(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal search body: %w", err)
+		return nil, err
 	}
 
 	opts := []func(*opensearchapi.SearchRequest){
 		s.osc.Search.WithContext(ctx),
 		s.osc.Search.WithIndex("messages"),
-		s.osc.Search.WithBody(bytes.NewReader(queryBytes)),
+		s.osc.Search.WithBody(bytes.NewReader(q)),
 		s.osc.Search.WithTrackTotalHits(true),
-		s.osc.Search.WithSource("false"),
 	}
 	if req.ChannelId != nil {
 		opts = append(opts, s.osc.Search.WithRouting(fmt.Sprintf("%d", *req.ChannelId)))
@@ -87,10 +75,7 @@ func (s *Search) Search(ctx context.Context, req SearchRequest) (results *Result
 
 	var ids = make([]int64, 0, len(sr.Hits.Hits))
 	for _, h := range sr.Hits.Hits {
-		id64, err := strconv.ParseInt(h.ID, 10, 64)
-		if err == nil {
-			ids = append(ids, id64)
-		}
+		ids = append(ids, h.Source.MessageId)
 	}
 	return &Results{Ids: ids, Total: sr.Hits.Total.Value}, nil
 }
@@ -102,46 +87,64 @@ type osSearchResponse struct {
 			Relation string `json:"relation"`
 		} `json:"total"`
 		Hits []struct {
-			ID string `json:"_id"`
+			Source struct {
+				MessageId int64 `json:"message_id"`
+			} `json:"_source"`
 		} `json:"hits"`
 	} `json:"hits"`
 }
 
-func buildOSQuery(req SearchRequest) map[string]any {
-	must := make([]any, 0, 4)
-	filter := make([]any, 0, 4)
+type osSearchRequest struct {
+	From   int      `json:"from,omitempty"`
+	Size   int      `json:"size,omitempty"`
+	Source []string `json:"_source,omitempty"`
+	Query  struct {
+		Bool struct {
+			Filter []osSearchQuery `json:"filter,omitempty"`
+			Must   []osSearchQuery `json:"must,omitempty"`
+		} `json:"bool,omitempty"`
+	} `json:"query,omitempty"`
+}
+
+type osSearchQuery struct {
+	Match map[string]any `json:"match,omitempty"`
+	Term  map[string]any `json:"term,omitempty"`
+}
+
+func buildOSQuery(req SearchRequest) ([]byte, error) {
+	var osreq = osSearchRequest{
+		From:   req.From,
+		Size:   10,
+		Source: []string{"message_id"},
+	}
 
 	// Required guild filter
-	filter = append(filter, map[string]any{"term": map[string]any{"guild_id": req.GuildId}})
+	osreq.Query.Bool.Filter = append(osreq.Query.Bool.Filter, osSearchQuery{Match: map[string]any{"guild_id": req.GuildId}})
+
 	// Optional filters
 	if req.ChannelId != nil {
-		filter = append(filter, map[string]any{"term": map[string]any{"channel_id": *req.ChannelId}})
+		osreq.Query.Bool.Filter = append(osreq.Query.Bool.Filter, osSearchQuery{Term: map[string]any{"channel_id": *req.ChannelId}})
 	}
 	if req.AuthorId != nil {
-		filter = append(filter, map[string]any{"term": map[string]any{"user_id": *req.AuthorId}})
+		osreq.Query.Bool.Filter = append(osreq.Query.Bool.Filter, osSearchQuery{Term: map[string]any{"user_id": *req.AuthorId}})
 	}
 	if len(req.Mentions) > 0 {
-		filter = append(filter, map[string]any{"terms": map[string]any{"mentions": req.Mentions}})
+		osreq.Query.Bool.Filter = append(osreq.Query.Bool.Filter, osSearchQuery{Term: map[string]any{"mentions": req.Mentions}})
 	}
 	if len(req.Has) > 0 {
-		filter = append(filter, map[string]any{"terms": map[string]any{"has": req.Has}})
+		osreq.Query.Bool.Filter = append(osreq.Query.Bool.Filter, osSearchQuery{Term: map[string]any{"has": req.Has}})
 	}
 	if req.Content != nil {
 		content := strings.TrimSpace(*req.Content)
 		if content != "" {
-			must = append(must, map[string]any{"match": map[string]any{"content": content}})
+			osreq.Query.Bool.Must = append(osreq.Query.Bool.Must, osSearchQuery{Match: map[string]any{"content": content}})
 		}
 	}
 
-	boolNode := map[string]any{}
-	if len(must) > 0 {
-		boolNode["must"] = must
+	data, err := json.Marshal(osreq)
+	if err != nil {
+		return nil, err
 	}
-	if len(filter) > 0 {
-		boolNode["filter"] = filter
-	}
-	if len(boolNode) == 0 {
-		return nil
-	}
-	return map[string]any{"bool": boolNode}
+
+	return data, nil
 }
