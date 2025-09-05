@@ -2,18 +2,14 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"log/slog"
-	"net/http"
-	"strings"
-
-	nq "github.com/nats-io/nats.go"
-	"github.com/opensearch-project/opensearch-go"
+	"time"
 
 	"github.com/FlameInTheDark/gochat/cmd/indexer/config"
 	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/FlameInTheDark/gochat/internal/msgsearch"
+	nq "github.com/nats-io/nats.go"
 )
 
 const indexQueue = "indexer.message"
@@ -21,8 +17,8 @@ const indexQueue = "indexer.message"
 type App struct {
 	logger *slog.Logger
 
-	osc  *opensearch.Client
-	conn *nq.Conn
+	search *msgsearch.Search
+	conn   *nq.Conn
 
 	sub *nq.Subscription
 }
@@ -33,57 +29,9 @@ func NewApp(logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
-	client, err := opensearch.NewClient(opensearch.Config{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.OSInsecureSkipVerify},
-		},
-		Addresses: cfg.OSAddresses,
-		Username:  cfg.OSUsername,
-		Password:  cfg.OSPassword,
-	})
+	search, err := msgsearch.NewSearch(cfg.OSAddresses, cfg.OSInsecureSkipVerify, cfg.OSUsername, cfg.OSPassword)
 	if err != nil {
 		return nil, err
-	}
-
-	res, err := client.Indices.Exists([]string{"messages"})
-	if err != nil {
-		return nil, fmt.Errorf("failed to check if index exists: %w", err)
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		ctx := context.Background()
-		mapping := strings.NewReader(
-			`{
-  "settings": {
-    "index": {
-      "number_of_shards": 5,
-      "number_of_replicas": 1
-    }
-  },
-  "mappings": {
-    "_routing": {
-      "required": true
-    },
-    "properties": {
-      "message_id": { "type": "long" },
-      "user_id": { "type": "long" },
-      "channel_id": { "type": "long" },
-      "guild_id": { "type": "long" },
-      "mentions": { "type": "long" },
-      "has": { "type": "keyword" },
-      "content": { "type": "text" }
-    }
-  }
-}`)
-		_, err = client.Indices.Create(
-			"messages",
-			client.Indices.Create.WithBody(mapping),
-			client.Indices.Create.WithContext(ctx),
-		)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	c, err := nq.Connect(cfg.NatsConnString, nq.Compression(true))
@@ -93,7 +41,7 @@ func NewApp(logger *slog.Logger) (*App, error) {
 
 	return &App{
 		logger: logger,
-		osc:    client,
+		search: search,
 		conn:   c,
 	}, nil
 }
@@ -110,19 +58,21 @@ func (a *App) Start() error {
 			return
 		}
 
-		index, err := a.osc.Index(
-			"messages",
-			strings.NewReader(string(msg.Data)),
-			a.osc.Index.WithDocumentID(fmt.Sprintf("%d", indexMsg.MessageId)),
-			a.osc.Index.WithRouting(fmt.Sprintf("%d", indexMsg.ChannelId)),
-		)
-		if index.IsError() || err != nil {
-			a.logger.Error(err.Error())
-			a.logger.Debug("Error indexing message", slog.String("data", string(msg.Data)))
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		err = a.search.IndexMessage(ctx, msgsearch.AddMessage{
+			GuildId:   indexMsg.GuildId,
+			ChannelId: indexMsg.ChannelId,
+			UserId:    indexMsg.UserId,
+			MessageId: indexMsg.MessageId,
+			Has:       indexMsg.Has,
+			Mentions:  indexMsg.Mentions,
+			Content:   indexMsg.Content,
+		})
+		if err != nil {
+			a.logger.Error("Error indexing message", slog.String("error", err.Error()))
 			return
 		}
-		a.logger.Info("Message sent to index", slog.String("resp", index.String()))
-		defer index.Body.Close()
 	})
 	if err != nil {
 		a.logger.Error(err.Error())

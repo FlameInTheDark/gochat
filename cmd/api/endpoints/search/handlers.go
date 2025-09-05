@@ -55,7 +55,7 @@ func (e *entity) Search(c *fiber.Ctx) error {
 	res, err := e.search.Search(c.UserContext(), msgsearch.SearchRequest{
 		GuildId:   guildId,
 		ChannelId: req.ChannelId,
-		AuthorId:  req.AuthorId,
+		UserId:    req.AuthorId,
 		Content:   req.Content,
 		Mentions:  req.Mentions,
 		Has:       req.Has,
