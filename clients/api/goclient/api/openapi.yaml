@@ -1,0 +1,1703 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: viktorfreedom@gmail.com
+    name: Viktor Menshchikov
+    url: https://github.com/FlameInTheDark
+  description: This is an API for the GoChat
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: GoChat API
+  version: "1.0"
+externalDocs:
+  description: ""
+  url: ""
+servers:
+- url: localhost/api/v1
+paths:
+  /auth/confirmation:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.ConfirmationRequest'
+        description: Login data
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: "Registration completed, account created"
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Discriminator is not unique
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Confirmation
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.LoginRequest'
+        description: Login data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth.LoginResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Authentication
+      tags:
+      - Auth
+  /auth/recovery:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.PasswordRecoveryRequest'
+        description: Email for password recovery
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Recovery email sent
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Email not found
+        "429":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Try again later
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Password Recovery
+      tags:
+      - Auth
+  /auth/registration:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.RegisterRequest'
+        description: Login data
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Registration email sent
+        "302":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: User already exist
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "429":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Try again later
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Registration
+      tags:
+      - Auth
+  /auth/reset:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.PasswordResetRequest'
+        description: Password reset data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Password reset successful
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Password Reset
+      tags:
+      - Auth
+  /guild:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.CreateGuildRequest'
+        description: Guild data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Guild'
+          description: Guild
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Create guild
+      tags:
+      - Guild
+  /guild/{guild_id}:
+    get:
+      parameters:
+      - description: Guild id
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Guild'
+          description: Guild
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Get guild
+      tags:
+      - Guild
+    patch:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.UpdateGuildRequest'
+        description: Update guild data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Guild'
+          description: Guild
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Update guild
+      tags:
+      - Guild
+  /guild/{guild_id}/category:
+    post:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.CreateGuildChannelCategoryRequest'
+        description: Create category data
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Create guild channel category
+      tags:
+      - Guild
+  /guild/{guild_id}/category/{category_id}:
+    delete:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Category ID (actually a channel with special type)
+        explode: false
+        in: path
+        name: category_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Deleted
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Delete channel category
+      tags:
+      - Guild
+  /guild/{guild_id}/channel:
+    get:
+      parameters:
+      - description: Guild id
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Channel'
+                type: array
+          description: List of channels
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Get guild channels
+      tags:
+      - Guild
+    post:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.CreateGuildChannelRequest'
+        description: Create channel data
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Create guild channel
+      tags:
+      - Guild
+  /guild/{guild_id}/channel/{channel_id}:
+    delete:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Channel ID
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Deleted
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Delete channel
+      tags:
+      - Guild
+    get:
+      parameters:
+      - description: Guild id
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Channel id
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Channel'
+          description: Channel
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Get guild channel
+      tags:
+      - Guild
+  /me:
+    patch:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user.ModifyUserRequest'
+        description: Modify user data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect ID
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: User not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Get user
+      tags:
+      - User
+  /message/channel/{channel_id}:
+    get:
+      parameters:
+      - description: Channel id
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Start point for messages
+        explode: true
+        in: query
+        name: from
+        required: false
+        schema:
+          type: integer
+        style: form
+      - description: Select direction
+        explode: true
+        in: query
+        name: direction
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Message count limit
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Message'
+                type: array
+          description: Messages
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Get messages
+      tags:
+      - Message
+    post:
+      parameters:
+      - description: Channel id
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/message.SendMessageRequest'
+        description: Message data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Message'
+          description: Message
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Send message
+      tags:
+      - Message
+  /message/channel/{channel_id}/attachment:
+    post:
+      parameters:
+      - description: Channel id
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/message.UploadAttachmentRequest'
+        description: Attachment data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.AttachmentUpload'
+          description: Attachment upload data
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "413":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: File too large
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Create attachment
+      tags:
+      - Message
+  /message/channel/{channel_id}/{message_id}:
+    delete:
+      parameters:
+      - description: Message id
+        explode: false
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Channel id
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Delete message
+      tags:
+      - Message
+    patch:
+      parameters:
+      - description: Message id
+        explode: false
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Channel id
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/message.UpdateMessageRequest'
+        description: Message data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Message'
+          description: Message
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Update message
+      tags:
+      - Message
+  /search/{guild_id}/messages:
+    post:
+      parameters:
+      - description: Channel id
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/search.MessageSearchRequest'
+        description: Search request data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/search.MessageSearchResponse'
+                type: array
+          description: Messages
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Search messages
+      tags:
+      - Search
+  /user/me/channels:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user.CreateDMRequest'
+        description: Recipient data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Channel'
+          description: Created DM channel
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: User not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Create DM channel
+      tags:
+      - User
+  /user/me/channels/group:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user.CreateDMManyRequest'
+        description: Group DM data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Channel'
+          description: Created group DM channel
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Create group DM channel
+      tags:
+      - User
+  /user/me/guilds:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Guild'
+                type: array
+          description: Guilds list
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: User not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Get user guilds
+      tags:
+      - User
+  /user/me/guilds/{guild_id}:
+    delete:
+      parameters:
+      - description: Guild id
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Guild not found
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Cannot leave own guild
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Leave guild
+      tags:
+      - User
+  /user/me/guilds/{guild_id}/member:
+    get:
+      parameters:
+      - description: Guild id
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Member'
+          description: Guild member
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Member not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Get user guild member
+      tags:
+      - User
+  /user/{user_id}:
+    get:
+      parameters:
+      - description: User ID or 'me'
+        explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.User'
+          description: User data
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: User not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Get user
+      tags:
+      - User
+  /webhook/storage/events:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/webhook.S3Event'
+        description: S3 event
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect ID
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: User not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Storage event
+      tags:
+      - Webhook
+components:
+  schemas:
+    auth.ConfirmationRequest:
+      properties:
+        discriminator:
+          type: string
+        id:
+          type: integer
+        name:
+          type: string
+        password:
+          type: string
+        token:
+          type: string
+    auth.LoginRequest:
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    auth.LoginResponse:
+      example:
+        token: token
+      properties:
+        token:
+          type: string
+    auth.PasswordRecoveryRequest:
+      properties:
+        email:
+          type: string
+    auth.PasswordResetRequest:
+      properties:
+        id:
+          type: integer
+        password:
+          type: string
+        token:
+          type: string
+    auth.RegisterRequest:
+      properties:
+        email:
+          type: string
+    dto.Attachment:
+      example:
+        filename: filename
+        content_type: content_type
+        size: 6
+        width: 1
+        url: url
+        height: 0
+      properties:
+        content_type:
+          type: string
+        filename:
+          type: string
+        height:
+          type: integer
+        size:
+          type: integer
+        url:
+          type: string
+        width:
+          type: integer
+    dto.AttachmentUpload:
+      example:
+        file_name: file_name
+        upload_url: upload_url
+        id: 6
+        channel_id: 0
+      properties:
+        channel_id:
+          type: integer
+        file_name:
+          type: string
+        id:
+          type: integer
+        upload_url:
+          type: string
+    dto.Channel:
+      example:
+        parent_id: 1
+        permissions: 5
+        guild_id: 0
+        name: name
+        created_at: created_at
+        topic: topic
+        id: 6
+        position: 5
+        type: 2
+      properties:
+        created_at:
+          type: string
+        guild_id:
+          type: integer
+        id:
+          type: integer
+        name:
+          type: string
+        parent_id:
+          type: integer
+        permissions:
+          type: integer
+        position:
+          type: integer
+        topic:
+          type: string
+        type:
+          type: integer
+          x-enum-varnames:
+          - ChannelTypeGuild
+          - ChannelTypeGuildVoice
+          - ChannelTypeGuildCategory
+          - ChannelTypeDM
+          - ChannelTypeGroupDM
+          - ChannelTypeThread
+    dto.Guild:
+      example:
+        owner: 1
+        public: true
+        permissions: 5
+        icon: 0
+        name: name
+        id: 6
+      properties:
+        icon:
+          type: integer
+        id:
+          type: integer
+        name:
+          type: string
+        owner:
+          type: integer
+        permissions:
+          type: integer
+        public:
+          type: boolean
+    dto.Member:
+      example:
+        join_at: join_at
+        user_id:
+          name: name
+          avatar: 5
+          id: 5
+          discriminator: discriminator
+        roles:
+        - 6
+        - 6
+        avatar: 0
+        username: username
+      properties:
+        avatar:
+          type: integer
+        join_at:
+          type: string
+        roles:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        user_id:
+          $ref: '#/components/schemas/dto.User'
+        username:
+          type: string
+    dto.Message:
+      example:
+        attachments:
+        - filename: filename
+          content_type: content_type
+          size: 6
+          width: 1
+          url: url
+          height: 0
+        - filename: filename
+          content_type: content_type
+          size: 6
+          width: 1
+          url: url
+          height: 0
+        updated_at: updated_at
+        author:
+          name: name
+          avatar: 5
+          id: 5
+          discriminator: discriminator
+        id: 7
+        channel_id: 2
+        content: content
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/dto.Attachment'
+          type: array
+          uniqueItems: false
+        author:
+          $ref: '#/components/schemas/dto.User'
+        channel_id:
+          type: integer
+        content:
+          type: string
+        id:
+          type: integer
+        updated_at:
+          type: string
+    dto.User:
+      example:
+        name: name
+        avatar: 5
+        id: 5
+        discriminator: discriminator
+      properties:
+        avatar:
+          type: integer
+        discriminator:
+          type: string
+        id:
+          type: integer
+        name:
+          type: string
+    guild.CreateGuildChannelCategoryRequest:
+      properties:
+        name:
+          type: string
+        private:
+          type: boolean
+    guild.CreateGuildChannelRequest:
+      properties:
+        name:
+          type: string
+        parent_id:
+          type: integer
+        private:
+          type: boolean
+        type:
+          type: integer
+          x-enum-varnames:
+          - ChannelTypeGuild
+          - ChannelTypeGuildVoice
+          - ChannelTypeGuildCategory
+          - ChannelTypeDM
+          - ChannelTypeGroupDM
+          - ChannelTypeThread
+    guild.CreateGuildRequest:
+      properties:
+        icon_id:
+          type: integer
+        name:
+          type: string
+        public:
+          type: boolean
+    guild.UpdateGuildRequest:
+      properties:
+        icon_id:
+          type: integer
+        name:
+          type: string
+        permissions:
+          type: integer
+        public:
+          type: boolean
+    message.SendMessageRequest:
+      properties:
+        attachments:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        content:
+          type: string
+        mentions:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+    message.UpdateMessageRequest:
+      properties:
+        content:
+          type: string
+    message.UploadAttachmentRequest:
+      properties:
+        file_size:
+          type: integer
+        filename:
+          type: string
+        height:
+          type: integer
+        width:
+          type: integer
+    model.ChannelType:
+      type: integer
+      x-enum-varnames:
+      - ChannelTypeGuild
+      - ChannelTypeGuildVoice
+      - ChannelTypeGuildCategory
+      - ChannelTypeDM
+      - ChannelTypeGroupDM
+      - ChannelTypeThread
+    search.MessageSearchRequest:
+      properties:
+        author_id:
+          type: integer
+        channel_id:
+          type: integer
+        content:
+          type: string
+        has:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        mentions:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        page:
+          type: integer
+    search.MessageSearchResponse:
+      example:
+        pages: 6
+        ids:
+        - 0
+        - 0
+      properties:
+        ids:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        pages:
+          type: integer
+    user.CreateDMManyRequest:
+      properties:
+        channel_id:
+          type: integer
+        recipients_id:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+    user.CreateDMRequest:
+      properties:
+        recipient_id:
+          type: integer
+    user.ModifyUserRequest:
+      properties:
+        avatar:
+          type: integer
+        name:
+          type: string
+    webhook.S3Bucket:
+      properties:
+        arn:
+          type: string
+        name:
+          type: string
+        ownerIdentity:
+          $ref: '#/components/schemas/webhook.S3Identity'
+    webhook.S3Element:
+      properties:
+        bucket:
+          $ref: '#/components/schemas/webhook.S3Bucket'
+        configurationId:
+          type: string
+        object:
+          $ref: '#/components/schemas/webhook.S3Object'
+        s3SchemaVersion:
+          type: string
+    webhook.S3Event:
+      properties:
+        EventName:
+          type: string
+        Key:
+          type: string
+        Records:
+          items:
+            $ref: '#/components/schemas/webhook.S3EventRecord'
+          type: array
+          uniqueItems: false
+    webhook.S3EventRecord:
+      properties:
+        awsRegion:
+          type: string
+        eventName:
+          type: string
+        eventSource:
+          type: string
+        eventTime:
+          type: string
+        eventVersion:
+          type: string
+        requestParameters:
+          $ref: '#/components/schemas/webhook.S3RequestParameters'
+        responseElements:
+          additionalProperties:
+            type: string
+        s3:
+          $ref: '#/components/schemas/webhook.S3Element'
+        source:
+          $ref: '#/components/schemas/webhook.S3Source'
+        userIdentity:
+          $ref: '#/components/schemas/webhook.S3Identity'
+    webhook.S3Identity:
+      properties:
+        principalId:
+          type: string
+    webhook.S3Object:
+      properties:
+        contentType:
+          type: string
+        eTag:
+          type: string
+        key:
+          type: string
+        sequencer:
+          type: string
+        size:
+          type: integer
+        userMetadata:
+          additionalProperties:
+            type: string
+    webhook.S3RequestParameters:
+      properties:
+        principalId:
+          type: string
+        region:
+          type: string
+        sourceIPAddress:
+          type: string
+    webhook.S3Source:
+      properties:
+        host:
+          type: string
+        port:
+          type: string
+        userAgent:
+          type: string
+  securitySchemes:
+    basic:
+      scheme: basic
+      type: http

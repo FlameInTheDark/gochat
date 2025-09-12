@@ -29,3 +29,5 @@ go.work.sum
 .cursor
 
 my-values.yaml
+
+/clients/api/*/.openapi-generator/

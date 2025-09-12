@@ -85,6 +85,7 @@ require (
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/savsgio/gotils v0.0.0-20240303185622-093b76447511 // indirect
 	github.com/simukti/sqldb-logger v0.0.0-20230108155151-646c1a075551 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tinylib/msgp v1.1.9 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.57.0 // indirect

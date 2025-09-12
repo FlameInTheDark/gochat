@@ -22,7 +22,7 @@ import (
 //	@failure	401			{string}	string					"Unauthorized"
 //	@failure	403			{string}	string					"Forbidden"
 //	@failure	500			{string}	string					"Internal server error"
-//	@Router		/search/guild/{guild_id} [post]
+//	@Router		/search/{guild_id}/messages [post]
 func (e *entity) Search(c *fiber.Ctx) error {
 	gidStr := c.Params("guild_id")
 	guildId, err := strconv.ParseInt(gidStr, 10, 64)

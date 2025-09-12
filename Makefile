@@ -11,7 +11,7 @@ down:
 
 tools:
 	go install -tags "postgres cassandra" github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-	go install github.com/swaggo/swag/cmd/swag@latest
+	go install github.com/swaggo/swag@latest
 
 run:
 	go run ./cmd/api
@@ -40,7 +40,23 @@ migrate_pg_down:
 
 swag:
 	swag fmt
-	swag init --ot json -o ./docs/api -g cmd/api/main.go --parseDependency
+	swag init -g doc.go \
+	  	--v3.1 \
+		--o ./docs/api \
+		--ot json \
+		--parseDependency \
+		--parseInternal \
+		--collectionFormat multi
+
+client: js_client go_client
+
+js_client:
+	docker run --rm -v "./:/local/" mirror.gcr.io/openapitools/openapi-generator-cli:v7.12.0 \
+			generate -i /local/docs/api/swagger.json -g typescript-axios -o /local/clients/api/jsclient --additional-properties=useSingleRequestParameter=true,withInterfaces=false,supportsES6=true
+
+go_client:
+	docker run --rm -v "./:/local/" mirror.gcr.io/openapitools/openapi-generator-cli:v7.12.0 \
+			generate -i /local/docs/api/swagger.json -g go -o /local/clients/api/goclient --additional-properties=useSingleRequestParameter=true --package-name goclient --git-user-id FlameInTheDark --git-repo-id gochat/clients/api/goclient
 
 setup: tools up migrate
 

@@ -52,7 +52,7 @@ func (e *Entity) GetMember(ctx context.Context, userId, guildId int64) (model.Me
 	q := squirrel.Select("*").
 		PlaceholderFormat(squirrel.Dollar).
 		From("members").
-		Where(squirrel.Eq{"user_id": userId})
+		Where(squirrel.And{squirrel.Eq{"user_id": userId}, squirrel.Eq{"guild_id": guildId}})
 
 	sql, args, err := q.ToSql()
 	if err != nil {
