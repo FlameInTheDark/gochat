@@ -2,6 +2,8 @@
 
 GoChat is a real-time chat platform written in Go, designed around a set of focused services communicating over HTTP, WebSockets, and message queues.
 
+[Documentation](docs/project/README.md)
+
 ## Architecture overview
 
 GoChat follows a service-oriented architecture with a clear separation of concerns:
