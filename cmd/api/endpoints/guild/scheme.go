@@ -126,7 +126,6 @@ func (r CreateGuildChannelRequest) Validate() error {
 			validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
 		),
 		validation.Field(&r.Type,
-			validation.Required,
 			validation.In(
 				model.ChannelTypeGuild,
 				model.ChannelTypeGuildVoice,

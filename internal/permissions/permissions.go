@@ -27,7 +27,7 @@ const (
 	PermVoiceSpeak
 	PermVoiceVideo
 	PermVoiceMuteMembers
-	PermVoiceDefeanMembers
+	PermVoiceDeafenMembers
 	PermVoiceMoveMembers
 	PermAdministrator
 )
