@@ -11,6 +11,7 @@ Method | HTTP request | Description
 [**GuildGuildIdChannelGet**](GuildAPI.md#GuildGuildIdChannelGet) | **Get** /guild/{guild_id}/channel | Get guild channels
 [**GuildGuildIdChannelPost**](GuildAPI.md#GuildGuildIdChannelPost) | **Post** /guild/{guild_id}/channel | Create guild channel
 [**GuildGuildIdGet**](GuildAPI.md#GuildGuildIdGet) | **Get** /guild/{guild_id} | Get guild
+[**GuildGuildIdMemberUserIdRolesGet**](GuildAPI.md#GuildGuildIdMemberUserIdRolesGet) | **Get** /guild/{guild_id}/member/{user_id}/roles | Get member roles
 [**GuildGuildIdPatch**](GuildAPI.md#GuildGuildIdPatch) | **Patch** /guild/{guild_id} | Update guild
 [**GuildPost**](GuildAPI.md#GuildPost) | **Post** /guild | Create guild
 
@@ -490,6 +491,77 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**DtoGuild**](DtoGuild.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdMemberUserIdRolesGet
+
+> []DtoRole GuildGuildIdMemberUserIdRolesGet(ctx, guildId, userId).Execute()
+
+Get member roles
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdMemberUserIdRolesGet(context.Background(), guildId, userId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdMemberUserIdRolesGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdMemberUserIdRolesGet`: []DtoRole
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdMemberUserIdRolesGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**userId** | **int32** | User ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdMemberUserIdRolesGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+[**[]DtoRole**](DtoRole.md)
 
 ### Authorization
 

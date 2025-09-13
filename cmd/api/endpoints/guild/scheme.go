@@ -12,12 +12,14 @@ import (
 
 const (
 	ErrUnableToGetUserToken         = "unable to get user token"
+	ErrUnableToGetGuildMemberToken  = "unable to get guild member token"
 	ErrUnableToParseBody            = "unable to parse body"
 	ErrPermissionsRequired          = "permissions required"
 	ErrUnableToCreateAttachment     = "unable to create attachment"
 	ErrUnableToCreateUploadURL      = "unable to create upload url"
 	ErrIncorrectChannelID           = "incorrect channel ID"
 	ErrIncorrectGuildID             = "incorrect guild ID"
+	ErrIncorrectMemberID            = "incorrect member ID"
 	ErrFileIsTooBig                 = "file is too big"
 	ErrUnableToSendMessage          = "unable to send message"
 	ErrUnableToGetUser              = "unable to get user"
@@ -29,6 +31,7 @@ const (
 	ErrUnableToUpdateGuild          = "unable to update guild"
 	ErrUnableToGetRoles             = "unable to get roles"
 	ErrUnableToCreateChannelGroup   = "unable to create channel group"
+	ErrNotAMember                   = "not a member"
 
 	// Validation error messages
 	ErrGuildNameRequired   = "guild name is required"
@@ -153,6 +156,13 @@ type channelPermissionContext struct {
 	Roles   map[int64]*model.Role
 }
 
+type memberRole struct {
+	Id          int64  `json:"id"`
+	Name        string `json:"name"`
+	Color       int    `json:"color"`
+	Permissions int64  `json:"permissions"`
+}
+
 // DTO conversion functions
 
 func channelModelToDTO(c *model.Channel, guildId *int64, position int) dto.Channel {
@@ -179,4 +189,22 @@ func buildGuildDTO(guild *model.Guild) dto.Guild {
 		Public:      guild.Public,
 		Permissions: guild.Permissions,
 	}
+}
+
+func roleModelToDTO(r model.Role) dto.Role {
+	return dto.Role{
+		Id:          r.Id,
+		GuildId:     r.GuildId,
+		Name:        r.Name,
+		Color:       r.Color,
+		Permissions: r.Permissions,
+	}
+}
+
+func roleModelToDTOMany(roles []model.Role) []dto.Role {
+	result := make([]dto.Role, len(roles))
+	for i, r := range roles {
+		result[i] = roleModelToDTO(r)
+	}
+	return result
 }

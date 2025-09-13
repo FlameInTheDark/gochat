@@ -612,6 +612,61 @@ paths:
       summary: Get guild channel
       tags:
       - Guild
+  /guild/{guild_id}/member/{user_id}/roles:
+    get:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: User ID
+        explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Role'
+                type: array
+          description: List of user roles
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Member not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Get member roles
+      tags:
+      - Guild
   /me:
     patch:
       requestBody:
@@ -1464,6 +1519,24 @@ components:
           type: integer
         updated_at:
           type: string
+    dto.Role:
+      example:
+        color: 0
+        permissions: 5
+        guild_id: 6
+        name: name
+        id: 1
+      properties:
+        color:
+          type: integer
+        guild_id:
+          type: integer
+        id:
+          type: integer
+        name:
+          type: string
+        permissions:
+          type: integer
     dto.User:
       example:
         name: name

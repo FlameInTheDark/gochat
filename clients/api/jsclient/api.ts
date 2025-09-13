@@ -404,6 +404,43 @@ export interface DtoMessage {
 /**
  * 
  * @export
+ * @interface DtoRole
+ */
+export interface DtoRole {
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoRole
+     */
+    'color'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoRole
+     */
+    'guild_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoRole
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoRole
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoRole
+     */
+    'permissions'?: number;
+}
+/**
+ * 
+ * @export
  * @interface DtoUser
  */
 export interface DtoUser {
@@ -1767,6 +1804,44 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Get member roles
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdRolesGet: async (guildId: number, userId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdRolesGet', 'guildId', guildId)
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdRolesGet', 'userId', userId)
+            const localVarPath = `/guild/{guild_id}/member/{user_id}/roles`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Update guild
          * @param {number} guildId Guild ID
          * @param {GuildUpdateGuildRequest} guildUpdateGuildRequest Update guild data
@@ -1949,6 +2024,20 @@ export const GuildApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get member roles
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdMemberUserIdRolesGet(guildId: number, userId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoRole>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdRolesGet(guildId, userId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdMemberUserIdRolesGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Update guild
          * @param {number} guildId Guild ID
          * @param {GuildUpdateGuildRequest} guildUpdateGuildRequest Update guild data
@@ -2056,6 +2145,16 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
         },
         /**
          * 
+         * @summary Get member roles
+         * @param {GuildApiGuildGuildIdMemberUserIdRolesGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdRolesGet(requestParameters: GuildApiGuildGuildIdMemberUserIdRolesGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoRole>> {
+            return localVarFp.guildGuildIdMemberUserIdRolesGet(requestParameters.guildId, requestParameters.userId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Update guild
          * @param {GuildApiGuildGuildIdPatchRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -2152,6 +2251,16 @@ export interface GuildApiInterface {
      * @memberof GuildApiInterface
      */
     guildGuildIdGet(requestParameters: GuildApiGuildGuildIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild>;
+
+    /**
+     * 
+     * @summary Get member roles
+     * @param {GuildApiGuildGuildIdMemberUserIdRolesGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdMemberUserIdRolesGet(requestParameters: GuildApiGuildGuildIdMemberUserIdRolesGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoRole>>;
 
     /**
      * 
@@ -2309,6 +2418,27 @@ export interface GuildApiGuildGuildIdGetRequest {
 }
 
 /**
+ * Request parameters for guildGuildIdMemberUserIdRolesGet operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdMemberUserIdRolesGetRequest
+ */
+export interface GuildApiGuildGuildIdMemberUserIdRolesGetRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdMemberUserIdRolesGet
+     */
+    readonly guildId: number
+
+    /**
+     * User ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdMemberUserIdRolesGet
+     */
+    readonly userId: number
+}
+
+/**
  * Request parameters for guildGuildIdPatch operation in GuildApi.
  * @export
  * @interface GuildApiGuildGuildIdPatchRequest
@@ -2432,6 +2562,18 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      */
     public guildGuildIdGet(requestParameters: GuildApiGuildGuildIdGetRequest, options?: RawAxiosRequestConfig) {
         return GuildApiFp(this.configuration).guildGuildIdGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get member roles
+     * @param {GuildApiGuildGuildIdMemberUserIdRolesGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdMemberUserIdRolesGet(requestParameters: GuildApiGuildGuildIdMemberUserIdRolesGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdMemberUserIdRolesGet(requestParameters.guildId, requestParameters.userId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

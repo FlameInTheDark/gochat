@@ -91,6 +91,7 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdChannelGet**](docs/GuildAPI.md#guildguildidchannelget) | **Get** /guild/{guild_id}/channel | Get guild channels
 *GuildAPI* | [**GuildGuildIdChannelPost**](docs/GuildAPI.md#guildguildidchannelpost) | **Post** /guild/{guild_id}/channel | Create guild channel
 *GuildAPI* | [**GuildGuildIdGet**](docs/GuildAPI.md#guildguildidget) | **Get** /guild/{guild_id} | Get guild
+*GuildAPI* | [**GuildGuildIdMemberUserIdRolesGet**](docs/GuildAPI.md#guildguildidmemberuseridrolesget) | **Get** /guild/{guild_id}/member/{user_id}/roles | Get member roles
 *GuildAPI* | [**GuildGuildIdPatch**](docs/GuildAPI.md#guildguildidpatch) | **Patch** /guild/{guild_id} | Update guild
 *GuildAPI* | [**GuildPost**](docs/GuildAPI.md#guildpost) | **Post** /guild | Create guild
 *MessageAPI* | [**MessageChannelChannelIdAttachmentPost**](docs/MessageAPI.md#messagechannelchannelidattachmentpost) | **Post** /message/channel/{channel_id}/attachment | Create attachment
@@ -123,6 +124,7 @@ Class | Method | HTTP request | Description
  - [DtoGuild](docs/DtoGuild.md)
  - [DtoMember](docs/DtoMember.md)
  - [DtoMessage](docs/DtoMessage.md)
+ - [DtoRole](docs/DtoRole.md)
  - [DtoUser](docs/DtoUser.md)
  - [GuildCreateGuildChannelCategoryRequest](docs/GuildCreateGuildChannelCategoryRequest.md)
  - [GuildCreateGuildChannelRequest](docs/GuildCreateGuildChannelRequest.md)

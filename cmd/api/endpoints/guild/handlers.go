@@ -49,6 +49,15 @@ func (e *entity) parseCategoryID(c *fiber.Ctx) (int64, error) {
 	return categoryId, nil
 }
 
+func (e *entity) parseUserID(c *fiber.Ctx) (int64, error) {
+	memberIdStr := c.Params("user_id")
+	memberId, err := strconv.ParseInt(memberIdStr, 10, 64)
+	if err != nil {
+		return 0, fiber.NewError(fiber.StatusBadRequest, ErrIncorrectMemberID)
+	}
+	return memberId, nil
+}
+
 // validateGuildAccess validates user access to guild and returns guild context
 func (e *entity) validateGuildAccess(c *fiber.Ctx, guildId int64) (*guildContext, error) {
 	user, err := helper.GetUser(c)
@@ -777,4 +786,67 @@ func (e *entity) sendDeleteChannelEvent(guildId int64, channel *model.Channel) e
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
 	}
 	return nil
+}
+
+// GetMemberRoles
+//
+//	@Summary	Get member roles
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		guild_id	path		int64		true	"Guild ID"
+//	@Param		user_id		path		int64		true	"User ID"
+//	@Success	200			{array}		dto.Role	"List of user roles"
+//	@failure	400			{string}	string		"Incorrect request body"
+//	@failure	404			{string}	string		"Member not found"
+//	@failure	401			{string}	string		"Unauthorized"
+//	@failure	500			{string}	string		"Something bad happened"
+//	@Router		/guild/{guild_id}/member/{user_id}/roles [get]
+func (e *entity) GetMemberRoles(c *fiber.Ctx) error {
+	guildId, err := e.parseGuildID(c)
+	if err != nil {
+		return err
+	}
+
+	memberId, err := e.parseUserID(c)
+	if err != nil {
+		return err
+	}
+
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+
+	isUserMember, err := e.memb.IsGuildMember(c.UserContext(), guildId, user.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUserToken)
+	}
+	if !isUserMember {
+		return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
+	}
+
+	isGuildMember, err := e.memb.IsGuildMember(c.UserContext(), guildId, memberId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMemberToken)
+	}
+	if !isGuildMember {
+		return fiber.NewError(fiber.StatusNotFound, ErrNotAMember)
+	}
+
+	memberRoleIds, err := e.ur.GetUserRoles(c.UserContext(), guildId, memberId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
+	}
+
+	roleIds := make([]int64, len(memberRoleIds))
+	for _, role := range memberRoleIds {
+		roleIds = append(roleIds, role.RoleId)
+	}
+
+	roles, err := e.role.GetRolesBulk(c.UserContext(), roleIds)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
+	}
+
+	return c.JSON(roleModelToDTOMany(roles))
 }
