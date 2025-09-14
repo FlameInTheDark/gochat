@@ -11,6 +11,7 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/auth/endpoints/auth"
 	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/mailer"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/logmailer"
@@ -84,7 +85,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	// HTTP Router
 	s.Register(
 		"/api/v1",
-		auth.New(pg, m, cfg.AuthSecret, logger),
+		auth.New(pg, m, cfg.AuthSecret, logger, helper.RequireTokenType("refresh")),
 	)
 
 	return &App{

@@ -21,7 +21,7 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/registration", e.Registration)
 	router.Post("/confirmation", e.Confirmation)
 	router.Post("/recovery", e.PasswordRecovery)
-	router.Post("/reset", e.PasswordReset)
+	router.Post("/reset", e.middleware, e.PasswordReset)
 }
 
 type entity struct {
@@ -32,26 +32,28 @@ type entity struct {
 	log *slog.Logger
 
 	// DB entities
-	auth   authentication.Authentication
-	user   user.User
-	reg    registration.Registration
-	mailer *mailer.Mailer
-	disc   discriminator.Discriminator
+	auth       authentication.Authentication
+	user       user.User
+	reg        registration.Registration
+	mailer     *mailer.Mailer
+	disc       discriminator.Discriminator
+	middleware fiber.Handler
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(pg *pgdb.DB, m *mailer.Mailer, secret string, log *slog.Logger) server.Entity {
+func New(pg *pgdb.DB, m *mailer.Mailer, secret string, log *slog.Logger, middlewares fiber.Handler) server.Entity {
 	return &entity{
-		name:   entityName,
-		secret: secret,
-		log:    log,
-		auth:   authentication.New(pg.Conn()),
-		user:   user.New(pg.Conn()),
-		reg:    registration.New(pg.Conn()),
-		disc:   discriminator.New(pg.Conn()),
-		mailer: m,
+		name:       entityName,
+		secret:     secret,
+		log:        log,
+		auth:       authentication.New(pg.Conn()),
+		user:       user.New(pg.Conn()),
+		reg:        registration.New(pg.Conn()),
+		disc:       discriminator.New(pg.Conn()),
+		mailer:     m,
+		middleware: middlewares,
 	}
 }

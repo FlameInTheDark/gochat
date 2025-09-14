@@ -62,7 +62,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	}
 	shut.Up(pg)
 
-	jwtauth := auth.New(cfg.AuthSecret)
+	jwtauth := auth.New(cfg.AuthSecret, "gochat", "api")
 
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
 	logMiddleware := slogfiber.NewWithFilters(

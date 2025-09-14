@@ -139,6 +139,43 @@ paths:
       summary: Password Recovery
       tags:
       - Auth
+  /auth/refresh:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.RefreshTokenRequest'
+        description: Refresh token data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth.RefreshTokenResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Refresh authentication token
+      tags:
+      - Auth
   /auth/registration:
     post:
       requestBody:
@@ -1338,8 +1375,11 @@ components:
           type: string
     auth.LoginResponse:
       example:
+        refresh_token: refresh_token
         token: token
       properties:
+        refresh_token:
+          type: string
         token:
           type: string
     auth.PasswordRecoveryRequest:
@@ -1351,6 +1391,19 @@ components:
         id:
           type: integer
         password:
+          type: string
+        token:
+          type: string
+    auth.RefreshTokenRequest:
+      properties:
+        user_id:
+          type: integer
+    auth.RefreshTokenResponse:
+      example:
+        refresh_token: refresh_token
+        token: token
+      properties:
+        refresh_token:
           type: string
         token:
           type: string

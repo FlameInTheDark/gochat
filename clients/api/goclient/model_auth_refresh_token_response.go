@@ -15,34 +15,34 @@ import (
 	"encoding/json"
 )
 
-// checks if the AuthLoginResponse type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &AuthLoginResponse{}
+// checks if the AuthRefreshTokenResponse type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &AuthRefreshTokenResponse{}
 
-// AuthLoginResponse struct for AuthLoginResponse
-type AuthLoginResponse struct {
+// AuthRefreshTokenResponse struct for AuthRefreshTokenResponse
+type AuthRefreshTokenResponse struct {
 	RefreshToken *string `json:"refresh_token,omitempty"`
 	Token        *string `json:"token,omitempty"`
 }
 
-// NewAuthLoginResponse instantiates a new AuthLoginResponse object
+// NewAuthRefreshTokenResponse instantiates a new AuthRefreshTokenResponse object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewAuthLoginResponse() *AuthLoginResponse {
-	this := AuthLoginResponse{}
+func NewAuthRefreshTokenResponse() *AuthRefreshTokenResponse {
+	this := AuthRefreshTokenResponse{}
 	return &this
 }
 
-// NewAuthLoginResponseWithDefaults instantiates a new AuthLoginResponse object
+// NewAuthRefreshTokenResponseWithDefaults instantiates a new AuthRefreshTokenResponse object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewAuthLoginResponseWithDefaults() *AuthLoginResponse {
-	this := AuthLoginResponse{}
+func NewAuthRefreshTokenResponseWithDefaults() *AuthRefreshTokenResponse {
+	this := AuthRefreshTokenResponse{}
 	return &this
 }
 
 // GetRefreshToken returns the RefreshToken field value if set, zero value otherwise.
-func (o *AuthLoginResponse) GetRefreshToken() string {
+func (o *AuthRefreshTokenResponse) GetRefreshToken() string {
 	if o == nil || IsNil(o.RefreshToken) {
 		var ret string
 		return ret
@@ -52,7 +52,7 @@ func (o *AuthLoginResponse) GetRefreshToken() string {
 
 // GetRefreshTokenOk returns a tuple with the RefreshToken field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *AuthLoginResponse) GetRefreshTokenOk() (*string, bool) {
+func (o *AuthRefreshTokenResponse) GetRefreshTokenOk() (*string, bool) {
 	if o == nil || IsNil(o.RefreshToken) {
 		return nil, false
 	}
@@ -60,7 +60,7 @@ func (o *AuthLoginResponse) GetRefreshTokenOk() (*string, bool) {
 }
 
 // HasRefreshToken returns a boolean if a field has been set.
-func (o *AuthLoginResponse) HasRefreshToken() bool {
+func (o *AuthRefreshTokenResponse) HasRefreshToken() bool {
 	if o != nil && !IsNil(o.RefreshToken) {
 		return true
 	}
@@ -69,12 +69,12 @@ func (o *AuthLoginResponse) HasRefreshToken() bool {
 }
 
 // SetRefreshToken gets a reference to the given string and assigns it to the RefreshToken field.
-func (o *AuthLoginResponse) SetRefreshToken(v string) {
+func (o *AuthRefreshTokenResponse) SetRefreshToken(v string) {
 	o.RefreshToken = &v
 }
 
 // GetToken returns the Token field value if set, zero value otherwise.
-func (o *AuthLoginResponse) GetToken() string {
+func (o *AuthRefreshTokenResponse) GetToken() string {
 	if o == nil || IsNil(o.Token) {
 		var ret string
 		return ret
@@ -84,7 +84,7 @@ func (o *AuthLoginResponse) GetToken() string {
 
 // GetTokenOk returns a tuple with the Token field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *AuthLoginResponse) GetTokenOk() (*string, bool) {
+func (o *AuthRefreshTokenResponse) GetTokenOk() (*string, bool) {
 	if o == nil || IsNil(o.Token) {
 		return nil, false
 	}
@@ -92,7 +92,7 @@ func (o *AuthLoginResponse) GetTokenOk() (*string, bool) {
 }
 
 // HasToken returns a boolean if a field has been set.
-func (o *AuthLoginResponse) HasToken() bool {
+func (o *AuthRefreshTokenResponse) HasToken() bool {
 	if o != nil && !IsNil(o.Token) {
 		return true
 	}
@@ -101,11 +101,11 @@ func (o *AuthLoginResponse) HasToken() bool {
 }
 
 // SetToken gets a reference to the given string and assigns it to the Token field.
-func (o *AuthLoginResponse) SetToken(v string) {
+func (o *AuthRefreshTokenResponse) SetToken(v string) {
 	o.Token = &v
 }
 
-func (o AuthLoginResponse) MarshalJSON() ([]byte, error) {
+func (o AuthRefreshTokenResponse) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -113,7 +113,7 @@ func (o AuthLoginResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o AuthLoginResponse) ToMap() (map[string]interface{}, error) {
+func (o AuthRefreshTokenResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.RefreshToken) {
 		toSerialize["refresh_token"] = o.RefreshToken
@@ -124,38 +124,38 @@ func (o AuthLoginResponse) ToMap() (map[string]interface{}, error) {
 	return toSerialize, nil
 }
 
-type NullableAuthLoginResponse struct {
-	value *AuthLoginResponse
+type NullableAuthRefreshTokenResponse struct {
+	value *AuthRefreshTokenResponse
 	isSet bool
 }
 
-func (v NullableAuthLoginResponse) Get() *AuthLoginResponse {
+func (v NullableAuthRefreshTokenResponse) Get() *AuthRefreshTokenResponse {
 	return v.value
 }
 
-func (v *NullableAuthLoginResponse) Set(val *AuthLoginResponse) {
+func (v *NullableAuthRefreshTokenResponse) Set(val *AuthRefreshTokenResponse) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableAuthLoginResponse) IsSet() bool {
+func (v NullableAuthRefreshTokenResponse) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableAuthLoginResponse) Unset() {
+func (v *NullableAuthRefreshTokenResponse) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableAuthLoginResponse(val *AuthLoginResponse) *NullableAuthLoginResponse {
-	return &NullableAuthLoginResponse{value: val, isSet: true}
+func NewNullableAuthRefreshTokenResponse(val *AuthRefreshTokenResponse) *NullableAuthRefreshTokenResponse {
+	return &NullableAuthRefreshTokenResponse{value: val, isSet: true}
 }
 
-func (v NullableAuthLoginResponse) MarshalJSON() ([]byte, error) {
+func (v NullableAuthRefreshTokenResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableAuthLoginResponse) UnmarshalJSON(src []byte) error {
+func (v *NullableAuthRefreshTokenResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

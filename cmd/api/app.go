@@ -15,6 +15,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mq"
@@ -104,6 +105,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
 	s.AuthMiddleware(cfg.AuthSecret)
 	s.RateLimitMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
+	s.Use(helper.RequireTokenType("access"))
 
 	// HTTP Router
 	s.Register(

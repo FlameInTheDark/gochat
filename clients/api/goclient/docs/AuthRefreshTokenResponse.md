@@ -1,4 +1,4 @@
-# AuthLoginResponse
+# AuthRefreshTokenResponse
 
 ## Properties
 
@@ -9,70 +9,70 @@ Name | Type | Description | Notes
 
 ## Methods
 
-### NewAuthLoginResponse
+### NewAuthRefreshTokenResponse
 
-`func NewAuthLoginResponse() *AuthLoginResponse`
+`func NewAuthRefreshTokenResponse() *AuthRefreshTokenResponse`
 
-NewAuthLoginResponse instantiates a new AuthLoginResponse object
+NewAuthRefreshTokenResponse instantiates a new AuthRefreshTokenResponse object
 This constructor will assign default values to properties that have it defined,
 and makes sure properties required by API are set, but the set of arguments
 will change when the set of required properties is changed
 
-### NewAuthLoginResponseWithDefaults
+### NewAuthRefreshTokenResponseWithDefaults
 
-`func NewAuthLoginResponseWithDefaults() *AuthLoginResponse`
+`func NewAuthRefreshTokenResponseWithDefaults() *AuthRefreshTokenResponse`
 
-NewAuthLoginResponseWithDefaults instantiates a new AuthLoginResponse object
+NewAuthRefreshTokenResponseWithDefaults instantiates a new AuthRefreshTokenResponse object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
 ### GetRefreshToken
 
-`func (o *AuthLoginResponse) GetRefreshToken() string`
+`func (o *AuthRefreshTokenResponse) GetRefreshToken() string`
 
 GetRefreshToken returns the RefreshToken field if non-nil, zero value otherwise.
 
 ### GetRefreshTokenOk
 
-`func (o *AuthLoginResponse) GetRefreshTokenOk() (*string, bool)`
+`func (o *AuthRefreshTokenResponse) GetRefreshTokenOk() (*string, bool)`
 
 GetRefreshTokenOk returns a tuple with the RefreshToken field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetRefreshToken
 
-`func (o *AuthLoginResponse) SetRefreshToken(v string)`
+`func (o *AuthRefreshTokenResponse) SetRefreshToken(v string)`
 
 SetRefreshToken sets RefreshToken field to given value.
 
 ### HasRefreshToken
 
-`func (o *AuthLoginResponse) HasRefreshToken() bool`
+`func (o *AuthRefreshTokenResponse) HasRefreshToken() bool`
 
 HasRefreshToken returns a boolean if a field has been set.
 
 ### GetToken
 
-`func (o *AuthLoginResponse) GetToken() string`
+`func (o *AuthRefreshTokenResponse) GetToken() string`
 
 GetToken returns the Token field if non-nil, zero value otherwise.
 
 ### GetTokenOk
 
-`func (o *AuthLoginResponse) GetTokenOk() (*string, bool)`
+`func (o *AuthRefreshTokenResponse) GetTokenOk() (*string, bool)`
 
 GetTokenOk returns a tuple with the Token field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetToken
 
-`func (o *AuthLoginResponse) SetToken(v string)`
+`func (o *AuthRefreshTokenResponse) SetToken(v string)`
 
 SetToken sets Token field to given value.
 
 ### HasToken
 
-`func (o *AuthLoginResponse) HasToken() bool`
+`func (o *AuthRefreshTokenResponse) HasToken() bool`
 
 HasToken returns a boolean if a field has been set.
 

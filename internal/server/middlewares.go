@@ -16,16 +16,17 @@ import (
 func (s *Server) AuthMiddleware(secret string) {
 	s.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte(secret)},
+		Claims:     &helper.Claims{},
 		Filter: func(c *fiber.Ctx) bool {
 			switch string(c.Request().RequestURI()) {
-			case "/api/v1/webhook/storage/events":
-				fallthrough
-			case "/api/v1/auth/login":
-				fallthrough
-			case "/api/v1/auth/registration":
-				fallthrough
 			case "/docs/swagger":
-				fallthrough
+				return true
+			case "/api/v1/webhook/storage/events":
+				return true
+			case "/api/v1/auth/login":
+				return true
+			case "/api/v1/auth/registration":
+				return true
 			case "/api/v1/auth/confirmation":
 				return true
 			}

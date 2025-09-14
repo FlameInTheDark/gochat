@@ -7,6 +7,7 @@ Method | HTTP request | Description
 [**AuthConfirmationPost**](AuthAPI.md#AuthConfirmationPost) | **Post** /auth/confirmation | Confirmation
 [**AuthLoginPost**](AuthAPI.md#AuthLoginPost) | **Post** /auth/login | Authentication
 [**AuthRecoveryPost**](AuthAPI.md#AuthRecoveryPost) | **Post** /auth/recovery | Password Recovery
+[**AuthRefreshPost**](AuthAPI.md#AuthRefreshPost) | **Post** /auth/refresh | Refresh authentication token
 [**AuthRegistrationPost**](AuthAPI.md#AuthRegistrationPost) | **Post** /auth/registration | Registration
 [**AuthResetPost**](AuthAPI.md#AuthResetPost) | **Post** /auth/reset | Password Reset
 
@@ -189,6 +190,70 @@ Name | Type | Description  | Notes
 ### Return type
 
 **string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## AuthRefreshPost
+
+> AuthRefreshTokenResponse AuthRefreshPost(ctx).AuthRefreshTokenRequest(authRefreshTokenRequest).Execute()
+
+Refresh authentication token
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	authRefreshTokenRequest := *openapiclient.NewAuthRefreshTokenRequest() // AuthRefreshTokenRequest | Refresh token data
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.AuthAPI.AuthRefreshPost(context.Background()).AuthRefreshTokenRequest(authRefreshTokenRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `AuthAPI.AuthRefreshPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `AuthRefreshPost`: AuthRefreshTokenResponse
+	fmt.Fprintf(os.Stdout, "Response from `AuthAPI.AuthRefreshPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiAuthRefreshPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **authRefreshTokenRequest** | [**AuthRefreshTokenRequest**](AuthRefreshTokenRequest.md) | Refresh token data | 
+
+### Return type
+
+[**AuthRefreshTokenResponse**](AuthRefreshTokenResponse.md)
 
 ### Authorization
 

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/dto"
-	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 )
 
@@ -20,24 +19,17 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 		h.log.Error("Error unmarshalling hello message", "error", err)
 		return
 	}
-	token, err := h.jwt.Parse(m.Token)
+	token, err := h.jwt.ParseAccess(m.Token)
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()
 		h.log.Error("Error parsing token", "error", err)
 		return
 	}
-	usr, err := helper.GetUserFromToken(token)
-	if err != nil || usr == nil {
-		h.initTimer.Stop()
-		h.closer()
-		h.log.Error("Error getting user from token", "error", err)
-		return
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(h.hbTimeout))
 	defer cancel()
-	dbuser, err := h.u.GetUserById(ctx, usr.Id)
+	dbuser, err := h.u.GetUserById(ctx, token.UserID)
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()
@@ -70,7 +62,7 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 			h.log.Error("Error closing WS connection after timeout", "error", err)
 		}
 	})
-	err = h.sub.Subscribe("user", fmt.Sprintf("user.%d", usr.Id))
+	err = h.sub.Subscribe("user", fmt.Sprintf("user.%d", token.UserID))
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()
@@ -80,7 +72,7 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 
 	ctx, mcancel := context.WithTimeout(context.Background(), time.Second*time.Duration(h.hbTimeout))
 	defer mcancel()
-	guilds, err := h.m.GetUserGuilds(ctx, usr.Id)
+	guilds, err := h.m.GetUserGuilds(ctx, token.UserID)
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()

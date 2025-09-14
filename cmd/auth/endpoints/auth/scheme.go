@@ -19,11 +19,13 @@ const (
 	ErrUnableToGetPasswordHash          = "unable to get password hash"
 	ErrPasswordIsTooShort               = "password is too short"
 	ErrUnableToParseBody                = "unable to parse body"
+	ErrUnableToCheckIsRefreshToken      = "unable to check is refresh token"
 	ErrUnableToSendEmail                = "unable to send email"
 	ErrEmailAlreadySent                 = "email already sent"
 	ErrUnableToGenerateToken            = "unable to generate token"
 	ErrUnableToGetAuthenticationByEmail = "unable to get authentication by email"
 	ErrUnableToSignAuthenticationToken  = "unable to sign authentication token"
+	ErrUnableToSignRefreshToken         = "unable to sign refresh token"
 	ErrUserIsBanned                     = "user is banned"
 	ErrUnableToCompareHash              = "unable to compare hash"
 	ErrEmailNotFound                    = "email not found"
@@ -71,7 +73,25 @@ func (r LoginRequest) Validate() error {
 }
 
 type LoginResponse struct {
-	Token string `json:"token"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+type RefreshTokenRequest struct {
+	UserId int64 `json:"user_id"`
+}
+
+func (r RefreshTokenRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.UserId,
+			validation.Required,
+		),
+	)
+}
+
+type RefreshTokenResponse struct {
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type RegisterRequest struct {

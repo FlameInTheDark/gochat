@@ -6,12 +6,10 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
-
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/mailer"
+	"github.com/gofiber/fiber/v2"
 )
 
 // Login
@@ -52,23 +50,56 @@ func (e *entity) Login(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnauthorized, ErrUserIsBanned)
 	}
 
-	// Create the Claims
-	claims := jwt.MapClaims{
-		"name": user.Name,
-		"id":   user.Id,
-		"exp":  time.Now().Add(time.Hour * 72).Unix(),
-	}
-
-	// Create token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte(e.secret))
+	t, rt, err := helper.IssueTokens(user.Id, e.secret)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSignAuthenticationToken)
+		return err
 	}
 
-	return c.JSON(LoginResponse{Token: t})
+	return c.JSON(LoginResponse{Token: t, RefreshToken: rt})
+}
+
+// RefreshToken
+//
+//	@Summary	Refresh authentication token
+//	@Produce	json
+//	@Tags		Auth
+//	@Param		request	body		RefreshTokenRequest	true	"Refresh token data"
+//	@Success	200		{object}	RefreshTokenResponse
+//	@failure	400		{string}	string	"Incorrect request body"
+//	@failure	401		{string}	string	"Unauthorized"
+//	@failure	500		{string}	string	"Something bad happened"
+//	@Router		/auth/refresh [post]
+func (e *entity) RefreshToken(c *fiber.Ctx) error {
+	isRefresh, err := helper.IsExpired(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToCheckIsRefreshToken)
+	}
+	if !isRefresh {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	var req RefreshTokenRequest
+	err = c.BodyParser(&req)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	user, err := e.user.GetUserById(c.UserContext(), req.UserId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnauthorized, ErrUnableToGetUserById)
+	}
+	if user.Blocked {
+		return fiber.NewError(fiber.StatusUnauthorized, ErrUserIsBanned)
+	}
+
+	t, rt, err := helper.IssueTokens(user.Id, e.secret)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(RefreshTokenResponse{Token: t, RefreshToken: rt})
 }
 
 // Registration

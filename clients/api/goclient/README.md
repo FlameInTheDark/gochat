@@ -82,6 +82,7 @@ Class | Method | HTTP request | Description
 *AuthAPI* | [**AuthConfirmationPost**](docs/AuthAPI.md#authconfirmationpost) | **Post** /auth/confirmation | Confirmation
 *AuthAPI* | [**AuthLoginPost**](docs/AuthAPI.md#authloginpost) | **Post** /auth/login | Authentication
 *AuthAPI* | [**AuthRecoveryPost**](docs/AuthAPI.md#authrecoverypost) | **Post** /auth/recovery | Password Recovery
+*AuthAPI* | [**AuthRefreshPost**](docs/AuthAPI.md#authrefreshpost) | **Post** /auth/refresh | Refresh authentication token
 *AuthAPI* | [**AuthRegistrationPost**](docs/AuthAPI.md#authregistrationpost) | **Post** /auth/registration | Registration
 *AuthAPI* | [**AuthResetPost**](docs/AuthAPI.md#authresetpost) | **Post** /auth/reset | Password Reset
 *GuildAPI* | [**GuildGuildIdCategoryCategoryIdDelete**](docs/GuildAPI.md#guildguildidcategorycategoryiddelete) | **Delete** /guild/{guild_id}/category/{category_id} | Delete channel category
@@ -117,6 +118,8 @@ Class | Method | HTTP request | Description
  - [AuthLoginResponse](docs/AuthLoginResponse.md)
  - [AuthPasswordRecoveryRequest](docs/AuthPasswordRecoveryRequest.md)
  - [AuthPasswordResetRequest](docs/AuthPasswordResetRequest.md)
+ - [AuthRefreshTokenRequest](docs/AuthRefreshTokenRequest.md)
+ - [AuthRefreshTokenResponse](docs/AuthRefreshTokenResponse.md)
  - [AuthRegisterRequest](docs/AuthRegisterRequest.md)
  - [DtoAttachment](docs/DtoAttachment.md)
  - [DtoAttachmentUpload](docs/DtoAttachmentUpload.md)
