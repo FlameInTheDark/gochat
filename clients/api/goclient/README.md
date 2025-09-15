@@ -82,14 +82,16 @@ Class | Method | HTTP request | Description
 *AuthAPI* | [**AuthConfirmationPost**](docs/AuthAPI.md#authconfirmationpost) | **Post** /auth/confirmation | Confirmation
 *AuthAPI* | [**AuthLoginPost**](docs/AuthAPI.md#authloginpost) | **Post** /auth/login | Authentication
 *AuthAPI* | [**AuthRecoveryPost**](docs/AuthAPI.md#authrecoverypost) | **Post** /auth/recovery | Password Recovery
-*AuthAPI* | [**AuthRefreshPost**](docs/AuthAPI.md#authrefreshpost) | **Post** /auth/refresh | Refresh authentication token
+*AuthAPI* | [**AuthRefreshGet**](docs/AuthAPI.md#authrefreshget) | **Get** /auth/refresh | Refresh authentication token
 *AuthAPI* | [**AuthRegistrationPost**](docs/AuthAPI.md#authregistrationpost) | **Post** /auth/registration | Registration
 *AuthAPI* | [**AuthResetPost**](docs/AuthAPI.md#authresetpost) | **Post** /auth/reset | Password Reset
 *GuildAPI* | [**GuildGuildIdCategoryCategoryIdDelete**](docs/GuildAPI.md#guildguildidcategorycategoryiddelete) | **Delete** /guild/{guild_id}/category/{category_id} | Delete channel category
 *GuildAPI* | [**GuildGuildIdCategoryPost**](docs/GuildAPI.md#guildguildidcategorypost) | **Post** /guild/{guild_id}/category | Create guild channel category
 *GuildAPI* | [**GuildGuildIdChannelChannelIdDelete**](docs/GuildAPI.md#guildguildidchannelchanneliddelete) | **Delete** /guild/{guild_id}/channel/{channel_id} | Delete channel
 *GuildAPI* | [**GuildGuildIdChannelChannelIdGet**](docs/GuildAPI.md#guildguildidchannelchannelidget) | **Get** /guild/{guild_id}/channel/{channel_id} | Get guild channel
+*GuildAPI* | [**GuildGuildIdChannelChannelIdPatch**](docs/GuildAPI.md#guildguildidchannelchannelidpatch) | **Patch** /guild/{guild_id}/channel/{channel_id} | Change channels data
 *GuildAPI* | [**GuildGuildIdChannelGet**](docs/GuildAPI.md#guildguildidchannelget) | **Get** /guild/{guild_id}/channel | Get guild channels
+*GuildAPI* | [**GuildGuildIdChannelOrderPatch**](docs/GuildAPI.md#guildguildidchannelorderpatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 *GuildAPI* | [**GuildGuildIdChannelPost**](docs/GuildAPI.md#guildguildidchannelpost) | **Post** /guild/{guild_id}/channel | Create guild channel
 *GuildAPI* | [**GuildGuildIdGet**](docs/GuildAPI.md#guildguildidget) | **Get** /guild/{guild_id} | Get guild
 *GuildAPI* | [**GuildGuildIdMemberUserIdRolesGet**](docs/GuildAPI.md#guildguildidmemberuseridrolesget) | **Get** /guild/{guild_id}/member/{user_id}/roles | Get member roles
@@ -118,7 +120,6 @@ Class | Method | HTTP request | Description
  - [AuthLoginResponse](docs/AuthLoginResponse.md)
  - [AuthPasswordRecoveryRequest](docs/AuthPasswordRecoveryRequest.md)
  - [AuthPasswordResetRequest](docs/AuthPasswordResetRequest.md)
- - [AuthRefreshTokenRequest](docs/AuthRefreshTokenRequest.md)
  - [AuthRefreshTokenResponse](docs/AuthRefreshTokenResponse.md)
  - [AuthRegisterRequest](docs/AuthRegisterRequest.md)
  - [DtoAttachment](docs/DtoAttachment.md)
@@ -129,9 +130,12 @@ Class | Method | HTTP request | Description
  - [DtoMessage](docs/DtoMessage.md)
  - [DtoRole](docs/DtoRole.md)
  - [DtoUser](docs/DtoUser.md)
+ - [GuildChannelOrder](docs/GuildChannelOrder.md)
  - [GuildCreateGuildChannelCategoryRequest](docs/GuildCreateGuildChannelCategoryRequest.md)
  - [GuildCreateGuildChannelRequest](docs/GuildCreateGuildChannelRequest.md)
  - [GuildCreateGuildRequest](docs/GuildCreateGuildRequest.md)
+ - [GuildPatchGuildChannelOrderRequest](docs/GuildPatchGuildChannelOrderRequest.md)
+ - [GuildPatchGuildChannelRequest](docs/GuildPatchGuildChannelRequest.md)
  - [GuildUpdateGuildRequest](docs/GuildUpdateGuildRequest.md)
  - [MessageSendMessageRequest](docs/MessageSendMessageRequest.md)
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)

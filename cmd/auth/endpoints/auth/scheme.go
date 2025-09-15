@@ -20,6 +20,7 @@ const (
 	ErrPasswordIsTooShort               = "password is too short"
 	ErrUnableToParseBody                = "unable to parse body"
 	ErrUnableToCheckIsRefreshToken      = "unable to check is refresh token"
+	ErrUnableToGetUserFromToken         = "unable to get user from token"
 	ErrUnableToSendEmail                = "unable to send email"
 	ErrEmailAlreadySent                 = "email already sent"
 	ErrUnableToGenerateToken            = "unable to generate token"

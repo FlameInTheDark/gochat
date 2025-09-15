@@ -63,38 +63,26 @@ func (e *entity) Login(c *fiber.Ctx) error {
 //	@Summary	Refresh authentication token
 //	@Produce	json
 //	@Tags		Auth
-//	@Param		request	body		RefreshTokenRequest	true	"Refresh token data"
-//	@Success	200		{object}	RefreshTokenResponse
-//	@failure	400		{string}	string	"Incorrect request body"
-//	@failure	401		{string}	string	"Unauthorized"
-//	@failure	500		{string}	string	"Something bad happened"
-//	@Router		/auth/refresh [post]
+//	@Success	200	{object}	RefreshTokenResponse
+//	@failure	400	{string}	string	"Incorrect request body"
+//	@failure	401	{string}	string	"Unauthorized"
+//	@failure	500	{string}	string	"Something bad happened"
+//	@Router		/auth/refresh [get]
 func (e *entity) RefreshToken(c *fiber.Ctx) error {
-	isRefresh, err := helper.IsExpired(c)
+	tu, err := helper.GetUser(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToCheckIsRefreshToken)
-	}
-	if !isRefresh {
-		return c.SendStatus(fiber.StatusUnauthorized)
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUserFromToken)
 	}
 
-	var req RefreshTokenRequest
-	err = c.BodyParser(&req)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
-	}
-	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
-	}
-	user, err := e.user.GetUserById(c.UserContext(), req.UserId)
+	u, err := e.user.GetUserById(c.UserContext(), tu.Id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnauthorized, ErrUnableToGetUserById)
 	}
-	if user.Blocked {
+	if u.Blocked {
 		return fiber.NewError(fiber.StatusUnauthorized, ErrUserIsBanned)
 	}
 
-	t, rt, err := helper.IssueTokens(user.Id, e.secret)
+	t, rt, err := helper.IssueTokens(u.Id, e.secret)
 	if err != nil {
 		return err
 	}

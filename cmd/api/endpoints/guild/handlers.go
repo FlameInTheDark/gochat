@@ -850,3 +850,177 @@ func (e *entity) GetMemberRoles(c *fiber.Ctx) error {
 
 	return c.JSON(roleModelToDTOMany(roles))
 }
+
+// PatchChannelOrder
+//
+//	@Summary	Change channels order
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		guild_id	path		int64							true	"Guild ID"
+//	@Param		request		body		PatchGuildChannelOrderRequest	true	"Update channel order data"
+//	@Success	200			{string}	string							"Ok"
+//	@failure	400			{string}	string							"Incorrect request body"
+//	@failure	404			{string}	string							"Member not found"
+//	@failure	401			{string}	string							"Unauthorized"
+//	@failure	406			{string}	string							"Permissions required"
+//	@failure	500			{string}	string							"Something bad happened"
+//	@Router		/guild/{guild_id}/channel/order [patch]
+func (e *entity) PatchChannelOrder(c *fiber.Ctx) error {
+	guildId, err := e.parseGuildID(c)
+	if err != nil {
+		return err
+	}
+
+	var req PatchGuildChannelOrderRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	}
+
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	// Permission check: user must be able to manage channels in this guild
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+
+	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageChannels)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	if !hasPermission {
+		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+	}
+
+	// Ensure we only update channels that belong to this guild
+	guildChannels, err := e.gc.GetGuildChannels(c.UserContext(), guildId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	allowed := make(map[int64]struct{}, len(guildChannels))
+	for _, gch := range guildChannels {
+		allowed[gch.ChannelId] = struct{}{}
+	}
+
+	// Build update list
+	updates := make([]model.GuildChannelUpdatePosition, 0, len(req.Channels))
+	evt := make([]dto.ChannelOrder, 0, len(req.Channels))
+	for _, ch := range req.Channels {
+		if _, ok := allowed[ch.Id]; !ok {
+			continue
+		}
+		updates = append(updates, model.GuildChannelUpdatePosition{
+			GuildId:   guildId,
+			ChannelId: ch.Id,
+			Position:  ch.Position,
+		})
+		evt = append(evt, dto.ChannelOrder{Id: ch.Id, Position: ch.Position})
+	}
+
+	if len(updates) == 0 {
+		// Nothing to update
+		return c.SendStatus(fiber.StatusOK)
+	}
+
+	// Apply positions
+	if err := e.gc.SetGuildChannelPosition(c.UserContext(), updates); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	// Notify clients about the new order
+	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateChannelList{
+		GuildId:  &guildId,
+		Channels: evt,
+	}); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+// PatchChannel
+//
+//	@Summary	Change channels data
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		guild_id	path		int64						true	"Guild ID"
+//	@Param		channel_id	path		int64						true	"Channel ID"
+//	@Param		req			body		PatchGuildChannelRequest	true	"Request body"
+//	@Success	200			{object}	dto.Channel					"Ok"
+//	@failure	400			{string}	string						"Incorrect request body"
+//	@failure	404			{string}	string						"Member not found"
+//	@failure	401			{string}	string						"Unauthorized"
+//	@failure	406			{string}	string						"Permissions required"
+//	@failure	500			{string}	string						"Something bad happened"
+//	@Router		/guild/{guild_id}/channel/{channel_id} [patch]
+func (e *entity) PatchChannel(c *fiber.Ctx) error {
+	guildId, err := e.parseGuildID(c)
+	if err != nil {
+		return err
+	}
+
+	channelId, err := e.parseChannelID(c)
+	if err != nil {
+		return err
+	}
+
+	var req PatchGuildChannelRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	}
+
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	// Permission check: user must be able to manage channels in this guild
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+
+	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageChannels)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	if !hasPermission {
+		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+	}
+
+	if req.ParentId != nil && *req.ParentId == channelId {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToSetParentAsSelf)
+	}
+
+	guildChannel, err := e.gc.GetGuildChannel(c.UserContext(), guildId, channelId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
+	}
+
+	ch, err := e.ch.GetChannel(c.UserContext(), guildChannel.ChannelId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
+	}
+
+	if req.ParentId != nil && ch.Type == model.ChannelTypeGuildCategory {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToSetParentForCategory)
+	}
+
+	upd, err := e.ch.UpdateChannel(c.UserContext(), guildChannel.ChannelId, req.ParentId, req.Private, req.Name, req.Topic)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotModified, ErrUnableToUpdateChannel)
+	}
+
+	resp := channelModelToDTO(&upd, &guildId, guildChannel.Position)
+
+	// Notify clients about the channel update
+	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateChannel{
+		GuildId: &guildId,
+		Channel: resp,
+	}); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
+	}
+
+	return c.JSON(resp)
+}

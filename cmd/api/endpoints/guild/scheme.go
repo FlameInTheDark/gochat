@@ -31,6 +31,10 @@ const (
 	ErrUnableToUpdateGuild          = "unable to update guild"
 	ErrUnableToGetRoles             = "unable to get roles"
 	ErrUnableToCreateChannelGroup   = "unable to create channel group"
+	ErrUnableToGetChannel           = "unable to get channel"
+	ErrUnableToUpdateChannel        = "unable to update channel"
+	ErrUnableToSetParentAsSelf      = "unable to set parent as self"
+	ErrUnableToSetParentForCategory = "unable to set parent for category"
 	ErrNotAMember                   = "not a member"
 
 	// Validation error messages
@@ -137,6 +141,61 @@ func (r CreateGuildChannelRequest) Validate() error {
 		),
 		validation.Field(&r.ParentId,
 			validation.When(r.ParentId != nil, validation.Min(int64(1)).Error(ErrParentIdInvalid)),
+		),
+	)
+}
+
+type ChannelOrder struct {
+	Id       int64 `json:"id"`
+	Position int   `json:"position"`
+}
+
+type PatchGuildChannelOrderRequest struct {
+	Channels []ChannelOrder `json:"channels"`
+}
+
+func (c ChannelOrder) Validate() error {
+	return validation.ValidateStruct(
+		&c,
+		validation.Field(&c.Id, validation.Required),
+	)
+}
+
+func (r PatchGuildChannelOrderRequest) Validate() error {
+	return validation.ValidateStruct(
+		&r,
+		validation.Field(
+			&r.Channels,
+			validation.Required,
+			validation.Each(validation.By(func(v interface{}) error {
+				co, ok := v.(ChannelOrder)
+				if !ok {
+					return validation.NewError("validation", "invalid channel element")
+				}
+				return co.Validate()
+			})),
+		),
+	)
+}
+
+type PatchGuildChannelRequest struct {
+	Name     *string `json:"name,omitempty"`
+	ParentId *int64  `json:"parent_id,omitempty"`
+	Private  *bool   `json:"private,omitempty"`
+	Topic    *string `json:"topic,omitempty"`
+}
+
+func (r PatchGuildChannelRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.When(r.Name != nil,
+				validation.RuneLength(2, 0).Error(ErrChannelNameTooShort),
+				validation.RuneLength(0, 100).Error(ErrChannelNameTooLong),
+				validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
+			),
+		),
+		validation.Field(&r.ParentId, validation.When(r.ParentId != nil,
+			validation.Min(int64(1)).Error(ErrParentIdInvalid)),
 		),
 	)
 }

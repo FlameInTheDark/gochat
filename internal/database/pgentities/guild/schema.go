@@ -3,7 +3,6 @@ package guild
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -124,7 +123,7 @@ func (e *Entity) GetGuildsList(ctx context.Context, ids []int64) ([]model.Guild,
 	if err != nil {
 		return nil, fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	log.Println("GetGuildsList", sql, args)
+
 	err = e.c.SelectContext(ctx, &gs, sql, args...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get guilds: %w", err)

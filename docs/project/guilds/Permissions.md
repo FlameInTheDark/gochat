@@ -68,7 +68,6 @@ var DefaultPermissions = CreatePermissions(
 	PermTextCreateThreads,
 	PermTextAddReactions,
 	PermTextAttachFiles,
-	PermTextAddReactions,
 	PermTextReadMessageHistory,
 	PermVoiceConnect,
 	PermVoiceSpeak,

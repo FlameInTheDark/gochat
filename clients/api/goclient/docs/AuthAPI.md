@@ -7,7 +7,7 @@ Method | HTTP request | Description
 [**AuthConfirmationPost**](AuthAPI.md#AuthConfirmationPost) | **Post** /auth/confirmation | Confirmation
 [**AuthLoginPost**](AuthAPI.md#AuthLoginPost) | **Post** /auth/login | Authentication
 [**AuthRecoveryPost**](AuthAPI.md#AuthRecoveryPost) | **Post** /auth/recovery | Password Recovery
-[**AuthRefreshPost**](AuthAPI.md#AuthRefreshPost) | **Post** /auth/refresh | Refresh authentication token
+[**AuthRefreshGet**](AuthAPI.md#AuthRefreshGet) | **Get** /auth/refresh | Refresh authentication token
 [**AuthRegistrationPost**](AuthAPI.md#AuthRegistrationPost) | **Post** /auth/registration | Registration
 [**AuthResetPost**](AuthAPI.md#AuthResetPost) | **Post** /auth/reset | Password Reset
 
@@ -205,9 +205,9 @@ No authorization required
 [[Back to README]](../README.md)
 
 
-## AuthRefreshPost
+## AuthRefreshGet
 
-> AuthRefreshTokenResponse AuthRefreshPost(ctx).AuthRefreshTokenRequest(authRefreshTokenRequest).Execute()
+> AuthRefreshTokenResponse AuthRefreshGet(ctx).Execute()
 
 Refresh authentication token
 
@@ -224,32 +224,27 @@ import (
 )
 
 func main() {
-	authRefreshTokenRequest := *openapiclient.NewAuthRefreshTokenRequest() // AuthRefreshTokenRequest | Refresh token data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.AuthAPI.AuthRefreshPost(context.Background()).AuthRefreshTokenRequest(authRefreshTokenRequest).Execute()
+	resp, r, err := apiClient.AuthAPI.AuthRefreshGet(context.Background()).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `AuthAPI.AuthRefreshPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `AuthAPI.AuthRefreshGet``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `AuthRefreshPost`: AuthRefreshTokenResponse
-	fmt.Fprintf(os.Stdout, "Response from `AuthAPI.AuthRefreshPost`: %v\n", resp)
+	// response from `AuthRefreshGet`: AuthRefreshTokenResponse
+	fmt.Fprintf(os.Stdout, "Response from `AuthAPI.AuthRefreshGet`: %v\n", resp)
 }
 ```
 
 ### Path Parameters
 
-
+This endpoint does not need any parameter.
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiAuthRefreshPostRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiAuthRefreshGetRequest struct via the builder pattern
 
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **authRefreshTokenRequest** | [**AuthRefreshTokenRequest**](AuthRefreshTokenRequest.md) | Refresh token data | 
 
 ### Return type
 
@@ -261,7 +256,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

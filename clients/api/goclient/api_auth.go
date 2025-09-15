@@ -470,30 +470,23 @@ func (a *AuthAPIService) AuthRecoveryPostExecute(r ApiAuthRecoveryPostRequest) (
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiAuthRefreshPostRequest struct {
-	ctx                     context.Context
-	ApiService              *AuthAPIService
-	authRefreshTokenRequest *AuthRefreshTokenRequest
+type ApiAuthRefreshGetRequest struct {
+	ctx        context.Context
+	ApiService *AuthAPIService
 }
 
-// Refresh token data
-func (r ApiAuthRefreshPostRequest) AuthRefreshTokenRequest(authRefreshTokenRequest AuthRefreshTokenRequest) ApiAuthRefreshPostRequest {
-	r.authRefreshTokenRequest = &authRefreshTokenRequest
-	return r
-}
-
-func (r ApiAuthRefreshPostRequest) Execute() (*AuthRefreshTokenResponse, *http.Response, error) {
-	return r.ApiService.AuthRefreshPostExecute(r)
+func (r ApiAuthRefreshGetRequest) Execute() (*AuthRefreshTokenResponse, *http.Response, error) {
+	return r.ApiService.AuthRefreshGetExecute(r)
 }
 
 /*
-AuthRefreshPost Refresh authentication token
+AuthRefreshGet Refresh authentication token
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiAuthRefreshPostRequest
+	@return ApiAuthRefreshGetRequest
 */
-func (a *AuthAPIService) AuthRefreshPost(ctx context.Context) ApiAuthRefreshPostRequest {
-	return ApiAuthRefreshPostRequest{
+func (a *AuthAPIService) AuthRefreshGet(ctx context.Context) ApiAuthRefreshGetRequest {
+	return ApiAuthRefreshGetRequest{
 		ApiService: a,
 		ctx:        ctx,
 	}
@@ -502,15 +495,15 @@ func (a *AuthAPIService) AuthRefreshPost(ctx context.Context) ApiAuthRefreshPost
 // Execute executes the request
 //
 //	@return AuthRefreshTokenResponse
-func (a *AuthAPIService) AuthRefreshPostExecute(r ApiAuthRefreshPostRequest) (*AuthRefreshTokenResponse, *http.Response, error) {
+func (a *AuthAPIService) AuthRefreshGetExecute(r ApiAuthRefreshGetRequest) (*AuthRefreshTokenResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPost
+		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
 		localVarReturnValue *AuthRefreshTokenResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.AuthRefreshPost")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.AuthRefreshGet")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -520,12 +513,9 @@ func (a *AuthAPIService) AuthRefreshPostExecute(r ApiAuthRefreshPostRequest) (*A
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.authRefreshTokenRequest == nil {
-		return localVarReturnValue, nil, reportError("authRefreshTokenRequest is required and must be specified")
-	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -541,8 +531,6 @@ func (a *AuthAPIService) AuthRefreshPostExecute(r ApiAuthRefreshPostRequest) (*A
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	// body params
-	localVarPostBody = r.authRefreshTokenRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

@@ -21,7 +21,8 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/registration", e.Registration)
 	router.Post("/confirmation", e.Confirmation)
 	router.Post("/recovery", e.PasswordRecovery)
-	router.Post("/reset", e.middleware, e.PasswordReset)
+	router.Post("/reset", e.PasswordReset)
+	router.Get("/refresh", e.middleware, e.RefreshToken)
 }
 
 type entity struct {

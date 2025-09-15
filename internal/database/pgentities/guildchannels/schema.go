@@ -3,6 +3,7 @@ package guildchannels
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/Masterminds/squirrel"
@@ -117,25 +118,27 @@ func (e *Entity) SetGuildChannelPosition(ctx context.Context, updates []model.Gu
 		}
 	}()
 
+	// Build a single UPDATE using a VALUES list to map channel_id -> position
+	// This avoids any potential placeholder/type mismatches with IN clauses
 	guildID := updates[0].GuildId
-	ids := make([]interface{}, 0, len(updates))
-	caseStmt := "CASE channel_id"
+	values := make([]string, 0, len(updates))
+	args := make([]interface{}, 0, 1+len(updates)*2)
 
+	// $1 is reserved for guildID
+	args = append(args, guildID)
+	argIdx := 2
 	for _, u := range updates {
-		caseStmt += fmt.Sprintf(" WHEN %d THEN %d", u.ChannelId, u.Position)
-		ids = append(ids, u.ChannelId)
+		// Each pair adds two placeholders with explicit type casts
+		// to ensure Postgres infers correct column types in VALUES
+		values = append(values, fmt.Sprintf("($%d::bigint,$%d::int)", argIdx, argIdx+1))
+		args = append(args, u.ChannelId, u.Position)
+		argIdx += 2
 	}
-	caseStmt += " END"
 
-	query, args, err := squirrel.Update("guild_channels").
-		Set("position", squirrel.Expr(caseStmt)).
-		Where(squirrel.Eq{"guild_id": guildID}).
-		Where(squirrel.Expr("channel_id IN ("+squirrel.Placeholders(len(ids))+")", ids...)).
-		PlaceholderFormat(squirrel.Dollar).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("unable to build update query: %w", err)
-	}
+	query := fmt.Sprintf(
+		"UPDATE guild_channels AS gc SET position = v.position FROM (VALUES %s) AS v(channel_id, position) WHERE gc.guild_id = $1 AND gc.channel_id = v.channel_id",
+		strings.Join(values, ","),
+	)
 
 	_, err = tx.ExecContext(ctx, query, args...)
 	if err != nil {

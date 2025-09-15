@@ -140,14 +140,7 @@ paths:
       tags:
       - Auth
   /auth/refresh:
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/auth.RefreshTokenRequest'
-        description: Refresh token data
-        required: true
+    get:
       responses:
         "200":
           content:
@@ -556,6 +549,64 @@ paths:
       summary: Create guild channel
       tags:
       - Guild
+  /guild/{guild_id}/channel/order:
+    patch:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.PatchGuildChannelOrderRequest'
+        description: Update channel order data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Member not found
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Change channels order
+      tags:
+      - Guild
   /guild/{guild_id}/channel/{channel_id}:
     delete:
       parameters:
@@ -647,6 +698,71 @@ paths:
                 type: string
           description: Something bad happened
       summary: Get guild channel
+      tags:
+      - Guild
+    patch:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Channel ID
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.PatchGuildChannelRequest'
+        description: Request body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Channel'
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Member not found
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Change channels data
       tags:
       - Guild
   /guild/{guild_id}/member/{user_id}/roles:
@@ -1394,10 +1510,6 @@ components:
           type: string
         token:
           type: string
-    auth.RefreshTokenRequest:
-      properties:
-        user_id:
-          type: integer
     auth.RefreshTokenResponse:
       example:
         refresh_token: refresh_token
@@ -1605,6 +1717,12 @@ components:
           type: integer
         name:
           type: string
+    guild.ChannelOrder:
+      properties:
+        id:
+          type: integer
+        position:
+          type: integer
     guild.CreateGuildChannelCategoryRequest:
       properties:
         name:
@@ -1636,6 +1754,23 @@ components:
           type: string
         public:
           type: boolean
+    guild.PatchGuildChannelOrderRequest:
+      properties:
+        channels:
+          items:
+            $ref: '#/components/schemas/guild.ChannelOrder'
+          type: array
+          uniqueItems: false
+    guild.PatchGuildChannelRequest:
+      properties:
+        name:
+          type: string
+        parent_id:
+          type: integer
+        private:
+          type: boolean
+        topic:
+          type: string
     guild.UpdateGuildRequest:
       properties:
         icon_id:

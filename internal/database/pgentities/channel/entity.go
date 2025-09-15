@@ -20,6 +20,7 @@ type Channel interface {
 	SetChannelParent(ctx context.Context, id int64, parent *int64) error
 	SetChannelParentBulk(ctx context.Context, id []int64, parent *int64) error
 	SetLastMessage(ctx context.Context, id, lastMessage int64) error
+	UpdateChannel(ctx context.Context, id int64, parent *int64, private *bool, name, topic *string) (model.Channel, error)
 }
 
 type Entity struct {

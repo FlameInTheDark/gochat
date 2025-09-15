@@ -234,3 +234,36 @@ func (e *Entity) SetLastMessage(ctx context.Context, id, lastMessage int64) erro
 	}
 	return nil
 }
+
+func (e *Entity) UpdateChannel(ctx context.Context, id int64, parent *int64, private *bool, name, topic *string) (model.Channel, error) {
+	q := squirrel.Update("channels").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"id": id}).
+		Suffix("RETURNING *")
+	if parent != nil {
+		if *parent == 0 {
+			q = q.Set("parent_id", nil)
+		} else {
+			q = q.Set("parent_id", *parent)
+		}
+	}
+	if private != nil {
+		q = q.Set("private", *private)
+	}
+	if name != nil {
+		q = q.Set("name", *name)
+	}
+	if topic != nil {
+		q = q.Set("topic", *topic)
+	}
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return model.Channel{}, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	var ch model.Channel
+	err = e.c.GetContext(ctx, &ch, raw, args...)
+	if err != nil {
+		return model.Channel{}, fmt.Errorf("unable to update channel: %w", err)
+	}
+	return ch, nil
+}
