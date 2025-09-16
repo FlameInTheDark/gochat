@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gocql/gocql"
-
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
@@ -31,9 +29,6 @@ func (e *Entity) getUserRoleIDs(ctx context.Context, guildID, userID int64) ([]i
 // ChannelPerm checks if a user has the specified permissions for a channel
 // Returns channel, guild channel, guild, permission status, and error
 func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int64, perm ...permissions.RolePermission) (*model.Channel, *model.GuildChannel, *model.Guild, bool, error) {
-	// Administrator permission is always checked
-	perm = append(perm, permissions.PermAdministrator)
-
 	// Get channel information
 	channel, err := e.ch.GetChannel(ctx, channelID)
 	if err != nil {
@@ -137,13 +132,13 @@ func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int
 		}
 
 		// Get user-specific channel permissions
-		userChannelPerm, err := e.chup.GetUserChannelPermission(ctx, channelID, userID)
-		if err != nil {
-			return nil, nil, nil, false, err
+		userChannelPerm, ucpErr := e.chup.GetUserChannelPermission(ctx, channelID, userID)
+		if ucpErr != nil && !errors.Is(ucpErr, sql.ErrNoRows) {
+			return nil, nil, nil, false, ucpErr
 		}
 
 		// Apply user-specific permissions if found
-		if !errors.Is(err, sql.ErrNoRows) { // User has specific permissions
+		if ucpErr == nil { // User has specific permissions
 			allowPrivate = true
 			permAll = permissions.AddRoles(permAll, userChannelPerm.Accept)
 			permAll = permissions.SubtractRoles(permAll, userChannelPerm.Deny)
@@ -191,7 +186,7 @@ func (e *Entity) GuildPerm(ctx context.Context, guildID, userID int64, perm ...p
 
 	// Get role information
 	roles, err := e.role.GetRolesBulk(ctx, roleIDs)
-	if err != nil && !errors.Is(err, gocql.ErrNotFound) {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, false, err
 	}
 

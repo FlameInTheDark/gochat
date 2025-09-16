@@ -1,12 +1,12 @@
 package guild
 
 import (
+	"database/sql"
 	"errors"
 	"log/slog"
 	"strconv"
 	"time"
 
-	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -115,11 +115,11 @@ func (e *entity) checkChannelPermissions(c *fiber.Ctx, channel *model.Channel, g
 
 	// Check user-specific channel permissions
 	userPerm, err := e.uperm.GetUserChannelPermission(c.UserContext(), channel.Id, user.Id)
-	if err != nil && !errors.Is(err, gocql.ErrNotFound) {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return false, fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	if errors.Is(err, gocql.ErrNotFound) {
+	if errors.Is(err, sql.ErrNoRows) {
 		// Check role-based permissions
 		rolePerms, err := e.rperm.GetChannelRolePermissions(c.UserContext(), channel.Id)
 		if err != nil {

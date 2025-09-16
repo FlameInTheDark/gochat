@@ -1,11 +1,11 @@
 package user
 
 import (
+	"database/sql"
 	"errors"
 	"strconv"
 	"time"
 
-	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -459,7 +459,7 @@ func (e *entity) parseDMRequest(c *fiber.Ctx) (*CreateDMRequest, *helper.JWTUser
 func (e *entity) validateRecipient(c *fiber.Ctx, recipientId int64) (*model.User, error) {
 	recipient, err := e.user.GetUserById(c.UserContext(), recipientId)
 	if err != nil {
-		if errors.Is(err, gocql.ErrNotFound) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fiber.NewError(fiber.StatusNotFound, "recipient user not found")
 		}
 		return nil, helper.HttpDbError(err, ErrUnableToGetUser)
@@ -470,7 +470,7 @@ func (e *entity) validateRecipient(c *fiber.Ctx, recipientId int64) (*model.User
 // findExistingDMChannel checks if a DM channel already exists between users
 func (e *entity) findExistingDMChannel(c *fiber.Ctx, userId, recipientId int64) (*dto.Channel, error) {
 	dmChannel, err := e.dm.GetDmChannel(c.UserContext(), userId, recipientId)
-	if errors.Is(err, gocql.ErrNotFound) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil // No existing channel
 	}
 	if err != nil {
@@ -586,7 +586,7 @@ func (e *entity) parseGroupDMRequest(c *fiber.Ctx) (*CreateDMManyRequest, *helpe
 func (e *entity) validateRecipients(c *fiber.Ctx, recipientIds []int64) error {
 	for _, recipientId := range recipientIds {
 		if _, err := e.user.GetUserById(c.UserContext(), recipientId); err != nil {
-			if errors.Is(err, gocql.ErrNotFound) {
+			if errors.Is(err, sql.ErrNoRows) {
 				return fiber.NewError(fiber.StatusNotFound, "recipient user not found")
 			}
 			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUser)

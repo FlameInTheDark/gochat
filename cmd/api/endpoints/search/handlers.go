@@ -44,7 +44,7 @@ func (e *entity) Search(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnauthorized, "unable to get user token")
 	}
 
-	_, gc, _, canRead, err := e.perm.ChannelPerm(c.UserContext(), guildId, *req.ChannelId, user.Id, permissions.PermServerViewChannels)
+	_, gc, _, canRead, err := e.perm.ChannelPerm(c.UserContext(), guildId, *req.ChannelId, user.Id, permissions.PermServerViewChannels, permissions.PermTextReadMessageHistory)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
 	}

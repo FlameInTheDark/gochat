@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/savsgio/gotils/strings"
 )
 
 type JWTUser struct {
@@ -32,24 +32,6 @@ func GetUserFromToken(token *jwt.Token) (*JWTUser, error) {
 	return &JWTUser{
 		Id: claims.UserID,
 	}, nil
-}
-
-func IsExpired(c *fiber.Ctx) (bool, error) {
-	token, ok := c.Locals("user").(*jwt.Token)
-	if !ok {
-		return true, fmt.Errorf("could not find user in context")
-	}
-	claims, ok := token.Claims.(*Claims)
-	if !ok {
-		return true, fmt.Errorf("could not get claims")
-	}
-	if claims.ExpiresAt == nil {
-		return true, nil
-	}
-	if claims.ExpiresAt.Before(time.Now()) {
-		return true, nil
-	}
-	return false, nil
 }
 
 type Claims struct {
@@ -96,30 +78,7 @@ func IssueTokens(userID int64, secret string) (access, refresh string, err error
 	return
 }
 
-func MiddlewareAccess(secret []byte) fiber.Handler {
-	return jwtware.New(jwtware.Config{
-		SigningKey: jwtware.SigningKey{Key: secret},
-		Claims:     &Claims{},
-	})
-}
-
-func MiddlewareRefresh(secret []byte) fiber.Handler {
-	return jwtware.New(jwtware.Config{
-		SigningKey: jwtware.SigningKey{Key: secret},
-		Claims:     &Claims{},
-	})
-}
-
-func audHas(aud jwt.ClaimStrings, want string) bool {
-	for _, v := range aud {
-		if v == want {
-			return true
-		}
-	}
-	return false
-}
-
-func RequireTokenType(expect string) fiber.Handler {
+func RequireTokenType(expect string, audience ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tok, _ := c.Locals("user").(*jwt.Token)
 		if tok == nil {
@@ -129,13 +88,13 @@ func RequireTokenType(expect string) fiber.Handler {
 		if cl == nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "unable to get claims to check type")
 		}
-		// 1) explicit marker
+
 		if cl.TokenType != expect {
 			return fiber.NewError(fiber.StatusUnauthorized, "wrong token type")
 		}
-		// 2) audience defense-in-depth
-		for _, v := range cl.Audience {
-			if v == expect {
+
+		for _, v := range audience {
+			if !strings.Include(cl.Audience, v) {
 				return fiber.NewError(fiber.StatusUnauthorized, "wrong audience")
 			}
 		}

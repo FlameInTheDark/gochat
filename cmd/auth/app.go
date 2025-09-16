@@ -16,6 +16,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mailer"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/logmailer"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/sendpulse"
+	"github.com/FlameInTheDark/gochat/internal/mailer/providers/smtp"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
@@ -56,6 +57,8 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		provider = logmailer.New(logger)
 	case "sendpulse":
 		provider = sendpulse.New(cfg.SendpulseUserId, cfg.SendpulseSecret)
+	case "smtp":
+		provider = smtp.New(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPUseTLS)
 	default:
 		provider = logmailer.New(logger)
 	}
@@ -81,11 +84,12 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.WithMetrics()
 	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
 	s.RateLimitMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
+	s.AuthMiddleware(cfg.AuthSecret)
 
 	// HTTP Router
 	s.Register(
 		"/api/v1",
-		auth.New(pg, m, cfg.AuthSecret, logger, helper.RequireTokenType("refresh")),
+		auth.New(pg, m, cfg.AuthSecret, logger, helper.RequireTokenType("refresh", "refresh")),
 	)
 
 	return &App{

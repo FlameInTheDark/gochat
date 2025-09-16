@@ -1,6 +1,7 @@
 package message
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"strconv"
@@ -113,11 +114,11 @@ func (e *entity) validateSendPermissions(c *fiber.Ctx, channelId, userId int64) 
 	// Check guild permissions if it's a guild channel
 	if channel.Type == model.ChannelTypeGuild {
 		guildChannel, err := e.gc.GetGuildByChannel(c.UserContext(), channelId)
-		if err != nil && !errors.Is(err, gocql.ErrNotFound) {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to get guild channel")
 		}
 
-		if !errors.Is(err, gocql.ErrNotFound) {
+		if !errors.Is(err, sql.ErrNoRows) {
 			_, _, _, canSend, err := e.perm.ChannelPerm(c.UserContext(), guildChannel.GuildId, guildChannel.ChannelId, userId, permissions.PermTextSendMessage)
 			if err != nil {
 				return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
@@ -395,12 +396,19 @@ func (e *entity) validateReadPermissions(c *fiber.Ctx, channelId, userId int64) 
 	// Check guild permissions
 	if channel.Type == model.ChannelTypeGuild {
 		guildChannel, err := e.gc.GetGuildByChannel(c.UserContext(), channelId)
-		if err != nil && !errors.Is(err, gocql.ErrNotFound) {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to get guild channel")
 		}
 
-		if !errors.Is(err, gocql.ErrNotFound) {
-			_, _, _, canRead, err := e.perm.ChannelPerm(c.UserContext(), guildChannel.GuildId, guildChannel.ChannelId, userId, permissions.PermServerViewChannels)
+		if !errors.Is(err, sql.ErrNoRows) {
+			_, _, _, canRead, err := e.perm.ChannelPerm(
+				c.UserContext(),
+				guildChannel.GuildId,
+				guildChannel.ChannelId,
+				userId,
+				permissions.PermServerViewChannels,
+				permissions.PermTextReadMessageHistory,
+			)
 			if err != nil {
 				return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
 			}
@@ -736,10 +744,10 @@ func (e *entity) validateMessageOwnership(c *fiber.Ctx, messageId, channelId, us
 	// Get guild ID if it's a guild channel
 	var guildId *int64
 	guildChannel, err := e.gc.GetGuildByChannel(c.UserContext(), channelId)
-	if err != nil && !errors.Is(err, gocql.ErrNotFound) {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to get guild channel")
 	}
-	if !errors.Is(err, gocql.ErrNotFound) {
+	if !errors.Is(err, sql.ErrNoRows) {
 		guildId = &guildChannel.GuildId
 	}
 
@@ -836,7 +844,7 @@ func (e *entity) fetchUserDataForUpdate(c *fiber.Ctx, userId int64, guildId *int
 	if discRes.err != nil {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUserDiscriminator)
 	}
-	if memberRes.err != nil && !errors.Is(memberRes.err, gocql.ErrNotFound) {
+	if memberRes.err != nil && !errors.Is(memberRes.err, sql.ErrNoRows) {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to get member")
 	}
 
@@ -1068,11 +1076,11 @@ func (e *entity) validateUploadPermissions(c *fiber.Ctx, channelId, userId int64
 	// Check guild permissions
 	if channel.Type == model.ChannelTypeGuild {
 		guildChannel, err := e.gc.GetGuildByChannel(c.UserContext(), channelId)
-		if err != nil && !errors.Is(err, gocql.ErrNotFound) {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusInternalServerError, "failed to get guild channel")
 		}
 
-		if !errors.Is(err, gocql.ErrNotFound) {
+		if !errors.Is(err, sql.ErrNoRows) {
 			_, _, _, canAttach, err := e.perm.ChannelPerm(c.UserContext(), guildChannel.GuildId, guildChannel.ChannelId, userId, permissions.PermTextAttachFiles)
 			if err != nil {
 				return fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")

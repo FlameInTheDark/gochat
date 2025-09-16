@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net"
 	smtppkg "net/smtp"
-	"strings"
 
 	"github.com/FlameInTheDark/gochat/internal/mailer"
 )
@@ -23,13 +22,15 @@ import (
 // Note: net/smtp is frozen but stable. For richer needs consider third-party libs.
 // This implementation is context-aware for dialing and supports TLS and STARTTLS.
 type SmtpMailer struct {
-	addr     string
+	host     string
+	port     int
 	username string
 	password string
+	useTls   bool
 }
 
-func New(addr, username, password string) *SmtpMailer {
-	return &SmtpMailer{addr: addr, username: username, password: password}
+func New(host string, port int, username, password string, useTls bool) *SmtpMailer {
+	return &SmtpMailer{host: host, port: port, username: username, password: password, useTls: useTls}
 }
 
 func (m *SmtpMailer) Send(ctx context.Context, notify mailer.MailNotification) error {
@@ -45,38 +46,43 @@ func (m *SmtpMailer) Send(ctx context.Context, notify mailer.MailNotification) e
 	b64 := base64.StdEncoding.EncodeToString([]byte(notify.Html))
 	wrap76(&msg, b64)
 
-	// Establish connection honoring context; support implicit TLS on :465, otherwise STARTTLS when available.
-	host, port := splitHostPort(m.addr)
 	var (
 		conn net.Conn
 		err  error
 	)
-	if port == "465" {
-		// Implicit TLS (SMTPS)
-		conn, err = tls.DialWithDialer(&net.Dialer{}, "tcp", m.addr, &tls.Config{ServerName: host})
+	if m.useTls {
+		conn, err = tls.DialWithDialer(
+			&net.Dialer{},
+			"tcp",
+			fmt.Sprintf("%s:%d", m.host, m.port),
+			&tls.Config{ServerName: m.host},
+		)
 		if err != nil {
 			return err
 		}
 	} else {
 		// Plain TCP first; we'll upgrade via STARTTLS if the server supports it
 		dialer := &net.Dialer{}
-		conn, err = dialer.DialContext(ctx, "tcp", m.addr)
+		conn, err = dialer.DialContext(
+			ctx,
+			"tcp",
+			fmt.Sprintf("%s:%d", m.host, m.port),
+		)
 		if err != nil {
 			return err
 		}
 	}
 	defer conn.Close()
 
-	c, err := smtppkg.NewClient(conn, host)
+	c, err := smtppkg.NewClient(conn, m.host)
 	if err != nil {
 		return err
 	}
 	defer c.Close()
 
-	// STARTTLS when available and we're not already on implicit TLS
-	if port != "465" {
+	if m.useTls {
 		if ok, _ := c.Extension("STARTTLS"); ok {
-			if err := c.StartTLS(&tls.Config{ServerName: host}); err != nil {
+			if err := c.StartTLS(&tls.Config{ServerName: m.host}); err != nil {
 				return err
 			}
 		}
@@ -85,7 +91,7 @@ func (m *SmtpMailer) Send(ctx context.Context, notify mailer.MailNotification) e
 	// AUTH when supported
 	if m.username != "" || m.password != "" {
 		if ok, _ := c.Extension("AUTH"); ok {
-			auth := smtppkg.PlainAuth("", m.username, m.password, host)
+			auth := smtppkg.PlainAuth("", m.username, m.password, m.host)
 			if err := c.Auth(auth); err != nil {
 				return err
 			}
@@ -123,11 +129,4 @@ func wrap76(buf *bytes.Buffer, s string) {
 		buf.WriteString(s[i:end])
 		buf.WriteString("\r\n")
 	}
-}
-
-func splitHostPort(addr string) (host, port string) {
-	if i := strings.LastIndex(addr, ":"); i >= 0 {
-		return addr[:i], addr[i+1:]
-	}
-	return addr, "25" // default SMTP port
 }

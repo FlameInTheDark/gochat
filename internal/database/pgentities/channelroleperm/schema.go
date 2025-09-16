@@ -14,7 +14,7 @@ func (e *Entity) GetChannelRolePermission(ctx context.Context, channelId, roleId
 	var r model.ChannelRolesPermission
 	q := squirrel.Select("*").
 		PlaceholderFormat(squirrel.Dollar).
-		From("channel_role_permissions").
+		From("channel_roles_permissions").
 		Where(
 			squirrel.And{
 				squirrel.Eq{"channel_id": channelId},
@@ -36,7 +36,7 @@ func (e *Entity) GetChannelRolePermissions(ctx context.Context, channelId int64)
 	var roles []model.ChannelRolesPermission
 	q := squirrel.Select("*").
 		PlaceholderFormat(squirrel.Dollar).
-		From("channel_role_permissions").
+		From("channel_roles_permissions").
 		Where(squirrel.Eq{"channel_id": channelId})
 	raw, args, err := q.ToSql()
 	if err != nil {
@@ -52,7 +52,7 @@ func (e *Entity) GetChannelRolePermissions(ctx context.Context, channelId int64)
 }
 
 func (e *Entity) SetChannelRolePermission(ctx context.Context, channelId, roleId, accept, deny int64) error {
-	q := squirrel.Insert("channel_role_permissions").
+	q := squirrel.Insert("channel_roles_permissions").
 		PlaceholderFormat(squirrel.Dollar).
 		Columns("channel_id", "role_id", "accept", "deny").
 		Values(channelId, roleId, accept, deny)
@@ -68,7 +68,7 @@ func (e *Entity) SetChannelRolePermission(ctx context.Context, channelId, roleId
 }
 
 func (e *Entity) UpdateChannelRolePermission(ctx context.Context, channelId, roleId, accept, deny int64) error {
-	q := squirrel.Update("channel_role_permissions").
+	q := squirrel.Update("channel_roles_permissions").
 		PlaceholderFormat(squirrel.Dollar).
 		Where(
 			squirrel.And{
@@ -90,7 +90,7 @@ func (e *Entity) UpdateChannelRolePermission(ctx context.Context, channelId, rol
 }
 
 func (e *Entity) RemoveChannelRolePermission(ctx context.Context, channelId, roleId int64) error {
-	q := squirrel.Delete("channel_role_permissions").
+	q := squirrel.Delete("channel_roles_permissions").
 		PlaceholderFormat(squirrel.Dollar).
 		Where(
 			squirrel.And{

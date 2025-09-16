@@ -21,6 +21,11 @@ type Config struct {
 	EmailTemplate              string `yaml:"email_template" env:"EMAIL_TEMPLATE" env-default:"./email_notify.tmpl"`
 	PasswordResetTemplate      string `yaml:"password_reset_template" env:"PASSWORD_RESET_TEMPLATE" env-default:"./password_reset.tmpl"`
 	EmailProvider              string `yaml:"email_provider" env:"EMAIL_PROVIDER" env-default:"log"`
+	SMTPHost                   string `yaml:"smtp_host" env:"SMTP_HOST" env-default:"localhost"`
+	SMTPPort                   int    `yaml:"smtp_port" env:"SMTP_PORT" env-default:"25"`
+	SMTPUsername               string `yaml:"smtp_username" env:"SMTP_USERNAME" env-default:""`
+	SMTPPassword               string `yaml:"smtp_password" env:"SMTP_PASSWORD" env-default:""`
+	SMTPUseTLS                 bool   `yaml:"smtp_use_tls" env:"SMTP_USE_TLS" env-default:"false"`
 	SendpulseUserId            string `yaml:"sendpulse_user_id" env:"SENDPULSE_USER_ID" env-default:""`
 	SendpulseSecret            string `yaml:"sendpulse_secret" env:"SENDPULSE_SECRET" env-default:""`
 	AuthSecret                 string `yaml:"auth_secret" env:"AUTH_SECRET" env-default:"change_me_before_use_it_in_production"`
