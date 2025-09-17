@@ -26,10 +26,10 @@ flowchart
 	style s1 fill:#004a11
 	n4["Client"]
 	subgraph s2["Data Layer"]
-		n9["S3"]
+		n9["S3 Object Storage"]
 		n8["PostgreSQL"]
-		n6["Cassandra"]
-		n5["Redis"]
+		n6["Cassandra/ScyllaDB"]
+		n5["Redis/KeyDB"]
 	end
 	n1
 	n3
@@ -46,7 +46,7 @@ flowchart
 	n3
 	n3 --- n8
 	n3 --- n6
-	n1 --- n9["S3 Obecj Storage"]
+	n1 --- n9
 	n1 --- n8
 	n1 --- n6
 	n1 --- n5
