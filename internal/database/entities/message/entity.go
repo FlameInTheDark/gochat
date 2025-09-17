@@ -16,6 +16,7 @@ type Message interface {
 	GetMessagesBefore(ctx context.Context, channelId, msgId int64, limit int) ([]model.Message, []int64, error)
 	GetMessagesAfter(ctx context.Context, channelId, msgId, lastChannelMessage int64, limit int) ([]model.Message, []int64, error)
 	GetMessagesList(ctx context.Context, msgIds []int64) ([]model.Message, error)
+	GetChannelMessagesByIDs(ctx context.Context, channelId int64, ids []int64) ([]model.Message, error)
 }
 
 type Entity struct {

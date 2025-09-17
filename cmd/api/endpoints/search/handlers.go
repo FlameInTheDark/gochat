@@ -3,6 +3,8 @@ package search
 import (
 	"strconv"
 
+	"github.com/FlameInTheDark/gochat/internal/database/model"
+	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/helper"
@@ -44,7 +46,7 @@ func (e *entity) Search(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnauthorized, "unable to get user token")
 	}
 
-	_, gc, _, canRead, err := e.perm.ChannelPerm(c.UserContext(), guildId, *req.ChannelId, user.Id, permissions.PermServerViewChannels, permissions.PermTextReadMessageHistory)
+	_, gc, _, canRead, err := e.perm.ChannelPerm(c.UserContext(), guildId, req.ChannelId, user.Id, permissions.PermServerViewChannels, permissions.PermTextReadMessageHistory)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
 	}
@@ -62,11 +64,61 @@ func (e *entity) Search(c *fiber.Ctx) error {
 		From:      req.Page * 10,
 	})
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToFindMessages)
 	}
 
-	return c.JSON(MessageSearchResponse{
-		Ids:   res.Ids,
-		Pages: res.Total / 10,
-	})
+	msgs, err := e.msg.GetChannelMessagesByIDs(c.UserContext(), req.ChannelId, res.Ids)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetMessages)
+	}
+
+	var uidsmap = make(map[int64]bool)
+	var uids []int64
+
+	for _, m := range msgs {
+		if _, ok := uidsmap[m.UserId]; !ok {
+			uids = append(uids, m.UserId)
+			uidsmap[m.UserId] = true
+		}
+	}
+
+	users, err := e.user.GetUsersList(c.UserContext(), uids)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUsers)
+	}
+
+	var umap = make(map[int64]*model.User)
+	for _, u := range users {
+		umap[u.Id] = &u
+	}
+
+	var resp = MessageSearchResponse{Pages: (res.Total + 10 - 1) / 10}
+	for _, m := range msgs {
+		if u, ok := umap[m.UserId]; ok {
+			resp.Messages = append(resp.Messages, dto.Message{
+				Id:        m.Id,
+				ChannelId: m.ChannelId,
+				Author: dto.User{
+					Id:            u.Id,
+					Name:          u.Name,
+					Discriminator: "",
+					Avatar:        u.Avatar,
+				},
+				Content:     m.Content,
+				Attachments: nil,
+				UpdatedAt:   m.EditedAt,
+			})
+			continue
+		}
+		resp.Messages = append(resp.Messages, dto.Message{
+			Id:          m.Id,
+			ChannelId:   m.ChannelId,
+			Author:      dto.User{},
+			Content:     m.Content,
+			Attachments: nil,
+			UpdatedAt:   m.EditedAt,
+		})
+	}
+
+	return c.JSON(resp)
 }

@@ -124,6 +124,18 @@ paths:
               schema:
                 type: string
           description: Email not found
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Recovery email already sent
+        "410":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: User is banned
         "429":
           content:
             application/json:
@@ -1840,14 +1852,56 @@ components:
           type: integer
     search.MessageSearchResponse:
       example:
-        pages: 6
-        ids:
-        - 0
-        - 0
+        pages: 0
+        messages:
+        - attachments:
+          - filename: filename
+            content_type: content_type
+            size: 6
+            width: 1
+            url: url
+            height: 0
+          - filename: filename
+            content_type: content_type
+            size: 6
+            width: 1
+            url: url
+            height: 0
+          updated_at: updated_at
+          author:
+            name: name
+            avatar: 5
+            id: 5
+            discriminator: discriminator
+          id: 7
+          channel_id: 2
+          content: content
+        - attachments:
+          - filename: filename
+            content_type: content_type
+            size: 6
+            width: 1
+            url: url
+            height: 0
+          - filename: filename
+            content_type: content_type
+            size: 6
+            width: 1
+            url: url
+            height: 0
+          updated_at: updated_at
+          author:
+            name: name
+            avatar: 5
+            id: 5
+            discriminator: discriminator
+          id: 7
+          channel_id: 2
+          content: content
       properties:
-        ids:
+        messages:
           items:
-            type: integer
+            $ref: '#/components/schemas/dto.Message'
           type: array
           uniqueItems: false
         pages:

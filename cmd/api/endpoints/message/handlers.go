@@ -880,6 +880,31 @@ func (e *entity) sendUpdateEvent(channelId int64, guildId *int64, message dto.Me
 			"channel_id", channelId,
 			"error", err.Error())
 	}
+
+	var hasTypes []string
+	if HasURL(message.Content) {
+		hasTypes = append(hasTypes, "url")
+	}
+	for _, attachment := range message.Attachments {
+		if attachment.ContentType != nil {
+			hasTypes = append(hasTypes, GetAttachmentType(*attachment.ContentType))
+		}
+	}
+
+	if err := e.imq.UpdateMessage(dto.IndexMessage{
+		MessageId: message.Id,
+		UserId:    message.Author.Id,
+		ChannelId: channelId,
+		GuildId:   guildId,
+		Mentions:  nil,
+		Has:       UniqueAttachmentTypes(hasTypes),
+		Content:   message.Content,
+	}); err != nil {
+		e.log.Error("failed to send update message event",
+			"message_id", message.Id,
+			"channel_id", channelId,
+			"error", err.Error())
+	}
 }
 
 // Delete
@@ -977,6 +1002,15 @@ func (e *entity) sendDeleteEvent(channelId, messageId int64) {
 		e.log.Error("failed to send message delete event",
 			"message_id", messageId,
 			"channel_id", channelId,
+			"error", err.Error())
+	}
+
+	if err := e.imq.IndexDeleteMessage(dto.IndexDeleteMessage{
+		MessageId: messageId,
+		ChannelId: channelId,
+	}); err != nil {
+		e.log.Error("failed to send index delete message event",
+			"message_id", messageId,
 			"error", err.Error())
 	}
 }

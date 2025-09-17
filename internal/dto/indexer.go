@@ -12,3 +12,8 @@ type IndexMessage struct {
 	Has     []string `json:"has"`
 	Content string   `json:"content"`
 }
+
+type IndexDeleteMessage struct {
+	ChannelId int64 `json:"channel_id"`
+	MessageId int64 `json:"message_id"`
+}

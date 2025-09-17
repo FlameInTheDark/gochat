@@ -59,7 +59,7 @@ func NewSearch(addresses []string, tlsSkip bool, username, password string) (*Se
 	return &Search{osc: c}, nil
 }
 
-func (s *Search) IndexMessage(ctx context.Context, m AddMessage) error {
+func (s *Search) IndexMessage(ctx context.Context, m Message) error {
 	data, err := json.Marshal(m)
 	if err != nil {
 		return err
@@ -101,16 +101,18 @@ func (s *Search) Search(ctx context.Context, req SearchRequest) (results *Result
 		s.osc.Search.WithIndex("messages"),
 		s.osc.Search.WithBody(bytes.NewReader(q)),
 		s.osc.Search.WithTrackTotalHits(true),
+		s.osc.Search.WithRouting(fmt.Sprintf("%d", req.ChannelId)),
 	}
-	if req.ChannelId != nil {
-		opts = append(opts, s.osc.Search.WithRouting(fmt.Sprintf("%d", *req.ChannelId)))
-	}
+
 	res, err := s.osc.Search(opts...)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 	if res.IsError() {
+		if res.StatusCode == http.StatusNotFound {
+			return
+		}
 		b, _ := io.ReadAll(res.Body)
 		return nil, fmt.Errorf("search response error: %s", string(b))
 	}
@@ -134,38 +136,45 @@ func buildOSQuery(req SearchRequest) ([]byte, error) {
 		Size:   10,
 		Source: []string{"message_id"},
 	}
+	osreq.Sort = []map[string]any{
+		{"message_id": SortOrder{Order: "desc", Missing: "_last"}},
+		{"_id": "desc"},
+	}
+
+	// Required channel filter
+	osreq.Query.Bool.Filter = append(
+		osreq.Query.Bool.Filter,
+		osSearchQuery{Term: map[string]any{"channel_id": req.ChannelId}},
+	)
 
 	// Required guild filter
 	osreq.Query.Bool.Filter = append(
 		osreq.Query.Bool.Filter,
-		osSearchQuery{Match: map[string]any{"guild_id": req.GuildId}},
+		osSearchQuery{Term: map[string]any{"guild_id": req.GuildId}},
 	)
 
 	// Optional filters
-	if req.ChannelId != nil {
-		osreq.Query.Bool.Filter = append(
-			osreq.Query.Bool.Filter,
-			osSearchQuery{Term: map[string]any{"channel_id": *req.ChannelId}},
-		)
-	}
 	if req.UserId != nil {
 		osreq.Query.Bool.Filter = append(
 			osreq.Query.Bool.Filter,
 			osSearchQuery{Term: map[string]any{"user_id": *req.UserId}},
 		)
 	}
-	if len(req.Mentions) > 0 {
+
+	for _, v := range req.Mentions {
 		osreq.Query.Bool.Filter = append(
 			osreq.Query.Bool.Filter,
-			osSearchQuery{Term: map[string]any{"mentions": req.Mentions}},
+			osSearchQuery{Term: map[string]any{"mentions": v}},
 		)
 	}
-	if len(req.Has) > 0 {
+
+	for _, v := range req.Has {
 		osreq.Query.Bool.Filter = append(
 			osreq.Query.Bool.Filter,
-			osSearchQuery{Term: map[string]any{"has": req.Has}},
+			osSearchQuery{Term: map[string]any{"has": v}},
 		)
 	}
+
 	if req.Content != nil {
 		content := strings.TrimSpace(*req.Content)
 		if content != "" {
@@ -182,4 +191,62 @@ func buildOSQuery(req SearchRequest) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func (s *Search) DeleteMessage(ctx context.Context, m DeleteMessage) error {
+	if s.osc == nil {
+		return fmt.Errorf("opensearch client is not initialized")
+	}
+
+	res, err := s.osc.Delete(
+		"messages",
+		fmt.Sprintf("%d", m.MessageId),
+		s.osc.Delete.WithRouting(fmt.Sprintf("%d", m.ChannelId)),
+		s.osc.Delete.WithContext(ctx),
+	)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		if res.StatusCode == http.StatusNotFound {
+			return nil
+		}
+		b, _ := io.ReadAll(res.Body)
+		return fmt.Errorf("delete response error: %s", string(b))
+	}
+	return nil
+}
+
+func (s *Search) UpdateMessage(ctx context.Context, m Message) error {
+	if s.osc == nil {
+		return fmt.Errorf("opensearch client is not initialized")
+	}
+
+	data, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	res, err := s.osc.Update(
+		"messages",
+		fmt.Sprintf("%d", m.MessageId),
+		bytes.NewReader(data),
+		s.osc.Update.WithRouting(fmt.Sprintf("%d", m.ChannelId)),
+		s.osc.Update.WithContext(ctx),
+	)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		if res.StatusCode == http.StatusNotFound {
+			return nil
+		}
+		b, _ := io.ReadAll(res.Body)
+		return fmt.Errorf("update response error: %s", string(b))
+	}
+	return nil
 }

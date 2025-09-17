@@ -1,6 +1,6 @@
 package msgsearch
 
-type AddMessage struct {
+type Message struct {
 	GuildId   *int64   `json:"guild_id"`
 	ChannelId int64    `json:"channel_id"`
 	UserId    int64    `json:"user_id"`
@@ -8,6 +8,17 @@ type AddMessage struct {
 	Has       []string `json:"has"`
 	Mentions  []int64  `json:"mentions"`
 	Content   string   `json:"content"`
+}
+
+type DeleteMessage struct {
+	ChannelId int64 `json:"channel_id"`
+	MessageId int64 `json:"message_id"`
+}
+
+type UpdateMessage struct {
+	ChannelId int64  `json:"channel_id"`
+	MessageId int64  `json:"message_id"`
+	Content   string `json:"content"`
 }
 
 type SearchMessageResponse struct {
@@ -22,7 +33,7 @@ type SearchMessageResponse struct {
 
 type SearchRequest struct {
 	GuildId   int64    `json:"guild_id"`
-	ChannelId *int64   `json:"channel_id"`
+	ChannelId int64    `json:"channel_id"`
 	UserId    *int64   `json:"user_id"`
 	Content   *string  `json:"content"`
 	Mentions  []int64  `json:"mentions"`
@@ -54,11 +65,18 @@ type osSearchRequest struct {
 			Must   []osSearchQuery `json:"must,omitempty"`
 		} `json:"bool,omitempty"`
 	} `json:"query,omitempty"`
+	Sort []map[string]any `json:"sort,omitempty"`
+}
+
+type SortOrder struct {
+	Order   string `json:"order,omitempty"`
+	Missing string `json:"missing,omitempty"`
 }
 
 type osSearchQuery struct {
-	Match map[string]any `json:"match,omitempty"`
-	Term  map[string]any `json:"term,omitempty"`
+	Match             map[string]any `json:"match,omitempty"`
+	Term              map[string]any `json:"term,omitempty"`
+	MatchPhrasePrefix map[string]any `json:"match_phrase_prefix,omitempty"`
 }
 
 type osSettingsIndex struct {

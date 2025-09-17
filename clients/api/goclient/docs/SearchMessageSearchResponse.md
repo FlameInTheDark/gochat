@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Ids** | Pointer to **[]int32** |  | [optional] 
+**Messages** | Pointer to [**[]DtoMessage**](DtoMessage.md) |  | [optional] 
 **Pages** | Pointer to **int32** |  | [optional] 
 
 ## Methods
@@ -26,30 +26,30 @@ NewSearchMessageSearchResponseWithDefaults instantiates a new SearchMessageSearc
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-### GetIds
+### GetMessages
 
-`func (o *SearchMessageSearchResponse) GetIds() []int32`
+`func (o *SearchMessageSearchResponse) GetMessages() []DtoMessage`
 
-GetIds returns the Ids field if non-nil, zero value otherwise.
+GetMessages returns the Messages field if non-nil, zero value otherwise.
 
-### GetIdsOk
+### GetMessagesOk
 
-`func (o *SearchMessageSearchResponse) GetIdsOk() (*[]int32, bool)`
+`func (o *SearchMessageSearchResponse) GetMessagesOk() (*[]DtoMessage, bool)`
 
-GetIdsOk returns a tuple with the Ids field if it's non-nil, zero value otherwise
+GetMessagesOk returns a tuple with the Messages field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetIds
+### SetMessages
 
-`func (o *SearchMessageSearchResponse) SetIds(v []int32)`
+`func (o *SearchMessageSearchResponse) SetMessages(v []DtoMessage)`
 
-SetIds sets Ids field to given value.
+SetMessages sets Messages field to given value.
 
-### HasIds
+### HasMessages
 
-`func (o *SearchMessageSearchResponse) HasIds() bool`
+`func (o *SearchMessageSearchResponse) HasMessages() bool`
 
-HasIds returns a boolean if a field has been set.
+HasMessages returns a boolean if a field has been set.
 
 ### GetPages
 

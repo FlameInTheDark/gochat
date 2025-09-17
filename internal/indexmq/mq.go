@@ -8,7 +8,11 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/dto"
 )
 
-const indexerQueue = "indexer.message"
+const (
+	indexerQueue       = "indexer.message"
+	indexerDeleteQueue = "indexer.delete"
+	indexerUpdateQueue = "indexer.update"
+)
 
 type IndexMQ struct {
 	conn *nats.Conn
@@ -30,6 +34,30 @@ func (i *IndexMQ) IndexMessage(msg dto.IndexMessage) error {
 		return err
 	}
 	err = i.conn.Publish(indexerQueue, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (i *IndexMQ) IndexDeleteMessage(msg dto.IndexDeleteMessage) error {
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	err = i.conn.Publish(indexerDeleteQueue, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (i *IndexMQ) UpdateMessage(msg dto.IndexMessage) error {
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	err = i.conn.Publish(indexerUpdateQueue, data)
 	if err != nil {
 		return err
 	}

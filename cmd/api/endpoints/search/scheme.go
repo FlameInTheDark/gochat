@@ -1,11 +1,17 @@
 package search
 
-import validation "github.com/go-ozzo/ozzo-validation/v4"
+import (
+	"github.com/FlameInTheDark/gochat/internal/dto"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+)
 
 const (
-	ErrPermissionsRequired = "permissions required"
-	ErrIncorrectGuildID    = "incorrect guild ID"
-	ErrUnableToParseBody   = "unable to parse body"
+	ErrPermissionsRequired  = "permissions required"
+	ErrIncorrectGuildID     = "incorrect guild ID"
+	ErrUnableToParseBody    = "unable to parse body"
+	ErrUnableToFindMessages = "unable to find messages"
+	ErrUnableToGetMessages  = "unable to get messages"
+	ErrUnableToGetUsers     = "unable to get users"
 
 	// Validation error messages
 	ErrMentionIdInvalid   = "mention ID must be positive"
@@ -14,7 +20,7 @@ const (
 )
 
 type MessageSearchRequest struct {
-	ChannelId *int64   `json:"channel_id"`
+	ChannelId int64    `json:"channel_id"`
 	Mentions  []int64  `json:"mentions"`
 	AuthorId  *int64   `json:"author_id"`
 	Content   *string  `json:"content"`
@@ -23,8 +29,8 @@ type MessageSearchRequest struct {
 }
 
 type MessageSearchResponse struct {
-	Ids   []int64 `json:"ids"`
-	Pages int     `json:"pages"`
+	Messages []dto.Message `json:"messages"`
+	Pages    int           `json:"pages"`
 }
 
 func (r MessageSearchRequest) Validate() error {

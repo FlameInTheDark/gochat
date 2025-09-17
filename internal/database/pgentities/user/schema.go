@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -18,11 +20,11 @@ func (e *Entity) ModifyUser(ctx context.Context, userId int64, name *string, ava
 	if avatar != nil {
 		q = q.Set("avatar", *avatar)
 	}
-	sql, args, err := q.ToSql()
+	raw, args, err := q.ToSql()
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = e.c.ExecContext(ctx, sql, args...)
+	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
 		return fmt.Errorf("unable to modify user: %w", err)
 	}
@@ -36,11 +38,11 @@ func (e *Entity) GetUserById(ctx context.Context, id int64) (model.User, error) 
 		From("users").
 		Where(squirrel.Eq{"id": id}).
 		Limit(1)
-	sql, args, err := q.ToSql()
+	raw, args, err := q.ToSql()
 	if err != nil {
 		return user, fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	err = e.c.GetContext(ctx, &user, sql, args...)
+	err = e.c.GetContext(ctx, &user, raw, args...)
 	if err != nil {
 		return user, fmt.Errorf("unable to get user: %w", err)
 	}
@@ -53,12 +55,12 @@ func (e *Entity) GetUsersList(ctx context.Context, ids []int64) ([]model.User, e
 		PlaceholderFormat(squirrel.Dollar).
 		From("users").
 		Where(squirrel.Eq{"id": ids})
-	sql, args, err := q.ToSql()
+	raw, args, err := q.ToSql()
 	if err != nil {
 		return users, fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	err = e.c.SelectContext(ctx, &users, sql, args...)
-	if err != nil {
+	err = e.c.SelectContext(ctx, &users, raw, args...)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("unable to get users: %w", err)
 	}
 	return users, nil
@@ -69,11 +71,11 @@ func (e *Entity) CreateUser(ctx context.Context, id int64, name string) error {
 		PlaceholderFormat(squirrel.Dollar).
 		Columns("id", "name", "blocked").
 		Values(id, name, false)
-	sql, args, err := q.ToSql()
+	raw, args, err := q.ToSql()
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = e.c.ExecContext(ctx, sql, args...)
+	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
 		return fmt.Errorf("unable to create user: %w", err)
 	}
@@ -85,11 +87,11 @@ func (e *Entity) SetUserAvatar(ctx context.Context, id, attachmentId int64) erro
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{"id": id}).
 		Set("avatar", attachmentId)
-	sql, args, err := q.ToSql()
+	raw, args, err := q.ToSql()
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = e.c.ExecContext(ctx, sql, args...)
+	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
 		return fmt.Errorf("unable to set avatar Error: %w", err)
 	}
@@ -101,11 +103,11 @@ func (e *Entity) SetUsername(ctx context.Context, id, name string) error {
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{"id": id}).
 		Set("name", name)
-	sql, args, err := q.ToSql()
+	raw, args, err := q.ToSql()
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = e.c.ExecContext(ctx, sql, args...)
+	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
 		return fmt.Errorf("unable to set username Error: %w", err)
 	}
@@ -117,11 +119,11 @@ func (e *Entity) SetUserBlocked(ctx context.Context, id int64, blocked bool) err
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{"id": id}).
 		Set("blocked", blocked)
-	sql, args, err := q.ToSql()
+	raw, args, err := q.ToSql()
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = e.c.ExecContext(ctx, sql, args...)
+	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
 		return fmt.Errorf("unable to set blocked Error: %w", err)
 	}
@@ -133,11 +135,11 @@ func (e *Entity) SetUploadLimit(ctx context.Context, id int64, uploadLimit int64
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{"id": id}).
 		Set("upload_limit", uploadLimit)
-	sql, args, err := q.ToSql()
+	raw, args, err := q.ToSql()
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = e.c.ExecContext(ctx, sql, args...)
+	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
 		return fmt.Errorf("unable to set upload limit Error: %w", err)
 	}

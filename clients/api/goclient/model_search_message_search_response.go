@@ -20,8 +20,8 @@ var _ MappedNullable = &SearchMessageSearchResponse{}
 
 // SearchMessageSearchResponse struct for SearchMessageSearchResponse
 type SearchMessageSearchResponse struct {
-	Ids   []int32 `json:"ids,omitempty"`
-	Pages *int32  `json:"pages,omitempty"`
+	Messages []DtoMessage `json:"messages,omitempty"`
+	Pages    *int32       `json:"pages,omitempty"`
 }
 
 // NewSearchMessageSearchResponse instantiates a new SearchMessageSearchResponse object
@@ -41,36 +41,36 @@ func NewSearchMessageSearchResponseWithDefaults() *SearchMessageSearchResponse {
 	return &this
 }
 
-// GetIds returns the Ids field value if set, zero value otherwise.
-func (o *SearchMessageSearchResponse) GetIds() []int32 {
-	if o == nil || IsNil(o.Ids) {
-		var ret []int32
+// GetMessages returns the Messages field value if set, zero value otherwise.
+func (o *SearchMessageSearchResponse) GetMessages() []DtoMessage {
+	if o == nil || IsNil(o.Messages) {
+		var ret []DtoMessage
 		return ret
 	}
-	return o.Ids
+	return o.Messages
 }
 
-// GetIdsOk returns a tuple with the Ids field value if set, nil otherwise
+// GetMessagesOk returns a tuple with the Messages field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *SearchMessageSearchResponse) GetIdsOk() ([]int32, bool) {
-	if o == nil || IsNil(o.Ids) {
+func (o *SearchMessageSearchResponse) GetMessagesOk() ([]DtoMessage, bool) {
+	if o == nil || IsNil(o.Messages) {
 		return nil, false
 	}
-	return o.Ids, true
+	return o.Messages, true
 }
 
-// HasIds returns a boolean if a field has been set.
-func (o *SearchMessageSearchResponse) HasIds() bool {
-	if o != nil && !IsNil(o.Ids) {
+// HasMessages returns a boolean if a field has been set.
+func (o *SearchMessageSearchResponse) HasMessages() bool {
+	if o != nil && !IsNil(o.Messages) {
 		return true
 	}
 
 	return false
 }
 
-// SetIds gets a reference to the given []int32 and assigns it to the Ids field.
-func (o *SearchMessageSearchResponse) SetIds(v []int32) {
-	o.Ids = v
+// SetMessages gets a reference to the given []DtoMessage and assigns it to the Messages field.
+func (o *SearchMessageSearchResponse) SetMessages(v []DtoMessage) {
+	o.Messages = v
 }
 
 // GetPages returns the Pages field value if set, zero value otherwise.
@@ -115,8 +115,8 @@ func (o SearchMessageSearchResponse) MarshalJSON() ([]byte, error) {
 
 func (o SearchMessageSearchResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.Ids) {
-		toSerialize["ids"] = o.Ids
+	if !IsNil(o.Messages) {
+		toSerialize["messages"] = o.Messages
 	}
 	if !IsNil(o.Pages) {
 		toSerialize["pages"] = o.Pages

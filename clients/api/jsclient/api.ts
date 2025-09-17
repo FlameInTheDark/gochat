@@ -783,10 +783,10 @@ export interface SearchMessageSearchRequest {
 export interface SearchMessageSearchResponse {
     /**
      * 
-     * @type {Array<number>}
+     * @type {Array<DtoMessage>}
      * @memberof SearchMessageSearchResponse
      */
-    'ids'?: Array<number>;
+    'messages'?: Array<DtoMessage>;
     /**
      * 
      * @type {number}

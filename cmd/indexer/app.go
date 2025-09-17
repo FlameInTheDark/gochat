@@ -12,7 +12,11 @@ import (
 	nq "github.com/nats-io/nats.go"
 )
 
-const indexQueue = "indexer.message"
+const (
+	indexQueue       = "indexer.message"
+	indexDeleteQueue = "indexer.delete"
+	indexUpdateQueue = "indexer.update"
+)
 
 type App struct {
 	logger *slog.Logger
@@ -20,7 +24,7 @@ type App struct {
 	search *msgsearch.Search
 	conn   *nq.Conn
 
-	sub *nq.Subscription
+	subs []*nq.Subscription
 }
 
 func NewApp(logger *slog.Logger) (*App, error) {
@@ -60,7 +64,7 @@ func (a *App) Start() error {
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-		err = a.search.IndexMessage(ctx, msgsearch.AddMessage{
+		err = a.search.IndexMessage(ctx, msgsearch.Message{
 			GuildId:   indexMsg.GuildId,
 			ChannelId: indexMsg.ChannelId,
 			UserId:    indexMsg.UserId,
@@ -78,16 +82,77 @@ func (a *App) Start() error {
 		a.logger.Error(err.Error())
 		return err
 	}
+	a.subs = append(a.subs, sub)
 
-	a.sub = sub
+	delsub, err := a.conn.Subscribe(indexDeleteQueue, func(msg *nq.Msg) {
+		a.logger.Info("Received delete message", slog.String("body", string(msg.Data)))
+		var indexMsg dto.IndexDeleteMessage
+		err := json.Unmarshal(msg.Data, &indexMsg)
+		if err != nil {
+			a.logger.Error(err.Error())
+			a.logger.Debug("Error unmarshalling message", slog.String("data", string(msg.Data)))
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		err = a.search.DeleteMessage(ctx, msgsearch.DeleteMessage{
+			ChannelId: indexMsg.ChannelId,
+			MessageId: indexMsg.MessageId,
+		})
+		if err != nil {
+			a.logger.Error("Error deleting message", slog.String("error", err.Error()))
+			return
+		}
+	})
+	if err != nil {
+		a.logger.Error(err.Error())
+		return err
+	}
+	a.subs = append(a.subs, delsub)
+
+	updsub, err := a.conn.Subscribe(indexUpdateQueue, func(msg *nq.Msg) {
+		a.logger.Info("Received update message", slog.String("body", string(msg.Data)))
+		var indexMsg dto.IndexMessage
+		err := json.Unmarshal(msg.Data, &indexMsg)
+		if err != nil {
+			a.logger.Error(err.Error())
+			a.logger.Debug("Error unmarshalling message", slog.String("data", string(msg.Data)))
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		err = a.search.UpdateMessage(ctx, msgsearch.Message{
+			GuildId:   indexMsg.GuildId,
+			ChannelId: indexMsg.ChannelId,
+			UserId:    indexMsg.UserId,
+			MessageId: indexMsg.MessageId,
+			Has:       indexMsg.Has,
+			Mentions:  indexMsg.Mentions,
+			Content:   indexMsg.Content,
+		})
+		if err != nil {
+			a.logger.Error("Error updating message", slog.String("error", err.Error()))
+			return
+		}
+	})
+	if err != nil {
+		a.logger.Error(err.Error())
+		return err
+	}
+	a.subs = append(a.subs, updsub)
+
 	return nil
 }
 
 func (a *App) Close() error {
 	a.logger.Debug("Closing app")
-	err := a.sub.Unsubscribe()
-	if err != nil {
-		a.logger.Error("Unable to unsubscribe", slog.String("error", err.Error()))
+	for _, sub := range a.subs {
+		err := sub.Unsubscribe()
+		if err != nil {
+			a.logger.Error("Unable to unsubscribe", slog.String("error", err.Error()))
+		}
 	}
 	a.conn.Close()
 	return nil
