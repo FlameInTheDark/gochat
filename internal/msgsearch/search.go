@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/opensearch-project/opensearch-go"
-	"github.com/opensearch-project/opensearch-go/opensearchapi"
+	"github.com/opensearch-project/opensearch-go/v2"
+	"github.com/opensearch-project/opensearch-go/v2/opensearchapi"
 )
 
 type Search struct {
@@ -224,24 +224,25 @@ func (s *Search) UpdateMessage(ctx context.Context, m Message) error {
 		return fmt.Errorf("opensearch client is not initialized")
 	}
 
-	data, err := json.Marshal(m)
+	payload := map[string]any{"doc": m}
+	data, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
-	res, err := s.osc.Update(
-		"messages",
-		fmt.Sprintf("%d", m.MessageId),
-		bytes.NewReader(data),
-		s.osc.Update.WithRouting(fmt.Sprintf("%d", m.ChannelId)),
-		s.osc.Update.WithContext(ctx),
-	)
+	res, err := opensearchapi.UpdateRequest{
+		Index:      "messages",
+		DocumentID: fmt.Sprintf("%d", m.MessageId),
+		Routing:    fmt.Sprintf("%d", m.ChannelId),
+		Body:       bytes.NewReader(data),
+		Refresh:    "wait_for",
+	}.Do(ctx, s.osc)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
+	if res.StatusCode >= 300 {
 		if res.StatusCode == http.StatusNotFound {
 			return nil
 		}

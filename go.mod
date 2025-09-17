@@ -22,7 +22,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/minio/minio-go/v7 v7.0.80
 	github.com/nats-io/nats.go v1.37.0
-	github.com/opensearch-project/opensearch-go v1.1.0
+	github.com/opensearch-project/opensearch-go/v2 v2.3.0
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/resend/resend-go/v2 v2.23.0
