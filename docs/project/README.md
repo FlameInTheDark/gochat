@@ -11,6 +11,11 @@ Here goes the project documentation.
 
 ## Architecture Diagram
 ```mermaid
+---
+config:
+    look: handDrawn
+    theme: dark
+---
 flowchart
 	subgraph s1["API Layer"]
 		n7["Messagin Queue"]
@@ -18,7 +23,7 @@ flowchart
 		n2["Auth"]
 		n1["API"]
 	end
-	style s1 color:#00BF63
+	style s1 fill:#004a11
 	n4["Client"]
 	subgraph s2["Data Layer"]
 		n9["S3"]
@@ -30,12 +35,15 @@ flowchart
 	n3
 	n1 --- n7
 	n7 --- n3
-	style s2 color:#FF914D
+	
 	n4
 	s1
-	n4 --- n1
-	n4 --- n2
-	n4["Client Applications"] --- n3
+	n4
+	n1
+	n4
+	n2
+	n4["Client Applications"]
+	n3
 	n3 --- n8
 	n3 --- n6
 	n1 --- n9["S3 Obecj Storage"]
@@ -47,10 +55,17 @@ flowchart
 		n11["Message Indexer"]
 		n10["Indexer Queue"]
 	end
-	style s3 color:#8C52FF
+	
 	n1 --- n10
 	n10 --- n11
 	n11 --- n12
 	n1 --- n12
 	n2 --- n8
+	n13["Load Balancer"]
+	n4 --- n13
+	n13 --- n1
+	n13 --- n2
+	n13["Load Balancer (Ingress/Traefik)"] --- n3
+	style s2 fill:#472b0e
+	style s3 fill:#250e47
 ```
