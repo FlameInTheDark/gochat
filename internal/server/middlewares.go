@@ -25,9 +25,9 @@ func (s *Server) AuthMiddleware(secret string) {
 				return true
 			case "/api/v1/auth/login":
 				return true
-			case "/api/v1/auth/registration":
+			case "/api/v1/auth/registration", "/api/v1/auth/confirmation":
 				return true
-			case "/api/v1/auth/confirmation":
+			case "/api/v1/auth/recovery", "/api/v1/auth/reset":
 				return true
 			}
 			return false
@@ -52,6 +52,8 @@ func (s *Server) RateLimitMiddleware(limit, exp int) {
 			case "/api/v1/auth/registration", "/auth/registration":
 				return true
 			case "/api/v1/auth/confirmation", "/auth/confirmation":
+				return true
+			case "/api/v1/auth/recovery", "/auth/recovery":
 				return true
 			case "/docs/swagger":
 				return true

@@ -1,3 +1,6 @@
+PG_ADDRESS=postgres://postgres@127.0.0.1/gochat
+CASSANDRA_ADDRESS=cassandra://127.0.0.1/gochat?x-multi-statement=true
+
 up:
 	docker compose up -d
 	docker compose exec scylla bash ./init-scylladb.sh
@@ -27,16 +30,22 @@ migrate: migrate_pg migrate_scylla
 migrate_down: migrate_pg_down migrate_scylla_down
 
 migrate_scylla:
-	migrate -database cassandra://127.0.0.1/gochat?x-multi-statement=true -path ./db/cassandra up
+	migrate -database $(CASSANDRA_ADDRESS) -path ./db/cassandra up
 
 migrate_pg:
-	migrate -database postgres://postgres@127.0.0.1/gochat -path ./db/postgres up
+	migrate -database $(PG_ADDRESS) -path ./db/postgres up
 
 migrate_scylla_down:
-	migrate -database cassandra://127.0.0.1/gochat?x-multi-statement=true -path ./db/cassandra down
+	migrate -database $(CASSANDRA_ADDRESS) -path ./db/cassandra down
 
 migrate_pg_down:
-	migrate -database postgres://postgres@127.0.0.1/gochat -path ./db/postgres down
+	migrate -database $(PG_ADDRESS) -path ./db/postgres down
+
+add_migration_postgres:
+	migrate create -ext sql -dir db/postgres -seq $(name)
+
+add_migration_cassandra:
+	migrate create -ext cql -dir db/cassandra -seq $(name)
 
 swag:
 	swag fmt

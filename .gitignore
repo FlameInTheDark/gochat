@@ -31,3 +31,9 @@ go.work.sum
 my-values.yaml
 
 /clients/api/*/.openapi-generator/
+
+# Config files
+api_config.yaml
+auth_config.yaml
+indexer_config.yaml
+ws_config.yaml

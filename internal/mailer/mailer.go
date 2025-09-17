@@ -32,7 +32,7 @@ func NewMailer(provider Provider, template *Template, from User) *Mailer {
 
 // Send preserves legacy behavior for registration/password reset emails.
 // For new email types, prefer SendTemplate which supports arbitrary templates and data.
-func (m Mailer) Send(ctx context.Context, id int64, email, token string, emailType EmailType) error {
+func (m *Mailer) Send(ctx context.Context, id int64, email, token string, emailType EmailType) error {
 	html, err := m.template.Render(id, token, emailType)
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func (m Mailer) Send(ctx context.Context, id int64, email, token string, emailTy
 
 // SendTemplate sends an email using a named template and arbitrary data
 // and allows specifying any subject string.
-func (m Mailer) SendTemplate(ctx context.Context, to User, subject, templateName string, data any) error {
+func (m *Mailer) SendTemplate(ctx context.Context, to User, subject, templateName string, data any) error {
 	html, err := m.template.RenderNamed(templateName, data)
 	if err != nil {
 		return err

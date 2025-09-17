@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -111,10 +112,6 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 	if err := req.Validate(); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	token, err := helper.RandomToken(40)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGenerateToken)
-	}
 	_, err = e.auth.GetAuthenticationByEmail(c.UserContext(), req.Email)
 	if err == nil {
 		return c.SendStatus(fiber.StatusFound)
@@ -122,7 +119,9 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 		e.log.Error("unable to get authentication by email", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetAuthenticationByEmail)
 	}
+
 	var id int64
+	var token string
 	reg, err := e.reg.GetRegistrationByEmail(c.UserContext(), req.Email)
 	if errors.Is(err, sql.ErrNoRows) {
 		id = idgen.Next()
@@ -133,13 +132,27 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusTooManyRequests, ErrEmailAlreadySent)
 		}
 		id = reg.UserId
+		token = reg.ConfirmationToken
 	}
-	err = e.reg.CreateRegistration(c.UserContext(), id, req.Email, token)
-	if err := helper.HttpDbError(err, ErrUnableToCreateRegistration); err != nil {
-		return err
+
+	if token == "" {
+		newToken, tErr := helper.RandomToken(40)
+		if tErr != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGenerateToken)
+		}
+		token = newToken
 	}
+
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		err = e.reg.CreateRegistration(c.UserContext(), id, req.Email, token)
+		if err := helper.HttpDbError(err, ErrUnableToCreateRegistration); err != nil {
+			return err
+		}
+	}
+
 	err = e.mailer.Send(c.UserContext(), id, req.Email, token, mailer.EmailTypeRegistration)
 	if err != nil {
+		fmt.Println("Send email error: ", err.Error())
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendEmail)
 	}
 	return c.SendStatus(fiber.StatusCreated)
@@ -210,6 +223,8 @@ func (e *entity) Confirmation(c *fiber.Ctx) error {
 //	@Success	202		{string}	string					"Recovery email sent"
 //	@failure	400		{string}	string					"Incorrect request body"
 //	@failure	404		{string}	string					"Email not found"
+//	@failure	409		{string}	string					"Recovery email already sent"
+//	@failure	410		{string}	string					"User is banned"
 //	@failure	429		{string}	string					"Try again later"
 //	@failure	500		{string}	string					"Something bad happened"
 //	@Router		/auth/recovery [post]
@@ -233,6 +248,14 @@ func (e *entity) PasswordRecovery(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetAuthenticationByEmail)
 	}
 
+	user, err := e.user.GetUserById(c.UserContext(), auth.UserId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnauthorized, ErrUnableToGetUserById)
+	}
+	if user.Blocked {
+		return fiber.NewError(fiber.StatusGone, ErrUserIsBanned)
+	}
+
 	// Generate a token for password reset
 	token, err := helper.RandomToken(40)
 	if err != nil {
@@ -244,7 +267,7 @@ func (e *entity) PasswordRecovery(c *fiber.Ctx) error {
 	if err == nil {
 		// If recovery exists and was created less than a minute ago, return error
 		if rec.CreatedAt.Add(time.Minute).After(time.Now()) {
-			return fiber.NewError(fiber.StatusTooManyRequests, ErrRecoveryEmailAlreadySent)
+			return fiber.NewError(fiber.StatusNotAcceptable, ErrRecoveryEmailAlreadySent)
 		}
 		// Remove the existing recovery
 		err = e.auth.RemoveRecovery(c.UserContext(), auth.UserId)
@@ -252,11 +275,13 @@ func (e *entity) PasswordRecovery(c *fiber.Ctx) error {
 			return err
 		}
 	} else if !errors.Is(err, sql.ErrNoRows) {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRegistrationById)
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRecoveryByUserId)
 	}
 
+	expiration := time.Now().Add(time.Hour * 24)
+
 	// Create a new recovery record with the reset token
-	err = e.auth.CreateRecovery(c.UserContext(), auth.UserId, req.Email, token)
+	err = e.auth.CreateRecovery(c.UserContext(), auth.UserId, token, expiration)
 	if err := helper.HttpDbError(err, ErrUnableToCreateRegistration); err != nil {
 		return err
 	}
@@ -292,13 +317,13 @@ func (e *entity) PasswordReset(c *fiber.Ctx) error {
 	}
 
 	// Get the registration record for the user
-	reg, err := e.reg.GetRegistrationByUserId(c.UserContext(), req.Id)
+	rec, err := e.auth.GetRecoveryByUserId(c.UserContext(), req.Id)
 	if err := helper.HttpDbError(err, ErrUnableToGetRegistrationById); err != nil {
 		return err
 	}
 
 	// Verify the token
-	if reg.ConfirmationToken != req.Token {
+	if rec.Token != req.Token {
 		return fiber.NewError(fiber.StatusUnauthorized, ErrTokenIsIncorrect)
 	}
 
@@ -316,7 +341,7 @@ func (e *entity) PasswordReset(c *fiber.Ctx) error {
 	}
 
 	// Remove the registration record
-	err = e.reg.RemoveRegistration(c.UserContext(), req.Id)
+	err = e.auth.RemoveRecovery(c.UserContext(), req.Id)
 	if err := helper.HttpDbError(err, ErrUnableToRemoveRegistration); err != nil {
 		return err
 	}

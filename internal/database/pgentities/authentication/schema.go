@@ -3,6 +3,7 @@ package authentication
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/Masterminds/squirrel"
@@ -91,11 +92,11 @@ func (e *Entity) SetPasswordHash(ctx context.Context, userId int64, hash string)
 	return nil
 }
 
-func (e *Entity) CreateRecovery(ctx context.Context, userId int64, email, token string) error {
+func (e *Entity) CreateRecovery(ctx context.Context, userId int64, token string, expires time.Time) error {
 	q := squirrel.Insert("recoveries").
 		PlaceholderFormat(squirrel.Dollar).
-		Columns("user_id", "email", "token").
-		Values(userId, email, token)
+		Columns("user_id", "token", "expires_at").
+		Values(userId, token, expires)
 	sql, args, err := q.ToSql()
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)

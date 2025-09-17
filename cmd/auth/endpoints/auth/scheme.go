@@ -14,6 +14,7 @@ const (
 	ErrDiscriminatorIsNotUnique         = "discriminator is not unique"
 	ErrTokenIsIncorrect                 = "token is incorrect"
 	ErrUnableToGetRegistrationById      = "unable to get registration by id"
+	ErrUnableToGetRecoveryByUserId      = "unable to get recovery by user id"
 	ErrUnableToCreateRegistration       = "unable to create registration"
 	ErrUnableToGetRegistrationByEmail   = "unable to get registration by email"
 	ErrUnableToGetPasswordHash          = "unable to get password hash"

@@ -21,6 +21,7 @@ password_reset_template: "./password_reset.tmpl"
 email_provider: "smtp"
 sendpulse_user_id: ""
 sendpulse_secret: ""
+resend_api_key: ""
 smtp_host: "host.docker.internal"
 smtp_port: 2525
 smtp_username: ""

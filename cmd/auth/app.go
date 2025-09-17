@@ -15,6 +15,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/mailer"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/logmailer"
+	"github.com/FlameInTheDark/gochat/internal/mailer/providers/resendp"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/sendpulse"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/smtp"
 	"github.com/FlameInTheDark/gochat/internal/server"
@@ -59,6 +60,8 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		provider = sendpulse.New(cfg.SendpulseUserId, cfg.SendpulseSecret)
 	case "smtp":
 		provider = smtp.New(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPUseTLS)
+	case "resend":
+		provider = resendp.New(cfg.ResendAPIKey)
 	default:
 		provider = logmailer.New(logger)
 	}
