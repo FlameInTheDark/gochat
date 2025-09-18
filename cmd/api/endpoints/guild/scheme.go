@@ -56,9 +56,9 @@ var (
 )
 
 type CreateGuildRequest struct {
-	Name   string `json:"name"`
-	IconId *int64 `json:"icon_id"`
-	Public bool   `json:"public"`
+	Name   string `json:"name" example:"My unique guild"`        // Guild name
+	IconId *int64 `json:"icon_id" example:"2230469276416868352"` // Icon ID
+	Public bool   `json:"public" default:"false"`                // Whether the guild is public
 }
 
 func (r CreateGuildRequest) Validate() error {
@@ -75,10 +75,10 @@ func (r CreateGuildRequest) Validate() error {
 }
 
 type UpdateGuildRequest struct {
-	Name        *string `json:"name"`
-	IconId      *int64  `json:"icon_id"`
-	Public      *bool   `json:"public"`
-	Permissions *int64  `json:"permissions"`
+	Name        *string `json:"name" example:"New guild name"`         // Guild name
+	IconId      *int64  `json:"icon_id" example:"2230469276416868352"` // Icon ID
+	Public      *bool   `json:"public" default:"false"`                // Whether the guild is public
+	Permissions *int64  `json:"permissions" default:"7927905"`         // Permissions. Check the permissions documentation for more info.
 }
 
 func (r UpdateGuildRequest) Validate() error {
@@ -99,8 +99,8 @@ func (r UpdateGuildRequest) Validate() error {
 }
 
 type CreateGuildChannelCategoryRequest struct {
-	Name    string `json:"name"`
-	Private bool   `json:"private"`
+	Name    string `json:"name" example:"category-name"` // Category channel name
+	Private bool   `json:"private" default:"false"`      // Whether the category channel is private. Private channels can only be seen by users with roles assigned to this channel.
 }
 
 func (r CreateGuildChannelCategoryRequest) Validate() error {
@@ -115,10 +115,10 @@ func (r CreateGuildChannelCategoryRequest) Validate() error {
 }
 
 type CreateGuildChannelRequest struct {
-	Name     string            `json:"name"`
-	Type     model.ChannelType `json:"type"`
-	ParentId *int64            `json:"parent_id"`
-	Private  bool              `json:"private"`
+	Name     string            `json:"name" example:"channel-name"`             // Channel name
+	Type     model.ChannelType `json:"type" example:"0"`                        // Channel type
+	ParentId *int64            `json:"parent_id" example:"2230469276416868352"` // Parent channel ID. A Parent channel can only be a category channel.
+	Private  bool              `json:"private" default:"false"`                 // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
 }
 
 func (r CreateGuildChannelRequest) Validate() error {
@@ -146,12 +146,12 @@ func (r CreateGuildChannelRequest) Validate() error {
 }
 
 type ChannelOrder struct {
-	Id       int64 `json:"id"`
-	Position int   `json:"position"`
+	Id       int64 `json:"id" example:"2230469276416868352"` // Channel ID.
+	Position int   `json:"position" example:"4"`             // New channel position.
 }
 
 type PatchGuildChannelOrderRequest struct {
-	Channels []ChannelOrder `json:"channels"`
+	Channels []ChannelOrder `json:"channels"` // List of channels to change order.
 }
 
 func (c ChannelOrder) Validate() error {
@@ -179,10 +179,10 @@ func (r PatchGuildChannelOrderRequest) Validate() error {
 }
 
 type PatchGuildChannelRequest struct {
-	Name     *string `json:"name,omitempty"`
-	ParentId *int64  `json:"parent_id,omitempty"`
-	Private  *bool   `json:"private,omitempty"`
-	Topic    *string `json:"topic,omitempty"`
+	Name     *string `json:"name,omitempty" example:"new-channel-name"`         // Channel name.
+	ParentId *int64  `json:"parent_id,omitempty" example:"2230469276416868352"` // Parent channel ID. A Parent channel can only be a category channel.
+	Private  *bool   `json:"private,omitempty" default:"false"`                 // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
+	Topic    *string `json:"topic,omitempty" example:"Just a channel topic"`    // Channel topic.
 }
 
 func (r PatchGuildChannelRequest) Validate() error {

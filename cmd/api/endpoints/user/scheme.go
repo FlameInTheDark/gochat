@@ -43,8 +43,8 @@ const (
 )
 
 type ModifyUserRequest struct {
-	Avatar *int64  `json:"avatar,omitempty"`
-	Name   *string `json:"name,omitempty"`
+	Avatar *int64  `json:"avatar,omitempty" example:"2230469276416868352"` // Avatar ID.
+	Name   *string `json:"name,omitempty" example:"NewFancyName"`          // User name.
 }
 
 func (r ModifyUserRequest) Validate() error {

@@ -58,8 +58,8 @@ var (
 )
 
 type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" example:"user@example.com"`      // User Email
+	Password string `json:"password" example:"VerYstR0NgP@66WoR6"` // User password
 }
 
 func (r LoginRequest) Validate() error {
@@ -75,29 +75,17 @@ func (r LoginRequest) Validate() error {
 }
 
 type LoginResponse struct {
-	Token        string `json:"token"`
-	RefreshToken string `json:"refresh_token"`
-}
-
-type RefreshTokenRequest struct {
-	UserId int64 `json:"user_id"`
-}
-
-func (r RefreshTokenRequest) Validate() error {
-	return validation.ValidateStruct(&r,
-		validation.Field(&r.UserId,
-			validation.Required,
-		),
-	)
+	Token        string `json:"token"`         // Authentication token
+	RefreshToken string `json:"refresh_token"` // Refresh token. Used to refresh authentication token.
 }
 
 type RefreshTokenResponse struct {
-	Token        string `json:"token"`
-	RefreshToken string `json:"refresh_token"`
+	Token        string `json:"token"`         // Authentication token
+	RefreshToken string `json:"refresh_token"` // Refresh token. Used to refresh authentication token.
 }
 
 type RegisterRequest struct {
-	Email string `json:"email"`
+	Email string `json:"email" example:"user@example.com"` // User Email
 }
 
 func (r RegisterRequest) Validate() error {
@@ -110,11 +98,11 @@ func (r RegisterRequest) Validate() error {
 }
 
 type ConfirmationRequest struct {
-	Id            int64  `json:"id"`
-	Token         string `json:"token"`
-	Name          string `json:"name"`
-	Discriminator string `json:"discriminator"`
-	Password      string `json:"password"`
+	Id            int64  `json:"id" example:"2230469276416868352"`               // User ID
+	Token         string `json:"token" example:"just_a_randomly_generated_text"` // Registration token
+	Name          string `json:"name" example:"FancyUserName"`                   // User name
+	Discriminator string `json:"discriminator" example:"uniquename"`             // Unique discriminator
+	Password      string `json:"password" example:"VerYstR0NgP@66WoR6"`          // User password
 }
 
 func (r ConfirmationRequest) Validate() error {
@@ -147,7 +135,7 @@ func (r ConfirmationRequest) Validate() error {
 }
 
 type PasswordRecoveryRequest struct {
-	Email string `json:"email"`
+	Email string `json:"email" example:"user@example.com"` // User Email to receive recovery email
 }
 
 func (r PasswordRecoveryRequest) Validate() error {
@@ -160,9 +148,9 @@ func (r PasswordRecoveryRequest) Validate() error {
 }
 
 type PasswordResetRequest struct {
-	Id       int64  `json:"id"`
-	Token    string `json:"token"`
-	Password string `json:"password"`
+	Id       int64  `json:"id" example:"2230469276416868352"`              // User ID
+	Token    string `json:"token" example:"just_a_random_text_from_email"` // Reset token
+	Password string `json:"password" example:"N3wVerYstR0NgP@66WoR6"`      // New password
 }
 
 func (r PasswordResetRequest) Validate() error {

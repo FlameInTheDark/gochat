@@ -20,17 +20,17 @@ const (
 )
 
 type MessageSearchRequest struct {
-	ChannelId int64    `json:"channel_id"`
-	Mentions  []int64  `json:"mentions"`
-	AuthorId  *int64   `json:"author_id"`
-	Content   *string  `json:"content"`
-	Has       []string `json:"has"`
-	Page      int      `json:"page"`
+	ChannelId int64    `json:"channel_id" example:"2230469276416868352"` // Channel ID to search in. Required.
+	Mentions  []int64  `json:"mentions" example:"2230469276416868352"`   // Mentions contains a list of int64 user IDs.
+	AuthorId  *int64   `json:"author_id" example:"2230469276416868352"`  // Author ID to search by.
+	Content   *string  `json:"content" example:"Hello world!"`           // Content contains a string to search for. Might be empty if need to search by other parameters.
+	Has       []string `json:"has" enums:"url,image,video,file"`         // List of specific features to search for.
+	Page      int      `json:"page" default:"0"`                         // Page number to get. Starts from 0.
 }
 
 type MessageSearchResponse struct {
-	Messages []dto.Message `json:"messages"`
-	Pages    int           `json:"pages"`
+	Messages []dto.Message `json:"messages"` // List of messages
+	Pages    int           `json:"pages"`    // Total number of pages with current search parameters
 }
 
 func (r MessageSearchRequest) Validate() error {

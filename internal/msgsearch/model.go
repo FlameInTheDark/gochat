@@ -80,8 +80,9 @@ type osSearchQuery struct {
 }
 
 type osSettingsIndex struct {
-	NumberOfShards   int `json:"number_of_shards"`
-	NumberOfReplicas int `json:"number_of_replicas"`
+	NumberOfShards   int      `json:"number_of_shards"`
+	NumberOfReplicas int      `json:"number_of_replicas"`
+	RoutingPath      []string `json:"routing_path,omitempty"`
 }
 
 type osSettings struct {
@@ -120,6 +121,7 @@ var defaultMessagesIndex = osCreateMessagesIndexRequest{
 		Index: osSettingsIndex{
 			NumberOfShards:   5,
 			NumberOfReplicas: 1,
+			RoutingPath:      []string{"channel_id"},
 		},
 	},
 	Mappings: osMessagesMapping{

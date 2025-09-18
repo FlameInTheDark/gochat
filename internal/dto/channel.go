@@ -7,18 +7,18 @@ import (
 )
 
 type Channel struct {
-	Id          int64             `json:"id"`
-	Type        model.ChannelType `json:"type"`
-	GuildId     *int64            `json:"guild_id,omitempty"`
-	Name        string            `json:"name"`
-	ParentId    *int64            `json:"parent_id,omitempty"`
-	Position    int               `json:"position"`
-	Topic       *string           `json:"topic"`
-	Permissions *int64            `json:"permissions,omitempty"`
-	CreatedAt   time.Time         `json:"created_at"`
+	Id          int64             `json:"id" example:"2230469276416868352"`                  // Channel ID
+	Type        model.ChannelType `json:"type" example:"0"`                                  // Channel type
+	GuildId     *int64            `json:"guild_id,omitempty" example:"2230469276416868352"`  // Guild ID channel was created in
+	Name        string            `json:"name" example:"channel-name"`                       // Channel name, without spaces
+	ParentId    *int64            `json:"parent_id,omitempty" example:"2230469276416868352"` // Parent channel id
+	Position    int               `json:"position" example:"4"`                              // Channel position
+	Topic       *string           `json:"topic" example:"Just a channel topic"`              // Channel topic.
+	Permissions *int64            `json:"permissions,omitempty"`                             // Permissions. Check the permissions documentation for more info.
+	CreatedAt   time.Time         `json:"created_at"`                                        // Timestamp of channel creation
 }
 
 type ChannelOrder struct {
-	Id       int64 `json:"id"`
-	Position int   `json:"position"`
+	Id       int64 `json:"id"`       // Channel ID.
+	Position int   `json:"position"` // New channel position.
 }

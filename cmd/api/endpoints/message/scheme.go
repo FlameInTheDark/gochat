@@ -39,9 +39,9 @@ const (
 )
 
 type SendMessageRequest struct {
-	Content     string  `json:"content"`
-	Attachments []int64 `json:"attachments"`
-	Mentions    []int64 `json:"mentions"`
+	Content     string  `json:"content" example:"Hello world!"`            // Message content
+	Attachments []int64 `json:"attachments" example:"2230469276416868352"` // IDs of attached files
+	Mentions    []int64 `json:"mentions" example:"2230469276416868352"`    // IDs of mentioned users
 }
 
 func (r SendMessageRequest) Validate() error {
@@ -60,7 +60,7 @@ func (r SendMessageRequest) Validate() error {
 }
 
 type UpdateMessageRequest struct {
-	Content string `json:"content"`
+	Content string `json:"content" example:"Hello world!"` // Message content
 }
 
 func (r UpdateMessageRequest) Validate() error {
@@ -73,10 +73,10 @@ func (r UpdateMessageRequest) Validate() error {
 }
 
 type UploadAttachmentRequest struct {
-	Filename string `json:"filename"`
-	FileSize int64  `json:"file_size"`
-	Width    int64  `json:"width"`
-	Height   int64  `json:"height"`
+	Filename string `json:"filename" example:"image.png"` // File name
+	FileSize int64  `json:"file_size" example:"100000"`   // File size in bytes
+	Width    int64  `json:"width" example:"800"`          // Image width in pixels
+	Height   int64  `json:"height" example:"600"`         // Image height in pixels
 }
 
 func (r UploadAttachmentRequest) Validate() error {
@@ -113,9 +113,9 @@ const (
 )
 
 type GetMessagesRequest struct {
-	From      *int64     `query:"from" json:"from"`
-	Limit     *int       `query:"limit" json:"limit"`
-	Direction *Direction `query:"direction" json:"direction"`
+	From      *int64     `query:"from" json:"from" example:"2230469276416868352"`                   // ID of the message whe start to look from
+	Limit     *int       `query:"limit" json:"limit" example:"30"`                                  // Number of messages to return.
+	Direction *Direction `query:"direction" json:"direction" enums:"before,after" example:"before"` // Direction to look for messages
 }
 
 func (r GetMessagesRequest) Validate() error {

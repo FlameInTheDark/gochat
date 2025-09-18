@@ -9,6 +9,9 @@ Here goes the project documentation.
 
 - [WebSocket Events](ws/README.md)
 
+
+- [Swagger API Documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/FlameInTheDark/gochat/refs/heads/dev/docs/api/swagger.json)
+
 ## Architecture Diagram
 ```mermaid
 ---

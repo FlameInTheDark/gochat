@@ -17,10 +17,10 @@ type Channel struct {
 type ChannelType int
 
 const (
-	ChannelTypeGuild ChannelType = iota
-	ChannelTypeGuildVoice
-	ChannelTypeGuildCategory
-	ChannelTypeDM
-	ChannelTypeGroupDM
-	ChannelTypeThread
+	ChannelTypeGuild         ChannelType = iota // Default text channel in guild
+	ChannelTypeGuildVoice                       // Voice channel in guild
+	ChannelTypeGuildCategory                    // Category channel in guild
+	ChannelTypeDM                               // DM channel. Can't be created in Guild
+	ChannelTypeGroupDM                          // Group DM channel. Can't be created in Guild'
+	ChannelTypeThread                           // Thread channel
 )
