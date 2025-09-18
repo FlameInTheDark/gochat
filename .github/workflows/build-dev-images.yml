@@ -13,10 +13,28 @@ jobs:
   build-and-push-dev:
     name: Build and Push Dev Images
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: api
+            dockerfile: api.Dockerfile
+            image: gochat-api
+            cache_scope: api-dev
+          - service: ws
+            dockerfile: ws.Dockerfile
+            image: gochat-ws
+            cache_scope: ws-dev
+          - service: auth
+            dockerfile: auth.Dockerfile
+            image: gochat-auth
+            cache_scope: auth-dev
+          - service: indexer
+            dockerfile: indexer.Dockerfile
+            image: gochat-indexer
+            cache_scope: indexer-dev
     steps:
       - name: Check out code from dev branch
         uses: actions/checkout@v4
-        # Default ref is the branch that triggered the workflow (dev)
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -31,40 +49,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for API image (dev tag)
-        id: meta_api_dev
+      - name: Extract metadata for ${{ matrix.service }} image (dev tag)
+        id: meta_dev
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/gochat-api
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
           tags: |
-            type=raw,value=dev # Explicitly tag as dev
+            type=raw,value=dev
 
-      - name: Build and push API image (dev)
+      - name: Build and push ${{ matrix.service }} image (dev)
         uses: docker/build-push-action@v5
         with:
-          context: . # Build context is the repository root
-          file: ./api.Dockerfile # Dockerfile is in the root
+          context: .
+          file: ./${{ matrix.dockerfile }}
           push: true
-          tags: ${{ steps.meta_api_dev.outputs.tags }}
-          labels: ${{ steps.meta_api_dev.outputs.labels }}
-          cache-from: type=gha,scope=api-dev # Separate cache scope for dev
-          cache-to: type=gha,mode=max,scope=api-dev
-
-      - name: Extract metadata for WS image (dev tag)
-        id: meta_ws_dev
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/gochat-ws
-          tags: |
-            type=raw,value=dev # Explicitly tag as dev
-
-      - name: Build and push WS image (dev)
-        uses: docker/build-push-action@v5
-        with:
-          context: . # Build context is the repository root
-          file: ./ws.Dockerfile # Dockerfile is in the root
-          push: true
-          tags: ${{ steps.meta_ws_dev.outputs.tags }}
-          labels: ${{ steps.meta_ws_dev.outputs.labels }}
-          cache-from: type=gha,scope=ws-dev # Separate cache scope for dev
-          cache-to: type=gha,mode=max,scope=ws-dev
+          tags: ${{ steps.meta_dev.outputs.tags }}
+          labels: ${{ steps.meta_dev.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.cache_scope }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.cache_scope }}

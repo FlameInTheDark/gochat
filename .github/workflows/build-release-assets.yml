@@ -123,6 +123,48 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Extract metadata for AUTH image
+        id: meta_auth
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/gochat-auth
+          tags: |
+            type=ref,event=tag
+            # Always tag as latest on release
+            type=raw,value=latest,enable=true
+
+      - name: Build and push AUTH image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./auth.Dockerfile
+          push: true
+          tags: ${{ steps.meta_auth.outputs.tags }}
+          labels: ${{ steps.meta_auth.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract metadata for INDEXER image
+        id: meta_indexer
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/gochat-indexer
+          tags: |
+            type=ref,event=tag
+            # Always tag as latest on release
+            type=raw,value=latest,enable=true
+
+      - name: Build and push INDEXER image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./indexer.Dockerfile
+          push: true
+          tags: ${{ steps.meta_indexer.outputs.tags }}
+          labels: ${{ steps.meta_indexer.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Upload Release Assets using gh CLI
         # This step runs relative to the root, so the asset path is correct
         env:
