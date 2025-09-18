@@ -1,4 +1,4 @@
-name: Build and Upload Release Assets
+name: Build Release Images
 
 # Trigger when a release is published
 on:
@@ -6,12 +6,12 @@ on:
     types: [published]
 
 permissions:
-  contents: write # Needed to upload assets to existing release
+  contents: read # Only read access required to checkout code
   packages: write # Needed to push container images to GHCR
 
 jobs:
-  build-assets-and-images: # Combine jobs for simplicity or keep separate if preferred
-    name: Build Binaries and Container Images
+  build-images:
+    name: Build and Push Container Images
     runs-on: ubuntu-latest
     steps:
       # Checkout the specific tag associated with the release
@@ -20,53 +20,6 @@ jobs:
         with:
           # github.ref is the tag name for release events (e.g., refs/tags/v1.0.0)
           ref: ${{ github.ref }}
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21' # Specify your Go version
-
-      # Download dependencies within the installer directory
-      - name: Download Go Modules
-        working-directory: cmd/installer
-        run: go mod download
-
-      # Tidy ensures go.mod matches source code within the installer directory
-      - name: Tidy Go Modules
-        working-directory: cmd/installer
-        run: go mod tidy
-
-      - name: Build Go Binaries (Cross-Platform)
-        id: build
-        working-directory: cmd/installer
-        run: |
-          set -e # Exit on error
-          # Define targets (OS/Arch)
-          targets=(
-            "linux/amd64"
-            "linux/arm64"
-            "windows/amd64"
-            "darwin/amd64"
-            "darwin/arm64"
-          )
-
-          # Output dir relative to root, need to go up two levels from cmd/installer
-          OUTPUT_DIR="../../release_builds"
-          mkdir -p ${OUTPUT_DIR}
-
-          for target in "${targets[@]}"; do
-            IFS='/' read -r os arch <<< "$target"
-            output_name="installer-${os}-${arch}"
-            if [ "$os" = "windows" ]; then
-              output_name+=".exe"
-            fi
-            # Build main.go from the current (cmd/installer) directory
-            echo "Building for $os/$arch -> ${OUTPUT_DIR}/${output_name}"
-            GOOS=$os GOARCH=$arch go build -ldflags="-s -w" -o "${OUTPUT_DIR}/${output_name}" .
-          done
-
-          # List built files
-          ls -R ${OUTPUT_DIR}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -165,17 +118,3 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Upload Release Assets using gh CLI
-        # This step runs relative to the root, so the asset path is correct
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Get the tag name from the release event
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          echo "Uploading assets for tag: $RELEASE_TAG"
-          if [ -z "$RELEASE_TAG" ]; then
-            echo "Error: Triggering tag name not found."
-            exit 1
-          fi
-          # Upload all files from release_builds to the existing release matching the tag
-          gh release upload "$RELEASE_TAG" release_builds/* --clobber
