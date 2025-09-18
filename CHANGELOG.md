@@ -1,3 +1,41 @@
+# [1.1.0](https://github.com/FlameInTheDark/gochat/compare/v1.0.1...v1.1.0) (2025-09-18)
+
+
+### Bug Fixes
+
+* chart debug ([4c2a860](https://github.com/FlameInTheDark/gochat/commit/4c2a8605152849d45581b944cd3b9816f43ac2cc))
+* Guild route validation fixes ([69baf87](https://github.com/FlameInTheDark/gochat/commit/69baf87b80d6fbdf185d16ca983d71ea7b11e574))
+* installer list style improvement ([477445d](https://github.com/FlameInTheDark/gochat/commit/477445d50106763c0bd0941d7741c0f3babcbe0c))
+* installer rework ([81a8d72](https://github.com/FlameInTheDark/gochat/commit/81a8d729b6b668a3d4ff6d6ed8993404060c03fe))
+* **installer:** set image pull policy to Always for api, ui, and ws ([ec38189](https://github.com/FlameInTheDark/gochat/commit/ec38189bb5ec204d1a541a4b677fc0e594ff7690))
+
+
+### Features
+
+* Added generation and js, go clients for the API. Fixed query and docs, added config files comments for easier navigation ([b830ca6](https://github.com/FlameInTheDark/gochat/commit/b830ca62b0c3465c36f28b8cc8370f031748d34e))
+* Added member roles subroute to the guild route, bumped a Golang version ([73c3cd3](https://github.com/FlameInTheDark/gochat/commit/73c3cd3f35590b8157e5aeb97bb4eae70a919f89))
+* added search endpoint (so far returns ids instead of messages), some minor refactoring ([6e5f74d](https://github.com/FlameInTheDark/gochat/commit/6e5f74dc2d630f8fd876aaf9cff7f54960feabd9))
+* **api-deployment:** add S3 environment variables for MinIO configuration ([a47370a](https://github.com/FlameInTheDark/gochat/commit/a47370ac51f4c596caa78d05d4dc3431d2ffea3c))
+* **api:** Migrated cold data from ScyllaDB to PostgreSQL ([5a216e2](https://github.com/FlameInTheDark/gochat/commit/5a216e264fc3694a9f80af2aebef5a40f9f4192b))
+* **api:** Migration of cold data to PostgreSQL with Citus ([ed9f950](https://github.com/FlameInTheDark/gochat/commit/ed9f9509a69038316a8367f683c1c21452bd74fe))
+* **api:** PostgreSQL migration files ([c6bb212](https://github.com/FlameInTheDark/gochat/commit/c6bb212251b61bd715cbe6f4a87b05c39790189f))
+* **api:** request validation and some fixes ([50414da](https://github.com/FlameInTheDark/gochat/commit/50414daddf606e3f809f8d890360133125b5c52b))
+* **api:** some refactoring, optimizations and idempotency ([ea9d0da](https://github.com/FlameInTheDark/gochat/commit/ea9d0da080e68af848770c2fbbcb0b76e86fa93c))
+* changed refresh token route and update/reorder channels routesi ([9fb8070](https://github.com/FlameInTheDark/gochat/commit/9fb80708e8b71b155c766c93ed109b3808da152c))
+* client docs and methods ([e465a2d](https://github.com/FlameInTheDark/gochat/commit/e465a2d49db374887ba25e0e28a94f2ccef68939))
+* Improved authentication with access and refresh tokens ([c52a90d](https://github.com/FlameInTheDark/gochat/commit/c52a90dc9831ae2c97d4224ac065dd6001d450da))
+* **ingress:** add MinIO Console ingress configuration ([afdd6c1](https://github.com/FlameInTheDark/gochat/commit/afdd6c1d793e132959fa6aa3a67b27d541077157))
+* **installer:** enhance MinIO configuration with dedicated API credentials and console ingress options ([db21cd9](https://github.com/FlameInTheDark/gochat/commit/db21cd986f3c2353ffb0a92cc7fa310005f39b7b))
+* JWT refresh, config file examples, Resend email provider, SMTP changes ([00db646](https://github.com/FlameInTheDark/gochat/commit/00db646688402426357e5a5699a959c8b9f19207))
+* new auth service and password recovery ([3c35deb](https://github.com/FlameInTheDark/gochat/commit/3c35deb0d28a9e6734e4720a9b409a4b0ea5b986))
+* removed helm (will add in feature), mailer rework in progress, makefile update for the easier deployment of dev environment, readme update for better information about the project ([af9e20b](https://github.com/FlameInTheDark/gochat/commit/af9e20b49a3fc0cac532116b89acf3fb3863c64f))
+* search update ([0d87987](https://github.com/FlameInTheDark/gochat/commit/0d87987a4b55116143f9f7fc5ec3b3d927302fe2))
+* **search:** a little optimization of the search query builder ([f12f1b0](https://github.com/FlameInTheDark/gochat/commit/f12f1b008c91ee5a49a55c0b53d7aa155a22c9a0))
+* **search:** added OpenSearch and indexer service ([d060e20](https://github.com/FlameInTheDark/gochat/commit/d060e2055ac90ff6cf83e48b14d4b06e23085da5))
+* **search:** updated search indexing for messages ([6c5104c](https://github.com/FlameInTheDark/gochat/commit/6c5104c64d58dd258f6742fea988f84dc7531e95))
+* updated opensearch library and fixed document update on the indexer side ([b0359f5](https://github.com/FlameInTheDark/gochat/commit/b0359f544d68b08ff03f4957881ede5a98d729f7))
+* updated token generation and refresh, updated smtp and fixed some issues with permissions check ([4a6a4c0](https://github.com/FlameInTheDark/gochat/commit/4a6a4c01a599e0be9bc30f96cc56119f901d6f05))
+
 ## [1.0.1](https://github.com/FlameInTheDark/gochat/compare/v1.0.0...v1.0.1) (2025-04-08)
 
 
