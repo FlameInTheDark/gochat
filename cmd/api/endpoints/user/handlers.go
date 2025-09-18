@@ -116,7 +116,7 @@ func (e *entity) fetchUserWithDiscriminator(c *fiber.Ctx, userId int64) (dto.Use
 //	@failure	400		{string}	string				"Incorrect ID"
 //	@failure	404		{string}	string				"User not found"
 //	@failure	500		{string}	string				"Something bad happened"
-//	@Router		/me [patch]
+//	@Router		/user/me [patch]
 func (e *entity) ModifyUser(c *fiber.Ctx) error {
 	var req ModifyUserRequest
 	err := c.BodyParser(&req)
