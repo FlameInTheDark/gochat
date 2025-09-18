@@ -1,6 +1,8 @@
 package user
 
 import (
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 )
@@ -26,20 +28,74 @@ const (
 	ErrUnableToGetDMChannel        = "unable to get dm channel"
 	ErrUnableToGetGroupDMChannel   = "unable to get group dm channel"
 	ErrUnableToJoingGroupDmChannel = "unable to join group dm channel"
+
+	// Validation error messages
+	ErrUserNameTooShort    = "user name must be at least 4 characters"
+	ErrUserNameTooLong     = "user name must be less than 20 characters"
+	ErrAvatarIdInvalid     = "avatar ID must be positive"
+	ErrRecipientIdRequired = "recipient ID is required"
+	ErrRecipientIdInvalid  = "recipient ID must be positive"
+	ErrChannelIdInvalid    = "channel ID must be positive"
+	ErrRecipientsRequired  = "at least one recipient is required"
+	ErrRecipientsInvalid   = "recipient IDs must be positive"
+	ErrTooManyRecipients   = "maximum 10 recipients allowed"
+	ErrNoFieldsToUpdate    = "at least one field must be provided for update"
 )
 
 type ModifyUserRequest struct {
-	Avatar *int64  `json:"avatar,omitempty"`
-	Name   *string `json:"Name,omitempty"`
+	Avatar *int64  `json:"avatar,omitempty" example:"2230469276416868352"` // Avatar ID.
+	Name   *string `json:"name,omitempty" example:"NewFancyName"`          // User name.
+}
+
+func (r ModifyUserRequest) Validate() error {
+	// Check if at least one field is provided
+	if r.Avatar == nil && r.Name == nil {
+		return validation.NewError("VALIDATION_NO_FIELDS", ErrNoFieldsToUpdate)
+	}
+
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.When(r.Name != nil,
+				validation.RuneLength(4, 0).Error(ErrUserNameTooShort),
+				validation.RuneLength(0, 20).Error(ErrUserNameTooLong),
+			),
+		),
+		validation.Field(&r.Avatar,
+			validation.When(r.Avatar != nil, validation.Min(int64(1)).Error(ErrAvatarIdInvalid)),
+		),
+	)
 }
 
 type CreateDMRequest struct {
 	RecipientId int64 `json:"recipient_id"`
 }
 
+func (r CreateDMRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.RecipientId,
+			validation.Required.Error(ErrRecipientIdRequired),
+			validation.Min(int64(1)).Error(ErrRecipientIdInvalid),
+		),
+	)
+}
+
 type CreateDMManyRequest struct {
 	ChannelId    *int64  `json:"channel_id"`
 	RecipientsId []int64 `json:"recipients_id"`
+}
+
+func (r CreateDMManyRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.ChannelId,
+			validation.When(r.ChannelId != nil, validation.Min(int64(1)).Error(ErrChannelIdInvalid)),
+		),
+		validation.Field(&r.RecipientsId,
+			validation.Required.Error(ErrRecipientsRequired),
+			validation.Length(1, 0).Error(ErrRecipientsRequired),
+			validation.Length(0, 10).Error(ErrTooManyRecipients),
+			validation.Each(validation.Min(int64(1)).Error(ErrRecipientsInvalid)),
+		),
+	)
 }
 
 func modelToUser(m model.User) dto.User {

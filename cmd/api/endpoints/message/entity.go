@@ -7,20 +7,22 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/channel"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/channelroleperm"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/channeluserperm"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/discriminator"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/dmchannel"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/groupdmchannel"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/guild"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannels"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/role"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/user"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/userrole"
+	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channeluserperm"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/role"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
+	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
@@ -44,30 +46,31 @@ type entity struct {
 	log     *slog.Logger
 	storage *s3.Client
 	mqt     mq.SendTransporter
+	imq     *indexmq.IndexMQ
 
 	// DB entities
-	user  *user.Entity
-	m     *member.Entity
-	disc  *discriminator.Entity
-	ch    *channel.Entity
-	g     *guild.Entity
-	gc    *guildchannels.Entity
-	dmc   *dmchannel.Entity
-	gdmc  *groupdmchannel.Entity
-	msg   *message.Entity
-	at    *attachment.Entity
-	perm  *rolecheck.Entity
-	uperm *channeluserperm.Entity
-	rperm *channelroleperm.Entity
-	role  *role.Entity
-	ur    *userrole.Entity
+	user  user.User
+	m     member.Member
+	disc  discriminator.Discriminator
+	ch    channel.Channel
+	g     guild.Guild
+	gc    guildchannels.GuildChannels
+	dmc   dmchannel.DmChannel
+	gdmc  groupdmchannel.GroupDMChannel
+	msg   message.Message
+	at    attachment.Attachment
+	perm  rolecheck.RoleCheck
+	uperm channeluserperm.ChannelUserPerm
+	rperm channelroleperm.ChannelRolePerm
+	role  role.Role
+	ur    userrole.UserRole
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, storage *s3.Client, t mq.SendTransporter, uploadLimit int64, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, storage *s3.Client, t mq.SendTransporter, imq *indexmq.IndexMQ, uploadLimit int64, log *slog.Logger) server.Entity {
 
 	return &entity{
 		name:        entityName,
@@ -75,20 +78,21 @@ func New(dbcon *db.CQLCon, storage *s3.Client, t mq.SendTransporter, uploadLimit
 		log:         log,
 		storage:     storage,
 		mqt:         t,
-		user:        user.New(dbcon),
-		m:           member.New(dbcon),
-		disc:        discriminator.New(dbcon),
-		ch:          channel.New(dbcon),
-		dmc:         dmchannel.New(dbcon),
-		gdmc:        groupdmchannel.New(dbcon),
-		g:           guild.New(dbcon),
-		gc:          guildchannels.New(dbcon),
+		imq:         imq,
+		user:        user.New(pg.Conn()),
+		m:           member.New(pg.Conn()),
+		disc:        discriminator.New(pg.Conn()),
+		ch:          channel.New(pg.Conn()),
+		dmc:         dmchannel.New(pg.Conn()),
+		gdmc:        groupdmchannel.New(pg.Conn()),
+		g:           guild.New(pg.Conn()),
+		gc:          guildchannels.New(pg.Conn()),
 		msg:         message.New(dbcon),
 		at:          attachment.New(dbcon),
-		perm:        rolecheck.New(dbcon),
-		uperm:       channeluserperm.New(dbcon),
-		rperm:       channelroleperm.New(dbcon),
-		role:        role.New(dbcon),
-		ur:          userrole.New(dbcon),
+		perm:        rolecheck.New(dbcon, pg),
+		uperm:       channeluserperm.New(pg.Conn()),
+		rperm:       channelroleperm.New(pg.Conn()),
+		role:        role.New(pg.Conn()),
+		ur:          userrole.New(pg.Conn()),
 	}
 }

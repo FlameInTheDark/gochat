@@ -1,18 +1,25 @@
 package guild
 
 import (
+	"regexp"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/FlameInTheDark/gochat/internal/helper"
 )
 
 const (
 	ErrUnableToGetUserToken         = "unable to get user token"
+	ErrUnableToGetGuildMemberToken  = "unable to get guild member token"
 	ErrUnableToParseBody            = "unable to parse body"
 	ErrPermissionsRequired          = "permissions required"
 	ErrUnableToCreateAttachment     = "unable to create attachment"
 	ErrUnableToCreateUploadURL      = "unable to create upload url"
 	ErrIncorrectChannelID           = "incorrect channel ID"
 	ErrIncorrectGuildID             = "incorrect guild ID"
+	ErrIncorrectMemberID            = "incorrect member ID"
 	ErrFileIsTooBig                 = "file is too big"
 	ErrUnableToSendMessage          = "unable to send message"
 	ErrUnableToGetUser              = "unable to get user"
@@ -24,31 +31,197 @@ const (
 	ErrUnableToUpdateGuild          = "unable to update guild"
 	ErrUnableToGetRoles             = "unable to get roles"
 	ErrUnableToCreateChannelGroup   = "unable to create channel group"
+	ErrUnableToGetChannel           = "unable to get channel"
+	ErrUnableToUpdateChannel        = "unable to update channel"
+	ErrUnableToSetParentAsSelf      = "unable to set parent as self"
+	ErrUnableToSetParentForCategory = "unable to set parent for category"
+	ErrNotAMember                   = "not a member"
+
+	// Validation error messages
+	ErrGuildNameRequired   = "guild name is required"
+	ErrGuildNameTooShort   = "guild name must be at least 2 characters"
+	ErrGuildNameTooLong    = "guild name must be less than 100 characters"
+	ErrChannelNameRequired = "channel name is required"
+	ErrChannelNameTooShort = "channel name must be at least 2 characters"
+	ErrChannelNameTooLong  = "channel name must be less than 100 characters"
+	ErrChannelNameInvalid  = "channel name can only contain letters, numbers, hyphens, and underscores"
+	ErrChannelTypeInvalid  = "invalid channel type"
+	ErrIconIdInvalid       = "icon ID must be positive"
+	ErrParentIdInvalid     = "parent ID must be positive"
+	ErrPermissionsInvalid  = "permissions must be non-negative"
+)
+
+var (
+	channelNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 )
 
 type CreateGuildRequest struct {
-	Name   string `json:"name"`
-	IconId *int64 `json:"icon_id"`
-	Public bool   `json:"public"`
+	Name   string `json:"name" example:"My unique guild"`        // Guild name
+	IconId *int64 `json:"icon_id" example:"2230469276416868352"` // Icon ID
+	Public bool   `json:"public" default:"false"`                // Whether the guild is public
+}
+
+func (r CreateGuildRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.Required.Error(ErrGuildNameRequired),
+			validation.RuneLength(2, 0).Error(ErrGuildNameTooShort),
+			validation.RuneLength(0, 100).Error(ErrGuildNameTooLong),
+		),
+		validation.Field(&r.IconId,
+			validation.When(r.IconId != nil, validation.Min(int64(1)).Error(ErrIconIdInvalid)),
+		),
+	)
 }
 
 type UpdateGuildRequest struct {
-	Name   *string `json:"name"`
-	IconId *int64  `json:"icon_id"`
-	Public *bool   `json:"public"`
+	Name        *string `json:"name" example:"New guild name"`         // Guild name
+	IconId      *int64  `json:"icon_id" example:"2230469276416868352"` // Icon ID
+	Public      *bool   `json:"public" default:"false"`                // Whether the guild is public
+	Permissions *int64  `json:"permissions" default:"7927905"`         // Permissions. Check the permissions documentation for more info.
+}
+
+func (r UpdateGuildRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.When(r.Name != nil,
+				validation.RuneLength(2, 0).Error(ErrGuildNameTooShort),
+				validation.RuneLength(0, 100).Error(ErrGuildNameTooLong),
+			),
+		),
+		validation.Field(&r.IconId,
+			validation.When(r.IconId != nil, validation.Min(int64(1)).Error(ErrIconIdInvalid)),
+		),
+		validation.Field(&r.Permissions,
+			validation.When(r.Permissions != nil, validation.Min(int64(0)).Error(ErrPermissionsInvalid)),
+		),
+	)
 }
 
 type CreateGuildChannelCategoryRequest struct {
-	Name    string `json:"name"`
-	Private bool   `json:"private"`
+	Name    string `json:"name" example:"category-name"` // Category channel name
+	Private bool   `json:"private" default:"false"`      // Whether the category channel is private. Private channels can only be seen by users with roles assigned to this channel.
+}
+
+func (r CreateGuildChannelCategoryRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.Required.Error(ErrChannelNameRequired),
+			validation.RuneLength(2, 0).Error(ErrChannelNameTooShort),
+			validation.RuneLength(0, 100).Error(ErrChannelNameTooLong),
+			validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
+		),
+	)
 }
 
 type CreateGuildChannelRequest struct {
-	Name     string            `json:"name"`
-	Type     model.ChannelType `json:"type"`
-	ParentId *int64            `json:"parent_id"`
-	Private  bool              `json:"private"`
+	Name     string            `json:"name" example:"channel-name"`             // Channel name
+	Type     model.ChannelType `json:"type" example:"0"`                        // Channel type
+	ParentId *int64            `json:"parent_id" example:"2230469276416868352"` // Parent channel ID. A Parent channel can only be a category channel.
+	Private  bool              `json:"private" default:"false"`                 // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
 }
+
+func (r CreateGuildChannelRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.Required.Error(ErrChannelNameRequired),
+			validation.RuneLength(2, 0).Error(ErrChannelNameTooShort),
+			validation.RuneLength(0, 100).Error(ErrChannelNameTooLong),
+			validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
+		),
+		validation.Field(&r.Type,
+			validation.In(
+				model.ChannelTypeGuild,
+				model.ChannelTypeGuildVoice,
+				model.ChannelTypeGuildCategory,
+				model.ChannelTypeDM,
+				model.ChannelTypeGroupDM,
+				model.ChannelTypeThread,
+			).Error(ErrChannelTypeInvalid),
+		),
+		validation.Field(&r.ParentId,
+			validation.When(r.ParentId != nil, validation.Min(int64(1)).Error(ErrParentIdInvalid)),
+		),
+	)
+}
+
+type ChannelOrder struct {
+	Id       int64 `json:"id" example:"2230469276416868352"` // Channel ID.
+	Position int   `json:"position" example:"4"`             // New channel position.
+}
+
+type PatchGuildChannelOrderRequest struct {
+	Channels []ChannelOrder `json:"channels"` // List of channels to change order.
+}
+
+func (c ChannelOrder) Validate() error {
+	return validation.ValidateStruct(
+		&c,
+		validation.Field(&c.Id, validation.Required),
+	)
+}
+
+func (r PatchGuildChannelOrderRequest) Validate() error {
+	return validation.ValidateStruct(
+		&r,
+		validation.Field(
+			&r.Channels,
+			validation.Required,
+			validation.Each(validation.By(func(v interface{}) error {
+				co, ok := v.(ChannelOrder)
+				if !ok {
+					return validation.NewError("validation", "invalid channel element")
+				}
+				return co.Validate()
+			})),
+		),
+	)
+}
+
+type PatchGuildChannelRequest struct {
+	Name     *string `json:"name,omitempty" example:"new-channel-name"`         // Channel name.
+	ParentId *int64  `json:"parent_id,omitempty" example:"2230469276416868352"` // Parent channel ID. A Parent channel can only be a category channel.
+	Private  *bool   `json:"private,omitempty" default:"false"`                 // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
+	Topic    *string `json:"topic,omitempty" example:"Just a channel topic"`    // Channel topic.
+}
+
+func (r PatchGuildChannelRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.When(r.Name != nil,
+				validation.RuneLength(2, 0).Error(ErrChannelNameTooShort),
+				validation.RuneLength(0, 100).Error(ErrChannelNameTooLong),
+				validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
+			),
+		),
+		validation.Field(&r.ParentId, validation.When(r.ParentId != nil,
+			validation.Min(int64(1)).Error(ErrParentIdInvalid)),
+		),
+	)
+}
+
+// Common data structures for guild operations
+type guildContext struct {
+	User   *helper.JWTUser
+	Guild  *model.Guild
+	Member *model.Member
+}
+
+type channelPermissionContext struct {
+	User    *helper.JWTUser
+	Guild   *model.Guild
+	Channel *model.Channel
+	Roles   map[int64]*model.Role
+}
+
+type memberRole struct {
+	Id          int64  `json:"id"`
+	Name        string `json:"name"`
+	Color       int    `json:"color"`
+	Permissions int64  `json:"permissions"`
+}
+
+// DTO conversion functions
 
 func channelModelToDTO(c *model.Channel, guildId *int64, position int) dto.Channel {
 	return dto.Channel{
@@ -62,4 +235,34 @@ func channelModelToDTO(c *model.Channel, guildId *int64, position int) dto.Chann
 		Permissions: c.Permissions,
 		CreatedAt:   c.CreatedAt,
 	}
+}
+
+// buildGuildDTO creates a guild DTO from model
+func buildGuildDTO(guild *model.Guild) dto.Guild {
+	return dto.Guild{
+		Id:          guild.Id,
+		Name:        guild.Name,
+		Icon:        guild.Icon,
+		Owner:       guild.OwnerId,
+		Public:      guild.Public,
+		Permissions: guild.Permissions,
+	}
+}
+
+func roleModelToDTO(r model.Role) dto.Role {
+	return dto.Role{
+		Id:          r.Id,
+		GuildId:     r.GuildId,
+		Name:        r.Name,
+		Color:       r.Color,
+		Permissions: r.Permissions,
+	}
+}
+
+func roleModelToDTOMany(roles []model.Role) []dto.Role {
+	result := make([]dto.Role, len(roles))
+	for i, r := range roles {
+		result[i] = roleModelToDTO(r)
+	}
+	return result
 }

@@ -13,10 +13,11 @@ import (
 //	@Summary	Storage event
 //	@Produce	json
 //	@Tags		Webhook
-//	@Success	200	{string}	string	"Ok"
-//	@failure	400	{string}	string	"Incorrect ID"
-//	@failure	404	{string}	string	"User not found"
-//	@failure	500	{string}	string	"Something bad happened"
+//	@Param		request	body		S3Event	true	"S3 event"
+//	@Success	200		{string}	string	"Ok"
+//	@failure	400		{string}	string	"Incorrect ID"
+//	@failure	404		{string}	string	"User not found"
+//	@failure	500		{string}	string	"Something bad happened"
 //	@Router		/webhook/storage/events [post]
 func (e *entity) StorageEvents(c *fiber.Ctx) error {
 	var event S3Event

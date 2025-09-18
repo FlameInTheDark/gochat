@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/gocql/gocql"
@@ -18,6 +19,8 @@ const (
 	getMessagesBefore     = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND id <= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
 	getMessagesAfter      = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND id >= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
 	getMessagesList       = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE id IN ?`
+	getMessagesByIds      = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id IN ?;
+`
 )
 
 func (e *Entity) CreateMessage(ctx context.Context, id, channel_id, user_id int64, content string, attachments []int64) error {
@@ -175,4 +178,66 @@ func (e *Entity) GetMessagesList(ctx context.Context, msgIds []int64) ([]model.M
 		return nil, fmt.Errorf("unable to get messages list: %w", err)
 	}
 	return msgs, nil
+}
+
+func (e *Entity) GetChannelMessagesByIDs(ctx context.Context, channelId int64, ids []int64) ([]model.Message, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	byBucket := make(map[int][]int64)
+	for _, id := range ids {
+		b := int(idgen.GetBucket(id))
+		byBucket[b] = append(byBucket[b], id)
+	}
+
+	const maxIN = 100
+	chunk := func(src []int64, size int) [][]int64 {
+		var out [][]int64
+		for len(src) > 0 {
+			n := size
+			if len(src) < n {
+				n = len(src)
+			}
+			out = append(out, src[:n])
+			src = src[n:]
+		}
+		return out
+	}
+
+	results := make([]model.Message, 0, len(ids))
+	for bucket, idList := range byBucket {
+		for _, part := range chunk(idList, maxIN) {
+			iter := e.c.Session().
+				Query(getMessagesByIds, channelId, bucket, part).
+				WithContext(ctx).
+				Iter()
+
+			var m model.Message
+			for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt) {
+				// copy slice to avoid reuse issues
+				mm := m
+				if mm.Attachments != nil {
+					mm.Attachments = append([]int64(nil), mm.Attachments...)
+				}
+				results = append(results, mm)
+			}
+			if err := iter.Close(); err != nil {
+				return nil, fmt.Errorf("unable to get messages list: %w", err)
+			}
+		}
+	}
+
+	byID := make(map[int64]model.Message, len(results))
+	for _, m := range results {
+		byID[m.Id] = m
+	}
+
+	out := make([]model.Message, 0, len(ids))
+	for _, id := range ids {
+		if m, ok := byID[id]; ok {
+			out = append(out, m)
+		}
+	}
+	return out, nil
 }

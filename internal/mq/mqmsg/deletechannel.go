@@ -7,9 +7,9 @@ import (
 )
 
 type DeleteChannel struct {
-	GuildId     *int64 `json:"guild_id"`
-	ChannelType model.ChannelType
-	ChannelId   int64
+	GuildId     *int64            `json:"guild_id"`
+	ChannelType model.ChannelType `json:"channel_type"`
+	ChannelId   int64             `json:"channel_id"`
 }
 
 func (m *DeleteChannel) EventType() *EventType {

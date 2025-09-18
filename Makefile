@@ -1,13 +1,20 @@
+PG_ADDRESS=postgres://postgres@127.0.0.1/gochat
+CASSANDRA_ADDRESS=cassandra://127.0.0.1/gochat?x-multi-statement=true
+
 up:
 	docker compose up -d
+	docker compose exec scylla bash ./init-scylladb.sh
+	docker compose -p gochat up --scale citus-worker=3 -d
+
+scylla_init:
 	docker compose exec scylla bash ./init-scylladb.sh
 
 down:
 	docker compose down
 
 tools:
-	go install github.com/db-journey/journey/v2
-	go install github.com/swaggo/swag/cmd/swag@latest
+	go install -tags "postgres cassandra" github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+	go install github.com/swaggo/swag@latest
 
 run:
 	go run ./cmd/api
@@ -15,57 +22,51 @@ run:
 run_ws:
 	go run ./cmd/ws
 
-migrate:
-	journey --url cassandra://127.0.0.1/gochat --path ./db/migrations migrate up
+citus_up:
+	docker compose -p gochat up --scale citus-worker=3 -d
 
-migrate_down:
-	journey --url cassandra://127.0.0.1/gochat --path ./db/migrations migrate down
+migrate: migrate_pg migrate_scylla
+
+migrate_down: migrate_pg_down migrate_scylla_down
+
+migrate_scylla:
+	migrate -database $(CASSANDRA_ADDRESS) -path ./db/cassandra up
+
+migrate_pg:
+	migrate -database $(PG_ADDRESS) -path ./db/postgres up
+
+migrate_scylla_down:
+	migrate -database $(CASSANDRA_ADDRESS) -path ./db/cassandra down
+
+migrate_pg_down:
+	migrate -database $(PG_ADDRESS) -path ./db/postgres down
+
+add_migration_postgres:
+	migrate create -ext sql -dir db/postgres -seq $(name)
+
+add_migration_cassandra:
+	migrate create -ext cql -dir db/cassandra -seq $(name)
 
 swag:
 	swag fmt
-	swag init --ot json -o ./docs/api -g cmd/api/main.go --parseDependency
+	swag init -g doc.go \
+	  	--v3.1 \
+		--o ./docs/api \
+		--ot json \
+		--parseDependency \
+		--parseInternal \
+		--collectionFormat multi
+
+client: js_client go_client
+
+js_client:
+	docker run --rm -v "./:/local/" mirror.gcr.io/openapitools/openapi-generator-cli:v7.12.0 \
+			generate -i /local/docs/api/swagger.json -g typescript-axios -o /local/clients/api/jsclient --additional-properties=useSingleRequestParameter=true,withInterfaces=false,supportsES6=true
+
+go_client:
+	docker run --rm -v "./:/local/" mirror.gcr.io/openapitools/openapi-generator-cli:v7.12.0 \
+			generate -i /local/docs/api/swagger.json -g go -o /local/clients/api/goclient --additional-properties=useSingleRequestParameter=true --package-name goclient --git-user-id FlameInTheDark --git-repo-id gochat/clients/api/goclient
 
 setup: tools up migrate
 
-# Helm Chart Management
-# Variables
-HELM_CHART_PATH ?= ./gochat-chart
-HELM_RELEASE_NAME ?= gochat
-HELM_NAMESPACE ?= default
-HELM_MIGRATIONS_SRC ?= ./db/migrations
-HELM_MIGRATIONS_DEST ?= $(HELM_CHART_PATH)/db/migrations
-
-.PHONY: helm-lint helm-template helm-install helm-upgrade helm-uninstall copy-migrations-to-chart clean-migrations-from-chart
-
-copy-migrations-to-chart:
-	@echo "Copying migrations to Helm chart directory..."
-	@mkdir -p $(dir $(HELM_MIGRATIONS_DEST)) # Ensure parent dir exists
-	@cp -r $(HELM_MIGRATIONS_SRC) $(HELM_MIGRATIONS_DEST)
-
-clean-migrations-from-chart:
-	@echo "Cleaning up copied migrations from Helm chart directory..."
-	@rm -rf $(HELM_MIGRATIONS_DEST)
-
-helm-lint:
-	$(MAKE) copy-migrations-to-chart
-	helm lint $(HELM_CHART_PATH)
-	$(MAKE) clean-migrations-from-chart
-
-helm-template:
-	$(MAKE) copy-migrations-to-chart
-	helm template $(HELM_RELEASE_NAME) $(HELM_CHART_PATH) --namespace $(HELM_NAMESPACE) > rendered-manifest.yaml
-	$(MAKE) clean-migrations-from-chart
-	@echo "Rendered manifest saved to rendered-manifest.yaml"
-
-helm-install:
-	$(MAKE) copy-migrations-to-chart
-	helm install $(HELM_RELEASE_NAME) $(HELM_CHART_PATH) --namespace $(HELM_NAMESPACE) --create-namespace
-	$(MAKE) clean-migrations-from-chart
-
-helm-upgrade:
-	$(MAKE) copy-migrations-to-chart
-	helm upgrade --install $(HELM_RELEASE_NAME) $(HELM_CHART_PATH) --namespace $(HELM_NAMESPACE) --create-namespace
-	$(MAKE) clean-migrations-from-chart
-
-helm-uninstall:
-	helm uninstall $(HELM_RELEASE_NAME) --namespace $(HELM_NAMESPACE)
+.PHONY: setup

@@ -1,38 +1,46 @@
 package search
 
-const (
-	ErrUnableToGetUserToken         = "unable to get user token"
-	ErrUnableToParseBody            = "unable to parse body"
-	ErrPermissionsRequired          = "permissions required"
-	ErrUnableToCreateAttachment     = "unable to create attachment"
-	ErrUnableToCreateUploadURL      = "unable to create upload url"
-	ErrIncorrectChannelID           = "incorrect channel ID"
-	ErrFileIsTooBig                 = "file is too big"
-	ErrUnableToSendMessage          = "unable to send message"
-	ErrUnableToGetUser              = "unable to get user"
-	ErrUnableToGetUserDiscriminator = "unable to get discriminator"
-	ErrUnableToGetAttachements      = "unable to get attachments"
+import (
+	"github.com/FlameInTheDark/gochat/internal/dto"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
-type SendMessageRequest struct {
-	Content     string  `json:"content"`
-	Attachments []int64 `json:"attachments"`
+const (
+	ErrPermissionsRequired  = "permissions required"
+	ErrIncorrectGuildID     = "incorrect guild ID"
+	ErrUnableToParseBody    = "unable to parse body"
+	ErrUnableToFindMessages = "unable to find messages"
+	ErrUnableToGetMessages  = "unable to get messages"
+	ErrUnableToGetUsers     = "unable to get users"
+
+	// Validation error messages
+	ErrMentionIdInvalid   = "mention ID must be positive"
+	ErrIncorrectChannelID = "incorrect channel ID"
+	ErrChannelIDRequired  = "channel ID is required"
+)
+
+type MessageSearchRequest struct {
+	ChannelId int64    `json:"channel_id" example:"2230469276416868352"` // Channel ID to search in. Required.
+	Mentions  []int64  `json:"mentions" example:"2230469276416868352"`   // Mentions contains a list of int64 user IDs.
+	AuthorId  *int64   `json:"author_id" example:"2230469276416868352"`  // Author ID to search by.
+	Content   *string  `json:"content" example:"Hello world!"`           // Content contains a string to search for. Might be empty if need to search by other parameters.
+	Has       []string `json:"has" enums:"url,image,video,file"`         // List of specific features to search for.
+	Page      int      `json:"page" default:"0"`                         // Page number to get. Starts from 0.
 }
 
-type UpdateMessageRequest struct {
-	Content string `json:"content"`
+type MessageSearchResponse struct {
+	Messages []dto.Message `json:"messages"` // List of messages
+	Pages    int           `json:"pages"`    // Total number of pages with current search parameters
 }
 
-type UploadAttachmentRequest struct {
-	Filename string `json:"filename"`
-	FileSize int64  `json:"file_size"`
-	Width    int64  `json:"width"`
-	Height   int64  `json:"height"`
-}
-
-type SearchRequest struct {
-	GuildId   int64  `json:"guild_id"`
-	ChannelId *int64 `json:"channel_id"`
-	Mention   *int64 `json:"mentions"`
-	AuthorId  *int64 `json:"author_id"`
+func (r MessageSearchRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.ChannelId,
+			validation.Required.Error(ErrChannelIDRequired),
+			validation.Min(int64(1)).Error(ErrIncorrectChannelID),
+		),
+		validation.Field(&r.Mentions,
+			validation.Each(validation.Min(int64(1)).Error(ErrMentionIdInvalid)),
+		),
+	)
 }

@@ -1,13 +1,14 @@
 package server
 
 import (
+	"log/slog"
+
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	slogfiber "github.com/samber/slog-fiber"
-	"log/slog"
 
 	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
 )
@@ -21,8 +22,13 @@ func NewServer() *Server {
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
 	rc := recover.ConfigDefault
 	rc.EnableStackTrace = true
+	app.Get("/healthz", healthzHandler)
 	app.Use(recover.New(rc))
 	return &Server{app: app}
+}
+
+func healthzHandler(c *fiber.Ctx) error {
+	return c.SendString("OK")
 }
 
 func (s *Server) Register(base string, components ...Entity) {

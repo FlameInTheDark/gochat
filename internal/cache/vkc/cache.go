@@ -24,6 +24,10 @@ func New(addr string) (*Cache, error) {
 	return &Cache{c: client}, client.Ping(context.Background()).Err()
 }
 
+func (c *Cache) Client() *redis.Client {
+	return c.c
+}
+
 func (c *Cache) Close() error {
 	return c.c.Close()
 }

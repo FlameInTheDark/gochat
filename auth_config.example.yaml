@@ -1,0 +1,35 @@
+# App
+app_name: "GoChat"
+base_url: "http://example.com"
+
+# API
+server_address: ":3100"
+api_log: true
+idempotency_storage_lifetime: 10
+rate_limit_time: 1
+swagger: false
+rate_limit_requests: 20
+
+# Auth
+auth_secret: "change_me_before_use_it_in_production"
+
+# Email
+email_source: "no-reply@example.com"
+email_name: "no-reply"
+email_template: "./email_notify.tmpl"
+password_reset_template: "./password_reset.tmpl"
+email_provider: "smtp"
+sendpulse_user_id: ""
+sendpulse_secret: ""
+resend_api_key: ""
+smtp_host: "host.docker.internal"
+smtp_port: 2525
+smtp_username: ""
+smtp_password: ""
+smtp_use_tls: false
+
+# Redis
+keydb: "keydb:6379"
+
+# PostgreSQL
+pg_dsn: "host=citus-master port=5432 user=postgres dbname=gochat sslmode=disable"

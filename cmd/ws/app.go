@@ -1,14 +1,16 @@
 package main
 
 import (
-	"github.com/FlameInTheDark/gochat/internal/database/db"
-	"github.com/FlameInTheDark/gochat/internal/shut"
-	slogfiber "github.com/samber/slog-fiber"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/FlameInTheDark/gochat/internal/database/db"
+	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/shutter"
+	slogfiber "github.com/samber/slog-fiber"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -24,13 +26,14 @@ type App struct {
 	natsConn *nats.Conn
 	app      *fiber.App
 	cdb      *db.CQLCon
+	pg       *pgdb.DB
 
-	sh  *shut.Shut
-	cfg *config.Config
-	log *slog.Logger
+	shut *shutter.Shut
+	cfg  *config.Config
+	log  *slog.Logger
 }
 
-func NewApp(sh *shut.Shut, logger *slog.Logger) *App {
+func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	cfg, err := config.LoadConfig(logger)
 	if err != nil {
 		logger.Error("unable to load config", slog.String("error", err.Error()))
@@ -42,16 +45,24 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) *App {
 		logger.Error("unable to connect to NATS", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
-	sh.UpFunc(natsCon.Close)
+	shut.UpFunc(natsCon.Close)
 
 	dbcon, err := db.NewCQLCon(cfg.ClusterKeyspace, db.NewDBLogger(logger), cfg.Cluster...)
 	if err != nil {
 		logger.Error("unable to connect to cluster", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
-	sh.Up(dbcon)
+	shut.Up(dbcon)
 
-	jwtauth := auth.New(cfg.AuthSecret)
+	pg := pgdb.NewDB(logger)
+	err = pg.Connect(cfg.PGDSN, cfg.PGRetries)
+	if err != nil {
+		logger.Error("unable to connect to pg", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	shut.Up(pg)
+
+	jwtauth := auth.New(cfg.AuthSecret, "gochat", "api")
 
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
 	logMiddleware := slogfiber.NewWithFilters(
@@ -73,9 +84,10 @@ func NewApp(sh *shut.Shut, logger *slog.Logger) *App {
 		natsConn: natsCon,
 		app:      app,
 		cdb:      dbcon,
+		pg:       pg,
 		cfg:      cfg,
 		log:      logger,
-		sh:       sh,
+		shut:     shut,
 	}
 }
 

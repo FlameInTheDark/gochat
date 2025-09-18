@@ -19,6 +19,8 @@ type Config struct {
 	RabbitMQUsername  string   `yaml:"rabbitmq_username" env:"RABBITMQ_USERNAME" env-default:"guest"`
 	RabbitMQPassword  string   `yaml:"rabbitmq_password" env:"RABBITMQ_PASSWORD" env-default:"guest"`
 	NatsConnString    string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
+	PGDSN             string   `yaml:"pg_dsn" env:"PG_DSN"`
+	PGRetries         int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {

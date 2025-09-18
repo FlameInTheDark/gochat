@@ -1,0 +1,8 @@
+# NATS
+nats_conn_string: "nats://indexer-nats:4222"
+
+# OpenSearch
+os_insecure_skip_verify: true
+os_addresses: ["http://opensearch:9200"]
+os_username: "admin"
+os_password: "CustOM-Pa55w0Rd"

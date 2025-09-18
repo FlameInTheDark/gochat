@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/FlameInTheDark/gochat/internal/shut"
-	"github.com/nats-io/nats.go"
 	"log/slog"
 	"os"
+
+	"github.com/FlameInTheDark/gochat/internal/shutter"
+	"github.com/nats-io/nats.go"
 )
 
 //var rabbitConn *amqp.Connection
@@ -36,11 +37,11 @@ type Attachment struct {
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	shutter := shut.NewShutter(logger)
-	defer shutter.Down()
+	shut := shutter.NewShutter(logger)
+	defer shut.Down()
 
-	app := NewApp(shutter, logger)
-	shutter.Up(app)
+	app := NewApp(shut, logger)
+	shut.Up(app)
 
 	app.Start()
 }

@@ -7,19 +7,20 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/channel"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/channelroleperm"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/channeluserperm"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/discriminator"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/guild"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/role"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/user"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/userrole"
+	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channeluserperm"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/role"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/server"
 )
@@ -33,6 +34,9 @@ func (e *entity) Init(router fiber.Router) {
 	router.Get("/:guild_id<int>/channel/:channel_id<int>", e.GetChannel)
 	router.Get("/:guild_id<int>/channel", e.GetChannels)
 	router.Post("/:guild_id<int>/channel", e.CreateChannel)
+	router.Patch("/:guild_id<int>/channel/order", e.PatchChannelOrder)
+	router.Patch("/:guild_id<int>/channel/:channel_id", e.PatchChannel)
+	router.Get("/:guild_id<int>/member/:user_id<int>/roles", e.GetMemberRoles)
 	router.Post("/:guild_id<int>/category", e.CreateCategory)
 	router.Delete("/:guild_id<int>/channel/:channel_id<int>", e.DeleteChannel)
 	router.Delete("/:guild_id<int>/category/:category_id<int>", e.DeleteCategory)
@@ -46,44 +50,44 @@ type entity struct {
 	mqt mq.SendTransporter
 
 	// DB entities
-	user  *user.Entity
-	disc  *discriminator.Entity
-	ch    *channel.Entity
-	g     *guild.Entity
-	gc    *guildchannels.Entity
-	msg   *message.Entity
-	at    *attachment.Entity
-	perm  *rolecheck.Entity
-	uperm *channeluserperm.Entity
-	rperm *channelroleperm.Entity
-	role  *role.Entity
-	ur    *userrole.Entity
-	icon  *icon.Entity
-	memb  *member.Entity
+	user  user.User
+	disc  discriminator.Discriminator
+	ch    channel.Channel
+	g     guild.Guild
+	gc    guildchannels.GuildChannels
+	msg   message.Message
+	at    attachment.Attachment
+	perm  rolecheck.RoleCheck
+	uperm channeluserperm.ChannelUserPerm
+	rperm channelroleperm.ChannelRolePerm
+	role  role.Role
+	ur    userrole.UserRole
+	icon  icon.Icon
+	memb  member.Member
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, mqt mq.SendTransporter, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, log *slog.Logger) server.Entity {
 	return &entity{
 		name:  entityName,
 		log:   log,
 		mqt:   mqt,
-		user:  user.New(dbcon),
-		disc:  discriminator.New(dbcon),
-		ch:    channel.New(dbcon),
-		g:     guild.New(dbcon),
-		gc:    guildchannels.New(dbcon),
+		user:  user.New(pg.Conn()),
+		disc:  discriminator.New(pg.Conn()),
+		ch:    channel.New(pg.Conn()),
+		g:     guild.New(pg.Conn()),
+		gc:    guildchannels.New(pg.Conn()),
 		msg:   message.New(dbcon),
 		at:    attachment.New(dbcon),
-		perm:  rolecheck.New(dbcon),
-		uperm: channeluserperm.New(dbcon),
-		rperm: channelroleperm.New(dbcon),
-		role:  role.New(dbcon),
-		ur:    userrole.New(dbcon),
+		perm:  rolecheck.New(dbcon, pg),
+		uperm: channeluserperm.New(pg.Conn()),
+		rperm: channelroleperm.New(pg.Conn()),
+		role:  role.New(pg.Conn()),
+		ur:    userrole.New(pg.Conn()),
 		icon:  icon.New(dbcon),
-		memb:  member.New(dbcon),
+		memb:  member.New(pg.Conn()),
 	}
 }
