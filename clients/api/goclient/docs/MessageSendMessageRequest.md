@@ -4,9 +4,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Attachments** | Pointer to **[]int32** |  | [optional] 
-**Content** | Pointer to **string** |  | [optional] 
-**Mentions** | Pointer to **[]int32** |  | [optional] 
+**Attachments** | Pointer to **[]int32** | IDs of attached files | [optional] 
+**Content** | Pointer to **string** | Message content | [optional] 
+**Mentions** | Pointer to **[]int32** | IDs of mentioned users | [optional] 
 
 ## Methods
 

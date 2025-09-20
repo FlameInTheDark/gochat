@@ -4,8 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Name** | Pointer to **string** |  | [optional] 
-**Private** | Pointer to **bool** |  | [optional] 
+**Name** | Pointer to **string** | Category channel name | [optional] 
+**Private** | Pointer to **bool** | Whether the category channel is private. Private channels can only be seen by users with roles assigned to this channel. | [optional] [default to false]
 
 ## Methods
 

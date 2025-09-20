@@ -20,15 +20,24 @@ var _ MappedNullable = &DtoChannel{}
 
 // DtoChannel struct for DtoChannel
 type DtoChannel struct {
-	CreatedAt   *string `json:"created_at,omitempty"`
-	GuildId     *int32  `json:"guild_id,omitempty"`
-	Id          *int32  `json:"id,omitempty"`
-	Name        *string `json:"name,omitempty"`
-	ParentId    *int32  `json:"parent_id,omitempty"`
-	Permissions *int32  `json:"permissions,omitempty"`
-	Position    *int32  `json:"position,omitempty"`
-	Topic       *string `json:"topic,omitempty"`
-	Type        *int32  `json:"type,omitempty"`
+	// Timestamp of channel creation
+	CreatedAt *string `json:"created_at,omitempty"`
+	// Guild ID channel was created in
+	GuildId *int32 `json:"guild_id,omitempty"`
+	// Channel ID
+	Id *int32 `json:"id,omitempty"`
+	// Channel name, without spaces
+	Name *string `json:"name,omitempty"`
+	// Parent channel id
+	ParentId *int32 `json:"parent_id,omitempty"`
+	// Permissions. Check the permissions documentation for more info.
+	Permissions *int32 `json:"permissions,omitempty"`
+	// Channel position
+	Position *int32 `json:"position,omitempty"`
+	// Channel topic.
+	Topic *string `json:"topic,omitempty"`
+	// Channel type
+	Type *int32 `json:"type,omitempty"`
 }
 
 // NewDtoChannel instantiates a new DtoChannel object

@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Content** | Pointer to **string** |  | [optional] 
+**Content** | Pointer to **string** | Message content | [optional] 
 
 ## Methods
 

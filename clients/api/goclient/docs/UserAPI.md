@@ -4,78 +4,14 @@ All URIs are relative to *http://localhost/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**MePatch**](UserAPI.md#MePatch) | **Patch** /me | Get user
 [**UserMeChannelsGroupPost**](UserAPI.md#UserMeChannelsGroupPost) | **Post** /user/me/channels/group | Create group DM channel
 [**UserMeChannelsPost**](UserAPI.md#UserMeChannelsPost) | **Post** /user/me/channels | Create DM channel
 [**UserMeGuildsGet**](UserAPI.md#UserMeGuildsGet) | **Get** /user/me/guilds | Get user guilds
 [**UserMeGuildsGuildIdDelete**](UserAPI.md#UserMeGuildsGuildIdDelete) | **Delete** /user/me/guilds/{guild_id} | Leave guild
 [**UserMeGuildsGuildIdMemberGet**](UserAPI.md#UserMeGuildsGuildIdMemberGet) | **Get** /user/me/guilds/{guild_id}/member | Get user guild member
+[**UserMePatch**](UserAPI.md#UserMePatch) | **Patch** /user/me | Get user
 [**UserUserIdGet**](UserAPI.md#UserUserIdGet) | **Get** /user/{user_id} | Get user
 
-
-
-## MePatch
-
-> string MePatch(ctx).UserModifyUserRequest(userModifyUserRequest).Execute()
-
-Get user
-
-### Example
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
-)
-
-func main() {
-	userModifyUserRequest := *openapiclient.NewUserModifyUserRequest() // UserModifyUserRequest | Modify user data
-
-	configuration := openapiclient.NewConfiguration()
-	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UserAPI.MePatch(context.Background()).UserModifyUserRequest(userModifyUserRequest).Execute()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.MePatch``: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	}
-	// response from `MePatch`: string
-	fmt.Fprintf(os.Stdout, "Response from `UserAPI.MePatch`: %v\n", resp)
-}
-```
-
-### Path Parameters
-
-
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiMePatchRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **userModifyUserRequest** | [**UserModifyUserRequest**](UserModifyUserRequest.md) | Modify user data | 
-
-### Return type
-
-**string**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
 
 
 ## UserMeChannelsGroupPost
@@ -394,6 +330,70 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMePatch
+
+> string UserMePatch(ctx).UserModifyUserRequest(userModifyUserRequest).Execute()
+
+Get user
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	userModifyUserRequest := *openapiclient.NewUserModifyUserRequest() // UserModifyUserRequest | Modify user data
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMePatch(context.Background()).UserModifyUserRequest(userModifyUserRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMePatch``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMePatch`: string
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMePatch`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMePatchRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **userModifyUserRequest** | [**UserModifyUserRequest**](UserModifyUserRequest.md) | Modify user data | 
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

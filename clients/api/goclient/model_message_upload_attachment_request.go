@@ -20,10 +20,14 @@ var _ MappedNullable = &MessageUploadAttachmentRequest{}
 
 // MessageUploadAttachmentRequest struct for MessageUploadAttachmentRequest
 type MessageUploadAttachmentRequest struct {
-	FileSize *int32  `json:"file_size,omitempty"`
+	// File size in bytes
+	FileSize *int32 `json:"file_size,omitempty"`
+	// File name
 	Filename *string `json:"filename,omitempty"`
-	Height   *int32  `json:"height,omitempty"`
-	Width    *int32  `json:"width,omitempty"`
+	// Image height in pixels
+	Height *int32 `json:"height,omitempty"`
+	// Image width in pixels
+	Width *int32 `json:"width,omitempty"`
 }
 
 // NewMessageUploadAttachmentRequest instantiates a new MessageUploadAttachmentRequest object

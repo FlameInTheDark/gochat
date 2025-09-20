@@ -20,6 +20,7 @@ var _ MappedNullable = &GuildPatchGuildChannelOrderRequest{}
 
 // GuildPatchGuildChannelOrderRequest struct for GuildPatchGuildChannelOrderRequest
 type GuildPatchGuildChannelOrderRequest struct {
+	// List of channels to change order.
 	Channels []GuildChannelOrder `json:"channels,omitempty"`
 }
 

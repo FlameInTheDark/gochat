@@ -163,3 +163,20 @@ func (e *Entity) SetTimeout(ctx context.Context, userId, guildId int64, timeout 
 	}
 	return nil
 }
+
+func (e *Entity) CountGuildMembers(ctx context.Context, guildId int64) (int64, error) {
+	var count int64
+	q := squirrel.Select("count(*)").
+		PlaceholderFormat(squirrel.Dollar).
+		From("members").
+		Where(squirrel.Eq{"guild_id": guildId})
+
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	if err = e.c.GetContext(ctx, &count, sql, args...); err != nil {
+		return 0, fmt.Errorf("unable to count guild members: %w", err)
+	}
+	return count, nil
+}

@@ -20,9 +20,12 @@ var _ MappedNullable = &AuthPasswordResetRequest{}
 
 // AuthPasswordResetRequest struct for AuthPasswordResetRequest
 type AuthPasswordResetRequest struct {
-	Id       *int32  `json:"id,omitempty"`
+	// User ID
+	Id *int32 `json:"id,omitempty"`
+	// New password
 	Password *string `json:"password,omitempty"`
-	Token    *string `json:"token,omitempty"`
+	// Reset token
+	Token *string `json:"token,omitempty"`
 }
 
 // NewAuthPasswordResetRequest instantiates a new AuthPasswordResetRequest object

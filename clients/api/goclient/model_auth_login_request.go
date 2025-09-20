@@ -20,7 +20,9 @@ var _ MappedNullable = &AuthLoginRequest{}
 
 // AuthLoginRequest struct for AuthLoginRequest
 type AuthLoginRequest struct {
-	Email    *string `json:"email,omitempty"`
+	// User Email
+	Email *string `json:"email,omitempty"`
+	// User password
 	Password *string `json:"password,omitempty"`
 }
 

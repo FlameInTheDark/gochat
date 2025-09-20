@@ -4,10 +4,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Name** | Pointer to **string** |  | [optional] 
-**ParentId** | Pointer to **int32** |  | [optional] 
-**Private** | Pointer to **bool** |  | [optional] 
-**Topic** | Pointer to **string** |  | [optional] 
+**Name** | Pointer to **string** | Channel name. | [optional] 
+**ParentId** | Pointer to **int32** | Parent channel ID. A Parent channel can only be a category channel. | [optional] 
+**Private** | Pointer to **bool** | Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel. | [optional] [default to false]
+**Topic** | Pointer to **string** | Channel topic. | [optional] 
 
 ## Methods
 

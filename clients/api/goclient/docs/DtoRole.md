@@ -4,11 +4,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Color** | Pointer to **int32** |  | [optional] 
-**GuildId** | Pointer to **int32** |  | [optional] 
-**Id** | Pointer to **int32** |  | [optional] 
-**Name** | Pointer to **string** |  | [optional] 
-**Permissions** | Pointer to **int32** |  | [optional] 
+**Color** | Pointer to **int32** | Role color. Will change username color. Represent RGB color in one Integer value. | [optional] 
+**GuildId** | Pointer to **int32** | Guild ID | [optional] 
+**Id** | Pointer to **int32** | Role ID | [optional] 
+**Name** | Pointer to **string** | Role name | [optional] 
+**Permissions** | Pointer to **int32** | Role permissions. Check the permissions documentation for more info. | [optional] 
 
 ## Methods
 

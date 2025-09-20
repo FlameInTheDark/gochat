@@ -97,18 +97,23 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdMemberUserIdRolesGet**](docs/GuildAPI.md#guildguildidmemberuseridrolesget) | **Get** /guild/{guild_id}/member/{user_id}/roles | Get member roles
 *GuildAPI* | [**GuildGuildIdPatch**](docs/GuildAPI.md#guildguildidpatch) | **Patch** /guild/{guild_id} | Update guild
 *GuildAPI* | [**GuildPost**](docs/GuildAPI.md#guildpost) | **Post** /guild | Create guild
+*GuildInvitesAPI* | [**GuildInvitesAcceptInviteCodePost**](docs/GuildInvitesAPI.md#guildinvitesacceptinvitecodepost) | **Post** /guild/invites/accept/{invite_code} | Accept invite and join guild
+*GuildInvitesAPI* | [**GuildInvitesGuildIdGet**](docs/GuildInvitesAPI.md#guildinvitesguildidget) | **Get** /guild/invites/{guild_id} | List active invites for guild
+*GuildInvitesAPI* | [**GuildInvitesGuildIdInviteIdDelete**](docs/GuildInvitesAPI.md#guildinvitesguildidinviteiddelete) | **Delete** /guild/invites/{guild_id}/{invite_id} | Delete an invite by id
+*GuildInvitesAPI* | [**GuildInvitesGuildIdPost**](docs/GuildInvitesAPI.md#guildinvitesguildidpost) | **Post** /guild/invites/{guild_id} | Create a new invite
+*GuildInvitesAPI* | [**GuildInvitesReceiveInviteCodeGet**](docs/GuildInvitesAPI.md#guildinvitesreceiveinvitecodeget) | **Get** /guild/invites/receive/{invite_code} | Get invite info by code
 *MessageAPI* | [**MessageChannelChannelIdAttachmentPost**](docs/MessageAPI.md#messagechannelchannelidattachmentpost) | **Post** /message/channel/{channel_id}/attachment | Create attachment
 *MessageAPI* | [**MessageChannelChannelIdGet**](docs/MessageAPI.md#messagechannelchannelidget) | **Get** /message/channel/{channel_id} | Get messages
 *MessageAPI* | [**MessageChannelChannelIdMessageIdDelete**](docs/MessageAPI.md#messagechannelchannelidmessageiddelete) | **Delete** /message/channel/{channel_id}/{message_id} | Delete message
 *MessageAPI* | [**MessageChannelChannelIdMessageIdPatch**](docs/MessageAPI.md#messagechannelchannelidmessageidpatch) | **Patch** /message/channel/{channel_id}/{message_id} | Update message
 *MessageAPI* | [**MessageChannelChannelIdPost**](docs/MessageAPI.md#messagechannelchannelidpost) | **Post** /message/channel/{channel_id} | Send message
 *SearchAPI* | [**SearchGuildIdMessagesPost**](docs/SearchAPI.md#searchguildidmessagespost) | **Post** /search/{guild_id}/messages | Search messages
-*UserAPI* | [**MePatch**](docs/UserAPI.md#mepatch) | **Patch** /me | Get user
 *UserAPI* | [**UserMeChannelsGroupPost**](docs/UserAPI.md#usermechannelsgrouppost) | **Post** /user/me/channels/group | Create group DM channel
 *UserAPI* | [**UserMeChannelsPost**](docs/UserAPI.md#usermechannelspost) | **Post** /user/me/channels | Create DM channel
 *UserAPI* | [**UserMeGuildsGet**](docs/UserAPI.md#usermeguildsget) | **Get** /user/me/guilds | Get user guilds
 *UserAPI* | [**UserMeGuildsGuildIdDelete**](docs/UserAPI.md#usermeguildsguildiddelete) | **Delete** /user/me/guilds/{guild_id} | Leave guild
 *UserAPI* | [**UserMeGuildsGuildIdMemberGet**](docs/UserAPI.md#usermeguildsguildidmemberget) | **Get** /user/me/guilds/{guild_id}/member | Get user guild member
+*UserAPI* | [**UserMePatch**](docs/UserAPI.md#usermepatch) | **Patch** /user/me | Get user
 *UserAPI* | [**UserUserIdGet**](docs/UserAPI.md#useruseridget) | **Get** /user/{user_id} | Get user
 *WebhookAPI* | [**WebhookStorageEventsPost**](docs/WebhookAPI.md#webhookstorageeventspost) | **Post** /webhook/storage/events | Storage event
 
@@ -126,6 +131,8 @@ Class | Method | HTTP request | Description
  - [DtoAttachmentUpload](docs/DtoAttachmentUpload.md)
  - [DtoChannel](docs/DtoChannel.md)
  - [DtoGuild](docs/DtoGuild.md)
+ - [DtoGuildInvite](docs/DtoGuildInvite.md)
+ - [DtoInvitePreview](docs/DtoInvitePreview.md)
  - [DtoMember](docs/DtoMember.md)
  - [DtoMessage](docs/DtoMessage.md)
  - [DtoRole](docs/DtoRole.md)
@@ -134,6 +141,7 @@ Class | Method | HTTP request | Description
  - [GuildCreateGuildChannelCategoryRequest](docs/GuildCreateGuildChannelCategoryRequest.md)
  - [GuildCreateGuildChannelRequest](docs/GuildCreateGuildChannelRequest.md)
  - [GuildCreateGuildRequest](docs/GuildCreateGuildRequest.md)
+ - [GuildCreateInviteRequest](docs/GuildCreateInviteRequest.md)
  - [GuildPatchGuildChannelOrderRequest](docs/GuildPatchGuildChannelOrderRequest.md)
  - [GuildPatchGuildChannelRequest](docs/GuildPatchGuildChannelRequest.md)
  - [GuildUpdateGuildRequest](docs/GuildUpdateGuildRequest.md)
@@ -159,17 +167,14 @@ Class | Method | HTTP request | Description
 
 
 Authentication schemes defined for the API:
-### basic
+### bearerauth
 
-- **Type**: HTTP basic authentication
+- **Type**: HTTP Bearer token authentication
 
 Example
 
 ```go
-auth := context.WithValue(context.Background(), goclient.ContextBasicAuth, goclient.BasicAuth{
-	UserName: "username",
-	Password: "password",
-})
+auth := context.WithValue(context.Background(), goclient.ContextAccessToken, "BEARER_TOKEN_STRING")
 r, err := client.Service.Operation(auth, args)
 ```
 
