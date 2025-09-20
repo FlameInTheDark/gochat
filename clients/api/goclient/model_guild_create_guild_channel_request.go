@@ -20,10 +20,14 @@ var _ MappedNullable = &GuildCreateGuildChannelRequest{}
 
 // GuildCreateGuildChannelRequest struct for GuildCreateGuildChannelRequest
 type GuildCreateGuildChannelRequest struct {
-	Name     *string `json:"name,omitempty"`
-	ParentId *int32  `json:"parent_id,omitempty"`
-	Private  *bool   `json:"private,omitempty"`
-	Type     *int32  `json:"type,omitempty"`
+	// Channel name
+	Name *string `json:"name,omitempty"`
+	// Parent channel ID. A Parent channel can only be a category channel.
+	ParentId *int32 `json:"parent_id,omitempty"`
+	// Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
+	Private *bool `json:"private,omitempty"`
+	// Channel type
+	Type *int32 `json:"type,omitempty"`
 }
 
 // NewGuildCreateGuildChannelRequest instantiates a new GuildCreateGuildChannelRequest object
@@ -32,6 +36,8 @@ type GuildCreateGuildChannelRequest struct {
 // will change when the set of required properties is changed
 func NewGuildCreateGuildChannelRequest() *GuildCreateGuildChannelRequest {
 	this := GuildCreateGuildChannelRequest{}
+	var private bool = false
+	this.Private = &private
 	return &this
 }
 
@@ -40,6 +46,8 @@ func NewGuildCreateGuildChannelRequest() *GuildCreateGuildChannelRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewGuildCreateGuildChannelRequestWithDefaults() *GuildCreateGuildChannelRequest {
 	this := GuildCreateGuildChannelRequest{}
+	var private bool = false
+	this.Private = &private
 	return &this
 }
 

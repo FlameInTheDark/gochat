@@ -20,12 +20,18 @@ var _ MappedNullable = &DtoAttachment{}
 
 // DtoAttachment struct for DtoAttachment
 type DtoAttachment struct {
+	// File mime type
 	ContentType *string `json:"content_type,omitempty"`
-	Filename    *string `json:"filename,omitempty"`
-	Height      *int32  `json:"height,omitempty"`
-	Size        *int32  `json:"size,omitempty"`
-	Url         *string `json:"url,omitempty"`
-	Width       *int32  `json:"width,omitempty"`
+	// File name
+	Filename *string `json:"filename,omitempty"`
+	// Image dimensions in pixels
+	Height *int32 `json:"height,omitempty"`
+	// FileSize in bytes
+	Size *int32 `json:"size,omitempty"`
+	// URL to download the file
+	Url *string `json:"url,omitempty"`
+	// Image dimensions in pixels
+	Width *int32 `json:"width,omitempty"`
 }
 
 // NewDtoAttachment instantiates a new DtoAttachment object

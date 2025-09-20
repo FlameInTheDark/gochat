@@ -4,8 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**RefreshToken** | Pointer to **string** |  | [optional] 
-**Token** | Pointer to **string** |  | [optional] 
+**RefreshToken** | Pointer to **string** | Refresh token. Used to refresh authentication token. | [optional] 
+**Token** | Pointer to **string** | Authentication token | [optional] 
 
 ## Methods
 

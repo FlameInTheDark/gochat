@@ -20,7 +20,9 @@ var _ MappedNullable = &GuildChannelOrder{}
 
 // GuildChannelOrder struct for GuildChannelOrder
 type GuildChannelOrder struct {
-	Id       *int32 `json:"id,omitempty"`
+	// Channel ID.
+	Id *int32 `json:"id,omitempty"`
+	// New channel position.
 	Position *int32 `json:"position,omitempty"`
 }
 

@@ -4,10 +4,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**FileSize** | Pointer to **int32** |  | [optional] 
-**Filename** | Pointer to **string** |  | [optional] 
-**Height** | Pointer to **int32** |  | [optional] 
-**Width** | Pointer to **int32** |  | [optional] 
+**FileSize** | Pointer to **int32** | File size in bytes | [optional] 
+**Filename** | Pointer to **string** | File name | [optional] 
+**Height** | Pointer to **int32** | Image height in pixels | [optional] 
+**Width** | Pointer to **int32** | Image width in pixels | [optional] 
 
 ## Methods
 

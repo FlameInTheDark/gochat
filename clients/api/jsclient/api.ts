@@ -30,31 +30,31 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerM
  */
 export interface AuthConfirmationRequest {
     /**
-     * 
+     * Unique discriminator
      * @type {string}
      * @memberof AuthConfirmationRequest
      */
     'discriminator'?: string;
     /**
-     * 
+     * User ID
      * @type {number}
      * @memberof AuthConfirmationRequest
      */
     'id'?: number;
     /**
-     * 
+     * User name
      * @type {string}
      * @memberof AuthConfirmationRequest
      */
     'name'?: string;
     /**
-     * 
+     * User password
      * @type {string}
      * @memberof AuthConfirmationRequest
      */
     'password'?: string;
     /**
-     * 
+     * Registration token
      * @type {string}
      * @memberof AuthConfirmationRequest
      */
@@ -67,13 +67,13 @@ export interface AuthConfirmationRequest {
  */
 export interface AuthLoginRequest {
     /**
-     * 
+     * User Email
      * @type {string}
      * @memberof AuthLoginRequest
      */
     'email'?: string;
     /**
-     * 
+     * User password
      * @type {string}
      * @memberof AuthLoginRequest
      */
@@ -86,13 +86,13 @@ export interface AuthLoginRequest {
  */
 export interface AuthLoginResponse {
     /**
-     * 
+     * Refresh token. Used to refresh authentication token.
      * @type {string}
      * @memberof AuthLoginResponse
      */
     'refresh_token'?: string;
     /**
-     * 
+     * Authentication token
      * @type {string}
      * @memberof AuthLoginResponse
      */
@@ -105,7 +105,7 @@ export interface AuthLoginResponse {
  */
 export interface AuthPasswordRecoveryRequest {
     /**
-     * 
+     * User Email to receive recovery email
      * @type {string}
      * @memberof AuthPasswordRecoveryRequest
      */
@@ -118,19 +118,19 @@ export interface AuthPasswordRecoveryRequest {
  */
 export interface AuthPasswordResetRequest {
     /**
-     * 
+     * User ID
      * @type {number}
      * @memberof AuthPasswordResetRequest
      */
     'id'?: number;
     /**
-     * 
+     * New password
      * @type {string}
      * @memberof AuthPasswordResetRequest
      */
     'password'?: string;
     /**
-     * 
+     * Reset token
      * @type {string}
      * @memberof AuthPasswordResetRequest
      */
@@ -143,13 +143,13 @@ export interface AuthPasswordResetRequest {
  */
 export interface AuthRefreshTokenResponse {
     /**
-     * 
+     * Refresh token. Used to refresh authentication token.
      * @type {string}
      * @memberof AuthRefreshTokenResponse
      */
     'refresh_token'?: string;
     /**
-     * 
+     * Authentication token
      * @type {string}
      * @memberof AuthRefreshTokenResponse
      */
@@ -162,7 +162,7 @@ export interface AuthRefreshTokenResponse {
  */
 export interface AuthRegisterRequest {
     /**
-     * 
+     * User Email
      * @type {string}
      * @memberof AuthRegisterRequest
      */
@@ -175,37 +175,37 @@ export interface AuthRegisterRequest {
  */
 export interface DtoAttachment {
     /**
-     * 
+     * File mime type
      * @type {string}
      * @memberof DtoAttachment
      */
     'content_type'?: string;
     /**
-     * 
+     * File name
      * @type {string}
      * @memberof DtoAttachment
      */
     'filename'?: string;
     /**
-     * 
+     * Image dimensions in pixels
      * @type {number}
      * @memberof DtoAttachment
      */
     'height'?: number;
     /**
-     * 
+     * FileSize in bytes
      * @type {number}
      * @memberof DtoAttachment
      */
     'size'?: number;
     /**
-     * 
+     * URL to download the file
      * @type {string}
      * @memberof DtoAttachment
      */
     'url'?: string;
     /**
-     * 
+     * Image dimensions in pixels
      * @type {number}
      * @memberof DtoAttachment
      */
@@ -218,25 +218,25 @@ export interface DtoAttachment {
  */
 export interface DtoAttachmentUpload {
     /**
-     * 
+     * Channel ID the attachment was sent to
      * @type {number}
      * @memberof DtoAttachmentUpload
      */
     'channel_id'?: number;
     /**
-     * 
+     * File name
      * @type {string}
      * @memberof DtoAttachmentUpload
      */
     'file_name'?: string;
     /**
-     * 
+     * Attachment ID
      * @type {number}
      * @memberof DtoAttachmentUpload
      */
     'id'?: number;
     /**
-     * 
+     * Upload URL. S3 presigned URL
      * @type {string}
      * @memberof DtoAttachmentUpload
      */
@@ -249,55 +249,55 @@ export interface DtoAttachmentUpload {
  */
 export interface DtoChannel {
     /**
-     * 
+     * Timestamp of channel creation
      * @type {string}
      * @memberof DtoChannel
      */
     'created_at'?: string;
     /**
-     * 
+     * Guild ID channel was created in
      * @type {number}
      * @memberof DtoChannel
      */
     'guild_id'?: number;
     /**
-     * 
+     * Channel ID
      * @type {number}
      * @memberof DtoChannel
      */
     'id'?: number;
     /**
-     * 
+     * Channel name, without spaces
      * @type {string}
      * @memberof DtoChannel
      */
     'name'?: string;
     /**
-     * 
+     * Parent channel id
      * @type {number}
      * @memberof DtoChannel
      */
     'parent_id'?: number;
     /**
-     * 
+     * Permissions. Check the permissions documentation for more info.
      * @type {number}
      * @memberof DtoChannel
      */
     'permissions'?: number;
     /**
-     * 
+     * Channel position
      * @type {number}
      * @memberof DtoChannel
      */
     'position'?: number;
     /**
-     * 
+     * Channel topic.
      * @type {string}
      * @memberof DtoChannel
      */
     'topic'?: string;
     /**
-     * 
+     * Channel type
      * @type {number}
      * @memberof DtoChannel
      */
@@ -310,37 +310,37 @@ export interface DtoChannel {
  */
 export interface DtoGuild {
     /**
-     * 
+     * Icon ID
      * @type {number}
      * @memberof DtoGuild
      */
     'icon'?: number;
     /**
-     * 
+     * Guild ID
      * @type {number}
      * @memberof DtoGuild
      */
     'id'?: number;
     /**
-     * 
+     * Guild Name
      * @type {string}
      * @memberof DtoGuild
      */
     'name'?: string;
     /**
-     * 
+     * Owner ID
      * @type {number}
      * @memberof DtoGuild
      */
     'owner'?: number;
     /**
-     * 
+     * Default guild Permissions. Check the permissions documentation for more info.
      * @type {number}
      * @memberof DtoGuild
      */
     'permissions'?: number;
     /**
-     * 
+     * Whether the guild is public
      * @type {boolean}
      * @memberof DtoGuild
      */
@@ -349,23 +349,115 @@ export interface DtoGuild {
 /**
  * 
  * @export
+ * @interface DtoGuildInvite
+ */
+export interface DtoGuildInvite {
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoGuildInvite
+     */
+    'author_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoGuildInvite
+     */
+    'code'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoGuildInvite
+     */
+    'created_at'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoGuildInvite
+     */
+    'expires_at'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoGuildInvite
+     */
+    'guild_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoGuildInvite
+     */
+    'id'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DtoInvitePreview
+ */
+export interface DtoInvitePreview {
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoInvitePreview
+     */
+    'author_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoInvitePreview
+     */
+    'code'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoInvitePreview
+     */
+    'created_at'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoInvitePreview
+     */
+    'expires_at'?: string;
+    /**
+     * 
+     * @type {DtoGuild}
+     * @memberof DtoInvitePreview
+     */
+    'guild'?: DtoGuild;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoInvitePreview
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoInvitePreview
+     */
+    'members_count'?: number;
+}
+/**
+ * 
+ * @export
  * @interface DtoMember
  */
 export interface DtoMember {
     /**
-     * 
+     * Avatar ID
      * @type {number}
      * @memberof DtoMember
      */
     'avatar'?: number;
     /**
-     * 
+     * Join date
      * @type {string}
      * @memberof DtoMember
      */
     'join_at'?: string;
     /**
-     * 
+     * List of assigned role IDs
      * @type {Array<number>}
      * @memberof DtoMember
      */
@@ -375,9 +467,9 @@ export interface DtoMember {
      * @type {DtoUser}
      * @memberof DtoMember
      */
-    'user_id'?: DtoUser;
+    'user'?: DtoUser;
     /**
-     * 
+     * Username in this guild
      * @type {string}
      * @memberof DtoMember
      */
@@ -402,7 +494,7 @@ export interface DtoMessage {
      */
     'author'?: DtoUser;
     /**
-     * 
+     * Channel id the message was sent to
      * @type {number}
      * @memberof DtoMessage
      */
@@ -414,13 +506,13 @@ export interface DtoMessage {
      */
     'content'?: string;
     /**
-     * 
+     * Message ID
      * @type {number}
      * @memberof DtoMessage
      */
     'id'?: number;
     /**
-     * 
+     * Timestamp of the last message edit
      * @type {string}
      * @memberof DtoMessage
      */
@@ -433,38 +525,38 @@ export interface DtoMessage {
  */
 export interface DtoRole {
     /**
-     * 
+     * Role color. Will change username color. Represent RGB color in one Integer value.
      * @type {number}
      * @memberof DtoRole
      */
     'color'?: number;
     /**
-     * 
+     * Guild ID
      * @type {number}
      * @memberof DtoRole
      */
     'guild_id'?: number;
     /**
-     * 
+     * Role ID
      * @type {number}
      * @memberof DtoRole
      */
     'id'?: number;
     /**
-     * 
+     * Role name
      * @type {string}
      * @memberof DtoRole
      */
     'name'?: string;
     /**
-     * 
+     * Role permissions. Check the permissions documentation for more info.
      * @type {number}
      * @memberof DtoRole
      */
     'permissions'?: number;
 }
 /**
- * 
+ * Guild member data
  * @export
  * @interface DtoUser
  */
@@ -501,13 +593,13 @@ export interface DtoUser {
  */
 export interface GuildChannelOrder {
     /**
-     * 
+     * Channel ID.
      * @type {number}
      * @memberof GuildChannelOrder
      */
     'id'?: number;
     /**
-     * 
+     * New channel position.
      * @type {number}
      * @memberof GuildChannelOrder
      */
@@ -520,13 +612,13 @@ export interface GuildChannelOrder {
  */
 export interface GuildCreateGuildChannelCategoryRequest {
     /**
-     * 
+     * Category channel name
      * @type {string}
      * @memberof GuildCreateGuildChannelCategoryRequest
      */
     'name'?: string;
     /**
-     * 
+     * Whether the category channel is private. Private channels can only be seen by users with roles assigned to this channel.
      * @type {boolean}
      * @memberof GuildCreateGuildChannelCategoryRequest
      */
@@ -539,25 +631,25 @@ export interface GuildCreateGuildChannelCategoryRequest {
  */
 export interface GuildCreateGuildChannelRequest {
     /**
-     * 
+     * Channel name
      * @type {string}
      * @memberof GuildCreateGuildChannelRequest
      */
     'name'?: string;
     /**
-     * 
+     * Parent channel ID. A Parent channel can only be a category channel.
      * @type {number}
      * @memberof GuildCreateGuildChannelRequest
      */
     'parent_id'?: number;
     /**
-     * 
+     * Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
      * @type {boolean}
      * @memberof GuildCreateGuildChannelRequest
      */
     'private'?: boolean;
     /**
-     * 
+     * Channel type
      * @type {number}
      * @memberof GuildCreateGuildChannelRequest
      */
@@ -570,19 +662,19 @@ export interface GuildCreateGuildChannelRequest {
  */
 export interface GuildCreateGuildRequest {
     /**
-     * 
+     * Icon ID
      * @type {number}
      * @memberof GuildCreateGuildRequest
      */
     'icon_id'?: number;
     /**
-     * 
+     * Guild name
      * @type {string}
      * @memberof GuildCreateGuildRequest
      */
     'name'?: string;
     /**
-     * 
+     * Whether the guild is public
      * @type {boolean}
      * @memberof GuildCreateGuildRequest
      */
@@ -591,11 +683,24 @@ export interface GuildCreateGuildRequest {
 /**
  * 
  * @export
+ * @interface GuildCreateInviteRequest
+ */
+export interface GuildCreateInviteRequest {
+    /**
+     * ExpiresInSec is a TTL in seconds; 0 means unlimited invite If omitted, server uses default (7 days)
+     * @type {number}
+     * @memberof GuildCreateInviteRequest
+     */
+    'expires_in_sec'?: number;
+}
+/**
+ * 
+ * @export
  * @interface GuildPatchGuildChannelOrderRequest
  */
 export interface GuildPatchGuildChannelOrderRequest {
     /**
-     * 
+     * List of channels to change order.
      * @type {Array<GuildChannelOrder>}
      * @memberof GuildPatchGuildChannelOrderRequest
      */
@@ -608,25 +713,25 @@ export interface GuildPatchGuildChannelOrderRequest {
  */
 export interface GuildPatchGuildChannelRequest {
     /**
-     * 
+     * Channel name.
      * @type {string}
      * @memberof GuildPatchGuildChannelRequest
      */
     'name'?: string;
     /**
-     * 
+     * Parent channel ID. A Parent channel can only be a category channel.
      * @type {number}
      * @memberof GuildPatchGuildChannelRequest
      */
     'parent_id'?: number;
     /**
-     * 
+     * Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
      * @type {boolean}
      * @memberof GuildPatchGuildChannelRequest
      */
     'private'?: boolean;
     /**
-     * 
+     * Channel topic.
      * @type {string}
      * @memberof GuildPatchGuildChannelRequest
      */
@@ -639,25 +744,25 @@ export interface GuildPatchGuildChannelRequest {
  */
 export interface GuildUpdateGuildRequest {
     /**
-     * 
+     * Icon ID
      * @type {number}
      * @memberof GuildUpdateGuildRequest
      */
     'icon_id'?: number;
     /**
-     * 
+     * Guild name
      * @type {string}
      * @memberof GuildUpdateGuildRequest
      */
     'name'?: string;
     /**
-     * 
+     * Permissions. Check the permissions documentation for more info.
      * @type {number}
      * @memberof GuildUpdateGuildRequest
      */
     'permissions'?: number;
     /**
-     * 
+     * Whether the guild is public
      * @type {boolean}
      * @memberof GuildUpdateGuildRequest
      */
@@ -670,19 +775,19 @@ export interface GuildUpdateGuildRequest {
  */
 export interface MessageSendMessageRequest {
     /**
-     * 
+     * IDs of attached files
      * @type {Array<number>}
      * @memberof MessageSendMessageRequest
      */
     'attachments'?: Array<number>;
     /**
-     * 
+     * Message content
      * @type {string}
      * @memberof MessageSendMessageRequest
      */
     'content'?: string;
     /**
-     * 
+     * IDs of mentioned users
      * @type {Array<number>}
      * @memberof MessageSendMessageRequest
      */
@@ -695,7 +800,7 @@ export interface MessageSendMessageRequest {
  */
 export interface MessageUpdateMessageRequest {
     /**
-     * 
+     * Message content
      * @type {string}
      * @memberof MessageUpdateMessageRequest
      */
@@ -708,25 +813,25 @@ export interface MessageUpdateMessageRequest {
  */
 export interface MessageUploadAttachmentRequest {
     /**
-     * 
+     * File size in bytes
      * @type {number}
      * @memberof MessageUploadAttachmentRequest
      */
     'file_size'?: number;
     /**
-     * 
+     * File name
      * @type {string}
      * @memberof MessageUploadAttachmentRequest
      */
     'filename'?: string;
     /**
-     * 
+     * Image height in pixels
      * @type {number}
      * @memberof MessageUploadAttachmentRequest
      */
     'height'?: number;
     /**
-     * 
+     * Image width in pixels
      * @type {number}
      * @memberof MessageUploadAttachmentRequest
      */
@@ -739,42 +844,52 @@ export interface MessageUploadAttachmentRequest {
  */
 export interface SearchMessageSearchRequest {
     /**
-     * 
+     * Author ID to search by.
      * @type {number}
      * @memberof SearchMessageSearchRequest
      */
     'author_id'?: number;
     /**
-     * 
+     * Channel ID to search in. Required.
      * @type {number}
      * @memberof SearchMessageSearchRequest
      */
     'channel_id'?: number;
     /**
-     * 
+     * Content contains a string to search for. Might be empty if need to search by other parameters.
      * @type {string}
      * @memberof SearchMessageSearchRequest
      */
     'content'?: string;
     /**
-     * 
+     * List of specific features to search for.
      * @type {Array<string>}
      * @memberof SearchMessageSearchRequest
      */
-    'has'?: Array<string>;
+    'has'?: Array<SearchMessageSearchRequestHasEnum>;
     /**
-     * 
+     * Mentions contains a list of int64 user IDs.
      * @type {Array<number>}
      * @memberof SearchMessageSearchRequest
      */
     'mentions'?: Array<number>;
     /**
-     * 
+     * Page number to get. Starts from 0.
      * @type {number}
      * @memberof SearchMessageSearchRequest
      */
     'page'?: number;
 }
+
+export const SearchMessageSearchRequestHasEnum = {
+    Url: 'url',
+    Image: 'image',
+    Video: 'video',
+    File: 'file'
+} as const;
+
+export type SearchMessageSearchRequestHasEnum = typeof SearchMessageSearchRequestHasEnum[keyof typeof SearchMessageSearchRequestHasEnum];
+
 /**
  * 
  * @export
@@ -782,13 +897,13 @@ export interface SearchMessageSearchRequest {
  */
 export interface SearchMessageSearchResponse {
     /**
-     * 
+     * List of messages
      * @type {Array<DtoMessage>}
      * @memberof SearchMessageSearchResponse
      */
     'messages'?: Array<DtoMessage>;
     /**
-     * 
+     * Total number of pages with current search parameters
      * @type {number}
      * @memberof SearchMessageSearchResponse
      */
@@ -833,13 +948,13 @@ export interface UserCreateDMRequest {
  */
 export interface UserModifyUserRequest {
     /**
-     * 
+     * Avatar ID.
      * @type {number}
      * @memberof UserModifyUserRequest
      */
     'avatar'?: number;
     /**
-     * 
+     * User name.
      * @type {string}
      * @memberof UserModifyUserRequest
      */
@@ -2989,6 +3104,544 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
 
 
 /**
+ * GuildInvitesApi - axios parameter creator
+ * @export
+ */
+export const GuildInvitesApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Accept invite and join guild
+         * @param {string} inviteCode Invite code
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildInvitesAcceptInviteCodePost: async (inviteCode: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'inviteCode' is not null or undefined
+            assertParamExists('guildInvitesAcceptInviteCodePost', 'inviteCode', inviteCode)
+            const localVarPath = `/guild/invites/accept/{invite_code}`
+                .replace(`{${"invite_code"}}`, encodeURIComponent(String(inviteCode)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List active invites for guild
+         * @param {number} guildId Guild id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildInvitesGuildIdGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildInvitesGuildIdGet', 'guildId', guildId)
+            const localVarPath = `/guild/invites/{guild_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete an invite by id
+         * @param {number} guildId Guild id
+         * @param {number} inviteId Invite id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildInvitesGuildIdInviteIdDelete: async (guildId: number, inviteId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildInvitesGuildIdInviteIdDelete', 'guildId', guildId)
+            // verify required parameter 'inviteId' is not null or undefined
+            assertParamExists('guildInvitesGuildIdInviteIdDelete', 'inviteId', inviteId)
+            const localVarPath = `/guild/invites/{guild_id}/{invite_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"invite_id"}}`, encodeURIComponent(String(inviteId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create a new invite
+         * @param {number} guildId Guild id
+         * @param {GuildCreateInviteRequest} guildCreateInviteRequest Invite options
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildInvitesGuildIdPost: async (guildId: number, guildCreateInviteRequest: GuildCreateInviteRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildInvitesGuildIdPost', 'guildId', guildId)
+            // verify required parameter 'guildCreateInviteRequest' is not null or undefined
+            assertParamExists('guildInvitesGuildIdPost', 'guildCreateInviteRequest', guildCreateInviteRequest)
+            const localVarPath = `/guild/invites/{guild_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(guildCreateInviteRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get invite info by code
+         * @param {string} inviteCode Invite code
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildInvitesReceiveInviteCodeGet: async (inviteCode: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'inviteCode' is not null or undefined
+            assertParamExists('guildInvitesReceiveInviteCodeGet', 'inviteCode', inviteCode)
+            const localVarPath = `/guild/invites/receive/{invite_code}`
+                .replace(`{${"invite_code"}}`, encodeURIComponent(String(inviteCode)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * GuildInvitesApi - functional programming interface
+ * @export
+ */
+export const GuildInvitesApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = GuildInvitesApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Accept invite and join guild
+         * @param {string} inviteCode Invite code
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildInvitesAcceptInviteCodePost(inviteCode: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildInvitesAcceptInviteCodePost(inviteCode, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildInvitesApi.guildInvitesAcceptInviteCodePost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary List active invites for guild
+         * @param {number} guildId Guild id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildInvitesGuildIdGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoGuildInvite>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildInvitesGuildIdGet(guildId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildInvitesApi.guildInvitesGuildIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Delete an invite by id
+         * @param {number} guildId Guild id
+         * @param {number} inviteId Invite id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildInvitesGuildIdInviteIdDelete(guildId: number, inviteId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildInvitesGuildIdInviteIdDelete(guildId, inviteId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildInvitesApi.guildInvitesGuildIdInviteIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Create a new invite
+         * @param {number} guildId Guild id
+         * @param {GuildCreateInviteRequest} guildCreateInviteRequest Invite options
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildInvitesGuildIdPost(guildId: number, guildCreateInviteRequest: GuildCreateInviteRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuildInvite>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildInvitesGuildIdPost(guildId, guildCreateInviteRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildInvitesApi.guildInvitesGuildIdPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get invite info by code
+         * @param {string} inviteCode Invite code
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildInvitesReceiveInviteCodeGet(inviteCode: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoInvitePreview>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildInvitesReceiveInviteCodeGet(inviteCode, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildInvitesApi.guildInvitesReceiveInviteCodeGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * GuildInvitesApi - factory interface
+ * @export
+ */
+export const GuildInvitesApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = GuildInvitesApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Accept invite and join guild
+         * @param {GuildInvitesApiGuildInvitesAcceptInviteCodePostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildInvitesAcceptInviteCodePost(requestParameters: GuildInvitesApiGuildInvitesAcceptInviteCodePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild> {
+            return localVarFp.guildInvitesAcceptInviteCodePost(requestParameters.inviteCode, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary List active invites for guild
+         * @param {GuildInvitesApiGuildInvitesGuildIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildInvitesGuildIdGet(requestParameters: GuildInvitesApiGuildInvitesGuildIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoGuildInvite>> {
+            return localVarFp.guildInvitesGuildIdGet(requestParameters.guildId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Delete an invite by id
+         * @param {GuildInvitesApiGuildInvitesGuildIdInviteIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildInvitesGuildIdInviteIdDelete(requestParameters: GuildInvitesApiGuildInvitesGuildIdInviteIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildInvitesGuildIdInviteIdDelete(requestParameters.guildId, requestParameters.inviteId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Create a new invite
+         * @param {GuildInvitesApiGuildInvitesGuildIdPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildInvitesGuildIdPost(requestParameters: GuildInvitesApiGuildInvitesGuildIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuildInvite> {
+            return localVarFp.guildInvitesGuildIdPost(requestParameters.guildId, requestParameters.guildCreateInviteRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get invite info by code
+         * @param {GuildInvitesApiGuildInvitesReceiveInviteCodeGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildInvitesReceiveInviteCodeGet(requestParameters: GuildInvitesApiGuildInvitesReceiveInviteCodeGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoInvitePreview> {
+            return localVarFp.guildInvitesReceiveInviteCodeGet(requestParameters.inviteCode, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * GuildInvitesApi - interface
+ * @export
+ * @interface GuildInvitesApi
+ */
+export interface GuildInvitesApiInterface {
+    /**
+     * 
+     * @summary Accept invite and join guild
+     * @param {GuildInvitesApiGuildInvitesAcceptInviteCodePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildInvitesApiInterface
+     */
+    guildInvitesAcceptInviteCodePost(requestParameters: GuildInvitesApiGuildInvitesAcceptInviteCodePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild>;
+
+    /**
+     * 
+     * @summary List active invites for guild
+     * @param {GuildInvitesApiGuildInvitesGuildIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildInvitesApiInterface
+     */
+    guildInvitesGuildIdGet(requestParameters: GuildInvitesApiGuildInvitesGuildIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoGuildInvite>>;
+
+    /**
+     * 
+     * @summary Delete an invite by id
+     * @param {GuildInvitesApiGuildInvitesGuildIdInviteIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildInvitesApiInterface
+     */
+    guildInvitesGuildIdInviteIdDelete(requestParameters: GuildInvitesApiGuildInvitesGuildIdInviteIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Create a new invite
+     * @param {GuildInvitesApiGuildInvitesGuildIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildInvitesApiInterface
+     */
+    guildInvitesGuildIdPost(requestParameters: GuildInvitesApiGuildInvitesGuildIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuildInvite>;
+
+    /**
+     * 
+     * @summary Get invite info by code
+     * @param {GuildInvitesApiGuildInvitesReceiveInviteCodeGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildInvitesApiInterface
+     */
+    guildInvitesReceiveInviteCodeGet(requestParameters: GuildInvitesApiGuildInvitesReceiveInviteCodeGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoInvitePreview>;
+
+}
+
+/**
+ * Request parameters for guildInvitesAcceptInviteCodePost operation in GuildInvitesApi.
+ * @export
+ * @interface GuildInvitesApiGuildInvitesAcceptInviteCodePostRequest
+ */
+export interface GuildInvitesApiGuildInvitesAcceptInviteCodePostRequest {
+    /**
+     * Invite code
+     * @type {string}
+     * @memberof GuildInvitesApiGuildInvitesAcceptInviteCodePost
+     */
+    readonly inviteCode: string
+}
+
+/**
+ * Request parameters for guildInvitesGuildIdGet operation in GuildInvitesApi.
+ * @export
+ * @interface GuildInvitesApiGuildInvitesGuildIdGetRequest
+ */
+export interface GuildInvitesApiGuildInvitesGuildIdGetRequest {
+    /**
+     * Guild id
+     * @type {number}
+     * @memberof GuildInvitesApiGuildInvitesGuildIdGet
+     */
+    readonly guildId: number
+}
+
+/**
+ * Request parameters for guildInvitesGuildIdInviteIdDelete operation in GuildInvitesApi.
+ * @export
+ * @interface GuildInvitesApiGuildInvitesGuildIdInviteIdDeleteRequest
+ */
+export interface GuildInvitesApiGuildInvitesGuildIdInviteIdDeleteRequest {
+    /**
+     * Guild id
+     * @type {number}
+     * @memberof GuildInvitesApiGuildInvitesGuildIdInviteIdDelete
+     */
+    readonly guildId: number
+
+    /**
+     * Invite id
+     * @type {number}
+     * @memberof GuildInvitesApiGuildInvitesGuildIdInviteIdDelete
+     */
+    readonly inviteId: number
+}
+
+/**
+ * Request parameters for guildInvitesGuildIdPost operation in GuildInvitesApi.
+ * @export
+ * @interface GuildInvitesApiGuildInvitesGuildIdPostRequest
+ */
+export interface GuildInvitesApiGuildInvitesGuildIdPostRequest {
+    /**
+     * Guild id
+     * @type {number}
+     * @memberof GuildInvitesApiGuildInvitesGuildIdPost
+     */
+    readonly guildId: number
+
+    /**
+     * Invite options
+     * @type {GuildCreateInviteRequest}
+     * @memberof GuildInvitesApiGuildInvitesGuildIdPost
+     */
+    readonly guildCreateInviteRequest: GuildCreateInviteRequest
+}
+
+/**
+ * Request parameters for guildInvitesReceiveInviteCodeGet operation in GuildInvitesApi.
+ * @export
+ * @interface GuildInvitesApiGuildInvitesReceiveInviteCodeGetRequest
+ */
+export interface GuildInvitesApiGuildInvitesReceiveInviteCodeGetRequest {
+    /**
+     * Invite code
+     * @type {string}
+     * @memberof GuildInvitesApiGuildInvitesReceiveInviteCodeGet
+     */
+    readonly inviteCode: string
+}
+
+/**
+ * GuildInvitesApi - object-oriented interface
+ * @export
+ * @class GuildInvitesApi
+ * @extends {BaseAPI}
+ */
+export class GuildInvitesApi extends BaseAPI implements GuildInvitesApiInterface {
+    /**
+     * 
+     * @summary Accept invite and join guild
+     * @param {GuildInvitesApiGuildInvitesAcceptInviteCodePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildInvitesApi
+     */
+    public guildInvitesAcceptInviteCodePost(requestParameters: GuildInvitesApiGuildInvitesAcceptInviteCodePostRequest, options?: RawAxiosRequestConfig) {
+        return GuildInvitesApiFp(this.configuration).guildInvitesAcceptInviteCodePost(requestParameters.inviteCode, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary List active invites for guild
+     * @param {GuildInvitesApiGuildInvitesGuildIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildInvitesApi
+     */
+    public guildInvitesGuildIdGet(requestParameters: GuildInvitesApiGuildInvitesGuildIdGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildInvitesApiFp(this.configuration).guildInvitesGuildIdGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Delete an invite by id
+     * @param {GuildInvitesApiGuildInvitesGuildIdInviteIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildInvitesApi
+     */
+    public guildInvitesGuildIdInviteIdDelete(requestParameters: GuildInvitesApiGuildInvitesGuildIdInviteIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return GuildInvitesApiFp(this.configuration).guildInvitesGuildIdInviteIdDelete(requestParameters.guildId, requestParameters.inviteId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Create a new invite
+     * @param {GuildInvitesApiGuildInvitesGuildIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildInvitesApi
+     */
+    public guildInvitesGuildIdPost(requestParameters: GuildInvitesApiGuildInvitesGuildIdPostRequest, options?: RawAxiosRequestConfig) {
+        return GuildInvitesApiFp(this.configuration).guildInvitesGuildIdPost(requestParameters.guildId, requestParameters.guildCreateInviteRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get invite info by code
+     * @param {GuildInvitesApiGuildInvitesReceiveInviteCodeGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildInvitesApi
+     */
+    public guildInvitesReceiveInviteCodeGet(requestParameters: GuildInvitesApiGuildInvitesReceiveInviteCodeGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildInvitesApiFp(this.configuration).guildInvitesReceiveInviteCodeGet(requestParameters.inviteCode, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
  * MessageApi - axios parameter creator
  * @export
  */
@@ -3767,42 +4420,6 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
     return {
         /**
          * 
-         * @summary Get user
-         * @param {UserModifyUserRequest} userModifyUserRequest Modify user data
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        mePatch: async (userModifyUserRequest: UserModifyUserRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'userModifyUserRequest' is not null or undefined
-            assertParamExists('mePatch', 'userModifyUserRequest', userModifyUserRequest)
-            const localVarPath = `/me`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-    
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(userModifyUserRequest, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Create group DM channel
          * @param {UserCreateDMManyRequest} userCreateDMManyRequest Group DM data
          * @param {*} [options] Override http request option.
@@ -3974,6 +4591,42 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Get user
+         * @param {UserModifyUserRequest} userModifyUserRequest Modify user data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMePatch: async (userModifyUserRequest: UserModifyUserRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userModifyUserRequest' is not null or undefined
+            assertParamExists('userMePatch', 'userModifyUserRequest', userModifyUserRequest)
+            const localVarPath = `/user/me`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(userModifyUserRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get user
          * @param {string} userId User ID or \&#39;me\&#39;
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -4015,19 +4668,6 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
 export const UserApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = UserApiAxiosParamCreator(configuration)
     return {
-        /**
-         * 
-         * @summary Get user
-         * @param {UserModifyUserRequest} userModifyUserRequest Modify user data
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async mePatch(userModifyUserRequest: UserModifyUserRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.mePatch(userModifyUserRequest, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['UserApi.mePatch']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
         /**
          * 
          * @summary Create group DM channel
@@ -4095,6 +4735,19 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get user
+         * @param {UserModifyUserRequest} userModifyUserRequest Modify user data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMePatch(userModifyUserRequest: UserModifyUserRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMePatch(userModifyUserRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMePatch']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get user
          * @param {string} userId User ID or \&#39;me\&#39;
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -4115,16 +4768,6 @@ export const UserApiFp = function(configuration?: Configuration) {
 export const UserApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = UserApiFp(configuration)
     return {
-        /**
-         * 
-         * @summary Get user
-         * @param {UserApiMePatchRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        mePatch(requestParameters: UserApiMePatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.mePatch(requestParameters.userModifyUserRequest, options).then((request) => request(axios, basePath));
-        },
         /**
          * 
          * @summary Create group DM channel
@@ -4177,6 +4820,16 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
         /**
          * 
          * @summary Get user
+         * @param {UserApiUserMePatchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMePatch(requestParameters: UserApiUserMePatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.userMePatch(requestParameters.userModifyUserRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get user
          * @param {UserApiUserUserIdGetRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -4193,16 +4846,6 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
  * @interface UserApi
  */
 export interface UserApiInterface {
-    /**
-     * 
-     * @summary Get user
-     * @param {UserApiMePatchRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UserApiInterface
-     */
-    mePatch(requestParameters: UserApiMePatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
-
     /**
      * 
      * @summary Create group DM channel
@@ -4255,6 +4898,16 @@ export interface UserApiInterface {
     /**
      * 
      * @summary Get user
+     * @param {UserApiUserMePatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMePatch(requestParameters: UserApiUserMePatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Get user
      * @param {UserApiUserUserIdGetRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -4262,20 +4915,6 @@ export interface UserApiInterface {
      */
     userUserIdGet(requestParameters: UserApiUserUserIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoUser>;
 
-}
-
-/**
- * Request parameters for mePatch operation in UserApi.
- * @export
- * @interface UserApiMePatchRequest
- */
-export interface UserApiMePatchRequest {
-    /**
-     * Modify user data
-     * @type {UserModifyUserRequest}
-     * @memberof UserApiMePatch
-     */
-    readonly userModifyUserRequest: UserModifyUserRequest
 }
 
 /**
@@ -4335,6 +4974,20 @@ export interface UserApiUserMeGuildsGuildIdMemberGetRequest {
 }
 
 /**
+ * Request parameters for userMePatch operation in UserApi.
+ * @export
+ * @interface UserApiUserMePatchRequest
+ */
+export interface UserApiUserMePatchRequest {
+    /**
+     * Modify user data
+     * @type {UserModifyUserRequest}
+     * @memberof UserApiUserMePatch
+     */
+    readonly userModifyUserRequest: UserModifyUserRequest
+}
+
+/**
  * Request parameters for userUserIdGet operation in UserApi.
  * @export
  * @interface UserApiUserUserIdGetRequest
@@ -4355,18 +5008,6 @@ export interface UserApiUserUserIdGetRequest {
  * @extends {BaseAPI}
  */
 export class UserApi extends BaseAPI implements UserApiInterface {
-    /**
-     * 
-     * @summary Get user
-     * @param {UserApiMePatchRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UserApi
-     */
-    public mePatch(requestParameters: UserApiMePatchRequest, options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).mePatch(requestParameters.userModifyUserRequest, options).then((request) => request(this.axios, this.basePath));
-    }
-
     /**
      * 
      * @summary Create group DM channel
@@ -4424,6 +5065,18 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      */
     public userMeGuildsGuildIdMemberGet(requestParameters: UserApiUserMeGuildsGuildIdMemberGetRequest, options?: RawAxiosRequestConfig) {
         return UserApiFp(this.configuration).userMeGuildsGuildIdMemberGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get user
+     * @param {UserApiUserMePatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMePatch(requestParameters: UserApiUserMePatchRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMePatch(requestParameters.userModifyUserRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

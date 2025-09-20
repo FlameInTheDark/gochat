@@ -22,10 +22,13 @@ var _ MappedNullable = &DtoMessage{}
 type DtoMessage struct {
 	Attachments []DtoAttachment `json:"attachments,omitempty"`
 	Author      *DtoUser        `json:"author,omitempty"`
-	ChannelId   *int32          `json:"channel_id,omitempty"`
-	Content     *string         `json:"content,omitempty"`
-	Id          *int32          `json:"id,omitempty"`
-	UpdatedAt   *string         `json:"updated_at,omitempty"`
+	// Channel id the message was sent to
+	ChannelId *int32  `json:"channel_id,omitempty"`
+	Content   *string `json:"content,omitempty"`
+	// Message ID
+	Id *int32 `json:"id,omitempty"`
+	// Timestamp of the last message edit
+	UpdatedAt *string `json:"updated_at,omitempty"`
 }
 
 // NewDtoMessage instantiates a new DtoMessage object

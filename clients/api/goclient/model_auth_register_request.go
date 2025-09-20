@@ -20,6 +20,7 @@ var _ MappedNullable = &AuthRegisterRequest{}
 
 // AuthRegisterRequest struct for AuthRegisterRequest
 type AuthRegisterRequest struct {
+	// User Email
 	Email *string `json:"email,omitempty"`
 }
 

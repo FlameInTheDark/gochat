@@ -20,8 +20,10 @@ var _ MappedNullable = &AuthRefreshTokenResponse{}
 
 // AuthRefreshTokenResponse struct for AuthRefreshTokenResponse
 type AuthRefreshTokenResponse struct {
+	// Refresh token. Used to refresh authentication token.
 	RefreshToken *string `json:"refresh_token,omitempty"`
-	Token        *string `json:"token,omitempty"`
+	// Authentication token
+	Token *string `json:"token,omitempty"`
 }
 
 // NewAuthRefreshTokenResponse instantiates a new AuthRefreshTokenResponse object

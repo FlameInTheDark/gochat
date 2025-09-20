@@ -4,8 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Email** | Pointer to **string** |  | [optional] 
-**Password** | Pointer to **string** |  | [optional] 
+**Email** | Pointer to **string** | User Email | [optional] 
+**Password** | Pointer to **string** | User password | [optional] 
 
 ## Methods
 

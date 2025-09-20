@@ -20,9 +20,12 @@ var _ MappedNullable = &MessageSendMessageRequest{}
 
 // MessageSendMessageRequest struct for MessageSendMessageRequest
 type MessageSendMessageRequest struct {
+	// IDs of attached files
 	Attachments []int32 `json:"attachments,omitempty"`
-	Content     *string `json:"content,omitempty"`
-	Mentions    []int32 `json:"mentions,omitempty"`
+	// Message content
+	Content *string `json:"content,omitempty"`
+	// IDs of mentioned users
+	Mentions []int32 `json:"mentions,omitempty"`
 }
 
 // NewMessageSendMessageRequest instantiates a new MessageSendMessageRequest object

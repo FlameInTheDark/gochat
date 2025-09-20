@@ -20,6 +20,7 @@ var _ MappedNullable = &MessageUpdateMessageRequest{}
 
 // MessageUpdateMessageRequest struct for MessageUpdateMessageRequest
 type MessageUpdateMessageRequest struct {
+	// Message content
 	Content *string `json:"content,omitempty"`
 }
 

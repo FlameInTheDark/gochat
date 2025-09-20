@@ -4,11 +4,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Discriminator** | Pointer to **string** |  | [optional] 
-**Id** | Pointer to **int32** |  | [optional] 
-**Name** | Pointer to **string** |  | [optional] 
-**Password** | Pointer to **string** |  | [optional] 
-**Token** | Pointer to **string** |  | [optional] 
+**Discriminator** | Pointer to **string** | Unique discriminator | [optional] 
+**Id** | Pointer to **int32** | User ID | [optional] 
+**Name** | Pointer to **string** | User name | [optional] 
+**Password** | Pointer to **string** | User password | [optional] 
+**Token** | Pointer to **string** | Registration token | [optional] 
 
 ## Methods
 

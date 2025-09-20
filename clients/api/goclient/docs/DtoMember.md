@@ -4,11 +4,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Avatar** | Pointer to **int32** |  | [optional] 
-**JoinAt** | Pointer to **string** |  | [optional] 
-**Roles** | Pointer to **[]int32** |  | [optional] 
-**UserId** | Pointer to [**DtoUser**](DtoUser.md) |  | [optional] 
-**Username** | Pointer to **string** |  | [optional] 
+**Avatar** | Pointer to **int32** | Avatar ID | [optional] 
+**JoinAt** | Pointer to **string** | Join date | [optional] 
+**Roles** | Pointer to **[]int32** | List of assigned role IDs | [optional] 
+**User** | Pointer to [**DtoUser**](DtoUser.md) |  | [optional] 
+**Username** | Pointer to **string** | Username in this guild | [optional] 
 
 ## Methods
 
@@ -104,30 +104,30 @@ SetRoles sets Roles field to given value.
 
 HasRoles returns a boolean if a field has been set.
 
-### GetUserId
+### GetUser
 
-`func (o *DtoMember) GetUserId() DtoUser`
+`func (o *DtoMember) GetUser() DtoUser`
 
-GetUserId returns the UserId field if non-nil, zero value otherwise.
+GetUser returns the User field if non-nil, zero value otherwise.
 
-### GetUserIdOk
+### GetUserOk
 
-`func (o *DtoMember) GetUserIdOk() (*DtoUser, bool)`
+`func (o *DtoMember) GetUserOk() (*DtoUser, bool)`
 
-GetUserIdOk returns a tuple with the UserId field if it's non-nil, zero value otherwise
+GetUserOk returns a tuple with the User field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetUserId
+### SetUser
 
-`func (o *DtoMember) SetUserId(v DtoUser)`
+`func (o *DtoMember) SetUser(v DtoUser)`
 
-SetUserId sets UserId field to given value.
+SetUser sets User field to given value.
 
-### HasUserId
+### HasUser
 
-`func (o *DtoMember) HasUserId() bool`
+`func (o *DtoMember) HasUser() bool`
 
-HasUserId returns a boolean if a field has been set.
+HasUser returns a boolean if a field has been set.
 
 ### GetUsername
 

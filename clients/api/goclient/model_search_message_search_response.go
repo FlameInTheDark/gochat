@@ -20,8 +20,10 @@ var _ MappedNullable = &SearchMessageSearchResponse{}
 
 // SearchMessageSearchResponse struct for SearchMessageSearchResponse
 type SearchMessageSearchResponse struct {
+	// List of messages
 	Messages []DtoMessage `json:"messages,omitempty"`
-	Pages    *int32       `json:"pages,omitempty"`
+	// Total number of pages with current search parameters
+	Pages *int32 `json:"pages,omitempty"`
 }
 
 // NewSearchMessageSearchResponse instantiates a new SearchMessageSearchResponse object

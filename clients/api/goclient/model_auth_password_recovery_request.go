@@ -20,6 +20,7 @@ var _ MappedNullable = &AuthPasswordRecoveryRequest{}
 
 // AuthPasswordRecoveryRequest struct for AuthPasswordRecoveryRequest
 type AuthPasswordRecoveryRequest struct {
+	// User Email to receive recovery email
 	Email *string `json:"email,omitempty"`
 }
 

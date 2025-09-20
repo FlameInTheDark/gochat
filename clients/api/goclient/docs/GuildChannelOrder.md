@@ -4,8 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | Pointer to **int32** |  | [optional] 
-**Position** | Pointer to **int32** |  | [optional] 
+**Id** | Pointer to **int32** | Channel ID. | [optional] 
+**Position** | Pointer to **int32** | New channel position. | [optional] 
 
 ## Methods
 

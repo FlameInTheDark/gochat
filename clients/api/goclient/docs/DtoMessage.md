@@ -6,10 +6,10 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Attachments** | Pointer to [**[]DtoAttachment**](DtoAttachment.md) |  | [optional] 
 **Author** | Pointer to [**DtoUser**](DtoUser.md) |  | [optional] 
-**ChannelId** | Pointer to **int32** |  | [optional] 
+**ChannelId** | Pointer to **int32** | Channel id the message was sent to | [optional] 
 **Content** | Pointer to **string** |  | [optional] 
-**Id** | Pointer to **int32** |  | [optional] 
-**UpdatedAt** | Pointer to **string** |  | [optional] 
+**Id** | Pointer to **int32** | Message ID | [optional] 
+**UpdatedAt** | Pointer to **string** | Timestamp of the last message edit | [optional] 
 
 ## Methods
 

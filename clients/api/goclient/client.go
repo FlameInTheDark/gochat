@@ -53,6 +53,8 @@ type APIClient struct {
 
 	GuildAPI *GuildAPIService
 
+	GuildInvitesAPI *GuildInvitesAPIService
+
 	MessageAPI *MessageAPIService
 
 	SearchAPI *SearchAPIService
@@ -80,6 +82,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	// API Services
 	c.AuthAPI = (*AuthAPIService)(&c.common)
 	c.GuildAPI = (*GuildAPIService)(&c.common)
+	c.GuildInvitesAPI = (*GuildInvitesAPIService)(&c.common)
 	c.MessageAPI = (*MessageAPIService)(&c.common)
 	c.SearchAPI = (*SearchAPIService)(&c.common)
 	c.UserAPI = (*UserAPIService)(&c.common)
@@ -433,9 +436,9 @@ func (c *APIClient) prepareRequest(
 
 		// Walk through any authentication.
 
-		// Basic HTTP Authentication
-		if auth, ok := ctx.Value(ContextBasicAuth).(BasicAuth); ok {
-			localVarRequest.SetBasicAuth(auth.UserName, auth.Password)
+		// AccessToken Authentication
+		if auth, ok := ctx.Value(ContextAccessToken).(string); ok {
+			localVarRequest.Header.Add("Authorization", "Bearer "+auth)
 		}
 
 	}

@@ -4,8 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Messages** | Pointer to [**[]DtoMessage**](DtoMessage.md) |  | [optional] 
-**Pages** | Pointer to **int32** |  | [optional] 
+**Messages** | Pointer to [**[]DtoMessage**](DtoMessage.md) | List of messages | [optional] 
+**Pages** | Pointer to **int32** | Total number of pages with current search parameters | [optional] 
 
 ## Methods
 

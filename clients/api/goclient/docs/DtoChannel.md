@@ -4,15 +4,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**CreatedAt** | Pointer to **string** |  | [optional] 
-**GuildId** | Pointer to **int32** |  | [optional] 
-**Id** | Pointer to **int32** |  | [optional] 
-**Name** | Pointer to **string** |  | [optional] 
-**ParentId** | Pointer to **int32** |  | [optional] 
-**Permissions** | Pointer to **int32** |  | [optional] 
-**Position** | Pointer to **int32** |  | [optional] 
-**Topic** | Pointer to **string** |  | [optional] 
-**Type** | Pointer to **int32** |  | [optional] 
+**CreatedAt** | Pointer to **string** | Timestamp of channel creation | [optional] 
+**GuildId** | Pointer to **int32** | Guild ID channel was created in | [optional] 
+**Id** | Pointer to **int32** | Channel ID | [optional] 
+**Name** | Pointer to **string** | Channel name, without spaces | [optional] 
+**ParentId** | Pointer to **int32** | Parent channel id | [optional] 
+**Permissions** | Pointer to **int32** | Permissions. Check the permissions documentation for more info. | [optional] 
+**Position** | Pointer to **int32** | Channel position | [optional] 
+**Topic** | Pointer to **string** | Channel topic. | [optional] 
+**Type** | Pointer to **int32** | Channel type | [optional] 
 
 ## Methods
 
