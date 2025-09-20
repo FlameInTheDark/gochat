@@ -4,10 +4,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**ChannelId** | Pointer to **int32** |  | [optional] 
-**FileName** | Pointer to **string** |  | [optional] 
-**Id** | Pointer to **int32** |  | [optional] 
-**UploadUrl** | Pointer to **string** |  | [optional] 
+**ChannelId** | Pointer to **int32** | Channel ID the attachment was sent to | [optional] 
+**FileName** | Pointer to **string** | File name | [optional] 
+**Id** | Pointer to **int32** | Attachment ID | [optional] 
+**UploadUrl** | Pointer to **string** | Upload URL. S3 presigned URL | [optional] 
 
 ## Methods
 

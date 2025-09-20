@@ -20,8 +20,10 @@ var _ MappedNullable = &UserModifyUserRequest{}
 
 // UserModifyUserRequest struct for UserModifyUserRequest
 type UserModifyUserRequest struct {
-	Avatar *int32  `json:"avatar,omitempty"`
-	Name   *string `json:"name,omitempty"`
+	// Avatar ID.
+	Avatar *int32 `json:"avatar,omitempty"`
+	// User name.
+	Name *string `json:"name,omitempty"`
 }
 
 // NewUserModifyUserRequest instantiates a new UserModifyUserRequest object

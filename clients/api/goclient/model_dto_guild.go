@@ -20,12 +20,18 @@ var _ MappedNullable = &DtoGuild{}
 
 // DtoGuild struct for DtoGuild
 type DtoGuild struct {
-	Icon        *int32  `json:"icon,omitempty"`
-	Id          *int32  `json:"id,omitempty"`
-	Name        *string `json:"name,omitempty"`
-	Owner       *int32  `json:"owner,omitempty"`
-	Permissions *int32  `json:"permissions,omitempty"`
-	Public      *bool   `json:"public,omitempty"`
+	// Icon ID
+	Icon *int32 `json:"icon,omitempty"`
+	// Guild ID
+	Id *int32 `json:"id,omitempty"`
+	// Guild Name
+	Name *string `json:"name,omitempty"`
+	// Owner ID
+	Owner *int32 `json:"owner,omitempty"`
+	// Default guild Permissions. Check the permissions documentation for more info.
+	Permissions *int32 `json:"permissions,omitempty"`
+	// Whether the guild is public
+	Public *bool `json:"public,omitempty"`
 }
 
 // NewDtoGuild instantiates a new DtoGuild object
@@ -34,6 +40,10 @@ type DtoGuild struct {
 // will change when the set of required properties is changed
 func NewDtoGuild() *DtoGuild {
 	this := DtoGuild{}
+	var permissions int32 = 7927905
+	this.Permissions = &permissions
+	var public bool = false
+	this.Public = &public
 	return &this
 }
 
@@ -42,6 +52,10 @@ func NewDtoGuild() *DtoGuild {
 // but it doesn't guarantee that properties required by API are set
 func NewDtoGuildWithDefaults() *DtoGuild {
 	this := DtoGuild{}
+	var permissions int32 = 7927905
+	this.Permissions = &permissions
+	var public bool = false
+	this.Public = &public
 	return &this
 }
 

@@ -4,8 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Avatar** | Pointer to **int32** |  | [optional] 
-**Name** | Pointer to **string** |  | [optional] 
+**Avatar** | Pointer to **int32** | Avatar ID. | [optional] 
+**Name** | Pointer to **string** | User name. | [optional] 
 
 ## Methods
 

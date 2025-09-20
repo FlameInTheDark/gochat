@@ -4,12 +4,12 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Icon** | Pointer to **int32** |  | [optional] 
-**Id** | Pointer to **int32** |  | [optional] 
-**Name** | Pointer to **string** |  | [optional] 
-**Owner** | Pointer to **int32** |  | [optional] 
-**Permissions** | Pointer to **int32** |  | [optional] 
-**Public** | Pointer to **bool** |  | [optional] 
+**Icon** | Pointer to **int32** | Icon ID | [optional] 
+**Id** | Pointer to **int32** | Guild ID | [optional] 
+**Name** | Pointer to **string** | Guild Name | [optional] 
+**Owner** | Pointer to **int32** | Owner ID | [optional] 
+**Permissions** | Pointer to **int32** | Default guild Permissions. Check the permissions documentation for more info. | [optional] [default to 7927905]
+**Public** | Pointer to **bool** | Whether the guild is public | [optional] [default to false]
 
 ## Methods
 

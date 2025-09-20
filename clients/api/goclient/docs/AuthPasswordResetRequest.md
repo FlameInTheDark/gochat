@@ -4,9 +4,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | Pointer to **int32** |  | [optional] 
-**Password** | Pointer to **string** |  | [optional] 
-**Token** | Pointer to **string** |  | [optional] 
+**Id** | Pointer to **int32** | User ID | [optional] 
+**Password** | Pointer to **string** | New password | [optional] 
+**Token** | Pointer to **string** | Reset token | [optional] 
 
 ## Methods
 

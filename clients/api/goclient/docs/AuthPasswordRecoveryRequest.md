@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Email** | Pointer to **string** |  | [optional] 
+**Email** | Pointer to **string** | User Email to receive recovery email | [optional] 
 
 ## Methods
 

@@ -20,9 +20,13 @@ var _ MappedNullable = &DtoAttachmentUpload{}
 
 // DtoAttachmentUpload struct for DtoAttachmentUpload
 type DtoAttachmentUpload struct {
-	ChannelId *int32  `json:"channel_id,omitempty"`
-	FileName  *string `json:"file_name,omitempty"`
-	Id        *int32  `json:"id,omitempty"`
+	// Channel ID the attachment was sent to
+	ChannelId *int32 `json:"channel_id,omitempty"`
+	// File name
+	FileName *string `json:"file_name,omitempty"`
+	// Attachment ID
+	Id *int32 `json:"id,omitempty"`
+	// Upload URL. S3 presigned URL
 	UploadUrl *string `json:"upload_url,omitempty"`
 }
 

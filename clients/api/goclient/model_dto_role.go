@@ -20,11 +20,16 @@ var _ MappedNullable = &DtoRole{}
 
 // DtoRole struct for DtoRole
 type DtoRole struct {
-	Color       *int32  `json:"color,omitempty"`
-	GuildId     *int32  `json:"guild_id,omitempty"`
-	Id          *int32  `json:"id,omitempty"`
-	Name        *string `json:"name,omitempty"`
-	Permissions *int32  `json:"permissions,omitempty"`
+	// Role color. Will change username color. Represent RGB color in one Integer value.
+	Color *int32 `json:"color,omitempty"`
+	// Guild ID
+	GuildId *int32 `json:"guild_id,omitempty"`
+	// Role ID
+	Id *int32 `json:"id,omitempty"`
+	// Role name
+	Name *string `json:"name,omitempty"`
+	// Role permissions. Check the permissions documentation for more info.
+	Permissions *int32 `json:"permissions,omitempty"`
 }
 
 // NewDtoRole instantiates a new DtoRole object

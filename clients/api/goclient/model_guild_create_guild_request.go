@@ -20,9 +20,12 @@ var _ MappedNullable = &GuildCreateGuildRequest{}
 
 // GuildCreateGuildRequest struct for GuildCreateGuildRequest
 type GuildCreateGuildRequest struct {
-	IconId *int32  `json:"icon_id,omitempty"`
-	Name   *string `json:"name,omitempty"`
-	Public *bool   `json:"public,omitempty"`
+	// Icon ID
+	IconId *int32 `json:"icon_id,omitempty"`
+	// Guild name
+	Name *string `json:"name,omitempty"`
+	// Whether the guild is public
+	Public *bool `json:"public,omitempty"`
 }
 
 // NewGuildCreateGuildRequest instantiates a new GuildCreateGuildRequest object
@@ -31,6 +34,8 @@ type GuildCreateGuildRequest struct {
 // will change when the set of required properties is changed
 func NewGuildCreateGuildRequest() *GuildCreateGuildRequest {
 	this := GuildCreateGuildRequest{}
+	var public bool = false
+	this.Public = &public
 	return &this
 }
 
@@ -39,6 +44,8 @@ func NewGuildCreateGuildRequest() *GuildCreateGuildRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewGuildCreateGuildRequestWithDefaults() *GuildCreateGuildRequest {
 	this := GuildCreateGuildRequest{}
+	var public bool = false
+	this.Public = &public
 	return &this
 }
 

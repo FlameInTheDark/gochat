@@ -20,11 +20,15 @@ var _ MappedNullable = &DtoMember{}
 
 // DtoMember struct for DtoMember
 type DtoMember struct {
-	Avatar   *int32   `json:"avatar,omitempty"`
-	JoinAt   *string  `json:"join_at,omitempty"`
-	Roles    []int32  `json:"roles,omitempty"`
-	UserId   *DtoUser `json:"user_id,omitempty"`
-	Username *string  `json:"username,omitempty"`
+	// Avatar ID
+	Avatar *int32 `json:"avatar,omitempty"`
+	// Join date
+	JoinAt *string `json:"join_at,omitempty"`
+	// List of assigned role IDs
+	Roles []int32  `json:"roles,omitempty"`
+	User  *DtoUser `json:"user,omitempty"`
+	// Username in this guild
+	Username *string `json:"username,omitempty"`
 }
 
 // NewDtoMember instantiates a new DtoMember object
@@ -140,36 +144,36 @@ func (o *DtoMember) SetRoles(v []int32) {
 	o.Roles = v
 }
 
-// GetUserId returns the UserId field value if set, zero value otherwise.
-func (o *DtoMember) GetUserId() DtoUser {
-	if o == nil || IsNil(o.UserId) {
+// GetUser returns the User field value if set, zero value otherwise.
+func (o *DtoMember) GetUser() DtoUser {
+	if o == nil || IsNil(o.User) {
 		var ret DtoUser
 		return ret
 	}
-	return *o.UserId
+	return *o.User
 }
 
-// GetUserIdOk returns a tuple with the UserId field value if set, nil otherwise
+// GetUserOk returns a tuple with the User field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *DtoMember) GetUserIdOk() (*DtoUser, bool) {
-	if o == nil || IsNil(o.UserId) {
+func (o *DtoMember) GetUserOk() (*DtoUser, bool) {
+	if o == nil || IsNil(o.User) {
 		return nil, false
 	}
-	return o.UserId, true
+	return o.User, true
 }
 
-// HasUserId returns a boolean if a field has been set.
-func (o *DtoMember) HasUserId() bool {
-	if o != nil && !IsNil(o.UserId) {
+// HasUser returns a boolean if a field has been set.
+func (o *DtoMember) HasUser() bool {
+	if o != nil && !IsNil(o.User) {
 		return true
 	}
 
 	return false
 }
 
-// SetUserId gets a reference to the given DtoUser and assigns it to the UserId field.
-func (o *DtoMember) SetUserId(v DtoUser) {
-	o.UserId = &v
+// SetUser gets a reference to the given DtoUser and assigns it to the User field.
+func (o *DtoMember) SetUser(v DtoUser) {
+	o.User = &v
 }
 
 // GetUsername returns the Username field value if set, zero value otherwise.
@@ -223,8 +227,8 @@ func (o DtoMember) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Roles) {
 		toSerialize["roles"] = o.Roles
 	}
-	if !IsNil(o.UserId) {
-		toSerialize["user_id"] = o.UserId
+	if !IsNil(o.User) {
+		toSerialize["user"] = o.User
 	}
 	if !IsNil(o.Username) {
 		toSerialize["username"] = o.Username

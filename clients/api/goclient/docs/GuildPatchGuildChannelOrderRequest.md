@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Channels** | Pointer to [**[]GuildChannelOrder**](GuildChannelOrder.md) |  | [optional] 
+**Channels** | Pointer to [**[]GuildChannelOrder**](GuildChannelOrder.md) | List of channels to change order. | [optional] 
 
 ## Methods
 

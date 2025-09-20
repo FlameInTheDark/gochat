@@ -4,12 +4,12 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AuthorId** | Pointer to **int32** |  | [optional] 
-**ChannelId** | Pointer to **int32** |  | [optional] 
-**Content** | Pointer to **string** |  | [optional] 
-**Has** | Pointer to **[]string** |  | [optional] 
-**Mentions** | Pointer to **[]int32** |  | [optional] 
-**Page** | Pointer to **int32** |  | [optional] 
+**AuthorId** | Pointer to **int32** | Author ID to search by. | [optional] 
+**ChannelId** | Pointer to **int32** | Channel ID to search in. Required. | [optional] 
+**Content** | Pointer to **string** | Content contains a string to search for. Might be empty if need to search by other parameters. | [optional] 
+**Has** | Pointer to **[]string** | List of specific features to search for. | [optional] 
+**Mentions** | Pointer to **[]int32** | Mentions contains a list of int64 user IDs. | [optional] 
+**Page** | Pointer to **int32** | Page number to get. Starts from 0. | [optional] [default to 0]
 
 ## Methods
 

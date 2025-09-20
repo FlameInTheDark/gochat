@@ -4,12 +4,12 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**ContentType** | Pointer to **string** |  | [optional] 
-**Filename** | Pointer to **string** |  | [optional] 
-**Height** | Pointer to **int32** |  | [optional] 
-**Size** | Pointer to **int32** |  | [optional] 
-**Url** | Pointer to **string** |  | [optional] 
-**Width** | Pointer to **int32** |  | [optional] 
+**ContentType** | Pointer to **string** | File mime type | [optional] 
+**Filename** | Pointer to **string** | File name | [optional] 
+**Height** | Pointer to **int32** | Image dimensions in pixels | [optional] 
+**Size** | Pointer to **int32** | FileSize in bytes | [optional] 
+**Url** | Pointer to **string** | URL to download the file | [optional] 
+**Width** | Pointer to **int32** | Image dimensions in pixels | [optional] 
 
 ## Methods
 

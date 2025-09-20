@@ -17,6 +17,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/invite"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/role"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
@@ -40,6 +41,11 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/:guild_id<int>/category", e.CreateCategory)
 	router.Delete("/:guild_id<int>/channel/:channel_id<int>", e.DeleteChannel)
 	router.Delete("/:guild_id<int>/category/:category_id<int>", e.DeleteCategory)
+	router.Get("/invites/receive/:invite_code", e.ReceiveInvite)
+	router.Post("/invites/accept/:invite_code", e.AcceptInvite)
+	router.Get("/invites/:guild_id<int>", e.ListInvites)
+	router.Delete("/invites/:guild_id<int>/:invite_id<int>", e.DeleteInvite)
+	router.Post("/invites/:guild_id<int>", e.CreateInvite)
 }
 
 type entity struct {
@@ -64,6 +70,7 @@ type entity struct {
 	ur    userrole.UserRole
 	icon  icon.Icon
 	memb  member.Member
+	inv   invite.Invite
 }
 
 func (e *entity) Name() string {
@@ -89,5 +96,6 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, log *slog.Logger
 		ur:    userrole.New(pg.Conn()),
 		icon:  icon.New(dbcon),
 		memb:  member.New(pg.Conn()),
+		inv:   invite.New(pg.Conn()),
 	}
 }

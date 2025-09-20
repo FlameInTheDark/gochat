@@ -20,6 +20,7 @@ const (
 	ErrIncorrectChannelID           = "incorrect channel ID"
 	ErrIncorrectGuildID             = "incorrect guild ID"
 	ErrIncorrectMemberID            = "incorrect member ID"
+	ErrIncorrectInviteID            = "incorrect invite ID"
 	ErrFileIsTooBig                 = "file is too big"
 	ErrUnableToSendMessage          = "unable to send message"
 	ErrUnableToGetUser              = "unable to get user"
@@ -36,6 +37,12 @@ const (
 	ErrUnableToSetParentAsSelf      = "unable to set parent as self"
 	ErrUnableToSetParentForCategory = "unable to set parent for category"
 	ErrNotAMember                   = "not a member"
+	// Invites
+	ErrUnableToCreateInvite = "unable to create invite"
+	ErrUnableToGetInvites   = "unable to get invites"
+	ErrUnableToDeleteInvite = "unable to delete invite"
+	ErrInviteNotFound       = "invite not found"
+	ErrInviteCodeInvalid    = "invalid invite code"
 
 	// Validation error messages
 	ErrGuildNameRequired   = "guild name is required"
@@ -196,6 +203,38 @@ func (r PatchGuildChannelRequest) Validate() error {
 		),
 		validation.Field(&r.ParentId, validation.When(r.ParentId != nil,
 			validation.Min(int64(1)).Error(ErrParentIdInvalid)),
+		),
+	)
+}
+
+// Invites
+type CreateInviteRequest struct {
+	// ExpiresInSec is a TTL in seconds; 0 means unlimited invite
+	// If omitted, server uses default (7 days)
+	ExpiresInSec *int `json:"expires_in_sec" example:"86400"`
+}
+
+func (r CreateInviteRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.ExpiresInSec,
+			validation.When(r.ExpiresInSec != nil,
+				validation.By(func(v interface{}) error {
+					p, _ := v.(*int)
+					if p == nil {
+						return nil
+					}
+					if *p == 0 {
+						return nil // unlimited is allowed
+					}
+					if *p < 60 {
+						return validation.NewError("validation", "expires_in_sec must be 0 or >= 60 seconds")
+					}
+					if *p > 60*60*24*30 {
+						return validation.NewError("validation", "expires_in_sec must be 0 or <= 2592000 seconds")
+					}
+					return nil
+				}),
+			),
 		),
 	)
 }

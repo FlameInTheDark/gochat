@@ -4,9 +4,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**IconId** | Pointer to **int32** |  | [optional] 
-**Name** | Pointer to **string** |  | [optional] 
-**Public** | Pointer to **bool** |  | [optional] 
+**IconId** | Pointer to **int32** | Icon ID | [optional] 
+**Name** | Pointer to **string** | Guild name | [optional] 
+**Public** | Pointer to **bool** | Whether the guild is public | [optional] [default to false]
 
 ## Methods
 

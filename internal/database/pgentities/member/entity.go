@@ -17,6 +17,7 @@ type Member interface {
 	IsGuildMember(ctx context.Context, guildId, userId int64) (bool, error)
 	GetUserGuilds(ctx context.Context, userId int64) ([]model.UserGuild, error)
 	SetTimeout(ctx context.Context, userId, guildId int64, timeout *time.Time) error
+	CountGuildMembers(ctx context.Context, guildId int64) (int64, error)
 }
 
 type Entity struct {

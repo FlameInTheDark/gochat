@@ -20,12 +20,18 @@ var _ MappedNullable = &SearchMessageSearchRequest{}
 
 // SearchMessageSearchRequest struct for SearchMessageSearchRequest
 type SearchMessageSearchRequest struct {
-	AuthorId  *int32   `json:"author_id,omitempty"`
-	ChannelId *int32   `json:"channel_id,omitempty"`
-	Content   *string  `json:"content,omitempty"`
-	Has       []string `json:"has,omitempty"`
-	Mentions  []int32  `json:"mentions,omitempty"`
-	Page      *int32   `json:"page,omitempty"`
+	// Author ID to search by.
+	AuthorId *int32 `json:"author_id,omitempty"`
+	// Channel ID to search in. Required.
+	ChannelId *int32 `json:"channel_id,omitempty"`
+	// Content contains a string to search for. Might be empty if need to search by other parameters.
+	Content *string `json:"content,omitempty"`
+	// List of specific features to search for.
+	Has []string `json:"has,omitempty"`
+	// Mentions contains a list of int64 user IDs.
+	Mentions []int32 `json:"mentions,omitempty"`
+	// Page number to get. Starts from 0.
+	Page *int32 `json:"page,omitempty"`
 }
 
 // NewSearchMessageSearchRequest instantiates a new SearchMessageSearchRequest object
@@ -34,6 +40,8 @@ type SearchMessageSearchRequest struct {
 // will change when the set of required properties is changed
 func NewSearchMessageSearchRequest() *SearchMessageSearchRequest {
 	this := SearchMessageSearchRequest{}
+	var page int32 = 0
+	this.Page = &page
 	return &this
 }
 
@@ -42,6 +50,8 @@ func NewSearchMessageSearchRequest() *SearchMessageSearchRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewSearchMessageSearchRequestWithDefaults() *SearchMessageSearchRequest {
 	this := SearchMessageSearchRequest{}
+	var page int32 = 0
+	this.Page = &page
 	return &this
 }
 

@@ -20,11 +20,16 @@ var _ MappedNullable = &AuthConfirmationRequest{}
 
 // AuthConfirmationRequest struct for AuthConfirmationRequest
 type AuthConfirmationRequest struct {
+	// Unique discriminator
 	Discriminator *string `json:"discriminator,omitempty"`
-	Id            *int32  `json:"id,omitempty"`
-	Name          *string `json:"name,omitempty"`
-	Password      *string `json:"password,omitempty"`
-	Token         *string `json:"token,omitempty"`
+	// User ID
+	Id *int32 `json:"id,omitempty"`
+	// User name
+	Name *string `json:"name,omitempty"`
+	// User password
+	Password *string `json:"password,omitempty"`
+	// Registration token
+	Token *string `json:"token,omitempty"`
 }
 
 // NewAuthConfirmationRequest instantiates a new AuthConfirmationRequest object
