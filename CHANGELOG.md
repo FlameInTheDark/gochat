@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/FlameInTheDark/gochat/compare/v1.1.0...v1.2.0) (2025-09-20)
+
+
+### Features
+
+* guild invites ([80ece98](https://github.com/FlameInTheDark/gochat/commit/80ece98faed49d8f00dc1e670cbc32e7e791ed0d))
+
 # [1.1.0](https://github.com/FlameInTheDark/gochat/compare/v1.0.1...v1.1.0) (2025-09-18)
 
 
