@@ -70,3 +70,22 @@ go_client:
 setup: tools up migrate
 
 .PHONY: setup
+
+# Dev tools
+rebuild_all: rebuild_api rebuild_auth rebuild_indexer rebuild_ws
+
+rebuild_api:
+	docker compose down api
+	docker compose up -d --no-deps --build api
+
+rebuild_auth:
+	docker compose down auth
+	docker compose up -d --no-deps --build auth
+
+rebuild_ws:
+	docker compose down ws
+	docker compose up -d --no-deps --build ws
+
+rebuild_indexer:
+	docker compose down indexer
+	docker compose up -d --no-deps --build indexer

@@ -104,7 +104,8 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.WithMetrics()
 	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
 	s.AuthMiddleware(cfg.AuthSecret)
-	s.RateLimitMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
+	//s.RateLimitMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
+	s.RateLimitPipedMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 	s.Use(helper.RequireTokenType("access", "api"))
 
 	// HTTP Router
