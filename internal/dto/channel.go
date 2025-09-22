@@ -15,6 +15,7 @@ type Channel struct {
 	Position    int               `json:"position" example:"4"`                              // Channel position
 	Topic       *string           `json:"topic" example:"Just a channel topic"`              // Channel topic.
 	Permissions *int64            `json:"permissions,omitempty"`                             // Permissions. Check the permissions documentation for more info.
+	Private     bool              `json:"private" default:"false"`                           // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
 	CreatedAt   time.Time         `json:"created_at"`                                        // Timestamp of channel creation
 }
 

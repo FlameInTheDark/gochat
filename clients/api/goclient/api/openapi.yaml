@@ -934,6 +934,340 @@ paths:
       summary: Change channels data
       tags:
       - Guild
+  /guild/{guild_id}/channel/{channel_id}/roles:
+    get:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Channel ID
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/guild.ChannelRolePermission'
+                type: array
+          description: List of role permissions
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: List channel role permissions
+      tags:
+      - Guild Roles
+  /guild/{guild_id}/channel/{channel_id}/roles/{role_id}:
+    delete:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Channel ID
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Role ID
+        explode: false
+        in: path
+        name: role_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Role or channel not found
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Remove channel role permission
+      tags:
+      - Guild Roles
+    get:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Channel ID
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Role ID
+        explode: false
+        in: path
+        name: role_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/guild.ChannelRolePermission'
+          description: Role permission
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Get channel role permission
+      tags:
+      - Guild Roles
+    patch:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Channel ID
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Role ID
+        explode: false
+        in: path
+        name: role_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.ChannelRolePermissionRequest'
+        description: Permission mask
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Role or channel not found
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Update channel role permission
+      tags:
+      - Guild Roles
+    put:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Channel ID
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Role ID
+        explode: false
+        in: path
+        name: role_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.ChannelRolePermissionRequest'
+        description: Permission mask
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Role or channel not found
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Set channel role permission (create or replace)
+      tags:
+      - Guild Roles
   /guild/{guild_id}/member/{user_id}/roles:
     get:
       parameters:
@@ -988,7 +1322,356 @@ paths:
           description: Something bad happened
       summary: Get member roles
       tags:
-      - Guild
+      - Guild Roles
+  /guild/{guild_id}/member/{user_id}/roles/{role_id}:
+    delete:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: User ID
+        explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Role ID
+        explode: false
+        in: path
+        name: role_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Member not found
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Remove role from member
+      tags:
+      - Guild Roles
+    put:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: User ID
+        explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Role ID
+        explode: false
+        in: path
+        name: role_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Member not found
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Assign role to member
+      tags:
+      - Guild Roles
+  /guild/{guild_id}/roles:
+    get:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Role'
+                type: array
+          description: Roles list
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Get guild roles
+      tags:
+      - Guild Roles
+    post:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.CreateGuildRoleRequest'
+        description: Role data
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Role'
+          description: Role
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Create guild role
+      tags:
+      - Guild Roles
+  /guild/{guild_id}/roles/{role_id}:
+    delete:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Role ID
+        explode: false
+        in: path
+        name: role_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Deleted
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Role not found
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Delete guild role
+      tags:
+      - Guild Roles
+    patch:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Role ID
+        explode: false
+        in: path
+        name: role_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.PatchGuildRoleRequest'
+        description: Role changes
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Role'
+          description: Role
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Role not found
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Update guild role
+      tags:
+      - Guild Roles
   /message/channel/{channel_id}:
     get:
       parameters:
@@ -1777,6 +2460,7 @@ components:
           type: string
     dto.Channel:
       example:
+        private: false
         parent_id: 2230469276416868352
         permissions: 0
         guild_id: 2230469276416868352
@@ -1813,6 +2497,11 @@ components:
           description: Channel position
           example: 4
           type: integer
+        private:
+          default: false
+          description: Whether the channel is private. Private channels can only be
+            seen by users with roles assigned to this channel.
+          type: boolean
         topic:
           description: Channel topic.
           example: Just a channel topic
@@ -2058,6 +2747,34 @@ components:
           description: New channel position.
           example: 4
           type: integer
+    guild.ChannelRolePermission:
+      example:
+        deny: 0
+        role_id: 2230469276416868352
+        accept: 0
+      properties:
+        accept:
+          description: Allowed permission bits mask
+          example: 0
+          type: integer
+        deny:
+          description: Denied permission bits mask
+          example: 0
+          type: integer
+        role_id:
+          description: Role ID
+          example: 2230469276416868352
+          type: integer
+    guild.ChannelRolePermissionRequest:
+      properties:
+        accept:
+          description: Allowed permission bits mask
+          example: 0
+          type: integer
+        deny:
+          description: Denied permission bits mask
+          example: 0
+          type: integer
     guild.CreateGuildChannelCategoryRequest:
       properties:
         name:
@@ -2117,6 +2834,20 @@ components:
           default: false
           description: Whether the guild is public
           type: boolean
+    guild.CreateGuildRoleRequest:
+      properties:
+        color:
+          description: RGB int value
+          example: 16777215
+          type: integer
+        name:
+          description: Role name
+          example: New Role
+          type: string
+        permissions:
+          default: 0
+          description: Permissions bitset
+          type: integer
     guild.CreateInviteRequest:
       properties:
         expires_in_sec:
@@ -2153,6 +2884,19 @@ components:
           description: Channel topic.
           example: Just a channel topic
           type: string
+    guild.PatchGuildRoleRequest:
+      properties:
+        color:
+          description: RGB int value
+          example: 16711680
+          type: integer
+        name:
+          description: Role name
+          example: Moderators
+          type: string
+        permissions:
+          description: Permissions bitset
+          type: integer
     guild.UpdateGuildRequest:
       properties:
         icon_id:

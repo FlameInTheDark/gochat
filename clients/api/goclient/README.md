@@ -94,7 +94,6 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdChannelOrderPatch**](docs/GuildAPI.md#guildguildidchannelorderpatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 *GuildAPI* | [**GuildGuildIdChannelPost**](docs/GuildAPI.md#guildguildidchannelpost) | **Post** /guild/{guild_id}/channel | Create guild channel
 *GuildAPI* | [**GuildGuildIdGet**](docs/GuildAPI.md#guildguildidget) | **Get** /guild/{guild_id} | Get guild
-*GuildAPI* | [**GuildGuildIdMemberUserIdRolesGet**](docs/GuildAPI.md#guildguildidmemberuseridrolesget) | **Get** /guild/{guild_id}/member/{user_id}/roles | Get member roles
 *GuildAPI* | [**GuildGuildIdPatch**](docs/GuildAPI.md#guildguildidpatch) | **Patch** /guild/{guild_id} | Update guild
 *GuildAPI* | [**GuildPost**](docs/GuildAPI.md#guildpost) | **Post** /guild | Create guild
 *GuildInvitesAPI* | [**GuildInvitesAcceptInviteCodePost**](docs/GuildInvitesAPI.md#guildinvitesacceptinvitecodepost) | **Post** /guild/invites/accept/{invite_code} | Accept invite and join guild
@@ -102,6 +101,18 @@ Class | Method | HTTP request | Description
 *GuildInvitesAPI* | [**GuildInvitesGuildIdInviteIdDelete**](docs/GuildInvitesAPI.md#guildinvitesguildidinviteiddelete) | **Delete** /guild/invites/{guild_id}/{invite_id} | Delete an invite by id
 *GuildInvitesAPI* | [**GuildInvitesGuildIdPost**](docs/GuildInvitesAPI.md#guildinvitesguildidpost) | **Post** /guild/invites/{guild_id} | Create a new invite
 *GuildInvitesAPI* | [**GuildInvitesReceiveInviteCodeGet**](docs/GuildInvitesAPI.md#guildinvitesreceiveinvitecodeget) | **Get** /guild/invites/receive/{invite_code} | Get invite info by code
+*GuildRolesAPI* | [**GuildGuildIdChannelChannelIdRolesGet**](docs/GuildRolesAPI.md#guildguildidchannelchannelidrolesget) | **Get** /guild/{guild_id}/channel/{channel_id}/roles | List channel role permissions
+*GuildRolesAPI* | [**GuildGuildIdChannelChannelIdRolesRoleIdDelete**](docs/GuildRolesAPI.md#guildguildidchannelchannelidrolesroleiddelete) | **Delete** /guild/{guild_id}/channel/{channel_id}/roles/{role_id} | Remove channel role permission
+*GuildRolesAPI* | [**GuildGuildIdChannelChannelIdRolesRoleIdGet**](docs/GuildRolesAPI.md#guildguildidchannelchannelidrolesroleidget) | **Get** /guild/{guild_id}/channel/{channel_id}/roles/{role_id} | Get channel role permission
+*GuildRolesAPI* | [**GuildGuildIdChannelChannelIdRolesRoleIdPatch**](docs/GuildRolesAPI.md#guildguildidchannelchannelidrolesroleidpatch) | **Patch** /guild/{guild_id}/channel/{channel_id}/roles/{role_id} | Update channel role permission
+*GuildRolesAPI* | [**GuildGuildIdChannelChannelIdRolesRoleIdPut**](docs/GuildRolesAPI.md#guildguildidchannelchannelidrolesroleidput) | **Put** /guild/{guild_id}/channel/{channel_id}/roles/{role_id} | Set channel role permission (create or replace)
+*GuildRolesAPI* | [**GuildGuildIdMemberUserIdRolesGet**](docs/GuildRolesAPI.md#guildguildidmemberuseridrolesget) | **Get** /guild/{guild_id}/member/{user_id}/roles | Get member roles
+*GuildRolesAPI* | [**GuildGuildIdMemberUserIdRolesRoleIdDelete**](docs/GuildRolesAPI.md#guildguildidmemberuseridrolesroleiddelete) | **Delete** /guild/{guild_id}/member/{user_id}/roles/{role_id} | Remove role from member
+*GuildRolesAPI* | [**GuildGuildIdMemberUserIdRolesRoleIdPut**](docs/GuildRolesAPI.md#guildguildidmemberuseridrolesroleidput) | **Put** /guild/{guild_id}/member/{user_id}/roles/{role_id} | Assign role to member
+*GuildRolesAPI* | [**GuildGuildIdRolesGet**](docs/GuildRolesAPI.md#guildguildidrolesget) | **Get** /guild/{guild_id}/roles | Get guild roles
+*GuildRolesAPI* | [**GuildGuildIdRolesPost**](docs/GuildRolesAPI.md#guildguildidrolespost) | **Post** /guild/{guild_id}/roles | Create guild role
+*GuildRolesAPI* | [**GuildGuildIdRolesRoleIdDelete**](docs/GuildRolesAPI.md#guildguildidrolesroleiddelete) | **Delete** /guild/{guild_id}/roles/{role_id} | Delete guild role
+*GuildRolesAPI* | [**GuildGuildIdRolesRoleIdPatch**](docs/GuildRolesAPI.md#guildguildidrolesroleidpatch) | **Patch** /guild/{guild_id}/roles/{role_id} | Update guild role
 *MessageAPI* | [**MessageChannelChannelIdAttachmentPost**](docs/MessageAPI.md#messagechannelchannelidattachmentpost) | **Post** /message/channel/{channel_id}/attachment | Create attachment
 *MessageAPI* | [**MessageChannelChannelIdGet**](docs/MessageAPI.md#messagechannelchannelidget) | **Get** /message/channel/{channel_id} | Get messages
 *MessageAPI* | [**MessageChannelChannelIdMessageIdDelete**](docs/MessageAPI.md#messagechannelchannelidmessageiddelete) | **Delete** /message/channel/{channel_id}/{message_id} | Delete message
@@ -138,12 +149,16 @@ Class | Method | HTTP request | Description
  - [DtoRole](docs/DtoRole.md)
  - [DtoUser](docs/DtoUser.md)
  - [GuildChannelOrder](docs/GuildChannelOrder.md)
+ - [GuildChannelRolePermission](docs/GuildChannelRolePermission.md)
+ - [GuildChannelRolePermissionRequest](docs/GuildChannelRolePermissionRequest.md)
  - [GuildCreateGuildChannelCategoryRequest](docs/GuildCreateGuildChannelCategoryRequest.md)
  - [GuildCreateGuildChannelRequest](docs/GuildCreateGuildChannelRequest.md)
  - [GuildCreateGuildRequest](docs/GuildCreateGuildRequest.md)
+ - [GuildCreateGuildRoleRequest](docs/GuildCreateGuildRoleRequest.md)
  - [GuildCreateInviteRequest](docs/GuildCreateInviteRequest.md)
  - [GuildPatchGuildChannelOrderRequest](docs/GuildPatchGuildChannelOrderRequest.md)
  - [GuildPatchGuildChannelRequest](docs/GuildPatchGuildChannelRequest.md)
+ - [GuildPatchGuildRoleRequest](docs/GuildPatchGuildRoleRequest.md)
  - [GuildUpdateGuildRequest](docs/GuildUpdateGuildRequest.md)
  - [MessageSendMessageRequest](docs/MessageSendMessageRequest.md)
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)

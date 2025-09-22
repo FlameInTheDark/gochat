@@ -1,6 +1,9 @@
 package permissions
 
 func CheckPermissions(perm int64, permissions ...RolePermission) bool {
+	if perm&int64(PermAdministrator) != 0 {
+		return true
+	}
 	for _, p := range permissions {
 		if perm&int64(p) == 0 {
 			return false
@@ -60,4 +63,17 @@ func AddRoles(perm int64, add ...int64) int64 {
 
 func HasOverlap(first, second int64) bool {
 	return (first & second) != 0
+}
+
+func SanitizeChannelOverrides(perm int64) int64 {
+	return RemovePermissions(
+		perm,
+		PermAdministrator,
+		PermServerViewAuditLog,
+		PermMembershipBanMembers,
+		PermMembershipChangeNickname,
+		PermMembershipKickMembers,
+		PermMembershipBanMembers,
+		PermMembershipTimeoutMembers,
+	)
 }

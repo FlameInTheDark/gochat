@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
+	"github.com/FlameInTheDark/gochat/internal/cache"
 )
 
 type VKStorage struct {
-	vk *vkc.Cache
+	vk cache.Cache
 }
 
-func NewVKStorage(c *vkc.Cache) *VKStorage {
+func NewVKStorage(c cache.Cache) *VKStorage {
 	return &VKStorage{vk: c}
 }
 

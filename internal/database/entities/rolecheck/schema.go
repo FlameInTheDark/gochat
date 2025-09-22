@@ -161,9 +161,6 @@ func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int
 // GuildPerm checks if a user has the specified permissions for a guild
 // Returns guild, permission status, and error
 func (e *Entity) GuildPerm(ctx context.Context, guildID, userID int64, perm ...permissions.RolePermission) (*model.Guild, bool, error) {
-	// Administrator permission is always checked
-	perm = append(perm, permissions.PermAdministrator)
-
 	// Get guild information
 	guild, err := e.g.GetGuildById(ctx, guildID)
 	if err != nil {
@@ -199,6 +196,5 @@ func (e *Entity) GuildPerm(ctx context.Context, guildID, userID int64, perm ...p
 	if permissions.CheckPermissions(permAll, perm...) {
 		return &guild, true, nil
 	}
-
 	return nil, false, nil
 }

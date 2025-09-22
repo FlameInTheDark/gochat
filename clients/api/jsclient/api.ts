@@ -291,6 +291,12 @@ export interface DtoChannel {
      */
     'position'?: number;
     /**
+     * Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
+     * @type {boolean}
+     * @memberof DtoChannel
+     */
+    'private'?: boolean;
+    /**
      * Channel topic.
      * @type {string}
      * @memberof DtoChannel
@@ -608,6 +614,50 @@ export interface GuildChannelOrder {
 /**
  * 
  * @export
+ * @interface GuildChannelRolePermission
+ */
+export interface GuildChannelRolePermission {
+    /**
+     * Allowed permission bits mask
+     * @type {number}
+     * @memberof GuildChannelRolePermission
+     */
+    'accept'?: number;
+    /**
+     * Denied permission bits mask
+     * @type {number}
+     * @memberof GuildChannelRolePermission
+     */
+    'deny'?: number;
+    /**
+     * Role ID
+     * @type {number}
+     * @memberof GuildChannelRolePermission
+     */
+    'role_id'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface GuildChannelRolePermissionRequest
+ */
+export interface GuildChannelRolePermissionRequest {
+    /**
+     * Allowed permission bits mask
+     * @type {number}
+     * @memberof GuildChannelRolePermissionRequest
+     */
+    'accept'?: number;
+    /**
+     * Denied permission bits mask
+     * @type {number}
+     * @memberof GuildChannelRolePermissionRequest
+     */
+    'deny'?: number;
+}
+/**
+ * 
+ * @export
  * @interface GuildCreateGuildChannelCategoryRequest
  */
 export interface GuildCreateGuildChannelCategoryRequest {
@@ -683,6 +733,31 @@ export interface GuildCreateGuildRequest {
 /**
  * 
  * @export
+ * @interface GuildCreateGuildRoleRequest
+ */
+export interface GuildCreateGuildRoleRequest {
+    /**
+     * RGB int value
+     * @type {number}
+     * @memberof GuildCreateGuildRoleRequest
+     */
+    'color'?: number;
+    /**
+     * Role name
+     * @type {string}
+     * @memberof GuildCreateGuildRoleRequest
+     */
+    'name'?: string;
+    /**
+     * Permissions bitset
+     * @type {number}
+     * @memberof GuildCreateGuildRoleRequest
+     */
+    'permissions'?: number;
+}
+/**
+ * 
+ * @export
  * @interface GuildCreateInviteRequest
  */
 export interface GuildCreateInviteRequest {
@@ -736,6 +811,31 @@ export interface GuildPatchGuildChannelRequest {
      * @memberof GuildPatchGuildChannelRequest
      */
     'topic'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface GuildPatchGuildRoleRequest
+ */
+export interface GuildPatchGuildRoleRequest {
+    /**
+     * RGB int value
+     * @type {number}
+     * @memberof GuildPatchGuildRoleRequest
+     */
+    'color'?: number;
+    /**
+     * Role name
+     * @type {string}
+     * @memberof GuildPatchGuildRoleRequest
+     */
+    'name'?: string;
+    /**
+     * Permissions bitset
+     * @type {number}
+     * @memberof GuildPatchGuildRoleRequest
+     */
+    'permissions'?: number;
 }
 /**
  * 
@@ -2162,44 +2262,6 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Get member roles
-         * @param {number} guildId Guild ID
-         * @param {number} userId User ID
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        guildGuildIdMemberUserIdRolesGet: async (guildId: number, userId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'guildId' is not null or undefined
-            assertParamExists('guildGuildIdMemberUserIdRolesGet', 'guildId', guildId)
-            // verify required parameter 'userId' is not null or undefined
-            assertParamExists('guildGuildIdMemberUserIdRolesGet', 'userId', userId)
-            const localVarPath = `/guild/{guild_id}/member/{user_id}/roles`
-                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
-                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Update guild
          * @param {number} guildId Guild ID
          * @param {GuildUpdateGuildRequest} guildUpdateGuildRequest Update guild data
@@ -2411,20 +2473,6 @@ export const GuildApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get member roles
-         * @param {number} guildId Guild ID
-         * @param {number} userId User ID
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async guildGuildIdMemberUserIdRolesGet(guildId: number, userId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoRole>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdRolesGet(guildId, userId, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdMemberUserIdRolesGet']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
          * @summary Update guild
          * @param {number} guildId Guild ID
          * @param {GuildUpdateGuildRequest} guildUpdateGuildRequest Update guild data
@@ -2552,16 +2600,6 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
         },
         /**
          * 
-         * @summary Get member roles
-         * @param {GuildApiGuildGuildIdMemberUserIdRolesGetRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        guildGuildIdMemberUserIdRolesGet(requestParameters: GuildApiGuildGuildIdMemberUserIdRolesGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoRole>> {
-            return localVarFp.guildGuildIdMemberUserIdRolesGet(requestParameters.guildId, requestParameters.userId, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
          * @summary Update guild
          * @param {GuildApiGuildGuildIdPatchRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -2678,16 +2716,6 @@ export interface GuildApiInterface {
      * @memberof GuildApiInterface
      */
     guildGuildIdGet(requestParameters: GuildApiGuildGuildIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild>;
-
-    /**
-     * 
-     * @summary Get member roles
-     * @param {GuildApiGuildGuildIdMemberUserIdRolesGetRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof GuildApiInterface
-     */
-    guildGuildIdMemberUserIdRolesGet(requestParameters: GuildApiGuildGuildIdMemberUserIdRolesGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoRole>>;
 
     /**
      * 
@@ -2894,27 +2922,6 @@ export interface GuildApiGuildGuildIdGetRequest {
 }
 
 /**
- * Request parameters for guildGuildIdMemberUserIdRolesGet operation in GuildApi.
- * @export
- * @interface GuildApiGuildGuildIdMemberUserIdRolesGetRequest
- */
-export interface GuildApiGuildGuildIdMemberUserIdRolesGetRequest {
-    /**
-     * Guild ID
-     * @type {number}
-     * @memberof GuildApiGuildGuildIdMemberUserIdRolesGet
-     */
-    readonly guildId: number
-
-    /**
-     * User ID
-     * @type {number}
-     * @memberof GuildApiGuildGuildIdMemberUserIdRolesGet
-     */
-    readonly userId: number
-}
-
-/**
  * Request parameters for guildGuildIdPatch operation in GuildApi.
  * @export
  * @interface GuildApiGuildGuildIdPatchRequest
@@ -3062,18 +3069,6 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      */
     public guildGuildIdGet(requestParameters: GuildApiGuildGuildIdGetRequest, options?: RawAxiosRequestConfig) {
         return GuildApiFp(this.configuration).guildGuildIdGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @summary Get member roles
-     * @param {GuildApiGuildGuildIdMemberUserIdRolesGetRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof GuildApi
-     */
-    public guildGuildIdMemberUserIdRolesGet(requestParameters: GuildApiGuildGuildIdMemberUserIdRolesGetRequest, options?: RawAxiosRequestConfig) {
-        return GuildApiFp(this.configuration).guildGuildIdMemberUserIdRolesGet(requestParameters.guildId, requestParameters.userId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -3636,6 +3631,1417 @@ export class GuildInvitesApi extends BaseAPI implements GuildInvitesApiInterface
      */
     public guildInvitesReceiveInviteCodeGet(requestParameters: GuildInvitesApiGuildInvitesReceiveInviteCodeGetRequest, options?: RawAxiosRequestConfig) {
         return GuildInvitesApiFp(this.configuration).guildInvitesReceiveInviteCodeGet(requestParameters.inviteCode, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * GuildRolesApi - axios parameter creator
+ * @export
+ */
+export const GuildRolesApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary List channel role permissions
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdRolesGet: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesGet', 'guildId', guildId)
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesGet', 'channelId', channelId)
+            const localVarPath = `/guild/{guild_id}/channel/{channel_id}/roles`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Remove channel role permission
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdRolesRoleIdDelete: async (guildId: number, channelId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdDelete', 'guildId', guildId)
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdDelete', 'channelId', channelId)
+            // verify required parameter 'roleId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdDelete', 'roleId', roleId)
+            const localVarPath = `/guild/{guild_id}/channel/{channel_id}/roles/{role_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"role_id"}}`, encodeURIComponent(String(roleId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get channel role permission
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdRolesRoleIdGet: async (guildId: number, channelId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdGet', 'guildId', guildId)
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdGet', 'channelId', channelId)
+            // verify required parameter 'roleId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdGet', 'roleId', roleId)
+            const localVarPath = `/guild/{guild_id}/channel/{channel_id}/roles/{role_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"role_id"}}`, encodeURIComponent(String(roleId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Update channel role permission
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
+         * @param {GuildChannelRolePermissionRequest} guildChannelRolePermissionRequest Permission mask
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdRolesRoleIdPatch: async (guildId: number, channelId: number, roleId: number, guildChannelRolePermissionRequest: GuildChannelRolePermissionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPatch', 'guildId', guildId)
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPatch', 'channelId', channelId)
+            // verify required parameter 'roleId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPatch', 'roleId', roleId)
+            // verify required parameter 'guildChannelRolePermissionRequest' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPatch', 'guildChannelRolePermissionRequest', guildChannelRolePermissionRequest)
+            const localVarPath = `/guild/{guild_id}/channel/{channel_id}/roles/{role_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"role_id"}}`, encodeURIComponent(String(roleId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(guildChannelRolePermissionRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Set channel role permission (create or replace)
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
+         * @param {GuildChannelRolePermissionRequest} guildChannelRolePermissionRequest Permission mask
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdRolesRoleIdPut: async (guildId: number, channelId: number, roleId: number, guildChannelRolePermissionRequest: GuildChannelRolePermissionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPut', 'guildId', guildId)
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPut', 'channelId', channelId)
+            // verify required parameter 'roleId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPut', 'roleId', roleId)
+            // verify required parameter 'guildChannelRolePermissionRequest' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPut', 'guildChannelRolePermissionRequest', guildChannelRolePermissionRequest)
+            const localVarPath = `/guild/{guild_id}/channel/{channel_id}/roles/{role_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"role_id"}}`, encodeURIComponent(String(roleId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(guildChannelRolePermissionRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get member roles
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdRolesGet: async (guildId: number, userId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdRolesGet', 'guildId', guildId)
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdRolesGet', 'userId', userId)
+            const localVarPath = `/guild/{guild_id}/member/{user_id}/roles`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Remove role from member
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {number} roleId Role ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdRolesRoleIdDelete: async (guildId: number, userId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdRolesRoleIdDelete', 'guildId', guildId)
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdRolesRoleIdDelete', 'userId', userId)
+            // verify required parameter 'roleId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdRolesRoleIdDelete', 'roleId', roleId)
+            const localVarPath = `/guild/{guild_id}/member/{user_id}/roles/{role_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+                .replace(`{${"role_id"}}`, encodeURIComponent(String(roleId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Assign role to member
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {number} roleId Role ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdRolesRoleIdPut: async (guildId: number, userId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdRolesRoleIdPut', 'guildId', guildId)
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdRolesRoleIdPut', 'userId', userId)
+            // verify required parameter 'roleId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdRolesRoleIdPut', 'roleId', roleId)
+            const localVarPath = `/guild/{guild_id}/member/{user_id}/roles/{role_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+                .replace(`{${"role_id"}}`, encodeURIComponent(String(roleId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get guild roles
+         * @param {number} guildId Guild ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdRolesGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdRolesGet', 'guildId', guildId)
+            const localVarPath = `/guild/{guild_id}/roles`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create guild role
+         * @param {number} guildId Guild ID
+         * @param {GuildCreateGuildRoleRequest} guildCreateGuildRoleRequest Role data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdRolesPost: async (guildId: number, guildCreateGuildRoleRequest: GuildCreateGuildRoleRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdRolesPost', 'guildId', guildId)
+            // verify required parameter 'guildCreateGuildRoleRequest' is not null or undefined
+            assertParamExists('guildGuildIdRolesPost', 'guildCreateGuildRoleRequest', guildCreateGuildRoleRequest)
+            const localVarPath = `/guild/{guild_id}/roles`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(guildCreateGuildRoleRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete guild role
+         * @param {number} guildId Guild ID
+         * @param {number} roleId Role ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdRolesRoleIdDelete: async (guildId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdRolesRoleIdDelete', 'guildId', guildId)
+            // verify required parameter 'roleId' is not null or undefined
+            assertParamExists('guildGuildIdRolesRoleIdDelete', 'roleId', roleId)
+            const localVarPath = `/guild/{guild_id}/roles/{role_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"role_id"}}`, encodeURIComponent(String(roleId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Update guild role
+         * @param {number} guildId Guild ID
+         * @param {number} roleId Role ID
+         * @param {GuildPatchGuildRoleRequest} guildPatchGuildRoleRequest Role changes
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdRolesRoleIdPatch: async (guildId: number, roleId: number, guildPatchGuildRoleRequest: GuildPatchGuildRoleRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdRolesRoleIdPatch', 'guildId', guildId)
+            // verify required parameter 'roleId' is not null or undefined
+            assertParamExists('guildGuildIdRolesRoleIdPatch', 'roleId', roleId)
+            // verify required parameter 'guildPatchGuildRoleRequest' is not null or undefined
+            assertParamExists('guildGuildIdRolesRoleIdPatch', 'guildPatchGuildRoleRequest', guildPatchGuildRoleRequest)
+            const localVarPath = `/guild/{guild_id}/roles/{role_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"role_id"}}`, encodeURIComponent(String(roleId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(guildPatchGuildRoleRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * GuildRolesApi - functional programming interface
+ * @export
+ */
+export const GuildRolesApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = GuildRolesApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary List channel role permissions
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdChannelChannelIdRolesGet(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<GuildChannelRolePermission>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesGet(guildId, channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Remove channel role permission
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdChannelChannelIdRolesRoleIdDelete(guildId: number, channelId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdDelete(guildId, channelId, roleId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesRoleIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get channel role permission
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdChannelChannelIdRolesRoleIdGet(guildId: number, channelId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildChannelRolePermission>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdGet(guildId, channelId, roleId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesRoleIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Update channel role permission
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
+         * @param {GuildChannelRolePermissionRequest} guildChannelRolePermissionRequest Permission mask
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdChannelChannelIdRolesRoleIdPatch(guildId: number, channelId: number, roleId: number, guildChannelRolePermissionRequest: GuildChannelRolePermissionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdPatch(guildId, channelId, roleId, guildChannelRolePermissionRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesRoleIdPatch']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Set channel role permission (create or replace)
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
+         * @param {GuildChannelRolePermissionRequest} guildChannelRolePermissionRequest Permission mask
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdChannelChannelIdRolesRoleIdPut(guildId: number, channelId: number, roleId: number, guildChannelRolePermissionRequest: GuildChannelRolePermissionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdPut(guildId, channelId, roleId, guildChannelRolePermissionRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesRoleIdPut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get member roles
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdMemberUserIdRolesGet(guildId: number, userId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoRole>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdRolesGet(guildId, userId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdMemberUserIdRolesGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Remove role from member
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {number} roleId Role ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdMemberUserIdRolesRoleIdDelete(guildId: number, userId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdRolesRoleIdDelete(guildId, userId, roleId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdMemberUserIdRolesRoleIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Assign role to member
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {number} roleId Role ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdMemberUserIdRolesRoleIdPut(guildId: number, userId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdRolesRoleIdPut(guildId, userId, roleId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdMemberUserIdRolesRoleIdPut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get guild roles
+         * @param {number} guildId Guild ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdRolesGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoRole>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesGet(guildId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Create guild role
+         * @param {number} guildId Guild ID
+         * @param {GuildCreateGuildRoleRequest} guildCreateGuildRoleRequest Role data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdRolesPost(guildId: number, guildCreateGuildRoleRequest: GuildCreateGuildRoleRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoRole>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesPost(guildId, guildCreateGuildRoleRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Delete guild role
+         * @param {number} guildId Guild ID
+         * @param {number} roleId Role ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdRolesRoleIdDelete(guildId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesRoleIdDelete(guildId, roleId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesRoleIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Update guild role
+         * @param {number} guildId Guild ID
+         * @param {number} roleId Role ID
+         * @param {GuildPatchGuildRoleRequest} guildPatchGuildRoleRequest Role changes
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdRolesRoleIdPatch(guildId: number, roleId: number, guildPatchGuildRoleRequest: GuildPatchGuildRoleRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoRole>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesRoleIdPatch(guildId, roleId, guildPatchGuildRoleRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesRoleIdPatch']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * GuildRolesApi - factory interface
+ * @export
+ */
+export const GuildRolesApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = GuildRolesApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary List channel role permissions
+         * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdRolesGet(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<GuildChannelRolePermission>> {
+            return localVarFp.guildGuildIdChannelChannelIdRolesGet(requestParameters.guildId, requestParameters.channelId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Remove channel role permission
+         * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdRolesRoleIdDelete(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdChannelChannelIdRolesRoleIdDelete(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get channel role permission
+         * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdRolesRoleIdGet(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<GuildChannelRolePermission> {
+            return localVarFp.guildGuildIdChannelChannelIdRolesRoleIdGet(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Update channel role permission
+         * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdRolesRoleIdPatch(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdChannelChannelIdRolesRoleIdPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, requestParameters.guildChannelRolePermissionRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Set channel role permission (create or replace)
+         * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdRolesRoleIdPut(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdChannelChannelIdRolesRoleIdPut(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, requestParameters.guildChannelRolePermissionRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get member roles
+         * @param {GuildRolesApiGuildGuildIdMemberUserIdRolesGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdRolesGet(requestParameters: GuildRolesApiGuildGuildIdMemberUserIdRolesGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoRole>> {
+            return localVarFp.guildGuildIdMemberUserIdRolesGet(requestParameters.guildId, requestParameters.userId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Remove role from member
+         * @param {GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdRolesRoleIdDelete(requestParameters: GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdMemberUserIdRolesRoleIdDelete(requestParameters.guildId, requestParameters.userId, requestParameters.roleId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Assign role to member
+         * @param {GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdRolesRoleIdPut(requestParameters: GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdMemberUserIdRolesRoleIdPut(requestParameters.guildId, requestParameters.userId, requestParameters.roleId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get guild roles
+         * @param {GuildRolesApiGuildGuildIdRolesGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdRolesGet(requestParameters: GuildRolesApiGuildGuildIdRolesGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoRole>> {
+            return localVarFp.guildGuildIdRolesGet(requestParameters.guildId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Create guild role
+         * @param {GuildRolesApiGuildGuildIdRolesPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdRolesPost(requestParameters: GuildRolesApiGuildGuildIdRolesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoRole> {
+            return localVarFp.guildGuildIdRolesPost(requestParameters.guildId, requestParameters.guildCreateGuildRoleRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Delete guild role
+         * @param {GuildRolesApiGuildGuildIdRolesRoleIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdRolesRoleIdDelete(requestParameters: GuildRolesApiGuildGuildIdRolesRoleIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdRolesRoleIdDelete(requestParameters.guildId, requestParameters.roleId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Update guild role
+         * @param {GuildRolesApiGuildGuildIdRolesRoleIdPatchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdRolesRoleIdPatch(requestParameters: GuildRolesApiGuildGuildIdRolesRoleIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoRole> {
+            return localVarFp.guildGuildIdRolesRoleIdPatch(requestParameters.guildId, requestParameters.roleId, requestParameters.guildPatchGuildRoleRequest, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * GuildRolesApi - interface
+ * @export
+ * @interface GuildRolesApi
+ */
+export interface GuildRolesApiInterface {
+    /**
+     * 
+     * @summary List channel role permissions
+     * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdChannelChannelIdRolesGet(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<GuildChannelRolePermission>>;
+
+    /**
+     * 
+     * @summary Remove channel role permission
+     * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdChannelChannelIdRolesRoleIdDelete(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Get channel role permission
+     * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdChannelChannelIdRolesRoleIdGet(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<GuildChannelRolePermission>;
+
+    /**
+     * 
+     * @summary Update channel role permission
+     * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdChannelChannelIdRolesRoleIdPatch(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Set channel role permission (create or replace)
+     * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdChannelChannelIdRolesRoleIdPut(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Get member roles
+     * @param {GuildRolesApiGuildGuildIdMemberUserIdRolesGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdMemberUserIdRolesGet(requestParameters: GuildRolesApiGuildGuildIdMemberUserIdRolesGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoRole>>;
+
+    /**
+     * 
+     * @summary Remove role from member
+     * @param {GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdMemberUserIdRolesRoleIdDelete(requestParameters: GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Assign role to member
+     * @param {GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdMemberUserIdRolesRoleIdPut(requestParameters: GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Get guild roles
+     * @param {GuildRolesApiGuildGuildIdRolesGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdRolesGet(requestParameters: GuildRolesApiGuildGuildIdRolesGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoRole>>;
+
+    /**
+     * 
+     * @summary Create guild role
+     * @param {GuildRolesApiGuildGuildIdRolesPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdRolesPost(requestParameters: GuildRolesApiGuildGuildIdRolesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoRole>;
+
+    /**
+     * 
+     * @summary Delete guild role
+     * @param {GuildRolesApiGuildGuildIdRolesRoleIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdRolesRoleIdDelete(requestParameters: GuildRolesApiGuildGuildIdRolesRoleIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Update guild role
+     * @param {GuildRolesApiGuildGuildIdRolesRoleIdPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdRolesRoleIdPatch(requestParameters: GuildRolesApiGuildGuildIdRolesRoleIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoRole>;
+
+}
+
+/**
+ * Request parameters for guildGuildIdChannelChannelIdRolesGet operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdChannelChannelIdRolesGetRequest
+ */
+export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesGetRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesGet
+     */
+    readonly guildId: number
+
+    /**
+     * Channel ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesGet
+     */
+    readonly channelId: number
+}
+
+/**
+ * Request parameters for guildGuildIdChannelChannelIdRolesRoleIdDelete operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest
+ */
+export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDelete
+     */
+    readonly guildId: number
+
+    /**
+     * Channel ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDelete
+     */
+    readonly channelId: number
+
+    /**
+     * Role ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDelete
+     */
+    readonly roleId: number
+}
+
+/**
+ * Request parameters for guildGuildIdChannelChannelIdRolesRoleIdGet operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest
+ */
+export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGet
+     */
+    readonly guildId: number
+
+    /**
+     * Channel ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGet
+     */
+    readonly channelId: number
+
+    /**
+     * Role ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGet
+     */
+    readonly roleId: number
+}
+
+/**
+ * Request parameters for guildGuildIdChannelChannelIdRolesRoleIdPatch operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest
+ */
+export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatch
+     */
+    readonly guildId: number
+
+    /**
+     * Channel ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatch
+     */
+    readonly channelId: number
+
+    /**
+     * Role ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatch
+     */
+    readonly roleId: number
+
+    /**
+     * Permission mask
+     * @type {GuildChannelRolePermissionRequest}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatch
+     */
+    readonly guildChannelRolePermissionRequest: GuildChannelRolePermissionRequest
+}
+
+/**
+ * Request parameters for guildGuildIdChannelChannelIdRolesRoleIdPut operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest
+ */
+export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPut
+     */
+    readonly guildId: number
+
+    /**
+     * Channel ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPut
+     */
+    readonly channelId: number
+
+    /**
+     * Role ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPut
+     */
+    readonly roleId: number
+
+    /**
+     * Permission mask
+     * @type {GuildChannelRolePermissionRequest}
+     * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPut
+     */
+    readonly guildChannelRolePermissionRequest: GuildChannelRolePermissionRequest
+}
+
+/**
+ * Request parameters for guildGuildIdMemberUserIdRolesGet operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdMemberUserIdRolesGetRequest
+ */
+export interface GuildRolesApiGuildGuildIdMemberUserIdRolesGetRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesGet
+     */
+    readonly guildId: number
+
+    /**
+     * User ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesGet
+     */
+    readonly userId: number
+}
+
+/**
+ * Request parameters for guildGuildIdMemberUserIdRolesRoleIdDelete operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest
+ */
+export interface GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDelete
+     */
+    readonly guildId: number
+
+    /**
+     * User ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDelete
+     */
+    readonly userId: number
+
+    /**
+     * Role ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDelete
+     */
+    readonly roleId: number
+}
+
+/**
+ * Request parameters for guildGuildIdMemberUserIdRolesRoleIdPut operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest
+ */
+export interface GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPut
+     */
+    readonly guildId: number
+
+    /**
+     * User ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPut
+     */
+    readonly userId: number
+
+    /**
+     * Role ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPut
+     */
+    readonly roleId: number
+}
+
+/**
+ * Request parameters for guildGuildIdRolesGet operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdRolesGetRequest
+ */
+export interface GuildRolesApiGuildGuildIdRolesGetRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdRolesGet
+     */
+    readonly guildId: number
+}
+
+/**
+ * Request parameters for guildGuildIdRolesPost operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdRolesPostRequest
+ */
+export interface GuildRolesApiGuildGuildIdRolesPostRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdRolesPost
+     */
+    readonly guildId: number
+
+    /**
+     * Role data
+     * @type {GuildCreateGuildRoleRequest}
+     * @memberof GuildRolesApiGuildGuildIdRolesPost
+     */
+    readonly guildCreateGuildRoleRequest: GuildCreateGuildRoleRequest
+}
+
+/**
+ * Request parameters for guildGuildIdRolesRoleIdDelete operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdRolesRoleIdDeleteRequest
+ */
+export interface GuildRolesApiGuildGuildIdRolesRoleIdDeleteRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdRolesRoleIdDelete
+     */
+    readonly guildId: number
+
+    /**
+     * Role ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdRolesRoleIdDelete
+     */
+    readonly roleId: number
+}
+
+/**
+ * Request parameters for guildGuildIdRolesRoleIdPatch operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdRolesRoleIdPatchRequest
+ */
+export interface GuildRolesApiGuildGuildIdRolesRoleIdPatchRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdRolesRoleIdPatch
+     */
+    readonly guildId: number
+
+    /**
+     * Role ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdRolesRoleIdPatch
+     */
+    readonly roleId: number
+
+    /**
+     * Role changes
+     * @type {GuildPatchGuildRoleRequest}
+     * @memberof GuildRolesApiGuildGuildIdRolesRoleIdPatch
+     */
+    readonly guildPatchGuildRoleRequest: GuildPatchGuildRoleRequest
+}
+
+/**
+ * GuildRolesApi - object-oriented interface
+ * @export
+ * @class GuildRolesApi
+ * @extends {BaseAPI}
+ */
+export class GuildRolesApi extends BaseAPI implements GuildRolesApiInterface {
+    /**
+     * 
+     * @summary List channel role permissions
+     * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdChannelChannelIdRolesGet(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdChannelChannelIdRolesGet(requestParameters.guildId, requestParameters.channelId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Remove channel role permission
+     * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdChannelChannelIdRolesRoleIdDelete(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdChannelChannelIdRolesRoleIdDelete(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get channel role permission
+     * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdChannelChannelIdRolesRoleIdGet(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdChannelChannelIdRolesRoleIdGet(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Update channel role permission
+     * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdChannelChannelIdRolesRoleIdPatch(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdChannelChannelIdRolesRoleIdPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, requestParameters.guildChannelRolePermissionRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Set channel role permission (create or replace)
+     * @param {GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdChannelChannelIdRolesRoleIdPut(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdChannelChannelIdRolesRoleIdPut(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, requestParameters.guildChannelRolePermissionRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get member roles
+     * @param {GuildRolesApiGuildGuildIdMemberUserIdRolesGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdMemberUserIdRolesGet(requestParameters: GuildRolesApiGuildGuildIdMemberUserIdRolesGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdMemberUserIdRolesGet(requestParameters.guildId, requestParameters.userId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Remove role from member
+     * @param {GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdMemberUserIdRolesRoleIdDelete(requestParameters: GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdMemberUserIdRolesRoleIdDelete(requestParameters.guildId, requestParameters.userId, requestParameters.roleId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Assign role to member
+     * @param {GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdMemberUserIdRolesRoleIdPut(requestParameters: GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdMemberUserIdRolesRoleIdPut(requestParameters.guildId, requestParameters.userId, requestParameters.roleId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get guild roles
+     * @param {GuildRolesApiGuildGuildIdRolesGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdRolesGet(requestParameters: GuildRolesApiGuildGuildIdRolesGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdRolesGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Create guild role
+     * @param {GuildRolesApiGuildGuildIdRolesPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdRolesPost(requestParameters: GuildRolesApiGuildGuildIdRolesPostRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdRolesPost(requestParameters.guildId, requestParameters.guildCreateGuildRoleRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Delete guild role
+     * @param {GuildRolesApiGuildGuildIdRolesRoleIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdRolesRoleIdDelete(requestParameters: GuildRolesApiGuildGuildIdRolesRoleIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdRolesRoleIdDelete(requestParameters.guildId, requestParameters.roleId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Update guild role
+     * @param {GuildRolesApiGuildGuildIdRolesRoleIdPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdRolesRoleIdPatch(requestParameters: GuildRolesApiGuildGuildIdRolesRoleIdPatchRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdRolesRoleIdPatch(requestParameters.guildId, requestParameters.roleId, requestParameters.guildPatchGuildRoleRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

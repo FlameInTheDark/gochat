@@ -32,15 +32,32 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("", e.Create)
 	router.Get("/:guild_id<int>", e.Get)
 	router.Patch("/:guild_id<int>", e.Update)
+
+	// Channels
 	router.Get("/:guild_id<int>/channel/:channel_id<int>", e.GetChannel)
 	router.Get("/:guild_id<int>/channel", e.GetChannels)
 	router.Post("/:guild_id<int>/channel", e.CreateChannel)
 	router.Patch("/:guild_id<int>/channel/order", e.PatchChannelOrder)
-	router.Patch("/:guild_id<int>/channel/:channel_id", e.PatchChannel)
-	router.Get("/:guild_id<int>/member/:user_id<int>/roles", e.GetMemberRoles)
+	router.Patch("/:guild_id<int>/channel/:channel_id<int>", e.PatchChannel)
 	router.Post("/:guild_id<int>/category", e.CreateCategory)
 	router.Delete("/:guild_id<int>/channel/:channel_id<int>", e.DeleteChannel)
 	router.Delete("/:guild_id<int>/category/:category_id<int>", e.DeleteCategory)
+
+	// Roles
+	router.Get("/:guild_id<int>/roles", e.GetGuildRoles)
+	router.Post("/:guild_id<int>/roles", e.CreateGuildRole)
+	router.Patch("/:guild_id<int>/roles/:role_id<int>", e.PatchGuildRole)
+	router.Delete("/:guild_id<int>/roles/:role_id<int>", e.DeleteGuildRole)
+	router.Get("/:guild_id<int>/member/:user_id<int>/roles", e.GetMemberRoles)
+	router.Put("/:guild_id<int>/member/:user_id<int>/roles/:role_id<int>", e.AddMemberRole)
+	router.Delete("/:guild_id<int>/member/:user_id<int>/roles/:role_id<int>", e.RemoveMemberRole)
+	router.Get("/:guild_id<int>/channel/:channel_id<int>/roles", e.GetChannelRolePermissions)
+	router.Get("/:guild_id<int>/channel/:channel_id<int>/roles/:role_id<int>", e.GetChannelRolePermission)
+	router.Put("/:guild_id<int>/channel/:channel_id<int>/roles/:role_id<int>", e.SetChannelRolePermission)
+	router.Patch("/:guild_id<int>/channel/:channel_id<int>/roles/:role_id<int>", e.UpdateChannelRolePermission)
+	router.Delete("/:guild_id<int>/channel/:channel_id<int>/roles/:role_id<int>", e.RemoveChannelRolePermission)
+
+	// Invites
 	router.Get("/invites/receive/:invite_code", e.ReceiveInvite)
 	router.Post("/invites/accept/:invite_code", e.AcceptInvite)
 	router.Get("/invites/:guild_id<int>", e.ListInvites)

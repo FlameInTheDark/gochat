@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/cache/vkcpiped"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
@@ -71,6 +72,60 @@ func (s *Server) RateLimitMiddleware(limit, exp int) {
 		},
 		Expiration: time.Second * time.Duration(exp),
 		Storage:    cs,
+	}))
+}
+
+func (s *Server) RateLimitPipedMiddleware(limit, exp int) {
+	if s.cache == nil {
+		return
+	}
+
+	write := s.cache.Client()
+	read := redis.NewClient(&redis.Options{
+		Addr:     write.Options().Addr,
+		Password: write.Options().Password,
+		DB:       write.Options().DB,
+		PoolSize: 2048,
+	})
+
+	store, err := vkcpiped.NewVKStorage(vkcpiped.VKOptions{
+		WriteClient:        write,
+		ReadClient:         read,
+		PipeSize:           16,
+		FlushInterval:      time.Millisecond,
+		Workers:            256,
+		EnqueueTimeout:     2 * time.Millisecond,
+		WaitAckTimeout:     0,
+		ExecTimeout:        250 * time.Millisecond,
+		DirectWriteTimeout: 50 * time.Millisecond,
+		Prefix:             "",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	s.app.Use(limiter.New(limiter.Config{
+		Max:        limit,
+		Expiration: time.Second * time.Duration(exp),
+		KeyGenerator: func(c *fiber.Ctx) string {
+			if user, err := helper.GetUser(c); err == nil && user != nil {
+				return fmt.Sprintf("user:%d:rateLimit", user.Id)
+			}
+			return fmt.Sprintf("ip:%s:%s:rateLimit", c.IP(), c.Path())
+		},
+		Next: func(c *fiber.Ctx) bool {
+			switch string(c.Request().RequestURI()) {
+			case "/api/v1/webhook/storage/events", "/webhook/storage/events",
+				"/api/v1/auth/login", "/auth/login",
+				"/api/v1/auth/registration", "/auth/registration",
+				"/api/v1/auth/confirmation", "/auth/confirmation",
+				"/api/v1/auth/recovery", "/auth/recovery",
+				"/docs/swagger":
+				return true
+			}
+			return false
+		},
+		Storage: store,
 	}))
 }
 
