@@ -34,6 +34,8 @@ type DtoChannel struct {
 	Permissions *int32 `json:"permissions,omitempty"`
 	// Channel position
 	Position *int32 `json:"position,omitempty"`
+	// Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
+	Private *bool `json:"private,omitempty"`
 	// Channel topic.
 	Topic *string `json:"topic,omitempty"`
 	// Channel type
@@ -46,6 +48,8 @@ type DtoChannel struct {
 // will change when the set of required properties is changed
 func NewDtoChannel() *DtoChannel {
 	this := DtoChannel{}
+	var private bool = false
+	this.Private = &private
 	return &this
 }
 
@@ -54,6 +58,8 @@ func NewDtoChannel() *DtoChannel {
 // but it doesn't guarantee that properties required by API are set
 func NewDtoChannelWithDefaults() *DtoChannel {
 	this := DtoChannel{}
+	var private bool = false
+	this.Private = &private
 	return &this
 }
 
@@ -281,6 +287,38 @@ func (o *DtoChannel) SetPosition(v int32) {
 	o.Position = &v
 }
 
+// GetPrivate returns the Private field value if set, zero value otherwise.
+func (o *DtoChannel) GetPrivate() bool {
+	if o == nil || IsNil(o.Private) {
+		var ret bool
+		return ret
+	}
+	return *o.Private
+}
+
+// GetPrivateOk returns a tuple with the Private field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoChannel) GetPrivateOk() (*bool, bool) {
+	if o == nil || IsNil(o.Private) {
+		return nil, false
+	}
+	return o.Private, true
+}
+
+// HasPrivate returns a boolean if a field has been set.
+func (o *DtoChannel) HasPrivate() bool {
+	if o != nil && !IsNil(o.Private) {
+		return true
+	}
+
+	return false
+}
+
+// SetPrivate gets a reference to the given bool and assigns it to the Private field.
+func (o *DtoChannel) SetPrivate(v bool) {
+	o.Private = &v
+}
+
 // GetTopic returns the Topic field value if set, zero value otherwise.
 func (o *DtoChannel) GetTopic() string {
 	if o == nil || IsNil(o.Topic) {
@@ -375,6 +413,9 @@ func (o DtoChannel) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Position) {
 		toSerialize["position"] = o.Position
+	}
+	if !IsNil(o.Private) {
+		toSerialize["private"] = o.Private
 	}
 	if !IsNil(o.Topic) {
 		toSerialize["topic"] = o.Topic

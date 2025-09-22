@@ -11,6 +11,7 @@ Name | Type | Description | Notes
 **ParentId** | Pointer to **int32** | Parent channel id | [optional] 
 **Permissions** | Pointer to **int32** | Permissions. Check the permissions documentation for more info. | [optional] 
 **Position** | Pointer to **int32** | Channel position | [optional] 
+**Private** | Pointer to **bool** | Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel. | [optional] [default to false]
 **Topic** | Pointer to **string** | Channel topic. | [optional] 
 **Type** | Pointer to **int32** | Channel type | [optional] 
 
@@ -207,6 +208,31 @@ SetPosition sets Position field to given value.
 `func (o *DtoChannel) HasPosition() bool`
 
 HasPosition returns a boolean if a field has been set.
+
+### GetPrivate
+
+`func (o *DtoChannel) GetPrivate() bool`
+
+GetPrivate returns the Private field if non-nil, zero value otherwise.
+
+### GetPrivateOk
+
+`func (o *DtoChannel) GetPrivateOk() (*bool, bool)`
+
+GetPrivateOk returns a tuple with the Private field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPrivate
+
+`func (o *DtoChannel) SetPrivate(v bool)`
+
+SetPrivate sets Private field to given value.
+
+### HasPrivate
+
+`func (o *DtoChannel) HasPrivate() bool`
+
+HasPrivate returns a boolean if a field has been set.
 
 ### GetTopic
 

@@ -20,314 +20,30 @@ import (
 	"strings"
 )
 
-// GuildAPIService GuildAPI service
-type GuildAPIService service
+// GuildRolesAPIService GuildRolesAPI service
+type GuildRolesAPIService service
 
-type ApiGuildGuildIdCategoryCategoryIdDeleteRequest struct {
+type ApiGuildGuildIdChannelChannelIdRolesGetRequest struct {
 	ctx        context.Context
-	ApiService *GuildAPIService
-	guildId    int32
-	categoryId int32
-}
-
-func (r ApiGuildGuildIdCategoryCategoryIdDeleteRequest) Execute() (string, *http.Response, error) {
-	return r.ApiService.GuildGuildIdCategoryCategoryIdDeleteExecute(r)
-}
-
-/*
-GuildGuildIdCategoryCategoryIdDelete Delete channel category
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param guildId Guild ID
-	@param categoryId Category ID (actually a channel with special type)
-	@return ApiGuildGuildIdCategoryCategoryIdDeleteRequest
-*/
-func (a *GuildAPIService) GuildGuildIdCategoryCategoryIdDelete(ctx context.Context, guildId int32, categoryId int32) ApiGuildGuildIdCategoryCategoryIdDeleteRequest {
-	return ApiGuildGuildIdCategoryCategoryIdDeleteRequest{
-		ApiService: a,
-		ctx:        ctx,
-		guildId:    guildId,
-		categoryId: categoryId,
-	}
-}
-
-// Execute executes the request
-//
-//	@return string
-func (a *GuildAPIService) GuildGuildIdCategoryCategoryIdDeleteExecute(r ApiGuildGuildIdCategoryCategoryIdDeleteRequest) (string, *http.Response, error) {
-	var (
-		localVarHTTPMethod  = http.MethodDelete
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue string
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdCategoryCategoryIdDelete")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/guild/{guild_id}/category/{category_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"category_id"+"}", url.PathEscape(parameterValueToString(r.categoryId, "categoryId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiGuildGuildIdCategoryPostRequest struct {
-	ctx                                    context.Context
-	ApiService                             *GuildAPIService
-	guildId                                int32
-	guildCreateGuildChannelCategoryRequest *GuildCreateGuildChannelCategoryRequest
-}
-
-// Create category data
-func (r ApiGuildGuildIdCategoryPostRequest) GuildCreateGuildChannelCategoryRequest(guildCreateGuildChannelCategoryRequest GuildCreateGuildChannelCategoryRequest) ApiGuildGuildIdCategoryPostRequest {
-	r.guildCreateGuildChannelCategoryRequest = &guildCreateGuildChannelCategoryRequest
-	return r
-}
-
-func (r ApiGuildGuildIdCategoryPostRequest) Execute() (string, *http.Response, error) {
-	return r.ApiService.GuildGuildIdCategoryPostExecute(r)
-}
-
-/*
-GuildGuildIdCategoryPost Create guild channel category
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param guildId Guild ID
-	@return ApiGuildGuildIdCategoryPostRequest
-*/
-func (a *GuildAPIService) GuildGuildIdCategoryPost(ctx context.Context, guildId int32) ApiGuildGuildIdCategoryPostRequest {
-	return ApiGuildGuildIdCategoryPostRequest{
-		ApiService: a,
-		ctx:        ctx,
-		guildId:    guildId,
-	}
-}
-
-// Execute executes the request
-//
-//	@return string
-func (a *GuildAPIService) GuildGuildIdCategoryPostExecute(r ApiGuildGuildIdCategoryPostRequest) (string, *http.Response, error) {
-	var (
-		localVarHTTPMethod  = http.MethodPost
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue string
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdCategoryPost")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/guild/{guild_id}/category"
-	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.guildCreateGuildChannelCategoryRequest == nil {
-		return localVarReturnValue, nil, reportError("guildCreateGuildChannelCategoryRequest is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// body params
-	localVarPostBody = r.guildCreateGuildChannelCategoryRequest
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiGuildGuildIdChannelChannelIdDeleteRequest struct {
-	ctx        context.Context
-	ApiService *GuildAPIService
+	ApiService *GuildRolesAPIService
 	guildId    int32
 	channelId  int32
 }
 
-func (r ApiGuildGuildIdChannelChannelIdDeleteRequest) Execute() (string, *http.Response, error) {
-	return r.ApiService.GuildGuildIdChannelChannelIdDeleteExecute(r)
+func (r ApiGuildGuildIdChannelChannelIdRolesGetRequest) Execute() ([]GuildChannelRolePermission, *http.Response, error) {
+	return r.ApiService.GuildGuildIdChannelChannelIdRolesGetExecute(r)
 }
 
 /*
-GuildGuildIdChannelChannelIdDelete Delete channel
+GuildGuildIdChannelChannelIdRolesGet List channel role permissions
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param guildId Guild ID
 	@param channelId Channel ID
-	@return ApiGuildGuildIdChannelChannelIdDeleteRequest
+	@return ApiGuildGuildIdChannelChannelIdRolesGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelChannelIdDelete(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdChannelChannelIdDeleteRequest {
-	return ApiGuildGuildIdChannelChannelIdDeleteRequest{
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesGet(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdChannelChannelIdRolesGetRequest {
+	return ApiGuildGuildIdChannelChannelIdRolesGetRequest{
 		ApiService: a,
 		ctx:        ctx,
 		guildId:    guildId,
@@ -337,159 +53,21 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdDelete(ctx context.Context
 
 // Execute executes the request
 //
-//	@return string
-func (a *GuildAPIService) GuildGuildIdChannelChannelIdDeleteExecute(r ApiGuildGuildIdChannelChannelIdDeleteRequest) (string, *http.Response, error) {
-	var (
-		localVarHTTPMethod  = http.MethodDelete
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue string
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdChannelChannelIdDelete")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/guild/{guild_id}/channel/{channel_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiGuildGuildIdChannelChannelIdGetRequest struct {
-	ctx        context.Context
-	ApiService *GuildAPIService
-	guildId    int32
-	channelId  int32
-}
-
-func (r ApiGuildGuildIdChannelChannelIdGetRequest) Execute() (*DtoChannel, *http.Response, error) {
-	return r.ApiService.GuildGuildIdChannelChannelIdGetExecute(r)
-}
-
-/*
-GuildGuildIdChannelChannelIdGet Get guild channel
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param guildId Guild id
-	@param channelId Channel id
-	@return ApiGuildGuildIdChannelChannelIdGetRequest
-*/
-func (a *GuildAPIService) GuildGuildIdChannelChannelIdGet(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdChannelChannelIdGetRequest {
-	return ApiGuildGuildIdChannelChannelIdGetRequest{
-		ApiService: a,
-		ctx:        ctx,
-		guildId:    guildId,
-		channelId:  channelId,
-	}
-}
-
-// Execute executes the request
-//
-//	@return DtoChannel
-func (a *GuildAPIService) GuildGuildIdChannelChannelIdGetExecute(r ApiGuildGuildIdChannelChannelIdGetRequest) (*DtoChannel, *http.Response, error) {
+//	@return []GuildChannelRolePermission
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesGetExecute(r ApiGuildGuildIdChannelChannelIdRolesGetRequest) ([]GuildChannelRolePermission, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue *DtoChannel
+		localVarReturnValue []GuildChannelRolePermission
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdChannelChannelIdGet")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdChannelChannelIdRolesGet")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/guild/{guild_id}/channel/{channel_id}"
+	localVarPath := localBasePath + "/guild/{guild_id}/channel/{channel_id}/roles"
 	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
 	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
 
@@ -558,6 +136,17 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdGetExecute(r ApiGuildGuild
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
+		if localVarHTTPResponse.StatusCode == 406 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v string
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -583,70 +172,64 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdGetExecute(r ApiGuildGuild
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiGuildGuildIdChannelChannelIdPatchRequest struct {
-	ctx                           context.Context
-	ApiService                    *GuildAPIService
-	guildId                       int32
-	channelId                     int32
-	guildPatchGuildChannelRequest *GuildPatchGuildChannelRequest
+type ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest struct {
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	channelId  int32
+	roleId     int32
 }
 
-// Request body
-func (r ApiGuildGuildIdChannelChannelIdPatchRequest) GuildPatchGuildChannelRequest(guildPatchGuildChannelRequest GuildPatchGuildChannelRequest) ApiGuildGuildIdChannelChannelIdPatchRequest {
-	r.guildPatchGuildChannelRequest = &guildPatchGuildChannelRequest
-	return r
-}
-
-func (r ApiGuildGuildIdChannelChannelIdPatchRequest) Execute() (*DtoChannel, *http.Response, error) {
-	return r.ApiService.GuildGuildIdChannelChannelIdPatchExecute(r)
+func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest) Execute() (string, *http.Response, error) {
+	return r.ApiService.GuildGuildIdChannelChannelIdRolesRoleIdDeleteExecute(r)
 }
 
 /*
-GuildGuildIdChannelChannelIdPatch Change channels data
+GuildGuildIdChannelChannelIdRolesRoleIdDelete Remove channel role permission
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param guildId Guild ID
 	@param channelId Channel ID
-	@return ApiGuildGuildIdChannelChannelIdPatchRequest
+	@param roleId Role ID
+	@return ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatch(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdChannelChannelIdPatchRequest {
-	return ApiGuildGuildIdChannelChannelIdPatchRequest{
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdDelete(ctx context.Context, guildId int32, channelId int32, roleId int32) ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest {
+	return ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
 		guildId:    guildId,
 		channelId:  channelId,
+		roleId:     roleId,
 	}
 }
 
 // Execute executes the request
 //
-//	@return DtoChannel
-func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatchExecute(r ApiGuildGuildIdChannelChannelIdPatchRequest) (*DtoChannel, *http.Response, error) {
+//	@return string
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdDeleteExecute(r ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest) (string, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPatch
+		localVarHTTPMethod  = http.MethodDelete
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue *DtoChannel
+		localVarReturnValue string
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdChannelChannelIdPatch")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdChannelChannelIdRolesRoleIdDelete")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/guild/{guild_id}/channel/{channel_id}"
+	localVarPath := localBasePath + "/guild/{guild_id}/channel/{channel_id}/roles/{role_id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
 	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"role_id"+"}", url.PathEscape(parameterValueToString(r.roleId, "roleId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildPatchGuildChannelRequest == nil {
-		return localVarReturnValue, nil, reportError("guildPatchGuildChannelRequest is required and must be specified")
-	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -662,8 +245,6 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatchExecute(r ApiGuildGui
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	// body params
-	localVarPostBody = r.guildPatchGuildChannelRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -755,49 +336,57 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatchExecute(r ApiGuildGui
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiGuildGuildIdChannelGetRequest struct {
+type ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest struct {
 	ctx        context.Context
-	ApiService *GuildAPIService
+	ApiService *GuildRolesAPIService
 	guildId    int32
+	channelId  int32
+	roleId     int32
 }
 
-func (r ApiGuildGuildIdChannelGetRequest) Execute() ([]DtoChannel, *http.Response, error) {
-	return r.ApiService.GuildGuildIdChannelGetExecute(r)
+func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest) Execute() (*GuildChannelRolePermission, *http.Response, error) {
+	return r.ApiService.GuildGuildIdChannelChannelIdRolesRoleIdGetExecute(r)
 }
 
 /*
-GuildGuildIdChannelGet Get guild channels
+GuildGuildIdChannelChannelIdRolesRoleIdGet Get channel role permission
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param guildId Guild id
-	@return ApiGuildGuildIdChannelGetRequest
+	@param guildId Guild ID
+	@param channelId Channel ID
+	@param roleId Role ID
+	@return ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelGet(ctx context.Context, guildId int32) ApiGuildGuildIdChannelGetRequest {
-	return ApiGuildGuildIdChannelGetRequest{
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdGet(ctx context.Context, guildId int32, channelId int32, roleId int32) ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest {
+	return ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest{
 		ApiService: a,
 		ctx:        ctx,
 		guildId:    guildId,
+		channelId:  channelId,
+		roleId:     roleId,
 	}
 }
 
 // Execute executes the request
 //
-//	@return []DtoChannel
-func (a *GuildAPIService) GuildGuildIdChannelGetExecute(r ApiGuildGuildIdChannelGetRequest) ([]DtoChannel, *http.Response, error) {
+//	@return GuildChannelRolePermission
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdGetExecute(r ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest) (*GuildChannelRolePermission, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue []DtoChannel
+		localVarReturnValue *GuildChannelRolePermission
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdChannelGet")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdChannelChannelIdRolesRoleIdGet")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/guild/{guild_id}/channel"
+	localVarPath := localBasePath + "/guild/{guild_id}/channel/{channel_id}/roles/{role_id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"role_id"+"}", url.PathEscape(parameterValueToString(r.roleId, "roleId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -820,152 +409,6 @@ func (a *GuildAPIService) GuildGuildIdChannelGetExecute(r ApiGuildGuildIdChannel
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiGuildGuildIdChannelOrderPatchRequest struct {
-	ctx                                context.Context
-	ApiService                         *GuildAPIService
-	guildId                            int32
-	guildPatchGuildChannelOrderRequest *GuildPatchGuildChannelOrderRequest
-}
-
-// Update channel order data
-func (r ApiGuildGuildIdChannelOrderPatchRequest) GuildPatchGuildChannelOrderRequest(guildPatchGuildChannelOrderRequest GuildPatchGuildChannelOrderRequest) ApiGuildGuildIdChannelOrderPatchRequest {
-	r.guildPatchGuildChannelOrderRequest = &guildPatchGuildChannelOrderRequest
-	return r
-}
-
-func (r ApiGuildGuildIdChannelOrderPatchRequest) Execute() (string, *http.Response, error) {
-	return r.ApiService.GuildGuildIdChannelOrderPatchExecute(r)
-}
-
-/*
-GuildGuildIdChannelOrderPatch Change channels order
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param guildId Guild ID
-	@return ApiGuildGuildIdChannelOrderPatchRequest
-*/
-func (a *GuildAPIService) GuildGuildIdChannelOrderPatch(ctx context.Context, guildId int32) ApiGuildGuildIdChannelOrderPatchRequest {
-	return ApiGuildGuildIdChannelOrderPatchRequest{
-		ApiService: a,
-		ctx:        ctx,
-		guildId:    guildId,
-	}
-}
-
-// Execute executes the request
-//
-//	@return string
-func (a *GuildAPIService) GuildGuildIdChannelOrderPatchExecute(r ApiGuildGuildIdChannelOrderPatchRequest) (string, *http.Response, error) {
-	var (
-		localVarHTTPMethod  = http.MethodPatch
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue string
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdChannelOrderPatch")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/guild/{guild_id}/channel/order"
-	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.guildPatchGuildChannelOrderRequest == nil {
-		return localVarReturnValue, nil, reportError("guildPatchGuildChannelOrderRequest is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// body params
-	localVarPostBody = r.guildPatchGuildChannelOrderRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1057,62 +500,70 @@ func (a *GuildAPIService) GuildGuildIdChannelOrderPatchExecute(r ApiGuildGuildId
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiGuildGuildIdChannelPostRequest struct {
-	ctx                            context.Context
-	ApiService                     *GuildAPIService
-	guildId                        int32
-	guildCreateGuildChannelRequest *GuildCreateGuildChannelRequest
+type ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest struct {
+	ctx                               context.Context
+	ApiService                        *GuildRolesAPIService
+	guildId                           int32
+	channelId                         int32
+	roleId                            int32
+	guildChannelRolePermissionRequest *GuildChannelRolePermissionRequest
 }
 
-// Create channel data
-func (r ApiGuildGuildIdChannelPostRequest) GuildCreateGuildChannelRequest(guildCreateGuildChannelRequest GuildCreateGuildChannelRequest) ApiGuildGuildIdChannelPostRequest {
-	r.guildCreateGuildChannelRequest = &guildCreateGuildChannelRequest
+// Permission mask
+func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest) GuildChannelRolePermissionRequest(guildChannelRolePermissionRequest GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
+	r.guildChannelRolePermissionRequest = &guildChannelRolePermissionRequest
 	return r
 }
 
-func (r ApiGuildGuildIdChannelPostRequest) Execute() (string, *http.Response, error) {
-	return r.ApiService.GuildGuildIdChannelPostExecute(r)
+func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest) Execute() (string, *http.Response, error) {
+	return r.ApiService.GuildGuildIdChannelChannelIdRolesRoleIdPatchExecute(r)
 }
 
 /*
-GuildGuildIdChannelPost Create guild channel
+GuildGuildIdChannelChannelIdRolesRoleIdPatch Update channel role permission
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param guildId Guild ID
-	@return ApiGuildGuildIdChannelPostRequest
+	@param channelId Channel ID
+	@param roleId Role ID
+	@return ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelPost(ctx context.Context, guildId int32) ApiGuildGuildIdChannelPostRequest {
-	return ApiGuildGuildIdChannelPostRequest{
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatch(ctx context.Context, guildId int32, channelId int32, roleId int32) ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
+	return ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
 		guildId:    guildId,
+		channelId:  channelId,
+		roleId:     roleId,
 	}
 }
 
 // Execute executes the request
 //
 //	@return string
-func (a *GuildAPIService) GuildGuildIdChannelPostExecute(r ApiGuildGuildIdChannelPostRequest) (string, *http.Response, error) {
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatchExecute(r ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest) (string, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPost
+		localVarHTTPMethod  = http.MethodPatch
 		localVarPostBody    interface{}
 		formFiles           []formFile
 		localVarReturnValue string
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdChannelPost")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdChannelChannelIdRolesRoleIdPatch")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/guild/{guild_id}/channel"
+	localVarPath := localBasePath + "/guild/{guild_id}/channel/{channel_id}/roles/{role_id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"role_id"+"}", url.PathEscape(parameterValueToString(r.roleId, "roleId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildCreateGuildChannelRequest == nil {
-		return localVarReturnValue, nil, reportError("guildCreateGuildChannelRequest is required and must be specified")
+	if r.guildChannelRolePermissionRequest == nil {
+		return localVarReturnValue, nil, reportError("guildChannelRolePermissionRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -1133,7 +584,7 @@ func (a *GuildAPIService) GuildGuildIdChannelPostExecute(r ApiGuildGuildIdChanne
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildCreateGuildChannelRequest
+	localVarPostBody = r.guildChannelRolePermissionRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1178,6 +629,28 @@ func (a *GuildAPIService) GuildGuildIdChannelPostExecute(r ApiGuildGuildIdChanne
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 406 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v string
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -1203,25 +676,678 @@ func (a *GuildAPIService) GuildGuildIdChannelPostExecute(r ApiGuildGuildIdChanne
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiGuildGuildIdGetRequest struct {
-	ctx        context.Context
-	ApiService *GuildAPIService
-	guildId    int32
+type ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest struct {
+	ctx                               context.Context
+	ApiService                        *GuildRolesAPIService
+	guildId                           int32
+	channelId                         int32
+	roleId                            int32
+	guildChannelRolePermissionRequest *GuildChannelRolePermissionRequest
 }
 
-func (r ApiGuildGuildIdGetRequest) Execute() (*DtoGuild, *http.Response, error) {
-	return r.ApiService.GuildGuildIdGetExecute(r)
+// Permission mask
+func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest) GuildChannelRolePermissionRequest(guildChannelRolePermissionRequest GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
+	r.guildChannelRolePermissionRequest = &guildChannelRolePermissionRequest
+	return r
+}
+
+func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest) Execute() (string, *http.Response, error) {
+	return r.ApiService.GuildGuildIdChannelChannelIdRolesRoleIdPutExecute(r)
 }
 
 /*
-GuildGuildIdGet Get guild
+GuildGuildIdChannelChannelIdRolesRoleIdPut Set channel role permission (create or replace)
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param guildId Guild id
-	@return ApiGuildGuildIdGetRequest
+	@param guildId Guild ID
+	@param channelId Channel ID
+	@param roleId Role ID
+	@return ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest
 */
-func (a *GuildAPIService) GuildGuildIdGet(ctx context.Context, guildId int32) ApiGuildGuildIdGetRequest {
-	return ApiGuildGuildIdGetRequest{
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPut(ctx context.Context, guildId int32, channelId int32, roleId int32) ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
+	return ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest{
+		ApiService: a,
+		ctx:        ctx,
+		guildId:    guildId,
+		channelId:  channelId,
+		roleId:     roleId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return string
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPutExecute(r ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest) (string, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPut
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue string
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdChannelChannelIdRolesRoleIdPut")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/guild/{guild_id}/channel/{channel_id}/roles/{role_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"role_id"+"}", url.PathEscape(parameterValueToString(r.roleId, "roleId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.guildChannelRolePermissionRequest == nil {
+		return localVarReturnValue, nil, reportError("guildChannelRolePermissionRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.guildChannelRolePermissionRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 406 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGuildGuildIdMemberUserIdRolesGetRequest struct {
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	userId     int32
+}
+
+func (r ApiGuildGuildIdMemberUserIdRolesGetRequest) Execute() ([]DtoRole, *http.Response, error) {
+	return r.ApiService.GuildGuildIdMemberUserIdRolesGetExecute(r)
+}
+
+/*
+GuildGuildIdMemberUserIdRolesGet Get member roles
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param guildId Guild ID
+	@param userId User ID
+	@return ApiGuildGuildIdMemberUserIdRolesGetRequest
+*/
+func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesGet(ctx context.Context, guildId int32, userId int32) ApiGuildGuildIdMemberUserIdRolesGetRequest {
+	return ApiGuildGuildIdMemberUserIdRolesGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+		guildId:    guildId,
+		userId:     userId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return []DtoRole
+func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesGetExecute(r ApiGuildGuildIdMemberUserIdRolesGetRequest) ([]DtoRole, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []DtoRole
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdMemberUserIdRolesGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/guild/{guild_id}/member/{user_id}/roles"
+	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", url.PathEscape(parameterValueToString(r.userId, "userId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest struct {
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	userId     int32
+	roleId     int32
+}
+
+func (r ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest) Execute() (string, *http.Response, error) {
+	return r.ApiService.GuildGuildIdMemberUserIdRolesRoleIdDeleteExecute(r)
+}
+
+/*
+GuildGuildIdMemberUserIdRolesRoleIdDelete Remove role from member
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param guildId Guild ID
+	@param userId User ID
+	@param roleId Role ID
+	@return ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest
+*/
+func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdDelete(ctx context.Context, guildId int32, userId int32, roleId int32) ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest {
+	return ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest{
+		ApiService: a,
+		ctx:        ctx,
+		guildId:    guildId,
+		userId:     userId,
+		roleId:     roleId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return string
+func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdDeleteExecute(r ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest) (string, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue string
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdMemberUserIdRolesRoleIdDelete")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/guild/{guild_id}/member/{user_id}/roles/{role_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", url.PathEscape(parameterValueToString(r.userId, "userId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"role_id"+"}", url.PathEscape(parameterValueToString(r.roleId, "roleId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 406 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest struct {
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	userId     int32
+	roleId     int32
+}
+
+func (r ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest) Execute() (string, *http.Response, error) {
+	return r.ApiService.GuildGuildIdMemberUserIdRolesRoleIdPutExecute(r)
+}
+
+/*
+GuildGuildIdMemberUserIdRolesRoleIdPut Assign role to member
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param guildId Guild ID
+	@param userId User ID
+	@param roleId Role ID
+	@return ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest
+*/
+func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdPut(ctx context.Context, guildId int32, userId int32, roleId int32) ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest {
+	return ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest{
+		ApiService: a,
+		ctx:        ctx,
+		guildId:    guildId,
+		userId:     userId,
+		roleId:     roleId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return string
+func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdPutExecute(r ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest) (string, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPut
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue string
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdMemberUserIdRolesRoleIdPut")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/guild/{guild_id}/member/{user_id}/roles/{role_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", url.PathEscape(parameterValueToString(r.userId, "userId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"role_id"+"}", url.PathEscape(parameterValueToString(r.roleId, "roleId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 406 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGuildGuildIdRolesGetRequest struct {
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+}
+
+func (r ApiGuildGuildIdRolesGetRequest) Execute() ([]DtoRole, *http.Response, error) {
+	return r.ApiService.GuildGuildIdRolesGetExecute(r)
+}
+
+/*
+GuildGuildIdRolesGet Get guild roles
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param guildId Guild ID
+	@return ApiGuildGuildIdRolesGetRequest
+*/
+func (a *GuildRolesAPIService) GuildGuildIdRolesGet(ctx context.Context, guildId int32) ApiGuildGuildIdRolesGetRequest {
+	return ApiGuildGuildIdRolesGetRequest{
 		ApiService: a,
 		ctx:        ctx,
 		guildId:    guildId,
@@ -1230,21 +1356,21 @@ func (a *GuildAPIService) GuildGuildIdGet(ctx context.Context, guildId int32) Ap
 
 // Execute executes the request
 //
-//	@return DtoGuild
-func (a *GuildAPIService) GuildGuildIdGetExecute(r ApiGuildGuildIdGetRequest) (*DtoGuild, *http.Response, error) {
+//	@return []DtoRole
+func (a *GuildRolesAPIService) GuildGuildIdRolesGetExecute(r ApiGuildGuildIdRolesGetRequest) ([]DtoRole, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue *DtoGuild
+		localVarReturnValue []DtoRole
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdGet")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdRolesGet")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/guild/{guild_id}"
+	localVarPath := localBasePath + "/guild/{guild_id}/roles"
 	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -1337,32 +1463,32 @@ func (a *GuildAPIService) GuildGuildIdGetExecute(r ApiGuildGuildIdGetRequest) (*
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiGuildGuildIdPatchRequest struct {
-	ctx                     context.Context
-	ApiService              *GuildAPIService
-	guildId                 int32
-	guildUpdateGuildRequest *GuildUpdateGuildRequest
+type ApiGuildGuildIdRolesPostRequest struct {
+	ctx                         context.Context
+	ApiService                  *GuildRolesAPIService
+	guildId                     int32
+	guildCreateGuildRoleRequest *GuildCreateGuildRoleRequest
 }
 
-// Update guild data
-func (r ApiGuildGuildIdPatchRequest) GuildUpdateGuildRequest(guildUpdateGuildRequest GuildUpdateGuildRequest) ApiGuildGuildIdPatchRequest {
-	r.guildUpdateGuildRequest = &guildUpdateGuildRequest
+// Role data
+func (r ApiGuildGuildIdRolesPostRequest) GuildCreateGuildRoleRequest(guildCreateGuildRoleRequest GuildCreateGuildRoleRequest) ApiGuildGuildIdRolesPostRequest {
+	r.guildCreateGuildRoleRequest = &guildCreateGuildRoleRequest
 	return r
 }
 
-func (r ApiGuildGuildIdPatchRequest) Execute() (*DtoGuild, *http.Response, error) {
-	return r.ApiService.GuildGuildIdPatchExecute(r)
+func (r ApiGuildGuildIdRolesPostRequest) Execute() (*DtoRole, *http.Response, error) {
+	return r.ApiService.GuildGuildIdRolesPostExecute(r)
 }
 
 /*
-GuildGuildIdPatch Update guild
+GuildGuildIdRolesPost Create guild role
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param guildId Guild ID
-	@return ApiGuildGuildIdPatchRequest
+	@return ApiGuildGuildIdRolesPostRequest
 */
-func (a *GuildAPIService) GuildGuildIdPatch(ctx context.Context, guildId int32) ApiGuildGuildIdPatchRequest {
-	return ApiGuildGuildIdPatchRequest{
+func (a *GuildRolesAPIService) GuildGuildIdRolesPost(ctx context.Context, guildId int32) ApiGuildGuildIdRolesPostRequest {
+	return ApiGuildGuildIdRolesPostRequest{
 		ApiService: a,
 		ctx:        ctx,
 		guildId:    guildId,
@@ -1371,28 +1497,28 @@ func (a *GuildAPIService) GuildGuildIdPatch(ctx context.Context, guildId int32) 
 
 // Execute executes the request
 //
-//	@return DtoGuild
-func (a *GuildAPIService) GuildGuildIdPatchExecute(r ApiGuildGuildIdPatchRequest) (*DtoGuild, *http.Response, error) {
+//	@return DtoRole
+func (a *GuildRolesAPIService) GuildGuildIdRolesPostExecute(r ApiGuildGuildIdRolesPostRequest) (*DtoRole, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPatch
+		localVarHTTPMethod  = http.MethodPost
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue *DtoGuild
+		localVarReturnValue *DtoRole
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdPatch")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdRolesPost")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/guild/{guild_id}"
+	localVarPath := localBasePath + "/guild/{guild_id}/roles"
 	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildUpdateGuildRequest == nil {
-		return localVarReturnValue, nil, reportError("guildUpdateGuildRequest is required and must be specified")
+	if r.guildCreateGuildRoleRequest == nil {
+		return localVarReturnValue, nil, reportError("guildCreateGuildRoleRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -1413,7 +1539,7 @@ func (a *GuildAPIService) GuildGuildIdPatchExecute(r ApiGuildGuildIdPatchRequest
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildUpdateGuildRequest
+	localVarPostBody = r.guildCreateGuildRoleRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1448,6 +1574,17 @@ func (a *GuildAPIService) GuildGuildIdPatchExecute(r ApiGuildGuildIdPatchRequest
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 406 {
 			var v string
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
@@ -1483,62 +1620,60 @@ func (a *GuildAPIService) GuildGuildIdPatchExecute(r ApiGuildGuildIdPatchRequest
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiGuildPostRequest struct {
-	ctx                     context.Context
-	ApiService              *GuildAPIService
-	guildCreateGuildRequest *GuildCreateGuildRequest
+type ApiGuildGuildIdRolesRoleIdDeleteRequest struct {
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	roleId     int32
 }
 
-// Guild data
-func (r ApiGuildPostRequest) GuildCreateGuildRequest(guildCreateGuildRequest GuildCreateGuildRequest) ApiGuildPostRequest {
-	r.guildCreateGuildRequest = &guildCreateGuildRequest
-	return r
-}
-
-func (r ApiGuildPostRequest) Execute() (*DtoGuild, *http.Response, error) {
-	return r.ApiService.GuildPostExecute(r)
+func (r ApiGuildGuildIdRolesRoleIdDeleteRequest) Execute() (string, *http.Response, error) {
+	return r.ApiService.GuildGuildIdRolesRoleIdDeleteExecute(r)
 }
 
 /*
-GuildPost Create guild
+GuildGuildIdRolesRoleIdDelete Delete guild role
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiGuildPostRequest
+	@param guildId Guild ID
+	@param roleId Role ID
+	@return ApiGuildGuildIdRolesRoleIdDeleteRequest
 */
-func (a *GuildAPIService) GuildPost(ctx context.Context) ApiGuildPostRequest {
-	return ApiGuildPostRequest{
+func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdDelete(ctx context.Context, guildId int32, roleId int32) ApiGuildGuildIdRolesRoleIdDeleteRequest {
+	return ApiGuildGuildIdRolesRoleIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
+		guildId:    guildId,
+		roleId:     roleId,
 	}
 }
 
 // Execute executes the request
 //
-//	@return DtoGuild
-func (a *GuildAPIService) GuildPostExecute(r ApiGuildPostRequest) (*DtoGuild, *http.Response, error) {
+//	@return string
+func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdDeleteExecute(r ApiGuildGuildIdRolesRoleIdDeleteRequest) (string, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPost
+		localVarHTTPMethod  = http.MethodDelete
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue *DtoGuild
+		localVarReturnValue string
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildPost")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdRolesRoleIdDelete")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/guild"
+	localVarPath := localBasePath + "/guild/{guild_id}/roles/{role_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"role_id"+"}", url.PathEscape(parameterValueToString(r.roleId, "roleId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildCreateGuildRequest == nil {
-		return localVarReturnValue, nil, reportError("guildCreateGuildRequest is required and must be specified")
-	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1554,8 +1689,6 @@ func (a *GuildAPIService) GuildPostExecute(r ApiGuildPostRequest) (*DtoGuild, *h
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	// body params
-	localVarPostBody = r.guildCreateGuildRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1590,6 +1723,200 @@ func (a *GuildAPIService) GuildPostExecute(r ApiGuildPostRequest) (*DtoGuild, *h
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 406 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGuildGuildIdRolesRoleIdPatchRequest struct {
+	ctx                        context.Context
+	ApiService                 *GuildRolesAPIService
+	guildId                    int32
+	roleId                     int32
+	guildPatchGuildRoleRequest *GuildPatchGuildRoleRequest
+}
+
+// Role changes
+func (r ApiGuildGuildIdRolesRoleIdPatchRequest) GuildPatchGuildRoleRequest(guildPatchGuildRoleRequest GuildPatchGuildRoleRequest) ApiGuildGuildIdRolesRoleIdPatchRequest {
+	r.guildPatchGuildRoleRequest = &guildPatchGuildRoleRequest
+	return r
+}
+
+func (r ApiGuildGuildIdRolesRoleIdPatchRequest) Execute() (*DtoRole, *http.Response, error) {
+	return r.ApiService.GuildGuildIdRolesRoleIdPatchExecute(r)
+}
+
+/*
+GuildGuildIdRolesRoleIdPatch Update guild role
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param guildId Guild ID
+	@param roleId Role ID
+	@return ApiGuildGuildIdRolesRoleIdPatchRequest
+*/
+func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatch(ctx context.Context, guildId int32, roleId int32) ApiGuildGuildIdRolesRoleIdPatchRequest {
+	return ApiGuildGuildIdRolesRoleIdPatchRequest{
+		ApiService: a,
+		ctx:        ctx,
+		guildId:    guildId,
+		roleId:     roleId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return DtoRole
+func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatchExecute(r ApiGuildGuildIdRolesRoleIdPatchRequest) (*DtoRole, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DtoRole
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdRolesRoleIdPatch")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/guild/{guild_id}/roles/{role_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"role_id"+"}", url.PathEscape(parameterValueToString(r.roleId, "roleId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.guildPatchGuildRoleRequest == nil {
+		return localVarReturnValue, nil, reportError("guildPatchGuildRoleRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.guildPatchGuildRoleRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 406 {
 			var v string
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {

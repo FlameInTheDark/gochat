@@ -21,6 +21,7 @@ const (
 	ErrIncorrectGuildID             = "incorrect guild ID"
 	ErrIncorrectMemberID            = "incorrect member ID"
 	ErrIncorrectInviteID            = "incorrect invite ID"
+	ErrIncorrectRoleID              = "incorrect role ID"
 	ErrFileIsTooBig                 = "file is too big"
 	ErrUnableToSendMessage          = "unable to send message"
 	ErrUnableToGetUser              = "unable to get user"
@@ -31,18 +32,26 @@ const (
 	ErrUnableToGetGuildByID         = "unable to get guild by id"
 	ErrUnableToUpdateGuild          = "unable to update guild"
 	ErrUnableToGetRoles             = "unable to get roles"
+	ErrUnableToSetUserRole          = "unable to set user role"
+	ErrUnableToRemoveUserRole       = "unable to remove user role"
 	ErrUnableToCreateChannelGroup   = "unable to create channel group"
 	ErrUnableToGetChannel           = "unable to get channel"
 	ErrUnableToUpdateChannel        = "unable to update channel"
 	ErrUnableToSetParentAsSelf      = "unable to set parent as self"
 	ErrUnableToSetParentForCategory = "unable to set parent for category"
 	ErrNotAMember                   = "not a member"
+	// Channel role permissions
+	ErrUnableToGetChannelRolePerms = "unable to get channel role permissions"
+	ErrUnableToSetChannelRolePerm  = "unable to set channel role permission"
+	ErrUnableToUpdateChannelRole   = "unable to update channel role permission"
+	ErrUnableToRemoveChannelRole   = "unable to remove channel role permission"
 	// Invites
 	ErrUnableToCreateInvite = "unable to create invite"
 	ErrUnableToGetInvites   = "unable to get invites"
 	ErrUnableToDeleteInvite = "unable to delete invite"
 	ErrInviteNotFound       = "invite not found"
 	ErrInviteCodeInvalid    = "invalid invite code"
+	ErrRoleNotInGuild       = "role does not belong to this guild"
 
 	// Validation error messages
 	ErrGuildNameRequired   = "guild name is required"
@@ -56,6 +65,11 @@ const (
 	ErrIconIdInvalid       = "icon ID must be positive"
 	ErrParentIdInvalid     = "parent ID must be positive"
 	ErrPermissionsInvalid  = "permissions must be non-negative"
+	// Roles
+	ErrRoleNameRequired = "role name is required"
+	ErrRoleNameTooShort = "role name must be at least 2 characters"
+	ErrRoleNameTooLong  = "role name must be less than 100 characters"
+	ErrRoleColorInvalid = "role color must be between 0 and 16777215"
 )
 
 var (
@@ -209,9 +223,7 @@ func (r PatchGuildChannelRequest) Validate() error {
 
 // Invites
 type CreateInviteRequest struct {
-	// ExpiresInSec is a TTL in seconds; 0 means unlimited invite
-	// If omitted, server uses default (7 days)
-	ExpiresInSec *int `json:"expires_in_sec" example:"86400"`
+	ExpiresInSec *int `json:"expires_in_sec" example:"86400"` // Expiration time in seconds. 0 means unlimited.
 }
 
 func (r CreateInviteRequest) Validate() error {
@@ -273,6 +285,7 @@ func channelModelToDTO(c *model.Channel, guildId *int64, position int) dto.Chann
 		Topic:       c.Topic,
 		Permissions: c.Permissions,
 		CreatedAt:   c.CreatedAt,
+		Private:     c.Private,
 	}
 }
 
@@ -304,4 +317,72 @@ func roleModelToDTOMany(roles []model.Role) []dto.Role {
 		result[i] = roleModelToDTO(r)
 	}
 	return result
+}
+
+// Channel role permissions
+type ChannelRolePermission struct {
+	RoleId int64 `json:"role_id" example:"2230469276416868352"` // Role ID
+	Accept int64 `json:"accept" example:"0"`                    // Allowed permission bits mask
+	Deny   int64 `json:"deny" example:"0"`                      // Denied permission bits mask
+}
+
+type ChannelRolePermissionRequest struct {
+	Accept int64 `json:"accept" example:"0"` // Allowed permission bits mask
+	Deny   int64 `json:"deny" example:"0"`   // Denied permission bits mask
+}
+
+func (r ChannelRolePermissionRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Accept, validation.Min(int64(0)).Error(ErrPermissionsInvalid)),
+		validation.Field(&r.Deny, validation.Min(int64(0)).Error(ErrPermissionsInvalid)),
+	)
+}
+
+type CreateGuildRoleRequest struct {
+	Name        string `json:"name" example:"New Role"`  // Role name
+	Color       int    `json:"color" example:"16777215"` // RGB int value
+	Permissions int64  `json:"permissions" default:"0"`  // Permissions bitset
+}
+
+func (r CreateGuildRoleRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.Required.Error(ErrRoleNameRequired),
+			validation.RuneLength(2, 0).Error(ErrRoleNameTooShort),
+			validation.RuneLength(0, 100).Error(ErrRoleNameTooLong),
+		),
+		validation.Field(&r.Color,
+			validation.Min(0).Error(ErrRoleColorInvalid),
+			validation.Max(16777215).Error(ErrRoleColorInvalid),
+		),
+		validation.Field(&r.Permissions,
+			validation.Min(int64(0)).Error(ErrPermissionsInvalid),
+		),
+	)
+}
+
+type PatchGuildRoleRequest struct {
+	Name        *string `json:"name,omitempty" example:"Moderators"` // Role name
+	Color       *int    `json:"color,omitempty" example:"16711680"`  // RGB int value
+	Permissions *int64  `json:"permissions,omitempty"`               // Permissions bitset
+}
+
+func (r PatchGuildRoleRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.When(r.Name != nil,
+				validation.RuneLength(2, 0).Error(ErrRoleNameTooShort),
+				validation.RuneLength(0, 100).Error(ErrRoleNameTooLong),
+			),
+		),
+		validation.Field(&r.Color,
+			validation.When(r.Color != nil,
+				validation.Min(0).Error(ErrRoleColorInvalid),
+				validation.Max(16777215).Error(ErrRoleColorInvalid),
+			),
+		),
+		validation.Field(&r.Permissions,
+			validation.When(r.Permissions != nil, validation.Min(int64(0)).Error(ErrPermissionsInvalid)),
+		),
+	)
 }

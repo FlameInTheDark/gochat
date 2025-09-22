@@ -55,6 +55,8 @@ type APIClient struct {
 
 	GuildInvitesAPI *GuildInvitesAPIService
 
+	GuildRolesAPI *GuildRolesAPIService
+
 	MessageAPI *MessageAPIService
 
 	SearchAPI *SearchAPIService
@@ -83,6 +85,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.AuthAPI = (*AuthAPIService)(&c.common)
 	c.GuildAPI = (*GuildAPIService)(&c.common)
 	c.GuildInvitesAPI = (*GuildInvitesAPIService)(&c.common)
+	c.GuildRolesAPI = (*GuildRolesAPIService)(&c.common)
 	c.MessageAPI = (*MessageAPIService)(&c.common)
 	c.SearchAPI = (*SearchAPIService)(&c.common)
 	c.UserAPI = (*UserAPIService)(&c.common)
