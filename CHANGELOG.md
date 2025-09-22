@@ -1,3 +1,11 @@
+# [1.3.0](https://github.com/FlameInTheDark/gochat/compare/v1.2.0...v1.3.0) (2025-09-22)
+
+
+### Features
+
+* a little speedup of rate limiting ([8155d4e](https://github.com/FlameInTheDark/gochat/commit/8155d4e43340cfe6e83a24c2d9aad477ef0c882f))
+* role management ([ac90947](https://github.com/FlameInTheDark/gochat/commit/ac909475869d2ba1c2bda5ac04abae87836a7dde))
+
 # [1.2.0](https://github.com/FlameInTheDark/gochat/compare/v1.1.0...v1.2.0) (2025-09-20)
 
 
