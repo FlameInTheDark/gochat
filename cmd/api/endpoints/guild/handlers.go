@@ -3,11 +3,10 @@ package guild
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
-
-	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
@@ -15,6 +14,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
+	"github.com/gofiber/fiber/v2"
 )
 
 // Helper functions for common operations
@@ -245,11 +245,9 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext, ro
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	var channelIds []int64
-	channelMap := make(map[int64]*model.GuildChannel)
+	var channelIds = make([]int64, len(guildChannels))
 	for i, gch := range guildChannels {
-		channelMap[gch.ChannelId] = &guildChannels[i]
-		channelIds = append(channelIds, gch.ChannelId)
+		channelIds[i] = gch.ChannelId
 	}
 
 	channels, err := e.ch.GetChannelsBulk(c.UserContext(), channelIds)
@@ -257,24 +255,18 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext, ro
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	var visibleChannels []dto.Channel
-	for _, ch := range channels {
-		if guildChannel, exists := channelMap[ch.Id]; exists {
-			// Set default permissions if not set
-			if ch.Permissions == nil {
-				ch.Permissions = &guildCtx.Guild.Permissions
-			}
+	croles, err := e.rperm.GetChannelRolesBulk(c.UserContext(), channelIds)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
 
-			// Check if user can view this channel
-			canView, err := e.checkChannelPermissions(c, &ch, guildCtx.Guild, guildCtx.User, roles)
-			if err != nil {
-				return err
-			}
-
-			if canView {
-				visibleChannels = append(visibleChannels, channelModelToDTO(&ch, &guildCtx.Guild.Id, guildChannel.Position))
-			}
+	var visibleChannels = make([]dto.Channel, len(channels))
+	for i, ch := range channels {
+		fmt.Printf("channel: %d - %s, roles: %v\n", ch.Id, ch.Name, croles[i].Roles)
+		if ch.Permissions == nil {
+			ch.Permissions = &guildCtx.Guild.Permissions
 		}
+		visibleChannels[i] = channelModelToDTO(&ch, &guildCtx.Guild.Id, guildChannels[i].Position, croles[i].Roles)
 	}
 
 	return c.JSON(visibleChannels)
@@ -343,7 +335,7 @@ func (e *entity) fetchSingleChannel(c *fiber.Ctx, guildCtx *guildContext, channe
 		return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
 	}
 
-	return c.JSON(channelModelToDTO(&channel, &guildCtx.Guild.Id, guildChannel.Position))
+	return c.JSON(channelModelToDTO(&channel, &guildCtx.Guild.Id, guildChannel.Position, nil))
 }
 
 // Create
@@ -672,6 +664,10 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
+	if err := e.gc.RemoveChannel(c.UserContext(), guildId, channelId); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
 	// Delete channel messages if any exist
 	if channel.LastMessage != 0 {
 		if err := e.msg.DeleteChannelMessages(c.UserContext(), channelId, channel.LastMessage); err != nil {
@@ -736,6 +732,10 @@ func (e *entity) deleteCategoryWithPermissionCheck(c *fiber.Ctx, guildId, catego
 
 	// Delete the category
 	if err := e.ch.DeleteChannel(c.UserContext(), channel.Id); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	if err := e.gc.RemoveChannel(c.UserContext(), guildId, channel.Id); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
@@ -959,7 +959,7 @@ func (e *entity) PatchChannel(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotModified, ErrUnableToUpdateChannel)
 	}
 
-	resp := channelModelToDTO(&upd, &guildId, guildChannel.Position)
+	resp := channelModelToDTO(&upd, &guildId, guildChannel.Position, nil)
 
 	// Notify clients about the channel update
 	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateChannel{
@@ -970,4 +970,62 @@ func (e *entity) PatchChannel(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(resp)
+}
+
+// GetMembers
+//
+//	@Summary	Get guild members
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		guild_id	path		int64		true	"Guild ID"
+//	@Success	200			{array}		dto.Member	"Ok"
+//	@failure	400			{string}	string		"Incorrect request body"
+//	@failure	401			{string}	string		"Unauthorized"
+//	@failure	500			{string}	string		"Something bad happened"
+//	@Router		/guild/{guild_id}/members [get]
+func (e *entity) GetMembers(c *fiber.Ctx) error {
+	guildId, err := e.parseGuildID(c)
+	if err != nil {
+		return err
+	}
+
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+	isMember, err := e.memb.IsGuildMember(c.UserContext(), guildId, user.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMemberToken)
+	}
+	if !isMember {
+		return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
+	}
+
+	members, err := e.memb.GetGuildMembers(c.UserContext(), guildId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMembers)
+	}
+
+	var memberIds = make([]int64, len(members))
+	for i, m := range members {
+		memberIds[i] = m.UserId
+	}
+
+	dscs, err := e.disc.GetDiscriminatorsByUserIDs(c.UserContext(), memberIds)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetDiscriminators)
+	}
+
+	users, err := e.user.GetUsersList(c.UserContext(), memberIds)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUsers)
+	}
+
+	roles, err := e.ur.GetUsersRolesByGuild(c.UserContext(), guildId, memberIds)
+	if err != nil {
+		slog.Error("unable to get users roles", slog.String("error", err.Error()))
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUsersRoles)
+	}
+
+	return c.JSON(membersToDTO(members, users, roles, dscs))
 }

@@ -43,6 +43,9 @@ func (e *entity) Init(router fiber.Router) {
 	router.Delete("/:guild_id<int>/channel/:channel_id<int>", e.DeleteChannel)
 	router.Delete("/:guild_id<int>/category/:category_id<int>", e.DeleteCategory)
 
+	// Members
+	router.Get("/:guild_id<int>/members", e.GetMembers)
+
 	// Roles
 	router.Get("/:guild_id<int>/roles", e.GetGuildRoles)
 	router.Post("/:guild_id<int>/roles", e.CreateGuildRole)

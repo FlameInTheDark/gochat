@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -359,6 +360,8 @@ func (e *entity) LeaveGuild(c *fiber.Ctx) error {
 	if err := e.member.RemoveMember(c.UserContext(), user.Id, guildId); err != nil {
 		return helper.HttpDbError(err, ErrUnableToRemoveMember)
 	}
+
+	go e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMember{GuildId: guildId, UserId: user.Id})
 
 	return c.SendStatus(fiber.StatusOK)
 }

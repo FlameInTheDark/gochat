@@ -8,6 +8,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
 )
 
 func (e *Entity) GetChannelRolePermission(ctx context.Context, channelId, roleId int64) (model.ChannelRolesPermission, error) {
@@ -107,4 +108,38 @@ func (e *Entity) RemoveChannelRolePermission(ctx context.Context, channelId, rol
 		return fmt.Errorf("unable to remove channel role permission: %w", err)
 	}
 	return nil
+}
+
+func (e *Entity) GetChannelRolesBulk(ctx context.Context, channelIDs []int64) ([]model.ChannelRoles, error) {
+	var roles []model.ChannelRoles
+	q := squirrel.
+		Select("ch.channel_id").
+		PlaceholderFormat(squirrel.Dollar).
+		PrefixExpr(squirrel.Expr(`
+			WITH ch AS (
+				SELECT unnest(?::bigint[]) AS channel_id
+			),
+			per_channel AS (
+				SELECT channel_id,
+					array_agg(DISTINCT role_id::bigint ORDER BY role_id::bigint) AS roles
+				FROM channel_roles_permissions
+				WHERE channel_id = ANY (?::bigint[])
+				GROUP BY channel_id
+			)`,
+			pq.Array(channelIDs), pq.Array(channelIDs))).
+		Column(squirrel.Expr(`COALESCE(pc.roles, '{}'::bigint[]) AS roles`)).
+		From("ch").
+		LeftJoin("per_channel pc USING (channel_id)").
+		OrderBy("ch.channel_id")
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return roles, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+
+	err = e.c.SelectContext(ctx, &roles, raw, args...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get users roles: %w", err)
+	}
+
+	return roles, nil
 }

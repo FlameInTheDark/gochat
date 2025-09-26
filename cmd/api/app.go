@@ -111,7 +111,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	// HTTP Router
 	s.Register(
 		"/api/v1",
-		user.New(pg, logger),
+		user.New(pg, qt, logger),
 		message.New(database, pg, storage, qt, imq, cfg.UploadLimit, logger),
 		webhook.New(database, storage, logger),
 		guild.New(database, pg, qt, logger),

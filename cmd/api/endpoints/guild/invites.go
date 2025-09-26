@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/dto"
@@ -113,6 +114,11 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
+	u, err := e.user.GetUserById(c.UserContext(), user.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUser)
+	}
+
 	inv, err := e.inv.FetchInvite(c.UserContext(), code)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -132,10 +138,28 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 		}
 	}
 
+	disc, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), u.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetDiscriminator)
+	}
+
 	g, err := e.g.GetGuildById(c.UserContext(), inv.GuildId)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildByID)
 	}
+
+	go e.mqt.SendGuildUpdate(inv.GuildId, &mqmsg.AddGuildMember{
+		GuildId: inv.GuildId,
+		UserId:  u.Id,
+		Member: dto.Member{
+			User:     userToDTO(u, disc.Discriminator),
+			Username: nil,
+			Avatar:   nil,
+			JoinAt:   time.Now(),
+			Roles:    nil,
+		},
+	})
+
 	return c.JSON(buildGuildDTO(&g))
 }
 

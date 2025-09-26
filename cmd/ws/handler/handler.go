@@ -129,9 +129,9 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		// Check if user has access to the guilds
 		for _, guildID := range m.Guilds {
 			// Check if user is a member of the guild
-			_, ok, err := h.perm.GuildPerm(context.Background(), guildID, h.user.Id, permissions.PermServerViewChannels)
+			ok, err := h.m.IsGuildMember(context.Background(), guildID, h.user.Id)
 			if err != nil {
-				h.log.Warn("Error checking guild permissions", "error", err)
+				h.log.Warn("Error checking guild access", "error", err)
 			} else if ok {
 				// User has permission, subscribe to the guild
 				err := h.sub.Subscribe(fmt.Sprintf("guild.%d", guildID), fmt.Sprintf("guild.%d", guildID))

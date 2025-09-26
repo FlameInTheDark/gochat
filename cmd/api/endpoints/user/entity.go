@@ -3,6 +3,7 @@ package user
 import (
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
@@ -33,6 +34,7 @@ type entity struct {
 
 	// Services
 	log *slog.Logger
+	mqt mq.SendTransporter
 
 	// DB entities
 	user   user.User
@@ -49,10 +51,11 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(pg *pgdb.DB, log *slog.Logger) server.Entity {
+func New(pg *pgdb.DB, mqt mq.SendTransporter, log *slog.Logger) server.Entity {
 	return &entity{
 		name:   entityName,
 		log:    log,
+		mqt:    mqt,
 		user:   user.New(pg.Conn()),
 		member: member.New(pg.Conn()),
 		guild:  guild.New(pg.Conn()),

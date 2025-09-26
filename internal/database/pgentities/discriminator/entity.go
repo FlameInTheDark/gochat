@@ -11,6 +11,7 @@ type Discriminator interface {
 	CreateDiscriminator(ctx context.Context, userId int64, discriminator string) error
 	GetDiscriminatorByUserId(ctx context.Context, userId int64) (model.Discriminator, error)
 	GetUserIdByDiscriminator(ctx context.Context, discriminator string) (model.Discriminator, error)
+	GetDiscriminatorsByUserIDs(ctx context.Context, userIDs []int64) ([]model.Discriminator, error)
 }
 
 type Entity struct {

@@ -7,6 +7,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
+	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/gofiber/fiber/v2"
 )
@@ -156,6 +157,7 @@ func (e *entity) CreateGuildRole(c *fiber.Ctx) error {
 	}
 
 	created := dto.Role{Id: roleId, GuildId: guildId, Name: req.Name, Color: req.Color, Permissions: req.Permissions}
+	go e.mqt.SendGuildUpdate(guildId, &mqmsg.CreateGuildRole{Role: created})
 	return c.Status(fiber.StatusCreated).JSON(created)
 }
 
@@ -234,7 +236,10 @@ func (e *entity) PatchGuildRole(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
-	return c.JSON(roleModelToDTO(ur))
+	role := roleModelToDTO(ur)
+	go e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateGuildRole{GuildId: guildId, Role: role})
+
+	return c.JSON(role)
 }
 
 // DeleteGuildRole
@@ -356,6 +361,8 @@ func (e *entity) AddMemberRole(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetUserRole)
 	}
 
+	go e.mqt.SendGuildUpdate(guildId, &mqmsg.AddGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
+
 	return c.SendStatus(fiber.StatusOK)
 }
 
@@ -422,6 +429,8 @@ func (e *entity) RemoveMemberRole(c *fiber.Ctx) error {
 	if err := e.ur.RemoveUserRole(c.UserContext(), guildId, memberId, roleId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToRemoveUserRole)
 	}
+
+	go e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
 
 	return c.SendStatus(fiber.StatusOK)
 }

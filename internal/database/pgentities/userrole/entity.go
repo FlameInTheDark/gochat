@@ -12,6 +12,7 @@ type UserRole interface {
 	AddUserRole(ctx context.Context, guildID, userId, roleId int64) error
 	RemoveUserRole(ctx context.Context, guildID, userId, roleId int64) error
 	RemoveRoleAssignments(ctx context.Context, guildID, roleId int64) error
+	GetUsersRolesByGuild(ctx context.Context, guildID int64, userIds []int64) ([]model.UserRoles, error)
 }
 
 type Entity struct {

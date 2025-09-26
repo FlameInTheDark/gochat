@@ -1456,6 +1456,47 @@ paths:
       summary: Assign role to member
       tags:
       - Guild Roles
+  /guild/{guild_id}/members:
+    get:
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Member'
+                type: array
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Get guild members
+      tags:
+      - Guild
   /guild/{guild_id}/roles:
     get:
       parameters:
@@ -2463,6 +2504,8 @@ components:
         private: false
         parent_id: 2230469276416868352
         permissions: 0
+        roles:
+        - 2230469276416868352
         guild_id: 2230469276416868352
         name: channel-name
         created_at: created_at
@@ -2502,6 +2545,14 @@ components:
           description: Whether the channel is private. Private channels can only be
             seen by users with roles assigned to this channel.
           type: boolean
+        roles:
+          description: Roles IDs
+          example:
+          - 2230469276416868352
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
         topic:
           description: Channel topic.
           example: Just a channel topic
@@ -2851,9 +2902,7 @@ components:
     guild.CreateInviteRequest:
       properties:
         expires_in_sec:
-          description: |-
-            ExpiresInSec is a TTL in seconds; 0 means unlimited invite
-            If omitted, server uses default (7 days)
+          description: Expiration time in seconds. 0 means unlimited.
           example: 86400
           type: integer
     guild.PatchGuildChannelOrderRequest:

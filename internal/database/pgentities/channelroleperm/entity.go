@@ -13,6 +13,7 @@ type ChannelRolePerm interface {
 	SetChannelRolePermission(ctx context.Context, channelId, roleId, accept, deny int64) error
 	UpdateChannelRolePermission(ctx context.Context, channelId, roleId, accept, deny int64) error
 	RemoveChannelRolePermission(ctx context.Context, channelId, roleId int64) error
+	GetChannelRolesBulk(ctx context.Context, channelIds []int64) ([]model.ChannelRoles, error)
 }
 
 type Entity struct {
