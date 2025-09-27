@@ -3,7 +3,6 @@ package guild
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
@@ -161,22 +160,12 @@ func (e *entity) createDefaultChannels(c *fiber.Ctx, guildId int64, isPublic boo
 	categoryId := idgen.Next()
 	channelId := idgen.Next()
 
-	// Create text category
-	if err := e.ch.CreateChannel(c.UserContext(), categoryId, "text", model.ChannelTypeGuildCategory, nil, nil, isPublic); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-
-	// Create general channel
-	if err := e.ch.CreateChannel(c.UserContext(), channelId, "general", model.ChannelTypeGuild, &categoryId, nil, isPublic); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-
 	// Add channels to guild
-	if err := e.gc.AddChannel(c.UserContext(), guildId, categoryId, 0); err != nil {
+	if err := e.gc.AddChannel(c.UserContext(), guildId, categoryId, "text", model.ChannelTypeGuildCategory, nil, isPublic, 0); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	if err := e.gc.AddChannel(c.UserContext(), guildId, channelId, 0); err != nil {
+	if err := e.gc.AddChannel(c.UserContext(), guildId, channelId, "general", model.ChannelTypeGuild, &categoryId, isPublic, 0); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
@@ -262,7 +251,6 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext, ro
 
 	var visibleChannels = make([]dto.Channel, len(channels))
 	for i, ch := range channels {
-		fmt.Printf("channel: %d - %s, roles: %v\n", ch.Id, ch.Name, croles[i].Roles)
 		if ch.Permissions == nil {
 			ch.Permissions = &guildCtx.Guild.Permissions
 		}
@@ -528,11 +516,11 @@ func (e *entity) CreateCategory(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	return e.createChannelWithPermissionCheck(c, guildId, user.Id, req.Name, model.ChannelTypeGuildCategory, nil, req.Private)
+	return e.createChannelWithPermissionCheck(c, guildId, user.Id, req.Name, model.ChannelTypeGuildCategory, nil, req.Private, req.Position)
 }
 
 // createChannelWithPermissionCheck validates permissions and creates a channel
-func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId int64, name string, channelType model.ChannelType, parentId *int64, isPrivate bool) error {
+func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId int64, name string, channelType model.ChannelType, parentId *int64, isPrivate bool, position int) error {
 	guild, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, userId, permissions.PermServerManageChannels)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
@@ -544,13 +532,8 @@ func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId 
 
 	channelId := idgen.Next()
 
-	// Create the channel
-	if err := e.ch.CreateChannel(c.UserContext(), channelId, name, channelType, parentId, nil, isPrivate); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
-	}
-
 	// Add channel to guild
-	if err := e.gc.AddChannel(c.UserContext(), guild.Id, channelId, 0); err != nil {
+	if err := e.gc.AddChannel(c.UserContext(), guild.Id, channelId, name, channelType, parentId, isPrivate, position); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
 	}
 
@@ -614,7 +597,7 @@ func (e *entity) CreateChannel(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	return e.createChannelWithPermissionCheck(c, guildId, user.Id, req.Name, req.Type, req.ParentId, req.Private)
+	return e.createChannelWithPermissionCheck(c, guildId, user.Id, req.Name, req.Type, req.ParentId, req.Private, req.Position)
 }
 
 // DeleteChannel
@@ -660,10 +643,6 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 	}
 
 	// Delete the channel
-	if err := e.ch.DeleteChannel(c.UserContext(), channelId); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-
 	if err := e.gc.RemoveChannel(c.UserContext(), guildId, channelId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -731,10 +710,6 @@ func (e *entity) deleteCategoryWithPermissionCheck(c *fiber.Ctx, guildId, catego
 	}
 
 	// Delete the category
-	if err := e.ch.DeleteChannel(c.UserContext(), channel.Id); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-
 	if err := e.gc.RemoveChannel(c.UserContext(), guildId, channel.Id); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}

@@ -6,6 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Name** | Pointer to **string** | Channel name | [optional] 
 **ParentId** | Pointer to **int32** | Parent channel ID. A Parent channel can only be a category channel. | [optional] 
+**Position** | Pointer to **int32** | Channel position in the list. Should be set as the last position in the channel list, or it will be one of the first in the list. | [optional] [default to 0]
 **Private** | Pointer to **bool** | Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel. | [optional] [default to false]
 **Type** | Pointer to **int32** | Channel type | [optional] 
 
@@ -77,6 +78,31 @@ SetParentId sets ParentId field to given value.
 `func (o *GuildCreateGuildChannelRequest) HasParentId() bool`
 
 HasParentId returns a boolean if a field has been set.
+
+### GetPosition
+
+`func (o *GuildCreateGuildChannelRequest) GetPosition() int32`
+
+GetPosition returns the Position field if non-nil, zero value otherwise.
+
+### GetPositionOk
+
+`func (o *GuildCreateGuildChannelRequest) GetPositionOk() (*int32, bool)`
+
+GetPositionOk returns a tuple with the Position field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPosition
+
+`func (o *GuildCreateGuildChannelRequest) SetPosition(v int32)`
+
+SetPosition sets Position field to given value.
+
+### HasPosition
+
+`func (o *GuildCreateGuildChannelRequest) HasPosition() bool`
+
+HasPosition returns a boolean if a field has been set.
 
 ### GetPrivate
 

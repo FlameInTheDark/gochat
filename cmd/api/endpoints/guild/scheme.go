@@ -126,8 +126,9 @@ func (r UpdateGuildRequest) Validate() error {
 }
 
 type CreateGuildChannelCategoryRequest struct {
-	Name    string `json:"name" example:"category-name"` // Category channel name
-	Private bool   `json:"private" default:"false"`      // Whether the category channel is private. Private channels can only be seen by users with roles assigned to this channel.
+	Name     string `json:"name" example:"category-name"` // Category channel name
+	Private  bool   `json:"private" default:"false"`      // Whether the category channel is private. Private channels can only be seen by users with roles assigned to this channel.
+	Position int    `json:"position" default:"0"`         // Channel position in the list. Should be set as the last position in the channel list, or it will be one of the first in the list.
 }
 
 func (r CreateGuildChannelCategoryRequest) Validate() error {
@@ -146,6 +147,7 @@ type CreateGuildChannelRequest struct {
 	Type     model.ChannelType `json:"type" example:"0"`                        // Channel type
 	ParentId *int64            `json:"parent_id" example:"2230469276416868352"` // Parent channel ID. A Parent channel can only be a category channel.
 	Private  bool              `json:"private" default:"false"`                 // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
+	Position int               `json:"position" default:"0"`                    // Channel position in the list. Should be set as the last position in the channel list, or it will be one of the first in the list.
 }
 
 func (r CreateGuildChannelRequest) Validate() error {

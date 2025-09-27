@@ -674,6 +674,12 @@ export interface GuildCreateGuildChannelCategoryRequest {
      */
     'name'?: string;
     /**
+     * Channel position in the list. Should be set as the last position in the channel list, or it will be one of the first in the list.
+     * @type {number}
+     * @memberof GuildCreateGuildChannelCategoryRequest
+     */
+    'position'?: number;
+    /**
      * Whether the category channel is private. Private channels can only be seen by users with roles assigned to this channel.
      * @type {boolean}
      * @memberof GuildCreateGuildChannelCategoryRequest
@@ -698,6 +704,12 @@ export interface GuildCreateGuildChannelRequest {
      * @memberof GuildCreateGuildChannelRequest
      */
     'parent_id'?: number;
+    /**
+     * Channel position in the list. Should be set as the last position in the channel list, or it will be one of the first in the list.
+     * @type {number}
+     * @memberof GuildCreateGuildChannelRequest
+     */
+    'position'?: number;
     /**
      * Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
      * @type {boolean}

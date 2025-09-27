@@ -9,16 +9,41 @@ import (
 	"github.com/lib/pq"
 )
 
-func (e *Entity) AddChannel(ctx context.Context, guildID, channelID int64, position int) error {
+func (e *Entity) AddChannel(ctx context.Context, guildID, channelID int64, channelName string, channelType model.ChannelType, parentID *int64, private bool, position int) error {
+	tx, err := e.c.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			_ = tx.Commit()
+		}
+	}()
+
+	chq := squirrel.Insert("channels").
+		PlaceholderFormat(squirrel.Dollar).
+		Columns("id", "name", "type", "parent_id", "private", "last_message").
+		Values(channelID, channelName, channelType, parentID, private, 0)
+	sql, args, err := chq.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query for create channel: %w")
+	}
+	_, err = tx.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("unable to create channel: %w", err)
+	}
+
 	q := squirrel.Insert("guild_channels").
 		PlaceholderFormat(squirrel.Dollar).
 		Columns("guild_id", "channel_id", "position").
 		Values(guildID, channelID, position)
-	sql, args, err := q.ToSql()
+	sql, args, err = q.ToSql()
 	if err != nil {
-		return fmt.Errorf("unable to create SQL query: %w", err)
+		return fmt.Errorf("unable to create SQL query for add channel to guild: %w", err)
 	}
-	_, err = e.c.ExecContext(ctx, sql, args...)
+	_, err = tx.ExecContext(ctx, sql, args...)
 	if err != nil {
 		return fmt.Errorf("unable to add channel: %w", err)
 	}
@@ -84,6 +109,19 @@ func (e *Entity) GetGuildByChannel(ctx context.Context, channelID int64) (model.
 }
 
 func (e *Entity) RemoveChannel(ctx context.Context, guildID, channelID int64) error {
+	tx, err := e.c.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			_ = tx.Commit()
+		}
+	}()
+
 	q := squirrel.Delete("guild_channels").
 		PlaceholderFormat(squirrel.Dollar).
 		Where(
@@ -94,9 +132,21 @@ func (e *Entity) RemoveChannel(ctx context.Context, guildID, channelID int64) er
 		)
 	sql, args, err := q.ToSql()
 	if err != nil {
-		return fmt.Errorf("unable to create SQL query: %w", err)
+		return fmt.Errorf("unable to create SQL query to remove guild channel: %w", err)
 	}
-	_, err = e.c.ExecContext(ctx, sql, args...)
+	_, err = tx.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("unable to remove guild channel: %w", err)
+	}
+
+	qch := squirrel.Delete("channels").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"id": channelID})
+	sql, args, err = qch.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query to remove channel: %w", err)
+	}
+	_, err = tx.ExecContext(ctx, sql, args...)
 	if err != nil {
 		return fmt.Errorf("unable to remove channel: %w", err)
 	}
@@ -122,7 +172,7 @@ func (e *Entity) SetGuildChannelPosition(ctx context.Context, updates []model.Gu
 
 	guildID := updates[0].GuildId
 	chIDs := make([]int64, 0, len(updates))
-	positions := make([]int32, 0, len(updates)) // or int
+	positions := make([]int32, 0, len(updates))
 	for _, u := range updates {
 		chIDs = append(chIDs, u.ChannelId)
 		positions = append(positions, int32(u.Position))
@@ -131,7 +181,6 @@ func (e *Entity) SetGuildChannelPosition(ctx context.Context, updates []model.Gu
 	qb := squirrel.
 		Update("guild_channels AS gc").
 		PlaceholderFormat(squirrel.Dollar).
-		// CTE built from array parameters; still fully parameterized
 		Prefix(
 			"WITH v(channel_id, position) AS (SELECT * FROM unnest(?::bigint[], ?::int[]))",
 			pq.Array(chIDs), pq.Array(positions),

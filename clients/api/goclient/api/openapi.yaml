@@ -2832,6 +2832,11 @@ components:
           description: Category channel name
           example: category-name
           type: string
+        position:
+          default: 0
+          description: "Channel position in the list. Should be set as the last position\
+            \ in the channel list, or it will be one of the first in the list."
+          type: integer
         private:
           default: false
           description: Whether the category channel is private. Private channels can
@@ -2847,6 +2852,11 @@ components:
           description: Parent channel ID. A Parent channel can only be a category
             channel.
           example: 2230469276416868352
+          type: integer
+        position:
+          default: 0
+          description: "Channel position in the list. Should be set as the last position\
+            \ in the channel list, or it will be one of the first in the list."
           type: integer
         private:
           default: false
