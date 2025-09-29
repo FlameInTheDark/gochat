@@ -17,8 +17,8 @@ import (
 //	@Summary	Get member roles
 //	@Produce	json
 //	@Tags		Guild Roles
-//	@Param		guild_id	path		int64		true	"Guild ID"
-//	@Param		user_id		path		int64		true	"User ID"
+//	@Param		guild_id	path		int64		true	"Guild ID"	example(2230469276416868352)
+//	@Param		user_id		path		int64		true	"User ID"	example(2230469276416868352)
 //	@Success	200			{array}		dto.Role	"List of user roles"
 //	@failure	400			{string}	string		"Incorrect request body"
 //	@failure	404			{string}	string		"Member not found"
@@ -80,7 +80,7 @@ func (e *entity) GetMemberRoles(c *fiber.Ctx) error {
 //	@Summary	Get guild roles
 //	@Produce	json
 //	@Tags		Guild Roles
-//	@Param		guild_id	path		int64		true	"Guild ID"
+//	@Param		guild_id	path		int64		true	"Guild ID"	example(2230469276416868352)
 //	@Success	200			{array}		dto.Role	"Roles list"
 //	@failure	400			{string}	string		"Incorrect request body"
 //	@failure	401			{string}	string		"Unauthorized"
@@ -116,7 +116,7 @@ func (e *entity) GetGuildRoles(c *fiber.Ctx) error {
 //	@Summary	Create guild role
 //	@Produce	json
 //	@Tags		Guild Roles
-//	@Param		guild_id	path		int64					true	"Guild ID"
+//	@Param		guild_id	path		int64					true	"Guild ID"	example(2230469276416868352)
 //	@Param		req			body		CreateGuildRoleRequest	true	"Role data"
 //	@Success	201			{object}	dto.Role				"Role"
 //	@failure	400			{string}	string					"Incorrect request body"
@@ -166,8 +166,8 @@ func (e *entity) CreateGuildRole(c *fiber.Ctx) error {
 //	@Summary	Update guild role
 //	@Produce	json
 //	@Tags		Guild Roles
-//	@Param		guild_id	path		int64					true	"Guild ID"
-//	@Param		role_id		path		int64					true	"Role ID"
+//	@Param		guild_id	path		int64					true	"Guild ID"	example(2230469276416868352)
+//	@Param		role_id		path		int64					true	"Role ID"	example(2230469276416868352)
 //	@Param		req			body		PatchGuildRoleRequest	true	"Role changes"
 //	@Success	200			{object}	dto.Role				"Role"
 //	@failure	400			{string}	string					"Incorrect request body"
@@ -247,8 +247,8 @@ func (e *entity) PatchGuildRole(c *fiber.Ctx) error {
 //	@Summary	Delete guild role
 //	@Produce	json
 //	@Tags		Guild Roles
-//	@Param		guild_id	path		int64	true	"Guild ID"
-//	@Param		role_id		path		int64	true	"Role ID"
+//	@Param		guild_id	path		int64	true	"Guild ID"	example(2230469276416868352)
+//	@Param		role_id		path		int64	true	"Role ID"	example(2230469276416868352)
 //	@Success	200			{string}	string	"Deleted"
 //	@failure	400			{string}	string	"Incorrect request body"
 //	@failure	401			{string}	string	"Unauthorized"
@@ -302,9 +302,9 @@ func (e *entity) DeleteGuildRole(c *fiber.Ctx) error {
 //	@Summary	Assign role to member
 //	@Produce	json
 //	@Tags		Guild Roles
-//	@Param		guild_id	path		int64	true	"Guild ID"
-//	@Param		user_id		path		int64	true	"User ID"
-//	@Param		role_id		path		int64	true	"Role ID"
+//	@Param		guild_id	path		int64	true	"Guild ID"	example(2230469276416868352)
+//	@Param		user_id		path		int64	true	"User ID"	example(2230469276416868352)
+//	@Param		role_id		path		int64	true	"Role ID"	example(2230469276416868352)
 //	@Success	200			{string}	string	"Ok"
 //	@failure	400			{string}	string	"Bad request"
 //	@failure	401			{string}	string	"Unauthorized"
@@ -371,9 +371,9 @@ func (e *entity) AddMemberRole(c *fiber.Ctx) error {
 //	@Summary	Remove role from member
 //	@Produce	json
 //	@Tags		Guild Roles
-//	@Param		guild_id	path		int64	true	"Guild ID"
-//	@Param		user_id		path		int64	true	"User ID"
-//	@Param		role_id		path		int64	true	"Role ID"
+//	@Param		guild_id	path		int64	true	"Guild ID"	example(2230469276416868352)
+//	@Param		user_id		path		int64	true	"User ID"	example(2230469276416868352)
+//	@Param		role_id		path		int64	true	"Role ID"	example(2230469276416868352)
 //	@Success	200			{string}	string	"Ok"
 //	@failure	400			{string}	string	"Bad request"
 //	@failure	401			{string}	string	"Unauthorized"
@@ -440,8 +440,8 @@ func (e *entity) RemoveMemberRole(c *fiber.Ctx) error {
 //	@Summary	List channel role permissions
 //	@Produce	json
 //	@Tags		Guild Roles
-//	@Param		guild_id	path		int64					true	"Guild ID"
-//	@Param		channel_id	path		int64					true	"Channel ID"
+//	@Param		guild_id	path		int64					true	"Guild ID"		example(2230469276416868352)
+//	@Param		channel_id	path		int64					true	"Channel ID"	example(2230469276416868352)
 //	@Success	200			{array}		ChannelRolePermission	"List of role permissions"
 //	@failure	400			{string}	string					"Incorrect request"
 //	@failure	401			{string}	string					"Unauthorized"
@@ -493,9 +493,9 @@ func (e *entity) GetChannelRolePermissions(c *fiber.Ctx) error {
 //	@Summary	Get channel role permission
 //	@Produce	json
 //	@Tags		Guild Roles
-//	@Param		guild_id	path		int64					true	"Guild ID"
-//	@Param		channel_id	path		int64					true	"Channel ID"
-//	@Param		role_id		path		int64					true	"Role ID"
+//	@Param		guild_id	path		int64					true	"Guild ID"		example(2230469276416868352)
+//	@Param		channel_id	path		int64					true	"Channel ID"	example(2230469276416868352)
+//	@Param		role_id		path		int64					true	"Role ID"		example(2230469276416868352)
 //	@Success	200			{object}	ChannelRolePermission	"Role permission"
 //	@failure	400			{string}	string					"Incorrect request"
 //	@failure	401			{string}	string					"Unauthorized"
@@ -551,9 +551,9 @@ func (e *entity) GetChannelRolePermission(c *fiber.Ctx) error {
 //	@Summary	Set channel role permission (create or replace)
 //	@Produce	json
 //	@Tags		Guild Roles
-//	@Param		guild_id	path		int64							true	"Guild ID"
-//	@Param		channel_id	path		int64							true	"Channel ID"
-//	@Param		role_id		path		int64							true	"Role ID"
+//	@Param		guild_id	path		int64							true	"Guild ID"		example(2230469276416868352)
+//	@Param		channel_id	path		int64							true	"Channel ID"	example(2230469276416868352)
+//	@Param		role_id		path		int64							true	"Role ID"		example(2230469276416868352)
 //	@Param		req			body		ChannelRolePermissionRequest	true	"Permission mask"
 //	@Success	200			{string}	string							"Ok"
 //	@failure	400			{string}	string							"Incorrect request"
@@ -633,9 +633,9 @@ func (e *entity) SetChannelRolePermission(c *fiber.Ctx) error {
 //	@Summary	Update channel role permission
 //	@Produce	json
 //	@Tags		Guild Roles
-//	@Param		guild_id	path		int64							true	"Guild ID"
-//	@Param		channel_id	path		int64							true	"Channel ID"
-//	@Param		role_id		path		int64							true	"Role ID"
+//	@Param		guild_id	path		int64							true	"Guild ID"		example(2230469276416868352)
+//	@Param		channel_id	path		int64							true	"Channel ID"	example(2230469276416868352)
+//	@Param		role_id		path		int64							true	"Role ID"		example(2230469276416868352)
 //	@Param		req			body		ChannelRolePermissionRequest	true	"Permission mask"
 //	@Success	200			{string}	string							"Ok"
 //	@failure	400			{string}	string							"Incorrect request"
@@ -700,9 +700,9 @@ func (e *entity) UpdateChannelRolePermission(c *fiber.Ctx) error {
 //	@Summary	Remove channel role permission
 //	@Produce	json
 //	@Tags		Guild Roles
-//	@Param		guild_id	path		int64	true	"Guild ID"
-//	@Param		channel_id	path		int64	true	"Channel ID"
-//	@Param		role_id		path		int64	true	"Role ID"
+//	@Param		guild_id	path		int64	true	"Guild ID"		example(2230469276416868352)
+//	@Param		channel_id	path		int64	true	"Channel ID"	example(2230469276416868352)
+//	@Param		role_id		path		int64	true	"Role ID"		example(2230469276416868352)
 //	@Success	200			{string}	string	"Ok"
 //	@failure	400			{string}	string	"Incorrect request"
 //	@failure	401			{string}	string	"Unauthorized"

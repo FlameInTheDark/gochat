@@ -177,7 +177,7 @@ func (e *entity) createDefaultChannels(c *fiber.Ctx, guildId int64, isPublic boo
 //	@Summary	Get guild
 //	@Produce	json
 //	@Tags		Guild
-//	@Param		guild_id	path		int64		true	"Guild id"
+//	@Param		guild_id	path		int64		true	"Guild id"	example(2230469276416868352)
 //	@Success	200			{object}	dto.Guild	"Guild"
 //	@failure	400			{string}	string		"Incorrect request body"
 //	@failure	401			{string}	string		"Unauthorized"
@@ -202,7 +202,7 @@ func (e *entity) Get(c *fiber.Ctx) error {
 //	@Summary	Get guild channels
 //	@Produce	json
 //	@Tags		Guild
-//	@Param		guild_id	path		int64		true	"Guild id"
+//	@Param		guild_id	path		int64		true	"Guild id"	example(2230469276416868352)
 //	@Success	200			{array}		dto.Channel	"List of channels"
 //	@failure	400			{string}	string		"Incorrect request body"
 //	@failure	401			{string}	string		"Unauthorized"
@@ -265,8 +265,8 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext, ro
 //	@Summary	Get guild channel
 //	@Produce	json
 //	@Tags		Guild
-//	@Param		guild_id	path		int64		true	"Guild id"
-//	@Param		channel_id	path		int64		true	"Channel id"
+//	@Param		guild_id	path		int64		true	"Guild id"		example(2230469276416868352)
+//	@Param		channel_id	path		int64		true	"Channel id"	example(2230469276416868352)
 //	@Success	200			{object}	dto.Channel	"Channel"
 //	@failure	400			{string}	string		"Incorrect request body"
 //	@failure	401			{string}	string		"Unauthorized"
@@ -415,7 +415,7 @@ func (e *entity) setGuildIconIfProvided(c *fiber.Ctx, guildId int64, iconId *int
 //	@Produce	json
 //	@Tags		Guild
 //	@Param		request		body		UpdateGuildRequest	true	"Update guild data"
-//	@Param		guild_id	path		int64				true	"Guild ID"
+//	@Param		guild_id	path		int64				true	"Guild ID"	example(2230469276416868352)
 //	@Success	200			{object}	dto.Guild			"Guild"
 //	@failure	400			{string}	string				"Incorrect request body"
 //	@failure	401			{string}	string				"Unauthorized"
@@ -490,7 +490,7 @@ func (e *entity) sendGuildUpdateEvent(guildId int64, guild *model.Guild) error {
 //	@Produce	json
 //	@Tags		Guild
 //	@Param		request		body		CreateGuildChannelCategoryRequest	true	"Create category data"
-//	@Param		guild_id	path		int64								true	"Guild ID"
+//	@Param		guild_id	path		int64								true	"Guild ID"	example(2230469276416868352)
 //	@Success	201			{object}	string								"Created"
 //	@failure	400			{string}	string								"Incorrect request body"
 //	@failure	401			{string}	string								"Unauthorized"
@@ -571,7 +571,7 @@ func (e *entity) sendCreateChannelEvent(guildId, guildModelId, channelId int64, 
 //	@Produce	json
 //	@Tags		Guild
 //	@Param		request		body		CreateGuildChannelRequest	true	"Create channel data"
-//	@Param		guild_id	path		int64						true	"Guild ID"
+//	@Param		guild_id	path		int64						true	"Guild ID"	example(2230469276416868352)
 //	@Success	201			{object}	string						"Created"
 //	@failure	400			{string}	string						"Incorrect request body"
 //	@failure	401			{string}	string						"Unauthorized"
@@ -605,8 +605,8 @@ func (e *entity) CreateChannel(c *fiber.Ctx) error {
 //	@Summary	Delete channel
 //	@Produce	json
 //	@Tags		Guild
-//	@Param		guild_id	path		int64	true	"Guild ID"
-//	@Param		channel_id	path		int64	true	"Channel ID"
+//	@Param		guild_id	path		int64	true	"Guild ID"		example(2230469276416868352)
+//	@Param		channel_id	path		int64	true	"Channel ID"	example(2230469276416868352)
 //	@Success	200			{object}	string	"Deleted"
 //	@failure	400			{string}	string	"Incorrect request body"
 //	@failure	401			{string}	string	"Unauthorized"
@@ -667,8 +667,8 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 //	@Summary	Delete channel category
 //	@Produce	json
 //	@Tags		Guild
-//	@Param		guild_id	path		int64	true	"Guild ID"
-//	@Param		category_id	path		int64	true	"Category ID (actually a channel with special type)"
+//	@Param		guild_id	path		int64	true	"Guild ID"												example(2230469276416868352)
+//	@Param		category_id	path		int64	true	"Category ID (actually a channel with special type)"	example(2230469276416868352)
 //	@Success	200			{object}	string	"Deleted"
 //	@failure	400			{string}	string	"Incorrect request body"
 //	@failure	401			{string}	string	"Unauthorized"
@@ -778,7 +778,7 @@ func (e *entity) sendDeleteChannelEvent(guildId int64, channel *model.Channel) e
 //	@Summary	Change channels order
 //	@Produce	json
 //	@Tags		Guild
-//	@Param		guild_id	path		int64							true	"Guild ID"
+//	@Param		guild_id	path		int64							true	"Guild ID"	example(2230469276416868352)
 //	@Param		request		body		PatchGuildChannelOrderRequest	true	"Update channel order data"
 //	@Success	200			{string}	string							"Ok"
 //	@failure	400			{string}	string							"Incorrect request body"
@@ -867,8 +867,8 @@ func (e *entity) PatchChannelOrder(c *fiber.Ctx) error {
 //	@Summary	Change channels data
 //	@Produce	json
 //	@Tags		Guild
-//	@Param		guild_id	path		int64						true	"Guild ID"
-//	@Param		channel_id	path		int64						true	"Channel ID"
+//	@Param		guild_id	path		int64						true	"Guild ID"		example(2230469276416868352)
+//	@Param		channel_id	path		int64						true	"Channel ID"	example(2230469276416868352)
 //	@Param		req			body		PatchGuildChannelRequest	true	"Request body"
 //	@Success	200			{object}	dto.Channel					"Ok"
 //	@failure	400			{string}	string						"Incorrect request body"
@@ -952,7 +952,7 @@ func (e *entity) PatchChannel(c *fiber.Ctx) error {
 //	@Summary	Get guild members
 //	@Produce	json
 //	@Tags		Guild
-//	@Param		guild_id	path		int64		true	"Guild ID"
+//	@Param		guild_id	path		int64		true	"Guild ID"	example(2230469276416868352)
 //	@Success	200			{array}		dto.Member	"Ok"
 //	@failure	400			{string}	string		"Incorrect request body"
 //	@failure	401			{string}	string		"Unauthorized"

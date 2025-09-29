@@ -17,7 +17,7 @@ import (
 //	@Summary	Search messages
 //	@Produce	json
 //	@Tags		Search
-//	@Param		guild_id	path		int64					true	"Channel id"
+//	@Param		guild_id	path		int64					true	"Guild id"	example(2230469276416868352)
 //	@Param		request		body		MessageSearchRequest	true	"Search request data"
 //	@Success	200			{array}		MessageSearchResponse	"Messages"
 //	@failure	400			{string}	string					"Bad request"

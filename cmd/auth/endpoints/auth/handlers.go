@@ -64,10 +64,11 @@ func (e *entity) Login(c *fiber.Ctx) error {
 //	@Summary	Refresh authentication token
 //	@Produce	json
 //	@Tags		Auth
-//	@Success	200	{object}	RefreshTokenResponse
-//	@failure	400	{string}	string	"Incorrect request body"
-//	@failure	401	{string}	string	"Unauthorized"
-//	@failure	500	{string}	string	"Something bad happened"
+//	@Param		Authorization	header		string	true	"Refresh token instead of auth"
+//	@Success	200				{object}	RefreshTokenResponse
+//	@failure	400				{string}	string	"Incorrect request body"
+//	@failure	401				{string}	string	"Unauthorized"
+//	@failure	500				{string}	string	"Something bad happened"
 //	@Router		/auth/refresh [get]
 func (e *entity) RefreshToken(c *fiber.Ctx) error {
 	tu, err := helper.GetUser(c)

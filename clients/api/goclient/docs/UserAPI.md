@@ -220,7 +220,7 @@ import (
 )
 
 func main() {
-	guildId := "guildId_example" // string | Guild id
+	guildId := "2230469276416868352" // string | Guild id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -288,7 +288,7 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild id
+	guildId := int32(2230469276416868352) // int32 | Guild id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)

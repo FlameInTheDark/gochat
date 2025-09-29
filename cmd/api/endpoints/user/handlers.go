@@ -204,7 +204,7 @@ func (e *entity) fetchUserGuilds(c *fiber.Ctx, userId int64) ([]dto.Guild, error
 //	@Summary	Get user guild member
 //	@Produce	json
 //	@Tags		User
-//	@Param		guild_id	path		int64		true	"Guild id"
+//	@Param		guild_id	path		int64		true	"Guild id"	example(2230469276416868352)
 //	@Success	200			{object}	dto.Member	"Guild member"
 //	@failure	400			{string}	string		"Bad request"
 //	@failure	404			{string}	string		"Member not found"
@@ -337,7 +337,7 @@ func (e *entity) fetchGuildMemberData(c *fiber.Ctx, userId, guildId int64) (dto.
 //	@Summary	Leave guild
 //	@Produce	json
 //	@Tags		User
-//	@Param		guild_id	path		string	true	"Guild id"
+//	@Param		guild_id	path		string	true	"Guild id"	example(2230469276416868352)
 //	@Success	200			{string}	string	"ok"
 //	@failure	400			{string}	string	"Bad request"
 //	@failure	404			{string}	string	"Guild not found"

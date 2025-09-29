@@ -207,7 +207,7 @@ No authorization required
 
 ## AuthRefreshGet
 
-> AuthRefreshTokenResponse AuthRefreshGet(ctx).Execute()
+> AuthRefreshTokenResponse AuthRefreshGet(ctx).Authorization(authorization).Execute()
 
 Refresh authentication token
 
@@ -224,10 +224,11 @@ import (
 )
 
 func main() {
+	authorization := "authorization_example" // string | Refresh token instead of auth
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.AuthAPI.AuthRefreshGet(context.Background()).Execute()
+	resp, r, err := apiClient.AuthAPI.AuthRefreshGet(context.Background()).Authorization(authorization).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AuthAPI.AuthRefreshGet``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -239,12 +240,16 @@ func main() {
 
 ### Path Parameters
 
-This endpoint does not need any parameter.
+
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiAuthRefreshGetRequest struct via the builder pattern
 
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **authorization** | **string** | Refresh token instead of auth | 
 
 ### Return type
 

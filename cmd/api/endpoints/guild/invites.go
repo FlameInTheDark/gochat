@@ -53,7 +53,7 @@ func generateInviteCodeFromID(inviteID int64) string {
 //	@Summary	Get invite info by code
 //	@Produce	json
 //	@Tags		Guild Invites
-//	@Param		invite_code	path		string				true	"Invite code"
+//	@Param		invite_code	path		string				true	"Invite code"	example(PWBJ124G)
 //	@Success	200			{object}	dto.InvitePreview	"Invite preview"
 //	@failure	404			{string}	string				"invite not found"
 //	@Router		/guild/invites/receive/{invite_code} [get]
@@ -98,7 +98,7 @@ func (e *entity) ReceiveInvite(c *fiber.Ctx) error {
 //	@Summary	Accept invite and join guild
 //	@Produce	json
 //	@Tags		Guild Invites
-//	@Param		invite_code	path		string		true	"Invite code"
+//	@Param		invite_code	path		string		true	"Invite code"	example(PWBJ124G)
 //	@Success	200			{object}	dto.Guild	"Joined guild"
 //	@failure	404			{string}	string		"invite not found"
 //	@failure	401			{string}	string		"unauthorized"
@@ -168,7 +168,7 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 //	@Summary	List active invites for guild
 //	@Produce	json
 //	@Tags		Guild Invites
-//	@Param		guild_id	path		int64			true	"Guild id"
+//	@Param		guild_id	path		int64			true	"Guild id"	example(2230469276416868352)
 //	@Success	200			{array}		dto.GuildInvite	"List of invites"
 //	@failure	401			{string}	string			"Unauthorized"
 //	@Router		/guild/invites/{guild_id} [get]
@@ -215,8 +215,8 @@ func (e *entity) ListInvites(c *fiber.Ctx) error {
 //	@Summary	Delete an invite by id
 //	@Produce	json
 //	@Tags		Guild Invites
-//	@Param		guild_id	path		int64	true	"Guild id"
-//	@Param		invite_id	path		int64	true	"Invite id"
+//	@Param		guild_id	path		int64	true	"Guild id"	example(2230469276416868352)
+//	@Param		invite_id	path		int64	true	"Invite id"	example(2230469276416868352)
 //	@Success	204			{string}	string	"Deleted"
 //	@failure	404			{string}	string	"invite not found"
 //	@Router		/guild/invites/{guild_id}/{invite_id} [delete]
@@ -255,7 +255,7 @@ func (e *entity) DeleteInvite(c *fiber.Ctx) error {
 //	@Summary	Create a new invite
 //	@Produce	json
 //	@Tags		Guild Invites
-//	@Param		guild_id	path		int64				true	"Guild id"
+//	@Param		guild_id	path		int64				true	"Guild id"	example(2230469276416868352)
 //	@Param		request		body		CreateInviteRequest	true	"Invite options"
 //	@Success	201			{object}	dto.GuildInvite		"Invite"
 //	@failure	401			{string}	string				"Unauthorized"

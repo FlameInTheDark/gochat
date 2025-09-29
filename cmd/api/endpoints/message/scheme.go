@@ -106,6 +106,7 @@ type Direction string
 const (
 	DirectionBefore = Direction("before")
 	DirectionAfter  = Direction("after")
+	DirectionAround = Direction("around")
 )
 
 const (
@@ -113,9 +114,9 @@ const (
 )
 
 type GetMessagesRequest struct {
-	From      *int64     `query:"from" json:"from" example:"2230469276416868352"`                   // ID of the message whe start to look from
-	Limit     *int       `query:"limit" json:"limit" example:"30"`                                  // Number of messages to return.
-	Direction *Direction `query:"direction" json:"direction" enums:"before,after" example:"before"` // Direction to look for messages
+	From      *int64     `query:"from" json:"from" example:"2230469276416868352"`                          // ID of the message whe start to look from
+	Limit     *int       `query:"limit" json:"limit" example:"30"`                                         // Number of messages to return.
+	Direction *Direction `query:"direction" json:"direction" enums:"before,after,around" example:"before"` // Direction to look for messages
 }
 
 func (r GetMessagesRequest) Validate() error {
@@ -131,7 +132,7 @@ func (r GetMessagesRequest) Validate() error {
 		),
 		validation.Field(&r.Direction,
 			validation.When(r.Direction != nil,
-				validation.In(DirectionBefore, DirectionAfter).Error(ErrDirectionInvalid),
+				validation.In(DirectionBefore, DirectionAfter, DirectionAround).Error(ErrDirectionInvalid),
 			),
 		),
 	)

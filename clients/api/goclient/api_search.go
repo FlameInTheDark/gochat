@@ -44,7 +44,7 @@ func (r ApiSearchGuildIdMessagesPostRequest) Execute() ([]SearchMessageSearchRes
 SearchGuildIdMessagesPost Search messages
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param guildId Channel id
+	@param guildId Guild id
 	@return ApiSearchGuildIdMessagesPostRequest
 */
 func (a *SearchAPIService) SearchGuildIdMessagesPost(ctx context.Context, guildId int32) ApiSearchGuildIdMessagesPostRequest {

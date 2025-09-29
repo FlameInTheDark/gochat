@@ -17,7 +17,7 @@ const (
 	deleteChannelMessages = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket IN ?`
 	getMessage            = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE id = ? AND channel_id = ? AND bucket = ?`
 	getMessagesBefore     = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND id <= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
-	getMessagesAfter      = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND id >= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
+	getMessagesAfter      = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND id >= ? AND bucket = ? ORDER BY id LIMIT ?`
 	getMessagesList       = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE id IN ?`
 	getMessagesByIds      = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id IN ?;
 `
@@ -152,7 +152,7 @@ func (e *Entity) GetMessagesAfter(ctx context.Context, channelId, msgId, lastCha
 		if len(msgs) == limit || lastBucket >= endBucket {
 			break
 		} else {
-			lastBucket = lastBucket - 1
+			lastBucket = lastBucket + 1
 		}
 	}
 	var uids []int64
@@ -160,6 +160,28 @@ func (e *Entity) GetMessagesAfter(ctx context.Context, channelId, msgId, lastCha
 		uids = append(uids, id)
 	}
 	return msgs, uids, nil
+}
+
+func (e *Entity) GetMessagesAround(ctx context.Context, channelId, msgId, lastChannelMessage int64, limit int) ([]model.Message, []int64, error) {
+	beforemsgs, beforeuids, err := e.GetMessagesBefore(ctx, channelId, msgId, limit/2)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	aftermsgs, afteruids, err := e.GetMessagesAfter(ctx, channelId, msgId, lastChannelMessage, limit/2)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var msgs []model.Message
+
+	if len(aftermsgs) > 1 {
+		msgs = append(beforemsgs, aftermsgs[1:]...)
+	} else {
+		msgs = beforemsgs
+	}
+
+	return msgs, append(beforeuids, afteruids...), nil
 }
 
 func (e *Entity) GetMessagesList(ctx context.Context, msgIds []int64) ([]model.Message, error) {

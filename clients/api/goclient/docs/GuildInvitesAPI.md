@@ -31,7 +31,7 @@ import (
 )
 
 func main() {
-	inviteCode := "inviteCode_example" // string | Invite code
+	inviteCode := "PWBJ124G" // string | Invite code
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -99,7 +99,7 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild id
+	guildId := int32(2230469276416868352) // int32 | Guild id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -167,8 +167,8 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild id
-	inviteId := int32(56) // int32 | Invite id
+	guildId := int32(2230469276416868352) // int32 | Guild id
+	inviteId := int32(2230469276416868352) // int32 | Invite id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -238,7 +238,7 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild id
+	guildId := int32(2230469276416868352) // int32 | Guild id
 	guildCreateInviteRequest := *openapiclient.NewGuildCreateInviteRequest() // GuildCreateInviteRequest | Invite options
 
 	configuration := openapiclient.NewConfiguration()
@@ -308,7 +308,7 @@ import (
 )
 
 func main() {
-	inviteCode := "inviteCode_example" // string | Invite code
+	inviteCode := "PWBJ124G" // string | Invite code
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)

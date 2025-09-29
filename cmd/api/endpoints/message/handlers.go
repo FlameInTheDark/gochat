@@ -304,10 +304,10 @@ func (e *entity) sendMessageEvents(channelId int64, guildId *int64, message dto.
 //	@Summary	Get messages
 //	@Produce	json
 //	@Tags		Message
-//	@Param		channel_id	path		int64		true	"Channel id"
-//	@Param		from		query		int64		false	"Start point for messages"
-//	@Param		direction	query		string		false	"Select direction"
-//	@Param		limit		query		int			false	"Message count limit"
+//	@Param		channel_id	path		int64		true	"Channel id"				example(2230469276416868352)
+//	@Param		from		query		int64		false	"Start point for messages"	example(2230469276416868352)
+//	@Param		direction	query		string		false	"Select direction"			Enums(before, after, around)	example(before)
+//	@Param		limit		query		int			false	"Message count limit"		example(30)
 //	@Success	200			{array}		dto.Message	"Messages"
 //	@failure	400			{string}	string		"Bad request"
 //	@failure	403			{string}	string		"Forbidden"
@@ -465,6 +465,11 @@ func (e *entity) fetchRawMessages(c *fiber.Ctx, req *GetMessagesRequest, channel
 			return nil, nil, fiber.NewError(fiber.StatusBadRequest, "from parameter required for after direction")
 		}
 		rawMessages, userIds, err = e.msg.GetMessagesAfter(c.UserContext(), channel.Id, *req.From, channel.LastMessage, *req.Limit)
+	case DirectionAround:
+		if req.From == nil {
+			return nil, nil, fiber.NewError(fiber.StatusBadRequest, "from parameter required for around direction")
+		}
+		rawMessages, userIds, err = e.msg.GetMessagesAround(c.UserContext(), channel.Id, *req.From, channel.LastMessage, *req.Limit)
 	}
 
 	if err != nil {

@@ -22,18 +22,6 @@ func Test_goclient_UserAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
-	t.Run("Test UserAPIService MePatch", func(t *testing.T) {
-
-		t.Skip("skip test") // remove to run test
-
-		resp, httpRes, err := apiClient.UserAPI.MePatch(context.Background()).Execute()
-
-		require.Nil(t, err)
-		require.NotNil(t, resp)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
 	t.Run("Test UserAPIService UserMeChannelsGroupPost", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
@@ -91,6 +79,18 @@ func Test_goclient_UserAPIService(t *testing.T) {
 		var guildId int32
 
 		resp, httpRes, err := apiClient.UserAPI.UserMeGuildsGuildIdMemberGet(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test UserAPIService UserMePatch", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		resp, httpRes, err := apiClient.UserAPI.UserMePatch(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)

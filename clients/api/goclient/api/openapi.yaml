@@ -153,6 +153,15 @@ paths:
       - Auth
   /auth/refresh:
     get:
+      parameters:
+      - description: Refresh token instead of auth
+        explode: false
+        in: header
+        name: Authorization
+        required: true
+        schema:
+          type: string
+        style: simple
       responses:
         "200":
           content:
@@ -302,6 +311,7 @@ paths:
     post:
       parameters:
       - description: Invite code
+        example: PWBJ124G
         explode: false
         in: path
         name: invite_code
@@ -335,6 +345,7 @@ paths:
     get:
       parameters:
       - description: Invite code
+        example: PWBJ124G
         explode: false
         in: path
         name: invite_code
@@ -362,6 +373,7 @@ paths:
     get:
       parameters:
       - description: Guild id
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -390,6 +402,7 @@ paths:
     post:
       parameters:
       - description: Guild id
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -424,6 +437,7 @@ paths:
     delete:
       parameters:
       - description: Guild id
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -432,6 +446,7 @@ paths:
           type: integer
         style: simple
       - description: Invite id
+        example: 2230469276416868352
         explode: false
         in: path
         name: invite_id
@@ -459,6 +474,7 @@ paths:
     get:
       parameters:
       - description: Guild id
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -497,6 +513,7 @@ paths:
     patch:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -543,6 +560,7 @@ paths:
     post:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -589,6 +607,7 @@ paths:
     delete:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -597,6 +616,7 @@ paths:
           type: integer
         style: simple
       - description: Category ID (actually a channel with special type)
+        example: 2230469276416868352
         explode: false
         in: path
         name: category_id
@@ -636,6 +656,7 @@ paths:
     get:
       parameters:
       - description: Guild id
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -676,6 +697,7 @@ paths:
     post:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -722,6 +744,7 @@ paths:
     patch:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -780,6 +803,7 @@ paths:
     delete:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -788,6 +812,7 @@ paths:
           type: integer
         style: simple
       - description: Channel ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: channel_id
@@ -826,6 +851,7 @@ paths:
     get:
       parameters:
       - description: Guild id
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -834,6 +860,7 @@ paths:
           type: integer
         style: simple
       - description: Channel id
+        example: 2230469276416868352
         explode: false
         in: path
         name: channel_id
@@ -872,6 +899,7 @@ paths:
     patch:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -880,6 +908,7 @@ paths:
           type: integer
         style: simple
       - description: Channel ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: channel_id
@@ -938,6 +967,7 @@ paths:
     get:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -946,6 +976,7 @@ paths:
           type: integer
         style: simple
       - description: Channel ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: channel_id
@@ -993,6 +1024,7 @@ paths:
     delete:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -1001,6 +1033,7 @@ paths:
           type: integer
         style: simple
       - description: Channel ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: channel_id
@@ -1009,6 +1042,7 @@ paths:
           type: integer
         style: simple
       - description: Role ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: role_id
@@ -1059,6 +1093,7 @@ paths:
     get:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -1067,6 +1102,7 @@ paths:
           type: integer
         style: simple
       - description: Channel ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: channel_id
@@ -1075,6 +1111,7 @@ paths:
           type: integer
         style: simple
       - description: Role ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: role_id
@@ -1125,6 +1162,7 @@ paths:
     patch:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -1133,6 +1171,7 @@ paths:
           type: integer
         style: simple
       - description: Channel ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: channel_id
@@ -1141,6 +1180,7 @@ paths:
           type: integer
         style: simple
       - description: Role ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: role_id
@@ -1198,6 +1238,7 @@ paths:
     put:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -1206,6 +1247,7 @@ paths:
           type: integer
         style: simple
       - description: Channel ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: channel_id
@@ -1214,6 +1256,7 @@ paths:
           type: integer
         style: simple
       - description: Role ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: role_id
@@ -1272,6 +1315,7 @@ paths:
     get:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -1280,6 +1324,7 @@ paths:
           type: integer
         style: simple
       - description: User ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: user_id
@@ -1327,6 +1372,7 @@ paths:
     delete:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -1335,6 +1381,7 @@ paths:
           type: integer
         style: simple
       - description: User ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: user_id
@@ -1343,6 +1390,7 @@ paths:
           type: integer
         style: simple
       - description: Role ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: role_id
@@ -1393,6 +1441,7 @@ paths:
     put:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -1401,6 +1450,7 @@ paths:
           type: integer
         style: simple
       - description: User ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: user_id
@@ -1409,6 +1459,7 @@ paths:
           type: integer
         style: simple
       - description: Role ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: role_id
@@ -1460,6 +1511,7 @@ paths:
     get:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -1501,6 +1553,7 @@ paths:
     get:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -1541,6 +1594,7 @@ paths:
     post:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -1593,6 +1647,7 @@ paths:
     delete:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -1601,6 +1656,7 @@ paths:
           type: integer
         style: simple
       - description: Role ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: role_id
@@ -1651,6 +1707,7 @@ paths:
     patch:
       parameters:
       - description: Guild ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -1659,6 +1716,7 @@ paths:
           type: integer
         style: simple
       - description: Role ID
+        example: 2230469276416868352
         explode: false
         in: path
         name: role_id
@@ -1717,6 +1775,7 @@ paths:
     get:
       parameters:
       - description: Channel id
+        example: 2230469276416868352
         explode: false
         in: path
         name: channel_id
@@ -1725,6 +1784,7 @@ paths:
           type: integer
         style: simple
       - description: Start point for messages
+        example: 2230469276416868352
         explode: true
         in: query
         name: from
@@ -1733,14 +1793,20 @@ paths:
           type: integer
         style: form
       - description: Select direction
+        example: before
         explode: true
         in: query
         name: direction
         required: false
         schema:
+          enum:
+          - before
+          - after
+          - around
           type: string
         style: form
       - description: Message count limit
+        example: 30
         explode: true
         in: query
         name: limit
@@ -2002,7 +2068,8 @@ paths:
   /search/{guild_id}/messages:
     post:
       parameters:
-      - description: Channel id
+      - description: Guild id
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
@@ -2206,6 +2273,7 @@ paths:
     delete:
       parameters:
       - description: Guild id
+        example: "2230469276416868352"
         explode: false
         in: path
         name: guild_id
@@ -2251,6 +2319,7 @@ paths:
     get:
       parameters:
       - description: Guild id
+        example: 2230469276416868352
         explode: false
         in: path
         name: guild_id
