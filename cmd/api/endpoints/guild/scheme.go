@@ -46,6 +46,8 @@ const (
 	ErrUnableToSetParentAsSelf         = "unable to set parent as self"
 	ErrUnableToSetParentForCategory    = "unable to set parent for category"
 	ErrNotAMember                      = "not a member"
+	ErrUnableToGetReadState            = "unable to get read state"
+	ErrUnableToSetReadState            = "unable to set read state"
 	// Channel role permissions
 	ErrUnableToGetChannelRolePerms = "unable to get channel role permissions"
 	ErrUnableToSetChannelRolePerm  = "unable to set channel role permission"

@@ -3,6 +3,7 @@ package guild
 import (
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
@@ -72,8 +73,9 @@ type entity struct {
 	name string
 
 	// Services
-	log *slog.Logger
-	mqt mq.SendTransporter
+	log   *slog.Logger
+	mqt   mq.SendTransporter
+	cache cache.Cache
 
 	// DB entities
 	user  user.User
@@ -97,11 +99,12 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, cache cache.Cache, log *slog.Logger) server.Entity {
 	return &entity{
 		name:  entityName,
 		log:   log,
 		mqt:   mqt,
+		cache: cache,
 		user:  user.New(pg.Conn()),
 		disc:  discriminator.New(pg.Conn()),
 		ch:    channel.New(pg.Conn()),

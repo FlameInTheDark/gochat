@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/FlameInTheDark/gochat/internal/cache/vkcpiped"
+	"github.com/FlameInTheDark/gochat/internal/cache/kvcpiped"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
@@ -29,6 +29,8 @@ func (s *Server) AuthMiddleware(secret string) {
 			case "/api/v1/auth/registration", "/api/v1/auth/confirmation":
 				return true
 			case "/api/v1/auth/recovery", "/api/v1/auth/reset":
+				return true
+			case "/healthz", "/metrics":
 				return true
 			}
 			return false
@@ -57,6 +59,8 @@ func (s *Server) RateLimitMiddleware(limit, exp int) {
 			case "/api/v1/auth/recovery", "/auth/recovery":
 				return true
 			case "/docs/swagger":
+				return true
+			case "/healthz", "/metrics":
 				return true
 			}
 			return false
@@ -88,7 +92,7 @@ func (s *Server) RateLimitPipedMiddleware(limit, exp int) {
 		PoolSize: 2048,
 	})
 
-	store, err := vkcpiped.NewVKStorage(vkcpiped.VKOptions{
+	store, err := kvcpiped.NewVKStorage(kvcpiped.VKOptions{
 		WriteClient:        write,
 		ReadClient:         read,
 		PipeSize:           16,
@@ -120,7 +124,7 @@ func (s *Server) RateLimitPipedMiddleware(limit, exp int) {
 				"/api/v1/auth/registration", "/auth/registration",
 				"/api/v1/auth/confirmation", "/auth/confirmation",
 				"/api/v1/auth/recovery", "/auth/recovery",
-				"/docs/swagger":
+				"/docs/swagger", "/healthz", "/metrics":
 				return true
 			}
 			return false

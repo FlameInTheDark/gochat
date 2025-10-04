@@ -10,6 +10,8 @@ Method | HTTP request | Description
 [**UserMeGuildsGuildIdDelete**](UserAPI.md#UserMeGuildsGuildIdDelete) | **Delete** /user/me/guilds/{guild_id} | Leave guild
 [**UserMeGuildsGuildIdMemberGet**](UserAPI.md#UserMeGuildsGuildIdMemberGet) | **Get** /user/me/guilds/{guild_id}/member | Get user guild member
 [**UserMePatch**](UserAPI.md#UserMePatch) | **Patch** /user/me | Get user
+[**UserMeSettingsGet**](UserAPI.md#UserMeSettingsGet) | **Get** /user/me/settings | Get current user settings (optional version gating)
+[**UserMeSettingsPost**](UserAPI.md#UserMeSettingsPost) | **Post** /user/me/settings | Update current user settings (replaces and bumps version)
 [**UserUserIdGet**](UserAPI.md#UserUserIdGet) | **Get** /user/{user_id} | Get user
 
 
@@ -382,6 +384,134 @@ Other parameters are passed through a pointer to a apiUserMePatchRequest struct 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **userModifyUserRequest** | [**UserModifyUserRequest**](UserModifyUserRequest.md) | Modify user data | 
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeSettingsGet
+
+> UserUserSettingsResponse UserMeSettingsGet(ctx).Version(version).Execute()
+
+Get current user settings (optional version gating)
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	version := int32(56) // int32 | Client known version (optional)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeSettingsGet(context.Background()).Version(version).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeSettingsGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeSettingsGet`: UserUserSettingsResponse
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeSettingsGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeSettingsGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **version** | **int32** | Client known version | 
+
+### Return type
+
+[**UserUserSettingsResponse**](UserUserSettingsResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeSettingsPost
+
+> string UserMeSettingsPost(ctx).ModelUserSettingsData(modelUserSettingsData).Execute()
+
+Update current user settings (replaces and bumps version)
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	modelUserSettingsData := *openapiclient.NewModelUserSettingsData() // ModelUserSettingsData | User settings
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeSettingsPost(context.Background()).ModelUserSettingsData(modelUserSettingsData).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeSettingsPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeSettingsPost`: string
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeSettingsPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeSettingsPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **modelUserSettingsData** | [**ModelUserSettingsData**](ModelUserSettingsData.md) | User settings | 
 
 ### Return type
 

@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
 const (
@@ -93,6 +94,7 @@ func (r RegisterRequest) Validate() error {
 		validation.Field(&r.Email,
 			validation.Required.Error(ErrEmailRequired),
 			validation.Match(emailRegex).Error(ErrEmailInvalidFormat),
+			is.Email,
 		),
 	)
 }

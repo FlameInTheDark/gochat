@@ -1,8 +1,10 @@
 package guild
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
@@ -219,16 +221,17 @@ func (e *entity) GetChannels(c *fiber.Ctx) error {
 		return err
 	}
 
-	roles, err := e.getUserRoles(c, guildCtx.Guild.Id, guildCtx.User.Id)
-	if err != nil {
-		return err
-	}
-
-	return e.fetchAndFilterChannels(c, guildCtx, roles)
+	return e.fetchAndFilterChannels(c, guildCtx)
 }
 
 // fetchAndFilterChannels retrieves guild channels and filters based on permissions
-func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext, roles map[int64]*model.Role) error {
+func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) error {
+	var cachedChannels []dto.Channel
+	err := e.cache.GetJSON(c.UserContext(), fmt.Sprintf("guild:%d:channels", guildCtx.Guild.Id), cachedChannels)
+	if err == nil {
+		return c.JSON(cachedChannels)
+	}
+
 	guildChannels, err := e.gc.GetGuildChannels(c.UserContext(), guildCtx.Guild.Id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
@@ -249,15 +252,25 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext, ro
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	var visibleChannels = make([]dto.Channel, len(channels))
+	var channelsData = make([]dto.Channel, len(channels))
 	for i, ch := range channels {
 		if ch.Permissions == nil {
 			ch.Permissions = &guildCtx.Guild.Permissions
 		}
-		visibleChannels[i] = channelModelToDTO(&ch, &guildCtx.Guild.Id, guildChannels[i].Position, croles[i].Roles)
+		channelsData[i] = channelModelToDTO(&ch, &guildCtx.Guild.Id, guildChannels[i].Position, croles[i].Roles)
 	}
 
-	return c.JSON(visibleChannels)
+	go func() {
+		if err := e.cache.SetTimedJSON(
+			context.Background(),
+			fmt.Sprintf("guild:%d:channels", guildCtx.Guild.Id),
+			channelsData,
+			3600); err != nil {
+			slog.Error("unable to set cached response for guild channels list", slog.String("error", err.Error()))
+		}
+	}()
+
+	return c.JSON(channelsData)
 }
 
 // GetChannel
@@ -537,10 +550,15 @@ func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId 
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
 	}
 
-	// Send create channel event
-	if err := e.sendCreateChannelEvent(guildId, guild.Id, channelId, name, channelType, parentId); err != nil {
-		return err
-	}
+	// Send create channel event and clean cached data
+	go func() {
+		if err := e.sendCreateChannelEvent(guildId, guild.Id, channelId, name, channelType, parentId); err != nil {
+			slog.Error("unable to send create channel event", slog.String("error", err.Error()))
+		}
+		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
+			slog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
+		}
+	}()
 
 	return c.SendStatus(fiber.StatusCreated)
 }
@@ -654,10 +672,15 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 		}
 	}
 
-	// Send delete channel event
-	if err := e.sendDeleteChannelEvent(guildId, channel); err != nil {
-		return err
-	}
+	// Send delete channel event and clean cached value
+	go func() {
+		if err := e.sendDeleteChannelEvent(guildId, channel); err != nil {
+			slog.Error("unable to send guild event after channel deletion", slog.String("error", err.Error()))
+		}
+		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
+			slog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
+		}
+	}()
 
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -714,10 +737,15 @@ func (e *entity) deleteCategoryWithPermissionCheck(c *fiber.Ctx, guildId, catego
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	// Send delete channel event
-	if err := e.sendDeleteChannelEvent(guildId, channel); err != nil {
-		return err
-	}
+	// Send delete channel event and clean cached data
+	go func() {
+		if err := e.sendDeleteChannelEvent(guildId, channel); err != nil {
+			slog.Error("unable to send guild event after channel deletion", slog.String("error", err.Error()))
+		}
+		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
+			slog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
+		}
+	}()
 
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -851,13 +879,18 @@ func (e *entity) PatchChannelOrder(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	// Notify clients about the new order
-	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateChannelList{
-		GuildId:  &guildId,
-		Channels: evt,
-	}); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
-	}
+	// Notify clients about the new order and clean cached data
+	go func() {
+		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateChannelList{
+			GuildId:  &guildId,
+			Channels: evt,
+		}); err != nil {
+			slog.Error("unable to send guild update event after channel reorder", slog.String("error", err.Error()))
+		}
+		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
+			slog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
+		}
+	}()
 
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -936,13 +969,18 @@ func (e *entity) PatchChannel(c *fiber.Ctx) error {
 
 	resp := channelModelToDTO(&upd, &guildId, guildChannel.Position, nil)
 
-	// Notify clients about the channel update
-	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateChannel{
-		GuildId: &guildId,
-		Channel: resp,
-	}); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
-	}
+	// Notify clients about the channel update and clean cached data
+	go func() {
+		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateChannel{
+			GuildId: &guildId,
+			Channel: resp,
+		}); err != nil {
+			slog.Error("unable to send guild update event after channel update", slog.String("error", err.Error()))
+		}
+		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
+			slog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
+		}
+	}()
 
 	return c.JSON(resp)
 }

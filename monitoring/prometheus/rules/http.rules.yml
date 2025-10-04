@@ -1,0 +1,30 @@
+groups:
+  - name: gochat_http
+    interval: 30s
+    rules:
+      - record: gochat:http_requests_per_second:job
+        expr: sum by (job) (rate(gochat_http_requests_total[1m]))
+
+      - record: gochat:http_request_duration_seconds:avg:job
+        expr: |
+          sum by (job) (rate(gochat_http_request_duration_seconds_sum[5m]))
+          /
+          sum by (job) (rate(gochat_http_request_duration_seconds_count[5m]))
+
+      - record: gochat:http_requests_per_second
+        expr: sum(rate(gochat_http_requests_total[1m]))
+
+      - record: gochat:http_request_duration_seconds:avg
+        expr: |
+          sum(rate(gochat_http_request_duration_seconds_sum[5m]))
+          /
+          sum(rate(gochat_http_request_duration_seconds_count[5m]))
+
+      - record: gochat:http_requests_per_second:service_route
+        expr: sum by (service, route) (rate(gochat_http_requests_total[1m]))
+
+      - record: gochat:http_request_duration_seconds:avg:service_route
+        expr: |
+          sum by (service, route) (rate(gochat_http_request_duration_seconds_sum[5m]))
+          /
+          sum by (service, route) (rate(gochat_http_request_duration_seconds_count[5m]))

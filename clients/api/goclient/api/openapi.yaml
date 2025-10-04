@@ -2355,6 +2355,75 @@ paths:
       summary: Get user guild member
       tags:
       - User
+  /user/me/settings:
+    get:
+      parameters:
+      - description: Client known version
+        explode: true
+        in: query
+        name: version
+        required: false
+        schema:
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user.UserSettingsResponse'
+          description: User settings and version
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No changes
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Get current user settings (optional version gating)
+      tags:
+      - User
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/model.UserSettingsData'
+        description: User settings
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Update current user settings (replaces and bumps version)
+      tags:
+      - User
   /user/{user_id}:
     get:
       parameters:
@@ -3107,6 +3176,183 @@ components:
       - ChannelTypeDM
       - ChannelTypeGroupDM
       - ChannelTypeThread
+    model.GuildChannelReadState:
+      example:
+        last_read_message_id: 2
+        channel_id: 3
+        scroll_position: 4
+      properties:
+        channel_id:
+          type: integer
+        last_read_message_id:
+          type: integer
+        scroll_position:
+          type: integer
+    model.NotificationsType:
+      type: integer
+      x-enum-varnames:
+      - NotificationsAll
+      - NotificationsMentions
+      - NotificationsNone
+    model.UserSettingsAppearance:
+      example:
+        chat_font_scale: 0
+        color_scheme: color_scheme
+        chat_spacing: 6
+      properties:
+        chat_font_scale:
+          type: integer
+        chat_spacing:
+          type: integer
+        color_scheme:
+          type: string
+    model.UserSettingsData:
+      example:
+        favorite_gifs:
+        - favorite_gifs
+        - favorite_gifs
+        appearance:
+          chat_font_scale: 0
+          color_scheme: color_scheme
+          chat_spacing: 6
+        selected_guild: 1
+        guilds:
+        - selected_channel: 7
+          guild_id: 2
+          read_states:
+          - last_read_message_id: 2
+            channel_id: 3
+            scroll_position: 4
+          - last_read_message_id: 2
+            channel_id: 3
+            scroll_position: 4
+          position: 9
+          notifications:
+            roles: true
+            global: true
+            muted: true
+            notifications: 7
+        - selected_channel: 7
+          guild_id: 2
+          read_states:
+          - last_read_message_id: 2
+            channel_id: 3
+            scroll_position: 4
+          - last_read_message_id: 2
+            channel_id: 3
+            scroll_position: 4
+          position: 9
+          notifications:
+            roles: true
+            global: true
+            muted: true
+            notifications: 7
+        language: language
+        guild_folders:
+        - color: 1
+          guilds:
+          - 5
+          - 5
+          name: name
+          position: 5
+        - color: 1
+          guilds:
+          - 5
+          - 5
+          name: name
+          position: 5
+      properties:
+        appearance:
+          $ref: '#/components/schemas/model.UserSettingsAppearance'
+        favorite_gifs:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        guild_folders:
+          items:
+            $ref: '#/components/schemas/model.UserSettingsGuildFolders'
+          type: array
+          uniqueItems: false
+        guilds:
+          items:
+            $ref: '#/components/schemas/model.UserSettingsGuilds'
+          type: array
+          uniqueItems: false
+        language:
+          type: string
+        selected_guild:
+          type: integer
+    model.UserSettingsGuildFolders:
+      example:
+        color: 1
+        guilds:
+        - 5
+        - 5
+        name: name
+        position: 5
+      properties:
+        color:
+          type: integer
+        guilds:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        name:
+          type: string
+        position:
+          type: integer
+    model.UserSettingsGuilds:
+      example:
+        selected_channel: 7
+        guild_id: 2
+        read_states:
+        - last_read_message_id: 2
+          channel_id: 3
+          scroll_position: 4
+        - last_read_message_id: 2
+          channel_id: 3
+          scroll_position: 4
+        position: 9
+        notifications:
+          roles: true
+          global: true
+          muted: true
+          notifications: 7
+      properties:
+        guild_id:
+          type: integer
+        notifications:
+          $ref: '#/components/schemas/model.UserSettingsNotifications'
+        position:
+          type: integer
+        read_states:
+          items:
+            $ref: '#/components/schemas/model.GuildChannelReadState'
+          type: array
+          uniqueItems: false
+        selected_channel:
+          type: integer
+    model.UserSettingsNotifications:
+      example:
+        roles: true
+        global: true
+        muted: true
+        notifications: 7
+      properties:
+        global:
+          type: boolean
+        muted:
+          type: boolean
+        notifications:
+          type: integer
+          x-enum-varnames:
+          - NotificationsAll
+          - NotificationsMentions
+          - NotificationsNone
+        roles:
+          type: boolean
     search.MessageSearchRequest:
       properties:
         author_id:
@@ -3226,6 +3472,68 @@ components:
           description: User name.
           example: NewFancyName
           type: string
+    user.UserSettingsResponse:
+      example:
+        settings:
+          favorite_gifs:
+          - favorite_gifs
+          - favorite_gifs
+          appearance:
+            chat_font_scale: 0
+            color_scheme: color_scheme
+            chat_spacing: 6
+          selected_guild: 1
+          guilds:
+          - selected_channel: 7
+            guild_id: 2
+            read_states:
+            - last_read_message_id: 2
+              channel_id: 3
+              scroll_position: 4
+            - last_read_message_id: 2
+              channel_id: 3
+              scroll_position: 4
+            position: 9
+            notifications:
+              roles: true
+              global: true
+              muted: true
+              notifications: 7
+          - selected_channel: 7
+            guild_id: 2
+            read_states:
+            - last_read_message_id: 2
+              channel_id: 3
+              scroll_position: 4
+            - last_read_message_id: 2
+              channel_id: 3
+              scroll_position: 4
+            position: 9
+            notifications:
+              roles: true
+              global: true
+              muted: true
+              notifications: 7
+          language: language
+          guild_folders:
+          - color: 1
+            guilds:
+            - 5
+            - 5
+            name: name
+            position: 5
+          - color: 1
+            guilds:
+            - 5
+            - 5
+            name: name
+            position: 5
+        version: 1
+      properties:
+        settings:
+          $ref: '#/components/schemas/model.UserSettingsData'
+        version:
+          type: integer
     webhook.S3Bucket:
       properties:
         arn:

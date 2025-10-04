@@ -14,5 +14,6 @@ type Cache interface {
 	Incr(ctx context.Context, key string) (int64, error)
 	GetInt64(ctx context.Context, key string) (int64, error)
 	SetJSON(ctx context.Context, key string, val interface{}) error
+	SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64) error
 	GetJSON(ctx context.Context, key string, v interface{}) error
 }

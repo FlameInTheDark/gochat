@@ -1,8 +1,11 @@
 package guild
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"log/slog"
 
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
@@ -104,11 +107,26 @@ func (e *entity) GetGuildRoles(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
 	}
 
+	var cachedRoles []dto.Role
+	if err := e.cache.GetJSON(c.UserContext(), fmt.Sprintf("guild:%d:roles", guildId), cachedRoles); err == nil {
+		return c.JSON(cachedRoles)
+	}
+
 	roles, err := e.role.GetGuildRoles(c.UserContext(), guildId)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
-	return c.JSON(roleModelToDTOMany(roles))
+	rolesData := roleModelToDTOMany(roles)
+	go func() {
+		if err := e.cache.SetTimedJSON(
+			context.Background(),
+			fmt.Sprintf("guild:%d:roles", guildId),
+			rolesData,
+			3600); err != nil {
+			slog.Error("unable to cache guild roles", slog.String("error", err.Error()))
+		}
+	}()
+	return c.JSON(rolesData)
 }
 
 // CreateGuildRole
@@ -157,7 +175,15 @@ func (e *entity) CreateGuildRole(c *fiber.Ctx) error {
 	}
 
 	created := dto.Role{Id: roleId, GuildId: guildId, Name: req.Name, Color: req.Color, Permissions: req.Permissions}
-	go e.mqt.SendGuildUpdate(guildId, &mqmsg.CreateGuildRole{Role: created})
+	go func() {
+		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.CreateGuildRole{Role: created}); err != nil {
+			slog.Error("unable to send guild update after role creation", slog.String("error", err.Error()))
+		}
+		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:roles", guildId)); err != nil {
+			slog.Error("unable to delete guild roles cache", slog.String("error", err.Error()))
+		}
+	}()
+
 	return c.Status(fiber.StatusCreated).JSON(created)
 }
 
@@ -237,7 +263,14 @@ func (e *entity) PatchGuildRole(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
 	role := roleModelToDTO(ur)
-	go e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateGuildRole{GuildId: guildId, Role: role})
+	go func() {
+		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateGuildRole{GuildId: guildId, Role: role}); err != nil {
+			slog.Error("unable to send guild event after role update", slog.String("error", err.Error()))
+		}
+		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:roles", guildId)); err != nil {
+			slog.Error("unable to delete guild roles cache", slog.String("error", err.Error()))
+		}
+	}()
 
 	return c.JSON(role)
 }
@@ -294,6 +327,14 @@ func (e *entity) DeleteGuildRole(c *fiber.Ctx) error {
 	if err := e.role.RemoveRole(c.UserContext(), roleId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
+	go func() {
+		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.DeleteGuildRole{GuildId: guildId, RoleId: roleId}); err != nil {
+			slog.Error("unable to send guild event after role deletion", slog.String("error", err.Error()))
+		}
+		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:roles", guildId)); err != nil {
+			slog.Error("unable to delete guild roles cache", slog.String("error", err.Error()))
+		}
+	}()
 	return c.SendStatus(fiber.StatusOK)
 }
 
