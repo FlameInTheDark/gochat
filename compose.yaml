@@ -201,10 +201,34 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules
       - prometheus-data:/prometheus
     restart: always
     ports:
       - "9090:9090"
+
+  postgres-exporter-master:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:postgres@citus-master:5432/gochat?sslmode=disable
+      - PG_EXPORTER_EXTEND_QUERY_PATH=/etc/postgres_exporter/queries.yml
+      - PG_EXPORTER_AUTO_DISCOVER_DATABASES=false
+      - PG_EXPORTER_EXCLUDE_DATABASES=postgres,template0,template1
+    depends_on:
+      citus-master:
+        condition: service_started
+      citus-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./monitoring/postgres-exporter/queries-citus.yml:/etc/postgres_exporter/queries.yml:ro
+
+  postgres-exporter-worker:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:postgres@citus-worker:5432/postgres?sslmode=disable
+      - PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
+    depends_on:
+      - citus-worker
 
   loki:
     image: grafana/loki:latest
@@ -224,6 +248,9 @@ services:
     restart: always
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
     ports:
       - "3030:3000"
 
@@ -272,6 +299,18 @@ services:
       citus:
         aliases:
           - manager
+
+  citus-init:
+    image: postgres:15-alpine
+    restart: "no"
+    depends_on:
+      citus-master:
+        condition: service_started
+    environment:
+      - PGPASSWORD=${POSTGRES_PASSWORD:-postgres}
+    entrypoint: ["/bin/sh", "-c", "until pg_isready -h citus-master -p 5432 -U ${POSTGRES_USER:-postgres}; do sleep 1; done; psql -h citus-master -U ${POSTGRES_USER:-postgres} -d gochat -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS citus;'" ]
+    networks:
+      - citus
 
 volumes:
   scylla-data:

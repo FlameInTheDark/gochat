@@ -3,6 +3,7 @@ package user
 import (
 	"database/sql"
 	"errors"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -696,4 +697,78 @@ func (e *entity) channelToDTO(channel *model.Channel) dto.Channel {
 		Permissions: channel.Permissions,
 		CreatedAt:   channel.CreatedAt,
 	}
+}
+
+// GetUserSettings
+//
+//	@Summary	Get current user settings (optional version gating)
+//	@Produce	json
+//	@Tags		User
+//	@Param		version	query		int						false	"Client known version"
+//	@Success	200		{object}	UserSettingsResponse	"User settings and version"
+//	@Success	204		{string}	string					"No changes"
+//	@failure	400		{string}	string					"Bad request"
+//	@failure	500		{string}	string					"Internal server error"
+//	@Router		/user/me/settings [get]
+func (e *entity) GetUserSettings(c *fiber.Ctx) error {
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+
+	// Parse optional version filter; default 0
+	var version int64
+	if v := c.Query("version"); v != "" {
+		version, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseVersion)
+		}
+	}
+
+	s, err := e.uset.GetUserSettings(c.UserContext(), user.Id, version)
+	if err != nil {
+		return helper.HttpDbError(err, ErrUnableToGetUserSettings)
+	}
+
+	// No changes or no settings yet
+	if s.UserId == 0 || s.Settings == nil {
+		return c.SendStatus(fiber.StatusNoContent)
+	}
+	settings, err := modelToSettings(&s)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUnmarshalUserSettings)
+	}
+	return c.JSON(settings)
+}
+
+// SetUserSettings
+//
+//	@Summary	Update current user settings (replaces and bumps version)
+//	@Accept		json
+//	@Produce	json
+//	@Tags		User
+//	@Param		request	body		model.UserSettingsData	true	"User settings"
+//	@Success	200		{string}	string					"ok"
+//	@failure	400		{string}	string					"Bad request"
+//	@failure	500		{string}	string					"Internal server error"
+//	@Router		/user/me/settings [post]
+func (e *entity) SetUserSettings(c *fiber.Ctx) error {
+	var req model.UserSettingsData
+	if err := c.BodyParser(&req); err != nil {
+		slog.Error("failed to parse request body", slog.String("error", err.Error()))
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
+	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+
+	if err := e.uset.SetUserSettings(c.UserContext(), user.Id, req); err != nil {
+		return helper.HttpDbError(err, ErrUnableToSetUserSettings)
+	}
+	return c.SendStatus(fiber.StatusOK)
 }

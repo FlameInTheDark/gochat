@@ -126,6 +126,8 @@ Class | Method | HTTP request | Description
 *UserAPI* | [**UserMeGuildsGuildIdDelete**](docs/UserAPI.md#usermeguildsguildiddelete) | **Delete** /user/me/guilds/{guild_id} | Leave guild
 *UserAPI* | [**UserMeGuildsGuildIdMemberGet**](docs/UserAPI.md#usermeguildsguildidmemberget) | **Get** /user/me/guilds/{guild_id}/member | Get user guild member
 *UserAPI* | [**UserMePatch**](docs/UserAPI.md#usermepatch) | **Patch** /user/me | Get user
+*UserAPI* | [**UserMeSettingsGet**](docs/UserAPI.md#usermesettingsget) | **Get** /user/me/settings | Get current user settings (optional version gating)
+*UserAPI* | [**UserMeSettingsPost**](docs/UserAPI.md#usermesettingspost) | **Post** /user/me/settings | Update current user settings (replaces and bumps version)
 *UserAPI* | [**UserUserIdGet**](docs/UserAPI.md#useruseridget) | **Get** /user/{user_id} | Get user
 *WebhookAPI* | [**WebhookStorageEventsPost**](docs/WebhookAPI.md#webhookstorageeventspost) | **Post** /webhook/storage/events | Storage event
 
@@ -164,11 +166,18 @@ Class | Method | HTTP request | Description
  - [MessageSendMessageRequest](docs/MessageSendMessageRequest.md)
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)
  - [MessageUploadAttachmentRequest](docs/MessageUploadAttachmentRequest.md)
+ - [ModelGuildChannelReadState](docs/ModelGuildChannelReadState.md)
+ - [ModelUserSettingsAppearance](docs/ModelUserSettingsAppearance.md)
+ - [ModelUserSettingsData](docs/ModelUserSettingsData.md)
+ - [ModelUserSettingsGuildFolders](docs/ModelUserSettingsGuildFolders.md)
+ - [ModelUserSettingsGuilds](docs/ModelUserSettingsGuilds.md)
+ - [ModelUserSettingsNotifications](docs/ModelUserSettingsNotifications.md)
  - [SearchMessageSearchRequest](docs/SearchMessageSearchRequest.md)
  - [SearchMessageSearchResponse](docs/SearchMessageSearchResponse.md)
  - [UserCreateDMManyRequest](docs/UserCreateDMManyRequest.md)
  - [UserCreateDMRequest](docs/UserCreateDMRequest.md)
  - [UserModifyUserRequest](docs/UserModifyUserRequest.md)
+ - [UserUserSettingsResponse](docs/UserUserSettingsResponse.md)
  - [WebhookS3Bucket](docs/WebhookS3Bucket.md)
  - [WebhookS3Element](docs/WebhookS3Element.md)
  - [WebhookS3Event](docs/WebhookS3Event.md)

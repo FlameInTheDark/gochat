@@ -958,6 +958,198 @@ export interface MessageUploadAttachmentRequest {
 /**
  * 
  * @export
+ * @interface ModelGuildChannelReadState
+ */
+export interface ModelGuildChannelReadState {
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelGuildChannelReadState
+     */
+    'channel_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelGuildChannelReadState
+     */
+    'last_read_message_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelGuildChannelReadState
+     */
+    'scroll_position'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface ModelUserSettingsAppearance
+ */
+export interface ModelUserSettingsAppearance {
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserSettingsAppearance
+     */
+    'chat_font_scale'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserSettingsAppearance
+     */
+    'chat_spacing'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelUserSettingsAppearance
+     */
+    'color_scheme'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ModelUserSettingsData
+ */
+export interface ModelUserSettingsData {
+    /**
+     * 
+     * @type {ModelUserSettingsAppearance}
+     * @memberof ModelUserSettingsData
+     */
+    'appearance'?: ModelUserSettingsAppearance;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof ModelUserSettingsData
+     */
+    'favorite_gifs'?: Array<string>;
+    /**
+     * 
+     * @type {Array<ModelUserSettingsGuildFolders>}
+     * @memberof ModelUserSettingsData
+     */
+    'guild_folders'?: Array<ModelUserSettingsGuildFolders>;
+    /**
+     * 
+     * @type {Array<ModelUserSettingsGuilds>}
+     * @memberof ModelUserSettingsData
+     */
+    'guilds'?: Array<ModelUserSettingsGuilds>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelUserSettingsData
+     */
+    'language'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserSettingsData
+     */
+    'selected_guild'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface ModelUserSettingsGuildFolders
+ */
+export interface ModelUserSettingsGuildFolders {
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserSettingsGuildFolders
+     */
+    'color'?: number;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof ModelUserSettingsGuildFolders
+     */
+    'guilds'?: Array<number>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelUserSettingsGuildFolders
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserSettingsGuildFolders
+     */
+    'position'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface ModelUserSettingsGuilds
+ */
+export interface ModelUserSettingsGuilds {
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserSettingsGuilds
+     */
+    'guild_id'?: number;
+    /**
+     * 
+     * @type {ModelUserSettingsNotifications}
+     * @memberof ModelUserSettingsGuilds
+     */
+    'notifications'?: ModelUserSettingsNotifications;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserSettingsGuilds
+     */
+    'position'?: number;
+    /**
+     * 
+     * @type {Array<ModelGuildChannelReadState>}
+     * @memberof ModelUserSettingsGuilds
+     */
+    'read_states'?: Array<ModelGuildChannelReadState>;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserSettingsGuilds
+     */
+    'selected_channel'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface ModelUserSettingsNotifications
+ */
+export interface ModelUserSettingsNotifications {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelUserSettingsNotifications
+     */
+    'global'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelUserSettingsNotifications
+     */
+    'muted'?: boolean;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserSettingsNotifications
+     */
+    'notifications'?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelUserSettingsNotifications
+     */
+    'roles'?: boolean;
+}
+/**
+ * 
+ * @export
  * @interface SearchMessageSearchRequest
  */
 export interface SearchMessageSearchRequest {
@@ -1077,6 +1269,25 @@ export interface UserModifyUserRequest {
      * @memberof UserModifyUserRequest
      */
     'name'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface UserUserSettingsResponse
+ */
+export interface UserUserSettingsResponse {
+    /**
+     * 
+     * @type {ModelUserSettingsData}
+     * @memberof UserUserSettingsResponse
+     */
+    'settings'?: ModelUserSettingsData;
+    /**
+     * 
+     * @type {number}
+     * @memberof UserUserSettingsResponse
+     */
+    'version'?: number;
 }
 /**
  * 
@@ -6176,6 +6387,77 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         },
         /**
          * 
+         * @summary Get current user settings (optional version gating)
+         * @param {number} [version] Client known version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeSettingsGet: async (version?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/user/me/settings`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (version !== undefined) {
+                localVarQueryParameter['version'] = version;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Update current user settings (replaces and bumps version)
+         * @param {ModelUserSettingsData} modelUserSettingsData User settings
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeSettingsPost: async (modelUserSettingsData: ModelUserSettingsData, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'modelUserSettingsData' is not null or undefined
+            assertParamExists('userMeSettingsPost', 'modelUserSettingsData', modelUserSettingsData)
+            const localVarPath = `/user/me/settings`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(modelUserSettingsData, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get user
          * @param {string} userId User ID or \&#39;me\&#39;
          * @param {*} [options] Override http request option.
@@ -6297,6 +6579,32 @@ export const UserApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get current user settings (optional version gating)
+         * @param {number} [version] Client known version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeSettingsGet(version?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserUserSettingsResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeSettingsGet(version, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeSettingsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Update current user settings (replaces and bumps version)
+         * @param {ModelUserSettingsData} modelUserSettingsData User settings
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeSettingsPost(modelUserSettingsData: ModelUserSettingsData, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeSettingsPost(modelUserSettingsData, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeSettingsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Get user
          * @param {string} userId User ID or \&#39;me\&#39;
          * @param {*} [options] Override http request option.
@@ -6379,6 +6687,26 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
         },
         /**
          * 
+         * @summary Get current user settings (optional version gating)
+         * @param {UserApiUserMeSettingsGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeSettingsGet(requestParameters: UserApiUserMeSettingsGetRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<UserUserSettingsResponse> {
+            return localVarFp.userMeSettingsGet(requestParameters.version, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Update current user settings (replaces and bumps version)
+         * @param {UserApiUserMeSettingsPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeSettingsPost(requestParameters: UserApiUserMeSettingsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.userMeSettingsPost(requestParameters.modelUserSettingsData, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Get user
          * @param {UserApiUserUserIdGetRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -6454,6 +6782,26 @@ export interface UserApiInterface {
      * @memberof UserApiInterface
      */
     userMePatch(requestParameters: UserApiUserMePatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Get current user settings (optional version gating)
+     * @param {UserApiUserMeSettingsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeSettingsGet(requestParameters?: UserApiUserMeSettingsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<UserUserSettingsResponse>;
+
+    /**
+     * 
+     * @summary Update current user settings (replaces and bumps version)
+     * @param {UserApiUserMeSettingsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeSettingsPost(requestParameters: UserApiUserMeSettingsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
      * 
@@ -6535,6 +6883,34 @@ export interface UserApiUserMePatchRequest {
      * @memberof UserApiUserMePatch
      */
     readonly userModifyUserRequest: UserModifyUserRequest
+}
+
+/**
+ * Request parameters for userMeSettingsGet operation in UserApi.
+ * @export
+ * @interface UserApiUserMeSettingsGetRequest
+ */
+export interface UserApiUserMeSettingsGetRequest {
+    /**
+     * Client known version
+     * @type {number}
+     * @memberof UserApiUserMeSettingsGet
+     */
+    readonly version?: number
+}
+
+/**
+ * Request parameters for userMeSettingsPost operation in UserApi.
+ * @export
+ * @interface UserApiUserMeSettingsPostRequest
+ */
+export interface UserApiUserMeSettingsPostRequest {
+    /**
+     * User settings
+     * @type {ModelUserSettingsData}
+     * @memberof UserApiUserMeSettingsPost
+     */
+    readonly modelUserSettingsData: ModelUserSettingsData
 }
 
 /**
@@ -6627,6 +7003,30 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      */
     public userMePatch(requestParameters: UserApiUserMePatchRequest, options?: RawAxiosRequestConfig) {
         return UserApiFp(this.configuration).userMePatch(requestParameters.userModifyUserRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get current user settings (optional version gating)
+     * @param {UserApiUserMeSettingsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeSettingsGet(requestParameters: UserApiUserMeSettingsGetRequest = {}, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeSettingsGet(requestParameters.version, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Update current user settings (replaces and bumps version)
+     * @param {UserApiUserMeSettingsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeSettingsPost(requestParameters: UserApiUserMeSettingsPostRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeSettingsPost(requestParameters.modelUserSettingsData, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

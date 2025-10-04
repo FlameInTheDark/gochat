@@ -1,4 +1,4 @@
-package vkcpiped
+package kvcpiped
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// VKStorage implements fiber.Storage
-type VKStorage struct {
+// KVStorage implements fiber.Storage
+type KVStorage struct {
 	write *redis.Client
 	read  *redis.Client
 
@@ -71,7 +71,7 @@ type setJob struct {
 	res chan error
 }
 
-func NewVKStorage(opts VKOptions) (*VKStorage, error) {
+func NewVKStorage(opts VKOptions) (*KVStorage, error) {
 	wc := opts.WriteClient
 	rc := opts.ReadClient
 
@@ -92,7 +92,7 @@ func NewVKStorage(opts VKOptions) (*VKStorage, error) {
 		})
 	}
 
-	st := &VKStorage{
+	st := &KVStorage{
 		pipeSize:           max(1, nz(opts.PipeSize, 16)),
 		flushInterval:      nzd(opts.FlushInterval, time.Millisecond),
 		workers:            max(1, nz(opts.Workers, 256)),
@@ -140,7 +140,7 @@ func NewVKStorage(opts VKOptions) (*VKStorage, error) {
 	return st, nil
 }
 
-func NewVKStorageFromClient(c *redis.Client, tweak func(*VKOptions)) (*VKStorage, error) {
+func NewVKStorageFromClient(c *redis.Client, tweak func(*VKOptions)) (*KVStorage, error) {
 	opts := VKOptions{
 		WriteClient: c,
 		ReadClient:  c,
@@ -151,7 +151,7 @@ func NewVKStorageFromClient(c *redis.Client, tweak func(*VKOptions)) (*VKStorage
 	return NewVKStorage(opts)
 }
 
-func (s *VKStorage) GetWithContext(ctx context.Context, key string) ([]byte, error) {
+func (s *KVStorage) GetWithContext(ctx context.Context, key string) ([]byte, error) {
 	val, err := s.read.Get(ctx, s.k(key)).Bytes()
 	if err == redis.Nil {
 		return nil, nil
@@ -159,7 +159,7 @@ func (s *VKStorage) GetWithContext(ctx context.Context, key string) ([]byte, err
 	return val, err
 }
 
-func (s *VKStorage) SetWithContext(ctx context.Context, key string, val []byte, exp time.Duration) error {
+func (s *KVStorage) SetWithContext(ctx context.Context, key string, val []byte, exp time.Duration) error {
 	if s.closed.Load() {
 		return errors.New("storage closed")
 	}
@@ -193,11 +193,11 @@ func (s *VKStorage) SetWithContext(ctx context.Context, key string, val []byte, 
 	}
 }
 
-func (s *VKStorage) DeleteWithContext(ctx context.Context, key string) error {
+func (s *KVStorage) DeleteWithContext(ctx context.Context, key string) error {
 	return s.write.Del(ctx, s.k(key)).Err()
 }
 
-func (s *VKStorage) ResetWithContext(ctx context.Context) error {
+func (s *KVStorage) ResetWithContext(ctx context.Context) error {
 	if s.prefix == "" && s.resetUseFlushDB {
 		return s.write.FlushDB(ctx).Err()
 	}
@@ -223,23 +223,23 @@ func (s *VKStorage) ResetWithContext(ctx context.Context) error {
 	return nil
 }
 
-func (s *VKStorage) Get(key string) ([]byte, error) {
+func (s *KVStorage) Get(key string) ([]byte, error) {
 	return s.GetWithContext(context.Background(), key)
 }
 
-func (s *VKStorage) Set(key string, val []byte, exp time.Duration) error {
+func (s *KVStorage) Set(key string, val []byte, exp time.Duration) error {
 	return s.SetWithContext(context.Background(), key, val, exp)
 }
 
-func (s *VKStorage) Delete(key string) error {
+func (s *KVStorage) Delete(key string) error {
 	return s.DeleteWithContext(context.Background(), key)
 }
 
-func (s *VKStorage) Reset() error {
+func (s *KVStorage) Reset() error {
 	return s.ResetWithContext(context.Background())
 }
 
-func (s *VKStorage) Close() error {
+func (s *KVStorage) Close() error {
 	if s.closed.Swap(true) {
 		return nil
 	}
@@ -259,7 +259,7 @@ func (s *VKStorage) Close() error {
 	return err
 }
 
-func (s *VKStorage) worker() {
+func (s *KVStorage) worker() {
 	defer s.wg.Done()
 
 	type item struct {
@@ -337,7 +337,7 @@ func (s *VKStorage) worker() {
 	}
 }
 
-func (s *VKStorage) k(key string) string {
+func (s *KVStorage) k(key string) string {
 	if s.prefix == "" {
 		return key
 	}

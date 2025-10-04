@@ -5,7 +5,8 @@ import (
 )
 
 type DeleteGuildRole struct {
-	RoleId int64 `json:"role_id"`
+	GuildId int64 `json:"guild_id"`
+	RoleId  int64 `json:"role_id"`
 }
 
 func (m *DeleteGuildRole) EventType() *EventType {

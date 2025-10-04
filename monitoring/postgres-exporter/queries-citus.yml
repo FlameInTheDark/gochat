@@ -1,0 +1,78 @@
+---
+# Extended metrics for Citus (distributed PostgreSQL)
+# These queries are safe to run on the Citus coordinator (master).
+# Some may not return data on workers; that's fine — the exporter will skip empty results.
+
+citus_shards_total:
+  query: |
+    SELECT COUNT(*) AS count FROM pg_dist_shard;
+  metrics:
+    - count:
+        usage: GAUGE
+        description: Total number of Citus shards
+
+citus_distributed_tables_total:
+  query: |
+    SELECT COUNT(*) AS count FROM pg_dist_partition;
+  metrics:
+    - count:
+        usage: GAUGE
+        description: Total number of distributed tables
+
+citus_shard_placements_total:
+  query: |
+    SELECT COUNT(*) AS count FROM pg_dist_placement;
+  metrics:
+    - count:
+        usage: GAUGE
+        description: Total number of shard placements across workers
+
+citus_nodes_by_role:
+  query: |
+    SELECT noderole::text AS noderole, COUNT(*)::bigint AS count
+    FROM pg_dist_node
+    GROUP BY noderole;
+  metrics:
+    - noderole:
+        usage: LABEL
+        description: Citus node role (primary/secondary/worker/coordinator)
+    - count:
+        usage: GAUGE
+        description: Number of nodes per role
+
+citus_node_info:
+  query: |
+    SELECT nodename::text AS nodename,
+           nodeport::text AS nodeport,
+           noderole::text AS noderole,
+           1 AS up
+    FROM pg_dist_node;
+  metrics:
+    - nodename:
+        usage: LABEL
+        description: Node hostname
+    - nodeport:
+        usage: LABEL
+        description: Node port
+    - noderole:
+        usage: LABEL
+        description: Node role
+    - up:
+        usage: GAUGE
+        description: Static value to export per-node info
+
+citus_shards_per_table:
+  query: |
+    SELECT p.logicalrelid::text AS table_name,
+           COUNT(*)::bigint AS shard_count
+    FROM pg_dist_partition p
+    JOIN pg_dist_shard s ON s.logicalrelid = p.logicalrelid
+    GROUP BY p.logicalrelid;
+  metrics:
+    - table_name:
+        usage: LABEL
+        description: Distributed table name
+    - shard_count:
+        usage: GAUGE
+        description: Number of shards for the table
+

@@ -2,20 +2,24 @@ package server
 
 import (
 	"log/slog"
+	"strconv"
+	"time"
 
-	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	slogfiber "github.com/samber/slog-fiber"
+	"github.com/valyala/fasthttp/fasthttpadaptor"
 
-	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
+	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 )
 
 type Server struct {
 	app   *fiber.App
-	cache *vkc.Cache
+	cache *kvs.Cache
 }
 
 func NewServer() *Server {
@@ -59,14 +63,57 @@ func (s *Server) WithCORS() {
 	}))
 }
 
-func (s *Server) WithMetrics() {
-	prom := fiberprometheus.New("gochat-api")
-	prom.RegisterAt(s.app, "/metrics")
-	prom.SetSkipPaths([]string{"/healthz"})
-	s.app.Use(prom.Middleware)
+func (s *Server) WithMetrics(serviceName ...string) {
+	name := "gochat-api"
+	if len(serviceName) > 0 && serviceName[0] != "" {
+		name = serviceName[0]
+	}
+
+	// Expose default Prometheus registry at /metrics using promhttp
+	h := promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{})
+	s.app.Get("/metrics", func(c *fiber.Ctx) error {
+		fasthttpadaptor.NewFastHTTPHandler(h)(c.Context())
+		return nil
+	})
+
+	reqCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "gochat",
+		Subsystem: "http",
+		Name:      "requests_total",
+		Help:      "Total number of HTTP requests.",
+	}, []string{"service", "method", "code", "route"})
+
+	reqDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "gochat",
+		Subsystem: "http",
+		Name:      "request_duration_seconds",
+		Help:      "HTTP request duration in seconds.",
+		Buckets:   prometheus.DefBuckets,
+	}, []string{"service", "method", "code", "route"})
+
+	prometheus.MustRegister(reqCounter, reqDuration)
+
+	s.app.Use(func(c *fiber.Ctx) error {
+		// Skip non-business endpoints from custom metrics
+		p := c.Path()
+		if p == "/metrics" || p == "/healthz" {
+			return c.Next()
+		}
+		start := time.Now()
+		err := c.Next()
+		code := c.Response().StatusCode()
+		method := c.Method()
+		route := c.Path()
+		if r := c.Route(); r != nil && r.Path != "" {
+			route = r.Path
+		}
+		reqCounter.WithLabelValues(name, method, strconv.Itoa(code), route).Inc()
+		reqDuration.WithLabelValues(name, method, strconv.Itoa(code), route).Observe(time.Since(start).Seconds())
+		return err
+	})
 }
 
-func (s *Server) WithCache(c *vkc.Cache) {
+func (s *Server) WithCache(c *kvs.Cache) {
 	s.cache = c
 }
 

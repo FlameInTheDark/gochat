@@ -9,7 +9,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/cmd/auth/config"
 	"github.com/FlameInTheDark/gochat/cmd/auth/endpoints/auth"
-	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
+	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
@@ -41,7 +41,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 	shut.Up(pg)
 
-	cache, err := vkc.New(cfg.KeyDB)
+	cache, err := kvs.New(cfg.KeyDB)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		s.WithLogger(logger)
 	}
 	s.WithCORS()
-	s.WithMetrics()
+	s.WithMetrics("gochat-auth")
 	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
 	s.RateLimitMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 	s.AuthMiddleware(cfg.AuthSecret)

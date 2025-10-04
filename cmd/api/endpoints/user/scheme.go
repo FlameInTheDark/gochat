@@ -1,6 +1,8 @@
 package user
 
 import (
+	"encoding/json"
+
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -8,26 +10,30 @@ import (
 )
 
 const (
-	ErrUnableToGetUserToken        = "unable to get user token"
-	ErrBadRequest                  = "incorrect request"
-	ErrUnableToParseID             = "unable to parse id"
-	ErrUnableToGetUser             = "unable to get user"
-	ErrUnableToGetDiscriminator    = "unable to get user discriminator"
-	ErrUnableToModifyUser          = "unable to modify user"
-	ErrUnableToGetMember           = "unable to get member"
-	ErrUnableToGetRoles            = "unable to get roles"
-	ErrUnableToGetGuildByID        = "unable to get guild by id"
-	ErrUnableToGetGuilds           = "unable to get guilds"
-	ErrUnableToGetUserGuilds       = "unable to get user guilds"
-	ErrUnableToLeaveOwnServer      = "unable to leave own guild"
-	ErrUnableToRemoveMember        = "unable to remove member"
-	ErrUnableToParseRequestBody    = "unable to parse request body"
-	ErrUnableToCreateChannel       = "unable to create channel"
-	ErrUnableToCreateDMChannel     = "unable to create dm channel"
-	ErrUnableToGetChannel          = "unable to get channel"
-	ErrUnableToGetDMChannel        = "unable to get dm channel"
-	ErrUnableToGetGroupDMChannel   = "unable to get group dm channel"
-	ErrUnableToJoingGroupDmChannel = "unable to join group dm channel"
+	ErrUnableToGetUserToken          = "unable to get user token"
+	ErrBadRequest                    = "incorrect request"
+	ErrUnableToParseID               = "unable to parse id"
+	ErrUnableToGetUser               = "unable to get user"
+	ErrUnableToGetDiscriminator      = "unable to get user discriminator"
+	ErrUnableToModifyUser            = "unable to modify user"
+	ErrUnableToGetMember             = "unable to get member"
+	ErrUnableToGetRoles              = "unable to get roles"
+	ErrUnableToGetGuildByID          = "unable to get guild by id"
+	ErrUnableToGetGuilds             = "unable to get guilds"
+	ErrUnableToGetUserGuilds         = "unable to get user guilds"
+	ErrUnableToLeaveOwnServer        = "unable to leave own guild"
+	ErrUnableToRemoveMember          = "unable to remove member"
+	ErrUnableToParseRequestBody      = "unable to parse request body"
+	ErrUnableToCreateChannel         = "unable to create channel"
+	ErrUnableToCreateDMChannel       = "unable to create dm channel"
+	ErrUnableToGetChannel            = "unable to get channel"
+	ErrUnableToGetDMChannel          = "unable to get dm channel"
+	ErrUnableToGetGroupDMChannel     = "unable to get group dm channel"
+	ErrUnableToJoingGroupDmChannel   = "unable to join group dm channel"
+	ErrUnableToGetUserSettings       = "unable to get user settings"
+	ErrUnableToSetUserSettings       = "unable to set user settings"
+	ErrUnableToUnmarshalUserSettings = "unable to unmarshal user settings"
+	ErrUnableToParseVersion          = "unable to parse version"
 
 	// Validation error messages
 	ErrUserNameTooShort    = "user name must be at least 4 characters"
@@ -96,6 +102,23 @@ func (r CreateDMManyRequest) Validate() error {
 			validation.Each(validation.Min(int64(1)).Error(ErrRecipientsInvalid)),
 		),
 	)
+}
+
+type UserSettingsResponse struct {
+	Version  int64                   `json:"version"`
+	Settings *model.UserSettingsData `json:"settings"`
+}
+
+func modelToSettings(m *model.UserSettings) (UserSettingsResponse, error) {
+	var settings model.UserSettingsData
+	err := json.Unmarshal(m.Settings, &settings)
+	if err != nil {
+		return UserSettingsResponse{}, err
+	}
+	return UserSettingsResponse{
+		Version:  m.Version,
+		Settings: &settings,
+	}, nil
 }
 
 func modelToUser(m model.User) dto.User {
