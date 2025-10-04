@@ -12,6 +12,7 @@ Name | Type | Description | Notes
 **Permissions** | Pointer to **int32** | Permissions. Check the permissions documentation for more info. | [optional] 
 **Position** | Pointer to **int32** | Channel position | [optional] 
 **Private** | Pointer to **bool** | Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel. | [optional] [default to false]
+**Roles** | Pointer to **[]int32** | Roles IDs | [optional] 
 **Topic** | Pointer to **string** | Channel topic. | [optional] 
 **Type** | Pointer to **int32** | Channel type | [optional] 
 
@@ -233,6 +234,31 @@ SetPrivate sets Private field to given value.
 `func (o *DtoChannel) HasPrivate() bool`
 
 HasPrivate returns a boolean if a field has been set.
+
+### GetRoles
+
+`func (o *DtoChannel) GetRoles() []int32`
+
+GetRoles returns the Roles field if non-nil, zero value otherwise.
+
+### GetRolesOk
+
+`func (o *DtoChannel) GetRolesOk() (*[]int32, bool)`
+
+GetRolesOk returns a tuple with the Roles field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRoles
+
+`func (o *DtoChannel) SetRoles(v []int32)`
+
+SetRoles sets Roles field to given value.
+
+### HasRoles
+
+`func (o *DtoChannel) HasRoles() bool`
+
+HasRoles returns a boolean if a field has been set.
 
 ### GetTopic
 

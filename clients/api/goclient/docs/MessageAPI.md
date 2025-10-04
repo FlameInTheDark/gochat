@@ -101,10 +101,10 @@ import (
 )
 
 func main() {
-	channelId := int32(56) // int32 | Channel id
-	from := int32(56) // int32 | Start point for messages (optional)
-	direction := "direction_example" // string | Select direction (optional)
-	limit := int32(56) // int32 | Message count limit (optional)
+	channelId := int32(2230469276416868352) // int32 | Channel id
+	from := int32(2230469276416868352) // int32 | Start point for messages (optional)
+	direction := "before" // string | Select direction (optional)
+	limit := int32(30) // int32 | Message count limit (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)

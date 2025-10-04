@@ -38,8 +38,8 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
-	channelId := int32(56) // int32 | Channel ID
+	guildId := int32(2230469276416868352) // int32 | Guild ID
+	channelId := int32(2230469276416868352) // int32 | Channel ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -109,9 +109,9 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
-	channelId := int32(56) // int32 | Channel ID
-	roleId := int32(56) // int32 | Role ID
+	guildId := int32(2230469276416868352) // int32 | Guild ID
+	channelId := int32(2230469276416868352) // int32 | Channel ID
+	roleId := int32(2230469276416868352) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -183,9 +183,9 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
-	channelId := int32(56) // int32 | Channel ID
-	roleId := int32(56) // int32 | Role ID
+	guildId := int32(2230469276416868352) // int32 | Guild ID
+	channelId := int32(2230469276416868352) // int32 | Channel ID
+	roleId := int32(2230469276416868352) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -257,9 +257,9 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
-	channelId := int32(56) // int32 | Channel ID
-	roleId := int32(56) // int32 | Role ID
+	guildId := int32(2230469276416868352) // int32 | Guild ID
+	channelId := int32(2230469276416868352) // int32 | Channel ID
+	roleId := int32(2230469276416868352) // int32 | Role ID
 	guildChannelRolePermissionRequest := *openapiclient.NewGuildChannelRolePermissionRequest() // GuildChannelRolePermissionRequest | Permission mask
 
 	configuration := openapiclient.NewConfiguration()
@@ -333,9 +333,9 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
-	channelId := int32(56) // int32 | Channel ID
-	roleId := int32(56) // int32 | Role ID
+	guildId := int32(2230469276416868352) // int32 | Guild ID
+	channelId := int32(2230469276416868352) // int32 | Channel ID
+	roleId := int32(2230469276416868352) // int32 | Role ID
 	guildChannelRolePermissionRequest := *openapiclient.NewGuildChannelRolePermissionRequest() // GuildChannelRolePermissionRequest | Permission mask
 
 	configuration := openapiclient.NewConfiguration()
@@ -409,8 +409,8 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
-	userId := int32(56) // int32 | User ID
+	guildId := int32(2230469276416868352) // int32 | Guild ID
+	userId := int32(2230469276416868352) // int32 | User ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -480,9 +480,9 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
-	userId := int32(56) // int32 | User ID
-	roleId := int32(56) // int32 | Role ID
+	guildId := int32(2230469276416868352) // int32 | Guild ID
+	userId := int32(2230469276416868352) // int32 | User ID
+	roleId := int32(2230469276416868352) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -554,9 +554,9 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
-	userId := int32(56) // int32 | User ID
-	roleId := int32(56) // int32 | Role ID
+	guildId := int32(2230469276416868352) // int32 | Guild ID
+	userId := int32(2230469276416868352) // int32 | User ID
+	roleId := int32(2230469276416868352) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -628,7 +628,7 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
+	guildId := int32(2230469276416868352) // int32 | Guild ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -696,7 +696,7 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
+	guildId := int32(2230469276416868352) // int32 | Guild ID
 	guildCreateGuildRoleRequest := *openapiclient.NewGuildCreateGuildRoleRequest() // GuildCreateGuildRoleRequest | Role data
 
 	configuration := openapiclient.NewConfiguration()
@@ -766,8 +766,8 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
-	roleId := int32(56) // int32 | Role ID
+	guildId := int32(2230469276416868352) // int32 | Guild ID
+	roleId := int32(2230469276416868352) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -837,8 +837,8 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
-	roleId := int32(56) // int32 | Role ID
+	guildId := int32(2230469276416868352) // int32 | Guild ID
+	roleId := int32(2230469276416868352) // int32 | Role ID
 	guildPatchGuildRoleRequest := *openapiclient.NewGuildPatchGuildRoleRequest() // GuildPatchGuildRoleRequest | Role changes
 
 	configuration := openapiclient.NewConfiguration()

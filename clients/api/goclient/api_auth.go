@@ -493,8 +493,15 @@ func (a *AuthAPIService) AuthRecoveryPostExecute(r ApiAuthRecoveryPostRequest) (
 }
 
 type ApiAuthRefreshGetRequest struct {
-	ctx        context.Context
-	ApiService *AuthAPIService
+	ctx           context.Context
+	ApiService    *AuthAPIService
+	authorization *string
+}
+
+// Refresh token instead of auth
+func (r ApiAuthRefreshGetRequest) Authorization(authorization string) ApiAuthRefreshGetRequest {
+	r.authorization = &authorization
+	return r
 }
 
 func (r ApiAuthRefreshGetRequest) Execute() (*AuthRefreshTokenResponse, *http.Response, error) {
@@ -535,6 +542,9 @@ func (a *AuthAPIService) AuthRefreshGetExecute(r ApiAuthRefreshGetRequest) (*Aut
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.authorization == nil {
+		return localVarReturnValue, nil, reportError("authorization is required and must be specified")
+	}
 
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -553,6 +563,7 @@ func (a *AuthAPIService) AuthRefreshGetExecute(r ApiAuthRefreshGetRequest) (*Aut
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	parameterAddToHeaderOrQuery(localVarHeaderParams, "Authorization", r.authorization, "simple", "")
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

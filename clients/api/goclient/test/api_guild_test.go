@@ -81,6 +81,21 @@ func Test_goclient_GuildAPIService(t *testing.T) {
 
 	})
 
+	t.Run("Test GuildAPIService GuildGuildIdChannelChannelIdPatch", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var channelId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdChannelChannelIdPatch(context.Background(), guildId, channelId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test GuildAPIService GuildGuildIdChannelGet", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
@@ -88,6 +103,20 @@ func Test_goclient_GuildAPIService(t *testing.T) {
 		var guildId int32
 
 		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdChannelGet(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdChannelOrderPatch", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdChannelOrderPatch(context.Background(), guildId).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -116,6 +145,20 @@ func Test_goclient_GuildAPIService(t *testing.T) {
 		var guildId int32
 
 		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdGet(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdMembersGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdMembersGet(context.Background(), guildId).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)

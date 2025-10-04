@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**ExpiresInSec** | Pointer to **int32** | ExpiresInSec is a TTL in seconds; 0 means unlimited invite If omitted, server uses default (7 days) | [optional] 
+**ExpiresInSec** | Pointer to **int32** | Expiration time in seconds. 0 means unlimited. | [optional] 
 
 ## Methods
 

@@ -54,7 +54,8 @@ func (e *Entity) GetUsersList(ctx context.Context, ids []int64) ([]model.User, e
 	q := squirrel.Select("*").
 		PlaceholderFormat(squirrel.Dollar).
 		From("users").
-		Where(squirrel.Eq{"id": ids})
+		Where(squirrel.Eq{"id": ids}).
+		OrderBy("id ASC")
 	raw, args, err := q.ToSql()
 	if err != nil {
 		return users, fmt.Errorf("unable to create SQL query: %w", err)

@@ -3,6 +3,7 @@ package user
 import (
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
@@ -14,6 +15,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/usersettings"
 	"github.com/FlameInTheDark/gochat/internal/server"
 )
 
@@ -26,6 +28,10 @@ func (e *entity) Init(router fiber.Router) {
 	router.Get("/me/guilds/:guild_id<int>/member", e.GetMyGuildMember)
 	router.Delete("/me/guilds/:guild_id<int>", e.LeaveGuild)
 	router.Post("/me/channels", e.CreateDM)
+
+	// User settings
+	router.Get("/me/settings", e.GetUserSettings)
+	router.Post("/me/settings", e.SetUserSettings)
 }
 
 type entity struct {
@@ -33,6 +39,7 @@ type entity struct {
 
 	// Services
 	log *slog.Logger
+	mqt mq.SendTransporter
 
 	// DB entities
 	user   user.User
@@ -43,16 +50,18 @@ type entity struct {
 	dm     dmchannel.DmChannel
 	gdm    groupdmchannel.GroupDMChannel
 	disc   discriminator.Discriminator
+	uset   usersettings.UserSettings
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(pg *pgdb.DB, log *slog.Logger) server.Entity {
+func New(pg *pgdb.DB, mqt mq.SendTransporter, log *slog.Logger) server.Entity {
 	return &entity{
 		name:   entityName,
 		log:    log,
+		mqt:    mqt,
 		user:   user.New(pg.Conn()),
 		member: member.New(pg.Conn()),
 		guild:  guild.New(pg.Conn()),
@@ -61,5 +70,6 @@ func New(pg *pgdb.DB, log *slog.Logger) server.Entity {
 		dm:     dmchannel.New(pg.Conn()),
 		gdm:    groupdmchannel.New(pg.Conn()),
 		disc:   discriminator.New(pg.Conn()),
+		uset:   usersettings.New(pg.Conn()),
 	}
 }

@@ -33,7 +33,8 @@ func (e *Entity) GetChannelsBulk(ctx context.Context, ids []int64) ([]model.Chan
 	q := squirrel.Select("*").
 		PlaceholderFormat(squirrel.Dollar).
 		From("channels").
-		Where(squirrel.Eq{"id": ids})
+		Where(squirrel.Eq{"id": ids}).
+		OrderBy("id asc")
 	raw, args, err := q.ToSql()
 	if err != nil {
 		return chs, fmt.Errorf("unable to create SQL query: %w", err)

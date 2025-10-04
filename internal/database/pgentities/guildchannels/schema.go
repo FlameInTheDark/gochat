@@ -3,22 +3,47 @@ package guildchannels
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
 )
 
-func (e *Entity) AddChannel(ctx context.Context, guildID, channelID int64, position int) error {
+func (e *Entity) AddChannel(ctx context.Context, guildID, channelID int64, channelName string, channelType model.ChannelType, parentID *int64, private bool, position int) error {
+	tx, err := e.c.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			_ = tx.Commit()
+		}
+	}()
+
+	chq := squirrel.Insert("channels").
+		PlaceholderFormat(squirrel.Dollar).
+		Columns("id", "name", "type", "parent_id", "private", "last_message").
+		Values(channelID, channelName, channelType, parentID, private, 0)
+	sql, args, err := chq.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query for create channel: %w")
+	}
+	_, err = tx.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("unable to create channel: %w", err)
+	}
+
 	q := squirrel.Insert("guild_channels").
 		PlaceholderFormat(squirrel.Dollar).
 		Columns("guild_id", "channel_id", "position").
 		Values(guildID, channelID, position)
-	sql, args, err := q.ToSql()
+	sql, args, err = q.ToSql()
 	if err != nil {
-		return fmt.Errorf("unable to create SQL query: %w", err)
+		return fmt.Errorf("unable to create SQL query for add channel to guild: %w", err)
 	}
-	_, err = e.c.ExecContext(ctx, sql, args...)
+	_, err = tx.ExecContext(ctx, sql, args...)
 	if err != nil {
 		return fmt.Errorf("unable to add channel: %w", err)
 	}
@@ -52,7 +77,8 @@ func (e *Entity) GetGuildChannels(ctx context.Context, guildID int64) ([]model.G
 	q := squirrel.Select("*").
 		PlaceholderFormat(squirrel.Dollar).
 		From("guild_channels").
-		Where(squirrel.Eq{"guild_id": guildID})
+		Where(squirrel.Eq{"guild_id": guildID}).
+		OrderBy("channel_id ASC")
 	sql, args, err := q.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create SQL query: %w", err)
@@ -82,8 +108,22 @@ func (e *Entity) GetGuildByChannel(ctx context.Context, channelID int64) (model.
 	return ch, nil
 }
 
-func (e *Entity) RemoveChannel(ctx context.Context, guildID, channelID string) error {
+func (e *Entity) RemoveChannel(ctx context.Context, guildID, channelID int64) error {
+	tx, err := e.c.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			_ = tx.Commit()
+		}
+	}()
+
 	q := squirrel.Delete("guild_channels").
+		PlaceholderFormat(squirrel.Dollar).
 		Where(
 			squirrel.And{
 				squirrel.Eq{"guild_id": guildID},
@@ -92,16 +132,28 @@ func (e *Entity) RemoveChannel(ctx context.Context, guildID, channelID string) e
 		)
 	sql, args, err := q.ToSql()
 	if err != nil {
-		return fmt.Errorf("unable to create SQL query: %w", err)
+		return fmt.Errorf("unable to create SQL query to remove guild channel: %w", err)
 	}
-	_, err = e.c.ExecContext(ctx, sql, args...)
+	_, err = tx.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("unable to remove guild channel: %w", err)
+	}
+
+	qch := squirrel.Delete("channels").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"id": channelID})
+	sql, args, err = qch.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query to remove channel: %w", err)
+	}
+	_, err = tx.ExecContext(ctx, sql, args...)
 	if err != nil {
 		return fmt.Errorf("unable to remove channel: %w", err)
 	}
 	return nil
 }
 
-func (e *Entity) SetGuildChannelPosition(ctx context.Context, updates []model.GuildChannelUpdatePosition) error {
+func (e *Entity) SetGuildChannelPosition(ctx context.Context, updates []model.GuildChannelUpdatePosition) (err error) {
 	if len(updates) == 0 {
 		return nil
 	}
@@ -118,33 +170,33 @@ func (e *Entity) SetGuildChannelPosition(ctx context.Context, updates []model.Gu
 		}
 	}()
 
-	// Build a single UPDATE using a VALUES list to map channel_id -> position
-	// This avoids any potential placeholder/type mismatches with IN clauses
 	guildID := updates[0].GuildId
-	values := make([]string, 0, len(updates))
-	args := make([]interface{}, 0, 1+len(updates)*2)
-
-	// $1 is reserved for guildID
-	args = append(args, guildID)
-	argIdx := 2
+	chIDs := make([]int64, 0, len(updates))
+	positions := make([]int32, 0, len(updates))
 	for _, u := range updates {
-		// Each pair adds two placeholders with explicit type casts
-		// to ensure Postgres infers correct column types in VALUES
-		values = append(values, fmt.Sprintf("($%d::bigint,$%d::int)", argIdx, argIdx+1))
-		args = append(args, u.ChannelId, u.Position)
-		argIdx += 2
+		chIDs = append(chIDs, u.ChannelId)
+		positions = append(positions, int32(u.Position))
 	}
 
-	query := fmt.Sprintf(
-		"UPDATE guild_channels AS gc SET position = v.position FROM (VALUES %s) AS v(channel_id, position) WHERE gc.guild_id = $1 AND gc.channel_id = v.channel_id",
-		strings.Join(values, ","),
-	)
+	qb := squirrel.
+		Update("guild_channels AS gc").
+		PlaceholderFormat(squirrel.Dollar).
+		Prefix(
+			"WITH v(channel_id, position) AS (SELECT * FROM unnest(?::bigint[], ?::int[]))",
+			pq.Array(chIDs), pq.Array(positions),
+		).
+		Set("position", squirrel.Expr("v.position")).
+		From("v").
+		Where(squirrel.Eq{"gc.guild_id": guildID}).
+		Where(squirrel.Expr("gc.channel_id = v.channel_id"))
 
-	_, err = tx.ExecContext(ctx, query, args...)
-	if err != nil {
+	sql, args, buildErr := qb.ToSql()
+	if buildErr != nil {
+		return fmt.Errorf("build update: %w", buildErr)
+	}
+	if _, err = tx.ExecContext(ctx, sql, args...); err != nil {
 		return fmt.Errorf("failed to execute update: %w", err)
 	}
-
 	return nil
 }
 

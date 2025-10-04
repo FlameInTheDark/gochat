@@ -44,6 +44,8 @@ const (
 	EventTypeGuildMemberAdd EventType = 200 + iota
 	EventTypeGuildMemberUpdate
 	EventTypeGuildMemberRemove
+	EventTypeGuildMemberAddRole
+	EventTypeGuildMemberRemoveRole
 )
 
 type Message struct {

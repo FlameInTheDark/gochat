@@ -11,35 +11,43 @@ import (
 )
 
 const (
-	ErrUnableToGetUserToken         = "unable to get user token"
-	ErrUnableToGetGuildMemberToken  = "unable to get guild member token"
-	ErrUnableToParseBody            = "unable to parse body"
-	ErrPermissionsRequired          = "permissions required"
-	ErrUnableToCreateAttachment     = "unable to create attachment"
-	ErrUnableToCreateUploadURL      = "unable to create upload url"
-	ErrIncorrectChannelID           = "incorrect channel ID"
-	ErrIncorrectGuildID             = "incorrect guild ID"
-	ErrIncorrectMemberID            = "incorrect member ID"
-	ErrIncorrectInviteID            = "incorrect invite ID"
-	ErrIncorrectRoleID              = "incorrect role ID"
-	ErrFileIsTooBig                 = "file is too big"
-	ErrUnableToSendMessage          = "unable to send message"
-	ErrUnableToGetUser              = "unable to get user"
-	ErrUnableToGetUserDiscriminator = "unable to get discriminator"
-	ErrUnableToGetAttachements      = "unable to get attachments"
-	ErrUnableToCreateGuild          = "unable to create guild"
-	ErrUnableToGetGuildMember       = "unable to get member"
-	ErrUnableToGetGuildByID         = "unable to get guild by id"
-	ErrUnableToUpdateGuild          = "unable to update guild"
-	ErrUnableToGetRoles             = "unable to get roles"
-	ErrUnableToSetUserRole          = "unable to set user role"
-	ErrUnableToRemoveUserRole       = "unable to remove user role"
-	ErrUnableToCreateChannelGroup   = "unable to create channel group"
-	ErrUnableToGetChannel           = "unable to get channel"
-	ErrUnableToUpdateChannel        = "unable to update channel"
-	ErrUnableToSetParentAsSelf      = "unable to set parent as self"
-	ErrUnableToSetParentForCategory = "unable to set parent for category"
-	ErrNotAMember                   = "not a member"
+	ErrUnableToGetUserToken            = "unable to get user token"
+	ErrUnableToGetGuildMemberToken     = "unable to get guild member token"
+	ErrUnableToGetGuildMembers         = "unable to get guild members"
+	ErrUnableToGetUsersRoles           = "unable to get users roles"
+	ErrUnableToGetGuildMembersProfiles = "unable to get guild members profiles"
+	ErrUnableToParseBody               = "unable to parse body"
+	ErrPermissionsRequired             = "permissions required"
+	ErrUnableToCreateAttachment        = "unable to create attachment"
+	ErrUnableToCreateUploadURL         = "unable to create upload url"
+	ErrIncorrectChannelID              = "incorrect channel ID"
+	ErrIncorrectGuildID                = "incorrect guild ID"
+	ErrIncorrectMemberID               = "incorrect member ID"
+	ErrIncorrectInviteID               = "incorrect invite ID"
+	ErrIncorrectRoleID                 = "incorrect role ID"
+	ErrFileIsTooBig                    = "file is too big"
+	ErrUnableToSendMessage             = "unable to send message"
+	ErrUnableToGetUser                 = "unable to get user"
+	ErrUnableToGetUsers                = "unable to get users"
+	ErrUnableToGetUserDiscriminator    = "unable to get discriminator"
+	ErrUnableToGetDiscriminators       = "unable to get discriminators"
+	ErrUnableToGetAttachements         = "unable to get attachments"
+	ErrUnableToCreateGuild             = "unable to create guild"
+	ErrUnableToGetGuildMember          = "unable to get member"
+	ErrUnableToGetDiscriminator        = "unable to get discriminator"
+	ErrUnableToGetGuildByID            = "unable to get guild by id"
+	ErrUnableToUpdateGuild             = "unable to update guild"
+	ErrUnableToGetRoles                = "unable to get roles"
+	ErrUnableToSetUserRole             = "unable to set user role"
+	ErrUnableToRemoveUserRole          = "unable to remove user role"
+	ErrUnableToCreateChannelGroup      = "unable to create channel group"
+	ErrUnableToGetChannel              = "unable to get channel"
+	ErrUnableToUpdateChannel           = "unable to update channel"
+	ErrUnableToSetParentAsSelf         = "unable to set parent as self"
+	ErrUnableToSetParentForCategory    = "unable to set parent for category"
+	ErrNotAMember                      = "not a member"
+	ErrUnableToGetReadState            = "unable to get read state"
+	ErrUnableToSetReadState            = "unable to set read state"
 	// Channel role permissions
 	ErrUnableToGetChannelRolePerms = "unable to get channel role permissions"
 	ErrUnableToSetChannelRolePerm  = "unable to set channel role permission"
@@ -120,8 +128,9 @@ func (r UpdateGuildRequest) Validate() error {
 }
 
 type CreateGuildChannelCategoryRequest struct {
-	Name    string `json:"name" example:"category-name"` // Category channel name
-	Private bool   `json:"private" default:"false"`      // Whether the category channel is private. Private channels can only be seen by users with roles assigned to this channel.
+	Name     string `json:"name" example:"category-name"` // Category channel name
+	Private  bool   `json:"private" default:"false"`      // Whether the category channel is private. Private channels can only be seen by users with roles assigned to this channel.
+	Position int    `json:"position" default:"0"`         // Channel position in the list. Should be set as the last position in the channel list, or it will be one of the first in the list.
 }
 
 func (r CreateGuildChannelCategoryRequest) Validate() error {
@@ -140,6 +149,7 @@ type CreateGuildChannelRequest struct {
 	Type     model.ChannelType `json:"type" example:"0"`                        // Channel type
 	ParentId *int64            `json:"parent_id" example:"2230469276416868352"` // Parent channel ID. A Parent channel can only be a category channel.
 	Private  bool              `json:"private" default:"false"`                 // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
+	Position int               `json:"position" default:"0"`                    // Channel position in the list. Should be set as the last position in the channel list, or it will be one of the first in the list.
 }
 
 func (r CreateGuildChannelRequest) Validate() error {
@@ -274,7 +284,7 @@ type memberRole struct {
 
 // DTO conversion functions
 
-func channelModelToDTO(c *model.Channel, guildId *int64, position int) dto.Channel {
+func channelModelToDTO(c *model.Channel, guildId *int64, position int, roles []int64) dto.Channel {
 	return dto.Channel{
 		Id:          c.Id,
 		Type:        c.Type,
@@ -286,6 +296,7 @@ func channelModelToDTO(c *model.Channel, guildId *int64, position int) dto.Chann
 		Permissions: c.Permissions,
 		CreatedAt:   c.CreatedAt,
 		Private:     c.Private,
+		Roles:       roles,
 	}
 }
 
@@ -385,4 +396,27 @@ func (r PatchGuildRoleRequest) Validate() error {
 			validation.When(r.Permissions != nil, validation.Min(int64(0)).Error(ErrPermissionsInvalid)),
 		),
 	)
+}
+
+func userToDTO(user model.User, dsc string) dto.User {
+	return dto.User{
+		Id:            user.Id,
+		Name:          user.Name,
+		Discriminator: dsc,
+		Avatar:        user.Avatar,
+	}
+}
+
+func membersToDTO(members []model.Member, users []model.User, roles []model.UserRoles, dscs []model.Discriminator) []dto.Member {
+	var data = make([]dto.Member, len(members))
+	for i, m := range members {
+		data[i] = dto.Member{
+			User:     userToDTO(users[i], dscs[i].Discriminator),
+			Username: m.Username,
+			Avatar:   m.Avatar,
+			JoinAt:   m.JoinAt,
+			Roles:    roles[i].Roles,
+		}
+	}
+	return data
 }

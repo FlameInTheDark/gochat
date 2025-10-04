@@ -22,6 +22,85 @@ func Test_goclient_GuildRolesAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
+	t.Run("Test GuildRolesAPIService GuildGuildIdChannelChannelIdRolesGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var channelId int32
+
+		resp, httpRes, err := apiClient.GuildRolesAPI.GuildGuildIdChannelChannelIdRolesGet(context.Background(), guildId, channelId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildRolesAPIService GuildGuildIdChannelChannelIdRolesRoleIdDelete", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var channelId int32
+		var roleId int32
+
+		resp, httpRes, err := apiClient.GuildRolesAPI.GuildGuildIdChannelChannelIdRolesRoleIdDelete(context.Background(), guildId, channelId, roleId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildRolesAPIService GuildGuildIdChannelChannelIdRolesRoleIdGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var channelId int32
+		var roleId int32
+
+		resp, httpRes, err := apiClient.GuildRolesAPI.GuildGuildIdChannelChannelIdRolesRoleIdGet(context.Background(), guildId, channelId, roleId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildRolesAPIService GuildGuildIdChannelChannelIdRolesRoleIdPatch", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var channelId int32
+		var roleId int32
+
+		resp, httpRes, err := apiClient.GuildRolesAPI.GuildGuildIdChannelChannelIdRolesRoleIdPatch(context.Background(), guildId, channelId, roleId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildRolesAPIService GuildGuildIdChannelChannelIdRolesRoleIdPut", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var channelId int32
+		var roleId int32
+
+		resp, httpRes, err := apiClient.GuildRolesAPI.GuildGuildIdChannelChannelIdRolesRoleIdPut(context.Background(), guildId, channelId, roleId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test GuildRolesAPIService GuildGuildIdMemberUserIdRolesGet", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test

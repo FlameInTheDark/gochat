@@ -36,6 +36,8 @@ type DtoChannel struct {
 	Position *int32 `json:"position,omitempty"`
 	// Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
 	Private *bool `json:"private,omitempty"`
+	// Roles IDs
+	Roles []int32 `json:"roles,omitempty"`
 	// Channel topic.
 	Topic *string `json:"topic,omitempty"`
 	// Channel type
@@ -319,6 +321,38 @@ func (o *DtoChannel) SetPrivate(v bool) {
 	o.Private = &v
 }
 
+// GetRoles returns the Roles field value if set, zero value otherwise.
+func (o *DtoChannel) GetRoles() []int32 {
+	if o == nil || IsNil(o.Roles) {
+		var ret []int32
+		return ret
+	}
+	return o.Roles
+}
+
+// GetRolesOk returns a tuple with the Roles field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoChannel) GetRolesOk() ([]int32, bool) {
+	if o == nil || IsNil(o.Roles) {
+		return nil, false
+	}
+	return o.Roles, true
+}
+
+// HasRoles returns a boolean if a field has been set.
+func (o *DtoChannel) HasRoles() bool {
+	if o != nil && !IsNil(o.Roles) {
+		return true
+	}
+
+	return false
+}
+
+// SetRoles gets a reference to the given []int32 and assigns it to the Roles field.
+func (o *DtoChannel) SetRoles(v []int32) {
+	o.Roles = v
+}
+
 // GetTopic returns the Topic field value if set, zero value otherwise.
 func (o *DtoChannel) GetTopic() string {
 	if o == nil || IsNil(o.Topic) {
@@ -416,6 +450,9 @@ func (o DtoChannel) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Private) {
 		toSerialize["private"] = o.Private
+	}
+	if !IsNil(o.Roles) {
+		toSerialize["roles"] = o.Roles
 	}
 	if !IsNil(o.Topic) {
 		toSerialize["topic"] = o.Topic

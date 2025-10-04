@@ -20,7 +20,7 @@ var _ MappedNullable = &GuildCreateInviteRequest{}
 
 // GuildCreateInviteRequest struct for GuildCreateInviteRequest
 type GuildCreateInviteRequest struct {
-	// ExpiresInSec is a TTL in seconds; 0 means unlimited invite If omitted, server uses default (7 days)
+	// Expiration time in seconds. 0 means unlimited.
 	ExpiresInSec *int32 `json:"expires_in_sec,omitempty"`
 }
 

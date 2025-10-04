@@ -1,4 +1,4 @@
-package vkc
+package kvs
 
 import (
 	"context"
@@ -98,6 +98,15 @@ func (c *Cache) SetJSON(ctx context.Context, key string, val interface{}) error 
 		return err
 	}
 	res := c.c.Set(ctx, key, string(msg), 0)
+	return res.Err()
+}
+
+func (c *Cache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64) error {
+	msg, err := json.Marshal(val)
+	if err != nil {
+		return err
+	}
+	res := c.c.Set(ctx, key, string(msg), time.Duration(ttl)*time.Second)
 	return res.Err()
 }
 

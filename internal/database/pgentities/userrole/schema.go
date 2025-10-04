@@ -8,6 +8,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
 )
 
 func (e *Entity) GetUserRoles(ctx context.Context, guildID, userId int64) ([]model.UserRole, error) {
@@ -97,4 +98,30 @@ func (e *Entity) RemoveRoleAssignments(ctx context.Context, guildID, roleId int6
 		return fmt.Errorf("unable to remove role assignments: %w", err)
 	}
 	return nil
+}
+
+func (e *Entity) GetUsersRolesByGuild(ctx context.Context, guildID int64, userIds []int64) ([]model.UserRoles, error) {
+	var roles []model.UserRoles
+	q := squirrel.
+		Select("u.user_id").
+		Column(squirrel.Expr(`
+			ARRAY(
+				SELECT DISTINCT ur.role_id::bigint
+				FROM user_roles ur
+				WHERE ur.guild_id = ? AND ur.user_id = u.user_id
+				ORDER BY ur.role_id::bigint
+			) AS roles`, guildID)).
+		PlaceholderFormat(squirrel.Dollar).
+		PrefixExpr(squirrel.Expr("WITH u AS (SELECT unnest(?::bigint[]) AS user_id)", pq.Array(userIds))).
+		From("u").
+		OrderBy("u.user_id")
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return roles, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	err = e.c.SelectContext(ctx, &roles, raw, args...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get users roles: %w", err)
+	}
+	return roles, nil
 }

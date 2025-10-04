@@ -12,7 +12,7 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/search"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/user"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/webhook"
-	"github.com/FlameInTheDark/gochat/internal/cache/vkc"
+	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/helper"
@@ -67,7 +67,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
-	cache, err := vkc.New(cfg.KeyDB)
+	cache, err := kvs.New(cfg.KeyDB)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		s.WithLogger(logger)
 	}
 	s.WithCORS()
-	s.WithMetrics()
+	s.WithMetrics("gochat-api")
 	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
 	s.AuthMiddleware(cfg.AuthSecret)
 	//s.RateLimitMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
@@ -111,10 +111,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	// HTTP Router
 	s.Register(
 		"/api/v1",
-		user.New(pg, logger),
+		user.New(pg, qt, logger),
 		message.New(database, pg, storage, qt, imq, cfg.UploadLimit, logger),
 		webhook.New(database, storage, logger),
-		guild.New(database, pg, qt, logger),
+		guild.New(database, pg, qt, cache, logger),
 		search.New(database, pg, searchService, logger),
 	)
 

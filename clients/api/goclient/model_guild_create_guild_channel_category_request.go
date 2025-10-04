@@ -22,6 +22,8 @@ var _ MappedNullable = &GuildCreateGuildChannelCategoryRequest{}
 type GuildCreateGuildChannelCategoryRequest struct {
 	// Category channel name
 	Name *string `json:"name,omitempty"`
+	// Channel position in the list. Should be set as the last position in the channel list, or it will be one of the first in the list.
+	Position *int32 `json:"position,omitempty"`
 	// Whether the category channel is private. Private channels can only be seen by users with roles assigned to this channel.
 	Private *bool `json:"private,omitempty"`
 }
@@ -32,6 +34,8 @@ type GuildCreateGuildChannelCategoryRequest struct {
 // will change when the set of required properties is changed
 func NewGuildCreateGuildChannelCategoryRequest() *GuildCreateGuildChannelCategoryRequest {
 	this := GuildCreateGuildChannelCategoryRequest{}
+	var position int32 = 0
+	this.Position = &position
 	var private bool = false
 	this.Private = &private
 	return &this
@@ -42,6 +46,8 @@ func NewGuildCreateGuildChannelCategoryRequest() *GuildCreateGuildChannelCategor
 // but it doesn't guarantee that properties required by API are set
 func NewGuildCreateGuildChannelCategoryRequestWithDefaults() *GuildCreateGuildChannelCategoryRequest {
 	this := GuildCreateGuildChannelCategoryRequest{}
+	var position int32 = 0
+	this.Position = &position
 	var private bool = false
 	this.Private = &private
 	return &this
@@ -77,6 +83,38 @@ func (o *GuildCreateGuildChannelCategoryRequest) HasName() bool {
 // SetName gets a reference to the given string and assigns it to the Name field.
 func (o *GuildCreateGuildChannelCategoryRequest) SetName(v string) {
 	o.Name = &v
+}
+
+// GetPosition returns the Position field value if set, zero value otherwise.
+func (o *GuildCreateGuildChannelCategoryRequest) GetPosition() int32 {
+	if o == nil || IsNil(o.Position) {
+		var ret int32
+		return ret
+	}
+	return *o.Position
+}
+
+// GetPositionOk returns a tuple with the Position field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *GuildCreateGuildChannelCategoryRequest) GetPositionOk() (*int32, bool) {
+	if o == nil || IsNil(o.Position) {
+		return nil, false
+	}
+	return o.Position, true
+}
+
+// HasPosition returns a boolean if a field has been set.
+func (o *GuildCreateGuildChannelCategoryRequest) HasPosition() bool {
+	if o != nil && !IsNil(o.Position) {
+		return true
+	}
+
+	return false
+}
+
+// SetPosition gets a reference to the given int32 and assigns it to the Position field.
+func (o *GuildCreateGuildChannelCategoryRequest) SetPosition(v int32) {
+	o.Position = &v
 }
 
 // GetPrivate returns the Private field value if set, zero value otherwise.
@@ -123,6 +161,9 @@ func (o GuildCreateGuildChannelCategoryRequest) ToMap() (map[string]interface{},
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
+	}
+	if !IsNil(o.Position) {
+		toSerialize["position"] = o.Position
 	}
 	if !IsNil(o.Private) {
 		toSerialize["private"] = o.Private

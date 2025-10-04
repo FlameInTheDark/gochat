@@ -2,6 +2,8 @@ package discriminator
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -58,4 +60,25 @@ func (e *Entity) GetUserIdByDiscriminator(ctx context.Context, discriminator str
 		return model.Discriminator{}, fmt.Errorf("unable to get discriminator by user id: %w", err)
 	}
 	return disc, nil
+}
+
+func (e *Entity) GetDiscriminatorsByUserIDs(ctx context.Context, userIDs []int64) ([]model.Discriminator, error) {
+	var discs []model.Discriminator
+	q := squirrel.Select("user_id", "discriminator").
+		PlaceholderFormat(squirrel.Dollar).
+		From("discriminators").
+		Where(squirrel.Eq{"user_id": userIDs}).
+		OrderBy("user_id ASC")
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	err = e.c.SelectContext(ctx, &discs, raw, args...)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("unable to get discriminators by user ids: %w", err)
+	}
+	return discs, nil
 }
