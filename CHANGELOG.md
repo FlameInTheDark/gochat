@@ -1,3 +1,13 @@
+# [1.4.0](https://github.com/FlameInTheDark/gochat/compare/v1.3.0...v1.4.0) (2025-10-04)
+
+
+### Features
+
+* added ability to fetch messages around ([133ad34](https://github.com/FlameInTheDark/gochat/commit/133ad3419578b8cb0e86bb8b0c84f37976b0330d))
+* added user settings with read state, some metrics ([f82a3c5](https://github.com/FlameInTheDark/gochat/commit/f82a3c5a162e380df0386067d923755b3fbfe78d))
+* transactions for guild channel creation and removal operations, channel ordering on creation ([8663ed5](https://github.com/FlameInTheDark/gochat/commit/8663ed50992f5a4d6a931433f578ac828340bb72))
+* websocket events and guild api improvements ([fe434c2](https://github.com/FlameInTheDark/gochat/commit/fe434c2cdfa0937b6b3f54a2534227d8f0590134))
+
 # [1.3.0](https://github.com/FlameInTheDark/gochat/compare/v1.2.0...v1.3.0) (2025-09-22)
 
 
