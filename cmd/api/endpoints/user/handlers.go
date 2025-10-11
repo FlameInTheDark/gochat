@@ -730,11 +730,32 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 		return helper.HttpDbError(err, ErrUnableToGetUserSettings)
 	}
 
-	// No changes or no settings yet
-	if s.UserId == 0 || s.Settings == nil {
-		return c.SendStatus(fiber.StatusNoContent)
+	memb, err := e.member.GetUserGuilds(c.UserContext(), user.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetMembership)
 	}
-	settings, err := modelToSettings(&s)
+
+	var gids = make([]int64, len(memb))
+	for i, m := range memb {
+		gids[i] = m.GuildId
+	}
+
+	guilds, err := e.guild.GetGuildsList(c.UserContext(), gids)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUserGuilds)
+	}
+
+	gclm, err := e.gclm.GetChannelsMessagesForGuilds(c.UserContext(), gids)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuilds)
+	}
+
+	rs, err := e.rs.GetReadStates(c.UserContext(), user.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetReadStates)
+	}
+
+	settings, err := modelToSettings(&s, guildModelToGuildMany(guilds), rs, gclm)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUnmarshalUserSettings)
 	}

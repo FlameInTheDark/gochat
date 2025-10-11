@@ -49,7 +49,7 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 		h.closer()
 		return
 	}
-	err = h.ws.WriteJSON(hellomsg)
+	err = h.sendJSON(hellomsg)
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()

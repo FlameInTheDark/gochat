@@ -23,7 +23,6 @@ type ModelUserSettingsGuilds struct {
 	GuildId         *int32                          `json:"guild_id,omitempty"`
 	Notifications   *ModelUserSettingsNotifications `json:"notifications,omitempty"`
 	Position        *int32                          `json:"position,omitempty"`
-	ReadStates      []ModelGuildChannelReadState    `json:"read_states,omitempty"`
 	SelectedChannel *int32                          `json:"selected_channel,omitempty"`
 }
 
@@ -140,38 +139,6 @@ func (o *ModelUserSettingsGuilds) SetPosition(v int32) {
 	o.Position = &v
 }
 
-// GetReadStates returns the ReadStates field value if set, zero value otherwise.
-func (o *ModelUserSettingsGuilds) GetReadStates() []ModelGuildChannelReadState {
-	if o == nil || IsNil(o.ReadStates) {
-		var ret []ModelGuildChannelReadState
-		return ret
-	}
-	return o.ReadStates
-}
-
-// GetReadStatesOk returns a tuple with the ReadStates field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *ModelUserSettingsGuilds) GetReadStatesOk() ([]ModelGuildChannelReadState, bool) {
-	if o == nil || IsNil(o.ReadStates) {
-		return nil, false
-	}
-	return o.ReadStates, true
-}
-
-// HasReadStates returns a boolean if a field has been set.
-func (o *ModelUserSettingsGuilds) HasReadStates() bool {
-	if o != nil && !IsNil(o.ReadStates) {
-		return true
-	}
-
-	return false
-}
-
-// SetReadStates gets a reference to the given []ModelGuildChannelReadState and assigns it to the ReadStates field.
-func (o *ModelUserSettingsGuilds) SetReadStates(v []ModelGuildChannelReadState) {
-	o.ReadStates = v
-}
-
 // GetSelectedChannel returns the SelectedChannel field value if set, zero value otherwise.
 func (o *ModelUserSettingsGuilds) GetSelectedChannel() int32 {
 	if o == nil || IsNil(o.SelectedChannel) {
@@ -222,9 +189,6 @@ func (o ModelUserSettingsGuilds) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Position) {
 		toSerialize["position"] = o.Position
-	}
-	if !IsNil(o.ReadStates) {
-		toSerialize["read_states"] = o.ReadStates
 	}
 	if !IsNil(o.SelectedChannel) {
 		toSerialize["selected_channel"] = o.SelectedChannel

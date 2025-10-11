@@ -6,6 +6,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**MessageChannelChannelIdAttachmentPost**](MessageAPI.md#MessageChannelChannelIdAttachmentPost) | **Post** /message/channel/{channel_id}/attachment | Create attachment
 [**MessageChannelChannelIdGet**](MessageAPI.md#MessageChannelChannelIdGet) | **Get** /message/channel/{channel_id} | Get messages
+[**MessageChannelChannelIdMessageIdAckPost**](MessageAPI.md#MessageChannelChannelIdMessageIdAckPost) | **Post** /message/channel/{channel_id}/{message_id}/ack | Set channel read state for current user
 [**MessageChannelChannelIdMessageIdDelete**](MessageAPI.md#MessageChannelChannelIdMessageIdDelete) | **Delete** /message/channel/{channel_id}/{message_id} | Delete message
 [**MessageChannelChannelIdMessageIdPatch**](MessageAPI.md#MessageChannelChannelIdMessageIdPatch) | **Patch** /message/channel/{channel_id}/{message_id} | Update message
 [**MessageChannelChannelIdPost**](MessageAPI.md#MessageChannelChannelIdPost) | **Post** /message/channel/{channel_id} | Send message
@@ -141,6 +142,77 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**[]DtoMessage**](DtoMessage.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## MessageChannelChannelIdMessageIdAckPost
+
+> string MessageChannelChannelIdMessageIdAckPost(ctx, channelId, messageId).Execute()
+
+Set channel read state for current user
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Channel id
+	messageId := int32(56) // int32 | Message id
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.MessageAPI.MessageChannelChannelIdMessageIdAckPost(context.Background(), channelId, messageId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `MessageAPI.MessageChannelChannelIdMessageIdAckPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `MessageChannelChannelIdMessageIdAckPost`: string
+	fmt.Fprintf(os.Stdout, "Response from `MessageAPI.MessageChannelChannelIdMessageIdAckPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Channel id | 
+**messageId** | **int32** | Message id | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiMessageChannelChannelIdMessageIdAckPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+**string**
 
 ### Authorization
 

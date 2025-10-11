@@ -1,13 +1,12 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
-
-	"github.com/gofiber/contrib/websocket"
 
 	"github.com/FlameInTheDark/gochat/cmd/ws/auth"
 	"github.com/FlameInTheDark/gochat/cmd/ws/subscriber"
@@ -27,49 +26,41 @@ type helloMessage struct {
 	Token string `json:"token"`
 }
 
-type helloResponse struct {
-	HeartbeatInterval int `json:"heartbeat_interval"`
-}
-
 type heartbeatMessage struct {
 	// Seconds since connection opened
 	LastEventId int64 `json:"e"`
 }
 
 type Handler struct {
-	user *dto.User
-	sub  *subscriber.Subscriber
-	g    guild.Guild
-	m    member.Member
-	u    user.User
-	gc   guildchannels.GuildChannels
-	perm rolecheck.RoleCheck
-	jwt  *auth.Auth
-	ws   *websocket.Conn
+	user     *dto.User
+	sub      *subscriber.Subscriber
+	g        guild.Guild
+	m        member.Member
+	u        user.User
+	gc       guildchannels.GuildChannels
+	perm     rolecheck.RoleCheck
+	jwt      *auth.Auth
+	sendJSON func(v any) error
 
 	lastEventId int64
-	// Timeout to close connection
-	hbTimeout int64
-	// Heartbeat timer, close connection if no heartbeat or messages are received in the heartbeat window
-	hTimer *time.Timer
-	// Timer to receive hello message, close connection if no hello message was received
-	initTimer *time.Timer
-	// Close connection handler function
-	closer func()
-	log    *slog.Logger
+	hbTimeout   int64
+	hTimer      *time.Timer
+	initTimer   *time.Timer
+	closer      func()
+	log         *slog.Logger
 }
 
-func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, ws *websocket.Conn, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger) *Handler {
+func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v any) error, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger) *Handler {
 	initTimer := time.AfterFunc(time.Second*5, closer)
 	return &Handler{
-		sub:  sub,
-		g:    guild.New(pg.Conn()),
-		m:    member.New(pg.Conn()),
-		u:    user.New(pg.Conn()),
-		gc:   guildchannels.New(pg.Conn()),
-		perm: rolecheck.New(c, pg),
-		jwt:  jwt,
-		ws:   ws,
+		sub:      sub,
+		g:        guild.New(pg.Conn()),
+		m:        member.New(pg.Conn()),
+		u:        user.New(pg.Conn()),
+		gc:       guildchannels.New(pg.Conn()),
+		perm:     rolecheck.New(c, pg),
+		jwt:      jwt,
+		sendJSON: sendJSON,
 
 		hbTimeout: hbTimeout,
 		initTimer: initTimer,
@@ -86,6 +77,9 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 	case mqmsg.OPCodeHello:
 		h.hello(&e)
 	case mqmsg.OPCodeHeartBeat:
+		if len(e.Data) == 0 || string(bytes.TrimSpace(e.Data)) == "null" {
+			return
+		}
 		var m heartbeatMessage
 		err := json.Unmarshal(e.Data, &m)
 		if err != nil {
@@ -103,19 +97,15 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			return
 		}
 
-		// Check if user has access to the channel
 		if m.Channel != nil {
-			// Get the guild channel to find the guild ID
 			gc, err := h.gc.GetGuildByChannel(context.Background(), *m.Channel)
 			if err != nil {
 				h.log.Warn("Error getting guild channel", "error", err, "channel_id", *m.Channel)
 			} else {
-				// Check if user has permission to view the channel
 				_, _, _, ok, err := h.perm.ChannelPerm(context.Background(), gc.GuildId, gc.ChannelId, h.user.Id, permissions.PermServerViewChannels)
 				if err != nil {
 					h.log.Warn("Error checking channel permissions", "error", err)
 				} else if ok {
-					// User has permission, subscribe to the channel
 					err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel))
 					if err != nil {
 						h.log.Warn("Error subscribing to channel", "error", err)
@@ -126,14 +116,11 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			}
 		}
 
-		// Check if user has access to the guilds
 		for _, guildID := range m.Guilds {
-			// Check if user is a member of the guild
 			ok, err := h.m.IsGuildMember(context.Background(), guildID, h.user.Id)
 			if err != nil {
 				h.log.Warn("Error checking guild access", "error", err)
 			} else if ok {
-				// User has permission, subscribe to the guild
 				err := h.sub.Subscribe(fmt.Sprintf("guild.%d", guildID), fmt.Sprintf("guild.%d", guildID))
 				if err != nil {
 					h.log.Warn("Error subscribing to guild", "error", err)

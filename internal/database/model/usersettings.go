@@ -34,19 +34,12 @@ type UserSettingsGuilds struct {
 	Position        int64                     `json:"position"`
 	SelectedChannel int64                     `json:"selected_channel"`
 	Notifications   UserSettingsNotifications `json:"notifications"`
-	ReadStates      []GuildChannelReadState   `json:"read_states"`
 }
 
 func (g UserSettingsGuilds) Validate() error {
 	return validation.ValidateStruct(&g,
 		validation.Field(&g.Notifications),
 	)
-}
-
-type GuildChannelReadState struct {
-	ChannelId         int64 `json:"channel_id"`
-	LastReadMessageId int64 `json:"last_read_message_id"`
-	ScrollPosition    int64 `json:"scroll_position"`
 }
 
 type NotificationsType int

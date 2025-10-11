@@ -123,3 +123,40 @@ func (c *Cache) GetJSON(ctx context.Context, key string, v interface{}) error {
 
 	return json.Unmarshal(b, v)
 }
+
+func (c *Cache) HGet(ctx context.Context, key, field string) (string, error) {
+	h := c.c.HGet(ctx, key, field)
+	if h.Err() != nil {
+		return "", nil
+	}
+	return h.Val(), nil
+}
+
+func (c *Cache) HSet(ctx context.Context, key, field, value string) error {
+	h := c.c.HSet(ctx, key, field, value)
+	if h.Err() != nil {
+		return h.Err()
+	}
+	return nil
+}
+
+func (c *Cache) HGetAll(ctx context.Context, key string) (map[string]string, error) {
+	h := c.c.HGetAll(ctx, key)
+	if h.Err() != nil {
+		return nil, h.Err()
+	}
+	return h.Val(), nil
+}
+
+func (c *Cache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
+	h := c.c.XAdd(ctx, &redis.XAddArgs{
+		Stream: stream,
+		MaxLen: maxLen,
+		Approx: approx,
+		Values: values,
+	})
+	if h.Err() != nil {
+		return h.Err()
+	}
+	return nil
+}

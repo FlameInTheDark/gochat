@@ -116,6 +116,7 @@ Class | Method | HTTP request | Description
 *GuildRolesAPI* | [**GuildGuildIdRolesRoleIdPatch**](docs/GuildRolesAPI.md#guildguildidrolesroleidpatch) | **Patch** /guild/{guild_id}/roles/{role_id} | Update guild role
 *MessageAPI* | [**MessageChannelChannelIdAttachmentPost**](docs/MessageAPI.md#messagechannelchannelidattachmentpost) | **Post** /message/channel/{channel_id}/attachment | Create attachment
 *MessageAPI* | [**MessageChannelChannelIdGet**](docs/MessageAPI.md#messagechannelchannelidget) | **Get** /message/channel/{channel_id} | Get messages
+*MessageAPI* | [**MessageChannelChannelIdMessageIdAckPost**](docs/MessageAPI.md#messagechannelchannelidmessageidackpost) | **Post** /message/channel/{channel_id}/{message_id}/ack | Set channel read state for current user
 *MessageAPI* | [**MessageChannelChannelIdMessageIdDelete**](docs/MessageAPI.md#messagechannelchannelidmessageiddelete) | **Delete** /message/channel/{channel_id}/{message_id} | Delete message
 *MessageAPI* | [**MessageChannelChannelIdMessageIdPatch**](docs/MessageAPI.md#messagechannelchannelidmessageidpatch) | **Patch** /message/channel/{channel_id}/{message_id} | Update message
 *MessageAPI* | [**MessageChannelChannelIdPost**](docs/MessageAPI.md#messagechannelchannelidpost) | **Post** /message/channel/{channel_id} | Send message
@@ -166,7 +167,6 @@ Class | Method | HTTP request | Description
  - [MessageSendMessageRequest](docs/MessageSendMessageRequest.md)
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)
  - [MessageUploadAttachmentRequest](docs/MessageUploadAttachmentRequest.md)
- - [ModelGuildChannelReadState](docs/ModelGuildChannelReadState.md)
  - [ModelUserSettingsAppearance](docs/ModelUserSettingsAppearance.md)
  - [ModelUserSettingsData](docs/ModelUserSettingsData.md)
  - [ModelUserSettingsGuildFolders](docs/ModelUserSettingsGuildFolders.md)

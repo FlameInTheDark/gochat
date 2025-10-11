@@ -48,6 +48,14 @@ const (
 	EventTypeGuildMemberRemoveRole
 )
 
+const (
+	EventTypeGuildChannelMessage EventType = 300 + iota
+)
+
+const (
+	EventTypeUserUpdateReadState EventType = 400 + iota
+)
+
 type Message struct {
 	Operation OPCodeType      `json:"op"`
 	Data      json.RawMessage `json:"d"`

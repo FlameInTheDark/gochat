@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **CreatedAt** | Pointer to **string** | Timestamp of channel creation | [optional] 
 **GuildId** | Pointer to **int32** | Guild ID channel was created in | [optional] 
 **Id** | Pointer to **int32** | Channel ID | [optional] 
+**LastMessageId** | Pointer to **int32** | ID of the last message in the channel | [optional] 
 **Name** | Pointer to **string** | Channel name, without spaces | [optional] 
 **ParentId** | Pointer to **int32** | Parent channel id | [optional] 
 **Permissions** | Pointer to **int32** | Permissions. Check the permissions documentation for more info. | [optional] 
@@ -109,6 +110,31 @@ SetId sets Id field to given value.
 `func (o *DtoChannel) HasId() bool`
 
 HasId returns a boolean if a field has been set.
+
+### GetLastMessageId
+
+`func (o *DtoChannel) GetLastMessageId() int32`
+
+GetLastMessageId returns the LastMessageId field if non-nil, zero value otherwise.
+
+### GetLastMessageIdOk
+
+`func (o *DtoChannel) GetLastMessageIdOk() (*int32, bool)`
+
+GetLastMessageIdOk returns a tuple with the LastMessageId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetLastMessageId
+
+`func (o *DtoChannel) SetLastMessageId(v int32)`
+
+SetLastMessageId sets LastMessageId field to given value.
+
+### HasLastMessageId
+
+`func (o *DtoChannel) HasLastMessageId() bool`
+
+HasLastMessageId returns a boolean if a field has been set.
 
 ### GetName
 

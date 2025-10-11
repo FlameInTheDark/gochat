@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS gochat.guild_channels_last_messages;
