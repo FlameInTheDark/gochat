@@ -140,6 +140,11 @@ func (c *Cache) HSet(ctx context.Context, key, field, value string) error {
 	return nil
 }
 
+func (c *Cache) HDel(ctx context.Context, key, field string) error {
+	h := c.c.HDel(ctx, key, field)
+	return h.Err()
+}
+
 func (c *Cache) HGetAll(ctx context.Context, key string) (map[string]string, error) {
 	h := c.c.HGetAll(ctx, key)
 	if h.Err() != nil {

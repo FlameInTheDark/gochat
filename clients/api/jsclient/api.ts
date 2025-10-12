@@ -964,6 +964,25 @@ export interface MessageUploadAttachmentRequest {
 /**
  * 
  * @export
+ * @interface ModelStatus
+ */
+export interface ModelStatus {
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelStatus
+     */
+    'custom_status_text'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelStatus
+     */
+    'status'?: string;
+}
+/**
+ * 
+ * @export
  * @interface ModelUserSettingsAppearance
  */
 export interface ModelUserSettingsAppearance {
@@ -1006,6 +1025,12 @@ export interface ModelUserSettingsData {
     'favorite_gifs'?: Array<string>;
     /**
      * 
+     * @type {string}
+     * @memberof ModelUserSettingsData
+     */
+    'forced_presence'?: string;
+    /**
+     * 
      * @type {Array<ModelUserSettingsGuildFolders>}
      * @memberof ModelUserSettingsData
      */
@@ -1028,6 +1053,12 @@ export interface ModelUserSettingsData {
      * @memberof ModelUserSettingsData
      */
     'selected_guild'?: number;
+    /**
+     * 
+     * @type {ModelStatus}
+     * @memberof ModelUserSettingsData
+     */
+    'status'?: ModelStatus;
 }
 /**
  * 

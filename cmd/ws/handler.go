@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"compress/zlib"
 	"encoding/json"
 	"errors"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -12,6 +15,7 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/ws/handler"
 	"github.com/FlameInTheDark/gochat/cmd/ws/subscriber"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/presence"
 )
 
 func (a *App) wsHandler(c *websocket.Conn) {
@@ -23,20 +27,59 @@ func (a *App) wsHandler(c *websocket.Conn) {
 	}
 	out := make(chan outMsg, 256)
 	writerClosed := make(chan struct{})
+
+	compressMode := strings.EqualFold(c.Query("compress"), "zlib-stream")
+	var zbuf bytes.Buffer
+	var zw *zlib.Writer
+	if compressMode {
+		zw, _ = zlib.NewWriterLevel(&zbuf, zlib.BestSpeed)
+	}
+
 	go func() {
 		for m := range out {
 			var err error
 			switch m.kind {
 			case 1:
-				if c.Conn != nil {
-					_ = c.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+				if compressMode {
+					if c.Conn != nil {
+						_ = c.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+					}
+					if zw != nil {
+						_, _ = zw.Write(m.data)
+						_ = zw.Flush()
+						chunk := zbuf.Bytes()
+						err = c.WriteMessage(websocket.BinaryMessage, chunk)
+						zbuf.Reset()
+					}
+				} else {
+					if c.Conn != nil {
+						_ = c.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+					}
+					err = c.WriteMessage(websocket.TextMessage, m.data)
 				}
-				err = c.WriteMessage(websocket.TextMessage, m.data)
 			case 2:
-				if c.Conn != nil {
-					_ = c.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+				if compressMode {
+					if c.Conn != nil {
+						_ = c.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+					}
+					b, jerr := json.Marshal(m.v)
+					if jerr != nil {
+						err = jerr
+						break
+					}
+					if zw != nil {
+						_, _ = zw.Write(b)
+						_ = zw.Flush()
+						chunk := zbuf.Bytes()
+						err = c.WriteMessage(websocket.BinaryMessage, chunk)
+						zbuf.Reset()
+					}
+				} else {
+					if c.Conn != nil {
+						_ = c.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+					}
+					err = c.WriteJSON(m.v)
 				}
-				err = c.WriteJSON(m.v)
 			case 3:
 				err = c.WriteControl(
 					websocket.CloseMessage,
@@ -44,11 +87,19 @@ func (a *App) wsHandler(c *websocket.Conn) {
 					time.Now().Add(1*time.Second),
 				)
 				_ = c.Close()
+			case 4:
+				if c.Conn != nil {
+					_ = c.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+				}
+				err = c.WriteControl(websocket.PingMessage, nil, time.Now().Add(5*time.Second))
 			}
 			if m.done != nil {
 				m.done <- err
 			}
 			if m.kind == 3 {
+				if compressMode && zw != nil {
+					_ = zw.Close()
+				}
 				return
 			}
 		}
@@ -104,16 +155,48 @@ func (a *App) wsHandler(c *websocket.Conn) {
 
 	subs := subscriber.New(emitText, a.natsConn)
 	defer func() {
-		sendClose("Closed")
 		cerr := subs.Close()
 		if cerr != nil {
 			a.log.Error("Error closing subscriber", "error", cerr)
 		}
 	}()
+	pstore := presence.NewStore(a.cache)
 
 	h := handler.New(a.cdb, a.pg, subs, sendJSON, a.jwt, a.cfg.HearthBeatTimeout, func() {
 		sendClose("Closed")
-	}, a.log)
+	}, a.log, a.natsConn, pstore)
+
+	defer func() { _ = h.Close() }()
+
+	pingInterval := time.Second * 15
+	if a.cfg.HearthBeatTimeout > 0 {
+		half := time.Duration(a.cfg.HearthBeatTimeout/2) * time.Millisecond
+		if half < pingInterval {
+			pingInterval = half
+		}
+	}
+	stopPing := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(pingInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-writerClosed:
+				return
+			case <-stopPing:
+				return
+			case <-ticker.C:
+				done := make(chan error, 1)
+				select {
+				case out <- outMsg{kind: 4, done: done}:
+					<-done
+				case <-writerClosed:
+					return
+				}
+			}
+		}
+	}()
+	defer close(stopPing)
 
 	for {
 		mt, msg, err := c.ReadMessage()

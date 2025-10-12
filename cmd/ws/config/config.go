@@ -21,6 +21,7 @@ type Config struct {
 	NatsConnString    string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 	PGDSN             string   `yaml:"pg_dsn" env:"PG_DSN"`
 	PGRetries         int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
+	CacheAddr         string   `yaml:"cache_addr" env:"CACHE_ADDR" env-default:"keydb:6379"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {

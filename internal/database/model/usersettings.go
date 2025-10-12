@@ -14,18 +14,33 @@ type UserSettings struct {
 }
 
 type UserSettingsData struct {
-	Language      string                     `json:"language"`
-	SelectedGuild int64                      `json:"selected_guild"`
-	Appearance    UserSettingsAppearance     `json:"appearance"`
-	GuildFolders  []UserSettingsGuildFolders `json:"guild_folders"`
-	Guilds        []UserSettingsGuilds       `json:"guilds"`
-	FavoriteGifs  []string                   `json:"favorite_gifs"`
+	Language       string                     `json:"language"`
+	SelectedGuild  int64                      `json:"selected_guild"`
+	Appearance     UserSettingsAppearance     `json:"appearance"`
+	GuildFolders   []UserSettingsGuildFolders `json:"guild_folders"`
+	Guilds         []UserSettingsGuilds       `json:"guilds"`
+	FavoriteGifs   []string                   `json:"favorite_gifs"`
+	ForcedPresence string                     `json:"forced_presence"`
+	Status         Status                     `json:"status"`
 }
 
 func (s UserSettingsData) Validate() error {
 	return validation.ValidateStruct(&s,
 		validation.Field(&s.Appearance),
+		validation.Field(&s.Status),
 		validation.Field(&s.FavoriteGifs, validation.Each(is.URL)),
+	)
+}
+
+type Status struct {
+	Status           string `json:"status"`
+	CustomStatusText string `json:"custom_status_text,omitempty"`
+}
+
+func (s Status) Validate() error {
+	return validation.ValidateStruct(&s,
+		validation.Field(&s.Status, validation.In("online", "idle", "dnd", "offline")),
+		validation.Field(&s.CustomStatusText, validation.Length(0, 255)),
 	)
 }
 

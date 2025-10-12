@@ -3228,6 +3228,15 @@ components:
       - NotificationsAll
       - NotificationsMentions
       - NotificationsNone
+    model.Status:
+      example:
+        custom_status_text: custom_status_text
+        status: status
+      properties:
+        custom_status_text:
+          type: string
+        status:
+          type: string
     model.UserSettingsAppearance:
       example:
         chat_font_scale: 1
@@ -3268,6 +3277,7 @@ components:
             muted: true
             notifications: 3
         language: language
+        forced_presence: forced_presence
         guild_folders:
         - color: 5
           guilds:
@@ -3281,6 +3291,9 @@ components:
           - 2
           name: name
           position: 7
+        status:
+          custom_status_text: custom_status_text
+          status: status
       properties:
         appearance:
           $ref: '#/components/schemas/model.UserSettingsAppearance'
@@ -3289,6 +3302,8 @@ components:
             type: string
           type: array
           uniqueItems: false
+        forced_presence:
+          type: string
         guild_folders:
           items:
             $ref: '#/components/schemas/model.UserSettingsGuildFolders'
@@ -3303,6 +3318,8 @@ components:
           type: string
         selected_guild:
           type: integer
+        status:
+          $ref: '#/components/schemas/model.Status'
     model.UserSettingsGuildFolders:
       example:
         color: 5
@@ -3509,6 +3526,7 @@ components:
               muted: true
               notifications: 3
           language: language
+          forced_presence: forced_presence
           guild_folders:
           - color: 5
             guilds:
@@ -3522,6 +3540,9 @@ components:
             - 2
             name: name
             position: 7
+          status:
+            custom_status_text: custom_status_text
+            status: status
         guilds:
         - owner: 2230469276416868352
           public: false

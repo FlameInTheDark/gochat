@@ -791,5 +791,14 @@ func (e *entity) SetUserSettings(c *fiber.Ctx) error {
 	if err := e.uset.SetUserSettings(c.UserContext(), user.Id, req); err != nil {
 		return helper.HttpDbError(err, ErrUnableToSetUserSettings)
 	}
+
+	go func() {
+		if err := e.mqt.SendUserUpdate(user.Id, &mqmsg.UpdateUserSettings{
+			Settings: req,
+		}); err != nil {
+			slog.Error("unable to send update user settings event", slog.String("error", err.Error()))
+		}
+	}()
+
 	return c.SendStatus(fiber.StatusOK)
 }

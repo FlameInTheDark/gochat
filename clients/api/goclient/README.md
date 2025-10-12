@@ -167,6 +167,7 @@ Class | Method | HTTP request | Description
  - [MessageSendMessageRequest](docs/MessageSendMessageRequest.md)
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)
  - [MessageUploadAttachmentRequest](docs/MessageUploadAttachmentRequest.md)
+ - [ModelStatus](docs/ModelStatus.md)
  - [ModelUserSettingsAppearance](docs/ModelUserSettingsAppearance.md)
  - [ModelUserSettingsData](docs/ModelUserSettingsData.md)
  - [ModelUserSettingsGuildFolders](docs/ModelUserSettingsGuildFolders.md)

@@ -19,6 +19,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/cmd/ws/auth"
 	"github.com/FlameInTheDark/gochat/cmd/ws/config"
+	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 )
 
 type App struct {
@@ -27,6 +28,7 @@ type App struct {
 	app      *fiber.App
 	cdb      *db.CQLCon
 	pg       *pgdb.DB
+	cache    *kvs.Cache
 
 	shut *shutter.Shut
 	cfg  *config.Config
@@ -64,6 +66,14 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 
 	jwtauth := auth.New(cfg.AuthSecret, "gochat", "api")
 
+	// Cache (Redis)
+	kv, err := kvs.New(cfg.CacheAddr)
+	if err != nil {
+		logger.Error("unable to connect to cache", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	shut.Up(kv)
+
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
 	logMiddleware := slogfiber.NewWithFilters(
 		logger,
@@ -85,6 +95,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 		app:      app,
 		cdb:      dbcon,
 		pg:       pg,
+		cache:    kv,
 		cfg:      cfg,
 		log:      logger,
 		shut:     shut,

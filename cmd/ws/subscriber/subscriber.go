@@ -3,6 +3,7 @@ package subscriber
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 
 	"github.com/nats-io/nats.go"
@@ -37,7 +38,10 @@ func (s *Subscriber) Subscribe(key, topic string) error {
 	delete(s.subs, key)
 	sub, err := s.nc.Subscribe(topic, func(msg *nats.Msg) {
 		if err := s.emit(msg.Data); err != nil {
-			log.Println("Emit message error:", err)
+			// Writer can legitimately be closed during shutdown; reduce noise
+			if !strings.Contains(strings.ToLower(err.Error()), "ws writer closed") {
+				log.Println("Emit message error:", err)
+			}
 		}
 	})
 	if err != nil {

@@ -20,12 +20,14 @@ var _ MappedNullable = &ModelUserSettingsData{}
 
 // ModelUserSettingsData struct for ModelUserSettingsData
 type ModelUserSettingsData struct {
-	Appearance    *ModelUserSettingsAppearance    `json:"appearance,omitempty"`
-	FavoriteGifs  []string                        `json:"favorite_gifs,omitempty"`
-	GuildFolders  []ModelUserSettingsGuildFolders `json:"guild_folders,omitempty"`
-	Guilds        []ModelUserSettingsGuilds       `json:"guilds,omitempty"`
-	Language      *string                         `json:"language,omitempty"`
-	SelectedGuild *int32                          `json:"selected_guild,omitempty"`
+	Appearance     *ModelUserSettingsAppearance    `json:"appearance,omitempty"`
+	FavoriteGifs   []string                        `json:"favorite_gifs,omitempty"`
+	ForcedPresence *string                         `json:"forced_presence,omitempty"`
+	GuildFolders   []ModelUserSettingsGuildFolders `json:"guild_folders,omitempty"`
+	Guilds         []ModelUserSettingsGuilds       `json:"guilds,omitempty"`
+	Language       *string                         `json:"language,omitempty"`
+	SelectedGuild  *int32                          `json:"selected_guild,omitempty"`
+	Status         *ModelStatus                    `json:"status,omitempty"`
 }
 
 // NewModelUserSettingsData instantiates a new ModelUserSettingsData object
@@ -107,6 +109,38 @@ func (o *ModelUserSettingsData) HasFavoriteGifs() bool {
 // SetFavoriteGifs gets a reference to the given []string and assigns it to the FavoriteGifs field.
 func (o *ModelUserSettingsData) SetFavoriteGifs(v []string) {
 	o.FavoriteGifs = v
+}
+
+// GetForcedPresence returns the ForcedPresence field value if set, zero value otherwise.
+func (o *ModelUserSettingsData) GetForcedPresence() string {
+	if o == nil || IsNil(o.ForcedPresence) {
+		var ret string
+		return ret
+	}
+	return *o.ForcedPresence
+}
+
+// GetForcedPresenceOk returns a tuple with the ForcedPresence field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsData) GetForcedPresenceOk() (*string, bool) {
+	if o == nil || IsNil(o.ForcedPresence) {
+		return nil, false
+	}
+	return o.ForcedPresence, true
+}
+
+// HasForcedPresence returns a boolean if a field has been set.
+func (o *ModelUserSettingsData) HasForcedPresence() bool {
+	if o != nil && !IsNil(o.ForcedPresence) {
+		return true
+	}
+
+	return false
+}
+
+// SetForcedPresence gets a reference to the given string and assigns it to the ForcedPresence field.
+func (o *ModelUserSettingsData) SetForcedPresence(v string) {
+	o.ForcedPresence = &v
 }
 
 // GetGuildFolders returns the GuildFolders field value if set, zero value otherwise.
@@ -237,6 +271,38 @@ func (o *ModelUserSettingsData) SetSelectedGuild(v int32) {
 	o.SelectedGuild = &v
 }
 
+// GetStatus returns the Status field value if set, zero value otherwise.
+func (o *ModelUserSettingsData) GetStatus() ModelStatus {
+	if o == nil || IsNil(o.Status) {
+		var ret ModelStatus
+		return ret
+	}
+	return *o.Status
+}
+
+// GetStatusOk returns a tuple with the Status field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsData) GetStatusOk() (*ModelStatus, bool) {
+	if o == nil || IsNil(o.Status) {
+		return nil, false
+	}
+	return o.Status, true
+}
+
+// HasStatus returns a boolean if a field has been set.
+func (o *ModelUserSettingsData) HasStatus() bool {
+	if o != nil && !IsNil(o.Status) {
+		return true
+	}
+
+	return false
+}
+
+// SetStatus gets a reference to the given ModelStatus and assigns it to the Status field.
+func (o *ModelUserSettingsData) SetStatus(v ModelStatus) {
+	o.Status = &v
+}
+
 func (o ModelUserSettingsData) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -253,6 +319,9 @@ func (o ModelUserSettingsData) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.FavoriteGifs) {
 		toSerialize["favorite_gifs"] = o.FavoriteGifs
 	}
+	if !IsNil(o.ForcedPresence) {
+		toSerialize["forced_presence"] = o.ForcedPresence
+	}
 	if !IsNil(o.GuildFolders) {
 		toSerialize["guild_folders"] = o.GuildFolders
 	}
@@ -264,6 +333,9 @@ func (o ModelUserSettingsData) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.SelectedGuild) {
 		toSerialize["selected_guild"] = o.SelectedGuild
+	}
+	if !IsNil(o.Status) {
+		toSerialize["status"] = o.Status
 	}
 	return toSerialize, nil
 }
