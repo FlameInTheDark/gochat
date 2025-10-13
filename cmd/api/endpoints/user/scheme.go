@@ -34,6 +34,8 @@ const (
 	ErrUnableToSetUserSettings       = "unable to set user settings"
 	ErrUnableToUnmarshalUserSettings = "unable to unmarshal user settings"
 	ErrUnableToParseVersion          = "unable to parse version"
+	ErrUnableToGetReadStates         = "unable to get read states"
+	ErrUnableToGetMembership         = "unable to get membership"
 
 	// Validation error messages
 	ErrUserNameTooShort    = "user name must be at least 4 characters"
@@ -105,19 +107,25 @@ func (r CreateDMManyRequest) Validate() error {
 }
 
 type UserSettingsResponse struct {
-	Version  int64                   `json:"version"`
-	Settings *model.UserSettingsData `json:"settings"`
+	Version            int64                     `json:"version"`
+	Settings           *model.UserSettingsData   `json:"settings"`
+	ReadStates         map[int64]int64           `json:"read_states"`
+	GuildsLastMessages map[int64]map[int64]int64 `json:"guilds_last_messages"`
+	Guilds             []dto.Guild               `json:"guilds"`
 }
 
-func modelToSettings(m *model.UserSettings) (UserSettingsResponse, error) {
+func modelToSettings(m *model.UserSettings, guilds []dto.Guild, rs map[int64]int64, glms map[int64]map[int64]int64) (UserSettingsResponse, error) {
 	var settings model.UserSettingsData
 	err := json.Unmarshal(m.Settings, &settings)
 	if err != nil {
-		return UserSettingsResponse{}, err
+		return UserSettingsResponse{ReadStates: rs}, err
 	}
 	return UserSettingsResponse{
-		Version:  m.Version,
-		Settings: &settings,
+		Version:            m.Version,
+		Settings:           &settings,
+		ReadStates:         rs,
+		GuildsLastMessages: glms,
+		Guilds:             guilds,
 	}, nil
 }
 

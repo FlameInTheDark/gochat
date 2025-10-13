@@ -6,10 +6,12 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Appearance** | Pointer to [**ModelUserSettingsAppearance**](ModelUserSettingsAppearance.md) |  | [optional] 
 **FavoriteGifs** | Pointer to **[]string** |  | [optional] 
+**ForcedPresence** | Pointer to **string** |  | [optional] 
 **GuildFolders** | Pointer to [**[]ModelUserSettingsGuildFolders**](ModelUserSettingsGuildFolders.md) |  | [optional] 
 **Guilds** | Pointer to [**[]ModelUserSettingsGuilds**](ModelUserSettingsGuilds.md) |  | [optional] 
 **Language** | Pointer to **string** |  | [optional] 
 **SelectedGuild** | Pointer to **int32** |  | [optional] 
+**Status** | Pointer to [**ModelStatus**](ModelStatus.md) |  | [optional] 
 
 ## Methods
 
@@ -79,6 +81,31 @@ SetFavoriteGifs sets FavoriteGifs field to given value.
 `func (o *ModelUserSettingsData) HasFavoriteGifs() bool`
 
 HasFavoriteGifs returns a boolean if a field has been set.
+
+### GetForcedPresence
+
+`func (o *ModelUserSettingsData) GetForcedPresence() string`
+
+GetForcedPresence returns the ForcedPresence field if non-nil, zero value otherwise.
+
+### GetForcedPresenceOk
+
+`func (o *ModelUserSettingsData) GetForcedPresenceOk() (*string, bool)`
+
+GetForcedPresenceOk returns a tuple with the ForcedPresence field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetForcedPresence
+
+`func (o *ModelUserSettingsData) SetForcedPresence(v string)`
+
+SetForcedPresence sets ForcedPresence field to given value.
+
+### HasForcedPresence
+
+`func (o *ModelUserSettingsData) HasForcedPresence() bool`
+
+HasForcedPresence returns a boolean if a field has been set.
 
 ### GetGuildFolders
 
@@ -179,6 +206,31 @@ SetSelectedGuild sets SelectedGuild field to given value.
 `func (o *ModelUserSettingsData) HasSelectedGuild() bool`
 
 HasSelectedGuild returns a boolean if a field has been set.
+
+### GetStatus
+
+`func (o *ModelUserSettingsData) GetStatus() ModelStatus`
+
+GetStatus returns the Status field if non-nil, zero value otherwise.
+
+### GetStatusOk
+
+`func (o *ModelUserSettingsData) GetStatusOk() (*ModelStatus, bool)`
+
+GetStatusOk returns a tuple with the Status field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetStatus
+
+`func (o *ModelUserSettingsData) SetStatus(v ModelStatus)`
+
+SetStatus sets Status field to given value.
+
+### HasStatus
+
+`func (o *ModelUserSettingsData) HasStatus() bool`
+
+HasStatus returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

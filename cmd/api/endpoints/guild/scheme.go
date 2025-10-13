@@ -283,20 +283,20 @@ type memberRole struct {
 }
 
 // DTO conversion functions
-
 func channelModelToDTO(c *model.Channel, guildId *int64, position int, roles []int64) dto.Channel {
 	return dto.Channel{
-		Id:          c.Id,
-		Type:        c.Type,
-		GuildId:     guildId,
-		Name:        c.Name,
-		ParentId:    c.ParentID,
-		Position:    position,
-		Topic:       c.Topic,
-		Permissions: c.Permissions,
-		CreatedAt:   c.CreatedAt,
-		Private:     c.Private,
-		Roles:       roles,
+		Id:            c.Id,
+		Type:          c.Type,
+		GuildId:       guildId,
+		Name:          c.Name,
+		ParentId:      c.ParentID,
+		Position:      position,
+		Topic:         c.Topic,
+		Permissions:   c.Permissions,
+		CreatedAt:     c.CreatedAt,
+		Private:       c.Private,
+		Roles:         roles,
+		LastMessageId: c.LastMessage,
 	}
 }
 

@@ -17,6 +17,7 @@ const (
 	OPCodePresenceUpdate
 	OPCodeGuildUpdateSubscription
 	OPCodeChannelSubscription
+	OPCodePresenceSubscription
 )
 
 type EventType int
@@ -48,6 +49,15 @@ const (
 	EventTypeGuildMemberRemoveRole
 )
 
+const (
+	EventTypeGuildChannelMessage EventType = 300 + iota
+)
+
+const (
+	EventTypeUserUpdateReadState EventType = 400 + iota
+	EventTypeUserUpdateSettings
+)
+
 type Message struct {
 	Operation OPCodeType      `json:"op"`
 	Data      json.RawMessage `json:"d"`
@@ -59,4 +69,25 @@ func BuildEventMessage(data EventDataMessage) (msg Message, err error) {
 	msg.Operation = data.Operation()
 	msg.Data, err = data.Marshal()
 	return
+}
+
+// UnmarshalJSON supports clients that send "data" instead of "d" for the payload field.
+func (m *Message) UnmarshalJSON(b []byte) error {
+	var aux struct {
+		Operation OPCodeType      `json:"op"`
+		D         json.RawMessage `json:"d"`
+		Data      json.RawMessage `json:"data"`
+		T         *EventType      `json:"t"`
+	}
+	if err := json.Unmarshal(b, &aux); err != nil {
+		return err
+	}
+	m.Operation = aux.Operation
+	m.EventType = aux.T
+	if len(aux.D) > 0 {
+		m.Data = aux.D
+	} else {
+		m.Data = aux.Data
+	}
+	return nil
 }

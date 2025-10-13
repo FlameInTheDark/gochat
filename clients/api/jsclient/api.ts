@@ -267,6 +267,12 @@ export interface DtoChannel {
      */
     'id'?: number;
     /**
+     * ID of the last message in the channel
+     * @type {number}
+     * @memberof DtoChannel
+     */
+    'last_message_id'?: number;
+    /**
      * Channel name, without spaces
      * @type {string}
      * @memberof DtoChannel
@@ -958,27 +964,21 @@ export interface MessageUploadAttachmentRequest {
 /**
  * 
  * @export
- * @interface ModelGuildChannelReadState
+ * @interface ModelStatus
  */
-export interface ModelGuildChannelReadState {
+export interface ModelStatus {
     /**
      * 
-     * @type {number}
-     * @memberof ModelGuildChannelReadState
+     * @type {string}
+     * @memberof ModelStatus
      */
-    'channel_id'?: number;
+    'custom_status_text'?: string;
     /**
      * 
-     * @type {number}
-     * @memberof ModelGuildChannelReadState
+     * @type {string}
+     * @memberof ModelStatus
      */
-    'last_read_message_id'?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof ModelGuildChannelReadState
-     */
-    'scroll_position'?: number;
+    'status'?: string;
 }
 /**
  * 
@@ -1025,6 +1025,12 @@ export interface ModelUserSettingsData {
     'favorite_gifs'?: Array<string>;
     /**
      * 
+     * @type {string}
+     * @memberof ModelUserSettingsData
+     */
+    'forced_presence'?: string;
+    /**
+     * 
      * @type {Array<ModelUserSettingsGuildFolders>}
      * @memberof ModelUserSettingsData
      */
@@ -1047,6 +1053,12 @@ export interface ModelUserSettingsData {
      * @memberof ModelUserSettingsData
      */
     'selected_guild'?: number;
+    /**
+     * 
+     * @type {ModelStatus}
+     * @memberof ModelUserSettingsData
+     */
+    'status'?: ModelStatus;
 }
 /**
  * 
@@ -1103,12 +1115,6 @@ export interface ModelUserSettingsGuilds {
      * @memberof ModelUserSettingsGuilds
      */
     'position'?: number;
-    /**
-     * 
-     * @type {Array<ModelGuildChannelReadState>}
-     * @memberof ModelUserSettingsGuilds
-     */
-    'read_states'?: Array<ModelGuildChannelReadState>;
     /**
      * 
      * @type {number}
@@ -1276,6 +1282,24 @@ export interface UserModifyUserRequest {
  * @interface UserUserSettingsResponse
  */
 export interface UserUserSettingsResponse {
+    /**
+     * 
+     * @type {Array<DtoGuild>}
+     * @memberof UserUserSettingsResponse
+     */
+    'guilds'?: Array<DtoGuild>;
+    /**
+     * 
+     * @type {{ [key: string]: { [key: string]: number; }; }}
+     * @memberof UserUserSettingsResponse
+     */
+    'guilds_last_messages'?: { [key: string]: { [key: string]: number; }; };
+    /**
+     * 
+     * @type {{ [key: string]: number; }}
+     * @memberof UserUserSettingsResponse
+     */
+    'read_states'?: { [key: string]: number; };
     /**
      * 
      * @type {ModelUserSettingsData}
@@ -5490,6 +5514,44 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Set channel read state for current user
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdMessageIdAckPost: async (channelId: number, messageId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdAckPost', 'channelId', channelId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdAckPost', 'messageId', messageId)
+            const localVarPath = `/message/channel/{channel_id}/{message_id}/ack`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"message_id"}}`, encodeURIComponent(String(messageId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Delete message
          * @param {number} messageId Message id
          * @param {number} channelId Channel id
@@ -5652,6 +5714,20 @@ export const MessageApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Set channel read state for current user
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async messageChannelChannelIdMessageIdAckPost(channelId: number, messageId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdMessageIdAckPost(channelId, messageId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdMessageIdAckPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Delete message
          * @param {number} messageId Message id
          * @param {number} channelId Channel id
@@ -5725,6 +5801,16 @@ export const MessageApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
+         * @summary Set channel read state for current user
+         * @param {MessageApiMessageChannelChannelIdMessageIdAckPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdMessageIdAckPost(requestParameters: MessageApiMessageChannelChannelIdMessageIdAckPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.messageChannelChannelIdMessageIdAckPost(requestParameters.channelId, requestParameters.messageId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Delete message
          * @param {MessageApiMessageChannelChannelIdMessageIdDeleteRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -5781,6 +5867,16 @@ export interface MessageApiInterface {
      * @memberof MessageApiInterface
      */
     messageChannelChannelIdGet(requestParameters: MessageApiMessageChannelChannelIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoMessage>>;
+
+    /**
+     * 
+     * @summary Set channel read state for current user
+     * @param {MessageApiMessageChannelChannelIdMessageIdAckPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApiInterface
+     */
+    messageChannelChannelIdMessageIdAckPost(requestParameters: MessageApiMessageChannelChannelIdMessageIdAckPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
      * 
@@ -5868,6 +5964,27 @@ export interface MessageApiMessageChannelChannelIdGetRequest {
      * @memberof MessageApiMessageChannelChannelIdGet
      */
     readonly limit?: number
+}
+
+/**
+ * Request parameters for messageChannelChannelIdMessageIdAckPost operation in MessageApi.
+ * @export
+ * @interface MessageApiMessageChannelChannelIdMessageIdAckPostRequest
+ */
+export interface MessageApiMessageChannelChannelIdMessageIdAckPostRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdAckPost
+     */
+    readonly channelId: number
+
+    /**
+     * Message id
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdAckPost
+     */
+    readonly messageId: number
 }
 
 /**
@@ -5969,6 +6086,18 @@ export class MessageApi extends BaseAPI implements MessageApiInterface {
      */
     public messageChannelChannelIdGet(requestParameters: MessageApiMessageChannelChannelIdGetRequest, options?: RawAxiosRequestConfig) {
         return MessageApiFp(this.configuration).messageChannelChannelIdGet(requestParameters.channelId, requestParameters.from, requestParameters.direction, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Set channel read state for current user
+     * @param {MessageApiMessageChannelChannelIdMessageIdAckPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApi
+     */
+    public messageChannelChannelIdMessageIdAckPost(requestParameters: MessageApiMessageChannelChannelIdMessageIdAckPostRequest, options?: RawAxiosRequestConfig) {
+        return MessageApiFp(this.configuration).messageChannelChannelIdMessageIdAckPost(requestParameters.channelId, requestParameters.messageId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

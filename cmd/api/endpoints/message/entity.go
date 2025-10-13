@@ -3,6 +3,8 @@ package message
 import (
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
@@ -36,6 +38,7 @@ func (e *entity) Init(router fiber.Router) {
 	router.Patch("/channel/:channel_id<int>/:message_id<int>", e.Update)
 	router.Delete("/channel/:channel_id<int>/:message_id<int>", e.Delete)
 	router.Get("/channel/:channel_id<int>", e.GetMessages)
+	router.Post("/channel/:channel_id<int>/:message_id<int>/ack", e.SetReadState)
 }
 
 type entity struct {
@@ -64,13 +67,15 @@ type entity struct {
 	rperm channelroleperm.ChannelRolePerm
 	role  role.Role
 	ur    userrole.UserRole
+	rs    readstates.ReadStates
+	gclm  guildchannelmessages.GuildChannelMessages
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, pg *pgdb.DB, storage *s3.Client, t mq.SendTransporter, imq *indexmq.IndexMQ, uploadLimit int64, log *slog.Logger) server.Entity {
+func New(cql *db.CQLCon, pg *pgdb.DB, storage *s3.Client, t mq.SendTransporter, imq *indexmq.IndexMQ, uploadLimit int64, log *slog.Logger) server.Entity {
 
 	return &entity{
 		name:        entityName,
@@ -87,12 +92,14 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, storage *s3.Client, t mq.SendTransporter
 		gdmc:        groupdmchannel.New(pg.Conn()),
 		g:           guild.New(pg.Conn()),
 		gc:          guildchannels.New(pg.Conn()),
-		msg:         message.New(dbcon),
-		at:          attachment.New(dbcon),
-		perm:        rolecheck.New(dbcon, pg),
+		msg:         message.New(cql),
+		at:          attachment.New(cql),
+		perm:        rolecheck.New(cql, pg),
 		uperm:       channeluserperm.New(pg.Conn()),
 		rperm:       channelroleperm.New(pg.Conn()),
 		role:        role.New(pg.Conn()),
 		ur:          userrole.New(pg.Conn()),
+		rs:          readstates.New(cql),
+		gclm:        guildchannelmessages.New(cql),
 	}
 }

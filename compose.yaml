@@ -188,6 +188,10 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedByDefault=false"
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.transport.respondingTimeouts.idleTimeout=120s"
+      - "--entrypoints.web.transport.respondingTimeouts.readTimeout=0s"
+      - "--entrypoints.web.transport.respondingTimeouts.writeTimeout=0s"
+      - "--serversTransport.forwardingTimeouts.idleConnTimeout=120s"
     ports:
       - "80:80"
       - "8080:8080"

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"sync"
 	"time"
@@ -19,12 +20,10 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
 
-// Performance optimization constants
 const (
-	MaxBatchSize = 50 // Maximum messages to process at once
+	MaxBatchSize = 50
 )
 
-// Object pools for memory optimization
 var (
 	messagePool = sync.Pool{
 		New: func() interface{} {
@@ -155,6 +154,13 @@ func (e *entity) createAndSendMessage(c *fiber.Ctx, req *SendMessageRequest, jwt
 		return dto.Message{}, err
 	}
 
+	if guildId != nil {
+		err := e.gclm.SetChannelLastMessage(c.UserContext(), *guildId, channel.Id, messageId)
+		if err != nil {
+			slog.Error("unable to set guild channel last message id", slog.String("error", err.Error()))
+		}
+	}
+
 	// Send events (non-blocking)
 	go e.sendMessageEvents(channel.Id, guildId, message, userData, req)
 
@@ -271,6 +277,17 @@ func (e *entity) sendMessageEvents(channelId int64, guildId *int64, message dto.
 			"message_id", message.Id,
 			"channel_id", channelId,
 			"error", err.Error())
+	}
+
+	if guildId != nil {
+		if err := e.mqt.SendGuildUpdate(*guildId, &mqmsg.GuildChannelMessage{
+			GuildId:   guildId,
+			ChannelId: channelId,
+			MessageId: message.Id,
+		}); err != nil {
+			e.log.Error("failed to send guild message event",
+				slog.String("error", err.Error()))
+		}
 	}
 
 	// Send indexing event
@@ -1264,4 +1281,56 @@ func (e *entity) buildAttachmentsOptimized(attachmentIds []int64, data *messageR
 	attachmentPool.Put(attachments)
 
 	return result
+}
+
+// SetReadState
+//
+//	@Summary	Set channel read state for current user
+//	@Produce	json
+//	@Tags		Message
+//	@Param		channel_id	path		int64	true	"Channel id"
+//	@Param		message_id	path		int64	true	"Message id"
+//	@Success	200			{string}	string	"Read state updated"
+//	@failure	400			{string}	string	"Bad request"
+//	@failure	500			{string}	string	"Internal server error"
+//	@Router		/message/channel/{channel_id}/{message_id}/ack [post]
+func (e *entity) SetReadState(c *fiber.Ctx) error {
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+	channelIdStr := c.Params("channel_id")
+	channelId, err := strconv.ParseInt(channelIdStr, 10, 64)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+	}
+
+	messageIdStr := c.Params("message_id")
+	messageId, err := strconv.ParseInt(messageIdStr, 10, 64)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+	}
+
+	// Validate channel and permissions
+	channel, _, err := e.validateReadPermissions(c, channelId, user.Id)
+	if err != nil {
+		return err
+	}
+
+	err = e.rs.SetReadState(c.UserContext(), user.Id, channel.Id, messageId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetReadState)
+	}
+
+	go func() {
+		if err := e.mqt.SendUserUpdate(user.Id, &mqmsg.UpdateReadState{
+			ChannelId: channelId,
+			MessageId: messageId,
+		}); err != nil {
+			slog.Error("unable to send user update read state event",
+				slog.String("error", err.Error()))
+		}
+	}()
+
+	return c.SendStatus(fiber.StatusOK)
 }

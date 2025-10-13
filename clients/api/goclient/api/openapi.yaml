@@ -2065,6 +2065,47 @@ paths:
       summary: Update message
       tags:
       - Message
+  /message/channel/{channel_id}/{message_id}/ack:
+    post:
+      parameters:
+      - description: Channel id
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Message id
+        explode: false
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Read state updated
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Set channel read state for current user
+      tags:
+      - Message
   /search/{guild_id}/messages:
     post:
       parameters:
@@ -2639,6 +2680,7 @@ components:
           type: string
     dto.Channel:
       example:
+        last_message_id: 2230469276416868352
         private: false
         parent_id: 2230469276416868352
         permissions: 0
@@ -2661,6 +2703,10 @@ components:
           type: integer
         id:
           description: Channel ID
+          example: 2230469276416868352
+          type: integer
+        last_message_id:
+          description: ID of the last message in the channel
           example: 2230469276416868352
           type: integer
         name:
@@ -3176,29 +3222,26 @@ components:
       - ChannelTypeDM
       - ChannelTypeGroupDM
       - ChannelTypeThread
-    model.GuildChannelReadState:
-      example:
-        last_read_message_id: 2
-        channel_id: 3
-        scroll_position: 4
-      properties:
-        channel_id:
-          type: integer
-        last_read_message_id:
-          type: integer
-        scroll_position:
-          type: integer
     model.NotificationsType:
       type: integer
       x-enum-varnames:
       - NotificationsAll
       - NotificationsMentions
       - NotificationsNone
+    model.Status:
+      example:
+        custom_status_text: custom_status_text
+        status: status
+      properties:
+        custom_status_text:
+          type: string
+        status:
+          type: string
     model.UserSettingsAppearance:
       example:
-        chat_font_scale: 0
+        chat_font_scale: 1
         color_scheme: color_scheme
-        chat_spacing: 6
+        chat_spacing: 5
       properties:
         chat_font_scale:
           type: integer
@@ -3212,55 +3255,45 @@ components:
         - favorite_gifs
         - favorite_gifs
         appearance:
-          chat_font_scale: 0
+          chat_font_scale: 1
           color_scheme: color_scheme
-          chat_spacing: 6
-        selected_guild: 1
+          chat_spacing: 5
+        selected_guild: 7
         guilds:
-        - selected_channel: 7
-          guild_id: 2
-          read_states:
-          - last_read_message_id: 2
-            channel_id: 3
-            scroll_position: 4
-          - last_read_message_id: 2
-            channel_id: 3
-            scroll_position: 4
-          position: 9
+        - selected_channel: 4
+          guild_id: 9
+          position: 2
           notifications:
             roles: true
             global: true
             muted: true
-            notifications: 7
-        - selected_channel: 7
-          guild_id: 2
-          read_states:
-          - last_read_message_id: 2
-            channel_id: 3
-            scroll_position: 4
-          - last_read_message_id: 2
-            channel_id: 3
-            scroll_position: 4
-          position: 9
+            notifications: 3
+        - selected_channel: 4
+          guild_id: 9
+          position: 2
           notifications:
             roles: true
             global: true
             muted: true
-            notifications: 7
+            notifications: 3
         language: language
+        forced_presence: forced_presence
         guild_folders:
-        - color: 1
+        - color: 5
           guilds:
-          - 5
-          - 5
+          - 2
+          - 2
           name: name
-          position: 5
-        - color: 1
+          position: 7
+        - color: 5
           guilds:
-          - 5
-          - 5
+          - 2
+          - 2
           name: name
-          position: 5
+          position: 7
+        status:
+          custom_status_text: custom_status_text
+          status: status
       properties:
         appearance:
           $ref: '#/components/schemas/model.UserSettingsAppearance'
@@ -3269,6 +3302,8 @@ components:
             type: string
           type: array
           uniqueItems: false
+        forced_presence:
+          type: string
         guild_folders:
           items:
             $ref: '#/components/schemas/model.UserSettingsGuildFolders'
@@ -3283,14 +3318,16 @@ components:
           type: string
         selected_guild:
           type: integer
+        status:
+          $ref: '#/components/schemas/model.Status'
     model.UserSettingsGuildFolders:
       example:
-        color: 1
+        color: 5
         guilds:
-        - 5
-        - 5
+        - 2
+        - 2
         name: name
-        position: 5
+        position: 7
       properties:
         color:
           type: integer
@@ -3305,21 +3342,14 @@ components:
           type: integer
     model.UserSettingsGuilds:
       example:
-        selected_channel: 7
-        guild_id: 2
-        read_states:
-        - last_read_message_id: 2
-          channel_id: 3
-          scroll_position: 4
-        - last_read_message_id: 2
-          channel_id: 3
-          scroll_position: 4
-        position: 9
+        selected_channel: 4
+        guild_id: 9
+        position: 2
         notifications:
           roles: true
           global: true
           muted: true
-          notifications: 7
+          notifications: 3
       properties:
         guild_id:
           type: integer
@@ -3327,11 +3357,6 @@ components:
           $ref: '#/components/schemas/model.UserSettingsNotifications'
         position:
           type: integer
-        read_states:
-          items:
-            $ref: '#/components/schemas/model.GuildChannelReadState'
-          type: array
-          uniqueItems: false
         selected_channel:
           type: integer
     model.UserSettingsNotifications:
@@ -3339,7 +3364,7 @@ components:
         roles: true
         global: true
         muted: true
-        notifications: 7
+        notifications: 3
       properties:
         global:
           type: boolean
@@ -3479,57 +3504,77 @@ components:
           - favorite_gifs
           - favorite_gifs
           appearance:
-            chat_font_scale: 0
+            chat_font_scale: 1
             color_scheme: color_scheme
-            chat_spacing: 6
-          selected_guild: 1
+            chat_spacing: 5
+          selected_guild: 7
           guilds:
-          - selected_channel: 7
-            guild_id: 2
-            read_states:
-            - last_read_message_id: 2
-              channel_id: 3
-              scroll_position: 4
-            - last_read_message_id: 2
-              channel_id: 3
-              scroll_position: 4
-            position: 9
+          - selected_channel: 4
+            guild_id: 9
+            position: 2
             notifications:
               roles: true
               global: true
               muted: true
-              notifications: 7
-          - selected_channel: 7
-            guild_id: 2
-            read_states:
-            - last_read_message_id: 2
-              channel_id: 3
-              scroll_position: 4
-            - last_read_message_id: 2
-              channel_id: 3
-              scroll_position: 4
-            position: 9
+              notifications: 3
+          - selected_channel: 4
+            guild_id: 9
+            position: 2
             notifications:
               roles: true
               global: true
               muted: true
-              notifications: 7
+              notifications: 3
           language: language
+          forced_presence: forced_presence
           guild_folders:
-          - color: 1
+          - color: 5
             guilds:
-            - 5
-            - 5
+            - 2
+            - 2
             name: name
-            position: 5
-          - color: 1
+            position: 7
+          - color: 5
             guilds:
-            - 5
-            - 5
+            - 2
+            - 2
             name: name
-            position: 5
+            position: 7
+          status:
+            custom_status_text: custom_status_text
+            status: status
+        guilds:
+        - owner: 2230469276416868352
+          public: false
+          permissions: 0
+          icon: 2230469276416868352
+          name: My Guild
+          id: 2230469276416868352
+        - owner: 2230469276416868352
+          public: false
+          permissions: 0
+          icon: 2230469276416868352
+          name: My Guild
+          id: 2230469276416868352
+        read_states:
+          key: 6
         version: 1
+        guilds_last_messages:
+          key:
+            key: 0
       properties:
+        guilds:
+          items:
+            $ref: '#/components/schemas/dto.Guild'
+          type: array
+          uniqueItems: false
+        guilds_last_messages:
+          additionalProperties:
+            additionalProperties:
+              type: integer
+        read_states:
+          additionalProperties:
+            type: integer
         settings:
           $ref: '#/components/schemas/model.UserSettingsData'
         version:

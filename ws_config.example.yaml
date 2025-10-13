@@ -7,3 +7,6 @@ cluster_keyspace: "gochat"
 
 # PostgreSQL
 pg_dsn: "host=citus-master port=5432 user=postgres dbname=gochat sslmode=disable"
+
+# Cache Address (KeyDB)
+cache_addr: "keydb:6379"

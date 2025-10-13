@@ -3,6 +3,9 @@ package user
 import (
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/database/db"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/gofiber/fiber/v2"
 
@@ -51,13 +54,15 @@ type entity struct {
 	gdm    groupdmchannel.GroupDMChannel
 	disc   discriminator.Discriminator
 	uset   usersettings.UserSettings
+	rs     readstates.ReadStates
+	gclm   guildchannelmessages.GuildChannelMessages
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(pg *pgdb.DB, mqt mq.SendTransporter, log *slog.Logger) server.Entity {
+func New(cql *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, log *slog.Logger) server.Entity {
 	return &entity{
 		name:   entityName,
 		log:    log,
@@ -71,5 +76,7 @@ func New(pg *pgdb.DB, mqt mq.SendTransporter, log *slog.Logger) server.Entity {
 		gdm:    groupdmchannel.New(pg.Conn()),
 		disc:   discriminator.New(pg.Conn()),
 		uset:   usersettings.New(pg.Conn()),
+		rs:     readstates.New(cql),
+		gclm:   guildchannelmessages.New(cql),
 	}
 }

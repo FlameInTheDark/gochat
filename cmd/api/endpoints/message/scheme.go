@@ -22,6 +22,7 @@ const (
 	ErrUnableToSentToThisChannel    = "unable to send to this channel"
 	ErrUnableToReadFromThisChannel  = "unable to read from this channel"
 	ErrUnableToGetMessage           = "unable to get message"
+	ErrUnableToSetReadState         = "unable to set read state"
 
 	// Validation error messages
 	ErrMessageContentRequired = "message content is required"

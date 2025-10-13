@@ -38,8 +38,14 @@ migrate_pg:
 migrate_scylla_down:
 	migrate -database $(CASSANDRA_ADDRESS) -path ./db/cassandra down
 
+migrate_scylla_rollback:
+	migrate -database $(CASSANDRA_ADDRESS) -path ./db/cassandra down 1
+
 migrate_pg_down:
 	migrate -database $(PG_ADDRESS) -path ./db/postgres down
+
+migrate_pg_rollback:
+	migrate -database $(PG_ADDRESS) -path ./db/postgres down 1
 
 add_migration_postgres:
 	migrate create -ext sql -dir db/postgres -seq $(name)

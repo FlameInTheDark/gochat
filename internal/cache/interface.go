@@ -16,4 +16,9 @@ type Cache interface {
 	SetJSON(ctx context.Context, key string, val interface{}) error
 	SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64) error
 	GetJSON(ctx context.Context, key string, v interface{}) error
+	HGet(ctx context.Context, key, field string) (string, error)
+	HSet(ctx context.Context, key, field, value string) error
+	HDel(ctx context.Context, key, field string) error
+	HGetAll(ctx context.Context, key string) (map[string]string, error)
+	XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error
 }
