@@ -21,12 +21,12 @@ var _ MappedNullable = &ModelUserSettingsData{}
 // ModelUserSettingsData struct for ModelUserSettingsData
 type ModelUserSettingsData struct {
 	Appearance     *ModelUserSettingsAppearance    `json:"appearance,omitempty"`
+	DmChannels     []ModelUserDMChannels           `json:"dm_channels,omitempty"`
 	FavoriteGifs   []string                        `json:"favorite_gifs,omitempty"`
 	ForcedPresence *string                         `json:"forced_presence,omitempty"`
 	GuildFolders   []ModelUserSettingsGuildFolders `json:"guild_folders,omitempty"`
 	Guilds         []ModelUserSettingsGuilds       `json:"guilds,omitempty"`
 	Language       *string                         `json:"language,omitempty"`
-	SelectedGuild  *int32                          `json:"selected_guild,omitempty"`
 	Status         *ModelStatus                    `json:"status,omitempty"`
 }
 
@@ -77,6 +77,38 @@ func (o *ModelUserSettingsData) HasAppearance() bool {
 // SetAppearance gets a reference to the given ModelUserSettingsAppearance and assigns it to the Appearance field.
 func (o *ModelUserSettingsData) SetAppearance(v ModelUserSettingsAppearance) {
 	o.Appearance = &v
+}
+
+// GetDmChannels returns the DmChannels field value if set, zero value otherwise.
+func (o *ModelUserSettingsData) GetDmChannels() []ModelUserDMChannels {
+	if o == nil || IsNil(o.DmChannels) {
+		var ret []ModelUserDMChannels
+		return ret
+	}
+	return o.DmChannels
+}
+
+// GetDmChannelsOk returns a tuple with the DmChannels field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsData) GetDmChannelsOk() ([]ModelUserDMChannels, bool) {
+	if o == nil || IsNil(o.DmChannels) {
+		return nil, false
+	}
+	return o.DmChannels, true
+}
+
+// HasDmChannels returns a boolean if a field has been set.
+func (o *ModelUserSettingsData) HasDmChannels() bool {
+	if o != nil && !IsNil(o.DmChannels) {
+		return true
+	}
+
+	return false
+}
+
+// SetDmChannels gets a reference to the given []ModelUserDMChannels and assigns it to the DmChannels field.
+func (o *ModelUserSettingsData) SetDmChannels(v []ModelUserDMChannels) {
+	o.DmChannels = v
 }
 
 // GetFavoriteGifs returns the FavoriteGifs field value if set, zero value otherwise.
@@ -239,38 +271,6 @@ func (o *ModelUserSettingsData) SetLanguage(v string) {
 	o.Language = &v
 }
 
-// GetSelectedGuild returns the SelectedGuild field value if set, zero value otherwise.
-func (o *ModelUserSettingsData) GetSelectedGuild() int32 {
-	if o == nil || IsNil(o.SelectedGuild) {
-		var ret int32
-		return ret
-	}
-	return *o.SelectedGuild
-}
-
-// GetSelectedGuildOk returns a tuple with the SelectedGuild field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *ModelUserSettingsData) GetSelectedGuildOk() (*int32, bool) {
-	if o == nil || IsNil(o.SelectedGuild) {
-		return nil, false
-	}
-	return o.SelectedGuild, true
-}
-
-// HasSelectedGuild returns a boolean if a field has been set.
-func (o *ModelUserSettingsData) HasSelectedGuild() bool {
-	if o != nil && !IsNil(o.SelectedGuild) {
-		return true
-	}
-
-	return false
-}
-
-// SetSelectedGuild gets a reference to the given int32 and assigns it to the SelectedGuild field.
-func (o *ModelUserSettingsData) SetSelectedGuild(v int32) {
-	o.SelectedGuild = &v
-}
-
 // GetStatus returns the Status field value if set, zero value otherwise.
 func (o *ModelUserSettingsData) GetStatus() ModelStatus {
 	if o == nil || IsNil(o.Status) {
@@ -316,6 +316,9 @@ func (o ModelUserSettingsData) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Appearance) {
 		toSerialize["appearance"] = o.Appearance
 	}
+	if !IsNil(o.DmChannels) {
+		toSerialize["dm_channels"] = o.DmChannels
+	}
 	if !IsNil(o.FavoriteGifs) {
 		toSerialize["favorite_gifs"] = o.FavoriteGifs
 	}
@@ -330,9 +333,6 @@ func (o ModelUserSettingsData) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Language) {
 		toSerialize["language"] = o.Language
-	}
-	if !IsNil(o.SelectedGuild) {
-		toSerialize["selected_guild"] = o.SelectedGuild
 	}
 	if !IsNil(o.Status) {
 		toSerialize["status"] = o.Status

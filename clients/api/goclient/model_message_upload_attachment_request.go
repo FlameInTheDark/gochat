@@ -20,6 +20,8 @@ var _ MappedNullable = &MessageUploadAttachmentRequest{}
 
 // MessageUploadAttachmentRequest struct for MessageUploadAttachmentRequest
 type MessageUploadAttachmentRequest struct {
+	// File content-type meta data
+	ContentType *string `json:"content_type,omitempty"`
 	// File size in bytes
 	FileSize *int32 `json:"file_size,omitempty"`
 	// File name
@@ -45,6 +47,38 @@ func NewMessageUploadAttachmentRequest() *MessageUploadAttachmentRequest {
 func NewMessageUploadAttachmentRequestWithDefaults() *MessageUploadAttachmentRequest {
 	this := MessageUploadAttachmentRequest{}
 	return &this
+}
+
+// GetContentType returns the ContentType field value if set, zero value otherwise.
+func (o *MessageUploadAttachmentRequest) GetContentType() string {
+	if o == nil || IsNil(o.ContentType) {
+		var ret string
+		return ret
+	}
+	return *o.ContentType
+}
+
+// GetContentTypeOk returns a tuple with the ContentType field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *MessageUploadAttachmentRequest) GetContentTypeOk() (*string, bool) {
+	if o == nil || IsNil(o.ContentType) {
+		return nil, false
+	}
+	return o.ContentType, true
+}
+
+// HasContentType returns a boolean if a field has been set.
+func (o *MessageUploadAttachmentRequest) HasContentType() bool {
+	if o != nil && !IsNil(o.ContentType) {
+		return true
+	}
+
+	return false
+}
+
+// SetContentType gets a reference to the given string and assigns it to the ContentType field.
+func (o *MessageUploadAttachmentRequest) SetContentType(v string) {
+	o.ContentType = &v
 }
 
 // GetFileSize returns the FileSize field value if set, zero value otherwise.
@@ -185,6 +219,9 @@ func (o MessageUploadAttachmentRequest) MarshalJSON() ([]byte, error) {
 
 func (o MessageUploadAttachmentRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.ContentType) {
+		toSerialize["content_type"] = o.ContentType
+	}
 	if !IsNil(o.FileSize) {
 		toSerialize["file_size"] = o.FileSize
 	}

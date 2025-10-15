@@ -5,12 +5,12 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Appearance** | Pointer to [**ModelUserSettingsAppearance**](ModelUserSettingsAppearance.md) |  | [optional] 
+**DmChannels** | Pointer to [**[]ModelUserDMChannels**](ModelUserDMChannels.md) |  | [optional] 
 **FavoriteGifs** | Pointer to **[]string** |  | [optional] 
 **ForcedPresence** | Pointer to **string** |  | [optional] 
 **GuildFolders** | Pointer to [**[]ModelUserSettingsGuildFolders**](ModelUserSettingsGuildFolders.md) |  | [optional] 
 **Guilds** | Pointer to [**[]ModelUserSettingsGuilds**](ModelUserSettingsGuilds.md) |  | [optional] 
 **Language** | Pointer to **string** |  | [optional] 
-**SelectedGuild** | Pointer to **int32** |  | [optional] 
 **Status** | Pointer to [**ModelStatus**](ModelStatus.md) |  | [optional] 
 
 ## Methods
@@ -56,6 +56,31 @@ SetAppearance sets Appearance field to given value.
 `func (o *ModelUserSettingsData) HasAppearance() bool`
 
 HasAppearance returns a boolean if a field has been set.
+
+### GetDmChannels
+
+`func (o *ModelUserSettingsData) GetDmChannels() []ModelUserDMChannels`
+
+GetDmChannels returns the DmChannels field if non-nil, zero value otherwise.
+
+### GetDmChannelsOk
+
+`func (o *ModelUserSettingsData) GetDmChannelsOk() (*[]ModelUserDMChannels, bool)`
+
+GetDmChannelsOk returns a tuple with the DmChannels field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDmChannels
+
+`func (o *ModelUserSettingsData) SetDmChannels(v []ModelUserDMChannels)`
+
+SetDmChannels sets DmChannels field to given value.
+
+### HasDmChannels
+
+`func (o *ModelUserSettingsData) HasDmChannels() bool`
+
+HasDmChannels returns a boolean if a field has been set.
 
 ### GetFavoriteGifs
 
@@ -181,31 +206,6 @@ SetLanguage sets Language field to given value.
 `func (o *ModelUserSettingsData) HasLanguage() bool`
 
 HasLanguage returns a boolean if a field has been set.
-
-### GetSelectedGuild
-
-`func (o *ModelUserSettingsData) GetSelectedGuild() int32`
-
-GetSelectedGuild returns the SelectedGuild field if non-nil, zero value otherwise.
-
-### GetSelectedGuildOk
-
-`func (o *ModelUserSettingsData) GetSelectedGuildOk() (*int32, bool)`
-
-GetSelectedGuildOk returns a tuple with the SelectedGuild field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetSelectedGuild
-
-`func (o *ModelUserSettingsData) SetSelectedGuild(v int32)`
-
-SetSelectedGuild sets SelectedGuild field to given value.
-
-### HasSelectedGuild
-
-`func (o *ModelUserSettingsData) HasSelectedGuild() bool`
-
-HasSelectedGuild returns a boolean if a field has been set.
 
 ### GetStatus
 

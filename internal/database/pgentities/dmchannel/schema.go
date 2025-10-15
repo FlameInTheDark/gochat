@@ -40,13 +40,14 @@ func (e *Entity) CreateDmChannel(ctx context.Context, userId, participantId, cha
 	qUser := squirrel.Insert("dm_channels").
 		PlaceholderFormat(squirrel.Dollar).
 		Columns("user_id", "participant_id", "channel_id").
-		Values(userId, participantId, channelId)
+		Values(userId, participantId, channelId).
+		Suffix("ON CONFLICT (channel_id, user_id) DO NOTHING")
 	rawUser, argsUser, err := qUser.ToSql()
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = tx.ExecContext(ctx, rawUser, argsUser)
+	_, err = tx.ExecContext(ctx, rawUser, argsUser...)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("unable to create SQL query: %w", err)
@@ -55,13 +56,14 @@ func (e *Entity) CreateDmChannel(ctx context.Context, userId, participantId, cha
 	qPart := squirrel.Insert("dm_channels").
 		PlaceholderFormat(squirrel.Dollar).
 		Columns("user_id", "participant_id", "channel_id").
-		Values(participantId, userId, channelId)
+		Values(participantId, userId, channelId).
+		Suffix("ON CONFLICT (channel_id, user_id) DO NOTHING")
 	rawPart, argsPart, err := qPart.ToSql()
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = tx.ExecContext(ctx, rawPart, argsPart)
+	_, err = tx.ExecContext(ctx, rawPart, argsPart...)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("unable to create SQL query: %w", err)
@@ -96,4 +98,42 @@ func (e *Entity) IsDmChannelParticipant(ctx context.Context, channelId, userId i
 		return false, fmt.Errorf("check dm participant error: %w", err)
 	}
 	return count > 0, nil
+}
+
+func (e *Entity) GetUserDmChannels(ctx context.Context, userId int64) ([]model.DMChannel, error) {
+	var chs []model.DMChannel
+	q := squirrel.Select("user_id", "participant_id", "channel_id").
+		PlaceholderFormat(squirrel.Dollar).
+		From("dm_channels").
+		Where(squirrel.Eq{"user_id": userId})
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	err = e.c.SelectContext(ctx, &chs, raw, args...)
+	if errors.Is(err, sql.ErrNoRows) {
+		return []model.DMChannel{}, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("unable to get user dm channels: %w", err)
+	}
+	return chs, nil
+}
+
+func (e *Entity) GetDmChannelByChannelId(ctx context.Context, channelId int64) ([]model.DMChannel, error) {
+	var chs []model.DMChannel
+	q := squirrel.Select("user_id", "participant_id", "channel_id").
+		PlaceholderFormat(squirrel.Dollar).
+		From("dm_channels").
+		Where(squirrel.Eq{"channel_id": channelId})
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	if err := e.c.SelectContext(ctx, &chs, raw, args...); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []model.DMChannel{}, nil
+		}
+		return nil, fmt.Errorf("unable to get dm channel by channel id: %w", err)
+	}
+	return chs, nil
 }

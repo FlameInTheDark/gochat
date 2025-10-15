@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/FlameInTheDark/gochat/cmd/api/config"
@@ -11,7 +12,6 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/message"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/search"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/user"
-	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/webhook"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
@@ -73,7 +73,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 	shut.Up(cache)
 
-	storage, err := s3.NewClient(cfg.S3Endpoint, cfg.S3AccessKeyID, cfg.S3SecretAccessKey, cfg.S3UseSSL)
+	storage, err := s3.NewClient(cfg.S3Endpoint, cfg.S3AccessKeyID, cfg.S3SecretAccessKey, cfg.S3Region, cfg.S3Bucket, cfg.S3UseSSL)
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +108,27 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.RateLimitPipedMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 	s.Use(helper.RequireTokenType("access", "api"))
 
+	// Compute public base URL for objects
+	publicBase := strings.TrimRight(cfg.S3ExternalURL, "/")
+	if publicBase == "" {
+		endp := cfg.S3Endpoint
+		low := strings.ToLower(endp)
+		if !strings.HasPrefix(low, "http://") && !strings.HasPrefix(low, "https://") {
+			if cfg.S3UseSSL {
+				endp = "https://" + endp
+			} else {
+				endp = "http://" + endp
+			}
+		}
+		endp = strings.TrimRight(endp, "/")
+		publicBase = endp + "/" + strings.Trim(cfg.S3Bucket, "/")
+	}
+
 	// HTTP Router
 	s.Register(
 		"/api/v1",
 		user.New(database, pg, qt, logger),
-		message.New(database, pg, storage, qt, imq, cfg.UploadLimit, logger),
-		webhook.New(database, storage, logger),
+		message.New(database, pg, storage, qt, imq, cfg.UploadLimit, publicBase, logger),
 		guild.New(database, pg, qt, cache, logger),
 		search.New(database, pg, searchService, logger),
 	)

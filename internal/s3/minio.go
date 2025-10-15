@@ -2,62 +2,66 @@ package s3
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
-	"net/url"
+	"strings"
 	"time"
 
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
+	aws "github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	awss3 "github.com/aws/aws-sdk-go/service/s3"
 )
 
 const (
-	AttachmentBucket = "media"
+	attachmentDirectory = "media"
 )
 
 type Client struct {
-	c *minio.Client
+	s3     *awss3.S3
+	bucket string
 }
 
-func NewClient(endpoint, accessKeyId, secretAccessKey string, useSSL bool) (*Client, error) {
-	c, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKeyId, secretAccessKey, ""),
-		Secure: useSSL,
-	})
+// NewClient creates S3 client
+func NewClient(endpoint, accessKeyId, secretAccessKey, region, bucket string, useSSL bool) (*Client, error) {
+	ep := endpoint
+	if !strings.HasPrefix(strings.ToLower(ep), "http://") && !strings.HasPrefix(strings.ToLower(ep), "https://") {
+		if useSSL {
+			ep = "https://" + ep
+		} else {
+			ep = "http://" + ep
+		}
+	}
+
+	cfg := &aws.Config{
+		Region:           aws.String(region),
+		Endpoint:         aws.String(ep),
+		S3ForcePathStyle: aws.Bool(true),
+		Credentials:      credentials.NewStaticCredentials(accessKeyId, secretAccessKey, ""),
+		DisableSSL:       aws.Bool(!useSSL),
+	}
+
+	sess, err := session.NewSession(cfg)
 	if err != nil {
 		return nil, err
 	}
-	if !c.IsOnline() {
-		return nil, errors.New("minio connection not online")
-	}
-	return &Client{c: c}, nil
+	return &Client{s3: awss3.New(sess), bucket: bucket}, nil
 }
 
-// TODO: probably need to add Content-MD5 header, if it has effect
+// MakeUploadAttachment returns a presigned PUT URL to upload the object with one-minute duration.
 func (c *Client) MakeUploadAttachment(ctx context.Context, channelId, objectId, fileSize int64, objectName string) (string, error) {
-	purl, err := c.c.PresignHeader(
-		ctx,
-		http.MethodPut,
-		AttachmentBucket,
-		fmt.Sprintf("%d/%d/%s", channelId, objectId, objectName),
-		time.Minute,
-		url.Values{
-			"X-Amz-Meta-ChannelID": []string{fmt.Sprintf("%d", channelId)},
-			"X-Amz-Meta-ObjectID":  []string{fmt.Sprintf("%d", objectId)},
-		},
-		http.Header{
-			"Content-Length": []string{fmt.Sprintf("%d", fileSize)},
-		})
-	if err != nil {
-		return "", err
-	}
-
-	return purl.String(), nil
+	key := fmt.Sprintf("%s/%d/%d/%s", attachmentDirectory, channelId, objectId, objectName)
+	req, _ := c.s3.PutObjectRequest(&awss3.PutObjectInput{
+		Bucket:        aws.String(c.bucket),
+		Key:           aws.String(key),
+		ContentLength: aws.Int64(fileSize),
+	})
+	return req.Presign(1 * time.Minute)
 }
 
-func (c *Client) RemoveAttachment(ctx context.Context, key, bucket string) error {
-	return c.c.RemoveObject(ctx, bucket, key, minio.RemoveObjectOptions{
-		ForceDelete: true,
+func (c *Client) RemoveAttachment(ctx context.Context, key string) error {
+	_, err := c.s3.DeleteObjectWithContext(ctx, &awss3.DeleteObjectInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
 	})
+	return err
 }

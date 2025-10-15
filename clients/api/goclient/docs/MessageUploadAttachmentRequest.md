@@ -4,6 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**ContentType** | Pointer to **string** | File content-type meta data | [optional] 
 **FileSize** | Pointer to **int32** | File size in bytes | [optional] 
 **Filename** | Pointer to **string** | File name | [optional] 
 **Height** | Pointer to **int32** | Image height in pixels | [optional] 
@@ -27,6 +28,31 @@ will change when the set of required properties is changed
 NewMessageUploadAttachmentRequestWithDefaults instantiates a new MessageUploadAttachmentRequest object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetContentType
+
+`func (o *MessageUploadAttachmentRequest) GetContentType() string`
+
+GetContentType returns the ContentType field if non-nil, zero value otherwise.
+
+### GetContentTypeOk
+
+`func (o *MessageUploadAttachmentRequest) GetContentTypeOk() (*string, bool)`
+
+GetContentTypeOk returns a tuple with the ContentType field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetContentType
+
+`func (o *MessageUploadAttachmentRequest) SetContentType(v string)`
+
+SetContentType sets ContentType field to given value.
+
+### HasContentType
+
+`func (o *MessageUploadAttachmentRequest) HasContentType() bool`
+
+HasContentType returns a boolean if a field has been set.
 
 ### GetFileSize
 

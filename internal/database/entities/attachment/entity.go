@@ -8,10 +8,10 @@ import (
 )
 
 type Attachment interface {
-	CreateAttachment(ctx context.Context, id, channelId, fileSize int64, height, width int64, name string) error
+	CreateAttachment(ctx context.Context, id, channelId, fileSize int64, height, width int64, name, url, contentType string) error
 	RemoveAttachment(ctx context.Context, id, channelId int64) error
 	GetAttachment(ctx context.Context, id, channelId int64) (model.Attachment, error)
-	DoneAttachment(ctx context.Context, id, channelId int64, contentType *string) error
+	DoneAttachment(ctx context.Context, id, channelId int64, contentType, url *string) error
 	SelectAttachmentByIDs(ctx context.Context, ids []int64) ([]model.Attachment, error)
 }
 

@@ -154,3 +154,107 @@ func guildModelToGuildMany(guilds []model.Guild) []dto.Guild {
 	}
 	return models
 }
+
+// Friend-related errors
+const (
+	ErrUnableToGetFriends           = "unable to get friends"
+	ErrUnableToCreateFriendRequest  = "unable to create friend request"
+	ErrUnableToRemoveFriend         = "unable to remove friend"
+	ErrUnableToGetFriendRequests    = "unable to get friend requests"
+	ErrUnableToAcceptFriendRequest  = "unable to accept friend request"
+	ErrUnableToDeclineFriendRequest = "unable to decline friend request"
+)
+
+// Payloads for friend operations
+type CreateFriendRequestRequest struct {
+	Discriminator string `json:"discriminator"`
+}
+
+func (r CreateFriendRequestRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Discriminator,
+			validation.Required.Error("discriminator is required"),
+		),
+	)
+}
+
+type UnfriendRequest struct {
+	UserId int64 `json:"user_id"`
+}
+
+func (r UnfriendRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.UserId,
+			validation.Required.Error("user_id is required"),
+			validation.Min(int64(1)).Error("user_id must be positive"),
+		),
+	)
+}
+
+type FriendRequestAction struct {
+	UserId int64 `json:"user_id"`
+}
+
+func (r FriendRequestAction) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.UserId,
+			validation.Required.Error("user_id is required"),
+			validation.Min(int64(1)).Error("user_id must be positive"),
+		),
+	)
+}
+
+// usersWithDiscriminators converts users list and discriminator list into DTO users
+func usersWithDiscriminators(users []model.User, discs []model.Discriminator) []dto.User {
+	discMap := make(map[int64]string, len(discs))
+	for _, d := range discs {
+		discMap[d.UserId] = d.Discriminator
+	}
+	res := make([]dto.User, len(users))
+	for i, u := range users {
+		res[i] = dto.User{
+			Id:            u.Id,
+			Name:          u.Name,
+			Discriminator: discMap[u.Id],
+			Avatar:        u.Avatar,
+		}
+	}
+	return res
+}
+
+// DM channels last messages request
+type DMChannelsLastRequest struct {
+	ChannelIds []int64 `json:"channel_ids"`
+}
+
+func (r DMChannelsLastRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.ChannelIds,
+			validation.Required.Error(ErrRecipientsRequired),
+			validation.Length(1, 0).Error(ErrRecipientsRequired),
+			validation.Each(validation.Min(int64(1)).Error("channel_id must be positive")),
+		),
+	)
+}
+
+func dmChannelModelToDTO(cn *model.Channel, last map[int64]int64, participant *int64) dto.Channel {
+	lm := cn.LastMessage
+	if v, ok := last[cn.Id]; ok {
+		lm = v
+	}
+	return dto.Channel{
+		Id:            cn.Id,
+		Type:          cn.Type,
+		GuildId:       nil,
+		ParticipantId: participant,
+		Name:          cn.Name,
+		ParentId:      cn.ParentID,
+		Position:      0,
+		Topic:         cn.Topic,
+		Permissions:   cn.Permissions,
+		Private:       cn.Private,
+		Roles:         nil,
+		LastMessageId: lm,
+		CreatedAt:     cn.CreatedAt,
+	}
+}

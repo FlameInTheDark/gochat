@@ -15,13 +15,13 @@ type UserSettings struct {
 
 type UserSettingsData struct {
 	Language       string                     `json:"language"`
-	SelectedGuild  int64                      `json:"selected_guild"`
 	Appearance     UserSettingsAppearance     `json:"appearance"`
 	GuildFolders   []UserSettingsGuildFolders `json:"guild_folders"`
 	Guilds         []UserSettingsGuilds       `json:"guilds"`
 	FavoriteGifs   []string                   `json:"favorite_gifs"`
 	ForcedPresence string                     `json:"forced_presence"`
 	Status         Status                     `json:"status"`
+	DMChannels     []UserDMChannels           `json:"dm_channels"`
 }
 
 func (s UserSettingsData) Validate() error {
@@ -42,6 +42,13 @@ func (s Status) Validate() error {
 		validation.Field(&s.Status, validation.In("online", "idle", "dnd", "offline")),
 		validation.Field(&s.CustomStatusText, validation.Length(0, 255)),
 	)
+}
+
+type UserDMChannels struct {
+	UserId      int64 `json:"user_id"`
+	ChannelId   int64 `json:"channel_id"`
+	Hidden      bool  `json:"hidden"`
+	HiddenAfter int64 `json:"hidden_after"`
 }
 
 type UserSettingsGuilds struct {

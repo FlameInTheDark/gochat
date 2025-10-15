@@ -11,6 +11,8 @@ type DmChannel interface {
 	GetDmChannel(ctx context.Context, userId, participantId int64) (model.DMChannel, error)
 	CreateDmChannel(ctx context.Context, userId, participantId, channelId int64) error
 	IsDmChannelParticipant(ctx context.Context, channelId, userId int64) (bool, error)
+	GetUserDmChannels(ctx context.Context, userId int64) ([]model.DMChannel, error)
+	GetDmChannelByChannelId(ctx context.Context, channelId int64) ([]model.DMChannel, error)
 }
 
 type Entity struct {

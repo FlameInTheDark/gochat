@@ -2199,6 +2199,31 @@ paths:
       tags:
       - User
   /user/me/channels:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Channel'
+                type: array
+          description: Channels
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: List all DM and Group DM channels for current user
+      tags:
+      - User
     post:
       requestBody:
         content:
@@ -2276,6 +2301,218 @@ paths:
                 type: string
           description: Internal server error
       summary: Create group DM channel
+      tags:
+      - User
+  /user/me/friends:
+    delete:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user.UnfriendRequest'
+        description: Unfriend
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Remove user from friends
+      tags:
+      - User
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.User'
+                type: array
+          description: Friends list
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Get my friends
+      tags:
+      - User
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user.CreateFriendRequestRequest'
+        description: Friend request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Send a friend request by discriminator
+      tags:
+      - User
+  /user/me/friends/requests:
+    delete:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user.FriendRequestAction'
+        description: Decline
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Decline a friend request
+      tags:
+      - User
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.User'
+                type: array
+          description: Request senders
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Get incoming friend requests
+      tags:
+      - User
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user.FriendRequestAction'
+        description: Accept
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Accept a friend request
+      tags:
+      - User
+  /user/me/friends/{user_id}:
+    get:
+      parameters:
+      - description: User id
+        example: 2230469276416868352
+        explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Channel'
+          description: DM channel
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: User not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Get or create DM with a user
       tags:
       - User
   /user/me/guilds:
@@ -2680,19 +2917,20 @@ components:
           type: string
     dto.Channel:
       example:
-        last_message_id: 2230469276416868352
         private: false
-        parent_id: 2230469276416868352
-        permissions: 0
+        participant_id: 2230469276416868352
         roles:
         - 2230469276416868352
+        created_at: created_at
+        type: 0
+        last_message_id: 2230469276416868352
+        parent_id: 2230469276416868352
+        permissions: 0
         guild_id: 2230469276416868352
         name: channel-name
-        created_at: created_at
         topic: Just a channel topic
         id: 2230469276416868352
         position: 4
-        type: 0
       properties:
         created_at:
           description: Timestamp of channel creation
@@ -2715,6 +2953,10 @@ components:
           type: string
         parent_id:
           description: Parent channel id
+          example: 2230469276416868352
+          type: integer
+        participant_id:
+          description: "For DM channels: the other participant's user ID"
           example: 2230469276416868352
           type: integer
         permissions:
@@ -3188,6 +3430,10 @@ components:
           type: string
     message.UploadAttachmentRequest:
       properties:
+        content_type:
+          description: File content-type meta data
+          example: image/png
+          type: string
         file_size:
           description: File size in bytes
           example: 100000
@@ -3237,6 +3483,21 @@ components:
           type: string
         status:
           type: string
+    model.UserDMChannels:
+      example:
+        hidden: true
+        user_id: 7
+        hidden_after: 2
+        channel_id: 5
+      properties:
+        channel_id:
+          type: integer
+        hidden:
+          type: boolean
+        hidden_after:
+          type: integer
+        user_id:
+          type: integer
     model.UserSettingsAppearance:
       example:
         chat_font_scale: 1
@@ -3254,49 +3515,62 @@ components:
         favorite_gifs:
         - favorite_gifs
         - favorite_gifs
+        dm_channels:
+        - hidden: true
+          user_id: 7
+          hidden_after: 2
+          channel_id: 5
+        - hidden: true
+          user_id: 7
+          hidden_after: 2
+          channel_id: 5
         appearance:
           chat_font_scale: 1
           color_scheme: color_scheme
           chat_spacing: 5
-        selected_guild: 7
         guilds:
-        - selected_channel: 4
-          guild_id: 9
-          position: 2
+        - selected_channel: 1
+          guild_id: 4
+          position: 1
           notifications:
             roles: true
             global: true
             muted: true
-            notifications: 3
-        - selected_channel: 4
-          guild_id: 9
-          position: 2
+            notifications: 7
+        - selected_channel: 1
+          guild_id: 4
+          position: 1
           notifications:
             roles: true
             global: true
             muted: true
-            notifications: 3
+            notifications: 7
         language: language
         forced_presence: forced_presence
         guild_folders:
-        - color: 5
+        - color: 9
           guilds:
-          - 2
-          - 2
+          - 3
+          - 3
           name: name
-          position: 7
-        - color: 5
+          position: 2
+        - color: 9
           guilds:
-          - 2
-          - 2
+          - 3
+          - 3
           name: name
-          position: 7
+          position: 2
         status:
           custom_status_text: custom_status_text
           status: status
       properties:
         appearance:
           $ref: '#/components/schemas/model.UserSettingsAppearance'
+        dm_channels:
+          items:
+            $ref: '#/components/schemas/model.UserDMChannels'
+          type: array
+          uniqueItems: false
         favorite_gifs:
           items:
             type: string
@@ -3316,18 +3590,16 @@ components:
           uniqueItems: false
         language:
           type: string
-        selected_guild:
-          type: integer
         status:
           $ref: '#/components/schemas/model.Status'
     model.UserSettingsGuildFolders:
       example:
-        color: 5
+        color: 9
         guilds:
-        - 2
-        - 2
+        - 3
+        - 3
         name: name
-        position: 7
+        position: 2
       properties:
         color:
           type: integer
@@ -3342,14 +3614,14 @@ components:
           type: integer
     model.UserSettingsGuilds:
       example:
-        selected_channel: 4
-        guild_id: 9
-        position: 2
+        selected_channel: 1
+        guild_id: 4
+        position: 1
         notifications:
           roles: true
           global: true
           muted: true
-          notifications: 3
+          notifications: 7
       properties:
         guild_id:
           type: integer
@@ -3364,7 +3636,7 @@ components:
         roles: true
         global: true
         muted: true
-        notifications: 3
+        notifications: 7
       properties:
         global:
           type: boolean
@@ -3487,6 +3759,14 @@ components:
       properties:
         recipient_id:
           type: integer
+    user.CreateFriendRequestRequest:
+      properties:
+        discriminator:
+          type: string
+    user.FriendRequestAction:
+      properties:
+        user_id:
+          type: integer
     user.ModifyUserRequest:
       properties:
         avatar:
@@ -3497,49 +3777,61 @@ components:
           description: User name.
           example: NewFancyName
           type: string
+    user.UnfriendRequest:
+      properties:
+        user_id:
+          type: integer
     user.UserSettingsResponse:
       example:
         settings:
           favorite_gifs:
           - favorite_gifs
           - favorite_gifs
+          dm_channels:
+          - hidden: true
+            user_id: 7
+            hidden_after: 2
+            channel_id: 5
+          - hidden: true
+            user_id: 7
+            hidden_after: 2
+            channel_id: 5
           appearance:
             chat_font_scale: 1
             color_scheme: color_scheme
             chat_spacing: 5
-          selected_guild: 7
           guilds:
-          - selected_channel: 4
-            guild_id: 9
-            position: 2
+          - selected_channel: 1
+            guild_id: 4
+            position: 1
             notifications:
               roles: true
               global: true
               muted: true
-              notifications: 3
-          - selected_channel: 4
-            guild_id: 9
-            position: 2
+              notifications: 7
+          - selected_channel: 1
+            guild_id: 4
+            position: 1
             notifications:
               roles: true
               global: true
               muted: true
-              notifications: 3
+              notifications: 7
           language: language
           forced_presence: forced_presence
           guild_folders:
-          - color: 5
+          - color: 9
             guilds:
-            - 2
-            - 2
+            - 3
+            - 3
             name: name
-            position: 7
-          - color: 5
+            position: 2
+          - color: 9
             guilds:
-            - 2
-            - 2
+            - 3
+            - 3
             name: name
-            position: 7
+            position: 2
           status:
             custom_status_text: custom_status_text
             status: status

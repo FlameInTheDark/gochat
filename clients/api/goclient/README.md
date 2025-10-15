@@ -121,8 +121,16 @@ Class | Method | HTTP request | Description
 *MessageAPI* | [**MessageChannelChannelIdMessageIdPatch**](docs/MessageAPI.md#messagechannelchannelidmessageidpatch) | **Patch** /message/channel/{channel_id}/{message_id} | Update message
 *MessageAPI* | [**MessageChannelChannelIdPost**](docs/MessageAPI.md#messagechannelchannelidpost) | **Post** /message/channel/{channel_id} | Send message
 *SearchAPI* | [**SearchGuildIdMessagesPost**](docs/SearchAPI.md#searchguildidmessagespost) | **Post** /search/{guild_id}/messages | Search messages
+*UserAPI* | [**UserMeChannelsGet**](docs/UserAPI.md#usermechannelsget) | **Get** /user/me/channels | List all DM and Group DM channels for current user
 *UserAPI* | [**UserMeChannelsGroupPost**](docs/UserAPI.md#usermechannelsgrouppost) | **Post** /user/me/channels/group | Create group DM channel
 *UserAPI* | [**UserMeChannelsPost**](docs/UserAPI.md#usermechannelspost) | **Post** /user/me/channels | Create DM channel
+*UserAPI* | [**UserMeFriendsDelete**](docs/UserAPI.md#usermefriendsdelete) | **Delete** /user/me/friends | Remove user from friends
+*UserAPI* | [**UserMeFriendsGet**](docs/UserAPI.md#usermefriendsget) | **Get** /user/me/friends | Get my friends
+*UserAPI* | [**UserMeFriendsPost**](docs/UserAPI.md#usermefriendspost) | **Post** /user/me/friends | Send a friend request by discriminator
+*UserAPI* | [**UserMeFriendsRequestsDelete**](docs/UserAPI.md#usermefriendsrequestsdelete) | **Delete** /user/me/friends/requests | Decline a friend request
+*UserAPI* | [**UserMeFriendsRequestsGet**](docs/UserAPI.md#usermefriendsrequestsget) | **Get** /user/me/friends/requests | Get incoming friend requests
+*UserAPI* | [**UserMeFriendsRequestsPost**](docs/UserAPI.md#usermefriendsrequestspost) | **Post** /user/me/friends/requests | Accept a friend request
+*UserAPI* | [**UserMeFriendsUserIdGet**](docs/UserAPI.md#usermefriendsuseridget) | **Get** /user/me/friends/{user_id} | Get or create DM with a user
 *UserAPI* | [**UserMeGuildsGet**](docs/UserAPI.md#usermeguildsget) | **Get** /user/me/guilds | Get user guilds
 *UserAPI* | [**UserMeGuildsGuildIdDelete**](docs/UserAPI.md#usermeguildsguildiddelete) | **Delete** /user/me/guilds/{guild_id} | Leave guild
 *UserAPI* | [**UserMeGuildsGuildIdMemberGet**](docs/UserAPI.md#usermeguildsguildidmemberget) | **Get** /user/me/guilds/{guild_id}/member | Get user guild member
@@ -168,6 +176,7 @@ Class | Method | HTTP request | Description
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)
  - [MessageUploadAttachmentRequest](docs/MessageUploadAttachmentRequest.md)
  - [ModelStatus](docs/ModelStatus.md)
+ - [ModelUserDMChannels](docs/ModelUserDMChannels.md)
  - [ModelUserSettingsAppearance](docs/ModelUserSettingsAppearance.md)
  - [ModelUserSettingsData](docs/ModelUserSettingsData.md)
  - [ModelUserSettingsGuildFolders](docs/ModelUserSettingsGuildFolders.md)
@@ -177,7 +186,10 @@ Class | Method | HTTP request | Description
  - [SearchMessageSearchResponse](docs/SearchMessageSearchResponse.md)
  - [UserCreateDMManyRequest](docs/UserCreateDMManyRequest.md)
  - [UserCreateDMRequest](docs/UserCreateDMRequest.md)
+ - [UserCreateFriendRequestRequest](docs/UserCreateFriendRequestRequest.md)
+ - [UserFriendRequestAction](docs/UserFriendRequestAction.md)
  - [UserModifyUserRequest](docs/UserModifyUserRequest.md)
+ - [UserUnfriendRequest](docs/UserUnfriendRequest.md)
  - [UserUserSettingsResponse](docs/UserUserSettingsResponse.md)
  - [WebhookS3Bucket](docs/WebhookS3Bucket.md)
  - [WebhookS3Element](docs/WebhookS3Element.md)

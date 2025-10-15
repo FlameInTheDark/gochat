@@ -59,7 +59,7 @@ func (e *entity) putAttachment(ctx context.Context, event *S3Event) error {
 	}
 	at, err := e.at.GetAttachment(ctx, objectId, channelId)
 	if err != nil {
-		cleanupErr := e.storage.RemoveAttachment(context.Background(), event.Key, event.Records[0].S3.Bucket.Name)
+		cleanupErr := e.storage.RemoveAttachment(context.Background(), event.Key)
 		if cleanupErr != nil {
 			e.log.Error("failed to get attachment and also failed to cleanup S3 object", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.String("get_error", err.Error()), slog.String("cleanup_error", cleanupErr.Error()))
 		} else {
@@ -69,7 +69,7 @@ func (e *entity) putAttachment(ctx context.Context, event *S3Event) error {
 	}
 
 	if at.FileSize != event.Records[0].S3.Object.Size {
-		cleanupErr := e.storage.RemoveAttachment(context.Background(), event.Key, event.Records[0].S3.Bucket.Name)
+		cleanupErr := e.storage.RemoveAttachment(context.Background(), event.Key)
 		if cleanupErr != nil {
 			e.log.Error("incorrect filesize and also failed to cleanup S3 object", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.Int64("expected", at.FileSize), slog.Int64("actual", event.Records[0].S3.Object.Size), slog.String("cleanup_error", cleanupErr.Error()))
 		} else {
@@ -78,9 +78,10 @@ func (e *entity) putAttachment(ctx context.Context, event *S3Event) error {
 		return errors.New(ErrIncorrectFileSize)
 	}
 
-	err = e.at.DoneAttachment(ctx, objectId, channelId, event.Records[0].S3.Object.ContentType)
+	// Mark attachment as done and persist metadata including URL
+	err = e.at.DoneAttachment(ctx, objectId, channelId, event.Records[0].S3.Object.ContentType, &event.Key)
 	if err != nil {
-		cleanupErr := e.storage.RemoveAttachment(context.Background(), event.Key, event.Records[0].S3.Bucket.Name)
+		cleanupErr := e.storage.RemoveAttachment(context.Background(), event.Key)
 		if cleanupErr != nil {
 			e.log.Error("failed to mark attachment done and also failed to cleanup S3 object", slog.Int64("objectId", objectId), slog.Int64("channelId", channelId), slog.String("done_error", err.Error()), slog.String("cleanup_error", cleanupErr.Error()))
 		} else {

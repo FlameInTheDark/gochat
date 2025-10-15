@@ -42,8 +42,10 @@ func (e *entity) Init(router fiber.Router) {
 }
 
 type entity struct {
-	name        string
-	uploadLimit int64
+	name          string
+	uploadLimit   int64
+	s3ExternalURL string
+	s3Bucket      string
 
 	// Services
 	log     *slog.Logger
@@ -75,31 +77,32 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(cql *db.CQLCon, pg *pgdb.DB, storage *s3.Client, t mq.SendTransporter, imq *indexmq.IndexMQ, uploadLimit int64, log *slog.Logger) server.Entity {
+func New(cql *db.CQLCon, pg *pgdb.DB, storage *s3.Client, t mq.SendTransporter, imq *indexmq.IndexMQ, uploadLimit int64, externalURL string, log *slog.Logger) server.Entity {
 
 	return &entity{
-		name:        entityName,
-		uploadLimit: uploadLimit,
-		log:         log,
-		storage:     storage,
-		mqt:         t,
-		imq:         imq,
-		user:        user.New(pg.Conn()),
-		m:           member.New(pg.Conn()),
-		disc:        discriminator.New(pg.Conn()),
-		ch:          channel.New(pg.Conn()),
-		dmc:         dmchannel.New(pg.Conn()),
-		gdmc:        groupdmchannel.New(pg.Conn()),
-		g:           guild.New(pg.Conn()),
-		gc:          guildchannels.New(pg.Conn()),
-		msg:         message.New(cql),
-		at:          attachment.New(cql),
-		perm:        rolecheck.New(cql, pg),
-		uperm:       channeluserperm.New(pg.Conn()),
-		rperm:       channelroleperm.New(pg.Conn()),
-		role:        role.New(pg.Conn()),
-		ur:          userrole.New(pg.Conn()),
-		rs:          readstates.New(cql),
-		gclm:        guildchannelmessages.New(cql),
+		name:          entityName,
+		uploadLimit:   uploadLimit,
+		s3ExternalURL: externalURL,
+		log:           log,
+		storage:       storage,
+		mqt:           t,
+		imq:           imq,
+		user:          user.New(pg.Conn()),
+		m:             member.New(pg.Conn()),
+		disc:          discriminator.New(pg.Conn()),
+		ch:            channel.New(pg.Conn()),
+		dmc:           dmchannel.New(pg.Conn()),
+		gdmc:          groupdmchannel.New(pg.Conn()),
+		g:             guild.New(pg.Conn()),
+		gc:            guildchannels.New(pg.Conn()),
+		msg:           message.New(cql),
+		at:            attachment.New(cql),
+		perm:          rolecheck.New(cql, pg),
+		uperm:         channeluserperm.New(pg.Conn()),
+		rperm:         channelroleperm.New(pg.Conn()),
+		role:          role.New(pg.Conn()),
+		ur:            userrole.New(pg.Conn()),
+		rs:            readstates.New(cql),
+		gclm:          guildchannelmessages.New(cql),
 	}
 }

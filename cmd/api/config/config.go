@@ -25,6 +25,9 @@ type Config struct {
 	S3AccessKeyID              string   `yaml:"s3_access_key_id" env:"S3_ACCESS_KEY_ID" env-default:""`
 	S3SecretAccessKey          string   `yaml:"s3_secret_access_key" env:"S3_SECRET_ACCESS_KEY" env-default:""`
 	S3UseSSL                   bool     `yaml:"s3_use_ssl" env:"S3_USE_SSL" env-default:"false"`
+	S3Bucket                   string   `yaml:"s3_bucket" env:"S3_BUCKET" env-default:"gochat"`
+	S3Region                   string   `yaml:"s3_region" env:"S3_REGION"`
+	S3ExternalURL              string   `yaml:"s3_external_url" env:"S3_EXTERNAL_URL"`
 	UploadLimit                int64    `yaml:"upload_limit" env:"UPLOAD_LIMIT" env-default:"50000000"`
 	NatsConnString             string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 	IndexerNatsConnString      string   `yaml:"indexer_nats_conn_string" env:"INDEX_NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`

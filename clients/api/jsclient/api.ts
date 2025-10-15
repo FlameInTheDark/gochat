@@ -285,6 +285,12 @@ export interface DtoChannel {
      */
     'parent_id'?: number;
     /**
+     * For DM channels: the other participant\'s user ID
+     * @type {number}
+     * @memberof DtoChannel
+     */
+    'participant_id'?: number;
+    /**
      * Permissions. Check the permissions documentation for more info.
      * @type {number}
      * @memberof DtoChannel
@@ -937,6 +943,12 @@ export interface MessageUpdateMessageRequest {
  */
 export interface MessageUploadAttachmentRequest {
     /**
+     * File content-type meta data
+     * @type {string}
+     * @memberof MessageUploadAttachmentRequest
+     */
+    'content_type'?: string;
+    /**
      * File size in bytes
      * @type {number}
      * @memberof MessageUploadAttachmentRequest
@@ -983,6 +995,37 @@ export interface ModelStatus {
 /**
  * 
  * @export
+ * @interface ModelUserDMChannels
+ */
+export interface ModelUserDMChannels {
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserDMChannels
+     */
+    'channel_id'?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelUserDMChannels
+     */
+    'hidden'?: boolean;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserDMChannels
+     */
+    'hidden_after'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserDMChannels
+     */
+    'user_id'?: number;
+}
+/**
+ * 
+ * @export
  * @interface ModelUserSettingsAppearance
  */
 export interface ModelUserSettingsAppearance {
@@ -1019,6 +1062,12 @@ export interface ModelUserSettingsData {
     'appearance'?: ModelUserSettingsAppearance;
     /**
      * 
+     * @type {Array<ModelUserDMChannels>}
+     * @memberof ModelUserSettingsData
+     */
+    'dm_channels'?: Array<ModelUserDMChannels>;
+    /**
+     * 
      * @type {Array<string>}
      * @memberof ModelUserSettingsData
      */
@@ -1047,12 +1096,6 @@ export interface ModelUserSettingsData {
      * @memberof ModelUserSettingsData
      */
     'language'?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof ModelUserSettingsData
-     */
-    'selected_guild'?: number;
     /**
      * 
      * @type {ModelStatus}
@@ -1260,6 +1303,32 @@ export interface UserCreateDMRequest {
 /**
  * 
  * @export
+ * @interface UserCreateFriendRequestRequest
+ */
+export interface UserCreateFriendRequestRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof UserCreateFriendRequestRequest
+     */
+    'discriminator'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface UserFriendRequestAction
+ */
+export interface UserFriendRequestAction {
+    /**
+     * 
+     * @type {number}
+     * @memberof UserFriendRequestAction
+     */
+    'user_id'?: number;
+}
+/**
+ * 
+ * @export
  * @interface UserModifyUserRequest
  */
 export interface UserModifyUserRequest {
@@ -1275,6 +1344,19 @@ export interface UserModifyUserRequest {
      * @memberof UserModifyUserRequest
      */
     'name'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface UserUnfriendRequest
+ */
+export interface UserUnfriendRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof UserUnfriendRequest
+     */
+    'user_id'?: number;
 }
 /**
  * 
@@ -6310,6 +6392,36 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
     return {
         /**
          * 
+         * @summary List all DM and Group DM channels for current user
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/user/me/channels`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create group DM channel
          * @param {UserCreateDMManyRequest} userCreateDMManyRequest Group DM data
          * @param {*} [options] Override http request option.
@@ -6374,6 +6486,244 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             localVarRequestOptions.data = serializeDataIfNeeded(userCreateDMRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Remove user from friends
+         * @param {UserUnfriendRequest} userUnfriendRequest Unfriend
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsDelete: async (userUnfriendRequest: UserUnfriendRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userUnfriendRequest' is not null or undefined
+            assertParamExists('userMeFriendsDelete', 'userUnfriendRequest', userUnfriendRequest)
+            const localVarPath = `/user/me/friends`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(userUnfriendRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get my friends
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/user/me/friends`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Send a friend request by discriminator
+         * @param {UserCreateFriendRequestRequest} userCreateFriendRequestRequest Friend request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsPost: async (userCreateFriendRequestRequest: UserCreateFriendRequestRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userCreateFriendRequestRequest' is not null or undefined
+            assertParamExists('userMeFriendsPost', 'userCreateFriendRequestRequest', userCreateFriendRequestRequest)
+            const localVarPath = `/user/me/friends`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(userCreateFriendRequestRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Decline a friend request
+         * @param {UserFriendRequestAction} userFriendRequestAction Decline
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsRequestsDelete: async (userFriendRequestAction: UserFriendRequestAction, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userFriendRequestAction' is not null or undefined
+            assertParamExists('userMeFriendsRequestsDelete', 'userFriendRequestAction', userFriendRequestAction)
+            const localVarPath = `/user/me/friends/requests`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(userFriendRequestAction, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get incoming friend requests
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsRequestsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/user/me/friends/requests`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Accept a friend request
+         * @param {UserFriendRequestAction} userFriendRequestAction Accept
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsRequestsPost: async (userFriendRequestAction: UserFriendRequestAction, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userFriendRequestAction' is not null or undefined
+            assertParamExists('userMeFriendsRequestsPost', 'userFriendRequestAction', userFriendRequestAction)
+            const localVarPath = `/user/me/friends/requests`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(userFriendRequestAction, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get or create DM with a user
+         * @param {number} userId User id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsUserIdGet: async (userId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('userMeFriendsUserIdGet', 'userId', userId)
+            const localVarPath = `/user/me/friends/{user_id}`
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -6631,6 +6981,18 @@ export const UserApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary List all DM and Group DM channels for current user
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeChannelsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoChannel>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeChannelsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Create group DM channel
          * @param {UserCreateDMManyRequest} userCreateDMManyRequest Group DM data
          * @param {*} [options] Override http request option.
@@ -6653,6 +7015,95 @@ export const UserApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsPost(userCreateDMRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeChannelsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Remove user from friends
+         * @param {UserUnfriendRequest} userUnfriendRequest Unfriend
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeFriendsDelete(userUnfriendRequest: UserUnfriendRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsDelete(userUnfriendRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get my friends
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeFriendsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoUser>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Send a friend request by discriminator
+         * @param {UserCreateFriendRequestRequest} userCreateFriendRequestRequest Friend request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeFriendsPost(userCreateFriendRequestRequest: UserCreateFriendRequestRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsPost(userCreateFriendRequestRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Decline a friend request
+         * @param {UserFriendRequestAction} userFriendRequestAction Decline
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeFriendsRequestsDelete(userFriendRequestAction: UserFriendRequestAction, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsRequestsDelete(userFriendRequestAction, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsRequestsDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get incoming friend requests
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeFriendsRequestsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoUser>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsRequestsGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsRequestsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Accept a friend request
+         * @param {UserFriendRequestAction} userFriendRequestAction Accept
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeFriendsRequestsPost(userFriendRequestAction: UserFriendRequestAction, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsRequestsPost(userFriendRequestAction, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsRequestsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get or create DM with a user
+         * @param {number} userId User id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeFriendsUserIdGet(userId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsUserIdGet(userId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsUserIdGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -6757,6 +7208,15 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
     return {
         /**
          * 
+         * @summary List all DM and Group DM channels for current user
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoChannel>> {
+            return localVarFp.userMeChannelsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Create group DM channel
          * @param {UserApiUserMeChannelsGroupPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -6774,6 +7234,74 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          */
         userMeChannelsPost(requestParameters: UserApiUserMeChannelsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoChannel> {
             return localVarFp.userMeChannelsPost(requestParameters.userCreateDMRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Remove user from friends
+         * @param {UserApiUserMeFriendsDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsDelete(requestParameters: UserApiUserMeFriendsDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.userMeFriendsDelete(requestParameters.userUnfriendRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get my friends
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoUser>> {
+            return localVarFp.userMeFriendsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Send a friend request by discriminator
+         * @param {UserApiUserMeFriendsPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsPost(requestParameters: UserApiUserMeFriendsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.userMeFriendsPost(requestParameters.userCreateFriendRequestRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Decline a friend request
+         * @param {UserApiUserMeFriendsRequestsDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsRequestsDelete(requestParameters: UserApiUserMeFriendsRequestsDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.userMeFriendsRequestsDelete(requestParameters.userFriendRequestAction, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get incoming friend requests
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsRequestsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoUser>> {
+            return localVarFp.userMeFriendsRequestsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Accept a friend request
+         * @param {UserApiUserMeFriendsRequestsPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsRequestsPost(requestParameters: UserApiUserMeFriendsRequestsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.userMeFriendsRequestsPost(requestParameters.userFriendRequestAction, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get or create DM with a user
+         * @param {UserApiUserMeFriendsUserIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeFriendsUserIdGet(requestParameters: UserApiUserMeFriendsUserIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoChannel> {
+            return localVarFp.userMeFriendsUserIdGet(requestParameters.userId, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -6855,6 +7383,15 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
 export interface UserApiInterface {
     /**
      * 
+     * @summary List all DM and Group DM channels for current user
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeChannelsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoChannel>>;
+
+    /**
+     * 
      * @summary Create group DM channel
      * @param {UserApiUserMeChannelsGroupPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -6872,6 +7409,74 @@ export interface UserApiInterface {
      * @memberof UserApiInterface
      */
     userMeChannelsPost(requestParameters: UserApiUserMeChannelsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoChannel>;
+
+    /**
+     * 
+     * @summary Remove user from friends
+     * @param {UserApiUserMeFriendsDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeFriendsDelete(requestParameters: UserApiUserMeFriendsDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Get my friends
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeFriendsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoUser>>;
+
+    /**
+     * 
+     * @summary Send a friend request by discriminator
+     * @param {UserApiUserMeFriendsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeFriendsPost(requestParameters: UserApiUserMeFriendsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Decline a friend request
+     * @param {UserApiUserMeFriendsRequestsDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeFriendsRequestsDelete(requestParameters: UserApiUserMeFriendsRequestsDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Get incoming friend requests
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeFriendsRequestsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoUser>>;
+
+    /**
+     * 
+     * @summary Accept a friend request
+     * @param {UserApiUserMeFriendsRequestsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeFriendsRequestsPost(requestParameters: UserApiUserMeFriendsRequestsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Get or create DM with a user
+     * @param {UserApiUserMeFriendsUserIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeFriendsUserIdGet(requestParameters: UserApiUserMeFriendsUserIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoChannel>;
 
     /**
      * 
@@ -6973,6 +7578,76 @@ export interface UserApiUserMeChannelsPostRequest {
 }
 
 /**
+ * Request parameters for userMeFriendsDelete operation in UserApi.
+ * @export
+ * @interface UserApiUserMeFriendsDeleteRequest
+ */
+export interface UserApiUserMeFriendsDeleteRequest {
+    /**
+     * Unfriend
+     * @type {UserUnfriendRequest}
+     * @memberof UserApiUserMeFriendsDelete
+     */
+    readonly userUnfriendRequest: UserUnfriendRequest
+}
+
+/**
+ * Request parameters for userMeFriendsPost operation in UserApi.
+ * @export
+ * @interface UserApiUserMeFriendsPostRequest
+ */
+export interface UserApiUserMeFriendsPostRequest {
+    /**
+     * Friend request
+     * @type {UserCreateFriendRequestRequest}
+     * @memberof UserApiUserMeFriendsPost
+     */
+    readonly userCreateFriendRequestRequest: UserCreateFriendRequestRequest
+}
+
+/**
+ * Request parameters for userMeFriendsRequestsDelete operation in UserApi.
+ * @export
+ * @interface UserApiUserMeFriendsRequestsDeleteRequest
+ */
+export interface UserApiUserMeFriendsRequestsDeleteRequest {
+    /**
+     * Decline
+     * @type {UserFriendRequestAction}
+     * @memberof UserApiUserMeFriendsRequestsDelete
+     */
+    readonly userFriendRequestAction: UserFriendRequestAction
+}
+
+/**
+ * Request parameters for userMeFriendsRequestsPost operation in UserApi.
+ * @export
+ * @interface UserApiUserMeFriendsRequestsPostRequest
+ */
+export interface UserApiUserMeFriendsRequestsPostRequest {
+    /**
+     * Accept
+     * @type {UserFriendRequestAction}
+     * @memberof UserApiUserMeFriendsRequestsPost
+     */
+    readonly userFriendRequestAction: UserFriendRequestAction
+}
+
+/**
+ * Request parameters for userMeFriendsUserIdGet operation in UserApi.
+ * @export
+ * @interface UserApiUserMeFriendsUserIdGetRequest
+ */
+export interface UserApiUserMeFriendsUserIdGetRequest {
+    /**
+     * User id
+     * @type {number}
+     * @memberof UserApiUserMeFriendsUserIdGet
+     */
+    readonly userId: number
+}
+
+/**
  * Request parameters for userMeGuildsGuildIdDelete operation in UserApi.
  * @export
  * @interface UserApiUserMeGuildsGuildIdDeleteRequest
@@ -7065,6 +7740,17 @@ export interface UserApiUserUserIdGetRequest {
 export class UserApi extends BaseAPI implements UserApiInterface {
     /**
      * 
+     * @summary List all DM and Group DM channels for current user
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeChannelsGet(options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeChannelsGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
      * @summary Create group DM channel
      * @param {UserApiUserMeChannelsGroupPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -7085,6 +7771,88 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      */
     public userMeChannelsPost(requestParameters: UserApiUserMeChannelsPostRequest, options?: RawAxiosRequestConfig) {
         return UserApiFp(this.configuration).userMeChannelsPost(requestParameters.userCreateDMRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Remove user from friends
+     * @param {UserApiUserMeFriendsDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeFriendsDelete(requestParameters: UserApiUserMeFriendsDeleteRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeFriendsDelete(requestParameters.userUnfriendRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get my friends
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeFriendsGet(options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeFriendsGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Send a friend request by discriminator
+     * @param {UserApiUserMeFriendsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeFriendsPost(requestParameters: UserApiUserMeFriendsPostRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeFriendsPost(requestParameters.userCreateFriendRequestRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Decline a friend request
+     * @param {UserApiUserMeFriendsRequestsDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeFriendsRequestsDelete(requestParameters: UserApiUserMeFriendsRequestsDeleteRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeFriendsRequestsDelete(requestParameters.userFriendRequestAction, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get incoming friend requests
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeFriendsRequestsGet(options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeFriendsRequestsGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Accept a friend request
+     * @param {UserApiUserMeFriendsRequestsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeFriendsRequestsPost(requestParameters: UserApiUserMeFriendsRequestsPostRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeFriendsRequestsPost(requestParameters.userFriendRequestAction, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get or create DM with a user
+     * @param {UserApiUserMeFriendsUserIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeFriendsUserIdGet(requestParameters: UserApiUserMeFriendsUserIdGetRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeFriendsUserIdGet(requestParameters.userId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

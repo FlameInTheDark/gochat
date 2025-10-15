@@ -56,6 +56,10 @@ const (
 const (
 	EventTypeUserUpdateReadState EventType = 400 + iota
 	EventTypeUserUpdateSettings
+	EventTypeUserFriendRequest
+	EventTypeUserFriendAdded
+	EventTypeUserFriendRemoved
+	EventTypeUserDMMessage
 )
 
 type Message struct {

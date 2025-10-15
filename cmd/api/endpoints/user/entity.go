@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/dmchannelmessages"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
 	"github.com/FlameInTheDark/gochat/internal/mq"
@@ -13,6 +14,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/friend"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
@@ -30,7 +32,17 @@ func (e *entity) Init(router fiber.Router) {
 	router.Get("/me/guilds", e.GetUserGuilds)
 	router.Get("/me/guilds/:guild_id<int>/member", e.GetMyGuildMember)
 	router.Delete("/me/guilds/:guild_id<int>", e.LeaveGuild)
+	router.Get("/me/channels", e.GetMyDMChannels)
 	router.Post("/me/channels", e.CreateDM)
+
+	// Friends
+	router.Get("/me/friends", e.GetFriends)                        // Get a friends list
+	router.Get("/me/friends/:user_id<int>", e.GetOrCreateFriendDM) // Get DM channel or create it if not exist
+	router.Post("/me/friends", e.CreateFriendRequest)              // Send friend request (search by discriminator string and send request if user did not block us)
+	router.Delete("/me/friends", e.Unfriend)                       // Unfriend users
+	router.Get("/me/friends/requests", e.GetFriendRequests)        // Get a list of friend requests
+	router.Post("/me/friends/requests", e.AcceptFriendRequest)     // Accept a friend request
+	router.Delete("/me/friends/requests", e.DeclineFriendRequest)  // Decline a friend request by deleting it
 
 	// User settings
 	router.Get("/me/settings", e.GetUserSettings)
@@ -53,9 +65,11 @@ type entity struct {
 	dm     dmchannel.DmChannel
 	gdm    groupdmchannel.GroupDMChannel
 	disc   discriminator.Discriminator
+	fr     friend.Friend
 	uset   usersettings.UserSettings
 	rs     readstates.ReadStates
 	gclm   guildchannelmessages.GuildChannelMessages
+	dmlm   *dmchannelmessages.Entity
 }
 
 func (e *entity) Name() string {
@@ -75,8 +89,10 @@ func New(cql *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, log *slog.Logger) 
 		dm:     dmchannel.New(pg.Conn()),
 		gdm:    groupdmchannel.New(pg.Conn()),
 		disc:   discriminator.New(pg.Conn()),
+		fr:     friend.New(pg.Conn()),
 		uset:   usersettings.New(pg.Conn()),
 		rs:     readstates.New(cql),
 		gclm:   guildchannelmessages.New(cql),
+		dmlm:   dmchannelmessages.New(cql),
 	}
 }

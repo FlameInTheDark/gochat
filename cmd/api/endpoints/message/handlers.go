@@ -1,11 +1,13 @@
 package message
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -240,13 +242,26 @@ func (e *entity) buildMessageResponse(c *fiber.Ctx, messageId int64, channel *mo
 			return dto.Message{}, helper.HttpDbError(err, ErrUnableToGetAttachements)
 		}
 
+		base := strings.TrimRight(e.s3ExternalURL, "/")
 		for _, at := range ats {
+			var path string
+			if at.URL != nil && *at.URL != "" {
+				path = *at.URL
+			} else {
+				path = fmt.Sprintf("media/%d/%d/%s", at.ChannelId, at.Id, at.Name)
+			}
+			full := path
+			if !(strings.HasPrefix(strings.ToLower(path), "http://") || strings.HasPrefix(strings.ToLower(path), "https://")) {
+				if base != "" {
+					full = base + "/" + strings.TrimLeft(path, "/")
+				}
+			}
 			attachments = append(attachments, dto.Attachment{
 				ContentType: at.ContentType,
 				Filename:    at.Name,
 				Height:      at.Height,
 				Width:       at.Width,
-				URL:         fmt.Sprintf("media/%d/%d/%s", at.ChannelId, at.Id, at.Name),
+				URL:         full,
 				Size:        at.FileSize,
 			})
 		}
@@ -313,6 +328,32 @@ func (e *entity) sendMessageEvents(channelId int64, guildId *int64, message dto.
 		e.log.Error("failed to send index message event",
 			"message_id", message.Id,
 			"error", err.Error())
+	}
+
+	// Notify DM recipient via user topic for 1:1 DMs
+	if guildId == nil {
+		// Determine channel type and DM participants
+		ch, err := e.ch.GetChannel(context.Background(), channelId)
+		if err == nil && ch.Type == model.ChannelTypeDM {
+			// Fetch both rows for this DM channel and pick the other user
+			rows, rerr := e.dmc.GetDmChannelByChannelId(context.Background(), channelId)
+			if rerr == nil {
+				var recipientId int64
+				for _, r := range rows {
+					if r.UserId != message.Author.Id {
+						recipientId = r.UserId
+						break
+					}
+				}
+				if recipientId != 0 {
+					_ = e.mqt.SendUserUpdate(recipientId, &mqmsg.DMMessage{
+						ChannelId: channelId,
+						MessageId: message.Id,
+						From:      mqmsg.UserBrief{Id: userData.User.Id, Name: userData.User.Name, Discriminator: userData.Discriminator.Discriminator, Avatar: userData.User.Avatar},
+					})
+				}
+			}
+		}
 	}
 }
 
@@ -665,12 +706,25 @@ func (e *entity) buildAttachments(attachmentIds []int64, data *messageRelatedDat
 	attachments := make([]dto.Attachment, 0, len(attachmentIds))
 	for _, id := range attachmentIds {
 		if attachment, exists := data.Attachments[id]; exists {
+			base := strings.TrimRight(e.s3ExternalURL, "/")
+			var path string
+			if attachment.URL != nil && *attachment.URL != "" {
+				path = *attachment.URL
+			} else {
+				path = fmt.Sprintf("media/%d/%d/%s", attachment.ChannelId, attachment.Id, attachment.Name)
+			}
+			full := path
+			if !(strings.HasPrefix(strings.ToLower(path), "http://") || strings.HasPrefix(strings.ToLower(path), "https://")) {
+				if base != "" {
+					full = base + "/" + strings.TrimLeft(path, "/")
+				}
+			}
 			attachments = append(attachments, dto.Attachment{
 				ContentType: attachment.ContentType,
 				Filename:    attachment.Name,
 				Height:      attachment.Height,
 				Width:       attachment.Width,
-				URL:         fmt.Sprintf("media/%d/%d/%s", attachment.ChannelId, attachment.Id, attachment.Name),
+				URL:         full,
 				Size:        attachment.FileSize,
 			})
 		}
@@ -1156,6 +1210,9 @@ func (e *entity) validateUploadPermissions(c *fiber.Ctx, channelId, userId int64
 	return nil
 }
 
+// https://3946cf92-4a18-4141-89ae-8be506c56aa4.selstorage.ru/gochat/media/2239769361793417216/2240231901539336192/photo_2025-10-14_22-59-56.jpg
+// https://3946cf92-4a18-4141-89ae-8be506c56aa4.selstorage.ru/media/2239769361793417216/2240231901539336192/photo_2025-10-14_22-59-56.jpg
+
 // createAttachmentUpload creates the attachment record and generates upload URL
 func (e *entity) createAttachmentUpload(c *fiber.Ctx, req *UploadAttachmentRequest, channelId int64) (dto.AttachmentUpload, error) {
 	attachmentId := idgen.Next()
@@ -1171,8 +1228,14 @@ func (e *entity) createAttachmentUpload(c *fiber.Ctx, req *UploadAttachmentReque
 		return dto.AttachmentUpload{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateUploadURL)
 	}
 
-	// Create attachment record
-	if err := e.at.CreateAttachment(c.UserContext(), attachmentId, channelId, req.FileSize, req.Height, req.Width, req.Filename); err != nil {
+	// Create attachment record in done state with public URL
+	path := fmt.Sprintf("media/%d/%d/%s", channelId, attachmentId, req.Filename)
+	base := strings.TrimRight(e.s3ExternalURL, "/")
+	url := path
+	if base != "" {
+		url = base + "/" + strings.TrimLeft(path, "/")
+	}
+	if err := e.at.CreateAttachment(c.UserContext(), attachmentId, channelId, req.FileSize, req.Height, req.Width, req.Filename, url, req.ContentType); err != nil {
 		return dto.AttachmentUpload{}, helper.HttpDbError(err, ErrUnableToCreateAttachment)
 	}
 
@@ -1260,14 +1323,27 @@ func (e *entity) buildAttachmentsOptimized(attachmentIds []int64, data *messageR
 	attachments := attachmentPool.Get().([]dto.Attachment)
 	attachments = attachments[:0] // Reset length but keep capacity
 
+	base := strings.TrimRight(e.s3ExternalURL, "/")
 	for _, id := range attachmentIds {
 		if attachment, exists := data.Attachments[id]; exists {
+			var path string
+			if attachment.URL != nil && *attachment.URL != "" {
+				path = *attachment.URL
+			} else {
+				path = fmt.Sprintf("media/%d/%d/%s", attachment.ChannelId, attachment.Id, attachment.Name)
+			}
+			full := path
+			if !(strings.HasPrefix(strings.ToLower(path), "http://") || strings.HasPrefix(strings.ToLower(path), "https://")) {
+				if base != "" {
+					full = base + "/" + strings.TrimLeft(path, "/")
+				}
+			}
 			attachments = append(attachments, dto.Attachment{
 				ContentType: attachment.ContentType,
 				Filename:    attachment.Name,
 				Height:      attachment.Height,
 				Width:       attachment.Width,
-				URL:         fmt.Sprintf("media/%d/%d/%s", attachment.ChannelId, attachment.Id, attachment.Name),
+				URL:         full,
 				Size:        attachment.FileSize,
 			})
 		}

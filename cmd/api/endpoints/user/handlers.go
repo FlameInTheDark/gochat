@@ -487,15 +487,16 @@ func (e *entity) findExistingDMChannel(c *fiber.Ctx, userId, recipientId int64) 
 		return nil, helper.HttpDbError(err, ErrUnableToGetChannel)
 	}
 
-	// Convert to DTO
+	// Convert to DTO and include DM participant id
 	channelDTO := dto.Channel{
-		Id:          channel.Id,
-		Type:        channel.Type,
-		GuildId:     nil,
-		Name:        channel.Name,
-		ParentId:    channel.ParentID,
-		Permissions: channel.Permissions,
-		CreatedAt:   channel.CreatedAt,
+		Id:            channel.Id,
+		Type:          channel.Type,
+		GuildId:       nil,
+		ParticipantId: &recipientId,
+		Name:          channel.Name,
+		ParentId:      channel.ParentID,
+		Permissions:   channel.Permissions,
+		CreatedAt:     channel.CreatedAt,
 	}
 
 	return &channelDTO, nil
@@ -524,14 +525,15 @@ func (e *entity) createNewDMChannel(c *fiber.Ctx, userId, recipientId int64) (dt
 		return dto.Channel{}, helper.HttpDbError(err, ErrUnableToCreateDMChannel)
 	}
 
-	// Return the successfully created channel
+	// Return the successfully created channel, include participant id
 	return dto.Channel{
-		Id:        channelId,
-		Type:      model.ChannelTypeDM,
-		GuildId:   nil,
-		Name:      "",
-		ParentId:  nil,
-		CreatedAt: time.Now(),
+		Id:            channelId,
+		Type:          model.ChannelTypeDM,
+		GuildId:       nil,
+		ParticipantId: &recipientId,
+		Name:          "",
+		ParentId:      nil,
+		CreatedAt:     time.Now(),
 	}, nil
 }
 

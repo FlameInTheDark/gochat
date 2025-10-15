@@ -13,6 +13,8 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
@@ -39,6 +41,8 @@ type Handler struct {
 	sub      *subscriber.Subscriber
 	g        guild.Guild
 	m        member.Member
+	dm       dmchannel.DmChannel
+	gdm      groupdmchannel.GroupDMChannel
 	u        user.User
 	gc       guildchannels.GuildChannels
 	perm     rolecheck.RoleCheck
@@ -67,6 +71,8 @@ func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v 
 		sub:      sub,
 		g:        guild.New(pg.Conn()),
 		m:        member.New(pg.Conn()),
+		dm:       dmchannel.New(pg.Conn()),
+		gdm:      groupdmchannel.New(pg.Conn()),
 		u:        user.New(pg.Conn()),
 		gc:       guildchannels.New(pg.Conn()),
 		perm:     rolecheck.New(c, pg),
@@ -132,20 +138,42 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		}
 
 		if m.Channel != nil {
-			gc, err := h.gc.GetGuildByChannel(context.Background(), *m.Channel)
-			if err != nil {
-				h.log.Warn("Error getting guild channel", "error", err, "channel_id", *m.Channel)
-			} else {
-				_, _, _, ok, err := h.perm.ChannelPerm(context.Background(), gc.GuildId, gc.ChannelId, h.user.Id, permissions.PermServerViewChannels)
-				if err != nil {
-					h.log.Warn("Error checking channel permissions", "error", err)
+			subscribed := false
+			if gcinfo, err := h.gc.GetGuildByChannel(context.Background(), *m.Channel); err == nil {
+				_, _, _, ok, perr := h.perm.ChannelPerm(context.Background(), gcinfo.GuildId, gcinfo.ChannelId, h.user.Id, permissions.PermServerViewChannels)
+				if perr != nil {
+					h.log.Warn("Error checking channel permissions", "error", perr)
 				} else if ok {
-					err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel))
-					if err != nil {
+					if err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel)); err != nil {
 						h.log.Warn("Error subscribing to channel", "error", err)
+					} else {
+						subscribed = true
 					}
-				} else {
-					h.log.Warn("User does not have permission to view channel", "user_id", h.user.Id, "channel_id", *m.Channel)
+				}
+			}
+
+			if !subscribed {
+				if ok, err := h.dm.IsDmChannelParticipant(context.Background(), *m.Channel, h.user.Id); err == nil && ok {
+					if err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel)); err != nil {
+						h.log.Warn("Error subscribing to DM channel", "error", err)
+					}
+					subscribed = true
+				} else if err != nil {
+					h.log.Warn("Error checking DM participation", "error", err)
+				}
+
+				if !subscribed {
+					if ok, err := h.gdm.IsGroupDmParticipant(context.Background(), *m.Channel, h.user.Id); err == nil && ok {
+						if err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel)); err != nil {
+							h.log.Warn("Error subscribing to Group DM channel", "error", err)
+						}
+						subscribed = true
+					} else if err != nil {
+						h.log.Warn("Error checking Group DM participation", "error", err)
+					}
+				}
+				if !subscribed {
+					h.log.Warn("User does not have permission/access to channel", "user_id", h.user.Id, "channel_id", *m.Channel)
 				}
 			}
 		}
