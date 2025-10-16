@@ -79,6 +79,7 @@ All URIs are relative to *http://localhost/api/v1*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*AttachmentsAPI* | [**AttachmentsChannelIdAttachmentIdPost**](docs/AttachmentsAPI.md#attachmentschannelidattachmentidpost) | **Post** /attachments/{channel_id}/{attachment_id} | Upload attachment
 *AuthAPI* | [**AuthConfirmationPost**](docs/AuthAPI.md#authconfirmationpost) | **Post** /auth/confirmation | Confirmation
 *AuthAPI* | [**AuthLoginPost**](docs/AuthAPI.md#authloginpost) | **Post** /auth/login | Authentication
 *AuthAPI* | [**AuthRecoveryPost**](docs/AuthAPI.md#authrecoverypost) | **Post** /auth/recovery | Password Recovery

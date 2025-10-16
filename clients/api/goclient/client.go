@@ -49,6 +49,8 @@ type APIClient struct {
 
 	// API Services
 
+	AttachmentsAPI *AttachmentsAPIService
+
 	AuthAPI *AuthAPIService
 
 	GuildAPI *GuildAPIService
@@ -82,6 +84,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
+	c.AttachmentsAPI = (*AttachmentsAPIService)(&c.common)
 	c.AuthAPI = (*AuthAPIService)(&c.common)
 	c.GuildAPI = (*GuildAPIService)(&c.common)
 	c.GuildInvitesAPI = (*GuildInvitesAPIService)(&c.common)

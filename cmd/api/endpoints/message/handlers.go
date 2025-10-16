@@ -4,10 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log/slog"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -234,34 +232,24 @@ func (e *entity) createMessageWithCleanup(c *fiber.Ctx, messageId, channelId, us
 
 // buildMessageResponse constructs the message response DTO
 func (e *entity) buildMessageResponse(c *fiber.Ctx, messageId int64, channel *model.Channel, userData *messageUserData, req *SendMessageRequest) (dto.Message, error) {
-	// Fetch attachments if any
 	var attachments []dto.Attachment
 	if len(req.Attachments) > 0 {
 		ats, err := e.at.SelectAttachmentByIDs(c.UserContext(), req.Attachments)
 		if err != nil {
 			return dto.Message{}, helper.HttpDbError(err, ErrUnableToGetAttachements)
 		}
-
-		base := strings.TrimRight(e.s3ExternalURL, "/")
 		for _, at := range ats {
-			var path string
-			if at.URL != nil && *at.URL != "" {
-				path = *at.URL
-			} else {
-				path = fmt.Sprintf("media/%d/%d/%s", at.ChannelId, at.Id, at.Name)
-			}
-			full := path
-			if !(strings.HasPrefix(strings.ToLower(path), "http://") || strings.HasPrefix(strings.ToLower(path), "https://")) {
-				if base != "" {
-					full = base + "/" + strings.TrimLeft(path, "/")
-				}
+			var url string
+			if at.URL != nil {
+				url = *at.URL
 			}
 			attachments = append(attachments, dto.Attachment{
 				ContentType: at.ContentType,
 				Filename:    at.Name,
 				Height:      at.Height,
 				Width:       at.Width,
-				URL:         full,
+				URL:         url,
+				PreviewURL:  at.PreviewURL,
 				Size:        at.FileSize,
 			})
 		}
@@ -706,18 +694,9 @@ func (e *entity) buildAttachments(attachmentIds []int64, data *messageRelatedDat
 	attachments := make([]dto.Attachment, 0, len(attachmentIds))
 	for _, id := range attachmentIds {
 		if attachment, exists := data.Attachments[id]; exists {
-			base := strings.TrimRight(e.s3ExternalURL, "/")
-			var path string
-			if attachment.URL != nil && *attachment.URL != "" {
-				path = *attachment.URL
-			} else {
-				path = fmt.Sprintf("media/%d/%d/%s", attachment.ChannelId, attachment.Id, attachment.Name)
-			}
-			full := path
-			if !(strings.HasPrefix(strings.ToLower(path), "http://") || strings.HasPrefix(strings.ToLower(path), "https://")) {
-				if base != "" {
-					full = base + "/" + strings.TrimLeft(path, "/")
-				}
+			var full string
+			if attachment.URL != nil {
+				full = *attachment.URL
 			}
 			attachments = append(attachments, dto.Attachment{
 				ContentType: attachment.ContentType,
@@ -725,6 +704,7 @@ func (e *entity) buildAttachments(attachmentIds []int64, data *messageRelatedDat
 				Height:      attachment.Height,
 				Width:       attachment.Width,
 				URL:         full,
+				PreviewURL:  attachment.PreviewURL,
 				Size:        attachment.FileSize,
 			})
 		}
@@ -1210,32 +1190,16 @@ func (e *entity) validateUploadPermissions(c *fiber.Ctx, channelId, userId int64
 	return nil
 }
 
-// https://3946cf92-4a18-4141-89ae-8be506c56aa4.selstorage.ru/gochat/media/2239769361793417216/2240231901539336192/photo_2025-10-14_22-59-56.jpg
-// https://3946cf92-4a18-4141-89ae-8be506c56aa4.selstorage.ru/media/2239769361793417216/2240231901539336192/photo_2025-10-14_22-59-56.jpg
-
 // createAttachmentUpload creates the attachment record and generates upload URL
 func (e *entity) createAttachmentUpload(c *fiber.Ctx, req *UploadAttachmentRequest, channelId int64) (dto.AttachmentUpload, error) {
 	attachmentId := idgen.Next()
 
-	// Generate upload URL
-	uploadURL, err := e.storage.MakeUploadAttachment(c.UserContext(), channelId, attachmentId, req.FileSize, req.Filename)
+	user, err := helper.GetUser(c)
 	if err != nil {
-		e.log.Error("failed to create upload URL",
-			"channel_id", channelId,
-			"attachment_id", attachmentId,
-			"filename", req.Filename,
-			"error", err.Error())
-		return dto.AttachmentUpload{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateUploadURL)
+		return dto.AttachmentUpload{}, fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	// Create attachment record in done state with public URL
-	path := fmt.Sprintf("media/%d/%d/%s", channelId, attachmentId, req.Filename)
-	base := strings.TrimRight(e.s3ExternalURL, "/")
-	url := path
-	if base != "" {
-		url = base + "/" + strings.TrimLeft(path, "/")
-	}
-	if err := e.at.CreateAttachment(c.UserContext(), attachmentId, channelId, req.FileSize, req.Height, req.Width, req.Filename, url, req.ContentType); err != nil {
+	if err := e.at.CreateAttachment(c.UserContext(), attachmentId, channelId, user.Id, e.attachTTL, req.FileSize, req.Filename); err != nil {
 		return dto.AttachmentUpload{}, helper.HttpDbError(err, ErrUnableToCreateAttachment)
 	}
 
@@ -1243,30 +1207,19 @@ func (e *entity) createAttachmentUpload(c *fiber.Ctx, req *UploadAttachmentReque
 		Id:        attachmentId,
 		ChannelId: channelId,
 		FileName:  req.Filename,
-		UploadURL: uploadURL,
 	}, nil
 }
-
-// Performance optimization functions for GetMessages
 
 // buildMessageDTOsOptimized constructs message DTOs with memory optimization using object pools
 func (e *entity) buildMessageDTOsOptimized(messages []model.Message, data *messageRelatedData) []dto.Message {
 	result := make([]dto.Message, len(messages))
 
 	for i, message := range messages {
-		// Get message from pool
 		msg := messagePool.Get().(*dto.Message)
-
-		// Reset the message
 		*msg = dto.Message{}
-
-		// Build author
 		author := e.buildAuthorOptimized(message.UserId, data)
-
-		// Build attachments with pool
 		attachments := e.buildAttachmentsOptimized(message.Attachments, data)
 
-		// Set message fields
 		msg.Id = message.Id
 		msg.ChannelId = message.ChannelId
 		msg.Author = author
@@ -1276,18 +1229,16 @@ func (e *entity) buildMessageDTOsOptimized(messages []model.Message, data *messa
 
 		result[i] = *msg
 
-		// Return message to pool
 		messagePool.Put(msg)
 	}
 
 	return result
 }
 
-// buildAuthorOptimized constructs author DTO with member override if available (optimized version)
+// buildAuthorOptimized constructs author DTO with member override if available
 func (e *entity) buildAuthorOptimized(userId int64, data *messageRelatedData) dto.User {
 	user, userExists := data.Users[userId]
 	if !userExists {
-		// Fallback for missing user data
 		return dto.User{
 			Id:   userId,
 			Name: "Unknown User",
@@ -1300,7 +1251,6 @@ func (e *entity) buildAuthorOptimized(userId int64, data *messageRelatedData) dt
 		Avatar: user.Avatar,
 	}
 
-	// Override with member data if available
 	if member, memberExists := data.Members[userId]; memberExists {
 		if member.Username != nil {
 			author.Name = *member.Username
@@ -1319,24 +1269,14 @@ func (e *entity) buildAttachmentsOptimized(attachmentIds []int64, data *messageR
 		return nil
 	}
 
-	// Get attachment slice from pool
 	attachments := attachmentPool.Get().([]dto.Attachment)
-	attachments = attachments[:0] // Reset length but keep capacity
+	attachments = attachments[:0]
 
-	base := strings.TrimRight(e.s3ExternalURL, "/")
 	for _, id := range attachmentIds {
 		if attachment, exists := data.Attachments[id]; exists {
-			var path string
-			if attachment.URL != nil && *attachment.URL != "" {
-				path = *attachment.URL
-			} else {
-				path = fmt.Sprintf("media/%d/%d/%s", attachment.ChannelId, attachment.Id, attachment.Name)
-			}
-			full := path
-			if !(strings.HasPrefix(strings.ToLower(path), "http://") || strings.HasPrefix(strings.ToLower(path), "https://")) {
-				if base != "" {
-					full = base + "/" + strings.TrimLeft(path, "/")
-				}
+			var full string
+			if attachment.URL != nil {
+				full = *attachment.URL
 			}
 			attachments = append(attachments, dto.Attachment{
 				ContentType: attachment.ContentType,
@@ -1344,16 +1284,15 @@ func (e *entity) buildAttachmentsOptimized(attachmentIds []int64, data *messageR
 				Height:      attachment.Height,
 				Width:       attachment.Width,
 				URL:         full,
+				PreviewURL:  attachment.PreviewURL,
 				Size:        attachment.FileSize,
 			})
 		}
 	}
 
-	// Create result copy and return slice to pool
 	result := make([]dto.Attachment, len(attachments))
 	copy(result, attachments)
 
-	// Return to pool
 	attachmentPool.Put(attachments)
 
 	return result

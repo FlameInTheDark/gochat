@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -78,8 +79,11 @@ func (e *entity) putAttachment(ctx context.Context, event *S3Event) error {
 		return errors.New(ErrIncorrectFileSize)
 	}
 
-	// Mark attachment as done and persist metadata including URL
-	err = e.at.DoneAttachment(ctx, objectId, channelId, event.Records[0].S3.Object.ContentType, &event.Key)
+	if strings.HasSuffix(event.Key, "/preview.webp") {
+		err = e.at.DoneAttachment(ctx, objectId, channelId, at.ContentType, at.URL, &event.Key, at.Height, at.Width)
+	} else {
+		err = e.at.DoneAttachment(ctx, objectId, channelId, event.Records[0].S3.Object.ContentType, &event.Key, nil, nil, nil)
+	}
 	if err != nil {
 		cleanupErr := e.storage.RemoveAttachment(context.Background(), event.Key)
 		if cleanupErr != nil {

@@ -21,14 +21,8 @@ type Config struct {
 	AuthSecret                 string   `yaml:"auth_secret" env:"AUTH_SECRET" env-default:"change_me_before_use_it_in_production"`
 	Swagger                    bool     `yaml:"swagger" env:"SWAGGER" env-default:"false"`
 	KeyDB                      string   `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1"`
-	S3Endpoint                 string   `yaml:"s3_endpoint" env:"S3_ENDPOINT" env-default:""`
-	S3AccessKeyID              string   `yaml:"s3_access_key_id" env:"S3_ACCESS_KEY_ID" env-default:""`
-	S3SecretAccessKey          string   `yaml:"s3_secret_access_key" env:"S3_SECRET_ACCESS_KEY" env-default:""`
-	S3UseSSL                   bool     `yaml:"s3_use_ssl" env:"S3_USE_SSL" env-default:"false"`
-	S3Bucket                   string   `yaml:"s3_bucket" env:"S3_BUCKET" env-default:"gochat"`
-	S3Region                   string   `yaml:"s3_region" env:"S3_REGION"`
-	S3ExternalURL              string   `yaml:"s3_external_url" env:"S3_EXTERNAL_URL"`
 	UploadLimit                int64    `yaml:"upload_limit" env:"UPLOAD_LIMIT" env-default:"50000000"`
+	AttachmentTTLMinutes       int64    `yaml:"attachment_ttl_minutes" env:"ATTACHMENT_TTL_MINUTES" env-default:"10"`
 	NatsConnString             string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 	IndexerNatsConnString      string   `yaml:"indexer_nats_conn_string" env:"INDEX_NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`
 	PGDSN                      string   `yaml:"pg_dsn" env:"PG_DSN" env-default:""`

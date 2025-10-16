@@ -1,10 +1,10 @@
 package user
 
 import (
-    "github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2"
 
-    "github.com/FlameInTheDark/gochat/internal/dto"
-    "github.com/FlameInTheDark/gochat/internal/helper"
+	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/FlameInTheDark/gochat/internal/helper"
 )
 
 // GetMyDMChannels
@@ -22,12 +22,11 @@ func (e *entity) GetMyDMChannels(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	// Gather DM channels
 	dms, err := e.dm.GetUserDmChannels(c.UserContext(), user.Id)
 	if err != nil {
 		return helper.HttpDbError(err, ErrUnableToGetChannel)
 	}
-	// Gather Group DM channels
+
 	gdms, err := e.gdm.GetUserGroupDmChannels(c.UserContext(), user.Id)
 	if err != nil {
 		return helper.HttpDbError(err, ErrUnableToGetChannel)
@@ -45,30 +44,28 @@ func (e *entity) GetMyDMChannels(c *fiber.Ctx) error {
 		return c.JSON([]dto.Channel{})
 	}
 
-    // Build participant map for 1:1 DMs
-    participants := make(map[int64]int64, len(dms)) // channelId -> participantId
-    for _, d := range dms {
-        participants[d.ChannelId] = d.ParticipantId
-    }
+	participants := make(map[int64]int64, len(dms)) // channelId -> participantId
+	for _, d := range dms {
+		participants[d.ChannelId] = d.ParticipantId
+	}
 
-    // Channels data
-    chs, err := e.ch.GetChannelsBulk(c.UserContext(), ids)
-    if err != nil {
-        return helper.HttpDbError(err, ErrUnableToGetChannel)
-    }
-	// Last messages from CQL (DM store)
+	chs, err := e.ch.GetChannelsBulk(c.UserContext(), ids)
+	if err != nil {
+		return helper.HttpDbError(err, ErrUnableToGetChannel)
+	}
+
 	last, err := e.dmlm.GetChannelsMessages(c.UserContext(), ids)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "unable to get dm last messages")
 	}
 
-    result := make([]dto.Channel, len(chs))
-    for i := range chs {
-        var pid *int64
-        if v, ok := participants[chs[i].Id]; ok {
-            pid = &v
-        }
-        result[i] = dmChannelModelToDTO(&chs[i], last, pid)
-    }
-    return c.JSON(result)
+	result := make([]dto.Channel, len(chs))
+	for i := range chs {
+		var pid *int64
+		if v, ok := participants[chs[i].Id]; ok {
+			pid = &v
+		}
+		result[i] = dmChannelModelToDTO(&chs[i], last, pid)
+	}
+	return c.JSON(result)
 }

@@ -1,34 +1,4 @@
 services:
-  minio:
-    image: minio/minio:latest
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: password
-    command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 5s
-      timeout: 2s
-      retries: 5
-    restart: always
-
-  minio-init:
-    image: minio/mc
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      MINIO_ENDPOINT: "http://minio:9000"
-      MINIO_ROOT_USER: admin # Match the minio service credentials
-      MINIO_ROOT_PASSWORD: password # Match the minio service credentials
-    volumes:
-      - ./init/init-minio.sh:/init-minio.sh
-    entrypoint: ["/bin/sh", "/init-minio.sh"]
-    restart: "no"
-
   scylla:
     image: scylladb/scylla:6.2
     volumes:
@@ -112,6 +82,29 @@ services:
         condition: service_started
       nats:
         condition: service_started
+      auth:
+        condition: service_started
+    networks:
+      - traefik
+      - default
+
+  attachments:
+    image: gochat/attachments
+    build:
+      dockerfile: attachments.Dockerfile
+    restart: always
+    volumes:
+      - ./attachments_config.yaml:/dist/config.yaml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.attachments.rule=PathPrefix(`/api/v1/attachments`)"
+      - "traefik.http.routers.attachments.priority=100"
+      - "traefik.http.routers.attachments.service=attachments"
+      - "traefik.http.services.attachments.loadbalancer.server.port=3200"
+      - "traefik.docker.network=gochat_traefik"
+    depends_on:
+      scylla:
+        condition: service_healthy
       auth:
         condition: service_started
     networks:

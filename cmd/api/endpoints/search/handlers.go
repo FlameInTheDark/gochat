@@ -72,6 +72,29 @@ func (e *entity) Search(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetMessages)
 	}
 
+	var attIds []int64
+	attSeen := make(map[int64]struct{})
+	for _, m := range msgs {
+		for _, aid := range m.Attachments {
+			if _, ok := attSeen[aid]; ok {
+				continue
+			}
+			attSeen[aid] = struct{}{}
+			attIds = append(attIds, aid)
+		}
+	}
+
+	attMap := make(map[int64]model.Attachment)
+	if len(attIds) > 0 {
+		ats, err := e.at.SelectAttachmentByIDs(c.UserContext(), attIds)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetMessages)
+		}
+		for _, a := range ats {
+			attMap[a.Id] = a
+		}
+	}
+
 	var uidsmap = make(map[int64]bool)
 	var uids []int64
 
@@ -94,6 +117,30 @@ func (e *entity) Search(c *fiber.Ctx) error {
 
 	var resp = MessageSearchResponse{Pages: (res.Total + 10 - 1) / 10}
 	for _, m := range msgs {
+		var dtoAts []dto.Attachment
+		if len(m.Attachments) > 0 {
+			for _, aid := range m.Attachments {
+				if a, ok := attMap[aid]; ok {
+					var full string
+					if a.URL != nil {
+						full = *a.URL
+					}
+					var previewFull *string
+					if a.PreviewURL != nil && *a.PreviewURL != "" {
+						previewFull = a.PreviewURL
+					}
+					dtoAts = append(dtoAts, dto.Attachment{
+						ContentType: a.ContentType,
+						Filename:    a.Name,
+						Height:      a.Height,
+						Width:       a.Width,
+						URL:         full,
+						PreviewURL:  previewFull,
+						Size:        a.FileSize,
+					})
+				}
+			}
+		}
 		if u, ok := umap[m.UserId]; ok {
 			resp.Messages = append(resp.Messages, dto.Message{
 				Id:        m.Id,
@@ -105,7 +152,7 @@ func (e *entity) Search(c *fiber.Ctx) error {
 					Avatar:        u.Avatar,
 				},
 				Content:     m.Content,
-				Attachments: nil,
+				Attachments: dtoAts,
 				UpdatedAt:   m.EditedAt,
 			})
 			continue
@@ -115,7 +162,7 @@ func (e *entity) Search(c *fiber.Ctx) error {
 			ChannelId:   m.ChannelId,
 			Author:      dto.User{},
 			Content:     m.Content,
-			Attachments: nil,
+			Attachments: dtoAts,
 			UpdatedAt:   m.EditedAt,
 		})
 	}

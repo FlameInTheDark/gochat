@@ -118,3 +118,24 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Extract metadata for ATTACHMENTS image
+        id: meta_attachments
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/gochat-attachments
+          tags: |
+            type=ref,event=tag
+            # Always tag as latest on release
+            type=raw,value=latest,enable=true
+
+      - name: Build and push ATTACHMENTS image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./attachments.Dockerfile
+          push: true
+          tags: ${{ steps.meta_attachments.outputs.tags }}
+          labels: ${{ steps.meta_attachments.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+

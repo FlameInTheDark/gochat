@@ -193,6 +193,12 @@ export interface DtoAttachment {
      */
     'height'?: number;
     /**
+     * Preview URL for image/video
+     * @type {string}
+     * @memberof DtoAttachment
+     */
+    'preview_url'?: string;
+    /**
      * FileSize in bytes
      * @type {number}
      * @memberof DtoAttachment
@@ -235,12 +241,6 @@ export interface DtoAttachmentUpload {
      * @memberof DtoAttachmentUpload
      */
     'id'?: number;
-    /**
-     * Upload URL. S3 presigned URL
-     * @type {string}
-     * @memberof DtoAttachmentUpload
-     */
-    'upload_url'?: string;
 }
 /**
  * 
@@ -1649,6 +1649,172 @@ export interface WebhookS3Source {
      */
     'userAgent'?: string;
 }
+
+/**
+ * AttachmentsApi - axios parameter creator
+ * @export
+ */
+export const AttachmentsApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
+         * @summary Upload attachment
+         * @param {number} channelId Channel ID
+         * @param {number} attachmentId Attachment ID
+         * @param {Array<number>} requestBody Binary file to upload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        attachmentsChannelIdAttachmentIdPost: async (channelId: number, attachmentId: number, requestBody: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('attachmentsChannelIdAttachmentIdPost', 'channelId', channelId)
+            // verify required parameter 'attachmentId' is not null or undefined
+            assertParamExists('attachmentsChannelIdAttachmentIdPost', 'attachmentId', attachmentId)
+            // verify required parameter 'requestBody' is not null or undefined
+            assertParamExists('attachmentsChannelIdAttachmentIdPost', 'requestBody', requestBody)
+            const localVarPath = `/attachments/{channel_id}/{attachment_id}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"attachment_id"}}`, encodeURIComponent(String(attachmentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/octet-stream';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * AttachmentsApi - functional programming interface
+ * @export
+ */
+export const AttachmentsApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = AttachmentsApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
+         * @summary Upload attachment
+         * @param {number} channelId Channel ID
+         * @param {number} attachmentId Attachment ID
+         * @param {Array<number>} requestBody Binary file to upload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async attachmentsChannelIdAttachmentIdPost(channelId: number, attachmentId: number, requestBody: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.attachmentsChannelIdAttachmentIdPost(channelId, attachmentId, requestBody, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AttachmentsApi.attachmentsChannelIdAttachmentIdPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * AttachmentsApi - factory interface
+ * @export
+ */
+export const AttachmentsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = AttachmentsApiFp(configuration)
+    return {
+        /**
+         * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
+         * @summary Upload attachment
+         * @param {AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        attachmentsChannelIdAttachmentIdPost(requestParameters: AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.attachmentsChannelIdAttachmentIdPost(requestParameters.channelId, requestParameters.attachmentId, requestParameters.requestBody, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * AttachmentsApi - interface
+ * @export
+ * @interface AttachmentsApi
+ */
+export interface AttachmentsApiInterface {
+    /**
+     * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
+     * @summary Upload attachment
+     * @param {AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AttachmentsApiInterface
+     */
+    attachmentsChannelIdAttachmentIdPost(requestParameters: AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+}
+
+/**
+ * Request parameters for attachmentsChannelIdAttachmentIdPost operation in AttachmentsApi.
+ * @export
+ * @interface AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest
+ */
+export interface AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest {
+    /**
+     * Channel ID
+     * @type {number}
+     * @memberof AttachmentsApiAttachmentsChannelIdAttachmentIdPost
+     */
+    readonly channelId: number
+
+    /**
+     * Attachment ID
+     * @type {number}
+     * @memberof AttachmentsApiAttachmentsChannelIdAttachmentIdPost
+     */
+    readonly attachmentId: number
+
+    /**
+     * Binary file to upload
+     * @type {Array<number>}
+     * @memberof AttachmentsApiAttachmentsChannelIdAttachmentIdPost
+     */
+    readonly requestBody: Array<number>
+}
+
+/**
+ * AttachmentsApi - object-oriented interface
+ * @export
+ * @class AttachmentsApi
+ * @extends {BaseAPI}
+ */
+export class AttachmentsApi extends BaseAPI implements AttachmentsApiInterface {
+    /**
+     * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
+     * @summary Upload attachment
+     * @param {AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AttachmentsApi
+     */
+    public attachmentsChannelIdAttachmentIdPost(requestParameters: AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest, options?: RawAxiosRequestConfig) {
+        return AttachmentsApiFp(this.configuration).attachmentsChannelIdAttachmentIdPost(requestParameters.channelId, requestParameters.attachmentId, requestParameters.requestBody, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
 
 /**
  * AuthApi - axios parameter creator

@@ -18,16 +18,6 @@ cluster_keyspace: "gochat"
 # Redis
 keydb: "keydb:6379"
 
-# S3
-s3_endpoint: minio:9000
-s3_access_key_id: lF0b7V15OZCv2eGggCg5
-s3_secret_access_key: 55ug80hPgx4nFPoFJXvwBHns1XwXmZrcKli8UHoz
-s3_bucket: gochat
-s3_region: ""
-# Optional: public base URL for objects; if empty, API will use https?://s3_endpoint/s3_bucket
-s3_external_url: ""
-s3_use_ssl: false
-
 # PostgreSQL
 pg_dsn: "host=citus-master port=5432 user=postgres dbname=gochat sslmode=disable"
 

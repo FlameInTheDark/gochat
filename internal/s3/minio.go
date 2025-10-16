@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"io"
+
 	aws "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -62,6 +64,17 @@ func (c *Client) RemoveAttachment(ctx context.Context, key string) error {
 	_, err := c.s3.DeleteObjectWithContext(ctx, &awss3.DeleteObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),
+	})
+	return err
+}
+
+// UploadObject uploads an object from a byte stream to S3 at the given key.
+func (c *Client) UploadObject(ctx context.Context, key string, body io.ReadSeeker, contentType string) error {
+	_, err := c.s3.PutObjectWithContext(ctx, &awss3.PutObjectInput{
+		Bucket:      aws.String(c.bucket),
+		Key:         aws.String(key),
+		Body:        aws.ReadSeekCloser(body),
+		ContentType: aws.String(contentType),
 	})
 	return err
 }

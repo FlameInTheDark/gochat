@@ -16,6 +16,89 @@ externalDocs:
 servers:
 - url: localhost/api/v1
 paths:
+  /attachments/{channel_id}/{attachment_id}:
+    post:
+      description: Uploads a file for an existing attachment. Stores the original
+        as-is and generates a WebP preview for images/videos. Finalizes the attachment
+        metadata.
+      parameters:
+      - description: Channel ID
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Attachment ID
+        explode: false
+        in: path
+        name: attachment_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              items:
+                type: integer
+              type: array
+        description: Binary file to upload
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Created
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content (already uploaded)
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Attachment not found
+        "413":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: File too large
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Upload attachment
+      tags:
+      - Attachments
   /auth/confirmation:
     post:
       requestBody:
@@ -2865,6 +2948,7 @@ components:
         filename: image.png
         content_type: image/png
         size: 1000000
+        preview_url: https://example.com/image_preview.webp
         width: 800
         url: https://example.com/image.png
         height: 600
@@ -2881,6 +2965,10 @@ components:
           description: Image dimensions in pixels
           example: 600
           type: integer
+        preview_url:
+          description: Preview URL for image/video
+          example: https://example.com/image_preview.webp
+          type: string
         size:
           description: FileSize in bytes
           example: 1000000
@@ -2896,7 +2984,6 @@ components:
     dto.AttachmentUpload:
       example:
         file_name: image.png
-        upload_url: upload_url
         id: 2230469276416868352
         channel_id: 2230469276416868352
       properties:
@@ -2912,9 +2999,6 @@ components:
           description: Attachment ID
           example: 2230469276416868352
           type: integer
-        upload_url:
-          description: Upload URL. S3 presigned URL
-          type: string
     dto.Channel:
       example:
         private: false
@@ -3126,12 +3210,14 @@ components:
         - filename: image.png
           content_type: image/png
           size: 1000000
+          preview_url: https://example.com/image_preview.webp
           width: 800
           url: https://example.com/image.png
           height: 600
         - filename: image.png
           content_type: image/png
           size: 1000000
+          preview_url: https://example.com/image_preview.webp
           width: 800
           url: https://example.com/image.png
           height: 600
@@ -3696,12 +3782,14 @@ components:
           - filename: image.png
             content_type: image/png
             size: 1000000
+            preview_url: https://example.com/image_preview.webp
             width: 800
             url: https://example.com/image.png
             height: 600
           - filename: image.png
             content_type: image/png
             size: 1000000
+            preview_url: https://example.com/image_preview.webp
             width: 800
             url: https://example.com/image.png
             height: 600
@@ -3718,12 +3806,14 @@ components:
           - filename: image.png
             content_type: image/png
             size: 1000000
+            preview_url: https://example.com/image_preview.webp
             width: 800
             url: https://example.com/image.png
             height: 600
           - filename: image.png
             content_type: image/png
             size: 1000000
+            preview_url: https://example.com/image_preview.webp
             width: 800
             url: https://example.com/image.png
             height: 600

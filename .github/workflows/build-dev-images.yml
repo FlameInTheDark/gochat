@@ -32,6 +32,10 @@ jobs:
             dockerfile: indexer.Dockerfile
             image: gochat-indexer
             cache_scope: indexer-dev
+          - service: attachments
+            dockerfile: attachments.Dockerfile
+            image: gochat-attachments
+            cache_scope: attachments-dev
     steps:
       - name: Check out code from dev branch
         uses: actions/checkout@v4

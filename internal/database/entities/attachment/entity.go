@@ -8,10 +8,13 @@ import (
 )
 
 type Attachment interface {
-	CreateAttachment(ctx context.Context, id, channelId, fileSize int64, height, width int64, name, url, contentType string) error
+	// CreateAttachment creates a placeholder attachment row with TTL and done=false
+	// Width/Height/URL/ContentType are filled on finalize; authorId is enforced during upload
+	CreateAttachment(ctx context.Context, id, channelId, authorId, ttlSeconds, fileSize int64, name string) error
 	RemoveAttachment(ctx context.Context, id, channelId int64) error
 	GetAttachment(ctx context.Context, id, channelId int64) (model.Attachment, error)
-	DoneAttachment(ctx context.Context, id, channelId int64, contentType, url *string) error
+	// DoneAttachment finalizes the attachment, clears TTL, and sets metadata and URLs
+	DoneAttachment(ctx context.Context, id, channelId int64, contentType, url, previewURL *string, height, width *int64) error
 	SelectAttachmentByIDs(ctx context.Context, ids []int64) ([]model.Attachment, error)
 }
 
