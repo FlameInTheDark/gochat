@@ -18,7 +18,11 @@ func (e *Entity) ModifyUser(ctx context.Context, userId int64, name *string, ava
 		q = q.Set("name", *name)
 	}
 	if avatar != nil {
-		q = q.Set("avatar", *avatar)
+		if *avatar == 0 {
+			q = q.Set("avatar", nil)
+		} else {
+			q = q.Set("avatar", *avatar)
+		}
 	}
 	raw, args, err := q.ToSql()
 	if err != nil {

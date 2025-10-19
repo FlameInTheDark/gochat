@@ -14,8 +14,14 @@ type Attachment interface {
 	RemoveAttachment(ctx context.Context, id, channelId int64) error
 	GetAttachment(ctx context.Context, id, channelId int64) (model.Attachment, error)
 	// DoneAttachment finalizes the attachment, clears TTL, and sets metadata and URLs
-	DoneAttachment(ctx context.Context, id, channelId int64, contentType, url, previewURL *string, height, width *int64) error
+	DoneAttachment(ctx context.Context, id, channelId int64, contentType, url, previewURL *string, height, width, fileSize *int64, name *string, authorId *int64) error
 	SelectAttachmentByIDs(ctx context.Context, ids []int64) ([]model.Attachment, error)
+	// UpdateFileSize updates only the filesize column for an attachment
+	UpdateFileSize(ctx context.Context, id, channelId int64, fileSize int64) error
+	// ListDoneZeroSize returns attachments marked done with missing/zero filesize
+	ListDoneZeroSize(ctx context.Context) ([]model.Attachment, error)
+	// UpdateName updates attachment name
+	UpdateName(ctx context.Context, id, channelId int64, name string) error
 }
 
 type Entity struct {

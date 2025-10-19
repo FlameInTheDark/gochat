@@ -20,8 +20,7 @@ var _ MappedNullable = &DtoGuild{}
 
 // DtoGuild struct for DtoGuild
 type DtoGuild struct {
-	// Icon ID
-	Icon *int32 `json:"icon,omitempty"`
+	Icon *DtoIcon `json:"icon,omitempty"`
 	// Guild ID
 	Id *int32 `json:"id,omitempty"`
 	// Guild Name
@@ -60,9 +59,9 @@ func NewDtoGuildWithDefaults() *DtoGuild {
 }
 
 // GetIcon returns the Icon field value if set, zero value otherwise.
-func (o *DtoGuild) GetIcon() int32 {
+func (o *DtoGuild) GetIcon() DtoIcon {
 	if o == nil || IsNil(o.Icon) {
-		var ret int32
+		var ret DtoIcon
 		return ret
 	}
 	return *o.Icon
@@ -70,7 +69,7 @@ func (o *DtoGuild) GetIcon() int32 {
 
 // GetIconOk returns a tuple with the Icon field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *DtoGuild) GetIconOk() (*int32, bool) {
+func (o *DtoGuild) GetIconOk() (*DtoIcon, bool) {
 	if o == nil || IsNil(o.Icon) {
 		return nil, false
 	}
@@ -86,8 +85,8 @@ func (o *DtoGuild) HasIcon() bool {
 	return false
 }
 
-// SetIcon gets a reference to the given int32 and assigns it to the Icon field.
-func (o *DtoGuild) SetIcon(v int32) {
+// SetIcon gets a reference to the given DtoIcon and assigns it to the Icon field.
+func (o *DtoGuild) SetIcon(v DtoIcon) {
 	o.Icon = &v
 }
 

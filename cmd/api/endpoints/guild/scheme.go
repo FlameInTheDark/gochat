@@ -8,6 +8,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
+	"github.com/gofiber/fiber/v2"
 )
 
 const (
@@ -25,6 +26,7 @@ const (
 	ErrIncorrectMemberID               = "incorrect member ID"
 	ErrIncorrectInviteID               = "incorrect invite ID"
 	ErrIncorrectRoleID                 = "incorrect role ID"
+	ErrIncorrectIconID                 = "incorrect icon ID"
 	ErrFileIsTooBig                    = "file is too big"
 	ErrUnableToSendMessage             = "unable to send message"
 	ErrUnableToGetUser                 = "unable to get user"
@@ -37,6 +39,7 @@ const (
 	ErrUnableToGetDiscriminator        = "unable to get discriminator"
 	ErrUnableToGetGuildByID            = "unable to get guild by id"
 	ErrUnableToUpdateGuild             = "unable to update guild"
+	ErrUnableToDeleteGuild             = "unable to delete guild"
 	ErrUnableToGetRoles                = "unable to get roles"
 	ErrUnableToSetUserRole             = "unable to set user role"
 	ErrUnableToRemoveUserRole          = "unable to remove user role"
@@ -74,10 +77,11 @@ const (
 	ErrParentIdInvalid     = "parent ID must be positive"
 	ErrPermissionsInvalid  = "permissions must be non-negative"
 	// Roles
-	ErrRoleNameRequired = "role name is required"
-	ErrRoleNameTooShort = "role name must be at least 2 characters"
-	ErrRoleNameTooLong  = "role name must be less than 100 characters"
-	ErrRoleColorInvalid = "role color must be between 0 and 16777215"
+	ErrRoleNameRequired         = "role name is required"
+	ErrRoleNameTooShort         = "role name must be at least 2 characters"
+	ErrRoleNameTooLong          = "role name must be less than 100 characters"
+	ErrRoleColorInvalid         = "role color must be between 0 and 16777215"
+	ErrUnableToDeleteActiveIcon = "unable to delete active icon"
 )
 
 var (
@@ -305,7 +309,6 @@ func buildGuildDTO(guild *model.Guild) dto.Guild {
 	return dto.Guild{
 		Id:          guild.Id,
 		Name:        guild.Name,
-		Icon:        guild.Icon,
 		Owner:       guild.OwnerId,
 		Public:      guild.Public,
 		Permissions: guild.Permissions,
@@ -403,15 +406,18 @@ func userToDTO(user model.User, dsc string) dto.User {
 		Id:            user.Id,
 		Name:          user.Name,
 		Discriminator: dsc,
-		Avatar:        user.Avatar,
 	}
 }
 
-func membersToDTO(members []model.Member, users []model.User, roles []model.UserRoles, dscs []model.Discriminator) []dto.Member {
+func membersToDTO(members []model.Member, users []model.User, roles []model.UserRoles, dscs []model.Discriminator, avData map[int64]*dto.AvatarData) []dto.Member {
 	var data = make([]dto.Member, len(members))
 	for i, m := range members {
+		u := userToDTO(users[i], dscs[i].Discriminator)
+		if ad, ok := avData[m.UserId]; ok {
+			u.Avatar = ad
+		}
 		data[i] = dto.Member{
-			User:     userToDTO(users[i], dscs[i].Discriminator),
+			User:     u,
 			Username: m.Username,
 			Avatar:   m.Avatar,
 			JoinAt:   m.JoinAt,
@@ -419,4 +425,20 @@ func membersToDTO(members []model.Member, users []model.User, roles []model.User
 		}
 	}
 	return data
+}
+
+// CreateIconRequest is a request to create guild icon metadata
+type CreateIconRequest struct {
+	FileSize    int64  `json:"file_size" example:"120000"`
+	ContentType string `json:"content_type" example:"image/png"`
+}
+
+func (r CreateIconRequest) Validate() error {
+	if r.FileSize <= 0 || r.FileSize > 250*1024 {
+		return fiber.NewError(fiber.StatusRequestEntityTooLarge, ErrFileIsTooBig)
+	}
+	if len(r.ContentType) < 6 || r.ContentType[:6] != "image/" {
+		return fiber.NewError(fiber.StatusUnsupportedMediaType, "unsupported content type")
+	}
+	return nil
 }

@@ -20,10 +20,10 @@ var _ MappedNullable = &DtoUser{}
 
 // DtoUser Guild member data
 type DtoUser struct {
-	Avatar        *int32  `json:"avatar,omitempty"`
-	Discriminator *string `json:"discriminator,omitempty"`
-	Id            *int32  `json:"id,omitempty"`
-	Name          *string `json:"name,omitempty"`
+	Avatar        *DtoAvatarData `json:"avatar,omitempty"`
+	Discriminator *string        `json:"discriminator,omitempty"`
+	Id            *int32         `json:"id,omitempty"`
+	Name          *string        `json:"name,omitempty"`
 }
 
 // NewDtoUser instantiates a new DtoUser object
@@ -44,9 +44,9 @@ func NewDtoUserWithDefaults() *DtoUser {
 }
 
 // GetAvatar returns the Avatar field value if set, zero value otherwise.
-func (o *DtoUser) GetAvatar() int32 {
+func (o *DtoUser) GetAvatar() DtoAvatarData {
 	if o == nil || IsNil(o.Avatar) {
-		var ret int32
+		var ret DtoAvatarData
 		return ret
 	}
 	return *o.Avatar
@@ -54,7 +54,7 @@ func (o *DtoUser) GetAvatar() int32 {
 
 // GetAvatarOk returns a tuple with the Avatar field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *DtoUser) GetAvatarOk() (*int32, bool) {
+func (o *DtoUser) GetAvatarOk() (*DtoAvatarData, bool) {
 	if o == nil || IsNil(o.Avatar) {
 		return nil, false
 	}
@@ -70,8 +70,8 @@ func (o *DtoUser) HasAvatar() bool {
 	return false
 }
 
-// SetAvatar gets a reference to the given int32 and assigns it to the Avatar field.
-func (o *DtoUser) SetAvatar(v int32) {
+// SetAvatar gets a reference to the given DtoAvatarData and assigns it to the Avatar field.
+func (o *DtoUser) SetAvatar(v DtoAvatarData) {
 	o.Avatar = &v
 }
 

@@ -8,10 +8,11 @@ import (
 )
 
 type Icon interface {
-	CreateIcon(ctx context.Context, id, guildId int64, object string) error
-	RemoveIcon(ctx context.Context, id int64) error
-	GetIcon(ctx context.Context, id int64) (model.Icon, error)
-	GetIconsByUserId(ctx context.Context, userId int64) ([]model.Icon, error)
+	CreateIcon(ctx context.Context, id, guildId, ttlSeconds, fileSize int64) error
+	DoneIcon(ctx context.Context, id, guildId int64, contentType, url *string, height, width, fileSize *int64) error
+	RemoveIcon(ctx context.Context, id, guildId int64) error
+	GetIcon(ctx context.Context, id, guildId int64) (model.Icon, error)
+	GetIconsByGuildId(ctx context.Context, guildId int64) ([]model.Icon, error)
 }
 
 type Entity struct {

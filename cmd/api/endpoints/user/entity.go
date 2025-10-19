@@ -6,10 +6,13 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/dmchannelmessages"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
@@ -35,6 +38,11 @@ func (e *entity) Init(router fiber.Router) {
 	router.Get("/me/channels", e.GetMyDMChannels)
 	router.Post("/me/channels", e.CreateDM)
 
+	// Avatar
+	router.Post("/me/avatar", e.CreateAvatar)
+	router.Get("/me/avatars", e.ListAvatars)
+	router.Delete("/me/avatars/:avatar_id<int>", e.DeleteAvatar)
+
 	// Friends
 	router.Get("/me/friends", e.GetFriends)                        // Get a friends list
 	router.Get("/me/friends/:user_id<int>", e.GetOrCreateFriendDM) // Get DM channel or create it if not exist
@@ -53,8 +61,9 @@ type entity struct {
 	name string
 
 	// Services
-	log *slog.Logger
-	mqt mq.SendTransporter
+	log   *slog.Logger
+	mqt   mq.SendTransporter
+	cache cache.Cache
 
 	// DB entities
 	user   user.User
@@ -70,29 +79,39 @@ type entity struct {
 	rs     readstates.ReadStates
 	gclm   guildchannelmessages.GuildChannelMessages
 	dmlm   *dmchannelmessages.Entity
+	av     avatar.Avatar
+	icon   icon.Icon
+
+	// Config
+	s3Base    string
+	attachTTL int64
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(cql *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, log *slog.Logger) server.Entity {
+func New(cql *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, cache cache.Cache, attachTTLSeconds int64, log *slog.Logger) server.Entity {
 	return &entity{
-		name:   entityName,
-		log:    log,
-		mqt:    mqt,
-		user:   user.New(pg.Conn()),
-		member: member.New(pg.Conn()),
-		guild:  guild.New(pg.Conn()),
-		urole:  userrole.New(pg.Conn()),
-		ch:     channel.New(pg.Conn()),
-		dm:     dmchannel.New(pg.Conn()),
-		gdm:    groupdmchannel.New(pg.Conn()),
-		disc:   discriminator.New(pg.Conn()),
-		fr:     friend.New(pg.Conn()),
-		uset:   usersettings.New(pg.Conn()),
-		rs:     readstates.New(cql),
-		gclm:   guildchannelmessages.New(cql),
-		dmlm:   dmchannelmessages.New(cql),
+		name:      entityName,
+		log:       log,
+		mqt:       mqt,
+		cache:     cache,
+		attachTTL: attachTTLSeconds,
+		user:      user.New(pg.Conn()),
+		member:    member.New(pg.Conn()),
+		guild:     guild.New(pg.Conn()),
+		urole:     userrole.New(pg.Conn()),
+		ch:        channel.New(pg.Conn()),
+		dm:        dmchannel.New(pg.Conn()),
+		gdm:       groupdmchannel.New(pg.Conn()),
+		disc:      discriminator.New(pg.Conn()),
+		fr:        friend.New(pg.Conn()),
+		uset:      usersettings.New(pg.Conn()),
+		rs:        readstates.New(cql),
+		gclm:      guildchannelmessages.New(cql),
+		dmlm:      dmchannelmessages.New(cql),
+		av:        avatar.New(cql),
+		icon:      icon.New(cql),
 	}
 }

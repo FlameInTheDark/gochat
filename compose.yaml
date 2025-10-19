@@ -1,42 +1,6 @@
 services:
-  scylla:
-    image: scylladb/scylla:6.2
-    volumes:
-      - scylla-data:/var/lib/scylla
-      - ./init/init-scylladb.sh:/init-scylladb.sh
-    ports:
-      - "7000:7000"
-      - "9042:9042"
-      - "7199:7199"
-    environment:
-      - SCYLLA_DEVELOPER_MODE=1
-    healthcheck:
-      test: ["CMD", "cqlsh", "-e", "SELECT now() FROM system.local;"]
-      interval: 10s
-      retries: 5
-    restart: always
 
-  nats:
-    image: nats:2.10.22-alpine3.20
-    ports:
-      - "4222:4222"
-      - "8222:8222"
-      - "6222:6222"
-    restart: always
-
-  indexer-nats:
-    image: nats:2.10.22-alpine3.20
-    ports:
-      - "4333:4222"
-      - "8333:8222"
-      - "6333:6222"
-    restart: always
-
-  keydb:
-    image: eqalpha/keydb:alpine
-    ports:
-      - "6379:6379"
-    restart: always
+# ---------- Application services ----------
 
   auth:
     image: gochat/auth
@@ -97,7 +61,7 @@ services:
       - ./attachments_config.yaml:/dist/config.yaml
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.attachments.rule=PathPrefix(`/api/v1/attachments`)"
+      - "traefik.http.routers.attachments.rule=PathPrefix(`/api/v1/upload`)"
       - "traefik.http.routers.attachments.priority=100"
       - "traefik.http.routers.attachments.service=attachments"
       - "traefik.http.services.attachments.loadbalancer.server.port=3200"
@@ -146,6 +110,47 @@ services:
         condition: service_started
       opensearch:
         condition: service_started
+
+  # ---------- Environment services ----------
+
+  scylla:
+    image: scylladb/scylla:6.2
+    volumes:
+      - scylla-data:/var/lib/scylla
+      - ./init/init-scylladb.sh:/init-scylladb.sh
+    ports:
+      - "7000:7000"
+      - "9042:9042"
+      - "7199:7199"
+    environment:
+      - SCYLLA_DEVELOPER_MODE=1
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "SELECT now() FROM system.local;"]
+      interval: 10s
+      retries: 5
+    restart: always
+
+  nats:
+    image: nats:2.10.22-alpine3.20
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+      - "6222:6222"
+    restart: always
+
+  indexer-nats:
+    image: nats:2.10.22-alpine3.20
+    ports:
+      - "4333:4222"
+      - "8333:8222"
+      - "6333:6222"
+    restart: always
+
+  keydb:
+    image: eqalpha/keydb:alpine
+    ports:
+      - "6379:6379"
+    restart: always
 
   opensearch:
     image: opensearchproject/opensearch:2.13.0

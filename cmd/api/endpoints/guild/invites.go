@@ -76,7 +76,6 @@ func (e *entity) ReceiveInvite(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildByID)
 	}
 
-	// Count members in the guild
 	membersCount, err := e.memb.CountGuildMembers(c.UserContext(), inv.GuildId)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
@@ -85,7 +84,7 @@ func (e *entity) ReceiveInvite(c *fiber.Ctx) error {
 	return c.JSON(dto.InvitePreview{
 		Id:           inv.InviteId,
 		Code:         inv.InviteCode,
-		Guild:        buildGuildDTO(&g),
+		Guild:        e.dtoGuildWithIcon(c, &g),
 		AuthorId:     inv.AuthorId,
 		CreatedAt:    inv.CreatedAt,
 		ExpiresAt:    inv.ExpiresAt,
@@ -160,7 +159,7 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 		},
 	})
 
-	return c.JSON(buildGuildDTO(&g))
+	return c.JSON(e.dtoGuildWithIcon(c, &g))
 }
 
 // ListInvites

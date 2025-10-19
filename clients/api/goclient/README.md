@@ -79,7 +79,6 @@ All URIs are relative to *http://localhost/api/v1*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*AttachmentsAPI* | [**AttachmentsChannelIdAttachmentIdPost**](docs/AttachmentsAPI.md#attachmentschannelidattachmentidpost) | **Post** /attachments/{channel_id}/{attachment_id} | Upload attachment
 *AuthAPI* | [**AuthConfirmationPost**](docs/AuthAPI.md#authconfirmationpost) | **Post** /auth/confirmation | Confirmation
 *AuthAPI* | [**AuthLoginPost**](docs/AuthAPI.md#authloginpost) | **Post** /auth/login | Authentication
 *AuthAPI* | [**AuthRecoveryPost**](docs/AuthAPI.md#authrecoverypost) | **Post** /auth/recovery | Password Recovery
@@ -94,7 +93,11 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdChannelGet**](docs/GuildAPI.md#guildguildidchannelget) | **Get** /guild/{guild_id}/channel | Get guild channels
 *GuildAPI* | [**GuildGuildIdChannelOrderPatch**](docs/GuildAPI.md#guildguildidchannelorderpatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 *GuildAPI* | [**GuildGuildIdChannelPost**](docs/GuildAPI.md#guildguildidchannelpost) | **Post** /guild/{guild_id}/channel | Create guild channel
+*GuildAPI* | [**GuildGuildIdDelete**](docs/GuildAPI.md#guildguildiddelete) | **Delete** /guild/{guild_id} | Delete guild
 *GuildAPI* | [**GuildGuildIdGet**](docs/GuildAPI.md#guildguildidget) | **Get** /guild/{guild_id} | Get guild
+*GuildAPI* | [**GuildGuildIdIconPost**](docs/GuildAPI.md#guildguildidiconpost) | **Post** /guild/{guild_id}/icon | Create guild icon metadata
+*GuildAPI* | [**GuildGuildIdIconsGet**](docs/GuildAPI.md#guildguildidiconsget) | **Get** /guild/{guild_id}/icons | List guild icons
+*GuildAPI* | [**GuildGuildIdIconsIconIdDelete**](docs/GuildAPI.md#guildguildidiconsiconiddelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
 *GuildAPI* | [**GuildGuildIdMembersGet**](docs/GuildAPI.md#guildguildidmembersget) | **Get** /guild/{guild_id}/members | Get guild members
 *GuildAPI* | [**GuildGuildIdPatch**](docs/GuildAPI.md#guildguildidpatch) | **Patch** /guild/{guild_id} | Update guild
 *GuildAPI* | [**GuildPost**](docs/GuildAPI.md#guildpost) | **Post** /guild | Create guild
@@ -122,6 +125,12 @@ Class | Method | HTTP request | Description
 *MessageAPI* | [**MessageChannelChannelIdMessageIdPatch**](docs/MessageAPI.md#messagechannelchannelidmessageidpatch) | **Patch** /message/channel/{channel_id}/{message_id} | Update message
 *MessageAPI* | [**MessageChannelChannelIdPost**](docs/MessageAPI.md#messagechannelchannelidpost) | **Post** /message/channel/{channel_id} | Send message
 *SearchAPI* | [**SearchGuildIdMessagesPost**](docs/SearchAPI.md#searchguildidmessagespost) | **Post** /search/{guild_id}/messages | Search messages
+*UploadAPI* | [**UploadAttachmentsChannelIdAttachmentIdPost**](docs/UploadAPI.md#uploadattachmentschannelidattachmentidpost) | **Post** /upload/attachments/{channel_id}/{attachment_id} | Upload attachment
+*UploadAPI* | [**UploadAvatarsUserIdAvatarIdPost**](docs/UploadAPI.md#uploadavatarsuseridavataridpost) | **Post** /upload/avatars/{user_id}/{avatar_id} | Upload user avatar
+*UploadAPI* | [**UploadIconsGuildIdIconIdPost**](docs/UploadAPI.md#uploadiconsguildidiconidpost) | **Post** /upload/icons/{guild_id}/{icon_id} | Upload guild icon
+*UserAPI* | [**UserMeAvatarPost**](docs/UserAPI.md#usermeavatarpost) | **Post** /user/me/avatar | Create avatar metadata
+*UserAPI* | [**UserMeAvatarsAvatarIdDelete**](docs/UserAPI.md#usermeavatarsavatariddelete) | **Delete** /user/me/avatars/{avatar_id} | Delete my avatar by ID
+*UserAPI* | [**UserMeAvatarsGet**](docs/UserAPI.md#usermeavatarsget) | **Get** /user/me/avatars | List my avatars
 *UserAPI* | [**UserMeChannelsGet**](docs/UserAPI.md#usermechannelsget) | **Get** /user/me/channels | List all DM and Group DM channels for current user
 *UserAPI* | [**UserMeChannelsGroupPost**](docs/UserAPI.md#usermechannelsgrouppost) | **Post** /user/me/channels/group | Create group DM channel
 *UserAPI* | [**UserMeChannelsPost**](docs/UserAPI.md#usermechannelspost) | **Post** /user/me/channels | Create DM channel
@@ -139,7 +148,6 @@ Class | Method | HTTP request | Description
 *UserAPI* | [**UserMeSettingsGet**](docs/UserAPI.md#usermesettingsget) | **Get** /user/me/settings | Get current user settings (optional version gating)
 *UserAPI* | [**UserMeSettingsPost**](docs/UserAPI.md#usermesettingspost) | **Post** /user/me/settings | Update current user settings (replaces and bumps version)
 *UserAPI* | [**UserUserIdGet**](docs/UserAPI.md#useruseridget) | **Get** /user/{user_id} | Get user
-*WebhookAPI* | [**WebhookStorageEventsPost**](docs/WebhookAPI.md#webhookstorageeventspost) | **Post** /webhook/storage/events | Storage event
 
 
 ## Documentation For Models
@@ -153,9 +161,14 @@ Class | Method | HTTP request | Description
  - [AuthRegisterRequest](docs/AuthRegisterRequest.md)
  - [DtoAttachment](docs/DtoAttachment.md)
  - [DtoAttachmentUpload](docs/DtoAttachmentUpload.md)
+ - [DtoAvatar](docs/DtoAvatar.md)
+ - [DtoAvatarData](docs/DtoAvatarData.md)
+ - [DtoAvatarUpload](docs/DtoAvatarUpload.md)
  - [DtoChannel](docs/DtoChannel.md)
  - [DtoGuild](docs/DtoGuild.md)
  - [DtoGuildInvite](docs/DtoGuildInvite.md)
+ - [DtoIcon](docs/DtoIcon.md)
+ - [DtoIconUpload](docs/DtoIconUpload.md)
  - [DtoInvitePreview](docs/DtoInvitePreview.md)
  - [DtoMember](docs/DtoMember.md)
  - [DtoMessage](docs/DtoMessage.md)
@@ -168,6 +181,7 @@ Class | Method | HTTP request | Description
  - [GuildCreateGuildChannelRequest](docs/GuildCreateGuildChannelRequest.md)
  - [GuildCreateGuildRequest](docs/GuildCreateGuildRequest.md)
  - [GuildCreateGuildRoleRequest](docs/GuildCreateGuildRoleRequest.md)
+ - [GuildCreateIconRequest](docs/GuildCreateIconRequest.md)
  - [GuildCreateInviteRequest](docs/GuildCreateInviteRequest.md)
  - [GuildPatchGuildChannelOrderRequest](docs/GuildPatchGuildChannelOrderRequest.md)
  - [GuildPatchGuildChannelRequest](docs/GuildPatchGuildChannelRequest.md)
@@ -185,6 +199,7 @@ Class | Method | HTTP request | Description
  - [ModelUserSettingsNotifications](docs/ModelUserSettingsNotifications.md)
  - [SearchMessageSearchRequest](docs/SearchMessageSearchRequest.md)
  - [SearchMessageSearchResponse](docs/SearchMessageSearchResponse.md)
+ - [UserCreateAvatarRequest](docs/UserCreateAvatarRequest.md)
  - [UserCreateDMManyRequest](docs/UserCreateDMManyRequest.md)
  - [UserCreateDMRequest](docs/UserCreateDMRequest.md)
  - [UserCreateFriendRequestRequest](docs/UserCreateFriendRequestRequest.md)
@@ -192,14 +207,6 @@ Class | Method | HTTP request | Description
  - [UserModifyUserRequest](docs/UserModifyUserRequest.md)
  - [UserUnfriendRequest](docs/UserUnfriendRequest.md)
  - [UserUserSettingsResponse](docs/UserUserSettingsResponse.md)
- - [WebhookS3Bucket](docs/WebhookS3Bucket.md)
- - [WebhookS3Element](docs/WebhookS3Element.md)
- - [WebhookS3Event](docs/WebhookS3Event.md)
- - [WebhookS3EventRecord](docs/WebhookS3EventRecord.md)
- - [WebhookS3Identity](docs/WebhookS3Identity.md)
- - [WebhookS3Object](docs/WebhookS3Object.md)
- - [WebhookS3RequestParameters](docs/WebhookS3RequestParameters.md)
- - [WebhookS3Source](docs/WebhookS3Source.md)
 
 
 ## Documentation For Authorization

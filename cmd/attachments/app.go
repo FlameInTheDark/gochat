@@ -9,8 +9,12 @@ import (
 
 	"github.com/FlameInTheDark/gochat/cmd/attachments/config"
 	attachments "github.com/FlameInTheDark/gochat/cmd/attachments/endpoints/attachments"
+	avatars "github.com/FlameInTheDark/gochat/cmd/attachments/endpoints/avatars"
+	icons "github.com/FlameInTheDark/gochat/cmd/attachments/endpoints/icons"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
+	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/helper"
+	"github.com/FlameInTheDark/gochat/internal/mq/nats"
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
@@ -42,6 +46,13 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
+	// Postgres for user profile updates (set active avatar)
+	pg := pgdb.NewDB(logger)
+	if err := pg.Connect(cfg.PGDSN, cfg.PGRetries); err != nil {
+		return nil, err
+	}
+	shut.Up(pg)
+
 	// Compute public base URL for objects
 	publicBase := strings.TrimRight(cfg.S3ExternalURL, "/")
 	if publicBase == "" {
@@ -68,10 +79,19 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.AuthMiddleware(cfg.AuthSecret)
 	s.Use(helper.RequireTokenType("access", "api"))
 
+	// MQ (NATS)
+	nt, err := nats.New(cfg.NatsConnString)
+	if err != nil {
+		return nil, err
+	}
+	shut.Up(nt)
+
 	// HTTP Router
 	s.Register(
-		"/api/v1",
-		attachments.New(database, storage, publicBase, logger),
+		"/api/v1/upload",
+		attachments.New(database, pg, storage, publicBase, logger),
+		avatars.New(database, pg, storage, publicBase, nt, logger),
+		icons.New(database, pg, storage, publicBase, nt, logger),
 	)
 
 	return &App{

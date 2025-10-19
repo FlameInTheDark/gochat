@@ -245,6 +245,111 @@ export interface DtoAttachmentUpload {
 /**
  * 
  * @export
+ * @interface DtoAvatar
+ */
+export interface DtoAvatar {
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoAvatar
+     */
+    'content_type'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoAvatar
+     */
+    'height'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoAvatar
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoAvatar
+     */
+    'size'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoAvatar
+     */
+    'url'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoAvatar
+     */
+    'width'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DtoAvatarData
+ */
+export interface DtoAvatarData {
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoAvatarData
+     */
+    'content_type'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoAvatarData
+     */
+    'height'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoAvatarData
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoAvatarData
+     */
+    'size'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoAvatarData
+     */
+    'url'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoAvatarData
+     */
+    'width'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DtoAvatarUpload
+ */
+export interface DtoAvatarUpload {
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoAvatarUpload
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoAvatarUpload
+     */
+    'user_id'?: number;
+}
+/**
+ * 
+ * @export
  * @interface DtoChannel
  */
 export interface DtoChannel {
@@ -334,11 +439,11 @@ export interface DtoChannel {
  */
 export interface DtoGuild {
     /**
-     * Icon ID
-     * @type {number}
+     * 
+     * @type {DtoIcon}
      * @memberof DtoGuild
      */
-    'icon'?: number;
+    'icon'?: DtoIcon;
     /**
      * Guild ID
      * @type {number}
@@ -410,6 +515,62 @@ export interface DtoGuildInvite {
      * 
      * @type {number}
      * @memberof DtoGuildInvite
+     */
+    'id'?: number;
+}
+/**
+ * Icon metadata
+ * @export
+ * @interface DtoIcon
+ */
+export interface DtoIcon {
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoIcon
+     */
+    'filesize'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoIcon
+     */
+    'height'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoIcon
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoIcon
+     */
+    'url'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoIcon
+     */
+    'width'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DtoIconUpload
+ */
+export interface DtoIconUpload {
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoIconUpload
+     */
+    'guild_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoIconUpload
      */
     'id'?: number;
 }
@@ -587,10 +748,10 @@ export interface DtoRole {
 export interface DtoUser {
     /**
      * 
-     * @type {number}
+     * @type {DtoAvatarData}
      * @memberof DtoUser
      */
-    'avatar'?: number;
+    'avatar'?: DtoAvatarData;
     /**
      * 
      * @type {string}
@@ -784,6 +945,25 @@ export interface GuildCreateGuildRoleRequest {
      * @memberof GuildCreateGuildRoleRequest
      */
     'permissions'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface GuildCreateIconRequest
+ */
+export interface GuildCreateIconRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildCreateIconRequest
+     */
+    'content_type'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildCreateIconRequest
+     */
+    'file_size'?: number;
 }
 /**
  * 
@@ -1271,6 +1451,25 @@ export interface SearchMessageSearchResponse {
 /**
  * 
  * @export
+ * @interface UserCreateAvatarRequest
+ */
+export interface UserCreateAvatarRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof UserCreateAvatarRequest
+     */
+    'content_type'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UserCreateAvatarRequest
+     */
+    'file_size'?: number;
+}
+/**
+ * 
+ * @export
  * @interface UserCreateDMManyRequest
  */
 export interface UserCreateDMManyRequest {
@@ -1395,426 +1594,6 @@ export interface UserUserSettingsResponse {
      */
     'version'?: number;
 }
-/**
- * 
- * @export
- * @interface WebhookS3Bucket
- */
-export interface WebhookS3Bucket {
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Bucket
-     */
-    'arn'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Bucket
-     */
-    'name'?: string;
-    /**
-     * 
-     * @type {WebhookS3Identity}
-     * @memberof WebhookS3Bucket
-     */
-    'ownerIdentity'?: WebhookS3Identity;
-}
-/**
- * 
- * @export
- * @interface WebhookS3Element
- */
-export interface WebhookS3Element {
-    /**
-     * 
-     * @type {WebhookS3Bucket}
-     * @memberof WebhookS3Element
-     */
-    'bucket'?: WebhookS3Bucket;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Element
-     */
-    'configurationId'?: string;
-    /**
-     * 
-     * @type {WebhookS3Object}
-     * @memberof WebhookS3Element
-     */
-    'object'?: WebhookS3Object;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Element
-     */
-    's3SchemaVersion'?: string;
-}
-/**
- * 
- * @export
- * @interface WebhookS3Event
- */
-export interface WebhookS3Event {
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Event
-     */
-    'EventName'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Event
-     */
-    'Key'?: string;
-    /**
-     * 
-     * @type {Array<WebhookS3EventRecord>}
-     * @memberof WebhookS3Event
-     */
-    'Records'?: Array<WebhookS3EventRecord>;
-}
-/**
- * 
- * @export
- * @interface WebhookS3EventRecord
- */
-export interface WebhookS3EventRecord {
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3EventRecord
-     */
-    'awsRegion'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3EventRecord
-     */
-    'eventName'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3EventRecord
-     */
-    'eventSource'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3EventRecord
-     */
-    'eventTime'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3EventRecord
-     */
-    'eventVersion'?: string;
-    /**
-     * 
-     * @type {WebhookS3RequestParameters}
-     * @memberof WebhookS3EventRecord
-     */
-    'requestParameters'?: WebhookS3RequestParameters;
-    /**
-     * 
-     * @type {{ [key: string]: string; }}
-     * @memberof WebhookS3EventRecord
-     */
-    'responseElements'?: { [key: string]: string; };
-    /**
-     * 
-     * @type {WebhookS3Element}
-     * @memberof WebhookS3EventRecord
-     */
-    's3'?: WebhookS3Element;
-    /**
-     * 
-     * @type {WebhookS3Source}
-     * @memberof WebhookS3EventRecord
-     */
-    'source'?: WebhookS3Source;
-    /**
-     * 
-     * @type {WebhookS3Identity}
-     * @memberof WebhookS3EventRecord
-     */
-    'userIdentity'?: WebhookS3Identity;
-}
-/**
- * 
- * @export
- * @interface WebhookS3Identity
- */
-export interface WebhookS3Identity {
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Identity
-     */
-    'principalId'?: string;
-}
-/**
- * 
- * @export
- * @interface WebhookS3Object
- */
-export interface WebhookS3Object {
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Object
-     */
-    'contentType'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Object
-     */
-    'eTag'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Object
-     */
-    'key'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Object
-     */
-    'sequencer'?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof WebhookS3Object
-     */
-    'size'?: number;
-    /**
-     * 
-     * @type {{ [key: string]: string; }}
-     * @memberof WebhookS3Object
-     */
-    'userMetadata'?: { [key: string]: string; };
-}
-/**
- * 
- * @export
- * @interface WebhookS3RequestParameters
- */
-export interface WebhookS3RequestParameters {
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3RequestParameters
-     */
-    'principalId'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3RequestParameters
-     */
-    'region'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3RequestParameters
-     */
-    'sourceIPAddress'?: string;
-}
-/**
- * 
- * @export
- * @interface WebhookS3Source
- */
-export interface WebhookS3Source {
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Source
-     */
-    'host'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Source
-     */
-    'port'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WebhookS3Source
-     */
-    'userAgent'?: string;
-}
-
-/**
- * AttachmentsApi - axios parameter creator
- * @export
- */
-export const AttachmentsApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
-        /**
-         * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
-         * @summary Upload attachment
-         * @param {number} channelId Channel ID
-         * @param {number} attachmentId Attachment ID
-         * @param {Array<number>} requestBody Binary file to upload
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        attachmentsChannelIdAttachmentIdPost: async (channelId: number, attachmentId: number, requestBody: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'channelId' is not null or undefined
-            assertParamExists('attachmentsChannelIdAttachmentIdPost', 'channelId', channelId)
-            // verify required parameter 'attachmentId' is not null or undefined
-            assertParamExists('attachmentsChannelIdAttachmentIdPost', 'attachmentId', attachmentId)
-            // verify required parameter 'requestBody' is not null or undefined
-            assertParamExists('attachmentsChannelIdAttachmentIdPost', 'requestBody', requestBody)
-            const localVarPath = `/attachments/{channel_id}/{attachment_id}`
-                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
-                .replace(`{${"attachment_id"}}`, encodeURIComponent(String(attachmentId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-    
-            localVarHeaderParameter['Content-Type'] = 'application/octet-stream';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-    }
-};
-
-/**
- * AttachmentsApi - functional programming interface
- * @export
- */
-export const AttachmentsApiFp = function(configuration?: Configuration) {
-    const localVarAxiosParamCreator = AttachmentsApiAxiosParamCreator(configuration)
-    return {
-        /**
-         * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
-         * @summary Upload attachment
-         * @param {number} channelId Channel ID
-         * @param {number} attachmentId Attachment ID
-         * @param {Array<number>} requestBody Binary file to upload
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async attachmentsChannelIdAttachmentIdPost(channelId: number, attachmentId: number, requestBody: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.attachmentsChannelIdAttachmentIdPost(channelId, attachmentId, requestBody, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['AttachmentsApi.attachmentsChannelIdAttachmentIdPost']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-    }
-};
-
-/**
- * AttachmentsApi - factory interface
- * @export
- */
-export const AttachmentsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    const localVarFp = AttachmentsApiFp(configuration)
-    return {
-        /**
-         * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
-         * @summary Upload attachment
-         * @param {AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        attachmentsChannelIdAttachmentIdPost(requestParameters: AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.attachmentsChannelIdAttachmentIdPost(requestParameters.channelId, requestParameters.attachmentId, requestParameters.requestBody, options).then((request) => request(axios, basePath));
-        },
-    };
-};
-
-/**
- * AttachmentsApi - interface
- * @export
- * @interface AttachmentsApi
- */
-export interface AttachmentsApiInterface {
-    /**
-     * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
-     * @summary Upload attachment
-     * @param {AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof AttachmentsApiInterface
-     */
-    attachmentsChannelIdAttachmentIdPost(requestParameters: AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
-
-}
-
-/**
- * Request parameters for attachmentsChannelIdAttachmentIdPost operation in AttachmentsApi.
- * @export
- * @interface AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest
- */
-export interface AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest {
-    /**
-     * Channel ID
-     * @type {number}
-     * @memberof AttachmentsApiAttachmentsChannelIdAttachmentIdPost
-     */
-    readonly channelId: number
-
-    /**
-     * Attachment ID
-     * @type {number}
-     * @memberof AttachmentsApiAttachmentsChannelIdAttachmentIdPost
-     */
-    readonly attachmentId: number
-
-    /**
-     * Binary file to upload
-     * @type {Array<number>}
-     * @memberof AttachmentsApiAttachmentsChannelIdAttachmentIdPost
-     */
-    readonly requestBody: Array<number>
-}
-
-/**
- * AttachmentsApi - object-oriented interface
- * @export
- * @class AttachmentsApi
- * @extends {BaseAPI}
- */
-export class AttachmentsApi extends BaseAPI implements AttachmentsApiInterface {
-    /**
-     * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
-     * @summary Upload attachment
-     * @param {AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof AttachmentsApi
-     */
-    public attachmentsChannelIdAttachmentIdPost(requestParameters: AttachmentsApiAttachmentsChannelIdAttachmentIdPostRequest, options?: RawAxiosRequestConfig) {
-        return AttachmentsApiFp(this.configuration).attachmentsChannelIdAttachmentIdPost(requestParameters.channelId, requestParameters.attachmentId, requestParameters.requestBody, options).then((request) => request(this.axios, this.basePath));
-    }
-}
-
-
 
 /**
  * AuthApi - axios parameter creator
@@ -2752,6 +2531,40 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
+         * Deletes a guild. Only the guild owner can delete a guild. This removes all members, all guild icons, and all guild channels.
+         * @summary Delete guild
+         * @param {number} guildId Guild ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdDelete: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdDelete', 'guildId', guildId)
+            const localVarPath = `/guild/{guild_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * 
          * @summary Get guild
          * @param {number} guildId Guild id
@@ -2771,6 +2584,118 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             }
 
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Creates an icon placeholder and returns upload info. Only guild owner may create.
+         * @summary Create guild icon metadata
+         * @param {number} guildId Guild ID
+         * @param {GuildCreateIconRequest} guildCreateIconRequest Icon creation request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdIconPost: async (guildId: number, guildCreateIconRequest: GuildCreateIconRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdIconPost', 'guildId', guildId)
+            // verify required parameter 'guildCreateIconRequest' is not null or undefined
+            assertParamExists('guildGuildIdIconPost', 'guildCreateIconRequest', guildCreateIconRequest)
+            const localVarPath = `/guild/{guild_id}/icon`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(guildCreateIconRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Returns a list of previously created icons for a guild. Only the guild owner may access this list.
+         * @summary List guild icons
+         * @param {number} guildId Guild ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdIconsGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdIconsGet', 'guildId', guildId)
+            const localVarPath = `/guild/{guild_id}/icons`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Deletes a guild icon. Only the guild owner may delete.
+         * @summary Delete guild icon by ID
+         * @param {number} guildId Guild ID
+         * @param {number} iconId Icon ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdIconsIconIdDelete: async (guildId: number, iconId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdIconsIconIdDelete', 'guildId', guildId)
+            // verify required parameter 'iconId' is not null or undefined
+            assertParamExists('guildGuildIdIconsIconIdDelete', 'iconId', iconId)
+            const localVarPath = `/guild/{guild_id}/icons/{icon_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"icon_id"}}`, encodeURIComponent(String(iconId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -3018,6 +2943,19 @@ export const GuildApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Deletes a guild. Only the guild owner can delete a guild. This removes all members, all guild icons, and all guild channels.
+         * @summary Delete guild
+         * @param {number} guildId Guild ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdDelete(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdDelete(guildId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * 
          * @summary Get guild
          * @param {number} guildId Guild id
@@ -3028,6 +2966,47 @@ export const GuildApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Creates an icon placeholder and returns upload info. Only guild owner may create.
+         * @summary Create guild icon metadata
+         * @param {number} guildId Guild ID
+         * @param {GuildCreateIconRequest} guildCreateIconRequest Icon creation request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdIconPost(guildId: number, guildCreateIconRequest: GuildCreateIconRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoIconUpload>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdIconPost(guildId, guildCreateIconRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdIconPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Returns a list of previously created icons for a guild. Only the guild owner may access this list.
+         * @summary List guild icons
+         * @param {number} guildId Guild ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdIconsGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoIcon>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdIconsGet(guildId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdIconsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Deletes a guild icon. Only the guild owner may delete.
+         * @summary Delete guild icon by ID
+         * @param {number} guildId Guild ID
+         * @param {number} iconId Icon ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdIconsIconIdDelete(guildId: number, iconId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdIconsIconIdDelete(guildId, iconId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdIconsIconIdDelete']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -3161,6 +3140,16 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.guildGuildIdChannelPost(requestParameters.guildId, requestParameters.guildCreateGuildChannelRequest, options).then((request) => request(axios, basePath));
         },
         /**
+         * Deletes a guild. Only the guild owner can delete a guild. This removes all members, all guild icons, and all guild channels.
+         * @summary Delete guild
+         * @param {GuildApiGuildGuildIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdDelete(requestParameters: GuildApiGuildGuildIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdDelete(requestParameters.guildId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * 
          * @summary Get guild
          * @param {GuildApiGuildGuildIdGetRequest} requestParameters Request parameters.
@@ -3169,6 +3158,36 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
          */
         guildGuildIdGet(requestParameters: GuildApiGuildGuildIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild> {
             return localVarFp.guildGuildIdGet(requestParameters.guildId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Creates an icon placeholder and returns upload info. Only guild owner may create.
+         * @summary Create guild icon metadata
+         * @param {GuildApiGuildGuildIdIconPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdIconPost(requestParameters: GuildApiGuildGuildIdIconPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoIconUpload> {
+            return localVarFp.guildGuildIdIconPost(requestParameters.guildId, requestParameters.guildCreateIconRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Returns a list of previously created icons for a guild. Only the guild owner may access this list.
+         * @summary List guild icons
+         * @param {GuildApiGuildGuildIdIconsGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdIconsGet(requestParameters: GuildApiGuildGuildIdIconsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoIcon>> {
+            return localVarFp.guildGuildIdIconsGet(requestParameters.guildId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Deletes a guild icon. Only the guild owner may delete.
+         * @summary Delete guild icon by ID
+         * @param {GuildApiGuildGuildIdIconsIconIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdIconsIconIdDelete(requestParameters: GuildApiGuildGuildIdIconsIconIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdIconsIconIdDelete(requestParameters.guildId, requestParameters.iconId, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -3290,6 +3309,16 @@ export interface GuildApiInterface {
     guildGuildIdChannelPost(requestParameters: GuildApiGuildGuildIdChannelPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
+     * Deletes a guild. Only the guild owner can delete a guild. This removes all members, all guild icons, and all guild channels.
+     * @summary Delete guild
+     * @param {GuildApiGuildGuildIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdDelete(requestParameters: GuildApiGuildGuildIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
      * 
      * @summary Get guild
      * @param {GuildApiGuildGuildIdGetRequest} requestParameters Request parameters.
@@ -3298,6 +3327,36 @@ export interface GuildApiInterface {
      * @memberof GuildApiInterface
      */
     guildGuildIdGet(requestParameters: GuildApiGuildGuildIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild>;
+
+    /**
+     * Creates an icon placeholder and returns upload info. Only guild owner may create.
+     * @summary Create guild icon metadata
+     * @param {GuildApiGuildGuildIdIconPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdIconPost(requestParameters: GuildApiGuildGuildIdIconPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoIconUpload>;
+
+    /**
+     * Returns a list of previously created icons for a guild. Only the guild owner may access this list.
+     * @summary List guild icons
+     * @param {GuildApiGuildGuildIdIconsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdIconsGet(requestParameters: GuildApiGuildGuildIdIconsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoIcon>>;
+
+    /**
+     * Deletes a guild icon. Only the guild owner may delete.
+     * @summary Delete guild icon by ID
+     * @param {GuildApiGuildGuildIdIconsIconIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdIconsIconIdDelete(requestParameters: GuildApiGuildGuildIdIconsIconIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
      * 
@@ -3500,6 +3559,20 @@ export interface GuildApiGuildGuildIdChannelPostRequest {
 }
 
 /**
+ * Request parameters for guildGuildIdDelete operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdDeleteRequest
+ */
+export interface GuildApiGuildGuildIdDeleteRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdDelete
+     */
+    readonly guildId: number
+}
+
+/**
  * Request parameters for guildGuildIdGet operation in GuildApi.
  * @export
  * @interface GuildApiGuildGuildIdGetRequest
@@ -3511,6 +3584,62 @@ export interface GuildApiGuildGuildIdGetRequest {
      * @memberof GuildApiGuildGuildIdGet
      */
     readonly guildId: number
+}
+
+/**
+ * Request parameters for guildGuildIdIconPost operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdIconPostRequest
+ */
+export interface GuildApiGuildGuildIdIconPostRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdIconPost
+     */
+    readonly guildId: number
+
+    /**
+     * Icon creation request
+     * @type {GuildCreateIconRequest}
+     * @memberof GuildApiGuildGuildIdIconPost
+     */
+    readonly guildCreateIconRequest: GuildCreateIconRequest
+}
+
+/**
+ * Request parameters for guildGuildIdIconsGet operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdIconsGetRequest
+ */
+export interface GuildApiGuildGuildIdIconsGetRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdIconsGet
+     */
+    readonly guildId: number
+}
+
+/**
+ * Request parameters for guildGuildIdIconsIconIdDelete operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdIconsIconIdDeleteRequest
+ */
+export interface GuildApiGuildGuildIdIconsIconIdDeleteRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdIconsIconIdDelete
+     */
+    readonly guildId: number
+
+    /**
+     * Icon ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdIconsIconIdDelete
+     */
+    readonly iconId: number
 }
 
 /**
@@ -3666,6 +3795,18 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
     }
 
     /**
+     * Deletes a guild. Only the guild owner can delete a guild. This removes all members, all guild icons, and all guild channels.
+     * @summary Delete guild
+     * @param {GuildApiGuildGuildIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdDelete(requestParameters: GuildApiGuildGuildIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdDelete(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * 
      * @summary Get guild
      * @param {GuildApiGuildGuildIdGetRequest} requestParameters Request parameters.
@@ -3675,6 +3816,42 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      */
     public guildGuildIdGet(requestParameters: GuildApiGuildGuildIdGetRequest, options?: RawAxiosRequestConfig) {
         return GuildApiFp(this.configuration).guildGuildIdGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Creates an icon placeholder and returns upload info. Only guild owner may create.
+     * @summary Create guild icon metadata
+     * @param {GuildApiGuildGuildIdIconPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdIconPost(requestParameters: GuildApiGuildGuildIdIconPostRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdIconPost(requestParameters.guildId, requestParameters.guildCreateIconRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Returns a list of previously created icons for a guild. Only the guild owner may access this list.
+     * @summary List guild icons
+     * @param {GuildApiGuildGuildIdIconsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdIconsGet(requestParameters: GuildApiGuildGuildIdIconsGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdIconsGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Deletes a guild icon. Only the guild owner may delete.
+     * @summary Delete guild icon by ID
+     * @param {GuildApiGuildGuildIdIconsIconIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdIconsIconIdDelete(requestParameters: GuildApiGuildGuildIdIconsIconIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdIconsIconIdDelete(requestParameters.guildId, requestParameters.iconId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -6551,11 +6728,515 @@ export class SearchApi extends BaseAPI implements SearchApiInterface {
 
 
 /**
+ * UploadApi - axios parameter creator
+ * @export
+ */
+export const UploadApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
+         * @summary Upload attachment
+         * @param {number} channelId Channel ID
+         * @param {number} attachmentId Attachment ID
+         * @param {Array<number>} requestBody Binary file to upload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        uploadAttachmentsChannelIdAttachmentIdPost: async (channelId: number, attachmentId: number, requestBody: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('uploadAttachmentsChannelIdAttachmentIdPost', 'channelId', channelId)
+            // verify required parameter 'attachmentId' is not null or undefined
+            assertParamExists('uploadAttachmentsChannelIdAttachmentIdPost', 'attachmentId', attachmentId)
+            // verify required parameter 'requestBody' is not null or undefined
+            assertParamExists('uploadAttachmentsChannelIdAttachmentIdPost', 'requestBody', requestBody)
+            const localVarPath = `/upload/attachments/{channel_id}/{attachment_id}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"attachment_id"}}`, encodeURIComponent(String(attachmentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/octet-stream';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Uploads an avatar image. Resizes to max 128x128 and converts to WebP <= 250KB. Finalizes avatar metadata.
+         * @summary Upload user avatar
+         * @param {number} userId User ID
+         * @param {number} avatarId Avatar ID
+         * @param {Array<number>} requestBody Binary image payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        uploadAvatarsUserIdAvatarIdPost: async (userId: number, avatarId: number, requestBody: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('uploadAvatarsUserIdAvatarIdPost', 'userId', userId)
+            // verify required parameter 'avatarId' is not null or undefined
+            assertParamExists('uploadAvatarsUserIdAvatarIdPost', 'avatarId', avatarId)
+            // verify required parameter 'requestBody' is not null or undefined
+            assertParamExists('uploadAvatarsUserIdAvatarIdPost', 'requestBody', requestBody)
+            const localVarPath = `/upload/avatars/{user_id}/{avatar_id}`
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+                .replace(`{${"avatar_id"}}`, encodeURIComponent(String(avatarId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/octet-stream';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
+         * @summary Upload guild icon
+         * @param {number} guildId Guild ID
+         * @param {number} iconId Icon ID
+         * @param {Array<number>} requestBody Binary image payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        uploadIconsGuildIdIconIdPost: async (guildId: number, iconId: number, requestBody: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('uploadIconsGuildIdIconIdPost', 'guildId', guildId)
+            // verify required parameter 'iconId' is not null or undefined
+            assertParamExists('uploadIconsGuildIdIconIdPost', 'iconId', iconId)
+            // verify required parameter 'requestBody' is not null or undefined
+            assertParamExists('uploadIconsGuildIdIconIdPost', 'requestBody', requestBody)
+            const localVarPath = `/upload/icons/{guild_id}/{icon_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"icon_id"}}`, encodeURIComponent(String(iconId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/octet-stream';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * UploadApi - functional programming interface
+ * @export
+ */
+export const UploadApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = UploadApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
+         * @summary Upload attachment
+         * @param {number} channelId Channel ID
+         * @param {number} attachmentId Attachment ID
+         * @param {Array<number>} requestBody Binary file to upload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async uploadAttachmentsChannelIdAttachmentIdPost(channelId: number, attachmentId: number, requestBody: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.uploadAttachmentsChannelIdAttachmentIdPost(channelId, attachmentId, requestBody, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UploadApi.uploadAttachmentsChannelIdAttachmentIdPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Uploads an avatar image. Resizes to max 128x128 and converts to WebP <= 250KB. Finalizes avatar metadata.
+         * @summary Upload user avatar
+         * @param {number} userId User ID
+         * @param {number} avatarId Avatar ID
+         * @param {Array<number>} requestBody Binary image payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async uploadAvatarsUserIdAvatarIdPost(userId: number, avatarId: number, requestBody: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.uploadAvatarsUserIdAvatarIdPost(userId, avatarId, requestBody, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UploadApi.uploadAvatarsUserIdAvatarIdPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
+         * @summary Upload guild icon
+         * @param {number} guildId Guild ID
+         * @param {number} iconId Icon ID
+         * @param {Array<number>} requestBody Binary image payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async uploadIconsGuildIdIconIdPost(guildId: number, iconId: number, requestBody: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.uploadIconsGuildIdIconIdPost(guildId, iconId, requestBody, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UploadApi.uploadIconsGuildIdIconIdPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * UploadApi - factory interface
+ * @export
+ */
+export const UploadApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = UploadApiFp(configuration)
+    return {
+        /**
+         * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
+         * @summary Upload attachment
+         * @param {UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        uploadAttachmentsChannelIdAttachmentIdPost(requestParameters: UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.uploadAttachmentsChannelIdAttachmentIdPost(requestParameters.channelId, requestParameters.attachmentId, requestParameters.requestBody, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Uploads an avatar image. Resizes to max 128x128 and converts to WebP <= 250KB. Finalizes avatar metadata.
+         * @summary Upload user avatar
+         * @param {UploadApiUploadAvatarsUserIdAvatarIdPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        uploadAvatarsUserIdAvatarIdPost(requestParameters: UploadApiUploadAvatarsUserIdAvatarIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.uploadAvatarsUserIdAvatarIdPost(requestParameters.userId, requestParameters.avatarId, requestParameters.requestBody, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
+         * @summary Upload guild icon
+         * @param {UploadApiUploadIconsGuildIdIconIdPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        uploadIconsGuildIdIconIdPost(requestParameters: UploadApiUploadIconsGuildIdIconIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.uploadIconsGuildIdIconIdPost(requestParameters.guildId, requestParameters.iconId, requestParameters.requestBody, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * UploadApi - interface
+ * @export
+ * @interface UploadApi
+ */
+export interface UploadApiInterface {
+    /**
+     * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
+     * @summary Upload attachment
+     * @param {UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UploadApiInterface
+     */
+    uploadAttachmentsChannelIdAttachmentIdPost(requestParameters: UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * Uploads an avatar image. Resizes to max 128x128 and converts to WebP <= 250KB. Finalizes avatar metadata.
+     * @summary Upload user avatar
+     * @param {UploadApiUploadAvatarsUserIdAvatarIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UploadApiInterface
+     */
+    uploadAvatarsUserIdAvatarIdPost(requestParameters: UploadApiUploadAvatarsUserIdAvatarIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
+     * @summary Upload guild icon
+     * @param {UploadApiUploadIconsGuildIdIconIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UploadApiInterface
+     */
+    uploadIconsGuildIdIconIdPost(requestParameters: UploadApiUploadIconsGuildIdIconIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+}
+
+/**
+ * Request parameters for uploadAttachmentsChannelIdAttachmentIdPost operation in UploadApi.
+ * @export
+ * @interface UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest
+ */
+export interface UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest {
+    /**
+     * Channel ID
+     * @type {number}
+     * @memberof UploadApiUploadAttachmentsChannelIdAttachmentIdPost
+     */
+    readonly channelId: number
+
+    /**
+     * Attachment ID
+     * @type {number}
+     * @memberof UploadApiUploadAttachmentsChannelIdAttachmentIdPost
+     */
+    readonly attachmentId: number
+
+    /**
+     * Binary file to upload
+     * @type {Array<number>}
+     * @memberof UploadApiUploadAttachmentsChannelIdAttachmentIdPost
+     */
+    readonly requestBody: Array<number>
+}
+
+/**
+ * Request parameters for uploadAvatarsUserIdAvatarIdPost operation in UploadApi.
+ * @export
+ * @interface UploadApiUploadAvatarsUserIdAvatarIdPostRequest
+ */
+export interface UploadApiUploadAvatarsUserIdAvatarIdPostRequest {
+    /**
+     * User ID
+     * @type {number}
+     * @memberof UploadApiUploadAvatarsUserIdAvatarIdPost
+     */
+    readonly userId: number
+
+    /**
+     * Avatar ID
+     * @type {number}
+     * @memberof UploadApiUploadAvatarsUserIdAvatarIdPost
+     */
+    readonly avatarId: number
+
+    /**
+     * Binary image payload
+     * @type {Array<number>}
+     * @memberof UploadApiUploadAvatarsUserIdAvatarIdPost
+     */
+    readonly requestBody: Array<number>
+}
+
+/**
+ * Request parameters for uploadIconsGuildIdIconIdPost operation in UploadApi.
+ * @export
+ * @interface UploadApiUploadIconsGuildIdIconIdPostRequest
+ */
+export interface UploadApiUploadIconsGuildIdIconIdPostRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof UploadApiUploadIconsGuildIdIconIdPost
+     */
+    readonly guildId: number
+
+    /**
+     * Icon ID
+     * @type {number}
+     * @memberof UploadApiUploadIconsGuildIdIconIdPost
+     */
+    readonly iconId: number
+
+    /**
+     * Binary image payload
+     * @type {Array<number>}
+     * @memberof UploadApiUploadIconsGuildIdIconIdPost
+     */
+    readonly requestBody: Array<number>
+}
+
+/**
+ * UploadApi - object-oriented interface
+ * @export
+ * @class UploadApi
+ * @extends {BaseAPI}
+ */
+export class UploadApi extends BaseAPI implements UploadApiInterface {
+    /**
+     * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
+     * @summary Upload attachment
+     * @param {UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UploadApi
+     */
+    public uploadAttachmentsChannelIdAttachmentIdPost(requestParameters: UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest, options?: RawAxiosRequestConfig) {
+        return UploadApiFp(this.configuration).uploadAttachmentsChannelIdAttachmentIdPost(requestParameters.channelId, requestParameters.attachmentId, requestParameters.requestBody, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Uploads an avatar image. Resizes to max 128x128 and converts to WebP <= 250KB. Finalizes avatar metadata.
+     * @summary Upload user avatar
+     * @param {UploadApiUploadAvatarsUserIdAvatarIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UploadApi
+     */
+    public uploadAvatarsUserIdAvatarIdPost(requestParameters: UploadApiUploadAvatarsUserIdAvatarIdPostRequest, options?: RawAxiosRequestConfig) {
+        return UploadApiFp(this.configuration).uploadAvatarsUserIdAvatarIdPost(requestParameters.userId, requestParameters.avatarId, requestParameters.requestBody, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
+     * @summary Upload guild icon
+     * @param {UploadApiUploadIconsGuildIdIconIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UploadApi
+     */
+    public uploadIconsGuildIdIconIdPost(requestParameters: UploadApiUploadIconsGuildIdIconIdPostRequest, options?: RawAxiosRequestConfig) {
+        return UploadApiFp(this.configuration).uploadIconsGuildIdIconIdPost(requestParameters.guildId, requestParameters.iconId, requestParameters.requestBody, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
  * UserApi - axios parameter creator
  * @export
  */
 export const UserApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * Creates an avatar placeholder and returns upload info. Upload the binary to attachments service.
+         * @summary Create avatar metadata
+         * @param {UserCreateAvatarRequest} userCreateAvatarRequest Avatar creation request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeAvatarPost: async (userCreateAvatarRequest: UserCreateAvatarRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userCreateAvatarRequest' is not null or undefined
+            assertParamExists('userMeAvatarPost', 'userCreateAvatarRequest', userCreateAvatarRequest)
+            const localVarPath = `/user/me/avatar`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(userCreateAvatarRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete my avatar by ID
+         * @param {number} avatarId Avatar ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeAvatarsAvatarIdDelete: async (avatarId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'avatarId' is not null or undefined
+            assertParamExists('userMeAvatarsAvatarIdDelete', 'avatarId', avatarId)
+            const localVarPath = `/user/me/avatars/{avatar_id}`
+                .replace(`{${"avatar_id"}}`, encodeURIComponent(String(avatarId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Returns a list of previously created avatars for the authenticated user.
+         * @summary List my avatars
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeAvatarsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/user/me/avatars`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * 
          * @summary List all DM and Group DM channels for current user
@@ -7146,6 +7827,44 @@ export const UserApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = UserApiAxiosParamCreator(configuration)
     return {
         /**
+         * Creates an avatar placeholder and returns upload info. Upload the binary to attachments service.
+         * @summary Create avatar metadata
+         * @param {UserCreateAvatarRequest} userCreateAvatarRequest Avatar creation request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeAvatarPost(userCreateAvatarRequest: UserCreateAvatarRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoAvatarUpload>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeAvatarPost(userCreateAvatarRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeAvatarPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Delete my avatar by ID
+         * @param {number} avatarId Avatar ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeAvatarsAvatarIdDelete(avatarId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeAvatarsAvatarIdDelete(avatarId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeAvatarsAvatarIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Returns a list of previously created avatars for the authenticated user.
+         * @summary List my avatars
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeAvatarsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoAvatar>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeAvatarsGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeAvatarsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * 
          * @summary List all DM and Group DM channels for current user
          * @param {*} [options] Override http request option.
@@ -7373,6 +8092,35 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
     const localVarFp = UserApiFp(configuration)
     return {
         /**
+         * Creates an avatar placeholder and returns upload info. Upload the binary to attachments service.
+         * @summary Create avatar metadata
+         * @param {UserApiUserMeAvatarPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeAvatarPost(requestParameters: UserApiUserMeAvatarPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoAvatarUpload> {
+            return localVarFp.userMeAvatarPost(requestParameters.userCreateAvatarRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Delete my avatar by ID
+         * @param {UserApiUserMeAvatarsAvatarIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeAvatarsAvatarIdDelete(requestParameters: UserApiUserMeAvatarsAvatarIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.userMeAvatarsAvatarIdDelete(requestParameters.avatarId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Returns a list of previously created avatars for the authenticated user.
+         * @summary List my avatars
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeAvatarsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoAvatar>> {
+            return localVarFp.userMeAvatarsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
          * 
          * @summary List all DM and Group DM channels for current user
          * @param {*} [options] Override http request option.
@@ -7548,6 +8296,35 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
  */
 export interface UserApiInterface {
     /**
+     * Creates an avatar placeholder and returns upload info. Upload the binary to attachments service.
+     * @summary Create avatar metadata
+     * @param {UserApiUserMeAvatarPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeAvatarPost(requestParameters: UserApiUserMeAvatarPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoAvatarUpload>;
+
+    /**
+     * 
+     * @summary Delete my avatar by ID
+     * @param {UserApiUserMeAvatarsAvatarIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeAvatarsAvatarIdDelete(requestParameters: UserApiUserMeAvatarsAvatarIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * Returns a list of previously created avatars for the authenticated user.
+     * @summary List my avatars
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeAvatarsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoAvatar>>;
+
+    /**
      * 
      * @summary List all DM and Group DM channels for current user
      * @param {*} [options] Override http request option.
@@ -7713,6 +8490,34 @@ export interface UserApiInterface {
      */
     userUserIdGet(requestParameters: UserApiUserUserIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoUser>;
 
+}
+
+/**
+ * Request parameters for userMeAvatarPost operation in UserApi.
+ * @export
+ * @interface UserApiUserMeAvatarPostRequest
+ */
+export interface UserApiUserMeAvatarPostRequest {
+    /**
+     * Avatar creation request
+     * @type {UserCreateAvatarRequest}
+     * @memberof UserApiUserMeAvatarPost
+     */
+    readonly userCreateAvatarRequest: UserCreateAvatarRequest
+}
+
+/**
+ * Request parameters for userMeAvatarsAvatarIdDelete operation in UserApi.
+ * @export
+ * @interface UserApiUserMeAvatarsAvatarIdDeleteRequest
+ */
+export interface UserApiUserMeAvatarsAvatarIdDeleteRequest {
+    /**
+     * Avatar ID
+     * @type {number}
+     * @memberof UserApiUserMeAvatarsAvatarIdDelete
+     */
+    readonly avatarId: number
 }
 
 /**
@@ -7904,6 +8709,41 @@ export interface UserApiUserUserIdGetRequest {
  * @extends {BaseAPI}
  */
 export class UserApi extends BaseAPI implements UserApiInterface {
+    /**
+     * Creates an avatar placeholder and returns upload info. Upload the binary to attachments service.
+     * @summary Create avatar metadata
+     * @param {UserApiUserMeAvatarPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeAvatarPost(requestParameters: UserApiUserMeAvatarPostRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeAvatarPost(requestParameters.userCreateAvatarRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Delete my avatar by ID
+     * @param {UserApiUserMeAvatarsAvatarIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeAvatarsAvatarIdDelete(requestParameters: UserApiUserMeAvatarsAvatarIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeAvatarsAvatarIdDelete(requestParameters.avatarId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Returns a list of previously created avatars for the authenticated user.
+     * @summary List my avatars
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeAvatarsGet(options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeAvatarsGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * 
      * @summary List all DM and Group DM channels for current user
@@ -8102,148 +8942,6 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      */
     public userUserIdGet(requestParameters: UserApiUserUserIdGetRequest, options?: RawAxiosRequestConfig) {
         return UserApiFp(this.configuration).userUserIdGet(requestParameters.userId, options).then((request) => request(this.axios, this.basePath));
-    }
-}
-
-
-
-/**
- * WebhookApi - axios parameter creator
- * @export
- */
-export const WebhookApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
-        /**
-         * 
-         * @summary Storage event
-         * @param {WebhookS3Event} webhookS3Event S3 event
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        webhookStorageEventsPost: async (webhookS3Event: WebhookS3Event, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'webhookS3Event' is not null or undefined
-            assertParamExists('webhookStorageEventsPost', 'webhookS3Event', webhookS3Event)
-            const localVarPath = `/webhook/storage/events`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-    
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(webhookS3Event, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-    }
-};
-
-/**
- * WebhookApi - functional programming interface
- * @export
- */
-export const WebhookApiFp = function(configuration?: Configuration) {
-    const localVarAxiosParamCreator = WebhookApiAxiosParamCreator(configuration)
-    return {
-        /**
-         * 
-         * @summary Storage event
-         * @param {WebhookS3Event} webhookS3Event S3 event
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async webhookStorageEventsPost(webhookS3Event: WebhookS3Event, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookStorageEventsPost(webhookS3Event, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['WebhookApi.webhookStorageEventsPost']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-    }
-};
-
-/**
- * WebhookApi - factory interface
- * @export
- */
-export const WebhookApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    const localVarFp = WebhookApiFp(configuration)
-    return {
-        /**
-         * 
-         * @summary Storage event
-         * @param {WebhookApiWebhookStorageEventsPostRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        webhookStorageEventsPost(requestParameters: WebhookApiWebhookStorageEventsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.webhookStorageEventsPost(requestParameters.webhookS3Event, options).then((request) => request(axios, basePath));
-        },
-    };
-};
-
-/**
- * WebhookApi - interface
- * @export
- * @interface WebhookApi
- */
-export interface WebhookApiInterface {
-    /**
-     * 
-     * @summary Storage event
-     * @param {WebhookApiWebhookStorageEventsPostRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof WebhookApiInterface
-     */
-    webhookStorageEventsPost(requestParameters: WebhookApiWebhookStorageEventsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
-
-}
-
-/**
- * Request parameters for webhookStorageEventsPost operation in WebhookApi.
- * @export
- * @interface WebhookApiWebhookStorageEventsPostRequest
- */
-export interface WebhookApiWebhookStorageEventsPostRequest {
-    /**
-     * S3 event
-     * @type {WebhookS3Event}
-     * @memberof WebhookApiWebhookStorageEventsPost
-     */
-    readonly webhookS3Event: WebhookS3Event
-}
-
-/**
- * WebhookApi - object-oriented interface
- * @export
- * @class WebhookApi
- * @extends {BaseAPI}
- */
-export class WebhookApi extends BaseAPI implements WebhookApiInterface {
-    /**
-     * 
-     * @summary Storage event
-     * @param {WebhookApiWebhookStorageEventsPostRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof WebhookApi
-     */
-    public webhookStorageEventsPost(requestParameters: WebhookApiWebhookStorageEventsPostRequest, options?: RawAxiosRequestConfig) {
-        return WebhookApiFp(this.configuration).webhookStorageEventsPost(requestParameters.webhookS3Event, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

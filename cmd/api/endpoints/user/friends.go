@@ -49,7 +49,23 @@ func (e *entity) GetFriends(c *fiber.Ctx) error {
 		return helper.HttpDbError(err, ErrUnableToGetDiscriminator)
 	}
 
-	return c.JSON(usersWithDiscriminators(users, discs))
+	dtos := usersWithDiscriminators(users, discs)
+
+	idx := make(map[int64]int, len(dtos))
+	for i := range dtos {
+		idx[dtos[i].Id] = i
+	}
+
+	for _, u := range users {
+		if u.Avatar != nil {
+			if ad, err := e.getAvatarDataCached(c.UserContext(), u.Id, *u.Avatar); err == nil && ad != nil {
+				if i, ok := idx[u.Id]; ok {
+					dtos[i].Avatar = ad
+				}
+			}
+		}
+	}
+	return c.JSON(dtos)
 }
 
 // GetOrCreateFriendDM
@@ -133,18 +149,23 @@ func (e *entity) CreateFriendRequest(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrBadRequest)
 	}
 
-	// Send friend request (recipient is disc.UserId)
 	if err := e.fr.CreateFriendRequest(c.UserContext(), me.Id, disc.UserId); err != nil {
 		return helper.HttpDbError(err, ErrUnableToCreateFriendRequest)
 	}
-	// Emit WS event to recipient about incoming request (best-effort)
+
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 		defer cancel()
 		if u, uerr := e.user.GetUserById(ctx, me.Id); uerr == nil {
 			if d, derr := e.disc.GetDiscriminatorByUserId(ctx, me.Id); derr == nil {
+				var ad *dto.AvatarData
+				if u.Avatar != nil {
+					if v, err := e.getAvatarDataCached(ctx, u.Id, *u.Avatar); err == nil {
+						ad = v
+					}
+				}
 				_ = e.mqt.SendUserUpdate(disc.UserId, &mqmsg.IncomingFriendRequest{
-					From: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar},
+					From: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad},
 				})
 			}
 		}
@@ -186,20 +207,31 @@ func (e *entity) Unfriend(c *fiber.Ctx) error {
 		return helper.HttpDbError(err, ErrUnableToRemoveFriend)
 	}
 
-	// Emit WS events to both users about friend removal (best-effort)
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 		defer cancel()
-		// Notify me about removed friend
+
 		if u, err := e.user.GetUserById(ctx, req.UserId); err == nil {
+			var ad *dto.AvatarData
+			if u.Avatar != nil {
+				if v, err := e.getAvatarDataCached(ctx, u.Id, *u.Avatar); err == nil {
+					ad = v
+				}
+			}
 			if d, derr := e.disc.GetDiscriminatorByUserId(ctx, req.UserId); derr == nil {
-				_ = e.mqt.SendUserUpdate(me.Id, &mqmsg.FriendRemoved{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar}})
+				_ = e.mqt.SendUserUpdate(me.Id, &mqmsg.FriendRemoved{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad}})
 			}
 		}
-		// Notify other user about me
+
 		if u, err := e.user.GetUserById(ctx, me.Id); err == nil {
+			var ad *dto.AvatarData
+			if u.Avatar != nil {
+				if v, err := e.getAvatarDataCached(ctx, u.Id, *u.Avatar); err == nil {
+					ad = v
+				}
+			}
 			if d, derr := e.disc.GetDiscriminatorByUserId(ctx, me.Id); derr == nil {
-				_ = e.mqt.SendUserUpdate(req.UserId, &mqmsg.FriendRemoved{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar}})
+				_ = e.mqt.SendUserUpdate(req.UserId, &mqmsg.FriendRemoved{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad}})
 			}
 		}
 	}()
@@ -230,7 +262,7 @@ func (e *entity) GetFriendRequests(c *fiber.Ctx) error {
 	}
 	ids := make([]int64, len(reqs))
 	for i, r := range reqs {
-		ids[i] = r.FriendId // sender id
+		ids[i] = r.FriendId
 	}
 
 	users, err := e.user.GetUsersList(c.UserContext(), ids)
@@ -241,7 +273,24 @@ func (e *entity) GetFriendRequests(c *fiber.Ctx) error {
 	if err != nil {
 		return helper.HttpDbError(err, ErrUnableToGetDiscriminator)
 	}
-	return c.JSON(usersWithDiscriminators(users, discs))
+
+	dtos := usersWithDiscriminators(users, discs)
+
+	idx := make(map[int64]int, len(dtos))
+	for i := range dtos {
+		idx[dtos[i].Id] = i
+	}
+
+	for _, u := range users {
+		if u.Avatar != nil {
+			if ad, err := e.getAvatarDataCached(c.UserContext(), u.Id, *u.Avatar); err == nil && ad != nil {
+				if i, ok := idx[u.Id]; ok {
+					dtos[i].Avatar = ad
+				}
+			}
+		}
+	}
+	return c.JSON(dtos)
 }
 
 // AcceptFriendRequest
@@ -275,24 +324,36 @@ func (e *entity) AcceptFriendRequest(c *fiber.Ctx) error {
 	if err := e.fr.AddFriend(c.UserContext(), me.Id, req.UserId); err != nil {
 		return helper.HttpDbError(err, ErrUnableToAcceptFriendRequest)
 	}
-	// Remove friend request entry
+
 	if err := e.fr.RemoveFriendRequest(c.UserContext(), me.Id, req.UserId); err != nil {
 		return helper.HttpDbError(err, ErrUnableToAcceptFriendRequest)
 	}
-	// Emit WS events for both users (best-effort)
+
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 		defer cancel()
-		// Notify me about new friend (the requester)
+
 		if u, err := e.user.GetUserById(ctx, req.UserId); err == nil {
 			if d, derr := e.disc.GetDiscriminatorByUserId(ctx, req.UserId); derr == nil {
-				_ = e.mqt.SendUserUpdate(me.Id, &mqmsg.FriendAdded{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar}})
+				var ad *dto.AvatarData
+				if u.Avatar != nil {
+					if v, err := e.getAvatarDataCached(ctx, u.Id, *u.Avatar); err == nil {
+						ad = v
+					}
+				}
+				_ = e.mqt.SendUserUpdate(me.Id, &mqmsg.FriendAdded{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad}})
 			}
 		}
-		// Notify requester about me
+
 		if u, err := e.user.GetUserById(ctx, me.Id); err == nil {
 			if d, derr := e.disc.GetDiscriminatorByUserId(ctx, me.Id); derr == nil {
-				_ = e.mqt.SendUserUpdate(req.UserId, &mqmsg.FriendAdded{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar}})
+				var ad *dto.AvatarData
+				if u.Avatar != nil {
+					if v, err := e.getAvatarDataCached(ctx, u.Id, *u.Avatar); err == nil {
+						ad = v
+					}
+				}
+				_ = e.mqt.SendUserUpdate(req.UserId, &mqmsg.FriendAdded{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad}})
 			}
 		}
 	}()

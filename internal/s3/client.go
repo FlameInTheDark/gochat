@@ -78,3 +78,62 @@ func (c *Client) UploadObject(ctx context.Context, key string, body io.ReadSeeke
 	})
 	return err
 }
+
+// StatObject performs a HEAD request to retrieve object size and content type
+func (c *Client) StatObject(ctx context.Context, key string) (int64, *string, error) {
+	out, err := c.s3.HeadObjectWithContext(ctx, &awss3.HeadObjectInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return 0, nil, err
+	}
+	var size int64
+	if out.ContentLength != nil {
+		size = *out.ContentLength
+	}
+	return size, out.ContentType, nil
+}
+
+// ObjectInfo contains minimal info returned from listing
+type ObjectInfo struct {
+	Key  string
+	Size int64
+}
+
+// ListObjectsPrefix lists object keys under a given prefix
+func (c *Client) ListObjectsPrefix(ctx context.Context, prefix string, max int64) ([]ObjectInfo, error) {
+	var result []ObjectInfo
+	var token *string
+	fetched := int64(0)
+	for {
+		out, err := c.s3.ListObjectsV2WithContext(ctx, &awss3.ListObjectsV2Input{
+			Bucket:            aws.String(c.bucket),
+			Prefix:            aws.String(prefix),
+			ContinuationToken: token,
+			MaxKeys:           aws.Int64(1000),
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, obj := range out.Contents {
+			if obj.Key == nil {
+				continue
+			}
+			size := int64(0)
+			if obj.Size != nil {
+				size = *obj.Size
+			}
+			result = append(result, ObjectInfo{Key: *obj.Key, Size: size})
+			fetched++
+			if max > 0 && fetched >= max {
+				return result, nil
+			}
+		}
+		if out.IsTruncated == nil || !*out.IsTruncated {
+			break
+		}
+		token = out.NextContinuationToken
+	}
+	return result, nil
+}

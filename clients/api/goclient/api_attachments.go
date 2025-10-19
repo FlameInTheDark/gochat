@@ -62,7 +62,7 @@ func (a *AttachmentsAPIService) AttachmentsChannelIdAttachmentIdPost(ctx context
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *AttachmentsAPIService) AttachmentsChannelIdAttachmentIdPostExecute(r ApiAttachmentsChannelIdAttachmentIdPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

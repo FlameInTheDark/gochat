@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"sync"
@@ -255,15 +256,22 @@ func (e *entity) buildMessageResponse(c *fiber.Ctx, messageId int64, channel *mo
 		}
 	}
 
+	// Build author with avatar data if present
+	author := dto.User{
+		Id:            userData.User.Id,
+		Name:          userData.User.Name,
+		Discriminator: userData.Discriminator.Discriminator,
+	}
+	if userData.User.Avatar != nil {
+		if ad, err := e.getAvatarDataCached(c.UserContext(), userData.User.Id, *userData.User.Avatar); err == nil && ad != nil {
+			author.Avatar = ad
+		}
+	}
+
 	return dto.Message{
-		Id:        messageId,
-		ChannelId: channel.Id,
-		Author: dto.User{
-			Id:            userData.User.Id,
-			Name:          userData.User.Name,
-			Discriminator: userData.Discriminator.Discriminator,
-			Avatar:        userData.User.Avatar,
-		},
+		Id:          messageId,
+		ChannelId:   channel.Id,
+		Author:      author,
 		Content:     req.Content,
 		Attachments: attachments,
 	}, nil
@@ -334,15 +342,51 @@ func (e *entity) sendMessageEvents(channelId int64, guildId *int64, message dto.
 					}
 				}
 				if recipientId != 0 {
+					var ad *dto.AvatarData
+					if userData.User.Avatar != nil {
+						if v, err := e.getAvatarDataCached(context.Background(), userData.User.Id, *userData.User.Avatar); err == nil {
+							ad = v
+						}
+					}
 					_ = e.mqt.SendUserUpdate(recipientId, &mqmsg.DMMessage{
 						ChannelId: channelId,
 						MessageId: message.Id,
-						From:      mqmsg.UserBrief{Id: userData.User.Id, Name: userData.User.Name, Discriminator: userData.Discriminator.Discriminator, Avatar: userData.User.Avatar},
+						From:      mqmsg.UserBrief{Id: userData.User.Id, Name: userData.User.Name, Discriminator: userData.Discriminator.Discriminator, Avatar: userData.User.Avatar, AvatarData: ad},
 					})
 				}
 			}
 		}
 	}
+}
+
+const avatarCacheTTLSeconds = 3600 // 1 hour
+
+func (e *entity) getAvatarDataCached(ctx context.Context, userId, avatarId int64) (*dto.AvatarData, error) {
+	key := fmt.Sprintf("avatars:%d:%d", userId, avatarId)
+	var ad dto.AvatarData
+	if e.cache != nil {
+		if err := e.cache.GetJSON(ctx, key, &ad); err == nil && ad.URL != "" {
+			return &ad, nil
+		}
+	}
+	av, err := e.av.GetAvatar(ctx, avatarId, userId)
+	if err != nil {
+		return nil, err
+	}
+	if av.URL == nil || *av.URL == "" {
+		return nil, nil
+	}
+	ad = dto.AvatarData{
+		URL:         *av.URL,
+		ContentType: av.ContentType,
+		Width:       av.Width,
+		Height:      av.Height,
+		Size:        av.FileSize,
+	}
+	if e.cache != nil {
+		_ = e.cache.SetTimedJSON(ctx, key, ad, avatarCacheTTLSeconds)
+	}
+	return &ad, nil
 }
 
 // GetMessages
@@ -530,6 +574,7 @@ type messageRelatedData struct {
 	Users       map[int64]*model.User
 	Members     map[int64]*model.Member
 	Attachments map[int64]*model.Attachment
+	AvData      map[int64]*dto.AvatarData
 }
 
 // fetchMessageRelatedData fetches users, members, and attachments concurrently
@@ -599,10 +644,17 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 		Users:       make(map[int64]*model.User),
 		Members:     make(map[int64]*model.Member),
 		Attachments: make(map[int64]*model.Attachment),
+		AvData:      make(map[int64]*dto.AvatarData),
 	}
 
 	for i := range usersRes.users {
-		data.Users[usersRes.users[i].Id] = &usersRes.users[i]
+		u := usersRes.users[i]
+		data.Users[u.Id] = &u
+		if u.Avatar != nil {
+			if ad, err := e.getAvatarDataCached(c.UserContext(), u.Id, *u.Avatar); err == nil && ad != nil {
+				data.AvData[u.Id] = ad
+			}
+		}
 	}
 
 	if membersRes.members != nil {
@@ -667,9 +719,11 @@ func (e *entity) buildAuthor(userId int64, data *messageRelatedData) dto.User {
 	member := data.Members[userId]
 
 	author := dto.User{
-		Id:     userId,
-		Name:   user.Name,
-		Avatar: user.Avatar,
+		Id:   userId,
+		Name: user.Name,
+	}
+	if ad, ok := data.AvData[userId]; ok {
+		author.Avatar = ad
 	}
 
 	// Override with member data if available
@@ -677,8 +731,11 @@ func (e *entity) buildAuthor(userId int64, data *messageRelatedData) dto.User {
 		if member.Username != nil {
 			author.Name = *member.Username
 		}
+		// If member has guild-specific avatar, override avatar data
 		if member.Avatar != nil {
-			author.Avatar = member.Avatar
+			if ad, err := e.getAvatarDataCached(context.Background(), userId, *member.Avatar); err == nil && ad != nil {
+				author.Avatar = ad
+			}
 		}
 	}
 
@@ -825,15 +882,26 @@ func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageR
 
 	// Build response
 	updatedAt := time.Now()
+	// Build author with avatar override if any
+	author := dto.User{
+		Id:            userData.User.Id,
+		Name:          userData.DisplayName,
+		Discriminator: userData.Discriminator.Discriminator,
+	}
+	if userData.Avatar != nil {
+		if ad, err := e.getAvatarDataCached(c.UserContext(), userData.User.Id, *userData.Avatar); err == nil && ad != nil {
+			author.Avatar = ad
+		}
+	} else if userData.User.Avatar != nil {
+		if ad, err := e.getAvatarDataCached(c.UserContext(), userData.User.Id, *userData.User.Avatar); err == nil && ad != nil {
+			author.Avatar = ad
+		}
+	}
+
 	return dto.Message{
 		Id:        message.Id,
 		ChannelId: message.ChannelId,
-		Author: dto.User{
-			Id:            userData.User.Id,
-			Name:          userData.DisplayName,
-			Discriminator: userData.Discriminator.Discriminator,
-			Avatar:        userData.Avatar,
-		},
+		Author:    author,
 		Content:   req.Content,
 		UpdatedAt: &updatedAt,
 	}, nil
@@ -1246,9 +1314,11 @@ func (e *entity) buildAuthorOptimized(userId int64, data *messageRelatedData) dt
 	}
 
 	author := dto.User{
-		Id:     userId,
-		Name:   user.Name,
-		Avatar: user.Avatar,
+		Id:   userId,
+		Name: user.Name,
+	}
+	if ad, ok := data.AvData[userId]; ok {
+		author.Avatar = ad
 	}
 
 	if member, memberExists := data.Members[userId]; memberExists {
@@ -1256,7 +1326,9 @@ func (e *entity) buildAuthorOptimized(userId int64, data *messageRelatedData) dt
 			author.Name = *member.Username
 		}
 		if member.Avatar != nil {
-			author.Avatar = member.Avatar
+			if ad, err := e.getAvatarDataCached(context.Background(), userId, *member.Avatar); err == nil && ad != nil {
+				author.Avatar = ad
+			}
 		}
 	}
 

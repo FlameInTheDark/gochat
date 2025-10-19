@@ -1,8 +1,10 @@
 package user
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
@@ -35,7 +37,7 @@ func (e *entity) GetUser(c *fiber.Ctx) error {
 	}
 
 	// Fetch user data concurrently
-	userDTO, err := e.fetchUserWithDiscriminator(c, userId)
+	userDTO, err := e.fetchUserWithDiscriminatorCtx(c.UserContext(), userId)
 	if err != nil {
 		return err
 	}
@@ -64,7 +66,7 @@ func (e *entity) parseUserIdParam(c *fiber.Ctx, paramName string) (int64, error)
 }
 
 // fetchUserWithDiscriminator fetches user data and discriminator concurrently
-func (e *entity) fetchUserWithDiscriminator(c *fiber.Ctx, userId int64) (dto.User, error) {
+func (e *entity) fetchUserWithDiscriminatorCtx(ctx context.Context, userId int64) (dto.User, error) {
 	type userResult struct {
 		user *model.User
 		err  error
@@ -79,13 +81,13 @@ func (e *entity) fetchUserWithDiscriminator(c *fiber.Ctx, userId int64) (dto.Use
 
 	// Fetch user data
 	go func() {
-		user, err := e.user.GetUserById(c.UserContext(), userId)
+		user, err := e.user.GetUserById(ctx, userId)
 		userCh <- userResult{&user, err}
 	}()
 
 	// Fetch discriminator
 	go func() {
-		disc, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), userId)
+		disc, err := e.disc.GetDiscriminatorByUserId(ctx, userId)
 		discCh <- discResult{&disc, err}
 	}()
 
@@ -101,8 +103,12 @@ func (e *entity) fetchUserWithDiscriminator(c *fiber.Ctx, userId int64) (dto.Use
 		return dto.User{}, helper.HttpDbError(discRes.err, ErrUnableToGetDiscriminator)
 	}
 
-	// Build and return user DTO
 	userDTO := modelToUser(*userRes.user)
+	if userRes.user.Avatar != nil {
+		if ad, err := e.getAvatarDataCached(ctx, userRes.user.Id, *userRes.user.Avatar); err == nil && ad != nil {
+			userDTO.Avatar = ad
+		}
+	}
 	userDTO.Discriminator = discRes.disc.Discriminator
 
 	return userDTO, nil
@@ -138,6 +144,17 @@ func (e *entity) ModifyUser(c *fiber.Ctx) error {
 	if err := helper.HttpDbError(err, ErrUnableToModifyUser); err != nil {
 		return err
 	}
+	// Emit user update event with fresh data (best-effort). Do not use fiber.Ctx from goroutine.
+	go func() {
+		dtoUser, ferr := e.fetchUserWithDiscriminatorCtx(context.Background(), user.Id)
+		if ferr != nil {
+			slog.Error("unable to build updated user dto", slog.String("error", ferr.Error()))
+			return
+		}
+		if err := e.mqt.SendUserUpdate(user.Id, &mqmsg.UpdateUser{User: dtoUser}); err != nil {
+			slog.Error("unable to send user update event", slog.String("error", err.Error()))
+		}
+	}()
 	return c.SendStatus(fiber.StatusOK)
 }
 
@@ -196,8 +213,8 @@ func (e *entity) fetchUserGuilds(c *fiber.Ctx, userId int64) ([]dto.Guild, error
 		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUserGuilds)
 	}
 
-	// Convert to DTOs
-	return guildModelToGuildMany(guilds), nil
+	// Convert to DTOs with icon metadata
+	return e.guildModelToGuildMany(c, guilds), nil
 }
 
 // GetMyGuildMember
@@ -318,19 +335,60 @@ func (e *entity) fetchGuildMemberData(c *fiber.Ctx, userId, guildId int64) (dto.
 		roleIds[i] = role.RoleId
 	}
 
+	// Build user DTO with possible avatar data
+	userDTO := dto.User{
+		Id:            userRes.user.Id,
+		Name:          userRes.user.Name,
+		Discriminator: discRes.disc.Discriminator,
+	}
+	// Prefer member avatar over user avatar
+	if memberRes.member.Avatar != nil {
+		if ad, err := e.getAvatarDataCached(c.UserContext(), userRes.user.Id, *memberRes.member.Avatar); err == nil && ad != nil {
+			userDTO.Avatar = ad
+		}
+	} else if userRes.user.Avatar != nil {
+		if ad, err := e.getAvatarDataCached(c.UserContext(), userRes.user.Id, *userRes.user.Avatar); err == nil && ad != nil {
+			userDTO.Avatar = ad
+		}
+	}
+
 	// Build and return member DTO
 	return dto.Member{
-		User: dto.User{
-			Id:            userRes.user.Id,
-			Name:          userRes.user.Name,
-			Discriminator: discRes.disc.Discriminator,
-			Avatar:        userRes.user.Avatar,
-		},
+		User:     userDTO,
 		Username: memberRes.member.Username,
 		Avatar:   memberRes.member.Avatar,
 		JoinAt:   memberRes.member.JoinAt,
 		Roles:    roleIds,
 	}, nil
+}
+
+const avatarCacheTTLSeconds = 3600 // 1 hour
+
+func (e *entity) getAvatarDataCached(ctx context.Context, userId, avatarId int64) (*dto.AvatarData, error) {
+	key := fmt.Sprintf("avatars:%d:%d", userId, avatarId)
+	var ad dto.AvatarData
+
+	if err := e.cache.GetJSON(ctx, key, &ad); err == nil && ad.URL != "" {
+		return &ad, nil
+	}
+
+	av, err := e.av.GetAvatar(ctx, avatarId, userId)
+	if err != nil {
+		return nil, err
+	}
+	if av.URL == nil || *av.URL == "" {
+		return nil, nil
+	}
+	ad = dto.AvatarData{
+		Id:          av.Id,
+		URL:         *av.URL,
+		ContentType: av.ContentType,
+		Width:       av.Width,
+		Height:      av.Height,
+		Size:        av.FileSize,
+	}
+	_ = e.cache.SetTimedJSON(ctx, key, ad, avatarCacheTTLSeconds)
+	return &ad, nil
 }
 
 // LeaveGuild
@@ -757,7 +815,7 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetReadStates)
 	}
 
-	settings, err := modelToSettings(&s, guildModelToGuildMany(guilds), rs, gclm)
+	settings, err := modelToSettings(&s, e.guildModelToGuildMany(c, guilds), rs, gclm)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUnmarshalUserSettings)
 	}

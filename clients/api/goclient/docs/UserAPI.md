@@ -4,6 +4,9 @@ All URIs are relative to *http://localhost/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**UserMeAvatarPost**](UserAPI.md#UserMeAvatarPost) | **Post** /user/me/avatar | Create avatar metadata
+[**UserMeAvatarsAvatarIdDelete**](UserAPI.md#UserMeAvatarsAvatarIdDelete) | **Delete** /user/me/avatars/{avatar_id} | Delete my avatar by ID
+[**UserMeAvatarsGet**](UserAPI.md#UserMeAvatarsGet) | **Get** /user/me/avatars | List my avatars
 [**UserMeChannelsGet**](UserAPI.md#UserMeChannelsGet) | **Get** /user/me/channels | List all DM and Group DM channels for current user
 [**UserMeChannelsGroupPost**](UserAPI.md#UserMeChannelsGroupPost) | **Post** /user/me/channels/group | Create group DM channel
 [**UserMeChannelsPost**](UserAPI.md#UserMeChannelsPost) | **Post** /user/me/channels | Create DM channel
@@ -22,6 +25,201 @@ Method | HTTP request | Description
 [**UserMeSettingsPost**](UserAPI.md#UserMeSettingsPost) | **Post** /user/me/settings | Update current user settings (replaces and bumps version)
 [**UserUserIdGet**](UserAPI.md#UserUserIdGet) | **Get** /user/{user_id} | Get user
 
+
+
+## UserMeAvatarPost
+
+> DtoAvatarUpload UserMeAvatarPost(ctx).UserCreateAvatarRequest(userCreateAvatarRequest).Execute()
+
+Create avatar metadata
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	userCreateAvatarRequest := *openapiclient.NewUserCreateAvatarRequest() // UserCreateAvatarRequest | Avatar creation request
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeAvatarPost(context.Background()).UserCreateAvatarRequest(userCreateAvatarRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeAvatarPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeAvatarPost`: DtoAvatarUpload
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeAvatarPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeAvatarPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **userCreateAvatarRequest** | [**UserCreateAvatarRequest**](UserCreateAvatarRequest.md) | Avatar creation request | 
+
+### Return type
+
+[**DtoAvatarUpload**](DtoAvatarUpload.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeAvatarsAvatarIdDelete
+
+> string UserMeAvatarsAvatarIdDelete(ctx, avatarId).Execute()
+
+Delete my avatar by ID
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	avatarId := int32(56) // int32 | Avatar ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeAvatarsAvatarIdDelete(context.Background(), avatarId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeAvatarsAvatarIdDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeAvatarsAvatarIdDelete`: string
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeAvatarsAvatarIdDelete`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**avatarId** | **int32** | Avatar ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeAvatarsAvatarIdDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeAvatarsGet
+
+> []DtoAvatar UserMeAvatarsGet(ctx).Execute()
+
+List my avatars
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeAvatarsGet(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeAvatarsGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeAvatarsGet`: []DtoAvatar
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeAvatarsGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeAvatarsGetRequest struct via the builder pattern
+
+
+### Return type
+
+[**[]DtoAvatar**](DtoAvatar.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
 ## UserMeChannelsGet

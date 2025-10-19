@@ -149,7 +149,6 @@ func (e *entity) Search(c *fiber.Ctx) error {
 					Id:            u.Id,
 					Name:          u.Name,
 					Discriminator: "",
-					Avatar:        u.Avatar,
 				},
 				Content:     m.Content,
 				Attachments: dtoAts,

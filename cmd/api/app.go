@@ -104,9 +104,9 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	// HTTP Router
 	s.Register(
 		"/api/v1",
-		user.New(database, pg, qt, logger),
-		message.New(database, pg, qt, imq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, logger),
-		guild.New(database, pg, qt, cache, logger),
+		user.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, logger),
+		message.New(database, pg, qt, imq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
+		guild.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, logger),
 		search.New(database, pg, searchService, logger),
 	)
 

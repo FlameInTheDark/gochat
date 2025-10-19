@@ -7,8 +7,10 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
@@ -44,7 +46,6 @@ type entity struct {
 	name        string
 	uploadLimit int64
 	attachTTL   int64
-
 	// Services
 	log *slog.Logger
 	mqt mq.SendTransporter
@@ -68,13 +69,15 @@ type entity struct {
 	ur    userrole.UserRole
 	rs    readstates.ReadStates
 	gclm  guildchannelmessages.GuildChannelMessages
+	av    avatar.Avatar
+	cache cache.Cache
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ, uploadLimit int64, attachTTLSeconds int64, log *slog.Logger) server.Entity {
+func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ, uploadLimit int64, attachTTLSeconds int64, cache cache.Cache, log *slog.Logger) server.Entity {
 
 	return &entity{
 		name:        entityName,
@@ -83,6 +86,8 @@ func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ
 		log:         log,
 		mqt:         t,
 		imq:         imq,
+		av:          avatar.New(cql),
+		cache:       cache,
 		user:        user.New(pg.Conn()),
 		m:           member.New(pg.Conn()),
 		disc:        discriminator.New(pg.Conn()),

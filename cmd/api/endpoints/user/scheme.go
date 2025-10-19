@@ -2,11 +2,13 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/gofiber/fiber/v2"
 )
 
 const (
@@ -38,16 +40,17 @@ const (
 	ErrUnableToGetMembership         = "unable to get membership"
 
 	// Validation error messages
-	ErrUserNameTooShort    = "user name must be at least 4 characters"
-	ErrUserNameTooLong     = "user name must be less than 20 characters"
-	ErrAvatarIdInvalid     = "avatar ID must be positive"
-	ErrRecipientIdRequired = "recipient ID is required"
-	ErrRecipientIdInvalid  = "recipient ID must be positive"
-	ErrChannelIdInvalid    = "channel ID must be positive"
-	ErrRecipientsRequired  = "at least one recipient is required"
-	ErrRecipientsInvalid   = "recipient IDs must be positive"
-	ErrTooManyRecipients   = "maximum 10 recipients allowed"
-	ErrNoFieldsToUpdate    = "at least one field must be provided for update"
+	ErrUserNameTooShort           = "user name must be at least 4 characters"
+	ErrUserNameTooLong            = "user name must be less than 20 characters"
+	ErrAvatarIdInvalid            = "avatar ID must be positive"
+	ErrRecipientIdRequired        = "recipient ID is required"
+	ErrRecipientIdInvalid         = "recipient ID must be positive"
+	ErrChannelIdInvalid           = "channel ID must be positive"
+	ErrRecipientsRequired         = "at least one recipient is required"
+	ErrRecipientsInvalid          = "recipient IDs must be positive"
+	ErrTooManyRecipients          = "maximum 10 recipients allowed"
+	ErrUnableToDeleteActiveAvatar = "unable to delete active avatar"
+	ErrNoFieldsToUpdate           = "at least one field must be provided for update"
 )
 
 type ModifyUserRequest struct {
@@ -131,26 +134,51 @@ func modelToSettings(m *model.UserSettings, guilds []dto.Guild, rs map[int64]int
 
 func modelToUser(m model.User) dto.User {
 	return dto.User{
-		Id:     m.Id,
-		Name:   m.Name,
-		Avatar: m.Avatar,
+		Id:   m.Id,
+		Name: m.Name,
 	}
 }
 
-func guildModelToGuild(m model.Guild) dto.Guild {
-	return dto.Guild{
+func (e *entity) guildModelToGuild(c *fiber.Ctx, m model.Guild) dto.Guild {
+	g := dto.Guild{
 		Id:     m.Id,
 		Name:   m.Name,
-		Icon:   m.Icon,
 		Owner:  m.OwnerId,
 		Public: m.Public,
 	}
+	if m.Icon != nil {
+		key := fmt.Sprintf("icons:%d:%d", m.Id, *m.Icon)
+		var cached dto.Icon
+		if err := e.cache.GetJSON(c.UserContext(), key, &cached); err == nil && cached.URL != "" {
+			g.Icon = &cached
+			return g
+		}
+
+		if ic, err := e.icon.GetIcon(c.UserContext(), *m.Icon, m.Id); err == nil && ic.URL != nil {
+			var w, h, size int64
+			if ic.Width != nil {
+				w = *ic.Width
+			}
+			if ic.Height != nil {
+				h = *ic.Height
+			}
+			size = ic.FileSize
+			var urlStr string
+			if ic.URL != nil {
+				urlStr = *ic.URL
+			}
+			ico := dto.Icon{Id: *m.Icon, URL: urlStr, Filesize: size, Width: w, Height: h}
+			g.Icon = &ico
+			_ = e.cache.SetJSON(c.UserContext(), key, ico)
+		}
+	}
+	return g
 }
 
-func guildModelToGuildMany(guilds []model.Guild) []dto.Guild {
+func (e *entity) guildModelToGuildMany(c *fiber.Ctx, guilds []model.Guild) []dto.Guild {
 	models := make([]dto.Guild, len(guilds))
 	for i, g := range guilds {
-		models[i] = guildModelToGuild(g)
+		models[i] = e.guildModelToGuild(c, g)
 	}
 	return models
 }
@@ -216,7 +244,6 @@ func usersWithDiscriminators(users []model.User, discs []model.Discriminator) []
 			Id:            u.Id,
 			Name:          u.Name,
 			Discriminator: discMap[u.Id],
-			Avatar:        u.Avatar,
 		}
 	}
 	return res

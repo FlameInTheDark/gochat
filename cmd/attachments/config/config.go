@@ -21,6 +21,9 @@ type Config struct {
 	S3Bucket          string   `yaml:"s3_bucket" env:"S3_BUCKET" env-default:"gochat"`
 	S3Region          string   `yaml:"s3_region" env:"S3_REGION"`
 	S3ExternalURL     string   `yaml:"s3_external_url" env:"S3_EXTERNAL_URL"`
+	PGDSN             string   `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
+	PGRetries         int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
+	NatsConnString    string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {

@@ -60,6 +60,7 @@ const (
 	EventTypeUserFriendAdded
 	EventTypeUserFriendRemoved
 	EventTypeUserDMMessage
+	EventTypeUserUpdate
 )
 
 type Message struct {

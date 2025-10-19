@@ -8,6 +8,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
@@ -33,6 +34,12 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("", e.Create)
 	router.Get("/:guild_id<int>", e.Get)
 	router.Patch("/:guild_id<int>", e.Update)
+	router.Delete("/:guild_id<int>", e.Delete)
+
+	// Icons
+	router.Post("/:guild_id<int>/icon", e.CreateIcon)
+	router.Get("/:guild_id<int>/icons", e.ListIcons)
+	router.Delete("/:guild_id<int>/icons/:icon_id<int>", e.DeleteIcon)
 
 	// Channels
 	router.Get("/:guild_id<int>/channel/:channel_id<int>", e.GetChannel)
@@ -43,7 +50,6 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/:guild_id<int>/category", e.CreateCategory)
 	router.Delete("/:guild_id<int>/channel/:channel_id<int>", e.DeleteChannel)
 	router.Delete("/:guild_id<int>/category/:category_id<int>", e.DeleteCategory)
-	//router.Post("/:guild_id<int>/readstates")
 
 	// Members
 	router.Get("/:guild_id<int>/members", e.GetMembers)
@@ -94,32 +100,37 @@ type entity struct {
 	icon  icon.Icon
 	memb  member.Member
 	inv   invite.Invite
+	av    avatar.Avatar
+	// Config
+	attachTTL int64
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, cache cache.Cache, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, cache cache.Cache, attachTTLSeconds int64, log *slog.Logger) server.Entity {
 	return &entity{
-		name:  entityName,
-		log:   log,
-		mqt:   mqt,
-		cache: cache,
-		user:  user.New(pg.Conn()),
-		disc:  discriminator.New(pg.Conn()),
-		ch:    channel.New(pg.Conn()),
-		g:     guild.New(pg.Conn()),
-		gc:    guildchannels.New(pg.Conn()),
-		msg:   message.New(dbcon),
-		at:    attachment.New(dbcon),
-		perm:  rolecheck.New(dbcon, pg),
-		uperm: channeluserperm.New(pg.Conn()),
-		rperm: channelroleperm.New(pg.Conn()),
-		role:  role.New(pg.Conn()),
-		ur:    userrole.New(pg.Conn()),
-		icon:  icon.New(dbcon),
-		memb:  member.New(pg.Conn()),
-		inv:   invite.New(pg.Conn()),
+		name:      entityName,
+		log:       log,
+		mqt:       mqt,
+		cache:     cache,
+		user:      user.New(pg.Conn()),
+		disc:      discriminator.New(pg.Conn()),
+		ch:        channel.New(pg.Conn()),
+		g:         guild.New(pg.Conn()),
+		gc:        guildchannels.New(pg.Conn()),
+		msg:       message.New(dbcon),
+		at:        attachment.New(dbcon),
+		perm:      rolecheck.New(dbcon, pg),
+		uperm:     channeluserperm.New(pg.Conn()),
+		rperm:     channelroleperm.New(pg.Conn()),
+		role:      role.New(pg.Conn()),
+		ur:        userrole.New(pg.Conn()),
+		icon:      icon.New(dbcon),
+		memb:      member.New(pg.Conn()),
+		inv:       invite.New(pg.Conn()),
+		av:        avatar.New(dbcon),
+		attachTTL: attachTTLSeconds,
 	}
 }

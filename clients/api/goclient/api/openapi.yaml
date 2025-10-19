@@ -16,89 +16,6 @@ externalDocs:
 servers:
 - url: localhost/api/v1
 paths:
-  /attachments/{channel_id}/{attachment_id}:
-    post:
-      description: Uploads a file for an existing attachment. Stores the original
-        as-is and generates a WebP preview for images/videos. Finalizes the attachment
-        metadata.
-      parameters:
-      - description: Channel ID
-        explode: false
-        in: path
-        name: channel_id
-        required: true
-        schema:
-          type: integer
-        style: simple
-      - description: Attachment ID
-        explode: false
-        in: path
-        name: attachment_id
-        required: true
-        schema:
-          type: integer
-        style: simple
-      requestBody:
-        content:
-          application/octet-stream:
-            schema:
-              items:
-                type: integer
-              type: array
-        description: Binary file to upload
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: Created
-        "204":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: No Content (already uploaded)
-        "400":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: Bad request
-        "401":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: Attachment not found
-        "413":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: File too large
-        "500":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: Internal server error
-      summary: Upload attachment
-      tags:
-      - Attachments
   /auth/confirmation:
     post:
       requestBody:
@@ -554,6 +471,47 @@ paths:
       tags:
       - Guild Invites
   /guild/{guild_id}:
+    delete:
+      description: "Deletes a guild. Only the guild owner can delete a guild. This\
+        \ removes all members, all guild icons, and all guild channels."
+      parameters:
+      - description: Guild ID
+        example: 2230469276416868352
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Deleted
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Delete guild
+      tags:
+      - Guild
     get:
       parameters:
       - description: Guild id
@@ -1394,6 +1352,151 @@ paths:
       summary: Set channel role permission (create or replace)
       tags:
       - Guild Roles
+  /guild/{guild_id}/icon:
+    post:
+      description: Creates an icon placeholder and returns upload info. Only guild
+        owner may create.
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.CreateIconRequest'
+        description: Icon creation request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.IconUpload'
+          description: Icon upload data
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Create guild icon metadata
+      tags:
+      - Guild
+  /guild/{guild_id}/icons:
+    get:
+      description: Returns a list of previously created icons for a guild. Only the
+        guild owner may access this list.
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Icon'
+                type: array
+          description: List of icons
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: List guild icons
+      tags:
+      - Guild
+  /guild/{guild_id}/icons/{icon_id}:
+    delete:
+      description: Deletes a guild icon. Only the guild owner may delete.
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Icon ID
+        explode: false
+        in: path
+        name: icon_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Delete guild icon by ID
+      tags:
+      - Guild
   /guild/{guild_id}/member/{user_id}/roles:
     get:
       parameters:
@@ -2244,6 +2347,253 @@ paths:
       summary: Search messages
       tags:
       - Search
+  /upload/attachments/{channel_id}/{attachment_id}:
+    post:
+      description: Uploads a file for an existing attachment. Stores the original
+        as-is and generates a WebP preview for images/videos. Finalizes the attachment
+        metadata.
+      parameters:
+      - description: Channel ID
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Attachment ID
+        explode: false
+        in: path
+        name: attachment_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              items:
+                type: integer
+              type: array
+        description: Binary file to upload
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Created
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content (already uploaded)
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Attachment not found
+        "413":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: File too large
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Upload attachment
+      tags:
+      - Upload
+  /upload/avatars/{user_id}/{avatar_id}:
+    post:
+      description: Uploads an avatar image. Resizes to max 128x128 and converts to
+        WebP <= 250KB. Finalizes avatar metadata.
+      parameters:
+      - description: User ID
+        explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Avatar ID
+        explode: false
+        in: path
+        name: avatar_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              items:
+                type: integer
+              type: array
+        description: Binary image payload
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Created
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content (already uploaded)
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Avatar not found
+        "413":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: File too large
+        "415":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unsupported Media Type
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Upload user avatar
+      tags:
+      - Upload
+  /upload/icons/{guild_id}/{icon_id}:
+    post:
+      description: Uploads a guild icon. Resizes to max 128x128 and converts to WebP
+        <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Icon ID
+        explode: false
+        in: path
+        name: icon_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              items:
+                type: integer
+              type: array
+        description: Binary image payload
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "413":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: File too large
+        "415":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unsupported Media Type
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Upload guild icon
+      tags:
+      - Upload
   /user/me:
     patch:
       requestBody:
@@ -2279,6 +2629,88 @@ paths:
                 type: string
           description: Something bad happened
       summary: Get user
+      tags:
+      - User
+  /user/me/avatar:
+    post:
+      description: Creates an avatar placeholder and returns upload info. Upload the
+        binary to attachments service.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user.CreateAvatarRequest'
+        description: Avatar creation request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.AvatarUpload'
+          description: Avatar upload data
+      summary: Create avatar metadata
+      tags:
+      - User
+  /user/me/avatars:
+    get:
+      description: Returns a list of previously created avatars for the authenticated
+        user.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Avatar'
+                type: array
+          description: List of avatars
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+      summary: List my avatars
+      tags:
+      - User
+  /user/me/avatars/{avatar_id}:
+    delete:
+      parameters:
+      - description: Avatar ID
+        explode: false
+        in: path
+        name: avatar_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Delete my avatar by ID
       tags:
       - User
   /user/me/channels:
@@ -2824,43 +3256,6 @@ paths:
       summary: Get user
       tags:
       - User
-  /webhook/storage/events:
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/webhook.S3Event'
-        description: S3 event
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: Ok
-        "400":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: Incorrect ID
-        "404":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: User not found
-        "500":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: Something bad happened
-      summary: Storage event
-      tags:
-      - Webhook
 components:
   schemas:
     auth.ConfirmationRequest:
@@ -2999,6 +3394,71 @@ components:
           description: Attachment ID
           example: 2230469276416868352
           type: integer
+    dto.Avatar:
+      example:
+        content_type: image/webp
+        size: 245678
+        width: 128
+        id: 2230469276416868352
+        url: https://cdn.example.com/avatars/2230/2231.webp
+        height: 128
+      properties:
+        content_type:
+          example: image/webp
+          type: string
+        height:
+          example: 128
+          type: integer
+        id:
+          example: 2230469276416868352
+          type: integer
+        size:
+          example: 245678
+          type: integer
+        url:
+          example: https://cdn.example.com/avatars/2230/2231.webp
+          type: string
+        width:
+          example: 128
+          type: integer
+    dto.AvatarData:
+      example:
+        content_type: image/webp
+        size: 245678
+        width: 128
+        id: 2230469276416868352
+        url: https://cdn.example.com/avatars/2230/2231.webp
+        height: 128
+      properties:
+        content_type:
+          example: image/webp
+          type: string
+        height:
+          example: 128
+          type: integer
+        id:
+          example: 2230469276416868352
+          type: integer
+        size:
+          example: 245678
+          type: integer
+        url:
+          example: https://cdn.example.com/avatars/2230/2231.webp
+          type: string
+        width:
+          example: 128
+          type: integer
+    dto.AvatarUpload:
+      example:
+        user_id: 2230469276416868352
+        id: 2230469276416868352
+      properties:
+        id:
+          example: 2230469276416868352
+          type: integer
+        user_id:
+          example: 2230469276416868352
+          type: integer
     dto.Channel:
       example:
         private: false
@@ -3090,14 +3550,17 @@ components:
         owner: 2230469276416868352
         public: false
         permissions: 0
-        icon: 2230469276416868352
+        icon:
+          width: 128
+          filesize: 12345
+          id: 2230469276416868352
+          url: https://cdn.example.com/icons/2230/2231.webp
+          height: 128
         name: My Guild
         id: 2230469276416868352
       properties:
         icon:
-          description: Icon ID
-          example: 2230469276416868352
-          type: integer
+          $ref: '#/components/schemas/dto.Icon'
         id:
           description: Guild ID
           example: 2230469276416868352
@@ -3140,13 +3603,53 @@ components:
           type: integer
         id:
           type: integer
+    dto.Icon:
+      description: Icon metadata
+      example:
+        width: 128
+        filesize: 12345
+        id: 2230469276416868352
+        url: https://cdn.example.com/icons/2230/2231.webp
+        height: 128
+      properties:
+        filesize:
+          example: 12345
+          type: integer
+        height:
+          example: 128
+          type: integer
+        id:
+          example: 2230469276416868352
+          type: integer
+        url:
+          example: https://cdn.example.com/icons/2230/2231.webp
+          type: string
+        width:
+          example: 128
+          type: integer
+    dto.IconUpload:
+      example:
+        guild_id: 2230469276416868352
+        id: 2230469276416868352
+      properties:
+        guild_id:
+          example: 2230469276416868352
+          type: integer
+        id:
+          example: 2230469276416868352
+          type: integer
     dto.InvitePreview:
       example:
         guild:
           owner: 2230469276416868352
           public: false
           permissions: 0
-          icon: 2230469276416868352
+          icon:
+            width: 128
+            filesize: 12345
+            id: 2230469276416868352
+            url: https://cdn.example.com/icons/2230/2231.webp
+            height: 128
           name: My Guild
           id: 2230469276416868352
         code: code
@@ -3178,7 +3681,13 @@ components:
         avatar: 2230469276416868352
         user:
           name: FancyUserName
-          avatar: 2230469276416868352
+          avatar:
+            content_type: image/webp
+            size: 245678
+            width: 128
+            id: 2230469276416868352
+            url: https://cdn.example.com/avatars/2230/2231.webp
+            height: 128
           id: 2230469276416868352
           discriminator: uniquename
         username: FancyUserName
@@ -3224,7 +3733,13 @@ components:
         updated_at: updated_at
         author:
           name: FancyUserName
-          avatar: 2230469276416868352
+          avatar:
+            content_type: image/webp
+            size: 245678
+            width: 128
+            id: 2230469276416868352
+            url: https://cdn.example.com/avatars/2230/2231.webp
+            height: 128
           id: 2230469276416868352
           discriminator: uniquename
         id: 2230469276416868352
@@ -3284,13 +3799,18 @@ components:
       description: Guild member data
       example:
         name: FancyUserName
-        avatar: 2230469276416868352
+        avatar:
+          content_type: image/webp
+          size: 245678
+          width: 128
+          id: 2230469276416868352
+          url: https://cdn.example.com/avatars/2230/2231.webp
+          height: 128
         id: 2230469276416868352
         discriminator: uniquename
       properties:
         avatar:
-          example: 2230469276416868352
-          type: integer
+          $ref: '#/components/schemas/dto.AvatarData'
         discriminator:
           example: uniquename
           type: string
@@ -3420,6 +3940,14 @@ components:
         permissions:
           default: 0
           description: Permissions bitset
+          type: integer
+    guild.CreateIconRequest:
+      properties:
+        content_type:
+          example: image/png
+          type: string
+        file_size:
+          example: 120000
           type: integer
     guild.CreateInviteRequest:
       properties:
@@ -3796,7 +4324,13 @@ components:
           updated_at: updated_at
           author:
             name: FancyUserName
-            avatar: 2230469276416868352
+            avatar:
+              content_type: image/webp
+              size: 245678
+              width: 128
+              id: 2230469276416868352
+              url: https://cdn.example.com/avatars/2230/2231.webp
+              height: 128
             id: 2230469276416868352
             discriminator: uniquename
           id: 2230469276416868352
@@ -3820,7 +4354,13 @@ components:
           updated_at: updated_at
           author:
             name: FancyUserName
-            avatar: 2230469276416868352
+            avatar:
+              content_type: image/webp
+              size: 245678
+              width: 128
+              id: 2230469276416868352
+              url: https://cdn.example.com/avatars/2230/2231.webp
+              height: 128
             id: 2230469276416868352
             discriminator: uniquename
           id: 2230469276416868352
@@ -3835,6 +4375,14 @@ components:
           uniqueItems: false
         pages:
           description: Total number of pages with current search parameters
+          type: integer
+    user.CreateAvatarRequest:
+      properties:
+        content_type:
+          example: image/png
+          type: string
+        file_size:
+          example: 120000
           type: integer
     user.CreateDMManyRequest:
       properties:
@@ -3929,13 +4477,23 @@ components:
         - owner: 2230469276416868352
           public: false
           permissions: 0
-          icon: 2230469276416868352
+          icon:
+            width: 128
+            filesize: 12345
+            id: 2230469276416868352
+            url: https://cdn.example.com/icons/2230/2231.webp
+            height: 128
           name: My Guild
           id: 2230469276416868352
         - owner: 2230469276416868352
           public: false
           permissions: 0
-          icon: 2230469276416868352
+          icon:
+            width: 128
+            filesize: 12345
+            id: 2230469276416868352
+            url: https://cdn.example.com/icons/2230/2231.webp
+            height: 128
           name: My Guild
           id: 2230469276416868352
         read_states:
@@ -3961,93 +4519,6 @@ components:
           $ref: '#/components/schemas/model.UserSettingsData'
         version:
           type: integer
-    webhook.S3Bucket:
-      properties:
-        arn:
-          type: string
-        name:
-          type: string
-        ownerIdentity:
-          $ref: '#/components/schemas/webhook.S3Identity'
-    webhook.S3Element:
-      properties:
-        bucket:
-          $ref: '#/components/schemas/webhook.S3Bucket'
-        configurationId:
-          type: string
-        object:
-          $ref: '#/components/schemas/webhook.S3Object'
-        s3SchemaVersion:
-          type: string
-    webhook.S3Event:
-      properties:
-        EventName:
-          type: string
-        Key:
-          type: string
-        Records:
-          items:
-            $ref: '#/components/schemas/webhook.S3EventRecord'
-          type: array
-          uniqueItems: false
-    webhook.S3EventRecord:
-      properties:
-        awsRegion:
-          type: string
-        eventName:
-          type: string
-        eventSource:
-          type: string
-        eventTime:
-          type: string
-        eventVersion:
-          type: string
-        requestParameters:
-          $ref: '#/components/schemas/webhook.S3RequestParameters'
-        responseElements:
-          additionalProperties:
-            type: string
-        s3:
-          $ref: '#/components/schemas/webhook.S3Element'
-        source:
-          $ref: '#/components/schemas/webhook.S3Source'
-        userIdentity:
-          $ref: '#/components/schemas/webhook.S3Identity'
-    webhook.S3Identity:
-      properties:
-        principalId:
-          type: string
-    webhook.S3Object:
-      properties:
-        contentType:
-          type: string
-        eTag:
-          type: string
-        key:
-          type: string
-        sequencer:
-          type: string
-        size:
-          type: integer
-        userMetadata:
-          additionalProperties:
-            type: string
-    webhook.S3RequestParameters:
-      properties:
-        principalId:
-          type: string
-        region:
-          type: string
-        sourceIPAddress:
-          type: string
-    webhook.S3Source:
-      properties:
-        host:
-          type: string
-        port:
-          type: string
-        userAgent:
-          type: string
   securitySchemes:
     bearerauth:
       bearerFormat: JWT

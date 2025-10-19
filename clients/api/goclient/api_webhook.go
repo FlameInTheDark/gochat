@@ -53,7 +53,7 @@ func (a *WebhookAPIService) WebhookStorageEventsPost(ctx context.Context) ApiWeb
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *WebhookAPIService) WebhookStorageEventsPostExecute(r ApiWebhookStorageEventsPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

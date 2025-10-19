@@ -1,13 +1,17 @@
 package mqmsg
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"github.com/FlameInTheDark/gochat/internal/dto"
+)
 
 // UserBrief is a lightweight user payload for events
 type UserBrief struct {
-	Id            int64  `json:"id"`
-	Name          string `json:"name"`
-	Discriminator string `json:"discriminator"`
-	Avatar        *int64 `json:"avatar,omitempty"`
+	Id            int64           `json:"id"`
+	Name          string          `json:"name"`
+	Discriminator string          `json:"discriminator"`
+	Avatar        *int64          `json:"avatar,omitempty"`      // legacy numeric ID
+	AvatarData    *dto.AvatarData `json:"avatar_data,omitempty"` // full avatar metadata
 }
 
 // IncomingFriendRequest notifies recipient about a new friend request

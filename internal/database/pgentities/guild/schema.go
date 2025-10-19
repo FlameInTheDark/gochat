@@ -156,7 +156,11 @@ func (e *Entity) UpdateGuild(ctx context.Context, id int64, name *string, icon *
 		q = q.Set("name", *name)
 	}
 	if icon != nil {
-		q = q.Set("icon", *icon)
+		if *icon == 0 {
+			q = q.Set("icon", nil)
+		} else {
+			q = q.Set("icon", *icon)
+		}
 	}
 	if public != nil {
 		q = q.Set("public", *public)
