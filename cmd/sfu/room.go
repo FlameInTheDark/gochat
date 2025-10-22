@@ -319,9 +319,13 @@ func (r *room) signalPeers() {
 		}
 
 		for _, p := range needsOffer {
-			if err := r.pushOffer(p); err != nil {
+			sent, err := r.pushOffer(p)
+			if err != nil {
 				r.log.Warn("offer failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
 				continue
+			}
+			if sent {
+				p.MarkInitialOfferSent()
 			}
 			p.MarkInitialOfferSent()
 		}
@@ -342,21 +346,21 @@ func (r *room) signalPeers() {
 	}()
 }
 
-func (r *room) pushOffer(p *peer) error {
+func (r *room) pushOffer(p *peer) (bool, error) {
 	if p.pc.SignalingState() != webrtc.SignalingStateStable {
-		return nil
+		return false, nil
 	}
 	offer, err := p.pc.CreateOffer(nil)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if err := p.pc.SetLocalDescription(offer); err != nil {
-		return err
+		return false, err
 	}
 	if err := p.send(int(mqmsg.OPCodeRTC), int(mqmsg.EventTypeRTCOffer), rtcOffer{SDP: offer.SDP}); err != nil {
-		return err
+		return false, err
 	}
-	return nil
+	return true, nil
 }
 
 func (r *room) isServerMuted(uid int64) bool {

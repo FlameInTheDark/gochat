@@ -33,28 +33,8 @@ func (a *App) messageLoop(c *websocket.Conn, room *room, p *peer, pc *webrtc.Pee
 			if err := json.Unmarshal(env.D, &payload); err != nil || payload.SDP == "" {
 				continue
 			}
-			a.log.Debug("client offer", slog.Int64("user", p.userID))
-			offer := webrtc.SessionDescription{Type: webrtc.SDPTypeOffer, SDP: payload.SDP}
-			if pc.SignalingState() == webrtc.SignalingStateHaveLocalOffer {
-				if err := pc.SetLocalDescription(webrtc.SessionDescription{Type: webrtc.SDPTypeRollback}); err != nil {
-					a.log.Warn("rollback failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
-					continue
-				}
-			}
-			if err := pc.SetRemoteDescription(offer); err != nil {
-				a.log.Warn("apply offer failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
-				continue
-			}
-			answer, aerr := pc.CreateAnswer(nil)
-			if aerr != nil {
-				a.log.Warn("create answer failed", slog.Int64("user", p.userID), slog.String("error", aerr.Error()))
-				continue
-			}
-			if err := pc.SetLocalDescription(answer); err != nil {
-				a.log.Warn("set local failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
-				continue
-			}
-			_ = p.send(int(mqmsg.OPCodeRTC), int(mqmsg.EventTypeRTCAnswer), rtcAnswer{SDP: answer.SDP})
+			a.log.Warn("unexpected client offer", slog.Int64("user", p.userID))
+			// Re-issue the server offer if needed so the client can answer.
 			room.signalPeers()
 		case int(mqmsg.EventTypeRTCAnswer):
 			var payload rtcAnswer
