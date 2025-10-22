@@ -327,6 +327,7 @@ func (r *room) signalPeers() {
 			if sent {
 				p.MarkInitialOfferSent()
 			}
+			p.MarkInitialOfferSent()
 		}
 
 		return shouldRetry
