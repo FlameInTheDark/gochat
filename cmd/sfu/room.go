@@ -303,6 +303,7 @@ func (r *room) signalPeers() {
 		if !attemptSync() {
 			return
 		}
+		return false
 	}
 
 	go func() {
