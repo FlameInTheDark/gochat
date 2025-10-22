@@ -38,6 +38,7 @@ require (
 	github.com/valyala/fasthttp v1.57.0
 	go.etcd.io/etcd/client/v3 v3.5.13
 	golang.org/x/crypto v0.35.0
+	resty.dev/v3 v3.0.0-beta.3
 )
 
 require (

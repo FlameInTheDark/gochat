@@ -2,9 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
+	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -14,8 +18,10 @@ import (
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
 	slogfiber "github.com/samber/slog-fiber"
+	"resty.dev/v3"
 
 	"github.com/FlameInTheDark/gochat/cmd/sfu/config"
+	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
 
@@ -25,6 +31,10 @@ type App struct {
 	log  *slog.Logger
 	shut *shutter.Shut
 	sfu  *SFU
+
+	instID      string
+	totalPeers  atomic.Int64
+	discoverLog sync.Once
 }
 
 func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
@@ -45,11 +55,12 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	sfu := NewSFU(logger)
 
 	a := &App{
-		app:  fiberApp,
-		cfg:  cfg,
-		log:  logger,
-		shut: shut,
-		sfu:  sfu,
+		app:    fiberApp,
+		cfg:    cfg,
+		log:    logger,
+		shut:   shut,
+		sfu:    sfu,
+		instID: cfg.ServiceID,
 	}
 
 	fiberApp.Get("/signal", websocket.New(a.handleSignalWS, websocket.Config{}))
@@ -67,7 +78,7 @@ func (a *App) Start() {
 		}
 	}()
 
-	go a.heartbeatLoop()
+	go a.discoveryHeartbeat()
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
@@ -78,6 +89,19 @@ func (a *App) Close() error { return a.app.Shutdown() }
 
 func (a *App) handleSignalWS(c *websocket.Conn) {
 	defer c.Close()
+
+	joinEnv, err := a.readJoinEnvelope(c)
+	if err != nil {
+		a.log.Warn("invalid join envelope", slog.String("error", err.Error()))
+		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: "invalid message"}})
+		return
+	}
+	uid, channelID, _, _, err := a.authorizeJoin(joinEnv)
+	if err != nil {
+		a.log.Warn("join unauthorized", slog.String("error", err.Error()))
+		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: err.Error()}})
+		return
+	}
 
 	pc, err := webrtc.NewPeerConnection(webrtc.Configuration{})
 	if err != nil {
@@ -99,15 +123,7 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 	}
 
 	pc.OnICECandidate(func(i *webrtc.ICECandidate) {
-		if i == nil {
-			return
-		}
-		candidateJSON, err := json.Marshal(i.ToJSON())
-		if err != nil {
-			a.log.Warn("failed to marshal candidate", slog.String("error", err.Error()))
-			return
-		}
-		if err := writer.WriteJSON(&websocketMessage{Event: "candidate", Data: string(candidateJSON)}); err != nil {
+		if err := writer.SendRTCCandidate(i); err != nil {
 			a.log.Warn("failed to send candidate", slog.String("error", err.Error()))
 		}
 	})
@@ -153,7 +169,18 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 	})
 
 	a.sfu.AddPeer(state)
-	defer a.sfu.RemovePeer(pc)
+	a.totalPeers.Add(1)
+	defer func() {
+		a.sfu.RemovePeer(pc)
+		a.totalPeers.Add(-1)
+	}()
+
+	if err := writer.SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: JoinAck{Ok: true}}); err != nil {
+		a.log.Warn("failed to send join ack", slog.String("error", err.Error()))
+		return
+	}
+
+	a.log.Info("client joined", slog.Int64("user", uid), slog.Int64("channel", channelID))
 
 	a.sfu.SignalPeerConnections()
 
@@ -165,44 +192,162 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 		}
 
 		var msg websocketMessage
-		if err := json.Unmarshal(raw, &msg); err != nil {
-			a.log.Warn("failed to unmarshal message", slog.String("error", err.Error()))
-			return
+		if err := json.Unmarshal(raw, &msg); err == nil && msg.Event != "" {
+			switch msg.Event {
+			case "candidate":
+				var cand webrtc.ICECandidateInit
+				if err := json.Unmarshal([]byte(msg.Data), &cand); err != nil {
+					a.log.Warn("failed to parse candidate", slog.String("error", err.Error()))
+					return
+				}
+				if err := pc.AddICECandidate(cand); err != nil {
+					a.log.Warn("failed to add candidate", slog.String("error", err.Error()))
+					return
+				}
+			case "answer":
+				var answer webrtc.SessionDescription
+				if err := json.Unmarshal([]byte(msg.Data), &answer); err != nil {
+					a.log.Warn("failed to parse answer", slog.String("error", err.Error()))
+					return
+				}
+				if err := pc.SetRemoteDescription(answer); err != nil {
+					a.log.Warn("failed to set remote description", slog.String("error", err.Error()))
+					return
+				}
+			default:
+				a.log.Warn("unknown message", slog.String("event", msg.Event))
+			}
+			continue
 		}
 
-		switch msg.Event {
-		case "candidate":
-			var cand webrtc.ICECandidateInit
-			if err := json.Unmarshal([]byte(msg.Data), &cand); err != nil {
-				a.log.Warn("failed to parse candidate", slog.String("error", err.Error()))
+		var env envelope
+		if err := json.Unmarshal(raw, &env); err == nil && env.OP != 0 {
+			if a.handleLegacyEnvelope(env, pc, writer) {
 				return
 			}
-			if err := pc.AddICECandidate(cand); err != nil {
-				a.log.Warn("failed to add candidate", slog.String("error", err.Error()))
-				return
-			}
-		case "answer":
-			var answer webrtc.SessionDescription
-			if err := json.Unmarshal([]byte(msg.Data), &answer); err != nil {
-				a.log.Warn("failed to parse answer", slog.String("error", err.Error()))
-				return
-			}
-			if err := pc.SetRemoteDescription(answer); err != nil {
-				a.log.Warn("failed to set remote description", slog.String("error", err.Error()))
-				return
-			}
-		default:
-			a.log.Warn("unknown message", slog.String("event", msg.Event))
+			continue
 		}
+
+		a.log.Warn("unrecognized message format")
 	}
 }
 
-func (a *App) heartbeatLoop() {
+func (a *App) discoveryHeartbeat() {
+	if a.cfg.WebhookURL == "" {
+		a.log.Warn("discovery heartbeat disabled", slog.String("reason", "webhook url missing"))
+		return
+	}
+
+	url := a.cfg.PublicBaseURL
+	if url == "" {
+		url = "ws://localhost:3300/signal"
+	} else {
+		lower := strings.ToLower(url)
+		switch {
+		case strings.HasPrefix(lower, "https://"):
+			url = "wss://" + strings.TrimPrefix(url, "https://")
+		case strings.HasPrefix(lower, "http://"):
+			url = "ws://" + strings.TrimPrefix(url, "http://")
+		}
+		if !strings.HasSuffix(url, "/signal") {
+			url = strings.TrimRight(url, "/") + "/signal"
+		}
+	}
+
+	client := resty.New().SetTimeout(5 * time.Second)
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		load := a.sfu.PeerCount()
-		a.log.Info("heartbeat", slog.Int("peers", load))
+	type heartbeatPayload struct {
+		ID     string `json:"id"`
+		Region string `json:"region"`
+		URL    string `json:"url"`
+		Load   int64  `json:"load"`
 	}
+
+	for range ticker.C {
+		payload := heartbeatPayload{
+			ID:     a.instID,
+			Region: a.cfg.Region,
+			URL:    url,
+			Load:   a.totalPeers.Load(),
+		}
+		resp, err := client.R().
+			SetHeader("Content-Type", "application/json").
+			SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
+			SetBody(payload).
+			Post(a.cfg.WebhookURL)
+		if err != nil {
+			a.log.Error("heartbeat request failed", slog.String("error", err.Error()))
+			continue
+		}
+		if resp.StatusCode() != 204 {
+			a.log.Warn("heartbeat unexpected status", slog.Int("status", resp.StatusCode()), slog.String("body", resp.String()))
+			continue
+		}
+		a.discoverLog.Do(func() {
+			a.log.Info("Service registered and discoverable")
+		})
+	}
+}
+
+func (a *App) readJoinEnvelope(c *websocket.Conn) (rtcJoinEnvelope, error) {
+	var env rtcJoinEnvelope
+	if c.Conn != nil {
+		_ = c.Conn.SetReadDeadline(time.Now().Add(joinHandshakeTimeout))
+	}
+	if err := c.ReadJSON(&env); err != nil {
+		return rtcJoinEnvelope{}, err
+	}
+	if c.Conn != nil {
+		_ = c.Conn.SetReadDeadline(time.Time{})
+	}
+	return env, nil
+}
+
+func (a *App) authorizeJoin(env rtcJoinEnvelope) (int64, int64, int64, bool, error) {
+	if env.OP != int(mqmsg.OPCodeRTC) || env.T != int(mqmsg.EventTypeRTCJoin) || env.D.Token == "" || env.D.Channel == 0 {
+		return 0, 0, 0, false, fmt.Errorf("expected join")
+	}
+	uid, tokChannel, perms, moved, err := a.validateJoinToken(env.D.Token)
+	if err != nil {
+		return 0, 0, 0, false, fmt.Errorf("unauthorized")
+	}
+	if tokChannel != 0 && tokChannel != env.D.Channel {
+		return 0, 0, 0, false, fmt.Errorf("unauthorized")
+	}
+	return uid, env.D.Channel, perms, moved, nil
+}
+
+func (a *App) handleLegacyEnvelope(env envelope, pc *webrtc.PeerConnection, writer *threadSafeWriter) bool {
+	switch env.OP {
+	case int(mqmsg.OPCodeHeartBeat):
+		var hb heartbeatData
+		_ = json.Unmarshal(env.D, &hb)
+		_ = writer.SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeHeartBeat), D: HeartbeatReply{Pong: true, ServerTS: time.Now().UnixMilli(), Nonce: hb.Nonce, TS: hb.TS}})
+		return false
+	case int(mqmsg.OPCodeRTC):
+		switch env.T {
+		case int(mqmsg.EventTypeRTCAnswer):
+			var ans rtcAnswer
+			if err := json.Unmarshal(env.D, &ans); err != nil || ans.SDP == "" {
+				return false
+			}
+			desc := webrtc.SessionDescription{Type: webrtc.SDPTypeAnswer, SDP: ans.SDP}
+			if err := pc.SetRemoteDescription(desc); err != nil {
+				a.log.Warn("failed to apply legacy answer", slog.String("error", err.Error()))
+			}
+		case int(mqmsg.EventTypeRTCCandidate):
+			var cand rtcCandidate
+			if err := json.Unmarshal(env.D, &cand); err != nil || cand.Candidate == "" {
+				return false
+			}
+			if err := pc.AddICECandidate(webrtc.ICECandidateInit{Candidate: cand.Candidate, SDPMid: cand.SDPMid, SDPMLineIndex: cand.SDPMLineIndex}); err != nil {
+				a.log.Warn("failed to add legacy candidate", slog.String("error", err.Error()))
+			}
+		case int(mqmsg.EventTypeRTCLeave):
+			return true
+		}
+	}
+	return false
 }

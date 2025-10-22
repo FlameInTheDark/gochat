@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -9,6 +10,8 @@ import (
 	"github.com/fasthttp/websocket"
 	"github.com/pion/rtcp"
 	"github.com/pion/webrtc/v4"
+
+	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 )
 
 type websocketMessage struct {
@@ -24,7 +27,56 @@ type threadSafeWriter struct {
 func (t *threadSafeWriter) WriteJSON(v any) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	if t.conn == nil {
+		return fmt.Errorf("websocket closed")
+	}
 	return t.conn.WriteJSON(v)
+}
+
+func (t *threadSafeWriter) sendDual(envelope any, eventName, eventData string) error {
+	if t.conn == nil {
+		return fmt.Errorf("websocket closed")
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if err := t.conn.WriteJSON(envelope); err != nil {
+		return err
+	}
+	if eventName != "" && eventData != "" {
+		msg := websocketMessage{Event: eventName, Data: eventData}
+		if err := t.conn.WriteJSON(&msg); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *threadSafeWriter) SendEnvelope(env OutEnvelope) error {
+	return t.sendDual(env, "", "")
+}
+
+func (t *threadSafeWriter) SendRTCOffer(desc webrtc.SessionDescription) error {
+	payload := rtcOffer{SDP: desc.SDP}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	env := OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCOffer), D: payload}
+	return t.sendDual(env, "offer", string(data))
+}
+
+func (t *threadSafeWriter) SendRTCCandidate(c *webrtc.ICECandidate) error {
+	if c == nil {
+		return nil
+	}
+	cand := c.ToJSON()
+	payload := rtcCandidate{Candidate: cand.Candidate, SDPMid: cand.SDPMid, SDPMLineIndex: cand.SDPMLineIndex}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	env := OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCCandidate), D: payload}
+	return t.sendDual(env, "candidate", string(data))
 }
 
 type peerConnectionState struct {
@@ -153,13 +205,7 @@ func (s *SFU) SignalPeerConnections() {
 				return true
 			}
 
-			offerBytes, err := json.Marshal(offer)
-			if err != nil {
-				s.log.Warn("failed to marshal offer", slog.String("error", err.Error()))
-				return true
-			}
-
-			if err = state.websocket.WriteJSON(&websocketMessage{Event: "offer", Data: string(offerBytes)}); err != nil {
+			if err = state.websocket.SendRTCOffer(offer); err != nil {
 				s.log.Warn("failed to send offer", slog.String("error", err.Error()))
 				return true
 			}
