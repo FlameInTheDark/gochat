@@ -31,6 +31,18 @@ type Config struct {
 	OSAddresses                []string `yaml:"os_addresses" env:"OS_ADDRESSES"`
 	OSUsername                 string   `yaml:"os_username" env:"OS_USERNAME"`
 	OSPassword                 string   `yaml:"os_password" env:"OS_PASSWORD"`
+	// Voice/Discovery
+	VoiceRegions       []VoiceRegion `yaml:"voice_regions"`
+	VoiceDefaultRegion string        `yaml:"voice_region" env:"VOICE_REGION" env-default:"global"`
+	EtcdEndpoints      []string      `yaml:"etcd_endpoints" env:"ETCD_ENDPOINTS" env-separator:","`
+	EtcdPrefix         string        `yaml:"etcd_prefix" env:"ETCD_PREFIX" env-default:"/gochat/sfu"`
+	EtcdUsername       string        `yaml:"etcd_username" env:"ETCD_USERNAME"`
+	EtcdPassword       string        `yaml:"etcd_password" env:"ETCD_PASSWORD"`
+}
+
+type VoiceRegion struct {
+	ID   string `yaml:"id"`
+	Name string `yaml:"name"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {

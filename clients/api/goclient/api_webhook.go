@@ -22,58 +22,67 @@ import (
 // WebhookAPIService WebhookAPI service
 type WebhookAPIService service
 
-type ApiWebhookStorageEventsPostRequest struct {
-	ctx            context.Context
-	ApiService     *WebhookAPIService
-	webhookS3Event *WebhookS3Event
+type ApiWebhookAttachmentsFinalizePostRequest struct {
+	ctx                        context.Context
+	ApiService                 *WebhookAPIService
+	xWebhookToken              *string
+	attachmentsFinalizeRequest *AttachmentsFinalizeRequest
 }
 
-// S3 event
-func (r ApiWebhookStorageEventsPostRequest) WebhookS3Event(webhookS3Event WebhookS3Event) ApiWebhookStorageEventsPostRequest {
-	r.webhookS3Event = &webhookS3Event
+// JWT token
+func (r ApiWebhookAttachmentsFinalizePostRequest) XWebhookToken(xWebhookToken string) ApiWebhookAttachmentsFinalizePostRequest {
+	r.xWebhookToken = &xWebhookToken
 	return r
 }
 
-func (r ApiWebhookStorageEventsPostRequest) Execute() (string, *http.Response, error) {
-	return r.ApiService.WebhookStorageEventsPostExecute(r)
+// Finalize payload
+func (r ApiWebhookAttachmentsFinalizePostRequest) AttachmentsFinalizeRequest(attachmentsFinalizeRequest AttachmentsFinalizeRequest) ApiWebhookAttachmentsFinalizePostRequest {
+	r.attachmentsFinalizeRequest = &attachmentsFinalizeRequest
+	return r
+}
+
+func (r ApiWebhookAttachmentsFinalizePostRequest) Execute() (*http.Response, error) {
+	return r.ApiService.WebhookAttachmentsFinalizePostExecute(r)
 }
 
 /*
-WebhookStorageEventsPost Storage event
+WebhookAttachmentsFinalizePost Finalize attachment metadata
+
+Persist completed attachment metadata after upload
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiWebhookStorageEventsPostRequest
+	@return ApiWebhookAttachmentsFinalizePostRequest
 */
-func (a *WebhookAPIService) WebhookStorageEventsPost(ctx context.Context) ApiWebhookStorageEventsPostRequest {
-	return ApiWebhookStorageEventsPostRequest{
+func (a *WebhookAPIService) WebhookAttachmentsFinalizePost(ctx context.Context) ApiWebhookAttachmentsFinalizePostRequest {
+	return ApiWebhookAttachmentsFinalizePostRequest{
 		ApiService: a,
 		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//
-//	@return	string
-func (a *WebhookAPIService) WebhookStorageEventsPostExecute(r ApiWebhookStorageEventsPostRequest) (string, *http.Response, error) {
+func (a *WebhookAPIService) WebhookAttachmentsFinalizePostExecute(r ApiWebhookAttachmentsFinalizePostRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPost
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue string
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WebhookAPIService.WebhookStorageEventsPost")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WebhookAPIService.WebhookAttachmentsFinalizePost")
 	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/webhook/storage/events"
+	localVarPath := localBasePath + "/webhook/attachments/finalize"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.webhookS3Event == nil {
-		return localVarReturnValue, nil, reportError("webhookS3Event is required and must be specified")
+	if r.xWebhookToken == nil {
+		return nil, reportError("xWebhookToken is required and must be specified")
+	}
+	if r.attachmentsFinalizeRequest == nil {
+		return nil, reportError("attachmentsFinalizeRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -93,23 +102,24 @@ func (a *WebhookAPIService) WebhookStorageEventsPostExecute(r ApiWebhookStorageE
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Webhook-Token", r.xWebhookToken, "simple", "")
 	// body params
-	localVarPostBody = r.webhookS3Event
+	localVarPostBody = r.attachmentsFinalizeRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return localVarReturnValue, nil, err
+		return nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
+		return localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
+		return localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -122,44 +132,200 @@ func (a *WebhookAPIService) WebhookStorageEventsPostExecute(r ApiWebhookStorageE
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
+				return localVarHTTPResponse, newErr
 			}
 			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
+			return localVarHTTPResponse, newErr
 		}
-		if localVarHTTPResponse.StatusCode == 404 {
+		if localVarHTTPResponse.StatusCode == 401 {
 			var v string
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
+				return localVarHTTPResponse, newErr
 			}
 			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
+			return localVarHTTPResponse, newErr
 		}
-		if localVarHTTPResponse.StatusCode == 500 {
+		if localVarHTTPResponse.StatusCode == 502 {
 			var v string
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 503 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
 			}
 			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 			newErr.model = v
 		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
+		return localVarHTTPResponse, newErr
 	}
 
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	return localVarHTTPResponse, nil
+}
+
+type ApiWebhookSfuHeartbeatPostRequest struct {
+	ctx                 context.Context
+	ApiService          *WebhookAPIService
+	xWebhookToken       *string
+	sfuHeartbeatRequest *SfuHeartbeatRequest
+}
+
+// JWT token
+func (r ApiWebhookSfuHeartbeatPostRequest) XWebhookToken(xWebhookToken string) ApiWebhookSfuHeartbeatPostRequest {
+	r.xWebhookToken = &xWebhookToken
+	return r
+}
+
+// Heartbeat payload
+func (r ApiWebhookSfuHeartbeatPostRequest) SfuHeartbeatRequest(sfuHeartbeatRequest SfuHeartbeatRequest) ApiWebhookSfuHeartbeatPostRequest {
+	r.sfuHeartbeatRequest = &sfuHeartbeatRequest
+	return r
+}
+
+func (r ApiWebhookSfuHeartbeatPostRequest) Execute() (*http.Response, error) {
+	return r.ApiService.WebhookSfuHeartbeatPostExecute(r)
+}
+
+/*
+WebhookSfuHeartbeatPost SFU heartbeat
+
+Register or refresh SFU instance for discovery
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiWebhookSfuHeartbeatPostRequest
+*/
+func (a *WebhookAPIService) WebhookSfuHeartbeatPost(ctx context.Context) ApiWebhookSfuHeartbeatPostRequest {
+	return ApiWebhookSfuHeartbeatPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+func (a *WebhookAPIService) WebhookSfuHeartbeatPostExecute(r ApiWebhookSfuHeartbeatPostRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WebhookAPIService.WebhookSfuHeartbeatPost")
 	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/webhook/sfu/heartbeat"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.xWebhookToken == nil {
+		return nil, reportError("xWebhookToken is required and must be specified")
+	}
+	if r.sfuHeartbeatRequest == nil {
+		return nil, reportError("sfuHeartbeatRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Webhook-Token", r.xWebhookToken, "simple", "")
+	// body params
+	localVarPostBody = r.sfuHeartbeatRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
 		newErr := &GenericOpenAPIError{
 			body:  localVarBody,
-			error: err.Error(),
+			error: localVarHTTPResponse.Status,
 		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 502 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 503 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
 	}
 
-	return localVarReturnValue, localVarHTTPResponse, nil
+	return localVarHTTPResponse, nil
 }

@@ -64,6 +64,10 @@ type APIClient struct {
 	UploadAPI *UploadAPIService
 
 	UserAPI *UserAPIService
+
+	VoiceAPI *VoiceAPIService
+
+	WebhookAPI *WebhookAPIService
 }
 
 type service struct {
@@ -90,6 +94,8 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.SearchAPI = (*SearchAPIService)(&c.common)
 	c.UploadAPI = (*UploadAPIService)(&c.common)
 	c.UserAPI = (*UserAPIService)(&c.common)
+	c.VoiceAPI = (*VoiceAPIService)(&c.common)
+	c.WebhookAPI = (*WebhookAPIService)(&c.common)
 
 	return c
 }

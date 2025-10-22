@@ -1,0 +1,32 @@
+[<- Documentation](README.md)
+
+# Tools CLI
+
+The `cmd/tools` application provides helper commands for operating the platform.
+
+## gen-token
+
+Generate a JWT for services that authenticate to the Webhook.
+
+Flags
+- `--type` Service type (e.g., `sfu`, `attachments`).
+- `--id` Optional service id (UUIDv4). When omitted, a random UUID is generated. For SFU, this should match `service_id` in `sfu_config.yaml`.
+- `--secret` HS256 secret used by the Webhook service (`jwt_secret`).
+- `--format` Output format: `text` (default) or `json`.
+- `--header` Print the `X-Webhook-Token` header line.
+- `--curl` Print a ready-to-run cURL example for the selected type.
+
+Examples
+```
+# Generate SFU token with a fixed id
+tools gen-token --type sfu --id 26a58109-fbc4-4205-ad3e-8bef10e9d8d5 --secret supersecret
+
+# Print as header and curl example
+tools gen-token --type sfu --secret supersecret --header --curl
+
+# JSON output (contains id and token fields)
+tools gen-token --type attachments --secret supersecret --format json
+```
+
+Use the output token as `webhook_token` in `sfu_config.yaml` or as the value for `X-Webhook-Token` when calling Webhook endpoints from trusted services.
+

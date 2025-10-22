@@ -22,13 +22,34 @@ type UserSettingsData struct {
 	ForcedPresence string                     `json:"forced_presence"`
 	Status         Status                     `json:"status"`
 	DMChannels     []UserDMChannels           `json:"dm_channels"`
+	Devices        Devices                    `json:"devices"`
 }
 
 func (s UserSettingsData) Validate() error {
 	return validation.ValidateStruct(&s,
 		validation.Field(&s.Appearance),
 		validation.Field(&s.Status),
+		validation.Field(&s.Devices),
 		validation.Field(&s.FavoriteGifs, validation.Each(is.URL)),
+	)
+}
+
+type Devices struct {
+	AudioInputDevice    string  `json:"audio_input_device"`
+	AudioOutputDevice   string  `json:"audio_output_device"`
+	VideoDevice         string  `json:"video_device"`
+	NoiseSuppression    bool    `json:"noise_suppression"`
+	EchoCancellation    bool    `json:"echo_cancellation"`
+	AudioInputLevel     float64 `json:"audio_input_level"`
+	AudioOutputLevel    float64 `json:"audio_output_level"`
+	AudioInputThreshold float64 `json:"audio_input_threshold"`
+	AutoGainControl     bool    `json:"auto_gain_control"`
+}
+
+func (d Devices) Validate() error {
+	return validation.ValidateStruct(&d,
+		validation.Field(&d.AudioInputLevel, validation.Min(0.0), validation.Max(100.0)),
+		validation.Field(&d.AudioOutputLevel, validation.Min(0.0), validation.Max(150.0)),
 	)
 }
 

@@ -19,6 +19,9 @@ Method | HTTP request | Description
 [**GuildGuildIdIconsIconIdDelete**](GuildAPI.md#GuildGuildIdIconsIconIdDelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
 [**GuildGuildIdMembersGet**](GuildAPI.md#GuildGuildIdMembersGet) | **Get** /guild/{guild_id}/members | Get guild members
 [**GuildGuildIdPatch**](GuildAPI.md#GuildGuildIdPatch) | **Patch** /guild/{guild_id} | Update guild
+[**GuildGuildIdVoiceChannelIdJoinPost**](GuildAPI.md#GuildGuildIdVoiceChannelIdJoinPost) | **Post** /guild/{guild_id}/voice/{channel_id}/join | Join voice channel (get SFU signaling info)
+[**GuildGuildIdVoiceChannelIdRegionPatch**](GuildAPI.md#GuildGuildIdVoiceChannelIdRegionPatch) | **Patch** /guild/{guild_id}/voice/{channel_id}/region | Set channel voice region
+[**GuildGuildIdVoiceMovePost**](GuildAPI.md#GuildGuildIdVoiceMovePost) | **Post** /guild/{guild_id}/voice/move | Move member to voice channel
 [**GuildPost**](GuildAPI.md#GuildPost) | **Post** /guild | Create guild
 
 
@@ -1063,6 +1066,226 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**DtoGuild**](DtoGuild.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdVoiceChannelIdJoinPost
+
+> GuildJoinVoiceResponse GuildGuildIdVoiceChannelIdJoinPost(ctx, guildId, channelId).Execute()
+
+Join voice channel (get SFU signaling info)
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdVoiceChannelIdJoinPost(context.Background(), guildId, channelId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdVoiceChannelIdJoinPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdVoiceChannelIdJoinPost`: GuildJoinVoiceResponse
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdVoiceChannelIdJoinPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Channel ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdVoiceChannelIdJoinPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+[**GuildJoinVoiceResponse**](GuildJoinVoiceResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdVoiceChannelIdRegionPatch
+
+> GuildSetVoiceRegionResponse GuildGuildIdVoiceChannelIdRegionPatch(ctx, guildId, channelId).GuildSetVoiceRegionRequest(guildSetVoiceRegionRequest).Execute()
+
+Set channel voice region
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	guildSetVoiceRegionRequest := *openapiclient.NewGuildSetVoiceRegionRequest() // GuildSetVoiceRegionRequest | Region payload
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdVoiceChannelIdRegionPatch(context.Background(), guildId, channelId).GuildSetVoiceRegionRequest(guildSetVoiceRegionRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdVoiceChannelIdRegionPatch``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdVoiceChannelIdRegionPatch`: GuildSetVoiceRegionResponse
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdVoiceChannelIdRegionPatch`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Channel ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdVoiceChannelIdRegionPatchRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+ **guildSetVoiceRegionRequest** | [**GuildSetVoiceRegionRequest**](GuildSetVoiceRegionRequest.md) | Region payload | 
+
+### Return type
+
+[**GuildSetVoiceRegionResponse**](GuildSetVoiceRegionResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdVoiceMovePost
+
+> GuildMoveMemberResponse GuildGuildIdVoiceMovePost(ctx, guildId).GuildMoveMemberRequest(guildMoveMemberRequest).Execute()
+
+Move member to voice channel
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	guildMoveMemberRequest := *openapiclient.NewGuildMoveMemberRequest() // GuildMoveMemberRequest | Move request
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdVoiceMovePost(context.Background(), guildId).GuildMoveMemberRequest(guildMoveMemberRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdVoiceMovePost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdVoiceMovePost`: GuildMoveMemberResponse
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdVoiceMovePost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdVoiceMovePostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **guildMoveMemberRequest** | [**GuildMoveMemberRequest**](GuildMoveMemberRequest.md) | Move request | 
+
+### Return type
+
+[**GuildMoveMemberResponse**](GuildMoveMemberResponse.md)
 
 ### Authorization
 

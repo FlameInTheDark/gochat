@@ -99,3 +99,11 @@ rebuild_indexer:
 rebuild_attachments:
 	docker compose down attachments
 	docker compose up -d --no-deps --build attachments
+
+rebuild_sfu:
+	docker compose down sfu
+	docker compose up -d --no-deps --build sfu
+
+rebuild_webhook:
+	docker compose down webhook
+	docker compose up -d --no-deps --build webhook

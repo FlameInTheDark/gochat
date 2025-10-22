@@ -158,6 +158,105 @@ func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int
 	}
 }
 
+// ChannelEffectivePermissions computes the combined permission bitmask for a user in a given channel.
+// It mirrors ChannelPerm logic but returns the effective permission flags instead of checking specific bits.
+func (e *Entity) GetChannelPermissions(ctx context.Context, guildID, channelID, userID int64) (int64, error) {
+	// Get channel information
+	channel, err := e.ch.GetChannel(ctx, channelID)
+	if err != nil {
+		return 0, err
+	}
+
+	// Handle DM/group DM/thread specially: use access semantics similar to ChannelPerm
+	switch channel.Type {
+	case model.ChannelTypeDM:
+		ok, err := e.dm.IsDmChannelParticipant(ctx, channelID, userID)
+		if err != nil {
+			return 0, err
+		}
+		if ok {
+			return permissions.CreatePermissions(permissions.PermServerViewChannels), nil
+		}
+		return 0, nil
+	case model.ChannelTypeGroupDM:
+		ok, err := e.gdm.IsGroupDmParticipant(ctx, channelID, userID)
+		if err != nil {
+			return 0, err
+		}
+		if ok {
+			return permissions.CreatePermissions(permissions.PermServerViewChannels), nil
+		}
+		return 0, nil
+	case model.ChannelTypeThread:
+		if channel.ParentID == nil {
+			return 0, fmt.Errorf("thread channel has no parent")
+		}
+		return e.GetChannelPermissions(ctx, guildID, *channel.ParentID, userID)
+	}
+
+	// Guild + guild channel info
+	guild, err := e.g.GetGuildById(ctx, guildID)
+	if err != nil {
+		return 0, err
+	}
+	if _, err := e.gc.GetGuildChannel(ctx, guildID, channelID); err != nil {
+		return 0, err
+	}
+
+	// Guild owner has all permissions
+	if userID == guild.OwnerId {
+		return int64(^uint64(0) >> 1), nil
+	}
+
+	// Base perms from channel or guild
+	var permAll int64
+	if channel.Permissions != nil {
+		permAll = *channel.Permissions
+	} else {
+		permAll = guild.Permissions
+	}
+
+	// Roles
+	roleIDs, err := e.getUserRoleIDs(ctx, guildID, userID)
+	if err != nil {
+		return 0, err
+	}
+	roles, err := e.role.GetRolesBulk(ctx, roleIDs)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return 0, err
+	}
+
+	// Channel role overrides
+	channelRolePerms, err := e.chrp.GetChannelRolePermissions(ctx, channelID)
+	if err != nil {
+		return 0, err
+	}
+	channelRolePermsMap := make(map[int64]*model.ChannelRolesPermission)
+	for i, p := range channelRolePerms {
+		channelRolePermsMap[p.RoleId] = &channelRolePerms[i]
+	}
+
+	// Apply role permissions
+	for _, r := range roles {
+		if crp, ok := channelRolePermsMap[r.Id]; ok {
+			r.Permissions = permissions.AddRoles(r.Permissions, crp.Accept)
+			r.Permissions = permissions.SubtractRoles(r.Permissions, crp.Deny)
+		}
+		permAll = permissions.AddRoles(permAll, r.Permissions)
+	}
+
+	// User-specific overrides
+	if ucp, err := e.chup.GetUserChannelPermission(ctx, channelID, userID); err == nil {
+		permAll = permissions.AddRoles(permAll, ucp.Accept)
+		permAll = permissions.SubtractRoles(permAll, ucp.Deny)
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return 0, err
+	}
+
+	// If channel is private and user has no role overrides, access may still be restricted in higher layers.
+	return permAll, nil
+}
+
 // GuildPerm checks if a user has the specified permissions for a guild
 // Returns guild, permission status, and error
 func (e *Entity) GuildPerm(ctx context.Context, guildID, userID int64, perm ...permissions.RolePermission) (*model.Guild, bool, error) {

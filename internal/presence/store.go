@@ -50,6 +50,26 @@ func (s *Store) TouchSessionTTL(ctx context.Context, userID int64, sessionID str
 	return nil
 }
 
+// SetSessionVoiceChannel sets or clears the session's current voice channel ID and refreshes TTLs.
+func (s *Store) SetSessionVoiceChannel(ctx context.Context, userID int64, sessionID string, channelID *int64, ttlSeconds int64) error {
+	val, err := s.c.HGet(ctx, sessionsKey(userID), sessionID)
+	var sp SessionPresence
+	if err == nil && val != "" {
+		_ = json.Unmarshal([]byte(val), &sp)
+	}
+	sp.SessionID = sessionID
+	sp.UpdatedAt = time.Now().Unix()
+	sp.ExpiresAt = time.Now().Unix() + ttlSeconds
+	sp.VoiceChannelID = channelID
+	b, _ := json.Marshal(sp)
+	if err := s.c.HSet(ctx, sessionsKey(userID), sessionID, string(b)); err != nil {
+		return err
+	}
+	_ = s.c.SetTTL(ctx, sessionsKey(userID), ttlSeconds)
+	_ = s.c.SetTTL(ctx, aggKey(userID), ttlSeconds)
+	return nil
+}
+
 // RemoveSession logically removes session by blanking its field; then refresh TTL.
 func (s *Store) RemoveSession(ctx context.Context, userID int64, sessionID string, ttlSeconds int64) error {
 	if err := s.c.HDel(ctx, sessionsKey(userID), sessionID); err != nil {
@@ -91,6 +111,8 @@ func (s *Store) Aggregate(ctx context.Context, userID int64, nowUnix int64) (Pre
 	any := false
 	var bestText string
 	var bestTextUpdated int64
+	var voiceID *int64
+	var voiceIDUpdated int64
 	for _, v := range m {
 		if v == "" {
 			continue
@@ -121,11 +143,16 @@ func (s *Store) Aggregate(ctx context.Context, userID int64, nowUnix int64) (Pre
 			bestText = sp.CustomStatusText
 			bestTextUpdated = sp.UpdatedAt
 		}
+		if sp.VoiceChannelID != nil && sp.UpdatedAt >= voiceIDUpdated {
+			vid := *sp.VoiceChannelID
+			voiceID = &vid
+			voiceIDUpdated = sp.UpdatedAt
+		}
 	}
 	if !any {
-		return Presence{UserID: userID, Status: StatusOffline, Since: nowUnix, CustomStatusText: bestText}, false, nil
+		return Presence{UserID: userID, Status: StatusOffline, Since: nowUnix, CustomStatusText: bestText, VoiceChannelID: voiceID}, false, nil
 	}
-	return Presence{UserID: userID, Status: best, Since: since, CustomStatusText: bestText}, true, nil
+	return Presence{UserID: userID, Status: best, Since: since, CustomStatusText: bestText, VoiceChannelID: voiceID}, true, nil
 }
 
 // Get returns aggregated presence (from cache if exists; falls back to recompute).

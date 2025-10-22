@@ -100,6 +100,9 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdIconsIconIdDelete**](docs/GuildAPI.md#guildguildidiconsiconiddelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
 *GuildAPI* | [**GuildGuildIdMembersGet**](docs/GuildAPI.md#guildguildidmembersget) | **Get** /guild/{guild_id}/members | Get guild members
 *GuildAPI* | [**GuildGuildIdPatch**](docs/GuildAPI.md#guildguildidpatch) | **Patch** /guild/{guild_id} | Update guild
+*GuildAPI* | [**GuildGuildIdVoiceChannelIdJoinPost**](docs/GuildAPI.md#guildguildidvoicechannelidjoinpost) | **Post** /guild/{guild_id}/voice/{channel_id}/join | Join voice channel (get SFU signaling info)
+*GuildAPI* | [**GuildGuildIdVoiceChannelIdRegionPatch**](docs/GuildAPI.md#guildguildidvoicechannelidregionpatch) | **Patch** /guild/{guild_id}/voice/{channel_id}/region | Set channel voice region
+*GuildAPI* | [**GuildGuildIdVoiceMovePost**](docs/GuildAPI.md#guildguildidvoicemovepost) | **Post** /guild/{guild_id}/voice/move | Move member to voice channel
 *GuildAPI* | [**GuildPost**](docs/GuildAPI.md#guildpost) | **Post** /guild | Create guild
 *GuildInvitesAPI* | [**GuildInvitesAcceptInviteCodePost**](docs/GuildInvitesAPI.md#guildinvitesacceptinvitecodepost) | **Post** /guild/invites/accept/{invite_code} | Accept invite and join guild
 *GuildInvitesAPI* | [**GuildInvitesGuildIdGet**](docs/GuildInvitesAPI.md#guildinvitesguildidget) | **Get** /guild/invites/{guild_id} | List active invites for guild
@@ -148,10 +151,14 @@ Class | Method | HTTP request | Description
 *UserAPI* | [**UserMeSettingsGet**](docs/UserAPI.md#usermesettingsget) | **Get** /user/me/settings | Get current user settings (optional version gating)
 *UserAPI* | [**UserMeSettingsPost**](docs/UserAPI.md#usermesettingspost) | **Post** /user/me/settings | Update current user settings (replaces and bumps version)
 *UserAPI* | [**UserUserIdGet**](docs/UserAPI.md#useruseridget) | **Get** /user/{user_id} | Get user
+*VoiceAPI* | [**VoiceRegionsGet**](docs/VoiceAPI.md#voiceregionsget) | **Get** /voice/regions | List available voice regions
+*WebhookAPI* | [**WebhookAttachmentsFinalizePost**](docs/WebhookAPI.md#webhookattachmentsfinalizepost) | **Post** /webhook/attachments/finalize | Finalize attachment metadata
+*WebhookAPI* | [**WebhookSfuHeartbeatPost**](docs/WebhookAPI.md#webhooksfuheartbeatpost) | **Post** /webhook/sfu/heartbeat | SFU heartbeat
 
 
 ## Documentation For Models
 
+ - [AttachmentsFinalizeRequest](docs/AttachmentsFinalizeRequest.md)
  - [AuthConfirmationRequest](docs/AuthConfirmationRequest.md)
  - [AuthLoginRequest](docs/AuthLoginRequest.md)
  - [AuthLoginResponse](docs/AuthLoginResponse.md)
@@ -183,13 +190,19 @@ Class | Method | HTTP request | Description
  - [GuildCreateGuildRoleRequest](docs/GuildCreateGuildRoleRequest.md)
  - [GuildCreateIconRequest](docs/GuildCreateIconRequest.md)
  - [GuildCreateInviteRequest](docs/GuildCreateInviteRequest.md)
+ - [GuildJoinVoiceResponse](docs/GuildJoinVoiceResponse.md)
+ - [GuildMoveMemberRequest](docs/GuildMoveMemberRequest.md)
+ - [GuildMoveMemberResponse](docs/GuildMoveMemberResponse.md)
  - [GuildPatchGuildChannelOrderRequest](docs/GuildPatchGuildChannelOrderRequest.md)
  - [GuildPatchGuildChannelRequest](docs/GuildPatchGuildChannelRequest.md)
  - [GuildPatchGuildRoleRequest](docs/GuildPatchGuildRoleRequest.md)
+ - [GuildSetVoiceRegionRequest](docs/GuildSetVoiceRegionRequest.md)
+ - [GuildSetVoiceRegionResponse](docs/GuildSetVoiceRegionResponse.md)
  - [GuildUpdateGuildRequest](docs/GuildUpdateGuildRequest.md)
  - [MessageSendMessageRequest](docs/MessageSendMessageRequest.md)
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)
  - [MessageUploadAttachmentRequest](docs/MessageUploadAttachmentRequest.md)
+ - [ModelDevices](docs/ModelDevices.md)
  - [ModelStatus](docs/ModelStatus.md)
  - [ModelUserDMChannels](docs/ModelUserDMChannels.md)
  - [ModelUserSettingsAppearance](docs/ModelUserSettingsAppearance.md)
@@ -199,6 +212,7 @@ Class | Method | HTTP request | Description
  - [ModelUserSettingsNotifications](docs/ModelUserSettingsNotifications.md)
  - [SearchMessageSearchRequest](docs/SearchMessageSearchRequest.md)
  - [SearchMessageSearchResponse](docs/SearchMessageSearchResponse.md)
+ - [SfuHeartbeatRequest](docs/SfuHeartbeatRequest.md)
  - [UserCreateAvatarRequest](docs/UserCreateAvatarRequest.md)
  - [UserCreateDMManyRequest](docs/UserCreateDMManyRequest.md)
  - [UserCreateDMRequest](docs/UserCreateDMRequest.md)
@@ -207,6 +221,8 @@ Class | Method | HTTP request | Description
  - [UserModifyUserRequest](docs/UserModifyUserRequest.md)
  - [UserUnfriendRequest](docs/UserUnfriendRequest.md)
  - [UserUserSettingsResponse](docs/UserUserSettingsResponse.md)
+ - [VoiceRegion](docs/VoiceRegion.md)
+ - [VoiceVoiceRegionsResponse](docs/VoiceVoiceRegionsResponse.md)
 
 
 ## Documentation For Authorization

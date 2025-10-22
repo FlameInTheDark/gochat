@@ -98,6 +98,48 @@ services:
       - traefik
       - default
 
+  sfu:
+    image: gochat/sfu
+    build:
+      dockerfile: sfu.Dockerfile
+    restart: always
+    volumes:
+      - ./sfu_config.yaml:/dist/config.yaml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sfu.rule=PathPrefix(`/sfu`)"
+      - "traefik.http.routers.sfu.middlewares=sfu-stripprefix"
+      - "traefik.http.middlewares.sfu-stripprefix.stripprefix.prefixes=/sfu"
+      - "traefik.http.middlewares.sfu-stripprefix.stripprefix.forceslash=true"
+      - "traefik.http.routers.sfu.service=sfu"
+      - "traefik.http.services.sfu.loadbalancer.server.port=3300"
+      - "traefik.docker.network=gochat_traefik"
+    depends_on:
+      - traefik
+    networks:
+      - traefik
+      - default
+
+  webhook:
+    image: gochat/webhook
+    build:
+      dockerfile: webhook.Dockerfile
+    restart: always
+    volumes:
+      - ./webhook_config.yaml:/dist/config.yaml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webhook.rule=PathPrefix(`/api/v1/webhook`)"
+      - "traefik.http.routers.webhook.priority=100"
+      - "traefik.http.routers.webhook.service=webhook"
+      - "traefik.http.services.webhook.loadbalancer.server.port=3200"
+      - "traefik.docker.network=gochat_traefik"
+    depends_on:
+      - traefik
+    networks:
+      - traefik
+      - default
+
   indexer:
     image: gochat/indexer
     build:
@@ -313,6 +355,21 @@ services:
     entrypoint: ["/bin/sh", "-c", "until pg_isready -h citus-master -p 5432 -U ${POSTGRES_USER:-postgres}; do sleep 1; done; psql -h citus-master -U ${POSTGRES_USER:-postgres} -d gochat -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS citus;'" ]
     networks:
       - citus
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.0
+    restart: always
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=no
+      - ETCD_ROOT_PASSWORD=${ETCD_ROOT_PASSWORD:-changeme}
+      - ETCD_ENABLE_V2=false
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd:2380
+      - ETCD_INITIAL_CLUSTER=etcd=http://etcd:2380
+      - ETCD_INITIAL_CLUSTER_STATE=new
+      - ETCD_NAME=etcd
 
 volumes:
   scylla-data:

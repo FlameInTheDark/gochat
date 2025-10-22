@@ -18,6 +18,8 @@ const (
 	OPCodeGuildUpdateSubscription
 	OPCodeChannelSubscription
 	OPCodePresenceSubscription
+	// WebRTC signaling over existing WS (single opcode)
+	OPCodeRTC
 )
 
 type EventType int
@@ -61,6 +63,37 @@ const (
 	EventTypeUserFriendRemoved
 	EventTypeUserDMMessage
 	EventTypeUserUpdate
+)
+
+// RTC signaling event types (client <-> SFU via WS)
+const (
+	EventTypeRTCJoin EventType = 500 + iota
+	EventTypeRTCOffer
+	EventTypeRTCAnswer
+	EventTypeRTCCandidate
+	EventTypeRTCLeave
+)
+
+// Extended RTC signaling/control events (client <-> SFU)
+const (
+	// Client mutes/unmutes self (local microphone)
+	EventTypeRTCMuteSelf EventType = 505 + iota
+	// Client mutes/unmutes specific user locally (does not affect others)
+	EventTypeRTCMuteUser
+	// Privileged: server-side mute a user for everyone
+	EventTypeRTCServerMuteUser
+	// Privileged: server-side deafen a user (they receive no one)
+	EventTypeRTCServerDeafenUser
+	// Keep binding alive while users are in the call; clients send periodically
+	EventTypeRTCBindingAlive
+	// Privileged: kick a user from the room (server instructs client to leave)
+	EventTypeRTCServerKickUser
+	// Privileged: block/unblock a user from joining this room
+	EventTypeRTCServerBlockUser
+	// Server -> client notification: you were moved to another channel (close WS and reconnect)
+	EventTypeRTCMoved
+	// Server -> clients in a voice channel: SFU route changed; reconnect by rejoining
+	EventTypeRTCServerRebind
 )
 
 type Message struct {

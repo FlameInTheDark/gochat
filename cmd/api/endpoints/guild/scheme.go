@@ -51,6 +51,9 @@ const (
 	ErrNotAMember                      = "not a member"
 	ErrUnableToGetReadState            = "unable to get read state"
 	ErrUnableToSetReadState            = "unable to set read state"
+	ErrUnableToIssueVoiceToken         = "unable to issue voice token"
+	ErrNoSFUAvailableInRegion          = "no sfu available in region"
+	ErrNotAVoiceChannel                = "not a voice channel"
 	// Channel role permissions
 	ErrUnableToGetChannelRolePerms = "unable to get channel role permissions"
 	ErrUnableToSetChannelRolePerm  = "unable to set channel role permission"
@@ -169,8 +172,6 @@ func (r CreateGuildChannelRequest) Validate() error {
 				model.ChannelTypeGuild,
 				model.ChannelTypeGuildVoice,
 				model.ChannelTypeGuildCategory,
-				model.ChannelTypeDM,
-				model.ChannelTypeGroupDM,
 				model.ChannelTypeThread,
 			).Error(ErrChannelTypeInvalid),
 		),
@@ -441,4 +442,43 @@ func (r CreateIconRequest) Validate() error {
 		return fiber.NewError(fiber.StatusUnsupportedMediaType, "unsupported content type")
 	}
 	return nil
+}
+
+// JoinVoiceResponse is the response for successful voice join initiation.
+type JoinVoiceResponse struct {
+	SFUURL   string `json:"sfu_url"`
+	SFUToken string `json:"sfu_token"`
+}
+
+// SetVoiceRegionRequest is the body for setting a channel's preferred voice region.
+type SetVoiceRegionRequest struct {
+	Region string `json:"region"`
+}
+
+// SetVoiceRegionResponse is the response for successful region update.
+type SetVoiceRegionResponse struct {
+	GuildID   int64  `json:"guild_id"`
+	ChannelID int64  `json:"channel_id"`
+	Region    string `json:"region,omitempty"`
+}
+
+// MoveMemberRequest is used to move a user to another voice channel.
+type MoveMemberRequest struct {
+	UserID    int64 `json:"user_id"`
+	ChannelID int64 `json:"channel_id"`
+	From      int64 `json:"from"`
+}
+
+// MoveMemberResponse acknowledges the move request dispatch.
+type MoveMemberResponse struct {
+	Ok           bool   `json:"ok"`
+	FromSFUURL   string `json:"from_sfu_url,omitempty"`
+	FromSFUToken string `json:"from_sfu_token,omitempty"`
+}
+
+// voiceRouteBinding is the cached binding of a channel to a specific SFU instance
+// stored under key `voice:route:{channel}`.
+type voiceRouteBinding struct {
+	ID  string `json:"id"`
+	URL string `json:"url"`
 }

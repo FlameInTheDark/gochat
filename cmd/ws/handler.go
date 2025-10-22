@@ -169,7 +169,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 
 	h := handler.New(a.cdb, a.pg, subs, sendJSON, a.jwt, a.cfg.HearthBeatTimeout, func() {
 		sendClose("Closed")
-	}, a.log, a.natsConn, pstore)
+	}, a.log, a.natsConn, pstore, a.cache)
 
 	defer func() { _ = h.Close() }()
 

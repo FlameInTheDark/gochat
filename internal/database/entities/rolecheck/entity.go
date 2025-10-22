@@ -23,6 +23,7 @@ type RoleCheck interface {
 	getUserRoleIDs(ctx context.Context, guildID, userID int64) ([]int64, error)
 	ChannelPerm(ctx context.Context, guildID, channelID, userID int64, perm ...permissions.RolePermission) (*model.Channel, *model.GuildChannel, *model.Guild, bool, error)
 	GuildPerm(ctx context.Context, guildID, userID int64, perm ...permissions.RolePermission) (*model.Guild, bool, error)
+	GetChannelPermissions(ctx context.Context, guildID, channelID, userID int64) (int64, error)
 }
 
 type Entity struct {

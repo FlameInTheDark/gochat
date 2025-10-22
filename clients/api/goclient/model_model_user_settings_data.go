@@ -21,6 +21,7 @@ var _ MappedNullable = &ModelUserSettingsData{}
 // ModelUserSettingsData struct for ModelUserSettingsData
 type ModelUserSettingsData struct {
 	Appearance     *ModelUserSettingsAppearance    `json:"appearance,omitempty"`
+	Devices        *ModelDevices                   `json:"devices,omitempty"`
 	DmChannels     []ModelUserDMChannels           `json:"dm_channels,omitempty"`
 	FavoriteGifs   []string                        `json:"favorite_gifs,omitempty"`
 	ForcedPresence *string                         `json:"forced_presence,omitempty"`
@@ -77,6 +78,38 @@ func (o *ModelUserSettingsData) HasAppearance() bool {
 // SetAppearance gets a reference to the given ModelUserSettingsAppearance and assigns it to the Appearance field.
 func (o *ModelUserSettingsData) SetAppearance(v ModelUserSettingsAppearance) {
 	o.Appearance = &v
+}
+
+// GetDevices returns the Devices field value if set, zero value otherwise.
+func (o *ModelUserSettingsData) GetDevices() ModelDevices {
+	if o == nil || IsNil(o.Devices) {
+		var ret ModelDevices
+		return ret
+	}
+	return *o.Devices
+}
+
+// GetDevicesOk returns a tuple with the Devices field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsData) GetDevicesOk() (*ModelDevices, bool) {
+	if o == nil || IsNil(o.Devices) {
+		return nil, false
+	}
+	return o.Devices, true
+}
+
+// HasDevices returns a boolean if a field has been set.
+func (o *ModelUserSettingsData) HasDevices() bool {
+	if o != nil && !IsNil(o.Devices) {
+		return true
+	}
+
+	return false
+}
+
+// SetDevices gets a reference to the given ModelDevices and assigns it to the Devices field.
+func (o *ModelUserSettingsData) SetDevices(v ModelDevices) {
+	o.Devices = &v
 }
 
 // GetDmChannels returns the DmChannels field value if set, zero value otherwise.
@@ -315,6 +348,9 @@ func (o ModelUserSettingsData) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.Appearance) {
 		toSerialize["appearance"] = o.Appearance
+	}
+	if !IsNil(o.Devices) {
+		toSerialize["devices"] = o.Devices
 	}
 	if !IsNil(o.DmChannels) {
 		toSerialize["dm_channels"] = o.DmChannels

@@ -1957,6 +1957,159 @@ paths:
       summary: Update guild role
       tags:
       - Guild Roles
+  /guild/{guild_id}/voice/move:
+    post:
+      description: Move a member to another voice channel and send them connection
+        info (SFU URL + token). Requires administrator or PermVoiceMoveMembers.
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.MoveMemberRequest'
+        description: Move request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/guild.MoveMemberResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+      summary: Move member to voice channel
+      tags:
+      - Guild
+  /guild/{guild_id}/voice/{channel_id}/join:
+    post:
+      description: Returns signaling path and a short-lived SFU token to connect to
+        the SFU for this channel.
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Channel ID
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/guild.JoinVoiceResponse'
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "503":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No SFU available in region
+      summary: Join voice channel (get SFU signaling info)
+      tags:
+      - Guild
+  /guild/{guild_id}/voice/{channel_id}/region:
+    patch:
+      description: Sets or clears preferred SFU region for a voice channel. Empty
+        region clears override.
+      parameters:
+      - description: Guild ID
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Channel ID
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.SetVoiceRegionRequest'
+        description: Region payload
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/guild.SetVoiceRegionResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+      summary: Set channel voice region
+      tags:
+      - Guild
   /message/channel/{channel_id}:
     get:
       parameters:
@@ -3256,8 +3409,140 @@ paths:
       summary: Get user
       tags:
       - User
+  /voice/regions:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/voice.VoiceRegionsResponse'
+          description: OK
+      summary: List available voice regions
+      tags:
+      - Voice
+  /webhook/attachments/finalize:
+    post:
+      description: Persist completed attachment metadata after upload
+      parameters:
+      - description: JWT token
+        explode: false
+        in: header
+        name: X-Webhook-Token
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/attachments.FinalizeRequest'
+        description: Finalize payload
+        required: true
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "502":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad gateway
+        "503":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Service unavailable
+      summary: Finalize attachment metadata
+      tags:
+      - Webhook
+  /webhook/sfu/heartbeat:
+    post:
+      description: Register or refresh SFU instance for discovery
+      parameters:
+      - description: JWT token
+        explode: false
+        in: header
+        name: X-Webhook-Token
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/sfu.HeartbeatRequest'
+        description: Heartbeat payload
+        required: true
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "502":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad gateway
+        "503":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Service unavailable
+      summary: SFU heartbeat
+      tags:
+      - Webhook
 components:
   schemas:
+    attachments.FinalizeRequest:
+      properties:
+        author_id:
+          type: integer
+        channel_id:
+          type: integer
+        content_type:
+          type: string
+        file_size:
+          type: integer
+        height:
+          type: integer
+        id:
+          type: integer
+        name:
+          type: string
+        preview_url:
+          type: string
+        url:
+          type: string
+        width:
+          type: integer
     auth.ConfirmationRequest:
       properties:
         discriminator:
@@ -3955,6 +4240,35 @@ components:
           description: Expiration time in seconds. 0 means unlimited.
           example: 86400
           type: integer
+    guild.JoinVoiceResponse:
+      example:
+        sfu_url: sfu_url
+        sfu_token: sfu_token
+      properties:
+        sfu_token:
+          type: string
+        sfu_url:
+          type: string
+    guild.MoveMemberRequest:
+      properties:
+        channel_id:
+          type: integer
+        from:
+          type: integer
+        user_id:
+          type: integer
+    guild.MoveMemberResponse:
+      example:
+        from_sfu_token: from_sfu_token
+        ok: true
+        from_sfu_url: from_sfu_url
+      properties:
+        from_sfu_token:
+          type: string
+        from_sfu_url:
+          type: string
+        ok:
+          type: boolean
     guild.PatchGuildChannelOrderRequest:
       properties:
         channels:
@@ -3996,6 +4310,22 @@ components:
         permissions:
           description: Permissions bitset
           type: integer
+    guild.SetVoiceRegionRequest:
+      properties:
+        region:
+          type: string
+    guild.SetVoiceRegionResponse:
+      example:
+        guild_id: 6
+        region: region
+        channel_id: 0
+      properties:
+        channel_id:
+          type: integer
+        guild_id:
+          type: integer
+        region:
+          type: string
     guild.UpdateGuildRequest:
       properties:
         icon_id:
@@ -4082,6 +4412,36 @@ components:
       - ChannelTypeDM
       - ChannelTypeGroupDM
       - ChannelTypeThread
+    model.Devices:
+      example:
+        audio_input_level: 5
+        auto_gain_control: true
+        audio_output_device: audio_output_device
+        audio_output_level: 7
+        audio_input_threshold: 2
+        echo_cancellation: true
+        video_device: video_device
+        noise_suppression: true
+        audio_input_device: audio_input_device
+      properties:
+        audio_input_device:
+          type: string
+        audio_input_level:
+          type: integer
+        audio_input_threshold:
+          type: integer
+        audio_output_device:
+          type: string
+        audio_output_level:
+          type: integer
+        auto_gain_control:
+          type: boolean
+        echo_cancellation:
+          type: boolean
+        noise_suppression:
+          type: boolean
+        video_device:
+          type: string
     model.NotificationsType:
       type: integer
       x-enum-varnames:
@@ -4100,9 +4460,9 @@ components:
     model.UserDMChannels:
       example:
         hidden: true
-        user_id: 7
-        hidden_after: 2
-        channel_id: 5
+        user_id: 2
+        hidden_after: 3
+        channel_id: 9
       properties:
         channel_id:
           type: integer
@@ -4131,55 +4491,67 @@ components:
         - favorite_gifs
         dm_channels:
         - hidden: true
-          user_id: 7
-          hidden_after: 2
-          channel_id: 5
+          user_id: 2
+          hidden_after: 3
+          channel_id: 9
         - hidden: true
-          user_id: 7
-          hidden_after: 2
-          channel_id: 5
+          user_id: 2
+          hidden_after: 3
+          channel_id: 9
         appearance:
           chat_font_scale: 1
           color_scheme: color_scheme
           chat_spacing: 5
+        devices:
+          audio_input_level: 5
+          auto_gain_control: true
+          audio_output_device: audio_output_device
+          audio_output_level: 7
+          audio_input_threshold: 2
+          echo_cancellation: true
+          video_device: video_device
+          noise_suppression: true
+          audio_input_device: audio_input_device
         guilds:
-        - selected_channel: 1
-          guild_id: 4
-          position: 1
+        - selected_channel: 7
+          guild_id: 1
+          position: 6
           notifications:
             roles: true
             global: true
             muted: true
-            notifications: 7
-        - selected_channel: 1
-          guild_id: 4
-          position: 1
+            notifications: 1
+        - selected_channel: 7
+          guild_id: 1
+          position: 6
           notifications:
             roles: true
             global: true
             muted: true
-            notifications: 7
+            notifications: 1
         language: language
         forced_presence: forced_presence
         guild_folders:
-        - color: 9
+        - color: 4
           guilds:
-          - 3
-          - 3
+          - 7
+          - 7
           name: name
-          position: 2
-        - color: 9
+          position: 1
+        - color: 4
           guilds:
-          - 3
-          - 3
+          - 7
+          - 7
           name: name
-          position: 2
+          position: 1
         status:
           custom_status_text: custom_status_text
           status: status
       properties:
         appearance:
           $ref: '#/components/schemas/model.UserSettingsAppearance'
+        devices:
+          $ref: '#/components/schemas/model.Devices'
         dm_channels:
           items:
             $ref: '#/components/schemas/model.UserDMChannels'
@@ -4208,12 +4580,12 @@ components:
           $ref: '#/components/schemas/model.Status'
     model.UserSettingsGuildFolders:
       example:
-        color: 9
+        color: 4
         guilds:
-        - 3
-        - 3
+        - 7
+        - 7
         name: name
-        position: 2
+        position: 1
       properties:
         color:
           type: integer
@@ -4228,14 +4600,14 @@ components:
           type: integer
     model.UserSettingsGuilds:
       example:
-        selected_channel: 1
-        guild_id: 4
-        position: 1
+        selected_channel: 7
+        guild_id: 1
+        position: 6
         notifications:
           roles: true
           global: true
           muted: true
-          notifications: 7
+          notifications: 1
       properties:
         guild_id:
           type: integer
@@ -4250,7 +4622,7 @@ components:
         roles: true
         global: true
         muted: true
-        notifications: 7
+        notifications: 1
       properties:
         global:
           type: boolean
@@ -4376,6 +4748,16 @@ components:
         pages:
           description: Total number of pages with current search parameters
           type: integer
+    sfu.HeartbeatRequest:
+      properties:
+        id:
+          type: string
+        load:
+          type: integer
+        region:
+          type: string
+        url:
+          type: string
     user.CreateAvatarRequest:
       properties:
         content_type:
@@ -4427,49 +4809,59 @@ components:
           - favorite_gifs
           dm_channels:
           - hidden: true
-            user_id: 7
-            hidden_after: 2
-            channel_id: 5
+            user_id: 2
+            hidden_after: 3
+            channel_id: 9
           - hidden: true
-            user_id: 7
-            hidden_after: 2
-            channel_id: 5
+            user_id: 2
+            hidden_after: 3
+            channel_id: 9
           appearance:
             chat_font_scale: 1
             color_scheme: color_scheme
             chat_spacing: 5
+          devices:
+            audio_input_level: 5
+            auto_gain_control: true
+            audio_output_device: audio_output_device
+            audio_output_level: 7
+            audio_input_threshold: 2
+            echo_cancellation: true
+            video_device: video_device
+            noise_suppression: true
+            audio_input_device: audio_input_device
           guilds:
-          - selected_channel: 1
-            guild_id: 4
-            position: 1
+          - selected_channel: 7
+            guild_id: 1
+            position: 6
             notifications:
               roles: true
               global: true
               muted: true
-              notifications: 7
-          - selected_channel: 1
-            guild_id: 4
-            position: 1
+              notifications: 1
+          - selected_channel: 7
+            guild_id: 1
+            position: 6
             notifications:
               roles: true
               global: true
               muted: true
-              notifications: 7
+              notifications: 1
           language: language
           forced_presence: forced_presence
           guild_folders:
-          - color: 9
+          - color: 4
             guilds:
-            - 3
-            - 3
+            - 7
+            - 7
             name: name
-            position: 2
-          - color: 9
+            position: 1
+          - color: 4
             guilds:
-            - 3
-            - 3
+            - 7
+            - 7
             name: name
-            position: 2
+            position: 1
           status:
             custom_status_text: custom_status_text
             status: status
@@ -4519,6 +4911,28 @@ components:
           $ref: '#/components/schemas/model.UserSettingsData'
         version:
           type: integer
+    voice.Region:
+      example:
+        name: name
+        id: id
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    voice.VoiceRegionsResponse:
+      example:
+        regions:
+        - name: name
+          id: id
+        - name: name
+          id: id
+      properties:
+        regions:
+          items:
+            $ref: '#/components/schemas/voice.Region'
+          type: array
+          uniqueItems: false
   securitySchemes:
     bearerauth:
       bearerFormat: JWT

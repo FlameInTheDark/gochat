@@ -8,6 +8,7 @@ type PresenceUpdate struct {
 	CustomStatusText string            `json:"custom_status_text,omitempty"`
 	Since            int64             `json:"since"`
 	ClientStatus     map[string]string `json:"client_status,omitempty"`
+	VoiceChannelID   *int64            `json:"voice_channel_id,omitempty"`
 }
 
 func (m *PresenceUpdate) EventType() *EventType    { return nil }

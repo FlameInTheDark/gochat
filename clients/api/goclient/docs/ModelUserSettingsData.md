@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Appearance** | Pointer to [**ModelUserSettingsAppearance**](ModelUserSettingsAppearance.md) |  | [optional] 
+**Devices** | Pointer to [**ModelDevices**](ModelDevices.md) |  | [optional] 
 **DmChannels** | Pointer to [**[]ModelUserDMChannels**](ModelUserDMChannels.md) |  | [optional] 
 **FavoriteGifs** | Pointer to **[]string** |  | [optional] 
 **ForcedPresence** | Pointer to **string** |  | [optional] 
@@ -56,6 +57,31 @@ SetAppearance sets Appearance field to given value.
 `func (o *ModelUserSettingsData) HasAppearance() bool`
 
 HasAppearance returns a boolean if a field has been set.
+
+### GetDevices
+
+`func (o *ModelUserSettingsData) GetDevices() ModelDevices`
+
+GetDevices returns the Devices field if non-nil, zero value otherwise.
+
+### GetDevicesOk
+
+`func (o *ModelUserSettingsData) GetDevicesOk() (*ModelDevices, bool)`
+
+GetDevicesOk returns a tuple with the Devices field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDevices
+
+`func (o *ModelUserSettingsData) SetDevices(v ModelDevices)`
+
+SetDevices sets Devices field to given value.
+
+### HasDevices
+
+`func (o *ModelUserSettingsData) HasDevices() bool`
+
+HasDevices returns a boolean if a field has been set.
 
 ### GetDmChannels
 

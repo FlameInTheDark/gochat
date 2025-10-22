@@ -7,22 +7,21 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/FlameInTheDark/gochat/internal/database/db"
-	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
-	"github.com/FlameInTheDark/gochat/internal/shutter"
-	slogfiber "github.com/samber/slog-fiber"
-
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	recm "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	slogfiber "github.com/samber/slog-fiber"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 
 	"github.com/FlameInTheDark/gochat/cmd/ws/auth"
 	"github.com/FlameInTheDark/gochat/cmd/ws/config"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
+	"github.com/FlameInTheDark/gochat/internal/database/db"
+	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
 
 type App struct {
