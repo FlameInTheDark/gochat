@@ -8,6 +8,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/aws/aws-sdk-go v1.55.8
 	github.com/dimuska139/sendpulse-sdk-go/v7 v7.1.3
+	github.com/fasthttp/websocket v1.5.8
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-playground/validator/v10 v10.22.1
 	github.com/gocql/gocql v0.0.0-20200203083758-81b8263d9fe5
@@ -37,7 +38,6 @@ require (
 	github.com/valyala/fasthttp v1.57.0
 	go.etcd.io/etcd/client/v3 v3.5.13
 	golang.org/x/crypto v0.35.0
-	resty.dev/v3 v3.0.0-beta.3
 )
 
 require (
@@ -50,7 +50,6 @@ require (
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/fasthttp/websocket v1.5.8 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect
 	github.com/go-openapi/errors v0.20.4 // indirect
