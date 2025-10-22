@@ -6,7 +6,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
-	"github.com/pion/webrtc/v3"
+	"github.com/pion/webrtc/v4"
 )
 
 // ensureRecvonly makes sure there is at least one transceiver of the given kind on pc.
@@ -40,6 +40,10 @@ func (a *App) setupPeer(room *room, uid int64, perms int64, send func(any) error
 	if err != nil {
 		return nil, nil, fmt.Errorf("pc create failed")
 	}
+	for _, kind := range []webrtc.RTPCodecType{webrtc.RTPCodecTypeAudio, webrtc.RTPCodecTypeVideo} {
+		ensureRecvonly(pc, kind)
+	}
+
 	p := &peer{userID: uid, pc: pc, log: a.log, send: func(op int, t int, data any) error { return send(OutEnvelope{OP: op, T: t, D: data}) }}
 	// Helpful: if the remote client can't handle server-initiated offers reliably,
 	// this will still be driven by explicit requestNegotiation() calls.
