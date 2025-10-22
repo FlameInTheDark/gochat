@@ -50,7 +50,9 @@ Notes
   - `PermVoiceDeafenMembers` — required for `t=508`
   - `PermVoiceMoveMembers` — required to kick/move members (handled by higher-level API/workflow)
   - `PermAdministrator` — overrides all the above to positive
-  - Token field `moved=true` lets a blocked user join (forced move) and grants audio/video publish permissions for the session.
+- Token field `moved=true` lets a blocked user join (forced move) and grants audio/video publish permissions for the session.
+
+- The SFU typically sends the first offer immediately after a user joins the room. Clients respond with an `RTCAnswer`, but may still initiate their own offer when local conditions change (codec/device switch).
 
 Notes:
 - Binding keepalive (t=509) is handled by the WS service. See WS Event Types for t=509.
