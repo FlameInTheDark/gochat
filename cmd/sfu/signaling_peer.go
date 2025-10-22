@@ -52,6 +52,13 @@ func (a *App) setupPeer(room *room, uid int64, perms int64, send func(any) error
 		},
 	}
 
+	pc.OnSignalingStateChange(func(state webrtc.SignalingState) {
+		if state != webrtc.SignalingStateStable {
+			return
+		}
+		p.resumePendingNegotiation("signaling stable")
+	})
+
 	pc.OnTrack(func(tr *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
 		a.log.Info("inbound track",
 			slog.Int64("user", uid),

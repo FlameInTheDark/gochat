@@ -223,6 +223,9 @@ func (r *room) dispatchKeyFrame() {
 			})
 		}
 	}
+	pub.mu.Lock()
+	pub.sends[p.userID] = sender
+	pub.mu.Unlock()
 }
 
 func (r *room) signalPeers() {
