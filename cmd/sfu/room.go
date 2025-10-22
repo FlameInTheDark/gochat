@@ -241,10 +241,14 @@ func (r *room) signalPeers() {
 	}()
 
 	attemptSync := func() bool {
+		shouldRetry := false
+		var needsOffer []*peer
+
 		for uid, p := range r.peers {
 			if p.pc.ConnectionState() == webrtc.PeerConnectionStateClosed {
 				delete(r.peers, uid)
-				return true
+				shouldRetry = true
+				continue
 			}
 
 			if p.pc.SignalingState() != webrtc.SignalingStateStable {
@@ -269,6 +273,8 @@ func (r *room) signalPeers() {
 
 			existing := map[string]bool{}
 			changed := false
+			skipOffer := false
+
 			for _, sender := range p.pc.GetSenders() {
 				track := sender.Track()
 				if track == nil {
@@ -278,11 +284,17 @@ func (r *room) signalPeers() {
 				if _, keep := desired[trackID]; !keep {
 					changed = true
 					if err := p.pc.RemoveTrack(sender); err != nil {
-						return true
+						shouldRetry = true
+						skipOffer = true
+						break
 					}
 					continue
 				}
 				existing[trackID] = true
+			}
+
+			if skipOffer {
+				continue
 			}
 
 			for id, pub := range desired {
@@ -291,19 +303,30 @@ func (r *room) signalPeers() {
 				}
 				changed = true
 				if _, err := p.pc.AddTrack(pub.local); err != nil {
-					return true
+					shouldRetry = true
+					skipOffer = true
+					break
 				}
 			}
 
-			if !changed {
-				return false
+			if skipOffer {
+				continue
 			}
 
-			if err := r.pushOffer(p); err != nil {
-				r.log.Warn("offer failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
+			if changed || p.NeedsInitialOffer() {
+				needsOffer = append(needsOffer, p)
 			}
 		}
-		return false
+
+		for _, p := range needsOffer {
+			if err := r.pushOffer(p); err != nil {
+				r.log.Warn("offer failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
+				continue
+			}
+			p.MarkInitialOfferSent()
+		}
+
+		return shouldRetry
 	}
 
 	for attempt := 0; attempt < 25; attempt++ {
