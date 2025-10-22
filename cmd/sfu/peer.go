@@ -39,6 +39,7 @@ func (p *peer) requestNegotiation() {
 		return
 	}
 	p.negotiating = true
+	p.negoPending = false
 	p.negoMu.Unlock()
 	if p.log != nil {
 		p.log.Debug("nego: start", slog.Int64("user", p.userID))
@@ -46,7 +47,38 @@ func (p *peer) requestNegotiation() {
 	go p.doNegotiation()
 }
 
+// resumePendingNegotiation starts a pending negotiation if the signaling state is stable and no round is running.
+func (p *peer) resumePendingNegotiation(reason string) bool {
+	if p.pc.SignalingState() != webrtc.SignalingStateStable {
+		return false
+	}
+	p.negoMu.Lock()
+	if !p.negoPending || p.negotiating {
+		p.negoMu.Unlock()
+		return false
+	}
+	p.negoPending = false
+	p.negotiating = true
+	p.negoMu.Unlock()
+	if p.log != nil {
+		p.log.Debug("nego: resume", slog.Int64("user", p.userID), slog.String("reason", reason))
+	}
+	go p.doNegotiation()
+	return true
+}
+
 func (p *peer) doNegotiation() {
+	if p.pc.SignalingState() != webrtc.SignalingStateStable {
+		p.negoMu.Lock()
+		// ensure another attempt runs once we return to stable state
+		p.negotiating = false
+		p.negoPending = true
+		p.negoMu.Unlock()
+		if p.log != nil {
+			p.log.Debug("nego: skip (not stable)", slog.Int64("user", p.userID))
+		}
+		return
+	}
 	offer, err := p.pc.CreateOffer(nil)
 	if err != nil {
 		p.negoMu.Lock()
@@ -60,6 +92,7 @@ func (p *peer) doNegotiation() {
 	if err := p.pc.SetLocalDescription(offer); err != nil {
 		p.negoMu.Lock()
 		p.negotiating = false
+		p.negoPending = true
 		p.negoMu.Unlock()
 		if p.log != nil {
 			p.log.Warn("nego: set local failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
@@ -77,17 +110,16 @@ func (p *peer) doNegotiation() {
 func (p *peer) onAnswerProcessed() {
 	p.negoMu.Lock()
 	p.negotiating = false
-	if p.negoPending {
-		p.negoPending = false
-		p.negotiating = true
-		p.negoMu.Unlock()
-		if p.log != nil {
-			p.log.Debug("nego: follow-up", slog.Int64("user", p.userID))
-		}
-		go p.doNegotiation()
-		return
-	}
+	pending := p.negoPending
 	p.negoMu.Unlock()
+	if pending {
+		if p.resumePendingNegotiation("follow-up") {
+			return
+		}
+		if p.log != nil {
+			p.log.Debug("nego: pending (waiting for stable)", slog.Int64("user", p.userID))
+		}
+	}
 }
 
 func (p *peer) SetSelfMuted(v bool) {

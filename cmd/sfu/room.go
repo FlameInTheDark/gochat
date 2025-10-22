@@ -7,6 +7,8 @@ import (
 	"time"
 
 	cfgpkg "github.com/FlameInTheDark/gochat/cmd/sfu/config"
+	"github.com/pion/rtcp"
+	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -86,7 +88,9 @@ func (r *room) removePeer(uid int64) {
 	delete(r.peers, uid)
 	// Clean any sender references for this peer
 	for i := range r.pubs {
+		r.pubs[i].mu.Lock()
 		delete(r.pubs[i].sends, uid)
+		r.pubs[i].mu.Unlock()
 	}
 	// Clear server-deafen entry for this user
 	delete(r.sdeaf, uid)
@@ -130,46 +134,61 @@ type publication struct {
 	from  int64
 	local *webrtc.TrackLocalStaticRTP
 	sends map[int64]*webrtc.RTPSender
+	mu    sync.Mutex
 }
 
 func (r *room) publishTrack(log *slog.Logger, publisher *peer, tr *webrtc.TrackRemote) error {
 	codec := tr.Codec().RTPCodecCapability
 	trackID := fmt.Sprintf("pub-%d-%s", publisher.userID, tr.ID())
 	streamID := fmt.Sprintf("user-%d", publisher.userID)
+
 	local, err := webrtc.NewTrackLocalStaticRTP(codec, trackID, streamID)
 	if err != nil {
 		return err
 	}
+
 	pub := &publication{from: publisher.userID, local: local, sends: make(map[int64]*webrtc.RTPSender)}
 	log.Info("publication created", slog.Int64("from", publisher.userID), slog.String("track", trackID))
-	for _, p := range r.listPeers(publisher.userID) {
-		if p.IsUserMuted(publisher.userID) || r.isServerDeafened(p.userID) {
-			log.Debug("skip attach (muted or deafened)", slog.Int64("from", publisher.userID), slog.Int64("to", p.userID))
-			continue
-		}
-		if _, ok := pub.sends[p.userID]; ok {
-			continue
-		}
-		if s, err := p.pc.AddTrack(local); err == nil {
-			pub.sends[p.userID] = s
-			log.Debug("attached to peer", slog.Int64("from", publisher.userID), slog.Int64("to", p.userID))
-			p.requestNegotiation()
-		} else {
-			log.Error("addtrack to peer failed", slog.String("error", err.Error()))
-		}
-	}
+
 	r.mu.Lock()
 	r.pubs = append(r.pubs, pub)
+	recipients := make([]*peer, 0, len(r.peers))
+	for uid, peer := range r.peers {
+		if uid == publisher.userID {
+			continue
+		}
+		recipients = append(recipients, peer)
+	}
 	r.mu.Unlock()
+
+	for _, p := range recipients {
+		r.attachPublicationToPeer(pub, p)
+	}
+
 	go func() {
+		defer r.unpublish(pub)
+
+		buf := make([]byte, 1500)
+		pkt := &rtp.Packet{}
+
 		for {
-			pkt, _, err := tr.ReadRTP()
-			if err != nil {
+			n, _, readErr := tr.Read(buf)
+			if readErr != nil {
 				return
 			}
+
+			if err := pkt.Unmarshal(buf[:n]); err != nil {
+				log.Error("rtp unmarshal failed", slog.String("error", err.Error()))
+				continue
+			}
+
+			pkt.Extension = false
+			pkt.Extensions = nil
+
 			if publisher.IsSelfMuted() || r.isServerMuted(publisher.userID) {
 				continue
 			}
+
 			if werr := local.WriteRTP(pkt); werr != nil {
 				// Do not exit on write errors (e.g., no active senders yet or renegotiation).
 				// Keep reading so forwarding resumes once a sender attaches or negotiation completes.
@@ -178,22 +197,87 @@ func (r *room) publishTrack(log *slog.Logger, publisher *peer, tr *webrtc.TrackR
 			}
 		}
 	}()
+
+	r.dispatchKeyFrame()
+
 	return nil
+}
+
+func (r *room) unpublish(pub *publication) {
+	r.mu.Lock()
+	pub.mu.Lock()
+	uids := make([]int64, 0, len(pub.sends))
+	for uid := range pub.sends {
+		uids = append(uids, uid)
+	}
+	pub.mu.Unlock()
+
+	for i, candidate := range r.pubs {
+		if candidate == pub {
+			r.pubs = append(r.pubs[:i], r.pubs[i+1:]...)
+			break
+		}
+	}
+
+	peers := make([]*peer, 0, len(uids))
+	for _, uid := range uids {
+		if peer := r.peers[uid]; peer != nil {
+			peers = append(peers, peer)
+		}
+	}
+	r.mu.Unlock()
+
+	for _, peer := range peers {
+		r.detachPublicationFromPeer(pub, peer)
+	}
+}
+
+func (r *room) dispatchKeyFrame() {
+	r.mu.RLock()
+	peers := make([]*peer, 0, len(r.peers))
+	for _, p := range r.peers {
+		peers = append(peers, p)
+	}
+	r.mu.RUnlock()
+
+	for _, p := range peers {
+		for _, receiver := range p.pc.GetReceivers() {
+			track := receiver.Track()
+			if track == nil || track.Kind() != webrtc.RTPCodecTypeVideo {
+				continue
+			}
+			_ = p.pc.WriteRTCP([]rtcp.Packet{
+				&rtcp.PictureLossIndication{MediaSSRC: uint32(track.SSRC())},
+			})
+		}
+	}
 }
 
 // attachPublicationToPeer adds the publication to the given peer if not muted by the peer
 func (r *room) attachPublicationToPeer(pub *publication, p *peer) {
 	if p.IsUserMuted(pub.from) || r.isServerDeafened(p.userID) {
+		r.log.Debug("skip attach (muted or deafened)", slog.Int64("from", pub.from), slog.Int64("to", p.userID))
 		return
 	}
-	if _, ok := pub.sends[p.userID]; ok {
+
+	pub.mu.Lock()
+	_, already := pub.sends[p.userID]
+	pub.mu.Unlock()
+	if already {
 		return
 	}
-	if s, err := p.pc.AddTrack(pub.local); err == nil {
-		pub.sends[p.userID] = s
-		r.log.Debug("attached existing pub", slog.Int64("from", pub.from), slog.Int64("to", p.userID))
-		p.requestNegotiation()
+	sender, err := p.pc.AddTrack(pub.local)
+	if err != nil {
+		r.log.Error("addtrack to peer failed", slog.String("error", err.Error()))
+		return
 	}
+
+	pub.mu.Lock()
+	pub.sends[p.userID] = sender
+	pub.mu.Unlock()
+
+	r.log.Debug("attached existing pub", slog.Int64("from", pub.from), slog.Int64("to", p.userID))
+	p.requestNegotiation()
 }
 
 // attachPublicationToPeerNoNeg attaches a publication to a peer without triggering negotiation.
@@ -202,20 +286,34 @@ func (r *room) attachPublicationToPeerNoNeg(pub *publication, p *peer) {
 	if p.IsUserMuted(pub.from) || r.isServerDeafened(p.userID) {
 		return
 	}
-	if _, ok := pub.sends[p.userID]; ok {
+	pub.mu.Lock()
+	_, already := pub.sends[p.userID]
+	pub.mu.Unlock()
+	if already {
 		return
 	}
-	if s, err := p.pc.AddTrack(pub.local); err == nil {
-		pub.sends[p.userID] = s
+	sender, err := p.pc.AddTrack(pub.local)
+	if err != nil {
+		r.log.Error("addtrack to peer failed", slog.String("error", err.Error()))
+		return
 	}
+	pub.mu.Lock()
+	pub.sends[p.userID] = sender
+	pub.mu.Unlock()
 }
 
 // hasSendersForPeer reports whether the room has any publications attached to the given peer.
 func (r *room) hasSendersForPeer(p *peer) bool {
 	r.mu.RLock()
-	defer r.mu.RUnlock()
-	for _, pub := range r.pubs {
-		if _, ok := pub.sends[p.userID]; ok {
+	pubs := make([]*publication, len(r.pubs))
+	copy(pubs, r.pubs)
+	r.mu.RUnlock()
+
+	for _, pub := range pubs {
+		pub.mu.Lock()
+		_, ok := pub.sends[p.userID]
+		pub.mu.Unlock()
+		if ok {
 			return true
 		}
 	}
@@ -224,12 +322,21 @@ func (r *room) hasSendersForPeer(p *peer) bool {
 
 // detachPublicationFromPeer removes the publication from the given peer if attached
 func (r *room) detachPublicationFromPeer(pub *publication, p *peer) {
-	if s, ok := pub.sends[p.userID]; ok {
-		_ = p.pc.RemoveTrack(s)
+	pub.mu.Lock()
+	sender, ok := pub.sends[p.userID]
+	if ok {
 		delete(pub.sends, p.userID)
-		r.log.Debug("detached pub", slog.Int64("from", pub.from), slog.Int64("to", p.userID))
-		p.requestNegotiation()
 	}
+	pub.mu.Unlock()
+	if !ok {
+		return
+	}
+
+	if err := p.pc.RemoveTrack(sender); err != nil {
+		r.log.Error("remove track failed", slog.String("error", err.Error()))
+	}
+	r.log.Debug("detached pub", slog.Int64("from", pub.from), slog.Int64("to", p.userID))
+	p.requestNegotiation()
 }
 
 func (r *room) isServerMuted(uid int64) bool {
