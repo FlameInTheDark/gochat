@@ -28,7 +28,7 @@ func (e *Entity) AddChannel(ctx context.Context, guildID, channelID int64, chann
 		Values(channelID, channelName, channelType, parentID, private, 0)
 	sql, args, err := chq.ToSql()
 	if err != nil {
-		return fmt.Errorf("unable to create SQL query for create channel: %w")
+		return fmt.Errorf("unable to create SQL query for create channel: %w", err)
 	}
 	_, err = tx.ExecContext(ctx, sql, args...)
 	if err != nil {
