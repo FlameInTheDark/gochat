@@ -206,7 +206,7 @@ func (r *room) unpublish(id string) {
 	r.signalPeers()
 }
 
-func (r *room) dispatchKeyFrame() {
+func (r *room) snapshotPeers() []*peer {
 	r.mu.RLock()
 	peers := make([]*peer, 0, len(r.peers))
 	for _, p := range r.peers {
@@ -214,20 +214,23 @@ func (r *room) dispatchKeyFrame() {
 	}
 	r.mu.RUnlock()
 
-	for _, p := range peers {
+	return peers
+}
+
+func (r *room) dispatchKeyFrame() {
+	for _, p := range r.snapshotPeers() {
 		for _, receiver := range p.pc.GetReceivers() {
 			track := receiver.Track()
 			if track == nil || track.Kind() != webrtc.RTPCodecTypeVideo {
 				continue
 			}
-			_ = p.pc.WriteRTCP([]rtcp.Packet{
+			if err := p.pc.WriteRTCP([]rtcp.Packet{
 				&rtcp.PictureLossIndication{MediaSSRC: uint32(track.SSRC())},
-			})
+			}); err != nil {
+				r.log.Debug("pli dispatch failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
+			}
 		}
 	}
-	pub.mu.Lock()
-	pub.sends[p.userID] = sender
-	pub.mu.Unlock()
 }
 
 func (r *room) signalPeers() {
@@ -300,6 +303,7 @@ func (r *room) signalPeers() {
 		if !attemptSync() {
 			return
 		}
+		return false
 	}
 
 	go func() {
