@@ -268,6 +268,7 @@ func (r *room) signalPeers() {
 			}
 
 			existing := map[string]bool{}
+			changed := false
 			for _, sender := range p.pc.GetSenders() {
 				track := sender.Track()
 				if track == nil {
@@ -275,6 +276,7 @@ func (r *room) signalPeers() {
 				}
 				trackID := track.ID()
 				if _, keep := desired[trackID]; !keep {
+					changed = true
 					if err := p.pc.RemoveTrack(sender); err != nil {
 						return true
 					}
@@ -287,9 +289,14 @@ func (r *room) signalPeers() {
 				if existing[id] {
 					continue
 				}
+				changed = true
 				if _, err := p.pc.AddTrack(pub.local); err != nil {
 					return true
 				}
+			}
+
+			if !changed {
+				return false
 			}
 
 			if err := r.pushOffer(p); err != nil {
