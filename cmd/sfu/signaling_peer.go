@@ -6,7 +6,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
-	"github.com/pion/webrtc/v3"
+	"github.com/pion/webrtc/v4"
 )
 
 // ensureRecvonly makes sure there is at least one transceiver of the given kind on pc.

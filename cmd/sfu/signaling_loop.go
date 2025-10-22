@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gofiber/contrib/websocket"
-	"github.com/pion/webrtc/v3"
+	"github.com/pion/webrtc/v4"
 	"log/slog"
 
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
