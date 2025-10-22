@@ -160,10 +160,7 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 		closeOnce.Do(func() { close(writeDone); _ = c.Close() })
 	}()
 
-	// 4) Attach existing publications
-	a.attachExistingPublications(room, p)
-
-	// 5) Enter message loop
+	// 4) Enter message loop
 	a.messageLoop(c, room, p, pc, perms, send)
 }
 

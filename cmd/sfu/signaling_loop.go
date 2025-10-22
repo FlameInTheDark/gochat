@@ -5,14 +5,13 @@ import (
 	"time"
 
 	"github.com/gofiber/contrib/websocket"
-	"github.com/pion/webrtc/v3"
+	"github.com/pion/webrtc/v4"
 	"log/slog"
 
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
 
-// messageLoop reads envelopes and handles heartbeat and RTC messages.
 func (a *App) messageLoop(c *websocket.Conn, room *room, p *peer, pc *webrtc.PeerConnection, perms int64, send func(any) error) {
 	for {
 		var env envelope
@@ -31,55 +30,41 @@ func (a *App) messageLoop(c *websocket.Conn, room *room, p *peer, pc *webrtc.Pee
 		switch env.T {
 		case int(mqmsg.EventTypeRTCOffer):
 			var payload rtcOffer
-			if err := json.Unmarshal(env.D, &payload); err != nil {
-				continue
-			}
-			if payload.SDP == "" {
+			if err := json.Unmarshal(env.D, &payload); err != nil || payload.SDP == "" {
 				continue
 			}
 			a.log.Debug("client offer", slog.Int64("user", p.userID))
 			offer := webrtc.SessionDescription{Type: webrtc.SDPTypeOffer, SDP: payload.SDP}
 			if err := pc.SetRemoteDescription(offer); err != nil {
-				_ = send(ErrorResponse{Error: err.Error()})
+				a.log.Warn("apply offer failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
 				continue
 			}
-			// Do not add transceivers here; answer must mirror the offer's m-line order/count.
-			// Pion will create the necessary receivers for offered m-lines during CreateAnswer.
 			answer, aerr := pc.CreateAnswer(nil)
 			if aerr != nil {
-				_ = send(ErrorResponse{Error: aerr.Error()})
+				a.log.Warn("create answer failed", slog.Int64("user", p.userID), slog.String("error", aerr.Error()))
 				continue
 			}
 			if err := pc.SetLocalDescription(answer); err != nil {
-				_ = send(ErrorResponse{Error: err.Error()})
+				a.log.Warn("set local failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
 				continue
 			}
 			_ = p.send(int(mqmsg.OPCodeRTC), int(mqmsg.EventTypeRTCAnswer), rtcAnswer{SDP: answer.SDP})
-			a.log.Debug("server answer sent", slog.Int64("user", p.userID))
-			// After answering the client's offer, if we already attached existing publications
-			// to this peer during join, negotiate once to deliver them, avoiding glare.
-			if room.hasSendersForPeer(p) {
-				p.requestNegotiation()
-			}
+			room.signalPeers()
 		case int(mqmsg.EventTypeRTCAnswer):
 			var payload rtcAnswer
-			if err := json.Unmarshal(env.D, &payload); err != nil {
-				continue
-			}
-			if payload.SDP == "" {
+			if err := json.Unmarshal(env.D, &payload); err != nil || payload.SDP == "" {
 				continue
 			}
 			ans := webrtc.SessionDescription{Type: webrtc.SDPTypeAnswer, SDP: payload.SDP}
-			_ = pc.SetRemoteDescription(ans)
-			a.log.Debug("client answer applied", slog.Int64("user", p.userID))
-			// Mark negotiation round complete and trigger a follow-up if pending
-			p.onAnswerProcessed()
+			if err := pc.SetRemoteDescription(ans); err != nil {
+				a.log.Warn("apply answer failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
+			} else {
+				a.log.Debug("client answer applied", slog.Int64("user", p.userID))
+				room.signalPeers()
+			}
 		case int(mqmsg.EventTypeRTCCandidate):
 			var payload rtcCandidate
-			if err := json.Unmarshal(env.D, &payload); err != nil {
-				continue
-			}
-			if payload.Candidate == "" {
+			if err := json.Unmarshal(env.D, &payload); err != nil || payload.Candidate == "" {
 				continue
 			}
 			_ = pc.AddICECandidate(webrtc.ICECandidateInit{Candidate: payload.Candidate, SDPMid: payload.SDPMid, SDPMLineIndex: payload.SDPMLineIndex})
@@ -94,27 +79,10 @@ func (a *App) messageLoop(c *websocket.Conn, room *room, p *peer, pc *webrtc.Pee
 		case int(mqmsg.EventTypeRTCMuteUser):
 			var payload rtcMuteUser
 			if err := json.Unmarshal(env.D, &payload); err == nil {
-				uid := payload.User
-				muted := payload.Muted
-				p.SetUserMuted(uid, muted)
-				// Apply to existing publications in this room
-				room.mu.RLock()
-				pubs := make([]*publication, len(room.pubs))
-				copy(pubs, room.pubs)
-				room.mu.RUnlock()
-				for _, pub := range pubs {
-					if pub.from != uid {
-						continue
-					}
-					if muted {
-						room.detachPublicationFromPeer(pub, p)
-					} else {
-						room.attachPublicationToPeer(pub, p)
-					}
-				}
+				p.SetUserMuted(payload.User, payload.Muted)
+				room.signalPeers()
 			}
 		case int(mqmsg.EventTypeRTCServerMuteUser):
-			// Requires PermVoiceMuteMembers (Administrator overrides)
 			if !permissions.CheckPermissions(perms, permissions.PermVoiceMuteMembers) {
 				break
 			}
@@ -123,30 +91,14 @@ func (a *App) messageLoop(c *websocket.Conn, room *room, p *peer, pc *webrtc.Pee
 				room.setServerMuted(payload.User, payload.Muted)
 			}
 		case int(mqmsg.EventTypeRTCServerDeafenUser):
-			// Requires PermVoiceDeafenMembers (Administrator overrides)
 			if !permissions.CheckPermissions(perms, permissions.PermVoiceDeafenMembers) {
 				break
 			}
 			var payload rtcServerDeafenUser
 			if err := json.Unmarshal(env.D, &payload); err == nil {
-				// Toggle deafen by detaching/attaching all publications to this peer
-				if target := room.getPeer(payload.User); target != nil {
-					room.mu.RLock()
-					pubs := make([]*publication, len(room.pubs))
-					copy(pubs, room.pubs)
-					room.mu.RUnlock()
-					for _, pub := range pubs {
-						if payload.Deafened {
-							room.detachPublicationFromPeer(pub, target)
-						} else {
-							room.attachPublicationToPeer(pub, target)
-						}
-					}
-					room.setServerDeafened(payload.User, payload.Deafened)
-				}
+				room.setServerDeafened(payload.User, payload.Deafened)
 			}
 		case int(mqmsg.EventTypeRTCServerKickUser):
-			// Requires PermVoiceMoveMembers (Administrator overrides)
 			if !permissions.CheckPermissions(perms, permissions.PermVoiceMoveMembers) {
 				break
 			}
@@ -160,7 +112,6 @@ func (a *App) messageLoop(c *websocket.Conn, room *room, p *peer, pc *webrtc.Pee
 				}
 			}
 		case int(mqmsg.EventTypeRTCServerBlockUser):
-			// Requires PermVoiceMoveMembers (Administrator overrides)
 			if !permissions.CheckPermissions(perms, permissions.PermVoiceMoveMembers) {
 				break
 			}
@@ -177,7 +128,6 @@ func (a *App) messageLoop(c *websocket.Conn, room *room, p *peer, pc *webrtc.Pee
 				}
 			}
 		case int(mqmsg.EventTypeRTCMoved):
-			// Requires PermVoiceMoveMembers (Administrator overrides) — admin instructs server to move target
 			if !permissions.CheckPermissions(perms, permissions.PermVoiceMoveMembers) {
 				break
 			}
