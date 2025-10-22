@@ -264,22 +264,24 @@ func (r *room) signalPeers() {
 				}
 			}
 
-			existing := map[string]*webrtc.RTPSender{}
+			existing := map[string]bool{}
 			for _, sender := range p.pc.GetSenders() {
 				track := sender.Track()
 				if track == nil {
 					continue
 				}
-				existing[track.ID()] = sender
-				if _, keep := desired[track.ID()]; !keep {
+				trackID := track.ID()
+				if _, keep := desired[trackID]; !keep {
 					if err := p.pc.RemoveTrack(sender); err != nil {
 						return true
 					}
+					continue
 				}
+				existing[trackID] = true
 			}
 
 			for id, pub := range desired {
-				if _, ok := existing[id]; ok {
+				if existing[id] {
 					continue
 				}
 				if _, err := p.pc.AddTrack(pub.local); err != nil {
