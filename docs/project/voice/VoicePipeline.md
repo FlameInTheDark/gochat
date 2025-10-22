@@ -46,8 +46,8 @@ sequenceDiagram
   U->>SFU: { op:7, t:500, d:{ channel, token } }
   SFU-->>U: { op:7, t:500, d:{ ok:true } }
 
-  U->>SFU: { op:7, t:501, d:{ sdp: "<OFFER>" } }
-  SFU-->>U: { op:7, t:502, d:{ sdp: "<ANSWER>" } }
+  SFU-->>U: { op:7, t:501, d:{ sdp: "<OFFER>" } }
+  U->>SFU: { op:7, t:502, d:{ sdp: "<ANSWER>" } }
   U-->>SFU: { op:7, t:503, d:{ candidate... } }
   SFU-->>U: { op:7, t:503, d:{ candidate... } }
 
@@ -110,13 +110,13 @@ See [SFU WebSocket Protocol](SFUProtocol.md) for the full event catalog.
 
 ## 4) WebRTC Negotiation
 
-- Typically client offers:
+- After the join acknowledgement the SFU immediately synchronizes the room and sends **server‑initiated offers** to every peer:
 
 ```json
 { "op":7, "t":501, "d": { "sdp": "<OFFER>" } }
 ```
 
-- SFU applies remote description, adds recvonly transceivers, creates answer:
+- Clients apply the offer and respond with an answer:
 
 ```json
 { "op":7, "t":502, "d": { "sdp": "<ANSWER>" } }
@@ -127,6 +127,8 @@ See [SFU WebSocket Protocol](SFUProtocol.md) for the full event catalog.
 ```json
 { "op":7, "t":503, "d": { "candidate": "...", "sdpMid": "0", "sdpMLineIndex": 0 } }
 ```
+
+- If a client needs to renegotiate proactively (e.g., codec change) it can still send its own offer; the SFU answers it and then resynchronizes the room.
 
 ## 5) Media + Permissions
 
