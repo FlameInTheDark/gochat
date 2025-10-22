@@ -15,7 +15,8 @@ type peer struct {
 	close  func()
 	log    *slog.Logger
 
-	audioMuted atomic.Int32
+	audioMuted       atomic.Int32
+	initialOfferSent atomic.Int32
 
 	mu    sync.Mutex
 	muted map[int64]struct{}
@@ -30,6 +31,10 @@ func (p *peer) SetSelfMuted(v bool) {
 }
 
 func (p *peer) IsSelfMuted() bool { return p.audioMuted.Load() == 1 }
+
+func (p *peer) NeedsInitialOffer() bool { return p.initialOfferSent.Load() == 0 }
+
+func (p *peer) MarkInitialOfferSent() { p.initialOfferSent.Store(1) }
 
 func (p *peer) SetUserMuted(uid int64, muted bool) {
 	p.mu.Lock()
