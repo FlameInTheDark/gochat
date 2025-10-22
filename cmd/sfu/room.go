@@ -300,10 +300,10 @@ func (r *room) signalPeers() {
 	}
 
 	for attempt := 0; attempt < 25; attempt++ {
-		if !attemptSync() {
-			return
+		if attemptSync() {
+			continue
 		}
-		return false
+		return
 	}
 
 	go func() {
