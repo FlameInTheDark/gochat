@@ -49,6 +49,7 @@ func (a *App) messageLoop(c *websocket.Conn, room *room, p *peer, pc *webrtc.Pee
 				continue
 			}
 			_ = p.send(int(mqmsg.OPCodeRTC), int(mqmsg.EventTypeRTCAnswer), rtcAnswer{SDP: answer.SDP})
+			room.signalPeers()
 		case int(mqmsg.EventTypeRTCAnswer):
 			var payload rtcAnswer
 			if err := json.Unmarshal(env.D, &payload); err != nil || payload.SDP == "" {
@@ -59,6 +60,7 @@ func (a *App) messageLoop(c *websocket.Conn, room *room, p *peer, pc *webrtc.Pee
 				a.log.Warn("apply answer failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
 			} else {
 				a.log.Debug("client answer applied", slog.Int64("user", p.userID))
+				room.signalPeers()
 			}
 		case int(mqmsg.EventTypeRTCCandidate):
 			var payload rtcCandidate

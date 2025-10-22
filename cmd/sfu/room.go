@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -141,8 +140,8 @@ func (r *room) maybeCleanup(m *roomManager, delay time.Duration) {
 
 func (r *room) publishTrack(log *slog.Logger, publisher *peer, tr *webrtc.TrackRemote) error {
 	codec := tr.Codec().RTPCodecCapability
-	trackID := fmt.Sprintf("pub-%d-%s", publisher.userID, tr.ID())
-	streamID := fmt.Sprintf("user-%d", publisher.userID)
+	trackID := tr.ID()
+	streamID := tr.StreamID()
 
 	local, err := webrtc.NewTrackLocalStaticRTP(codec, trackID, streamID)
 	if err != nil {
@@ -152,6 +151,9 @@ func (r *room) publishTrack(log *slog.Logger, publisher *peer, tr *webrtc.TrackR
 	pub := &publication{id: trackID, from: publisher.userID, kind: tr.Kind(), local: local}
 
 	r.mu.Lock()
+	if existing := r.publications[trackID]; existing != nil {
+		delete(r.publications, trackID)
+	}
 	r.publications[trackID] = pub
 	r.mu.Unlock()
 
@@ -242,6 +244,10 @@ func (r *room) signalPeers() {
 				return true
 			}
 
+			if p.pc.SignalingState() != webrtc.SignalingStateStable {
+				continue
+			}
+
 			desired := make(map[string]*publication)
 			if _, deaf := r.sdeaf[p.userID]; !deaf {
 				for id, pub := range r.publications {
@@ -270,13 +276,6 @@ func (r *room) signalPeers() {
 						return true
 					}
 				}
-			}
-
-			if _, deaf := r.sdeaf[p.userID]; deaf {
-				if err := r.pushOffer(p); err != nil {
-					r.log.Warn("offer failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
-				}
-				continue
 			}
 
 			for id, pub := range desired {
@@ -308,6 +307,9 @@ func (r *room) signalPeers() {
 }
 
 func (r *room) pushOffer(p *peer) error {
+	if p.pc.SignalingState() != webrtc.SignalingStateStable {
+		return nil
+	}
 	offer, err := p.pc.CreateOffer(nil)
 	if err != nil {
 		return err

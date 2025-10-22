@@ -54,6 +54,14 @@ Notes
 
 - The SFU typically sends the first offer immediately after a user joins the room. Clients respond with an `RTCAnswer`, but may still initiate their own offer when local conditions change (codec/device switch).
 
+## Offer/Answer Flow
+
+1. **Join & Ack** — Client connects to `/signal`, sends `RTCJoin`, and receives `{op:7, t:500, d:{ok:true}}` once the token and channel permissions are validated.
+2. **Server Offer** — The room synchronizer (`signalPeers`) immediately creates an SDP offer for every peer with a stable signaling state and pushes it via `{op:7, t:501, d:{sdp:"<OFFER>"}}`.
+3. **Client Answer** — Clients set the remote description, create an answer, and reply with `{op:7, t:502, d:{sdp:"<ANSWER>"}}`. When the SFU applies the answer it reschedules `signalPeers`, ensuring any pending tracks are attached.
+4. **Media Fan-out** — For each inbound publisher track the SFU clones RTP packets into a shared `TrackLocalStaticRTP` and reuses it across subscribers. Anytime membership or mute state changes, `signalPeers` refreshes RTPSenders and triggers a new offer.
+5. **Trickle ICE** — Both sides continue to exchange `{op:7, t:503}` candidates until the transports are connected. A PLI broadcast runs after every resync so late joiners request keyframes from active speakers.
+
 Notes:
 - Binding keepalive (t=509) is handled by the WS service. See WS Event Types for t=509.
 - Route rebind notifications are dispatched by the WS service (t=513). See WS Event Types.
