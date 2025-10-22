@@ -84,81 +84,78 @@ type peerConnectionState struct {
 	websocket      *threadSafeWriter
 }
 
-type SFU struct {
+type channelState struct {
+	id          int64
 	log         *slog.Logger
 	mu          sync.Mutex
 	peers       []*peerConnectionState
 	trackLocals map[string]*webrtc.TrackLocalStaticRTP
 }
 
-func NewSFU(log *slog.Logger) *SFU {
-	return &SFU{
+func newChannelState(id int64, log *slog.Logger) *channelState {
+	return &channelState{
+		id:          id,
 		log:         log,
 		trackLocals: make(map[string]*webrtc.TrackLocalStaticRTP),
 	}
 }
 
-func (s *SFU) AddPeer(state *peerConnectionState) {
-	s.mu.Lock()
-	s.peers = append(s.peers, state)
-	s.mu.Unlock()
+func (c *channelState) addPeer(state *peerConnectionState) {
+	c.mu.Lock()
+	c.peers = append(c.peers, state)
+	c.mu.Unlock()
 }
 
-func (s *SFU) RemovePeer(pc *webrtc.PeerConnection) {
-	s.mu.Lock()
-	removed := false
-	for i := range s.peers {
-		if s.peers[i].peerConnection == pc {
-			s.peers = append(s.peers[:i], s.peers[i+1:]...)
+func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removed bool, empty bool) {
+	c.mu.Lock()
+	for i := range c.peers {
+		if c.peers[i].peerConnection == pc {
+			c.peers = append(c.peers[:i], c.peers[i+1:]...)
 			removed = true
 			break
 		}
 	}
-	s.mu.Unlock()
-	if removed {
-		s.SignalPeerConnections()
-	}
+	empty = len(c.peers) == 0 && len(c.trackLocals) == 0
+	c.mu.Unlock()
+	return removed, empty
 }
 
-func (s *SFU) AddTrack(t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
-	s.mu.Lock()
-	defer func() {
-		s.mu.Unlock()
-		s.SignalPeerConnections()
-	}()
-
+func (c *channelState) addTrack(t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
 	trackLocal, err := webrtc.NewTrackLocalStaticRTP(t.Codec().RTPCodecCapability, t.ID(), t.StreamID())
 	if err != nil {
-		s.log.Warn("failed to create local track", slog.String("error", err.Error()))
+		c.log.Warn("failed to create local track", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 		return nil
 	}
 
-	s.trackLocals[t.ID()] = trackLocal
+	c.mu.Lock()
+	c.trackLocals[t.ID()] = trackLocal
+	c.mu.Unlock()
 	return trackLocal
 }
 
-func (s *SFU) RemoveTrack(track *webrtc.TrackLocalStaticRTP) {
-	s.mu.Lock()
-	defer func() {
-		s.mu.Unlock()
-		s.SignalPeerConnections()
-	}()
-
-	delete(s.trackLocals, track.ID())
+func (c *channelState) removeTrack(track *webrtc.TrackLocalStaticRTP) (removed bool, empty bool) {
+	if track == nil {
+		return false, false
+	}
+	c.mu.Lock()
+	if _, ok := c.trackLocals[track.ID()]; ok {
+		delete(c.trackLocals, track.ID())
+		removed = true
+	}
+	empty = len(c.peers) == 0 && len(c.trackLocals) == 0
+	c.mu.Unlock()
+	return removed, empty
 }
 
-func (s *SFU) SignalPeerConnections() {
-	s.mu.Lock()
-	defer func() {
-		s.mu.Unlock()
-		s.dispatchKeyFrame()
-	}()
-
+func (c *channelState) signalPeerConnections() {
 	attemptSync := func() bool {
-		for i := 0; i < len(s.peers); i++ {
-			state := s.peers[i]
+		c.mu.Lock()
+		defer c.mu.Unlock()
+
+		for i := 0; i < len(c.peers); i++ {
+			state := c.peers[i]
 			if state.peerConnection.ConnectionState() == webrtc.PeerConnectionStateClosed {
-				s.peers = append(s.peers[:i], s.peers[i+1:]...)
+				c.peers = append(c.peers[:i], c.peers[i+1:]...)
 				return true
 			}
 
@@ -171,9 +168,9 @@ func (s *SFU) SignalPeerConnections() {
 				trackID := sender.Track().ID()
 				existingSenders[trackID] = true
 
-				if _, ok := s.trackLocals[trackID]; !ok {
+				if _, ok := c.trackLocals[trackID]; !ok {
 					if err := state.peerConnection.RemoveTrack(sender); err != nil {
-						s.log.Warn("failed to remove sender", slog.String("error", err.Error()))
+						c.log.Warn("failed to remove sender", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 						return true
 					}
 				}
@@ -186,10 +183,10 @@ func (s *SFU) SignalPeerConnections() {
 				existingSenders[receiver.Track().ID()] = true
 			}
 
-			for id, track := range s.trackLocals {
+			for id, track := range c.trackLocals {
 				if _, ok := existingSenders[id]; !ok {
 					if _, err := state.peerConnection.AddTrack(track); err != nil {
-						s.log.Warn("failed to add track to peer", slog.String("error", err.Error()))
+						c.log.Warn("failed to add track to peer", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 						return true
 					}
 				}
@@ -197,16 +194,16 @@ func (s *SFU) SignalPeerConnections() {
 
 			offer, err := state.peerConnection.CreateOffer(nil)
 			if err != nil {
-				s.log.Warn("failed to create offer", slog.String("error", err.Error()))
+				c.log.Warn("failed to create offer", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 				return true
 			}
 			if err = state.peerConnection.SetLocalDescription(offer); err != nil {
-				s.log.Warn("failed to set local description", slog.String("error", err.Error()))
+				c.log.Warn("failed to set local description", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 				return true
 			}
 
 			if err = state.websocket.SendRTCOffer(offer); err != nil {
-				s.log.Warn("failed to send offer", slog.String("error", err.Error()))
+				c.log.Warn("failed to send offer", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 				return true
 			}
 		}
@@ -217,7 +214,7 @@ func (s *SFU) SignalPeerConnections() {
 		if attempts == 25 {
 			go func() {
 				time.Sleep(3 * time.Second)
-				s.SignalPeerConnections()
+				c.signalPeerConnections()
 			}()
 			return
 		}
@@ -227,10 +224,10 @@ func (s *SFU) SignalPeerConnections() {
 	}
 }
 
-func (s *SFU) dispatchKeyFrame() {
-	s.mu.Lock()
-	peers := append([]*peerConnectionState(nil), s.peers...)
-	s.mu.Unlock()
+func (c *channelState) dispatchKeyFrame() {
+	c.mu.Lock()
+	peers := append([]*peerConnectionState(nil), c.peers...)
+	c.mu.Unlock()
 
 	for _, p := range peers {
 		for _, receiver := range p.peerConnection.GetReceivers() {
@@ -244,16 +241,132 @@ func (s *SFU) dispatchKeyFrame() {
 	}
 }
 
+func (c *channelState) isEmpty() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return len(c.peers) == 0 && len(c.trackLocals) == 0
+}
+
+type SFU struct {
+	log      *slog.Logger
+	mu       sync.Mutex
+	channels map[int64]*channelState
+}
+
+func NewSFU(log *slog.Logger) *SFU {
+	return &SFU{
+		log:      log,
+		channels: make(map[int64]*channelState),
+	}
+}
+
+func (s *SFU) getOrCreateChannel(channelID int64) *channelState {
+	s.mu.Lock()
+	ch, ok := s.channels[channelID]
+	if !ok {
+		ch = newChannelState(channelID, s.log)
+		s.channels[channelID] = ch
+	}
+	s.mu.Unlock()
+	return ch
+}
+
+func (s *SFU) AddPeer(channelID int64, state *peerConnectionState) *channelState {
+	ch := s.getOrCreateChannel(channelID)
+	ch.addPeer(state)
+	ch.signalPeerConnections()
+	return ch
+}
+
+func (s *SFU) RemovePeer(channelID int64, pc *webrtc.PeerConnection) {
+	s.mu.Lock()
+	ch, ok := s.channels[channelID]
+	s.mu.Unlock()
+	if !ok {
+		return
+	}
+
+	removed, empty := ch.removePeer(pc)
+	if removed {
+		ch.signalPeerConnections()
+	}
+	if empty {
+		s.mu.Lock()
+		if ch.isEmpty() {
+			delete(s.channels, channelID)
+		}
+		s.mu.Unlock()
+	}
+}
+
+func (s *SFU) AddTrack(channelID int64, t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
+	ch := s.getOrCreateChannel(channelID)
+	track := ch.addTrack(t)
+	if track != nil {
+		ch.signalPeerConnections()
+	}
+	return track
+}
+
+func (s *SFU) RemoveTrack(channelID int64, track *webrtc.TrackLocalStaticRTP) {
+	s.mu.Lock()
+	ch, ok := s.channels[channelID]
+	s.mu.Unlock()
+	if !ok {
+		return
+	}
+	removed, empty := ch.removeTrack(track)
+	if removed {
+		ch.signalPeerConnections()
+	}
+	if empty {
+		s.mu.Lock()
+		if ch.isEmpty() {
+			delete(s.channels, channelID)
+		}
+		s.mu.Unlock()
+	}
+}
+
+func (s *SFU) SignalChannel(channelID int64) {
+	s.mu.Lock()
+	ch, ok := s.channels[channelID]
+	s.mu.Unlock()
+	if !ok {
+		return
+	}
+	ch.signalPeerConnections()
+}
+
+func (s *SFU) dispatchKeyFrameAll() {
+	s.mu.Lock()
+	channels := make([]*channelState, 0, len(s.channels))
+	for _, ch := range s.channels {
+		channels = append(channels, ch)
+	}
+	s.mu.Unlock()
+
+	for _, ch := range channels {
+		ch.dispatchKeyFrame()
+	}
+}
+
 func (s *SFU) RunKeyFrameTicker() {
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
 	for range ticker.C {
-		s.dispatchKeyFrame()
+		s.dispatchKeyFrameAll()
 	}
 }
 
 func (s *SFU) PeerCount() int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return len(s.peers)
+	total := 0
+	for _, ch := range s.channels {
+		ch.mu.Lock()
+		total += len(ch.peers)
+		ch.mu.Unlock()
+	}
+	return total
 }

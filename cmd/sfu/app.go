@@ -136,17 +136,17 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 			}
 		}
 		if state == webrtc.PeerConnectionStateClosed {
-			a.sfu.SignalPeerConnections()
+			a.sfu.SignalChannel(channelID)
 		}
 	})
 
 	pc.OnTrack(func(t *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
 		a.log.Info("inbound track", slog.String("kind", t.Kind().String()), slog.String("id", t.ID()))
-		trackLocal := a.sfu.AddTrack(t)
+		trackLocal := a.sfu.AddTrack(channelID, t)
 		if trackLocal == nil {
 			return
 		}
-		defer a.sfu.RemoveTrack(trackLocal)
+		defer a.sfu.RemoveTrack(channelID, trackLocal)
 
 		buf := make([]byte, 1500)
 		rtpPacket := &rtp.Packet{}
@@ -168,10 +168,10 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 		}
 	})
 
-	a.sfu.AddPeer(state)
+	a.sfu.AddPeer(channelID, state)
 	a.totalPeers.Add(1)
 	defer func() {
-		a.sfu.RemovePeer(pc)
+		a.sfu.RemovePeer(channelID, pc)
 		a.totalPeers.Add(-1)
 	}()
 
@@ -182,7 +182,7 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 
 	a.log.Info("client joined", slog.Int64("user", uid), slog.Int64("channel", channelID))
 
-	a.sfu.SignalPeerConnections()
+	a.sfu.SignalChannel(channelID)
 
 	for {
 		_, raw, err := c.ReadMessage()
