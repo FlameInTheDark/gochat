@@ -44,6 +44,13 @@ func (a *App) setupPeer(room *room, uid int64, perms int64, send func(any) error
 	// Helpful: if the remote client can't handle server-initiated offers reliably,
 	// this will still be driven by explicit requestNegotiation() calls.
 	pc.OnNegotiationNeeded(func() {
+		// Avoid sending offers before the initial remote description is set to prevent glare.
+		if pc.CurrentRemoteDescription() == nil {
+			if a.log != nil {
+				a.log.Debug("nego: defer (no remote description)", slog.Int64("user", uid))
+			}
+			return
+		}
 		// Coalesce via requestNegotiation state machine
 		p.requestNegotiation()
 	})

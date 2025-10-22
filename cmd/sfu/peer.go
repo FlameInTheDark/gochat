@@ -39,6 +39,7 @@ func (p *peer) requestNegotiation() {
 		return
 	}
 	p.negotiating = true
+	p.negoPending = false
 	p.negoMu.Unlock()
 	if p.log != nil {
 		p.log.Debug("nego: start", slog.Int64("user", p.userID))
@@ -47,6 +48,17 @@ func (p *peer) requestNegotiation() {
 }
 
 func (p *peer) doNegotiation() {
+	if p.pc.SignalingState() != webrtc.SignalingStateStable {
+		p.negoMu.Lock()
+		// ensure another attempt runs once we return to stable state
+		p.negotiating = false
+		p.negoPending = true
+		p.negoMu.Unlock()
+		if p.log != nil {
+			p.log.Debug("nego: skip (not stable)", slog.Int64("user", p.userID))
+		}
+		return
+	}
 	offer, err := p.pc.CreateOffer(nil)
 	if err != nil {
 		p.negoMu.Lock()
@@ -60,6 +72,7 @@ func (p *peer) doNegotiation() {
 	if err := p.pc.SetLocalDescription(offer); err != nil {
 		p.negoMu.Lock()
 		p.negotiating = false
+		p.negoPending = true
 		p.negoMu.Unlock()
 		if p.log != nil {
 			p.log.Warn("nego: set local failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
