@@ -14,13 +14,13 @@ func NewDBLogger(logger *slog.Logger) *DBLogger {
 }
 
 func (l *DBLogger) Print(v ...interface{}) {
-	l.logger.Debug(fmt.Sprint(v))
+	l.logger.Debug(fmt.Sprint(v...))
 }
 
 func (l *DBLogger) Printf(format string, v ...interface{}) {
-	l.logger.Debug(fmt.Sprintf(format, v))
+	l.logger.Debug(fmt.Sprintf(format, v...))
 }
 
 func (l *DBLogger) Println(v ...interface{}) {
-	l.logger.Debug(fmt.Sprint(v))
+	l.logger.Debug(fmt.Sprint(v...))
 }
