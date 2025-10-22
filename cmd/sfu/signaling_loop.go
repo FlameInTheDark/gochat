@@ -35,6 +35,12 @@ func (a *App) messageLoop(c *websocket.Conn, room *room, p *peer, pc *webrtc.Pee
 			}
 			a.log.Debug("client offer", slog.Int64("user", p.userID))
 			offer := webrtc.SessionDescription{Type: webrtc.SDPTypeOffer, SDP: payload.SDP}
+			if pc.SignalingState() == webrtc.SignalingStateHaveLocalOffer {
+				if err := pc.SetLocalDescription(webrtc.SessionDescription{Type: webrtc.SDPTypeRollback}); err != nil {
+					a.log.Warn("rollback failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
+					continue
+				}
+			}
 			if err := pc.SetRemoteDescription(offer); err != nil {
 				a.log.Warn("apply offer failed", slog.Int64("user", p.userID), slog.String("error", err.Error()))
 				continue
