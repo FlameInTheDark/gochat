@@ -159,6 +159,10 @@ func (c *channelState) signalPeerConnections() {
 				return true
 			}
 
+			if state.peerConnection.SignalingState() != webrtc.SignalingStateStable {
+				continue
+			}
+
 			existingSenders := map[string]bool{}
 			for _, sender := range state.peerConnection.GetSenders() {
 				if sender.Track() == nil {
