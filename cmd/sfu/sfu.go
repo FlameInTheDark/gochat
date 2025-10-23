@@ -88,6 +88,9 @@ func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removed bool, empt
 			break
 		}
 	}
+	if removed && len(c.peers) == 0 && len(c.trackLocals) > 0 {
+		c.trackLocals = make(map[string]*webrtc.TrackLocalStaticRTP)
+	}
 	empty = len(c.peers) == 0 && len(c.trackLocals) == 0
 	c.mu.Unlock()
 	return removed, empty
