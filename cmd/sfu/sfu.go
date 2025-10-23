@@ -278,7 +278,6 @@ func (s *SFU) getOrCreateChannel(channelID int64) *channelState {
 func (s *SFU) AddPeer(channelID int64, state *peerConnectionState) *channelState {
 	ch := s.getOrCreateChannel(channelID)
 	ch.addPeer(state)
-	ch.signalPeerConnections()
 	return ch
 }
 

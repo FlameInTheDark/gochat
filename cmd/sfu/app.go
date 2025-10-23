@@ -183,19 +183,19 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 		}
 	})
 
-	a.sfu.AddPeer(channelID, state)
-	a.totalPeers.Add(1)
-	defer func() {
-		a.sfu.RemovePeer(channelID, pc)
-		a.totalPeers.Add(-1)
-	}()
-
 	if err := writer.SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: JoinAck{Ok: true}}); err != nil {
 		a.log.Warn("failed to send join ack", slog.String("error", err.Error()))
 		return
 	}
 
 	a.log.Info("client joined", slog.Int64("user", uid), slog.Int64("channel", channelID))
+
+	a.sfu.AddPeer(channelID, state)
+	a.totalPeers.Add(1)
+	defer func() {
+		a.sfu.RemovePeer(channelID, pc)
+		a.totalPeers.Add(-1)
+	}()
 
 	a.sfu.SignalChannel(channelID)
 
