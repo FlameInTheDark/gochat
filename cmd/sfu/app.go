@@ -39,6 +39,11 @@ type App struct {
 	discoverLog sync.Once
 }
 
+type websocketMessage struct {
+	Event string `json:"event"`
+	Data  string `json:"data"`
+}
+
 func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	cfg, err := config.LoadConfig()
 	if err != nil {

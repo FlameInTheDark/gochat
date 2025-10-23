@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -13,11 +12,6 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 )
-
-type websocketMessage struct {
-	Event string `json:"event"`
-	Data  string `json:"data"`
-}
 
 type threadSafeWriter struct {
 	conn *websocket.Conn
@@ -33,36 +27,19 @@ func (t *threadSafeWriter) WriteJSON(v any) error {
 	return t.conn.WriteJSON(v)
 }
 
-func (t *threadSafeWriter) sendDual(envelope any, eventName, eventData string) error {
+func (t *threadSafeWriter) SendEnvelope(env OutEnvelope) error {
 	if t.conn == nil {
 		return fmt.Errorf("websocket closed")
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if err := t.conn.WriteJSON(envelope); err != nil {
-		return err
-	}
-	if eventName != "" && eventData != "" {
-		msg := websocketMessage{Event: eventName, Data: eventData}
-		if err := t.conn.WriteJSON(&msg); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (t *threadSafeWriter) SendEnvelope(env OutEnvelope) error {
-	return t.sendDual(env, "", "")
+	return t.conn.WriteJSON(env)
 }
 
 func (t *threadSafeWriter) SendRTCOffer(desc webrtc.SessionDescription) error {
 	payload := rtcOffer{SDP: desc.SDP, Type: desc.Type.String()}
-	data, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
 	env := OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCOffer), D: payload}
-	return t.sendDual(env, "offer", string(data))
+	return t.SendEnvelope(env)
 }
 
 func (t *threadSafeWriter) SendRTCCandidate(c *webrtc.ICECandidate) error {
@@ -71,12 +48,8 @@ func (t *threadSafeWriter) SendRTCCandidate(c *webrtc.ICECandidate) error {
 	}
 	cand := c.ToJSON()
 	payload := rtcCandidate{Candidate: cand.Candidate, SDPMid: cand.SDPMid, SDPMLineIndex: cand.SDPMLineIndex}
-	data, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
 	env := OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCCandidate), D: payload}
-	return t.sendDual(env, "candidate", string(data))
+	return t.SendEnvelope(env)
 }
 
 type peerConnectionState struct {
