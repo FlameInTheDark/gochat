@@ -32,6 +32,8 @@ type App struct {
 	shut *shutter.Shut
 	sfu  *SFU
 
+	iceConfig webrtc.Configuration
+
 	instID      string
 	totalPeers  atomic.Int64
 	discoverLog sync.Once
@@ -42,6 +44,18 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	if err != nil {
 		logger.Error("unable to load config", slog.String("error", err.Error()))
 		panic(err)
+	}
+
+	iceCfg := webrtc.Configuration{}
+	for _, raw := range cfg.STUNServers {
+		url := strings.TrimSpace(raw)
+		if url == "" {
+			continue
+		}
+		iceCfg.ICEServers = append(iceCfg.ICEServers, webrtc.ICEServer{URLs: []string{url}})
+	}
+	if len(iceCfg.ICEServers) == 0 {
+		iceCfg.ICEServers = []webrtc.ICEServer{{URLs: []string{"stun:stun.l.google.com:19302"}}}
 	}
 
 	fiberApp := fiber.New(fiber.Config{DisableStartupMessage: true})
@@ -55,12 +69,13 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	sfu := NewSFU(logger)
 
 	a := &App{
-		app:    fiberApp,
-		cfg:    cfg,
-		log:    logger,
-		shut:   shut,
-		sfu:    sfu,
-		instID: cfg.ServiceID,
+		app:       fiberApp,
+		cfg:       cfg,
+		log:       logger,
+		shut:      shut,
+		sfu:       sfu,
+		instID:    cfg.ServiceID,
+		iceConfig: iceCfg,
 	}
 
 	fiberApp.Get("/signal", websocket.New(a.handleSignalWS, websocket.Config{}))
@@ -103,7 +118,7 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 		return
 	}
 
-	pc, err := webrtc.NewPeerConnection(webrtc.Configuration{})
+	pc, err := webrtc.NewPeerConnection(a.iceConfig)
 	if err != nil {
 		a.log.Error("failed to create peer connection", slog.String("error", err.Error()))
 		return
