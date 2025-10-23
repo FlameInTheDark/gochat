@@ -210,6 +210,9 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 					a.log.Warn("failed to parse answer", slog.String("error", err.Error()))
 					return
 				}
+				if answer.Type == webrtc.SDPType(0) {
+					answer.Type = webrtc.SDPTypeAnswer
+				}
 				if err := pc.SetRemoteDescription(answer); err != nil {
 					a.log.Warn("failed to set remote description", slog.String("error", err.Error()))
 					return
@@ -333,7 +336,18 @@ func (a *App) handleLegacyEnvelope(env envelope, pc *webrtc.PeerConnection, writ
 			if err := json.Unmarshal(env.D, &ans); err != nil || ans.SDP == "" {
 				return false
 			}
-			desc := webrtc.SessionDescription{Type: webrtc.SDPTypeAnswer, SDP: ans.SDP}
+			descType := webrtc.SDPTypeAnswer
+			switch {
+			case strings.EqualFold(ans.Type, webrtc.SDPTypeOffer.String()):
+				descType = webrtc.SDPTypeOffer
+			case strings.EqualFold(ans.Type, webrtc.SDPTypePranswer.String()):
+				descType = webrtc.SDPTypePranswer
+			case strings.EqualFold(ans.Type, webrtc.SDPTypeRollback.String()):
+				descType = webrtc.SDPTypeRollback
+			case strings.EqualFold(ans.Type, webrtc.SDPTypeAnswer.String()):
+				descType = webrtc.SDPTypeAnswer
+			}
+			desc := webrtc.SessionDescription{Type: descType, SDP: ans.SDP}
 			if err := pc.SetRemoteDescription(desc); err != nil {
 				a.log.Warn("failed to apply legacy answer", slog.String("error", err.Error()))
 			}

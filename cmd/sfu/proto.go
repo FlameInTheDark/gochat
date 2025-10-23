@@ -23,11 +23,13 @@ type envelope struct {
 }
 
 type rtcAnswer struct {
-	SDP string `json:"sdp"`
+	SDP  string `json:"sdp"`
+	Type string `json:"type,omitempty"`
 }
 
 type rtcOffer struct {
-	SDP string `json:"sdp"`
+	SDP  string `json:"sdp"`
+	Type string `json:"type,omitempty"`
 }
 
 type rtcCandidate struct {

@@ -56,7 +56,7 @@ func (t *threadSafeWriter) SendEnvelope(env OutEnvelope) error {
 }
 
 func (t *threadSafeWriter) SendRTCOffer(desc webrtc.SessionDescription) error {
-	payload := rtcOffer{SDP: desc.SDP}
+	payload := rtcOffer{SDP: desc.SDP, Type: desc.Type.String()}
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return err
