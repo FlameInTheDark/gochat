@@ -54,13 +54,15 @@ flowchart
         n9("S3 Object Storage")
     end
 
-
+    n17 ---> n6
+    n17 ---> n7
     n1 ---> n7
     n7 ---> n3
-    n3 --> n8
-    n1 --> n6
-    n3 --> n6
-    n1 --> n8
+    n3 ---> n8
+    n1 ---> n6
+    n3 ---> n6
+    n1 ---> n8
+    n17 ---> n5
     n1 --> n5
     n1 ---> n10
     n10 ---> n11

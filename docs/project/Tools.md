@@ -4,7 +4,7 @@
 
 The `cmd/tools` application provides helper commands for operating the platform.
 
-## gen-token
+## Generate Webhook Token
 
 Generate a JWT for services that authenticate to the Webhook.
 
@@ -19,13 +19,13 @@ Flags
 Examples
 ```
 # Generate SFU token with a fixed id
-tools sfu token generate --type sfu --id 26a58109-fbc4-4205-ad3e-8bef10e9d8d5 --secret supersecret
+tools token webhook generate --type sfu --id 26a58109-fbc4-4205-ad3e-8bef10e9d8d5 --secret supersecret
 
 # Print as header and curl example
-tools sfu token generate --type sfu --secret supersecret --header --curl
+tools token webhook generate --type sfu --secret supersecret --header --curl
 
 # JSON output (contains id and token fields)
-tools sfu token generate --type attachments --secret supersecret --format json
+tools token webhook generate --type attachments --secret supersecret --format json
 ```
 
 Use the output token as `webhook_token` in `sfu_config.yaml` or as the value for `X-Webhook-Token` when calling Webhook endpoints from trusted services.
