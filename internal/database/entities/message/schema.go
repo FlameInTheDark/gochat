@@ -11,23 +11,36 @@ import (
 )
 
 const (
-	createMessage         = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, attachments) VALUES (?, ?, ?, ?, ?, ?)`
+	createMessage         = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, attachments, type) VALUES (?, ?, ?, ?, ?, ?, 0)`
+	createSystemMessage   = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, type) VALUES (?, ?, ?, ?, ?, ?)`
 	updateMessage         = `UPDATE gochat.messages SET content = ?, edited_at = toTimestamp(now()) WHERE channel_id = ? AND id = ? AND bucket = ?`
 	deleteMessage         = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id = ?`
 	deleteChannelMessages = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket IN ?`
-	getMessage            = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE id = ? AND channel_id = ? AND bucket = ?`
-	getMessagesBefore     = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND id <= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
-	getMessagesAfter      = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND id >= ? AND bucket = ? ORDER BY id LIMIT ?`
-	getMessagesList       = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE id IN ?`
-	getMessagesByIds      = `SELECT id, channel_id, user_id, content, attachments, edited_at FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id IN ?;
+	getMessage            = `SELECT id, channel_id, user_id, content, attachments, edited_at, type FROM gochat.messages WHERE id = ? AND channel_id = ? AND bucket = ?`
+	getMessagesBefore     = `SELECT id, channel_id, user_id, content, attachments, edited_at, type FROM gochat.messages WHERE channel_id = ? AND id <= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
+	getMessagesAfter      = `SELECT id, channel_id, user_id, content, attachments, edited_at, type FROM gochat.messages WHERE channel_id = ? AND id >= ? AND bucket = ? ORDER BY id LIMIT ?`
+	getMessagesList       = `SELECT id, channel_id, user_id, content, attachments, edited_at, type FROM gochat.messages WHERE id IN ?`
+	getMessagesByIds      = `SELECT id, channel_id, user_id, content, attachments, edited_at, type FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id IN ?;
 `
 )
 
-func (e *Entity) CreateMessage(ctx context.Context, id, channel_id, user_id int64, content string, attachments []int64) error {
+func (e *Entity) CreateMessage(ctx context.Context, id, channelId, userId int64, content string, attachments []int64) error {
 	err := e.c.Session().
 		Query(createMessage).
 		WithContext(ctx).
-		Bind(channel_id, idgen.GetBucket(id), id, user_id, content, attachments).
+		Bind(channelId, idgen.GetBucket(id), id, userId, content, attachments).
+		Exec()
+	if err != nil {
+		return fmt.Errorf("unable to create message: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) CreateSystemMessage(ctx context.Context, id, channelId, userId int64, content string, msgType model.MessageType) error {
+	err := e.c.Session().
+		Query(createSystemMessage).
+		WithContext(ctx).
+		Bind(channelId, idgen.GetBucket(id), id, userId, content, int(msgType)).
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to create message: %w", err)
@@ -83,7 +96,7 @@ func (e *Entity) GetMessage(ctx context.Context, id, channelId int64) (model.Mes
 		Query(getMessage).
 		WithContext(ctx).
 		Bind(id, channelId, idgen.GetBucket(id)).
-		Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt)
+		Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt, &m.Type)
 	if err != nil {
 		return m, fmt.Errorf("unable to get message: %w", err)
 	}
@@ -105,7 +118,7 @@ func (e *Entity) GetMessagesBefore(ctx context.Context, channelId, msgId int64, 
 			Bind(channelId, msgId, lastBucket, limit-len(msgs)).
 			Iter()
 		var m model.Message
-		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt) {
+		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt, &m.Type) {
 			msgs = append(msgs, m)
 			users[m.UserId] = true
 		}
@@ -141,7 +154,7 @@ func (e *Entity) GetMessagesAfter(ctx context.Context, channelId, msgId, lastCha
 			Bind(channelId, msgId, lastBucket, limit-len(msgs)).
 			Iter()
 		var m model.Message
-		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt) {
+		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt, &m.Type) {
 			msgs = append(msgs, m)
 			users[m.UserId] = true
 		}
@@ -192,7 +205,7 @@ func (e *Entity) GetMessagesList(ctx context.Context, msgIds []int64) ([]model.M
 		Bind(msgIds).
 		Iter()
 	var m model.Message
-	for iter.Scan(&m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt) {
+	for iter.Scan(&m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt, &m.Type) {
 		msgs = append(msgs, m)
 	}
 	err := iter.Close()
@@ -236,7 +249,7 @@ func (e *Entity) GetChannelMessagesByIDs(ctx context.Context, channelId int64, i
 				Iter()
 
 			var m model.Message
-			for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt) {
+			for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt, &m.Type) {
 				// copy slice to avoid reuse issues
 				mm := m
 				if mm.Attachments != nil {

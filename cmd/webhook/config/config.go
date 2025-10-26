@@ -22,6 +22,10 @@ type Config struct {
 	JWTSecret string `yaml:"jwt_secret" env:"WEBHOOK_JWT_SECRET"`
 	// Swagger
 	Swagger bool `yaml:"swagger" env:"SWAGGER" env-default:"false"`
+	// Cache
+	KeyDB string `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1"`
+	// NATS
+	NatsConnString string `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {

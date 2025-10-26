@@ -34,9 +34,10 @@ This page lists all event type values used in WebSocket payloads under the `t` f
 | 204  | Guild Member Role Removed |
 
 ### Channel Message Types (300)
-| Type | Description               |
-|------|---------------------------|
-| 300  | Guild Channel Message     |
+| Type | Description           |
+|------|-----------------------|
+| 300  | Guild Channel Message |
+| 301  | Channel Typing Event  |
 
 ### User Types (400–406)
 | Type | Description               |
@@ -57,7 +58,6 @@ This page lists all event type values used in WebSocket payloads under the `t` f
 
 | Type | Description                    |
 |------|--------------------------------|
-| 509  | RTC Binding Alive (keep route) |
 | 513  | RTC Server Rebind (reconnect)  |
 
 RTC Server Rebind (t=513)

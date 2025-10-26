@@ -104,8 +104,9 @@ func (e *entity) JoinVoice(c *fiber.Ctx) error {
 	now := time.Now()
 	claims := struct {
 		helper.Claims
-		ChannelID int64 `json:"channel_id"`
-		Perms     int64 `json:"perms"`
+		ChannelID int64  `json:"channel_id"`
+		GuildID   *int64 `json:"guild_id,omitempty"`
+		Perms     int64  `json:"perms"`
 	}{
 		Claims: helper.Claims{
 			UserID:    user.Id,
@@ -118,8 +119,10 @@ func (e *entity) JoinVoice(c *fiber.Ctx) error {
 			},
 		},
 		ChannelID: channelId,
+		GuildID:   &guildId,
 		Perms:     vperm,
 	}
+
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := tok.SignedString([]byte(e.authSecret))
 	if err != nil {

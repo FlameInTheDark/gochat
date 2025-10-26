@@ -159,7 +159,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		"/api/v1",
 		user.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, logger),
 		message.New(database, pg, qt, imq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
-		guild.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, extractRegionIDs(cfg.VoiceRegions), logger),
+		guild.New(database, pg, qt, imq, cache, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, extractRegionIDs(cfg.VoiceRegions), logger),
 		voice.New(convertRegions(cfg.VoiceRegions), logger),
 		search.New(database, pg, searchService, logger),
 	)

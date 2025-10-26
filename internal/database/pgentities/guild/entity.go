@@ -17,6 +17,7 @@ type Guild interface {
 	GetGuildsList(ctx context.Context, ids []int64) ([]model.Guild, error)
 	SetGuildPermissions(ctx context.Context, id int64, permissions int64) error
 	UpdateGuild(ctx context.Context, id int64, name *string, icon *int64, public *bool, permissions *int64) error
+	SetSystemMessagesChannel(ctx context.Context, id int64, channelId *int64) error
 }
 
 type Entity struct {

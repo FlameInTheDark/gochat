@@ -49,10 +49,13 @@ const (
 	EventTypeGuildMemberRemove
 	EventTypeGuildMemberAddRole
 	EventTypeGuildMemberRemoveRole
+	EventTypeGuildMemberJoinVoice
+	EventTypeGuildMemberLeaveVoice
 )
 
 const (
 	EventTypeGuildChannelMessage EventType = 300 + iota
+	EventTypeChannelUserTyping
 )
 
 const (

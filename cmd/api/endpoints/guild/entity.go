@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/FlameInTheDark/gochat/internal/cache"
+	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/database/db"
@@ -36,6 +37,7 @@ func (e *entity) Init(router fiber.Router) {
 	router.Get("/:guild_id<int>", e.Get)
 	router.Patch("/:guild_id<int>", e.Update)
 	router.Delete("/:guild_id<int>", e.Delete)
+	router.Post("/:guild_id<int>", e.SetSystemMessagesChannel)
 
 	// Icons
 	router.Post("/:guild_id<int>/icon", e.CreateIcon)
@@ -88,6 +90,7 @@ type entity struct {
 	// Services
 	log   *slog.Logger
 	mqt   mq.SendTransporter
+	imq   *indexmq.IndexMQ
 	cache cache.Cache
 
 	// DB entities
@@ -119,7 +122,7 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, cache cache.Cache, attachTTLSeconds int64, authSecret string, defaultVoiceRegion string, disco discovery.Manager, allowedRegions []string, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.IndexMQ, cache cache.Cache, attachTTLSeconds int64, authSecret string, defaultVoiceRegion string, disco discovery.Manager, allowedRegions []string, log *slog.Logger) server.Entity {
 	ar := make(map[string]struct{}, len(allowedRegions))
 	for _, r := range allowedRegions {
 		if r == "" {
@@ -131,6 +134,7 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, cache cache.Cach
 		name:               entityName,
 		log:                log,
 		mqt:                mqt,
+		imq:                imq,
 		cache:              cache,
 		user:               user.New(pg.Conn()),
 		disc:               discriminator.New(pg.Conn()),

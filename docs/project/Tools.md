@@ -19,13 +19,13 @@ Flags
 Examples
 ```
 # Generate SFU token with a fixed id
-tools gen-token --type sfu --id 26a58109-fbc4-4205-ad3e-8bef10e9d8d5 --secret supersecret
+tools sfu token generate --type sfu --id 26a58109-fbc4-4205-ad3e-8bef10e9d8d5 --secret supersecret
 
 # Print as header and curl example
-tools gen-token --type sfu --secret supersecret --header --curl
+tools sfu token generate --type sfu --secret supersecret --header --curl
 
 # JSON output (contains id and token fields)
-tools gen-token --type attachments --secret supersecret --format json
+tools sfu token generate --type attachments --secret supersecret --format json
 ```
 
 Use the output token as `webhook_token` in `sfu_config.yaml` or as the value for `X-Webhook-Token` when calling Webhook endpoints from trusted services.

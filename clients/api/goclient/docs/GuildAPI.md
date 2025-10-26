@@ -19,6 +19,7 @@ Method | HTTP request | Description
 [**GuildGuildIdIconsIconIdDelete**](GuildAPI.md#GuildGuildIdIconsIconIdDelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
 [**GuildGuildIdMembersGet**](GuildAPI.md#GuildGuildIdMembersGet) | **Get** /guild/{guild_id}/members | Get guild members
 [**GuildGuildIdPatch**](GuildAPI.md#GuildGuildIdPatch) | **Patch** /guild/{guild_id} | Update guild
+[**GuildGuildIdSystemchPatch**](GuildAPI.md#GuildGuildIdSystemchPatch) | **Patch** /guild/{guild_id}/systemch | Set system messages channel
 [**GuildGuildIdVoiceChannelIdJoinPost**](GuildAPI.md#GuildGuildIdVoiceChannelIdJoinPost) | **Post** /guild/{guild_id}/voice/{channel_id}/join | Join voice channel (get SFU signaling info)
 [**GuildGuildIdVoiceChannelIdRegionPatch**](GuildAPI.md#GuildGuildIdVoiceChannelIdRegionPatch) | **Patch** /guild/{guild_id}/voice/{channel_id}/region | Set channel voice region
 [**GuildGuildIdVoiceMovePost**](GuildAPI.md#GuildGuildIdVoiceMovePost) | **Post** /guild/{guild_id}/voice/move | Move member to voice channel
@@ -1062,6 +1063,76 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
  **guildUpdateGuildRequest** | [**GuildUpdateGuildRequest**](GuildUpdateGuildRequest.md) | Update guild data | 
+
+### Return type
+
+[**DtoGuild**](DtoGuild.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdSystemchPatch
+
+> DtoGuild GuildGuildIdSystemchPatch(ctx, guildId).GuildSetGuildSystemMessagesChannelRequest(guildSetGuildSystemMessagesChannelRequest).Execute()
+
+Set system messages channel
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(2230469276416868352) // int32 | Guild ID
+	guildSetGuildSystemMessagesChannelRequest := *openapiclient.NewGuildSetGuildSystemMessagesChannelRequest() // GuildSetGuildSystemMessagesChannelRequest | Set system messages channel
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdSystemchPatch(context.Background(), guildId).GuildSetGuildSystemMessagesChannelRequest(guildSetGuildSystemMessagesChannelRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdSystemchPatch``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdSystemchPatch`: DtoGuild
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdSystemchPatch`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdSystemchPatchRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **guildSetGuildSystemMessagesChannelRequest** | [**GuildSetGuildSystemMessagesChannelRequest**](GuildSetGuildSystemMessagesChannelRequest.md) | Set system messages channel | 
 
 ### Return type
 
