@@ -8,6 +8,7 @@ type Message struct {
 	Author      User         `json:"author"`
 	Content     string       `json:"content" example:"Hello world!"`
 	Attachments []Attachment `json:"attachments,omitempty"`
+	Type        int          `json:"type" example:"0"`
 	UpdatedAt   *time.Time   `json:"updated_at,omitempty"` // Timestamp of the last message edit
 }
 

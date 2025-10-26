@@ -155,19 +155,19 @@ func (e *entity) checkChannelPermissions(c *fiber.Ctx, channel *model.Channel, g
 }
 
 // createDefaultChannels creates default text category and general channel for new guild
-func (e *entity) createDefaultChannels(c *fiber.Ctx, guildId int64, isPublic bool) error {
+func (e *entity) createDefaultChannels(c *fiber.Ctx, guildId int64, isPublic bool) (int64, error) {
 	categoryId := idgen.Next()
 	channelId := idgen.Next()
 
 	if err := e.gc.AddChannel(c.UserContext(), guildId, categoryId, "text", model.ChannelTypeGuildCategory, nil, isPublic, 0); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return 0, fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	if err := e.gc.AddChannel(c.UserContext(), guildId, channelId, "general", model.ChannelTypeGuild, &categoryId, isPublic, 0); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return 0, fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	return nil
+	return channelId, nil
 }
 
 // Get
@@ -378,7 +378,8 @@ func (e *entity) createGuildWithDefaults(c *fiber.Ctx, req *CreateGuildRequest, 
 	}
 
 	// Create default channels
-	if err := e.createDefaultChannels(c, guildId, req.Public); err != nil {
+	ch, err := e.createDefaultChannels(c, guildId, req.Public)
+	if err != nil {
 		return err
 	}
 
@@ -392,6 +393,11 @@ func (e *entity) createGuildWithDefaults(c *fiber.Ctx, req *CreateGuildRequest, 
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateGuild)
 	}
+
+	if err := e.g.SetSystemMessagesChannel(c.UserContext(), guildId, &ch); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetSystemMessagesChannel)
+	}
+
 	return c.JSON(e.dtoGuildWithIcon(c, &createdGuild))
 }
 
@@ -579,6 +585,55 @@ func (e *entity) Update(c *fiber.Ctx) error {
 	}
 
 	return e.updateGuildWithPermissionCheck(c, guildId, user.Id, &req)
+}
+
+// SetSystemMessagesChannel
+//
+//	@Summary	Set system messages channel
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		request		body		SetGuildSystemMessagesChannelRequest	true	"Set system messages channel"
+//	@Param		guild_id	path		int64									true	"Guild ID"	example(2230469276416868352)
+//	@Success	200			{object}	dto.Guild								"Guild"
+//	@failure	400			{string}	string									"Incorrect request body"
+//	@failure	401			{string}	string									"Unauthorized"
+//	@failure	500			{string}	string									"Something bad happened"
+//	@Router		/guild/{guild_id}/systemch [patch]
+func (e *entity) SetSystemMessagesChannel(c *fiber.Ctx) error {
+	var req SetGuildSystemMessagesChannelRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	}
+
+	guildId, err := e.parseGuildID(c)
+	if err != nil {
+		return err
+	}
+
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+	guild, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermAdministrator)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnauthorized, ErrUnableToGetPermission)
+	}
+	if !hasPermission {
+		return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
+	}
+
+	if req.ChannelId != nil {
+		_, err := e.gc.GetGuildChannel(c.UserContext(), guild.Id, *req.ChannelId)
+		if err != nil {
+			return fiber.NewError(fiber.StatusNotFound, ErrUnableToGetChannel)
+		}
+	}
+
+	err = e.g.SetSystemMessagesChannel(c.UserContext(), guild.Id, req.ChannelId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetSystemMessagesChannel)
+	}
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // updateGuildWithPermissionCheck validates permissions and updates guild

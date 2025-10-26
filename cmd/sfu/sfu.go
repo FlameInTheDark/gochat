@@ -9,6 +9,7 @@ import (
 	"github.com/fasthttp/websocket"
 	"github.com/pion/rtcp"
 	"github.com/pion/webrtc/v4"
+	"resty.dev/v3"
 
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 )
@@ -63,13 +64,42 @@ type channelState struct {
 	mu          sync.Mutex
 	peers       []*peerConnectionState
 	trackLocals map[string]*webrtc.TrackLocalStaticRTP
+	ttlTicker   *time.Ticker
+	ttlStopChan chan struct{}
 }
 
-func newChannelState(id int64, log *slog.Logger) *channelState {
+func newChannelState(id int64, webhookUrl, webhookToken string, log *slog.Logger) *channelState {
+	t := time.NewTicker(time.Minute)
+	stop := make(chan struct{})
+	go func(channelId int64, ch chan struct{}) {
+		for {
+			select {
+			case <-t.C:
+				resp, err := resty.New().R().
+					SetTimeout(5*time.Second).
+					SetHeader("Content-Type", "application/json").
+					SetHeader("X-Webhook-Token", webhookToken).
+					SetBody(ChannelAliveNotify{
+						GuildId:   nil,
+						ChannelId: channelId,
+					}).
+					Post(webhookUrl + "/api/v1/webhook/sfu/channel/alive")
+				if err != nil && resp.StatusCode() != 200 {
+					log.Error("user join notify request failed", slog.String("error", err.Error()))
+				}
+			case <-ch:
+				t.Stop()
+				log.Info("channel liveness update stopped", slog.Int64("channel_id", channelId))
+				return
+			}
+		}
+	}(id, stop)
 	return &channelState{
 		id:          id,
 		log:         log,
 		trackLocals: make(map[string]*webrtc.TrackLocalStaticRTP),
+		ttlTicker:   t,
+		ttlStopChan: stop,
 	}
 }
 
@@ -231,12 +261,17 @@ type SFU struct {
 	log      *slog.Logger
 	mu       sync.Mutex
 	channels map[int64]*channelState
+
+	webhookUrl   string
+	webhookToken string
 }
 
-func NewSFU(log *slog.Logger) *SFU {
+func NewSFU(webhookUrl, webhookToken string, log *slog.Logger) *SFU {
 	return &SFU{
-		log:      log,
-		channels: make(map[int64]*channelState),
+		log:          log,
+		channels:     make(map[int64]*channelState),
+		webhookUrl:   webhookUrl,
+		webhookToken: webhookToken,
 	}
 }
 
@@ -244,7 +279,7 @@ func (s *SFU) getOrCreateChannel(channelID int64) *channelState {
 	s.mu.Lock()
 	ch, ok := s.channels[channelID]
 	if !ok {
-		ch = newChannelState(channelID, s.log)
+		ch = newChannelState(channelID, s.webhookUrl, s.webhookToken, s.log)
 		s.channels[channelID] = ch
 	}
 	s.mu.Unlock()
@@ -272,6 +307,7 @@ func (s *SFU) RemovePeer(channelID int64, pc *webrtc.PeerConnection) {
 	if empty {
 		s.mu.Lock()
 		if ch.isEmpty() {
+			close(s.channels[channelID].ttlStopChan)
 			delete(s.channels, channelID)
 		}
 		s.mu.Unlock()
@@ -336,16 +372,4 @@ func (s *SFU) RunKeyFrameTicker() {
 	for range ticker.C {
 		s.dispatchKeyFrameAll()
 	}
-}
-
-func (s *SFU) PeerCount() int {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	total := 0
-	for _, ch := range s.channels {
-		ch.mu.Lock()
-		total += len(ch.peers)
-		ch.mu.Unlock()
-	}
-	return total
 }

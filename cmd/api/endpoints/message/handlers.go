@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -23,20 +22,6 @@ import (
 
 const (
 	MaxBatchSize = 50
-)
-
-var (
-	messagePool = sync.Pool{
-		New: func() interface{} {
-			return &dto.Message{}
-		},
-	}
-
-	attachmentPool = sync.Pool{
-		New: func() interface{} {
-			return make([]dto.Attachment, 0, 5)
-		},
-	}
 )
 
 // Send
@@ -319,6 +304,7 @@ func (e *entity) sendMessageEvents(channelId int64, guildId *int64, message dto.
 		GuildId:   guildId,
 		Mentions:  req.Mentions,
 		Has:       UniqueAttachmentTypes(hasTypes),
+		Type:      int(model.MessageTypeChat),
 		Content:   message.Content,
 	}); err != nil {
 		e.log.Error("failed to send index message event",
@@ -1278,26 +1264,20 @@ func (e *entity) createAttachmentUpload(c *fiber.Ctx, req *UploadAttachmentReque
 	}, nil
 }
 
-// buildMessageDTOsOptimized constructs message DTOs with memory optimization using object pools
+// buildMessageDTOsOptimized constructs message DTOs efficiently
 func (e *entity) buildMessageDTOsOptimized(messages []model.Message, data *messageRelatedData) []dto.Message {
 	result := make([]dto.Message, len(messages))
 
 	for i, message := range messages {
-		msg := messagePool.Get().(*dto.Message)
-		*msg = dto.Message{}
-		author := e.buildAuthorOptimized(message.UserId, data)
-		attachments := e.buildAttachmentsOptimized(message.Attachments, data)
-
-		msg.Id = message.Id
-		msg.ChannelId = message.ChannelId
-		msg.Author = author
-		msg.Content = message.Content
-		msg.Attachments = attachments
-		msg.UpdatedAt = message.EditedAt
-
-		result[i] = *msg
-
-		messagePool.Put(msg)
+		result[i] = dto.Message{
+			Id:          message.Id,
+			ChannelId:   message.ChannelId,
+			Author:      e.buildAuthorOptimized(message.UserId, data),
+			Content:     message.Content,
+			Attachments: e.buildAttachmentsOptimized(message.Attachments, data),
+			UpdatedAt:   message.EditedAt,
+			Type:        message.Type,
+		}
 	}
 
 	return result
@@ -1335,14 +1315,14 @@ func (e *entity) buildAuthorOptimized(userId int64, data *messageRelatedData) dt
 	return author
 }
 
-// buildAttachmentsOptimized constructs attachment DTOs using object pools
+// buildAttachmentsOptimized constructs attachment DTOs efficiently
 func (e *entity) buildAttachmentsOptimized(attachmentIds []int64, data *messageRelatedData) []dto.Attachment {
 	if len(attachmentIds) == 0 {
 		return nil
 	}
 
-	attachments := attachmentPool.Get().([]dto.Attachment)
-	attachments = attachments[:0]
+	// Pre-allocate with exact capacity to avoid reallocation
+	attachments := make([]dto.Attachment, 0, len(attachmentIds))
 
 	for _, id := range attachmentIds {
 		if attachment, exists := data.Attachments[id]; exists {
@@ -1362,12 +1342,7 @@ func (e *entity) buildAttachmentsOptimized(attachmentIds []int64, data *messageR
 		}
 	}
 
-	result := make([]dto.Attachment, len(attachments))
-	copy(result, attachments)
-
-	attachmentPool.Put(attachments)
-
-	return result
+	return attachments
 }
 
 // SetReadState
@@ -1419,5 +1394,40 @@ func (e *entity) SetReadState(c *fiber.Ctx) error {
 		}
 	}()
 
+	return c.SendStatus(fiber.StatusOK)
+}
+
+// Typing
+//
+//	@Summary	Send user typing event in the channel
+//	@Produce	json
+//	@Tags		Message
+//	@Param		channel_id	path		int64	true	"Channel id"
+//	@Success	200			{string}	string	"typing status sent"
+//	@failure	400			{string}	string	"Bad request"
+//	@failure	500			{string}	string	"Internal server error"
+//	@Router		/message/channel/{channel_id}/typing [post]
+func (e *entity) Typing(c *fiber.Ctx) error {
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+	channelIdStr := c.Params("channel_id")
+	channelId, err := strconv.ParseInt(channelIdStr, 10, 64)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+	}
+	// Validate channel and permissions
+	channel, _, err := e.validateSendPermissions(c, channelId, user.Id)
+	if err != nil {
+		return err
+	}
+	err = e.mqt.SendChannelMessage(channelId, &mqmsg.ChannelUserTyping{
+		ChannelId: channel.Id,
+		UserId:    user.Id,
+	})
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendTypingEvent)
+	}
 	return c.SendStatus(fiber.StatusOK)
 }

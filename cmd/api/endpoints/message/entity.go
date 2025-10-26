@@ -40,6 +40,7 @@ func (e *entity) Init(router fiber.Router) {
 	router.Delete("/channel/:channel_id<int>/:message_id<int>", e.Delete)
 	router.Get("/channel/:channel_id<int>", e.GetMessages)
 	router.Post("/channel/:channel_id<int>/:message_id<int>/ack", e.SetReadState)
+	router.Post("/channel/:channel_id<int>/typing", e.Typing)
 }
 
 type entity struct {

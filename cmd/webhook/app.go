@@ -7,8 +7,11 @@ import (
 	cfgpkg "github.com/FlameInTheDark/gochat/cmd/webhook/config"
 	attentity "github.com/FlameInTheDark/gochat/cmd/webhook/endpoints/attachments"
 	sfuentity "github.com/FlameInTheDark/gochat/cmd/webhook/endpoints/sfu"
+	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
+	"github.com/FlameInTheDark/gochat/internal/mq"
+	"github.com/FlameInTheDark/gochat/internal/mq/nats"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
@@ -44,6 +47,20 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		att = attachment.New(cql)
 	}
 
+	var qt mq.SendTransporter
+	nt, err := nats.New(cfg.NatsConnString)
+	if err != nil {
+		return nil, err
+	}
+	shut.Up(nt)
+	qt = nt
+
+	cache, err := kvs.New(cfg.KeyDB)
+	if err != nil {
+		return nil, err
+	}
+	shut.Up(cache)
+
 	// HTTP server
 	s := server.NewServer()
 	shut.Up(s)
@@ -60,7 +77,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	// Register endpoints under /webhook
 	s.Register(
 		"/api/v1/webhook",
-		sfuentity.New(logger, disco, tokens),
+		sfuentity.New(logger, disco, tokens, cache, qt),
 		attentity.New(logger, att, tokens),
 	)
 

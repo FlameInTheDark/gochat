@@ -1,11 +1,14 @@
 package guild
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"log/slog"
 	"strconv"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/gofiber/fiber/v2"
 
@@ -147,17 +150,56 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildByID)
 	}
 
-	go e.mqt.SendGuildUpdate(inv.GuildId, &mqmsg.AddGuildMember{
-		GuildId: inv.GuildId,
-		UserId:  u.Id,
-		Member: dto.Member{
-			User:     userToDTO(u, disc.Discriminator),
-			Username: nil,
-			Avatar:   nil,
-			JoinAt:   time.Now(),
-			Roles:    nil,
-		},
-	})
+	go func() {
+		err := e.mqt.SendGuildUpdate(inv.GuildId, &mqmsg.AddGuildMember{
+			GuildId: inv.GuildId,
+			UserId:  u.Id,
+			Member: dto.Member{
+				User:     userToDTO(u, disc.Discriminator),
+				Username: nil,
+				Avatar:   nil,
+				JoinAt:   time.Now(),
+				Roles:    nil,
+			},
+		})
+		if err != nil {
+			e.log.Error("unable to send add guild member event", slog.String("error", err.Error()))
+		}
+		if g.SystemMessages != nil {
+			msgid := idgen.Next()
+			err := e.msg.CreateSystemMessage(context.Background(), msgid, *g.SystemMessages, user.Id, "", model.MessageTypeJoin)
+			if err != nil {
+				e.log.Error("unable to send system user join message", slog.String("error", err.Error()))
+				return
+			}
+			err = e.ch.SetLastMessage(context.Background(), *g.SystemMessages, msgid)
+			if err != nil {
+				e.log.Error("unable to set last message id", slog.String("error", err.Error()))
+			}
+			if err := e.mqt.SendChannelMessage(*g.SystemMessages, &mqmsg.CreateMessage{
+				GuildId: &g.Id,
+				Message: dto.Message{
+					Id:        msgid,
+					ChannelId: *g.SystemMessages,
+					Author:    userToDTO(u, disc.Discriminator),
+					Type:      int(model.MessageTypeJoin),
+				},
+			}); err != nil {
+				e.log.Error("unable to send join message event", slog.String("error", err.Error()))
+			}
+			if err := e.imq.IndexMessage(dto.IndexMessage{
+				MessageId: msgid,
+				UserId:    u.Id,
+				ChannelId: *g.SystemMessages,
+				GuildId:   &g.Id,
+				Type:      int(model.MessageTypeJoin),
+			}); err != nil {
+				e.log.Error("failed to send index message event",
+					"message_id", msgid,
+					"error", err.Error())
+			}
+		}
+	}()
 
 	return c.JSON(e.dtoGuildWithIcon(c, &g))
 }

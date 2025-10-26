@@ -100,6 +100,7 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdIconsIconIdDelete**](docs/GuildAPI.md#guildguildidiconsiconiddelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
 *GuildAPI* | [**GuildGuildIdMembersGet**](docs/GuildAPI.md#guildguildidmembersget) | **Get** /guild/{guild_id}/members | Get guild members
 *GuildAPI* | [**GuildGuildIdPatch**](docs/GuildAPI.md#guildguildidpatch) | **Patch** /guild/{guild_id} | Update guild
+*GuildAPI* | [**GuildGuildIdSystemchPatch**](docs/GuildAPI.md#guildguildidsystemchpatch) | **Patch** /guild/{guild_id}/systemch | Set system messages channel
 *GuildAPI* | [**GuildGuildIdVoiceChannelIdJoinPost**](docs/GuildAPI.md#guildguildidvoicechannelidjoinpost) | **Post** /guild/{guild_id}/voice/{channel_id}/join | Join voice channel (get SFU signaling info)
 *GuildAPI* | [**GuildGuildIdVoiceChannelIdRegionPatch**](docs/GuildAPI.md#guildguildidvoicechannelidregionpatch) | **Patch** /guild/{guild_id}/voice/{channel_id}/region | Set channel voice region
 *GuildAPI* | [**GuildGuildIdVoiceMovePost**](docs/GuildAPI.md#guildguildidvoicemovepost) | **Post** /guild/{guild_id}/voice/move | Move member to voice channel
@@ -127,6 +128,7 @@ Class | Method | HTTP request | Description
 *MessageAPI* | [**MessageChannelChannelIdMessageIdDelete**](docs/MessageAPI.md#messagechannelchannelidmessageiddelete) | **Delete** /message/channel/{channel_id}/{message_id} | Delete message
 *MessageAPI* | [**MessageChannelChannelIdMessageIdPatch**](docs/MessageAPI.md#messagechannelchannelidmessageidpatch) | **Patch** /message/channel/{channel_id}/{message_id} | Update message
 *MessageAPI* | [**MessageChannelChannelIdPost**](docs/MessageAPI.md#messagechannelchannelidpost) | **Post** /message/channel/{channel_id} | Send message
+*MessageAPI* | [**MessageChannelChannelIdTypingPost**](docs/MessageAPI.md#messagechannelchannelidtypingpost) | **Post** /message/channel/{channel_id}/typing | Send user typing event in the channel
 *SearchAPI* | [**SearchGuildIdMessagesPost**](docs/SearchAPI.md#searchguildidmessagespost) | **Post** /search/{guild_id}/messages | Search messages
 *UploadAPI* | [**UploadAttachmentsChannelIdAttachmentIdPost**](docs/UploadAPI.md#uploadattachmentschannelidattachmentidpost) | **Post** /upload/attachments/{channel_id}/{attachment_id} | Upload attachment
 *UploadAPI* | [**UploadAvatarsUserIdAvatarIdPost**](docs/UploadAPI.md#uploadavatarsuseridavataridpost) | **Post** /upload/avatars/{user_id}/{avatar_id} | Upload user avatar
@@ -153,7 +155,10 @@ Class | Method | HTTP request | Description
 *UserAPI* | [**UserUserIdGet**](docs/UserAPI.md#useruseridget) | **Get** /user/{user_id} | Get user
 *VoiceAPI* | [**VoiceRegionsGet**](docs/VoiceAPI.md#voiceregionsget) | **Get** /voice/regions | List available voice regions
 *WebhookAPI* | [**WebhookAttachmentsFinalizePost**](docs/WebhookAPI.md#webhookattachmentsfinalizepost) | **Post** /webhook/attachments/finalize | Finalize attachment metadata
+*WebhookAPI* | [**WebhookSfuChannelAlivePost**](docs/WebhookAPI.md#webhooksfuchannelalivepost) | **Post** /webhook/sfu/channel/alive | SFU update channel TTL
 *WebhookAPI* | [**WebhookSfuHeartbeatPost**](docs/WebhookAPI.md#webhooksfuheartbeatpost) | **Post** /webhook/sfu/heartbeat | SFU heartbeat
+*WebhookAPI* | [**WebhookSfuVoiceJoinPost**](docs/WebhookAPI.md#webhooksfuvoicejoinpost) | **Post** /webhook/sfu/voice/join | SFU voice join
+*WebhookAPI* | [**WebhookSfuVoiceLeavePost**](docs/WebhookAPI.md#webhooksfuvoiceleavepost) | **Post** /webhook/sfu/voice/leave | SFU voice leave
 
 
 ## Documentation For Models
@@ -196,6 +201,7 @@ Class | Method | HTTP request | Description
  - [GuildPatchGuildChannelOrderRequest](docs/GuildPatchGuildChannelOrderRequest.md)
  - [GuildPatchGuildChannelRequest](docs/GuildPatchGuildChannelRequest.md)
  - [GuildPatchGuildRoleRequest](docs/GuildPatchGuildRoleRequest.md)
+ - [GuildSetGuildSystemMessagesChannelRequest](docs/GuildSetGuildSystemMessagesChannelRequest.md)
  - [GuildSetVoiceRegionRequest](docs/GuildSetVoiceRegionRequest.md)
  - [GuildSetVoiceRegionResponse](docs/GuildSetVoiceRegionResponse.md)
  - [GuildUpdateGuildRequest](docs/GuildUpdateGuildRequest.md)
@@ -212,6 +218,9 @@ Class | Method | HTTP request | Description
  - [ModelUserSettingsNotifications](docs/ModelUserSettingsNotifications.md)
  - [SearchMessageSearchRequest](docs/SearchMessageSearchRequest.md)
  - [SearchMessageSearchResponse](docs/SearchMessageSearchResponse.md)
+ - [SfuChannelAlive](docs/SfuChannelAlive.md)
+ - [SfuChannelUserJoin](docs/SfuChannelUserJoin.md)
+ - [SfuChannelUserLeave](docs/SfuChannelUserLeave.md)
  - [SfuHeartbeatRequest](docs/SfuHeartbeatRequest.md)
  - [UserCreateAvatarRequest](docs/UserCreateAvatarRequest.md)
  - [UserCreateDMManyRequest](docs/UserCreateDMManyRequest.md)

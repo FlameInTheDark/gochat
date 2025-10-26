@@ -1957,6 +1957,53 @@ paths:
       summary: Update guild role
       tags:
       - Guild Roles
+  /guild/{guild_id}/systemch:
+    patch:
+      parameters:
+      - description: Guild ID
+        example: 2230469276416868352
+        explode: false
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.SetGuildSystemMessagesChannelRequest'
+        description: Set system messages channel
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Guild'
+          description: Guild
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Set system messages channel
+      tags:
+      - Guild
   /guild/{guild_id}/voice/move:
     post:
       description: Move a member to another voice channel and send them connection
@@ -2290,6 +2337,39 @@ paths:
                 type: string
           description: Internal server error
       summary: Create attachment
+      tags:
+      - Message
+  /message/channel/{channel_id}/typing:
+    post:
+      parameters:
+      - description: Channel id
+        explode: false
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: typing status sent
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Send user typing event in the channel
       tags:
       - Message
   /message/channel/{channel_id}/{message_id}:
@@ -3470,6 +3550,65 @@ paths:
       summary: Finalize attachment metadata
       tags:
       - Webhook
+  /webhook/sfu/channel/alive:
+    post:
+      description: Updates channel TTL to keep it alive in system cache for next connections
+      parameters:
+      - description: JWT token
+        explode: false
+        in: header
+        name: X-Webhook-Token
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/sfu.ChannelAlive'
+        description: Channel liveness data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unable to set status
+        "502":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad gateway
+        "503":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Service unavailable
+      summary: SFU update channel TTL
+      tags:
+      - Webhook
   /webhook/sfu/heartbeat:
     post:
       description: Register or refresh SFU instance for discovery
@@ -3517,6 +3656,124 @@ paths:
                 type: string
           description: Service unavailable
       summary: SFU heartbeat
+      tags:
+      - Webhook
+  /webhook/sfu/voice/join:
+    post:
+      description: Add client to voice channel participants list
+      parameters:
+      - description: JWT token
+        explode: false
+        in: header
+        name: X-Webhook-Token
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/sfu.ChannelUserJoin'
+        description: Client join data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unable to set status
+        "502":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad gateway
+        "503":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Service unavailable
+      summary: SFU voice join
+      tags:
+      - Webhook
+  /webhook/sfu/voice/leave:
+    post:
+      description: Remove client from voice channel participants list
+      parameters:
+      - description: JWT token
+        explode: false
+        in: header
+        name: X-Webhook-Token
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/sfu.ChannelUserLeave'
+        description: Client join data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unable to set status
+        "502":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad gateway
+        "503":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Service unavailable
+      summary: SFU voice leave
       tags:
       - Webhook
 components:
@@ -4028,6 +4285,7 @@ components:
           id: 2230469276416868352
           discriminator: uniquename
         id: 2230469276416868352
+        type: 0
         channel_id: 2230469276416868352
         content: Hello world!
       properties:
@@ -4048,6 +4306,9 @@ components:
         id:
           description: Message ID
           example: 2230469276416868352
+          type: integer
+        type:
+          example: 0
           type: integer
         updated_at:
           description: Timestamp of the last message edit
@@ -4310,6 +4571,12 @@ components:
         permissions:
           description: Permissions bitset
           type: integer
+    guild.SetGuildSystemMessagesChannelRequest:
+      properties:
+        channel_id:
+          description: Channel ID
+          example: 2230469276416868352
+          type: integer
     guild.SetVoiceRegionRequest:
       properties:
         region:
@@ -4414,11 +4681,11 @@ components:
       - ChannelTypeThread
     model.Devices:
       example:
-        audio_input_level: 5
+        audio_input_level: 5.637376656633329
         auto_gain_control: true
         audio_output_device: audio_output_device
-        audio_output_level: 7
-        audio_input_threshold: 2
+        audio_output_level: 7.061401241503109
+        audio_input_threshold: 2.3021358869347655
         echo_cancellation: true
         video_device: video_device
         noise_suppression: true
@@ -4427,13 +4694,13 @@ components:
         audio_input_device:
           type: string
         audio_input_level:
-          type: integer
+          type: number
         audio_input_threshold:
-          type: integer
+          type: number
         audio_output_device:
           type: string
         audio_output_level:
-          type: integer
+          type: number
         auto_gain_control:
           type: boolean
         echo_cancellation:
@@ -4503,11 +4770,11 @@ components:
           color_scheme: color_scheme
           chat_spacing: 5
         devices:
-          audio_input_level: 5
+          audio_input_level: 5.637376656633329
           auto_gain_control: true
           audio_output_device: audio_output_device
-          audio_output_level: 7
-          audio_input_threshold: 2
+          audio_output_level: 7.061401241503109
+          audio_input_threshold: 2.3021358869347655
           echo_cancellation: true
           video_device: video_device
           noise_suppression: true
@@ -4706,6 +4973,7 @@ components:
             id: 2230469276416868352
             discriminator: uniquename
           id: 2230469276416868352
+          type: 0
           channel_id: 2230469276416868352
           content: Hello world!
         - attachments:
@@ -4736,6 +5004,7 @@ components:
             id: 2230469276416868352
             discriminator: uniquename
           id: 2230469276416868352
+          type: 0
           channel_id: 2230469276416868352
           content: Hello world!
       properties:
@@ -4747,6 +5016,28 @@ components:
           uniqueItems: false
         pages:
           description: Total number of pages with current search parameters
+          type: integer
+    sfu.ChannelAlive:
+      properties:
+        channel_id:
+          type: integer
+        guild_id:
+          type: integer
+    sfu.ChannelUserJoin:
+      properties:
+        channel_id:
+          type: integer
+        guild_id:
+          type: integer
+        user_id:
+          type: integer
+    sfu.ChannelUserLeave:
+      properties:
+        channel_id:
+          type: integer
+        guild_id:
+          type: integer
+        user_id:
           type: integer
     sfu.HeartbeatRequest:
       properties:
@@ -4821,11 +5112,11 @@ components:
             color_scheme: color_scheme
             chat_spacing: 5
           devices:
-            audio_input_level: 5
+            audio_input_level: 5.637376656633329
             auto_gain_control: true
             audio_output_device: audio_output_device
-            audio_output_level: 7
-            audio_input_threshold: 2
+            audio_output_level: 7.061401241503109
+            audio_input_threshold: 2.3021358869347655
             echo_cancellation: true
             video_device: video_device
             noise_suppression: true

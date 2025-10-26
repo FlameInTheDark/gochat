@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **ChannelId** | Pointer to **int32** | Channel id the message was sent to | [optional] 
 **Content** | Pointer to **string** |  | [optional] 
 **Id** | Pointer to **int32** | Message ID | [optional] 
+**Type** | Pointer to **int32** |  | [optional] 
 **UpdatedAt** | Pointer to **string** | Timestamp of the last message edit | [optional] 
 
 ## Methods
@@ -154,6 +155,31 @@ SetId sets Id field to given value.
 `func (o *DtoMessage) HasId() bool`
 
 HasId returns a boolean if a field has been set.
+
+### GetType
+
+`func (o *DtoMessage) GetType() int32`
+
+GetType returns the Type field if non-nil, zero value otherwise.
+
+### GetTypeOk
+
+`func (o *DtoMessage) GetTypeOk() (*int32, bool)`
+
+GetTypeOk returns a tuple with the Type field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetType
+
+`func (o *DtoMessage) SetType(v int32)`
+
+SetType sets Type field to given value.
+
+### HasType
+
+`func (o *DtoMessage) HasType() bool`
+
+HasType returns a boolean if a field has been set.
 
 ### GetUpdatedAt
 

@@ -764,6 +764,12 @@ export interface DtoMessage {
      */
     'id'?: number;
     /**
+     * 
+     * @type {number}
+     * @memberof DtoMessage
+     */
+    'type'?: number;
+    /**
      * Timestamp of the last message edit
      * @type {string}
      * @memberof DtoMessage
@@ -1182,6 +1188,19 @@ export interface GuildPatchGuildRoleRequest {
      * @memberof GuildPatchGuildRoleRequest
      */
     'permissions'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface GuildSetGuildSystemMessagesChannelRequest
+ */
+export interface GuildSetGuildSystemMessagesChannelRequest {
+    /**
+     * Channel ID
+     * @type {number}
+     * @memberof GuildSetGuildSystemMessagesChannelRequest
+     */
+    'channel_id'?: number;
 }
 /**
  * 
@@ -1688,6 +1707,75 @@ export interface SearchMessageSearchResponse {
      * @memberof SearchMessageSearchResponse
      */
     'pages'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface SfuChannelAlive
+ */
+export interface SfuChannelAlive {
+    /**
+     * 
+     * @type {number}
+     * @memberof SfuChannelAlive
+     */
+    'channel_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SfuChannelAlive
+     */
+    'guild_id'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface SfuChannelUserJoin
+ */
+export interface SfuChannelUserJoin {
+    /**
+     * 
+     * @type {number}
+     * @memberof SfuChannelUserJoin
+     */
+    'channel_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SfuChannelUserJoin
+     */
+    'guild_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SfuChannelUserJoin
+     */
+    'user_id'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface SfuChannelUserLeave
+ */
+export interface SfuChannelUserLeave {
+    /**
+     * 
+     * @type {number}
+     * @memberof SfuChannelUserLeave
+     */
+    'channel_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SfuChannelUserLeave
+     */
+    'guild_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SfuChannelUserLeave
+     */
+    'user_id'?: number;
 }
 /**
  * 
@@ -3089,6 +3177,46 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
+         * 
+         * @summary Set system messages channel
+         * @param {number} guildId Guild ID
+         * @param {GuildSetGuildSystemMessagesChannelRequest} guildSetGuildSystemMessagesChannelRequest Set system messages channel
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdSystemchPatch: async (guildId: number, guildSetGuildSystemMessagesChannelRequest: GuildSetGuildSystemMessagesChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdSystemchPatch', 'guildId', guildId)
+            // verify required parameter 'guildSetGuildSystemMessagesChannelRequest' is not null or undefined
+            assertParamExists('guildGuildIdSystemchPatch', 'guildSetGuildSystemMessagesChannelRequest', guildSetGuildSystemMessagesChannelRequest)
+            const localVarPath = `/guild/{guild_id}/systemch`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(guildSetGuildSystemMessagesChannelRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Returns signaling path and a short-lived SFU token to connect to the SFU for this channel.
          * @summary Join voice channel (get SFU signaling info)
          * @param {number} guildId Guild ID
@@ -3463,6 +3591,20 @@ export const GuildApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * 
+         * @summary Set system messages channel
+         * @param {number} guildId Guild ID
+         * @param {GuildSetGuildSystemMessagesChannelRequest} guildSetGuildSystemMessagesChannelRequest Set system messages channel
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdSystemchPatch(guildId: number, guildSetGuildSystemMessagesChannelRequest: GuildSetGuildSystemMessagesChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdSystemchPatch(guildId, guildSetGuildSystemMessagesChannelRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdSystemchPatch']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Returns signaling path and a short-lived SFU token to connect to the SFU for this channel.
          * @summary Join voice channel (get SFU signaling info)
          * @param {number} guildId Guild ID
@@ -3679,6 +3821,16 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.guildGuildIdPatch(requestParameters.guildId, requestParameters.guildUpdateGuildRequest, options).then((request) => request(axios, basePath));
         },
         /**
+         * 
+         * @summary Set system messages channel
+         * @param {GuildApiGuildGuildIdSystemchPatchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdSystemchPatch(requestParameters: GuildApiGuildGuildIdSystemchPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild> {
+            return localVarFp.guildGuildIdSystemchPatch(requestParameters.guildId, requestParameters.guildSetGuildSystemMessagesChannelRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Returns signaling path and a short-lived SFU token to connect to the SFU for this channel.
          * @summary Join voice channel (get SFU signaling info)
          * @param {GuildApiGuildGuildIdVoiceChannelIdJoinPostRequest} requestParameters Request parameters.
@@ -3876,6 +4028,16 @@ export interface GuildApiInterface {
      * @memberof GuildApiInterface
      */
     guildGuildIdPatch(requestParameters: GuildApiGuildGuildIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild>;
+
+    /**
+     * 
+     * @summary Set system messages channel
+     * @param {GuildApiGuildGuildIdSystemchPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdSystemchPatch(requestParameters: GuildApiGuildGuildIdSystemchPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild>;
 
     /**
      * Returns signaling path and a short-lived SFU token to connect to the SFU for this channel.
@@ -4207,6 +4369,27 @@ export interface GuildApiGuildGuildIdPatchRequest {
 }
 
 /**
+ * Request parameters for guildGuildIdSystemchPatch operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdSystemchPatchRequest
+ */
+export interface GuildApiGuildGuildIdSystemchPatchRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdSystemchPatch
+     */
+    readonly guildId: number
+
+    /**
+     * Set system messages channel
+     * @type {GuildSetGuildSystemMessagesChannelRequest}
+     * @memberof GuildApiGuildGuildIdSystemchPatch
+     */
+    readonly guildSetGuildSystemMessagesChannelRequest: GuildSetGuildSystemMessagesChannelRequest
+}
+
+/**
  * Request parameters for guildGuildIdVoiceChannelIdJoinPost operation in GuildApi.
  * @export
  * @interface GuildApiGuildGuildIdVoiceChannelIdJoinPostRequest
@@ -4475,6 +4658,18 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      */
     public guildGuildIdPatch(requestParameters: GuildApiGuildGuildIdPatchRequest, options?: RawAxiosRequestConfig) {
         return GuildApiFp(this.configuration).guildGuildIdPatch(requestParameters.guildId, requestParameters.guildUpdateGuildRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Set system messages channel
+     * @param {GuildApiGuildGuildIdSystemchPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdSystemchPatch(requestParameters: GuildApiGuildGuildIdSystemchPatchRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdSystemchPatch(requestParameters.guildId, requestParameters.guildSetGuildSystemMessagesChannelRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -6732,6 +6927,40 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Send user typing event in the channel
+         * @param {number} channelId Channel id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdTypingPost: async (channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('messageChannelChannelIdTypingPost', 'channelId', channelId)
+            const localVarPath = `/message/channel/{channel_id}/typing`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -6829,6 +7058,19 @@ export const MessageApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * 
+         * @summary Send user typing event in the channel
+         * @param {number} channelId Channel id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async messageChannelChannelIdTypingPost(channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdTypingPost(channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdTypingPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -6899,6 +7141,16 @@ export const MessageApiFactory = function (configuration?: Configuration, basePa
         messageChannelChannelIdPost(requestParameters: MessageApiMessageChannelChannelIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessage> {
             return localVarFp.messageChannelChannelIdPost(requestParameters.channelId, requestParameters.messageSendMessageRequest, options).then((request) => request(axios, basePath));
         },
+        /**
+         * 
+         * @summary Send user typing event in the channel
+         * @param {MessageApiMessageChannelChannelIdTypingPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdTypingPost(requestParameters: MessageApiMessageChannelChannelIdTypingPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.messageChannelChannelIdTypingPost(requestParameters.channelId, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -6967,6 +7219,16 @@ export interface MessageApiInterface {
      * @memberof MessageApiInterface
      */
     messageChannelChannelIdPost(requestParameters: MessageApiMessageChannelChannelIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessage>;
+
+    /**
+     * 
+     * @summary Send user typing event in the channel
+     * @param {MessageApiMessageChannelChannelIdTypingPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApiInterface
+     */
+    messageChannelChannelIdTypingPost(requestParameters: MessageApiMessageChannelChannelIdTypingPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
 }
 
@@ -7118,6 +7380,20 @@ export interface MessageApiMessageChannelChannelIdPostRequest {
 }
 
 /**
+ * Request parameters for messageChannelChannelIdTypingPost operation in MessageApi.
+ * @export
+ * @interface MessageApiMessageChannelChannelIdTypingPostRequest
+ */
+export interface MessageApiMessageChannelChannelIdTypingPostRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdTypingPost
+     */
+    readonly channelId: number
+}
+
+/**
  * MessageApi - object-oriented interface
  * @export
  * @class MessageApi
@@ -7194,6 +7470,18 @@ export class MessageApi extends BaseAPI implements MessageApiInterface {
      */
     public messageChannelChannelIdPost(requestParameters: MessageApiMessageChannelChannelIdPostRequest, options?: RawAxiosRequestConfig) {
         return MessageApiFp(this.configuration).messageChannelChannelIdPost(requestParameters.channelId, requestParameters.messageSendMessageRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Send user typing event in the channel
+     * @param {MessageApiMessageChannelChannelIdTypingPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApi
+     */
+    public messageChannelChannelIdTypingPost(requestParameters: MessageApiMessageChannelChannelIdTypingPostRequest, options?: RawAxiosRequestConfig) {
+        return MessageApiFp(this.configuration).messageChannelChannelIdTypingPost(requestParameters.channelId, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -9749,6 +10037,48 @@ export const WebhookApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
+         * Updates channel TTL to keep it alive in system cache for next connections
+         * @summary SFU update channel TTL
+         * @param {string} xWebhookToken JWT token
+         * @param {SfuChannelAlive} sfuChannelAlive Channel liveness data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        webhookSfuChannelAlivePost: async (xWebhookToken: string, sfuChannelAlive: SfuChannelAlive, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'xWebhookToken' is not null or undefined
+            assertParamExists('webhookSfuChannelAlivePost', 'xWebhookToken', xWebhookToken)
+            // verify required parameter 'sfuChannelAlive' is not null or undefined
+            assertParamExists('webhookSfuChannelAlivePost', 'sfuChannelAlive', sfuChannelAlive)
+            const localVarPath = `/webhook/sfu/channel/alive`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (xWebhookToken != null) {
+                localVarHeaderParameter['X-Webhook-Token'] = String(xWebhookToken);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(sfuChannelAlive, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Register or refresh SFU instance for discovery
          * @summary SFU heartbeat
          * @param {string} xWebhookToken JWT token
@@ -9790,6 +10120,90 @@ export const WebhookApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Add client to voice channel participants list
+         * @summary SFU voice join
+         * @param {string} xWebhookToken JWT token
+         * @param {SfuChannelUserJoin} sfuChannelUserJoin Client join data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        webhookSfuVoiceJoinPost: async (xWebhookToken: string, sfuChannelUserJoin: SfuChannelUserJoin, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'xWebhookToken' is not null or undefined
+            assertParamExists('webhookSfuVoiceJoinPost', 'xWebhookToken', xWebhookToken)
+            // verify required parameter 'sfuChannelUserJoin' is not null or undefined
+            assertParamExists('webhookSfuVoiceJoinPost', 'sfuChannelUserJoin', sfuChannelUserJoin)
+            const localVarPath = `/webhook/sfu/voice/join`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (xWebhookToken != null) {
+                localVarHeaderParameter['X-Webhook-Token'] = String(xWebhookToken);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(sfuChannelUserJoin, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Remove client from voice channel participants list
+         * @summary SFU voice leave
+         * @param {string} xWebhookToken JWT token
+         * @param {SfuChannelUserLeave} sfuChannelUserLeave Client join data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        webhookSfuVoiceLeavePost: async (xWebhookToken: string, sfuChannelUserLeave: SfuChannelUserLeave, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'xWebhookToken' is not null or undefined
+            assertParamExists('webhookSfuVoiceLeavePost', 'xWebhookToken', xWebhookToken)
+            // verify required parameter 'sfuChannelUserLeave' is not null or undefined
+            assertParamExists('webhookSfuVoiceLeavePost', 'sfuChannelUserLeave', sfuChannelUserLeave)
+            const localVarPath = `/webhook/sfu/voice/leave`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (xWebhookToken != null) {
+                localVarHeaderParameter['X-Webhook-Token'] = String(xWebhookToken);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(sfuChannelUserLeave, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -9815,6 +10229,20 @@ export const WebhookApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Updates channel TTL to keep it alive in system cache for next connections
+         * @summary SFU update channel TTL
+         * @param {string} xWebhookToken JWT token
+         * @param {SfuChannelAlive} sfuChannelAlive Channel liveness data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async webhookSfuChannelAlivePost(xWebhookToken: string, sfuChannelAlive: SfuChannelAlive, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<object>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookSfuChannelAlivePost(xWebhookToken, sfuChannelAlive, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['WebhookApi.webhookSfuChannelAlivePost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Register or refresh SFU instance for discovery
          * @summary SFU heartbeat
          * @param {string} xWebhookToken JWT token
@@ -9826,6 +10254,34 @@ export const WebhookApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.webhookSfuHeartbeatPost(xWebhookToken, sfuHeartbeatRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['WebhookApi.webhookSfuHeartbeatPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Add client to voice channel participants list
+         * @summary SFU voice join
+         * @param {string} xWebhookToken JWT token
+         * @param {SfuChannelUserJoin} sfuChannelUserJoin Client join data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async webhookSfuVoiceJoinPost(xWebhookToken: string, sfuChannelUserJoin: SfuChannelUserJoin, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<object>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookSfuVoiceJoinPost(xWebhookToken, sfuChannelUserJoin, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['WebhookApi.webhookSfuVoiceJoinPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Remove client from voice channel participants list
+         * @summary SFU voice leave
+         * @param {string} xWebhookToken JWT token
+         * @param {SfuChannelUserLeave} sfuChannelUserLeave Client join data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async webhookSfuVoiceLeavePost(xWebhookToken: string, sfuChannelUserLeave: SfuChannelUserLeave, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<object>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookSfuVoiceLeavePost(xWebhookToken, sfuChannelUserLeave, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['WebhookApi.webhookSfuVoiceLeavePost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
@@ -9849,6 +10305,16 @@ export const WebhookApiFactory = function (configuration?: Configuration, basePa
             return localVarFp.webhookAttachmentsFinalizePost(requestParameters.xWebhookToken, requestParameters.attachmentsFinalizeRequest, options).then((request) => request(axios, basePath));
         },
         /**
+         * Updates channel TTL to keep it alive in system cache for next connections
+         * @summary SFU update channel TTL
+         * @param {WebhookApiWebhookSfuChannelAlivePostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        webhookSfuChannelAlivePost(requestParameters: WebhookApiWebhookSfuChannelAlivePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<object> {
+            return localVarFp.webhookSfuChannelAlivePost(requestParameters.xWebhookToken, requestParameters.sfuChannelAlive, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Register or refresh SFU instance for discovery
          * @summary SFU heartbeat
          * @param {WebhookApiWebhookSfuHeartbeatPostRequest} requestParameters Request parameters.
@@ -9857,6 +10323,26 @@ export const WebhookApiFactory = function (configuration?: Configuration, basePa
          */
         webhookSfuHeartbeatPost(requestParameters: WebhookApiWebhookSfuHeartbeatPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.webhookSfuHeartbeatPost(requestParameters.xWebhookToken, requestParameters.sfuHeartbeatRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Add client to voice channel participants list
+         * @summary SFU voice join
+         * @param {WebhookApiWebhookSfuVoiceJoinPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        webhookSfuVoiceJoinPost(requestParameters: WebhookApiWebhookSfuVoiceJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<object> {
+            return localVarFp.webhookSfuVoiceJoinPost(requestParameters.xWebhookToken, requestParameters.sfuChannelUserJoin, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Remove client from voice channel participants list
+         * @summary SFU voice leave
+         * @param {WebhookApiWebhookSfuVoiceLeavePostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        webhookSfuVoiceLeavePost(requestParameters: WebhookApiWebhookSfuVoiceLeavePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<object> {
+            return localVarFp.webhookSfuVoiceLeavePost(requestParameters.xWebhookToken, requestParameters.sfuChannelUserLeave, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -9878,6 +10364,16 @@ export interface WebhookApiInterface {
     webhookAttachmentsFinalizePost(requestParameters: WebhookApiWebhookAttachmentsFinalizePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
+     * Updates channel TTL to keep it alive in system cache for next connections
+     * @summary SFU update channel TTL
+     * @param {WebhookApiWebhookSfuChannelAlivePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhookApiInterface
+     */
+    webhookSfuChannelAlivePost(requestParameters: WebhookApiWebhookSfuChannelAlivePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<object>;
+
+    /**
      * Register or refresh SFU instance for discovery
      * @summary SFU heartbeat
      * @param {WebhookApiWebhookSfuHeartbeatPostRequest} requestParameters Request parameters.
@@ -9886,6 +10382,26 @@ export interface WebhookApiInterface {
      * @memberof WebhookApiInterface
      */
     webhookSfuHeartbeatPost(requestParameters: WebhookApiWebhookSfuHeartbeatPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * Add client to voice channel participants list
+     * @summary SFU voice join
+     * @param {WebhookApiWebhookSfuVoiceJoinPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhookApiInterface
+     */
+    webhookSfuVoiceJoinPost(requestParameters: WebhookApiWebhookSfuVoiceJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<object>;
+
+    /**
+     * Remove client from voice channel participants list
+     * @summary SFU voice leave
+     * @param {WebhookApiWebhookSfuVoiceLeavePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhookApiInterface
+     */
+    webhookSfuVoiceLeavePost(requestParameters: WebhookApiWebhookSfuVoiceLeavePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<object>;
 
 }
 
@@ -9911,6 +10427,27 @@ export interface WebhookApiWebhookAttachmentsFinalizePostRequest {
 }
 
 /**
+ * Request parameters for webhookSfuChannelAlivePost operation in WebhookApi.
+ * @export
+ * @interface WebhookApiWebhookSfuChannelAlivePostRequest
+ */
+export interface WebhookApiWebhookSfuChannelAlivePostRequest {
+    /**
+     * JWT token
+     * @type {string}
+     * @memberof WebhookApiWebhookSfuChannelAlivePost
+     */
+    readonly xWebhookToken: string
+
+    /**
+     * Channel liveness data
+     * @type {SfuChannelAlive}
+     * @memberof WebhookApiWebhookSfuChannelAlivePost
+     */
+    readonly sfuChannelAlive: SfuChannelAlive
+}
+
+/**
  * Request parameters for webhookSfuHeartbeatPost operation in WebhookApi.
  * @export
  * @interface WebhookApiWebhookSfuHeartbeatPostRequest
@@ -9929,6 +10466,48 @@ export interface WebhookApiWebhookSfuHeartbeatPostRequest {
      * @memberof WebhookApiWebhookSfuHeartbeatPost
      */
     readonly sfuHeartbeatRequest: SfuHeartbeatRequest
+}
+
+/**
+ * Request parameters for webhookSfuVoiceJoinPost operation in WebhookApi.
+ * @export
+ * @interface WebhookApiWebhookSfuVoiceJoinPostRequest
+ */
+export interface WebhookApiWebhookSfuVoiceJoinPostRequest {
+    /**
+     * JWT token
+     * @type {string}
+     * @memberof WebhookApiWebhookSfuVoiceJoinPost
+     */
+    readonly xWebhookToken: string
+
+    /**
+     * Client join data
+     * @type {SfuChannelUserJoin}
+     * @memberof WebhookApiWebhookSfuVoiceJoinPost
+     */
+    readonly sfuChannelUserJoin: SfuChannelUserJoin
+}
+
+/**
+ * Request parameters for webhookSfuVoiceLeavePost operation in WebhookApi.
+ * @export
+ * @interface WebhookApiWebhookSfuVoiceLeavePostRequest
+ */
+export interface WebhookApiWebhookSfuVoiceLeavePostRequest {
+    /**
+     * JWT token
+     * @type {string}
+     * @memberof WebhookApiWebhookSfuVoiceLeavePost
+     */
+    readonly xWebhookToken: string
+
+    /**
+     * Client join data
+     * @type {SfuChannelUserLeave}
+     * @memberof WebhookApiWebhookSfuVoiceLeavePost
+     */
+    readonly sfuChannelUserLeave: SfuChannelUserLeave
 }
 
 /**
@@ -9951,6 +10530,18 @@ export class WebhookApi extends BaseAPI implements WebhookApiInterface {
     }
 
     /**
+     * Updates channel TTL to keep it alive in system cache for next connections
+     * @summary SFU update channel TTL
+     * @param {WebhookApiWebhookSfuChannelAlivePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhookApi
+     */
+    public webhookSfuChannelAlivePost(requestParameters: WebhookApiWebhookSfuChannelAlivePostRequest, options?: RawAxiosRequestConfig) {
+        return WebhookApiFp(this.configuration).webhookSfuChannelAlivePost(requestParameters.xWebhookToken, requestParameters.sfuChannelAlive, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * Register or refresh SFU instance for discovery
      * @summary SFU heartbeat
      * @param {WebhookApiWebhookSfuHeartbeatPostRequest} requestParameters Request parameters.
@@ -9960,6 +10551,30 @@ export class WebhookApi extends BaseAPI implements WebhookApiInterface {
      */
     public webhookSfuHeartbeatPost(requestParameters: WebhookApiWebhookSfuHeartbeatPostRequest, options?: RawAxiosRequestConfig) {
         return WebhookApiFp(this.configuration).webhookSfuHeartbeatPost(requestParameters.xWebhookToken, requestParameters.sfuHeartbeatRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Add client to voice channel participants list
+     * @summary SFU voice join
+     * @param {WebhookApiWebhookSfuVoiceJoinPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhookApi
+     */
+    public webhookSfuVoiceJoinPost(requestParameters: WebhookApiWebhookSfuVoiceJoinPostRequest, options?: RawAxiosRequestConfig) {
+        return WebhookApiFp(this.configuration).webhookSfuVoiceJoinPost(requestParameters.xWebhookToken, requestParameters.sfuChannelUserJoin, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Remove client from voice channel participants list
+     * @summary SFU voice leave
+     * @param {WebhookApiWebhookSfuVoiceLeavePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhookApi
+     */
+    public webhookSfuVoiceLeavePost(requestParameters: WebhookApiWebhookSfuVoiceLeavePostRequest, options?: RawAxiosRequestConfig) {
+        return WebhookApiFp(this.configuration).webhookSfuVoiceLeavePost(requestParameters.xWebhookToken, requestParameters.sfuChannelUserLeave, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

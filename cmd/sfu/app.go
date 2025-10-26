@@ -71,7 +71,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	fiberApp.Use(lm)
 	fiberApp.Use(recm.New())
 
-	sfu := NewSFU(logger)
+	sfu := NewSFU(cfg.WebhookURL, cfg.WebhookToken, logger)
 
 	a := &App{
 		app:       fiberApp,
@@ -116,12 +116,44 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: "invalid message"}})
 		return
 	}
-	uid, channelID, _, _, err := a.authorizeJoin(joinEnv)
+	uid, channelID, guildID, _, _, err := a.authorizeJoin(joinEnv)
 	if err != nil {
 		a.log.Warn("join unauthorized", slog.String("error", err.Error()))
 		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: err.Error()}})
 		return
 	}
+
+	go func() {
+		resp, err := resty.New().R().
+			SetTimeout(5*time.Second).
+			SetHeader("Content-Type", "application/json").
+			SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
+			SetBody(UserJoinNotify{
+				UserId:    uid,
+				ChannelId: channelID,
+				GuildId:   guildID,
+			}).
+			Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/voice/join")
+		if err != nil && resp.StatusCode() != 200 {
+			a.log.Error("user join notify request failed", slog.String("error", err.Error()))
+		}
+	}()
+
+	defer func() {
+		resp, err := resty.New().R().
+			SetTimeout(5*time.Second).
+			SetHeader("Content-Type", "application/json").
+			SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
+			SetBody(UserLeaveNotify{
+				UserId:    uid,
+				ChannelId: channelID,
+				GuildId:   guildID,
+			}).
+			Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/voice/leave")
+		if err != nil && resp.StatusCode() != 200 {
+			a.log.Error("user join notify request failed", slog.String("error", err.Error()))
+		}
+	}()
 
 	pc, err := webrtc.NewPeerConnection(a.iceConfig)
 	if err != nil {
@@ -299,7 +331,7 @@ func (a *App) discoveryHeartbeat() {
 			SetHeader("Content-Type", "application/json").
 			SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
 			SetBody(payload).
-			Post(a.cfg.WebhookURL)
+			Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/heartbeat")
 		if err != nil {
 			a.log.Error("heartbeat request failed", slog.String("error", err.Error()))
 			continue
@@ -328,18 +360,18 @@ func (a *App) readJoinEnvelope(c *websocket.Conn) (rtcJoinEnvelope, error) {
 	return env, nil
 }
 
-func (a *App) authorizeJoin(env rtcJoinEnvelope) (int64, int64, int64, bool, error) {
+func (a *App) authorizeJoin(env rtcJoinEnvelope) (int64, int64, *int64, int64, bool, error) {
 	if env.OP != int(mqmsg.OPCodeRTC) || env.T != int(mqmsg.EventTypeRTCJoin) || env.D.Token == "" || env.D.Channel == 0 {
-		return 0, 0, 0, false, fmt.Errorf("expected join")
+		return 0, 0, nil, 0, false, fmt.Errorf("expected join")
 	}
-	uid, tokChannel, perms, moved, err := a.validateJoinToken(env.D.Token)
+	uid, tokChannel, tokGuild, perms, moved, err := a.validateJoinToken(env.D.Token)
 	if err != nil {
-		return 0, 0, 0, false, fmt.Errorf("unauthorized")
+		return 0, 0, nil, 0, false, fmt.Errorf("unauthorized")
 	}
 	if tokChannel != 0 && tokChannel != env.D.Channel {
-		return 0, 0, 0, false, fmt.Errorf("unauthorized")
+		return 0, 0, nil, 0, false, fmt.Errorf("unauthorized")
 	}
-	return uid, env.D.Channel, perms, moved, nil
+	return uid, env.D.Channel, tokGuild, perms, moved, nil
 }
 
 func (a *App) handleLegacyEnvelope(env envelope, pc *webrtc.PeerConnection, writer *threadSafeWriter) bool {

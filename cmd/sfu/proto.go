@@ -63,3 +63,20 @@ type HeartbeatReply struct {
 type JoinAck struct {
 	Ok bool `json:"ok"`
 }
+
+type UserJoinNotify struct {
+	UserId    int64  `json:"user_id"`
+	ChannelId int64  `json:"channel_id"`
+	GuildId   *int64 `json:"guild_id"`
+}
+
+type UserLeaveNotify struct {
+	UserId    int64  `json:"user_id"`
+	ChannelId int64  `json:"channel_id"`
+	GuildId   *int64 `json:"guild_id"`
+}
+
+type ChannelAliveNotify struct {
+	GuildId   *int64 `json:"guild_id"`
+	ChannelId int64  `json:"channel_id"`
+}
