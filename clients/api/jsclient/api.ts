@@ -1349,6 +1349,49 @@ export interface MessageUploadAttachmentRequest {
 /**
  * 
  * @export
+ * @interface ModelChannelMention
+ */
+export interface ModelChannelMention {
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelChannelMention
+     */
+    'authorId'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelChannelMention
+     */
+    'channelId'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelChannelMention
+     */
+    'guildId'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelChannelMention
+     */
+    'messageId'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelChannelMention
+     */
+    'roleId'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelChannelMention
+     */
+    'type'?: number;
+}
+/**
+ * 
+ * @export
  * @interface ModelDevices
  */
 export interface ModelDevices {
@@ -1406,6 +1449,37 @@ export interface ModelDevices {
      * @memberof ModelDevices
      */
     'video_device'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ModelMention
+ */
+export interface ModelMention {
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelMention
+     */
+    'authorId'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelMention
+     */
+    'channelId'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelMention
+     */
+    'messageId'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelMention
+     */
+    'userId'?: number;
 }
 /**
  * 
@@ -1485,6 +1559,25 @@ export interface ModelUserSettingsAppearance {
 /**
  * 
  * @export
+ * @interface ModelUserSettingsChannel
+ */
+export interface ModelUserSettingsChannel {
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserSettingsChannel
+     */
+    'channel_id'?: number;
+    /**
+     * 
+     * @type {ModelUserSettingsNotifications}
+     * @memberof ModelUserSettingsChannel
+     */
+    'notifications'?: ModelUserSettingsNotifications;
+}
+/**
+ * 
+ * @export
  * @interface ModelUserSettingsData
  */
 export interface ModelUserSettingsData {
@@ -1494,6 +1587,12 @@ export interface ModelUserSettingsData {
      * @memberof ModelUserSettingsData
      */
     'appearance'?: ModelUserSettingsAppearance;
+    /**
+     * 
+     * @type {Array<ModelUserSettingsChannel>}
+     * @memberof ModelUserSettingsData
+     */
+    'channels'?: Array<ModelUserSettingsChannel>;
     /**
      * 
      * @type {ModelDevices}
@@ -1542,6 +1641,18 @@ export interface ModelUserSettingsData {
      * @memberof ModelUserSettingsData
      */
     'status'?: ModelStatus;
+    /**
+     * 
+     * @type {ModelUserUISounds}
+     * @memberof ModelUserSettingsData
+     */
+    'ui_sounds'?: ModelUserUISounds;
+    /**
+     * 
+     * @type {Array<ModelUserSettingsUsers>}
+     * @memberof ModelUserSettingsData
+     */
+    'users'?: Array<ModelUserSettingsUsers>;
 }
 /**
  * 
@@ -1616,25 +1727,69 @@ export interface ModelUserSettingsNotifications {
      * @type {boolean}
      * @memberof ModelUserSettingsNotifications
      */
-    'global'?: boolean;
+    'muted'?: boolean;
     /**
      * 
-     * @type {boolean}
+     * @type {string}
      * @memberof ModelUserSettingsNotifications
      */
-    'muted'?: boolean;
+    'muted_until'?: string;
     /**
      * 
      * @type {number}
      * @memberof ModelUserSettingsNotifications
      */
     'notifications'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface ModelUserSettingsUsers
+ */
+export interface ModelUserSettingsUsers {
+    /**
+     * 
+     * @type {ModelUserSettingsNotifications}
+     * @memberof ModelUserSettingsUsers
+     */
+    'notifications'?: ModelUserSettingsNotifications;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelUserSettingsUsers
+     */
+    'user_id'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface ModelUserUISounds
+ */
+export interface ModelUserUISounds {
     /**
      * 
      * @type {boolean}
-     * @memberof ModelUserSettingsNotifications
+     * @memberof ModelUserUISounds
      */
-    'roles'?: boolean;
+    'deafen'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelUserUISounds
+     */
+    'mute'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelUserUISounds
+     */
+    'notification'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelUserUISounds
+     */
+    'voice_channel'?: boolean;
 }
 /**
  * 
@@ -1925,6 +2080,12 @@ export interface UserUnfriendRequest {
 export interface UserUserSettingsResponse {
     /**
      * 
+     * @type {{ [key: string]: Array<ModelChannelMention>; }}
+     * @memberof UserUserSettingsResponse
+     */
+    'channel_mentions'?: { [key: string]: Array<ModelChannelMention>; };
+    /**
+     * 
      * @type {Array<DtoGuild>}
      * @memberof UserUserSettingsResponse
      */
@@ -1935,6 +2096,12 @@ export interface UserUserSettingsResponse {
      * @memberof UserUserSettingsResponse
      */
     'guilds_last_messages'?: { [key: string]: { [key: string]: number; }; };
+    /**
+     * 
+     * @type {{ [key: string]: Array<ModelMention>; }}
+     * @memberof UserUserSettingsResponse
+     */
+    'mentions'?: { [key: string]: Array<ModelMention>; };
     /**
      * 
      * @type {{ [key: string]: number; }}

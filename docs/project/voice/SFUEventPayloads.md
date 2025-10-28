@@ -22,6 +22,7 @@ Legend
 | 510  | RTCServerKickUser   | C→S   | `{ user:int64 }` (privileged). Server replies by notifying the user and closing their WS. |
 | 511  | RTCServerBlockUser  | C→S   | `{ user:int64, block:boolean }` (privileged). Blocks/unblocks joining this channel. |
 | 512  | RTCMoved            | S→C   | `{ channel:int64 }` — client should reconnect to the indicated channel |
+| 514  | RTCSpeaking         | S→C   | `{ user_id:int64, speaking:int }` (1=active, 0=inactive) |
 
 Heartbeat (separate op=2)
 - Client → SFU: `{ op:2, d:{ nonce?:any, ts?:int } }`
@@ -87,4 +88,26 @@ function setUserVolume(userId, vol) {
 
 // Locally mute a user via SFU (saves bandwidth)
 ws.send(JSON.stringify({ op: 7, t: 506, d: { user: 2230469276416868352, muted: true } }));
+```
+Speaking indicator (broadcast to peers)
+```json
+{ "op": 7, "t": 514, "d": { "user_id": 2230469276416868352, "speaking": 1 } }
+```
+
+Simple (non‑envelope) events accepted by the SFU
+
+- Request renegotiation (server offer):
+```json
+{ "event": "negotiate" }
+```
+
+- Speaking on/off:
+```json
+{ "event": "speaking", "data": "1" }
+{ "event": "speaking", "data": "0" }
+```
+
+The speaking simple event also accepts a JSON string payload:
+```json
+{ "event": "speaking", "data": "{\"speaking\":1}" }
 ```

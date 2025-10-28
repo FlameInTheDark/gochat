@@ -14,6 +14,7 @@ type Friend interface {
 	CreateFriendRequest(ctx context.Context, userId, friendId int64) error
 	RemoveFriendRequest(ctx context.Context, userId, friendId int64) error
 	GetFriendRequests(ctx context.Context, userId int64) ([]model.FriendRequest, error)
+	IsFriend(ctx context.Context, userId, friendId int64) (bool, error)
 }
 
 type Entity struct {

@@ -169,3 +169,34 @@ func (e *Entity) GetFriendRequests(ctx context.Context, userId int64) ([]model.F
 	}
 	return reqs, nil
 }
+
+func (e *Entity) IsFriend(ctx context.Context, userId, friendId int64) (bool, error) {
+	subq := squirrel.
+		Select("1").
+		PlaceholderFormat(squirrel.Dollar).
+		From("friends").
+		Where(
+			squirrel.Or{
+				squirrel.And{
+					squirrel.Eq{"user_id": userId},
+					squirrel.Eq{"friend_id": friendId},
+				},
+				squirrel.And{
+					squirrel.Eq{"user_id": friendId},
+					squirrel.Eq{"friend_id": userId},
+				},
+			},
+		)
+
+	sqlStr, args, err := subq.ToSql()
+	if err != nil {
+		return false, err
+	}
+
+	var areFriends bool
+	if err := e.c.QueryRowContext(ctx, fmt.Sprintf("EXISTS (%s) AS are_friends", sqlStr), args...).
+		Scan(&areFriends); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return false, err
+	}
+	return areFriends, nil
+}

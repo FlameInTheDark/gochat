@@ -139,3 +139,73 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Extract metadata for SFU image
+        id: meta_sfu
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/gochat-sfu
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable=true
+
+      - name: Build and push SFU image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./sfu.Dockerfile
+          push: true
+          tags: ${{ steps.meta_sfu.outputs.tags }}
+          labels: ${{ steps.meta_sfu.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-binaries:
+    name: Build and Upload Release Binaries
+    runs-on: ubuntu-latest
+    needs: build-images
+    steps:
+      - name: Check out code at tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+
+      - name: Build SFU and Tools binaries (linux/amd64)
+        env:
+          CGO_ENABLED: 0
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          mkdir -p dist
+          go build -o dist/sfu_linux_amd64 ./cmd/sfu
+          go build -o dist/gctools_linux_amd64 ./cmd/tools
+
+      - name: Build SFU and Tools binaries (linux/arm64)
+        env:
+          CGO_ENABLED: 0
+          GOOS: linux
+          GOARCH: arm64
+        run: |
+          go build -o dist/sfu_linux_arm64 ./cmd/sfu
+          go build -o dist/gctools_linux_arm64 ./cmd/tools
+
+      - name: Create checksums
+        run: |
+          cd dist
+          sha256sum * > SHA256SUMS.txt
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/sfu_linux_amd64
+            dist/sfu_linux_arm64
+            dist/gctools_linux_amd64
+            dist/gctools_linux_arm64
+            dist/SHA256SUMS.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

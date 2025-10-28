@@ -56,6 +56,7 @@ func (t *threadSafeWriter) SendRTCCandidate(c *webrtc.ICECandidate) error {
 type peerConnectionState struct {
 	peerConnection *webrtc.PeerConnection
 	websocket      *threadSafeWriter
+	userID         int64
 }
 
 type channelState struct {
@@ -63,12 +64,20 @@ type channelState struct {
 	log         *slog.Logger
 	mu          sync.Mutex
 	peers       []*peerConnectionState
-	trackLocals map[string]*webrtc.TrackLocalStaticRTP
+	trackLocals map[string]trackLocalEntry
 	ttlTicker   *time.Ticker
 	ttlStopChan chan struct{}
+
+	// Configured limits
+	maxAudioBitrateBps uint64
 }
 
-func newChannelState(id int64, webhookUrl, webhookToken string, log *slog.Logger) *channelState {
+type trackLocalEntry struct {
+	track *webrtc.TrackLocalStaticRTP
+	owner int64
+}
+
+func newChannelState(id int64, webhookUrl, webhookToken string, log *slog.Logger, maxAudioBitrateBps uint64) *channelState {
 	t := time.NewTicker(time.Minute)
 	stop := make(chan struct{})
 	go func(channelId int64, ch chan struct{}) {
@@ -95,11 +104,12 @@ func newChannelState(id int64, webhookUrl, webhookToken string, log *slog.Logger
 		}
 	}(id, stop)
 	return &channelState{
-		id:          id,
-		log:         log,
-		trackLocals: make(map[string]*webrtc.TrackLocalStaticRTP),
-		ttlTicker:   t,
-		ttlStopChan: stop,
+		id:                 id,
+		log:                log,
+		trackLocals:        make(map[string]trackLocalEntry),
+		ttlTicker:          t,
+		ttlStopChan:        stop,
+		maxAudioBitrateBps: maxAudioBitrateBps,
 	}
 }
 
@@ -119,22 +129,27 @@ func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removed bool, empt
 		}
 	}
 	if removed && len(c.peers) == 0 && len(c.trackLocals) > 0 {
-		c.trackLocals = make(map[string]*webrtc.TrackLocalStaticRTP)
+		c.trackLocals = make(map[string]trackLocalEntry)
 	}
 	empty = len(c.peers) == 0 && len(c.trackLocals) == 0
 	c.mu.Unlock()
 	return removed, empty
 }
 
-func (c *channelState) addTrack(t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
-	trackLocal, err := webrtc.NewTrackLocalStaticRTP(t.Codec().RTPCodecCapability, t.ID(), t.StreamID())
+func (c *channelState) addTrack(userID int64, t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
+	// Use streamID to carry the sender's user ID so receivers can map tracks to users.
+	// Keep the original track ID for uniqueness.
+	streamID := fmt.Sprintf("u:%d", userID)
+	// Ensure unique Track ID per user to avoid collisions across peers (e.g. "video")
+	trackID := fmt.Sprintf("%d-%s", userID, t.ID())
+	trackLocal, err := webrtc.NewTrackLocalStaticRTP(t.Codec().RTPCodecCapability, trackID, streamID)
 	if err != nil {
 		c.log.Warn("failed to create local track", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 		return nil
 	}
 
 	c.mu.Lock()
-	c.trackLocals[t.ID()] = trackLocal
+	c.trackLocals[trackID] = trackLocalEntry{track: trackLocal, owner: userID}
 	c.mu.Unlock()
 	return trackLocal
 }
@@ -170,32 +185,30 @@ func (c *channelState) signalPeerConnections() {
 			}
 
 			existingSenders := map[string]bool{}
+			// Remove senders that no longer should be sent (missing or belongs to same user)
 			for _, sender := range state.peerConnection.GetSenders() {
 				if sender.Track() == nil {
 					continue
 				}
-
 				trackID := sender.Track().ID()
-				existingSenders[trackID] = true
-
-				if _, ok := c.trackLocals[trackID]; !ok {
+				entry, ok := c.trackLocals[trackID]
+				if !ok || entry.owner == state.userID {
 					if err := state.peerConnection.RemoveTrack(sender); err != nil {
 						c.log.Warn("failed to remove sender", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 						return true
 					}
-				}
-			}
-
-			for _, receiver := range state.peerConnection.GetReceivers() {
-				if receiver.Track() == nil {
 					continue
 				}
-				existingSenders[receiver.Track().ID()] = true
+				existingSenders[trackID] = true
 			}
 
-			for id, track := range c.trackLocals {
+			// Add missing tracks for other users
+			for id, entry := range c.trackLocals {
+				if entry.owner == state.userID {
+					continue // don't send user's own tracks back to them
+				}
 				if _, ok := existingSenders[id]; !ok {
-					if _, err := state.peerConnection.AddTrack(track); err != nil {
+					if _, err := state.peerConnection.AddTrack(entry.track); err != nil {
 						c.log.Warn("failed to add track to peer", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 						return true
 					}
@@ -206,6 +219,10 @@ func (c *channelState) signalPeerConnections() {
 			if err != nil {
 				c.log.Warn("failed to create offer", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 				return true
+			}
+			// Inject audio bitrate limits if configured (>0)
+			if c.maxAudioBitrateBps > 0 {
+				offer.SDP = limitAudioBitrateInSDP(offer.SDP, c.maxAudioBitrateBps)
 			}
 			if err = state.peerConnection.SetLocalDescription(offer); err != nil {
 				c.log.Warn("failed to set local description", slog.Int64("channel", c.id), slog.String("error", err.Error()))
@@ -264,14 +281,21 @@ type SFU struct {
 
 	webhookUrl   string
 	webhookToken string
+
+	maxAudioBitrateBps    uint64
+	enforceAudioBitrate   bool
+	audioBitrateMarginPct int
 }
 
-func NewSFU(webhookUrl, webhookToken string, log *slog.Logger) *SFU {
+func NewSFU(webhookUrl, webhookToken string, log *slog.Logger, maxAudioBitrateBps uint64, enforceAudioBitrate bool, audioBitrateMarginPct int) *SFU {
 	return &SFU{
-		log:          log,
-		channels:     make(map[int64]*channelState),
-		webhookUrl:   webhookUrl,
-		webhookToken: webhookToken,
+		log:                   log,
+		channels:              make(map[int64]*channelState),
+		webhookUrl:            webhookUrl,
+		webhookToken:          webhookToken,
+		maxAudioBitrateBps:    maxAudioBitrateBps,
+		enforceAudioBitrate:   enforceAudioBitrate,
+		audioBitrateMarginPct: audioBitrateMarginPct,
 	}
 }
 
@@ -279,7 +303,7 @@ func (s *SFU) getOrCreateChannel(channelID int64) *channelState {
 	s.mu.Lock()
 	ch, ok := s.channels[channelID]
 	if !ok {
-		ch = newChannelState(channelID, s.webhookUrl, s.webhookToken, s.log)
+		ch = newChannelState(channelID, s.webhookUrl, s.webhookToken, s.log, s.maxAudioBitrateBps)
 		s.channels[channelID] = ch
 	}
 	s.mu.Unlock()
@@ -314,9 +338,9 @@ func (s *SFU) RemovePeer(channelID int64, pc *webrtc.PeerConnection) {
 	}
 }
 
-func (s *SFU) AddTrack(channelID int64, t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
+func (s *SFU) AddTrack(channelID int64, userID int64, t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
 	ch := s.getOrCreateChannel(channelID)
-	track := ch.addTrack(t)
+	track := ch.addTrack(userID, t)
 	if track != nil {
 		ch.signalPeerConnections()
 	}
@@ -363,6 +387,34 @@ func (s *SFU) dispatchKeyFrameAll() {
 
 	for _, ch := range channels {
 		ch.dispatchKeyFrame()
+	}
+}
+
+// BroadcastSpeaking relays speaking state to all peers in the channel except the origin.
+func (s *SFU) BroadcastSpeaking(channelID int64, fromUser int64, speaking int) {
+	s.mu.Lock()
+	ch, ok := s.channels[channelID]
+	s.mu.Unlock()
+	if !ok {
+		return
+	}
+	ch.broadcastSpeaking(fromUser, speaking)
+}
+
+func (c *channelState) broadcastSpeaking(fromUser int64, speaking int) {
+	// snapshot peers to avoid holding lock while writing
+	c.mu.Lock()
+	peers := append([]*peerConnectionState(nil), c.peers...)
+	c.mu.Unlock()
+
+	payload := speakingEvent{UserId: fromUser, Speaking: speaking}
+	env := OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCSpeaking), D: payload}
+
+	for _, p := range peers {
+		if p.userID == fromUser {
+			continue
+		}
+		_ = p.websocket.SendEnvelope(env)
 	}
 }
 

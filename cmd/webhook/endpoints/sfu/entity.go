@@ -40,4 +40,6 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/voice/join", e.ChannelUserJoin)
 	router.Post("/voice/leave", e.ChannelUserLeave)
 	router.Post("/channel/alive", e.ChannelAlive)
+	// Prometheus HTTP SD endpoint that lists SFU metrics targets discovered via etcd
+	router.Get("/prom_sd", e.PromSD)
 }

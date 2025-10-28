@@ -3,7 +3,6 @@ package rolecheck
 import (
 	"context"
 
-	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
@@ -27,7 +26,6 @@ type RoleCheck interface {
 }
 
 type Entity struct {
-	c    *db.CQLCon
 	role role.Role
 	chrp channelroleperm.ChannelRolePerm
 	chup channeluserperm.ChannelUserPerm
@@ -40,9 +38,8 @@ type Entity struct {
 	gdm  groupdmchannel.GroupDMChannel
 }
 
-func New(c *db.CQLCon, pg *pgdb.DB) RoleCheck {
+func New(pg *pgdb.DB) RoleCheck {
 	return &Entity{
-		c:    c,
 		role: role.New(pg.Conn()),
 		chrp: channelroleperm.New(pg.Conn()),
 		chup: channeluserperm.New(pg.Conn()),

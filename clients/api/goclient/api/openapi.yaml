@@ -4661,6 +4661,27 @@ components:
           description: Image width in pixels
           example: 800
           type: integer
+    model.ChannelMention:
+      example:
+        roleId: 5
+        messageId: 5
+        authorId: 0
+        type: 2
+        guildId: 1
+        channelId: 6
+      properties:
+        authorId:
+          type: integer
+        channelId:
+          type: integer
+        guildId:
+          type: integer
+        messageId:
+          type: integer
+        roleId:
+          type: integer
+        type:
+          type: integer
     model.ChannelType:
       description: Channel type
       example: 0
@@ -4681,11 +4702,11 @@ components:
       - ChannelTypeThread
     model.Devices:
       example:
-        audio_input_level: 5.637376656633329
+        audio_input_level: 7.457744773683766
         auto_gain_control: true
         audio_output_device: audio_output_device
-        audio_output_level: 7.061401241503109
-        audio_input_threshold: 2.3021358869347655
+        audio_output_level: 4.965218492984954
+        audio_input_threshold: 1.1730742509559433
         echo_cancellation: true
         video_device: video_device
         noise_suppression: true
@@ -4709,6 +4730,21 @@ components:
           type: boolean
         video_device:
           type: string
+    model.Mention:
+      example:
+        messageId: 2
+        authorId: 9
+        userId: 4
+        channelId: 3
+      properties:
+        authorId:
+          type: integer
+        channelId:
+          type: integer
+        messageId:
+          type: integer
+        userId:
+          type: integer
     model.NotificationsType:
       type: integer
       x-enum-varnames:
@@ -4727,9 +4763,9 @@ components:
     model.UserDMChannels:
       example:
         hidden: true
-        user_id: 2
-        hidden_after: 3
-        channel_id: 9
+        user_id: 9
+        hidden_after: 9
+        channel_id: 5
       properties:
         channel_id:
           type: integer
@@ -4743,7 +4779,7 @@ components:
       example:
         chat_font_scale: 1
         color_scheme: color_scheme
-        chat_spacing: 5
+        chat_spacing: 1
       properties:
         chat_font_scale:
           type: integer
@@ -4751,6 +4787,18 @@ components:
           type: integer
         color_scheme:
           type: string
+    model.UserSettingsChannel:
+      example:
+        channel_id: 1
+        notifications:
+          muted_until: muted_until
+          muted: true
+          notifications: 6
+      properties:
+        channel_id:
+          type: integer
+        notifications:
+          $ref: '#/components/schemas/model.UserSettingsNotifications'
     model.UserSettingsData:
       example:
         favorite_gifs:
@@ -4758,65 +4806,95 @@ components:
         - favorite_gifs
         dm_channels:
         - hidden: true
-          user_id: 2
-          hidden_after: 3
-          channel_id: 9
+          user_id: 9
+          hidden_after: 9
+          channel_id: 5
         - hidden: true
-          user_id: 2
-          hidden_after: 3
-          channel_id: 9
+          user_id: 9
+          hidden_after: 9
+          channel_id: 5
         appearance:
           chat_font_scale: 1
           color_scheme: color_scheme
-          chat_spacing: 5
+          chat_spacing: 1
+        channels:
+        - channel_id: 1
+          notifications:
+            muted_until: muted_until
+            muted: true
+            notifications: 6
+        - channel_id: 1
+          notifications:
+            muted_until: muted_until
+            muted: true
+            notifications: 6
         devices:
-          audio_input_level: 5.637376656633329
+          audio_input_level: 7.457744773683766
           auto_gain_control: true
           audio_output_device: audio_output_device
-          audio_output_level: 7.061401241503109
-          audio_input_threshold: 2.3021358869347655
+          audio_output_level: 4.965218492984954
+          audio_input_threshold: 1.1730742509559433
           echo_cancellation: true
           video_device: video_device
           noise_suppression: true
           audio_input_device: audio_input_device
         guilds:
-        - selected_channel: 7
-          guild_id: 1
-          position: 6
+        - selected_channel: 6
+          guild_id: 6
+          position: 3
           notifications:
-            roles: true
-            global: true
+            muted_until: muted_until
             muted: true
-            notifications: 1
-        - selected_channel: 7
-          guild_id: 1
-          position: 6
+            notifications: 6
+        - selected_channel: 6
+          guild_id: 6
+          position: 3
           notifications:
-            roles: true
-            global: true
+            muted_until: muted_until
             muted: true
-            notifications: 1
+            notifications: 6
         language: language
         forced_presence: forced_presence
         guild_folders:
-        - color: 4
+        - color: 6
           guilds:
-          - 7
-          - 7
+          - 8
+          - 8
           name: name
-          position: 1
-        - color: 4
+          position: 9
+        - color: 6
           guilds:
-          - 7
-          - 7
+          - 8
+          - 8
           name: name
-          position: 1
+          position: 9
+        ui_sounds:
+          notification: true
+          mute: true
+          voice_channel: true
+          deafen: true
+        users:
+        - user_id: 1
+          notifications:
+            muted_until: muted_until
+            muted: true
+            notifications: 6
+        - user_id: 1
+          notifications:
+            muted_until: muted_until
+            muted: true
+            notifications: 6
         status:
           custom_status_text: custom_status_text
           status: status
       properties:
         appearance:
           $ref: '#/components/schemas/model.UserSettingsAppearance'
+        channels:
+          items:
+            $ref: '#/components/schemas/model.UserSettingsChannel'
+          type: array
+          uniqueItems: false
         devices:
           $ref: '#/components/schemas/model.Devices'
         dm_channels:
@@ -4845,14 +4923,21 @@ components:
           type: string
         status:
           $ref: '#/components/schemas/model.Status'
+        ui_sounds:
+          $ref: '#/components/schemas/model.UserUISounds'
+        users:
+          items:
+            $ref: '#/components/schemas/model.UserSettingsUsers'
+          type: array
+          uniqueItems: false
     model.UserSettingsGuildFolders:
       example:
-        color: 4
+        color: 6
         guilds:
-        - 7
-        - 7
+        - 8
+        - 8
         name: name
-        position: 1
+        position: 9
       properties:
         color:
           type: integer
@@ -4867,14 +4952,13 @@ components:
           type: integer
     model.UserSettingsGuilds:
       example:
-        selected_channel: 7
-        guild_id: 1
-        position: 6
+        selected_channel: 6
+        guild_id: 6
+        position: 3
         notifications:
-          roles: true
-          global: true
+          muted_until: muted_until
           muted: true
-          notifications: 1
+          notifications: 6
       properties:
         guild_id:
           type: integer
@@ -4886,22 +4970,46 @@ components:
           type: integer
     model.UserSettingsNotifications:
       example:
-        roles: true
-        global: true
+        muted_until: muted_until
         muted: true
-        notifications: 1
+        notifications: 6
       properties:
-        global:
-          type: boolean
         muted:
           type: boolean
+        muted_until:
+          type: string
         notifications:
           type: integer
           x-enum-varnames:
           - NotificationsAll
           - NotificationsMentions
           - NotificationsNone
-        roles:
+    model.UserSettingsUsers:
+      example:
+        user_id: 1
+        notifications:
+          muted_until: muted_until
+          muted: true
+          notifications: 6
+      properties:
+        notifications:
+          $ref: '#/components/schemas/model.UserSettingsNotifications'
+        user_id:
+          type: integer
+    model.UserUISounds:
+      example:
+        notification: true
+        mute: true
+        voice_channel: true
+        deafen: true
+      properties:
+        deafen:
+          type: boolean
+        mute:
+          type: boolean
+        notification:
+          type: boolean
+        voice_channel:
           type: boolean
     search.MessageSearchRequest:
       properties:
@@ -5100,62 +5208,101 @@ components:
           - favorite_gifs
           dm_channels:
           - hidden: true
-            user_id: 2
-            hidden_after: 3
-            channel_id: 9
+            user_id: 9
+            hidden_after: 9
+            channel_id: 5
           - hidden: true
-            user_id: 2
-            hidden_after: 3
-            channel_id: 9
+            user_id: 9
+            hidden_after: 9
+            channel_id: 5
           appearance:
             chat_font_scale: 1
             color_scheme: color_scheme
-            chat_spacing: 5
+            chat_spacing: 1
+          channels:
+          - channel_id: 1
+            notifications:
+              muted_until: muted_until
+              muted: true
+              notifications: 6
+          - channel_id: 1
+            notifications:
+              muted_until: muted_until
+              muted: true
+              notifications: 6
           devices:
-            audio_input_level: 5.637376656633329
+            audio_input_level: 7.457744773683766
             auto_gain_control: true
             audio_output_device: audio_output_device
-            audio_output_level: 7.061401241503109
-            audio_input_threshold: 2.3021358869347655
+            audio_output_level: 4.965218492984954
+            audio_input_threshold: 1.1730742509559433
             echo_cancellation: true
             video_device: video_device
             noise_suppression: true
             audio_input_device: audio_input_device
           guilds:
-          - selected_channel: 7
-            guild_id: 1
-            position: 6
+          - selected_channel: 6
+            guild_id: 6
+            position: 3
             notifications:
-              roles: true
-              global: true
+              muted_until: muted_until
               muted: true
-              notifications: 1
-          - selected_channel: 7
-            guild_id: 1
-            position: 6
+              notifications: 6
+          - selected_channel: 6
+            guild_id: 6
+            position: 3
             notifications:
-              roles: true
-              global: true
+              muted_until: muted_until
               muted: true
-              notifications: 1
+              notifications: 6
           language: language
           forced_presence: forced_presence
           guild_folders:
-          - color: 4
+          - color: 6
             guilds:
-            - 7
-            - 7
+            - 8
+            - 8
             name: name
-            position: 1
-          - color: 4
+            position: 9
+          - color: 6
             guilds:
-            - 7
-            - 7
+            - 8
+            - 8
             name: name
-            position: 1
+            position: 9
+          ui_sounds:
+            notification: true
+            mute: true
+            voice_channel: true
+            deafen: true
+          users:
+          - user_id: 1
+            notifications:
+              muted_until: muted_until
+              muted: true
+              notifications: 6
+          - user_id: 1
+            notifications:
+              muted_until: muted_until
+              muted: true
+              notifications: 6
           status:
             custom_status_text: custom_status_text
             status: status
+        channel_mentions:
+          key:
+          - roleId: 5
+            messageId: 5
+            authorId: 0
+            type: 2
+            guildId: 1
+            channelId: 6
+          - roleId: 5
+            messageId: 5
+            authorId: 0
+            type: 2
+            guildId: 1
+            channelId: 6
         guilds:
         - owner: 2230469276416868352
           public: false
@@ -5179,13 +5326,27 @@ components:
             height: 128
           name: My Guild
           id: 2230469276416868352
+        mentions:
+          key:
+          - messageId: 2
+            authorId: 9
+            userId: 4
+            channelId: 3
+          - messageId: 2
+            authorId: 9
+            userId: 4
+            channelId: 3
         read_states:
-          key: 6
-        version: 1
+          key: 7
+        version: 2
         guilds_last_messages:
           key:
-            key: 0
+            key: 7
       properties:
+        channel_mentions:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/model.ChannelMention'
         guilds:
           items:
             $ref: '#/components/schemas/dto.Guild'
@@ -5195,6 +5356,10 @@ components:
           additionalProperties:
             additionalProperties:
               type: integer
+        mentions:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/model.Mention'
         read_states:
           additionalProperties:
             type: integer

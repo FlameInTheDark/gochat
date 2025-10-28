@@ -14,9 +14,12 @@ import (
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	recm "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	slogfiber "github.com/samber/slog-fiber"
 	"resty.dev/v3"
 
@@ -71,7 +74,24 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	fiberApp.Use(lm)
 	fiberApp.Use(recm.New())
 
-	sfu := NewSFU(cfg.WebhookURL, cfg.WebhookToken, logger)
+	// Metrics: expose default Prometheus registry at /metrics
+	// (Default registry already includes Go & process collectors.)
+	h := promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{})
+	fiberApp.Get("/metrics", adaptor.HTTPHandler(h))
+
+	// Compute max audio bitrate in bps (0 means disabled)
+	var maxAudioBps uint64
+	if cfg.MaxAudioBitrateKbps > 0 {
+		maxAudioBps = uint64(cfg.MaxAudioBitrateKbps) * 1000
+	}
+	// Clamp margin to [0,100]
+	marginPct := cfg.AudioBitrateMarginPercent
+	if marginPct < 0 {
+		marginPct = 0
+	} else if marginPct > 100 {
+		marginPct = 100
+	}
+	sfu := NewSFU(cfg.WebhookURL, cfg.WebhookToken, logger, maxAudioBps, cfg.EnforceAudioBitrate, marginPct)
 
 	a := &App{
 		app:       fiberApp,
@@ -163,11 +183,13 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 	defer pc.Close()
 
 	writer := &threadSafeWriter{conn: c.Conn}
-	state := &peerConnectionState{peerConnection: pc, websocket: writer}
+	state := &peerConnectionState{peerConnection: pc, websocket: writer, userID: uid}
 
 	for _, typ := range []webrtc.RTPCodecType{webrtc.RTPCodecTypeVideo, webrtc.RTPCodecTypeAudio} {
 		if _, err := pc.AddTransceiverFromKind(typ, webrtc.RTPTransceiverInit{
-			Direction: webrtc.RTPTransceiverDirectionRecvonly,
+			// Use sendrecv to allow remote to send immediately and for SFU to later
+			// add outbound tracks to the same m-line without introducing new sections.
+			Direction: webrtc.RTPTransceiverDirectionSendrecv,
 		}); err != nil {
 			a.log.Error("failed to add transceiver", slog.String("error", err.Error()))
 			return
@@ -194,7 +216,8 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 
 	pc.OnTrack(func(t *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
 		a.log.Info("inbound track", slog.String("kind", t.Kind().String()), slog.String("id", t.ID()))
-		trackLocal := a.sfu.AddTrack(channelID, t)
+		// Attach userID to the outgoing stream ID so receivers can map track -> user
+		trackLocal := a.sfu.AddTrack(channelID, uid, t)
 		if trackLocal == nil {
 			return
 		}
@@ -202,6 +225,19 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 
 		buf := make([]byte, 1500)
 		rtpPacket := &rtp.Packet{}
+
+		// Bitrate enforcement for audio if configured
+		enforce := a.sfu.enforceAudioBitrate && a.sfu.maxAudioBitrateBps > 0 && t.Kind() == webrtc.RTPCodecTypeAudio
+		// Effective limit with margin (headers/overhead tolerance)
+		limitWithMargin := float64(a.sfu.maxAudioBitrateBps)
+		if a.sfu.audioBitrateMarginPct > 0 {
+			limitWithMargin *= 1.0 + float64(a.sfu.audioBitrateMarginPct)/100.0
+		}
+		var (
+			windowStart   = time.Now()
+			bytesInWindow int64
+			overCount     int
+		)
 
 		for {
 			n, _, err := t.Read(buf)
@@ -212,8 +248,32 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 				a.log.Warn("failed to unmarshal rtp packet", slog.String("error", err.Error()))
 				return
 			}
-			rtpPacket.Extension = false
-			rtpPacket.Extensions = nil
+			// Preserve RTP header extensions to maintain negotiated features
+			// like MID, RID, audio levels, or TWCC where applicable.
+			if enforce {
+				bytesInWindow += int64(n)
+				elapsed := time.Since(windowStart)
+				if elapsed >= time.Second {
+					bps := (float64(bytesInWindow) * 8.0) / elapsed.Seconds()
+					if bps > limitWithMargin {
+						overCount++
+					} else if overCount > 0 {
+						overCount = 0
+					}
+					// Reset window
+					windowStart = time.Now()
+					bytesInWindow = 0
+					if overCount >= 2 { // allow brief spikes, disconnect on sustained exceed
+						a.log.Warn("disconnecting peer due to audio bitrate limit exceed",
+							slog.Float64("bps", bps),
+							slog.Float64("limit_bps", limitWithMargin),
+							slog.Int64("channel", channelID))
+						// Close the PeerConnection; this will stop all tracks
+						_ = pc.Close()
+						return
+					}
+				}
+			}
 			if err = trackLocal.WriteRTP(rtpPacket); err != nil {
 				return
 			}
@@ -269,6 +329,29 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 					a.log.Warn("failed to set remote description", slog.String("error", err.Error()))
 					return
 				}
+			case "negotiate":
+				// Client requests a new offer (eg after enabling camera/screenshare)
+				a.log.Info("client requested renegotiation", slog.Int64("channel", channelID), slog.Int64("user", uid))
+				a.sfu.SignalChannel(channelID)
+			case "speaking":
+				// Client speaking indicator: data is expected to be "1" or "0" (string),
+				// tolerate JSON like {"speaking":1} as well.
+				speaking := 0
+				// Try plain payload first
+				if msg.Data == "1" || msg.Data == "\"1\"" {
+					speaking = 1
+				} else if msg.Data == "0" || msg.Data == "\"0\"" {
+					speaking = 0
+				} else if msg.Data != "" {
+					var aux struct {
+						Speaking int `json:"speaking"`
+					}
+					_ = json.Unmarshal([]byte(msg.Data), &aux)
+					if aux.Speaking != 0 {
+						speaking = 1
+					}
+				}
+				a.sfu.BroadcastSpeaking(channelID, uid, speaking)
 			default:
 				a.log.Warn("unknown message", slog.String("event", msg.Event))
 			}

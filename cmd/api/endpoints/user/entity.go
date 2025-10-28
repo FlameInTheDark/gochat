@@ -3,16 +3,16 @@ package user
 import (
 	"log/slog"
 
-	"github.com/FlameInTheDark/gochat/internal/database/db"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/dmchannelmessages"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
-	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/cache"
+	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/dmchannelmessages"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/mention"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
@@ -20,10 +20,12 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/friend"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/usersettings"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/server"
 )
 
@@ -66,21 +68,23 @@ type entity struct {
 	cache cache.Cache
 
 	// DB entities
-	user   user.User
-	member member.Member
-	guild  guild.Guild
-	urole  userrole.UserRole
-	ch     channel.Channel
-	dm     dmchannel.DmChannel
-	gdm    groupdmchannel.GroupDMChannel
-	disc   discriminator.Discriminator
-	fr     friend.Friend
-	uset   usersettings.UserSettings
-	rs     readstates.ReadStates
-	gclm   guildchannelmessages.GuildChannelMessages
-	dmlm   *dmchannelmessages.Entity
-	av     avatar.Avatar
-	icon   icon.Icon
+	user    user.User
+	member  member.Member
+	guild   guild.Guild
+	urole   userrole.UserRole
+	ch      channel.Channel
+	dm      dmchannel.DmChannel
+	gdm     groupdmchannel.GroupDMChannel
+	disc    discriminator.Discriminator
+	fr      friend.Friend
+	uset    usersettings.UserSettings
+	rs      readstates.ReadStates
+	gclm    guildchannelmessages.GuildChannelMessages
+	dmlm    *dmchannelmessages.Entity
+	av      avatar.Avatar
+	icon    icon.Icon
+	mention mention.Mention
+	gc      guildchannels.GuildChannels
 
 	// Config
 	s3Base    string
@@ -113,5 +117,7 @@ func New(cql *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, cache cache.Cache,
 		dmlm:      dmchannelmessages.New(cql),
 		av:        avatar.New(cql),
 		icon:      icon.New(cql),
+		mention:   mention.New(cql),
+		gc:        guildchannels.New(pg.Conn()),
 	}
 }

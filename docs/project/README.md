@@ -12,10 +12,11 @@ Here goes the project documentation.
 - [Voice](voice/README.md)
 
 - [Services Overview](Services.md)
- - [Tools CLI](Tools.md)
+- [Tools CLI](Tools.md)
 
 
 - [Swagger API Documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/FlameInTheDark/gochat/refs/heads/dev/docs/api/swagger.json)
+- [Database Diagram](Database.md)
 
 ## Architecture Diagram
 ```mermaid

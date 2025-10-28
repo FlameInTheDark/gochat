@@ -56,6 +56,10 @@ func (e *entity) Send(c *fiber.Ctx) error {
 		return err
 	}
 
+	if err := e.rs.SetReadState(c.UserContext(), user.Id, channelId, message.Id); err != nil {
+		e.log.Error("unable to set read state after message sent", slog.String("error", err.Error()))
+	}
+
 	return c.JSON(message)
 }
 
@@ -149,6 +153,104 @@ func (e *entity) createAndSendMessage(c *fiber.Ctx, req *SendMessageRequest, jwt
 
 	// Send events (non-blocking)
 	go e.sendMessageEvents(channel.Id, guildId, message, userData, req)
+
+	// Mentions
+	users, roles, everyone, here := MentionsExtractor(req.Content)
+	if users != nil || roles != nil || everyone || here {
+		go func() {
+			for _, u := range users {
+				switch channel.Type {
+				case model.ChannelTypeGuild:
+					if guildId != nil {
+						if ok, err := e.m.IsGuildMember(context.Background(), *guildId, u); err == nil && ok {
+							if err := e.mention.AddMention(context.Background(), u, channel.Id, messageId, message.Author.Id); err != nil {
+								e.log.Error("unable to save mention", slog.String("error", err.Error()))
+							}
+							if err := e.mqt.SendUserUpdate(u, &mqmsg.Mention{
+								GuildId:   guildId,
+								ChannelId: channel.Id,
+								MessageId: messageId,
+								AuthorId:  message.Author.Id,
+								Type:      int(model.ChannelMentionUser),
+							}); err != nil {
+								e.log.Error("unable to send mention notification", slog.String("error", err.Error()))
+							}
+						}
+					}
+				default:
+					if ok, err := e.fr.IsFriend(context.Background(), u, message.Author.Id); err == nil && ok {
+						if err := e.mention.AddMention(context.Background(), u, channel.Id, messageId, message.Author.Id); err != nil {
+							e.log.Error("unable to save mention", slog.String("error", err.Error()))
+						}
+						if err := e.mqt.SendUserUpdate(u, &mqmsg.Mention{
+							GuildId:   nil,
+							ChannelId: channel.Id,
+							MessageId: messageId,
+							AuthorId:  message.Author.Id,
+							Type:      int(model.ChannelMentionUser),
+						}); err != nil {
+							e.log.Error("unable to send mention notification", slog.String("error", err.Error()))
+						}
+					}
+				}
+			}
+			if guildId != nil {
+				for _, r := range roles {
+					if err := e.mention.AddChannelMention(
+						context.Background(),
+						*guildId,
+						channel.Id,
+						messageId,
+						message.Author.Id,
+						&r,
+						model.ChannelMentionRole); err != nil {
+						e.log.Error("unable to save role mention", slog.String("error", err.Error()))
+					}
+					if err := e.mqt.SendGuildUpdate(*guildId, &mqmsg.Mention{
+						GuildId:   guildId,
+						ChannelId: channel.Id,
+						MessageId: messageId,
+						AuthorId:  message.Author.Id,
+						Type:      int(model.ChannelMentionRole),
+					}); err != nil {
+						e.log.Error("unable to send role mention notification", slog.String("error", err.Error()))
+					}
+				}
+				if everyone {
+					if err := e.mention.AddChannelMention(
+						context.Background(),
+						*guildId,
+						channel.Id,
+						messageId,
+						message.Author.Id,
+						nil,
+						model.ChannelMentionEveryone); err != nil {
+						e.log.Error("unable to save role mention", slog.String("error", err.Error()))
+					}
+					if err := e.mqt.SendGuildUpdate(*guildId, &mqmsg.Mention{
+						GuildId:   guildId,
+						ChannelId: channel.Id,
+						MessageId: messageId,
+						AuthorId:  message.Author.Id,
+						Type:      int(model.ChannelMentionEveryone),
+					}); err != nil {
+						e.log.Error("unable to send role mention notification", slog.String("error", err.Error()))
+					}
+				}
+				if here {
+					if err := e.mqt.SendGuildUpdate(*guildId, &mqmsg.Mention{
+						GuildId:   guildId,
+						ChannelId: channel.Id,
+						MessageId: messageId,
+						AuthorId:  message.Author.Id,
+						Type:      int(model.ChannelMentionHere),
+					}); err != nil {
+						e.log.Error("unable to send role mention notification", slog.String("error", err.Error()))
+					}
+				}
+			}
+		}()
+	}
 
 	return message, nil
 }

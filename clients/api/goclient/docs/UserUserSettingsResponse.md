@@ -4,8 +4,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**ChannelMentions** | Pointer to [**map[string][]ModelChannelMention**](array.md) |  | [optional] 
 **Guilds** | Pointer to [**[]DtoGuild**](DtoGuild.md) |  | [optional] 
 **GuildsLastMessages** | Pointer to **map[string]map[string]int32** |  | [optional] 
+**Mentions** | Pointer to [**map[string][]ModelMention**](array.md) |  | [optional] 
 **ReadStates** | Pointer to **map[string]int32** |  | [optional] 
 **Settings** | Pointer to [**ModelUserSettingsData**](ModelUserSettingsData.md) |  | [optional] 
 **Version** | Pointer to **int32** |  | [optional] 
@@ -28,6 +30,31 @@ will change when the set of required properties is changed
 NewUserUserSettingsResponseWithDefaults instantiates a new UserUserSettingsResponse object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetChannelMentions
+
+`func (o *UserUserSettingsResponse) GetChannelMentions() map[string][]ModelChannelMention`
+
+GetChannelMentions returns the ChannelMentions field if non-nil, zero value otherwise.
+
+### GetChannelMentionsOk
+
+`func (o *UserUserSettingsResponse) GetChannelMentionsOk() (*map[string][]ModelChannelMention, bool)`
+
+GetChannelMentionsOk returns a tuple with the ChannelMentions field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetChannelMentions
+
+`func (o *UserUserSettingsResponse) SetChannelMentions(v map[string][]ModelChannelMention)`
+
+SetChannelMentions sets ChannelMentions field to given value.
+
+### HasChannelMentions
+
+`func (o *UserUserSettingsResponse) HasChannelMentions() bool`
+
+HasChannelMentions returns a boolean if a field has been set.
 
 ### GetGuilds
 
@@ -78,6 +105,31 @@ SetGuildsLastMessages sets GuildsLastMessages field to given value.
 `func (o *UserUserSettingsResponse) HasGuildsLastMessages() bool`
 
 HasGuildsLastMessages returns a boolean if a field has been set.
+
+### GetMentions
+
+`func (o *UserUserSettingsResponse) GetMentions() map[string][]ModelMention`
+
+GetMentions returns the Mentions field if non-nil, zero value otherwise.
+
+### GetMentionsOk
+
+`func (o *UserUserSettingsResponse) GetMentionsOk() (*map[string][]ModelMention, bool)`
+
+GetMentionsOk returns a tuple with the Mentions field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetMentions
+
+`func (o *UserUserSettingsResponse) SetMentions(v map[string][]ModelMention)`
+
+SetMentions sets Mentions field to given value.
+
+### HasMentions
+
+`func (o *UserUserSettingsResponse) HasMentions() bool`
+
+HasMentions returns a boolean if a field has been set.
 
 ### GetReadStates
 

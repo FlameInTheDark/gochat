@@ -21,6 +21,7 @@ var _ MappedNullable = &ModelUserSettingsData{}
 // ModelUserSettingsData struct for ModelUserSettingsData
 type ModelUserSettingsData struct {
 	Appearance     *ModelUserSettingsAppearance    `json:"appearance,omitempty"`
+	Channels       []ModelUserSettingsChannel      `json:"channels,omitempty"`
 	Devices        *ModelDevices                   `json:"devices,omitempty"`
 	DmChannels     []ModelUserDMChannels           `json:"dm_channels,omitempty"`
 	FavoriteGifs   []string                        `json:"favorite_gifs,omitempty"`
@@ -29,6 +30,8 @@ type ModelUserSettingsData struct {
 	Guilds         []ModelUserSettingsGuilds       `json:"guilds,omitempty"`
 	Language       *string                         `json:"language,omitempty"`
 	Status         *ModelStatus                    `json:"status,omitempty"`
+	UiSounds       *ModelUserUISounds              `json:"ui_sounds,omitempty"`
+	Users          []ModelUserSettingsUsers        `json:"users,omitempty"`
 }
 
 // NewModelUserSettingsData instantiates a new ModelUserSettingsData object
@@ -78,6 +81,38 @@ func (o *ModelUserSettingsData) HasAppearance() bool {
 // SetAppearance gets a reference to the given ModelUserSettingsAppearance and assigns it to the Appearance field.
 func (o *ModelUserSettingsData) SetAppearance(v ModelUserSettingsAppearance) {
 	o.Appearance = &v
+}
+
+// GetChannels returns the Channels field value if set, zero value otherwise.
+func (o *ModelUserSettingsData) GetChannels() []ModelUserSettingsChannel {
+	if o == nil || IsNil(o.Channels) {
+		var ret []ModelUserSettingsChannel
+		return ret
+	}
+	return o.Channels
+}
+
+// GetChannelsOk returns a tuple with the Channels field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsData) GetChannelsOk() ([]ModelUserSettingsChannel, bool) {
+	if o == nil || IsNil(o.Channels) {
+		return nil, false
+	}
+	return o.Channels, true
+}
+
+// HasChannels returns a boolean if a field has been set.
+func (o *ModelUserSettingsData) HasChannels() bool {
+	if o != nil && !IsNil(o.Channels) {
+		return true
+	}
+
+	return false
+}
+
+// SetChannels gets a reference to the given []ModelUserSettingsChannel and assigns it to the Channels field.
+func (o *ModelUserSettingsData) SetChannels(v []ModelUserSettingsChannel) {
+	o.Channels = v
 }
 
 // GetDevices returns the Devices field value if set, zero value otherwise.
@@ -336,6 +371,70 @@ func (o *ModelUserSettingsData) SetStatus(v ModelStatus) {
 	o.Status = &v
 }
 
+// GetUiSounds returns the UiSounds field value if set, zero value otherwise.
+func (o *ModelUserSettingsData) GetUiSounds() ModelUserUISounds {
+	if o == nil || IsNil(o.UiSounds) {
+		var ret ModelUserUISounds
+		return ret
+	}
+	return *o.UiSounds
+}
+
+// GetUiSoundsOk returns a tuple with the UiSounds field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsData) GetUiSoundsOk() (*ModelUserUISounds, bool) {
+	if o == nil || IsNil(o.UiSounds) {
+		return nil, false
+	}
+	return o.UiSounds, true
+}
+
+// HasUiSounds returns a boolean if a field has been set.
+func (o *ModelUserSettingsData) HasUiSounds() bool {
+	if o != nil && !IsNil(o.UiSounds) {
+		return true
+	}
+
+	return false
+}
+
+// SetUiSounds gets a reference to the given ModelUserUISounds and assigns it to the UiSounds field.
+func (o *ModelUserSettingsData) SetUiSounds(v ModelUserUISounds) {
+	o.UiSounds = &v
+}
+
+// GetUsers returns the Users field value if set, zero value otherwise.
+func (o *ModelUserSettingsData) GetUsers() []ModelUserSettingsUsers {
+	if o == nil || IsNil(o.Users) {
+		var ret []ModelUserSettingsUsers
+		return ret
+	}
+	return o.Users
+}
+
+// GetUsersOk returns a tuple with the Users field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsData) GetUsersOk() ([]ModelUserSettingsUsers, bool) {
+	if o == nil || IsNil(o.Users) {
+		return nil, false
+	}
+	return o.Users, true
+}
+
+// HasUsers returns a boolean if a field has been set.
+func (o *ModelUserSettingsData) HasUsers() bool {
+	if o != nil && !IsNil(o.Users) {
+		return true
+	}
+
+	return false
+}
+
+// SetUsers gets a reference to the given []ModelUserSettingsUsers and assigns it to the Users field.
+func (o *ModelUserSettingsData) SetUsers(v []ModelUserSettingsUsers) {
+	o.Users = v
+}
+
 func (o ModelUserSettingsData) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -348,6 +447,9 @@ func (o ModelUserSettingsData) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.Appearance) {
 		toSerialize["appearance"] = o.Appearance
+	}
+	if !IsNil(o.Channels) {
+		toSerialize["channels"] = o.Channels
 	}
 	if !IsNil(o.Devices) {
 		toSerialize["devices"] = o.Devices
@@ -372,6 +474,12 @@ func (o ModelUserSettingsData) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Status) {
 		toSerialize["status"] = o.Status
+	}
+	if !IsNil(o.UiSounds) {
+		toSerialize["ui_sounds"] = o.UiSounds
+	}
+	if !IsNil(o.Users) {
+		toSerialize["users"] = o.Users
 	}
 	return toSerialize, nil
 }

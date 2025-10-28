@@ -80,3 +80,10 @@ type ChannelAliveNotify struct {
 	GuildId   *int64 `json:"guild_id"`
 	ChannelId int64  `json:"channel_id"`
 }
+
+// speakingEvent is sent to clients in the same channel to indicate
+// that a user started or stopped speaking. Speaking is 1 (active) or 0 (inactive).
+type speakingEvent struct {
+	UserId   int64 `json:"user_id"`
+	Speaking int   `json:"speaking"`
+}

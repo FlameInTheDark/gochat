@@ -128,7 +128,13 @@ See [SFU WebSocket Protocol](SFUProtocol.md) for the full event catalog.
 { "op":7, "t":503, "d": { "candidate": "...", "sdpMid": "0", "sdpMLineIndex": 0 } }
 ```
 
-- If a client needs to renegotiate proactively (e.g., codec change) it can still send its own offer; the SFU answers it and then resynchronizes the room.
+- If a client enables camera later, bind the camera track to the already‑offered video transceiver (same m‑line, usually `mid: "0"`), set its direction to `sendonly` or `sendrecv`, then request a server offer via the convenience event:
+
+```json
+{ "event": "negotiate" }
+```
+
+Apply the incoming offer and answer as usual. Avoid creating a new local video transceiver for camera; reuse the SFU‑offered one so the answer sets the m‑line to `sendonly/sendrecv` instead of `inactive`.
 
 ## 5) Media + Permissions
 
@@ -138,6 +144,9 @@ See [SFU WebSocket Protocol](SFUProtocol.md) for the full event catalog.
   - `PermAdministrator` bypasses these checks.
   - Otherwise, the track is ignored.
 - For each published track, SFU relays (RTP) to other peers in the room and renegotiates for late joiners.
+
+Frontend track mapping:
+- The SFU tags outgoing streams with the sender’s user id: `stream.id = "u:<user_id>"`. Use this to attach tracks to the correct UI tile.
 
 ## 6) Mute/Deafen Controls
 
@@ -180,3 +189,11 @@ Compute RTT as `now_ms - send_ts` on the client.
 - Short‑lived SFU tokens scoped to `typ=sfu`, `aud=sfu` with embedded `channel_id` and `perms`.
 - SFU enforces `PermVoice*` at media/control plane.
 - etcd runs with authentication (and optionally TLS) when exposed to the Internet.
+- SFU metrics discovery is exposed as an HTTP SD endpoint and can be protected with a JWT (typ=prom). Prometheus should scrape the SD endpoint and then scrape SFUs directly. See deployment docs for details.
+
+## 11) Optional Media Limits
+
+The SFU can cap and enforce inbound audio bitrate per publisher:
+- `max_audio_bitrate_kbps`: applies SDP caps (Opus `maxaveragebitrate`, `b=TIAS`/`AS`).
+- `enforce_audio_bitrate`: disconnects peers who exceed the cap for sustained windows.
+- `audio_bitrate_margin_percent`: tolerance for overhead and jitter.

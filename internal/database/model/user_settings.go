@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
@@ -14,15 +15,18 @@ type UserSettings struct {
 }
 
 type UserSettingsData struct {
-	Language       string                     `json:"language"`
-	Appearance     UserSettingsAppearance     `json:"appearance"`
-	GuildFolders   []UserSettingsGuildFolders `json:"guild_folders"`
-	Guilds         []UserSettingsGuilds       `json:"guilds"`
-	FavoriteGifs   []string                   `json:"favorite_gifs"`
-	ForcedPresence string                     `json:"forced_presence"`
-	Status         Status                     `json:"status"`
-	DMChannels     []UserDMChannels           `json:"dm_channels"`
-	Devices        Devices                    `json:"devices"`
+	Language         string                     `json:"language"`
+	Appearance       UserSettingsAppearance     `json:"appearance"`
+	GuildFolders     []UserSettingsGuildFolders `json:"guild_folders"`
+	Guilds           []UserSettingsGuilds       `json:"guilds"`
+	ChannelsSettings []UserSettingsChannel      `json:"channels"`
+	UsersSettings    []UserSettingsUsers        `json:"users"`
+	FavoriteGifs     []string                   `json:"favorite_gifs"`
+	ForcedPresence   string                     `json:"forced_presence"`
+	Status           Status                     `json:"status"`
+	DMChannels       []UserDMChannels           `json:"dm_channels"`
+	Devices          Devices                    `json:"devices"`
+	UISounds         UserUISounds               `json:"ui_sounds"`
 }
 
 func (s UserSettingsData) Validate() error {
@@ -95,9 +99,8 @@ const (
 
 type UserSettingsNotifications struct {
 	Muted         bool              `json:"muted"`
+	MutedUntil    *time.Time        `json:"muted_until,omitempty"`
 	Notifications NotificationsType `json:"notifications"`
-	Global        bool              `json:"global"`
-	Roles         bool              `json:"roles"`
 }
 
 func (n UserSettingsNotifications) Validate() error {
@@ -114,9 +117,26 @@ type UserSettingsAppearance struct {
 	ChatFontScale int64  `json:"chat_font_scale"`
 }
 
+type UserUISounds struct {
+	Mute         *bool `json:"mute,omitempty"`
+	Deafen       *bool `json:"deafen,omitempty"`
+	VoiceChannel *bool `json:"voice_channel,omitempty"`
+	Notification *bool `json:"notification,omitempty"`
+}
+
 type UserSettingsGuildFolders struct {
 	Name     string  `json:"name"`
 	Color    int64   `json:"color"`
 	Position int64   `json:"position"`
 	Guilds   []int64 `json:"guilds"`
+}
+
+type UserSettingsChannel struct {
+	ChannelId     int64                     `json:"channel_id"`
+	Notifications UserSettingsNotifications `json:"notifications"`
+}
+
+type UserSettingsUsers struct {
+	UserId        int64                     `json:"user_id"`
+	Notifications UserSettingsNotifications `json:"notifications"`
 }

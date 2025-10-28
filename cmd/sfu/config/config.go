@@ -16,6 +16,19 @@ type Config struct {
 	WebhookURL   string `yaml:"webhook_url" env:"WEBHOOK_URL" env-required:"true"`
 	WebhookToken string `yaml:"webhook_token" env:"WEBHOOK_TOKEN" env-required:"true"`
 	ServiceID    string `yaml:"service_id" env:"SFU_SERVICE_ID" env-required:"true"`
+
+	// Media limits
+	// MaxAudioBitrateKbps, when > 0, injects SDP constraints to cap OPUS
+	// encoder average bitrate on clients and advertises bandwidth limits per
+	// RFC7587 (maxaveragebitrate) and RFC3890 (b=AS/TIAS).
+	// Example values: 64, 96, 128. 0 disables limiting.
+	MaxAudioBitrateKbps int  `yaml:"max_audio_bitrate_kbps" env:"SFU_MAX_AUDIO_BITRATE_KBPS" env-default:"0"`
+	EnforceAudioBitrate bool `yaml:"enforce_audio_bitrate" env:"SFU_ENFORCE_AUDIO_BITRATE" env-default:"false"`
+
+	// AudioBitrateMarginPercent adds tolerance to measured inbound RTP bitrate
+	// during enforcement to account for headers/Jitter/overhead. E.g. 15 means
+	// 15% over the configured cap is tolerated before disconnect. Range 0..100.
+	AudioBitrateMarginPercent int `yaml:"audio_bitrate_margin_percent" env:"SFU_AUDIO_BITRATE_MARGIN_PERCENT" env-default:"15"`
 }
 
 func LoadConfig() (*Config, error) {

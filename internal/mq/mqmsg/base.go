@@ -56,6 +56,7 @@ const (
 const (
 	EventTypeGuildChannelMessage EventType = 300 + iota
 	EventTypeChannelUserTyping
+	EventTypeMention
 )
 
 const (
@@ -97,6 +98,8 @@ const (
 	EventTypeRTCMoved
 	// Server -> clients in a voice channel: SFU route changed; reconnect by rejoining
 	EventTypeRTCServerRebind
+	// Client -> SFU and SFU -> clients: speaking state notification
+	EventTypeRTCSpeaking
 )
 
 type Message struct {

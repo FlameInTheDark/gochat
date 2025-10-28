@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
@@ -815,10 +816,93 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetReadStates)
 	}
 
+	gchs, err := e.gc.GetGuildsChannelsIDsMany(c.UserContext(), gids)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
+	}
+
+	// skip channels without new messages beyond the user's read state.
+	chModels, err := e.ch.GetChannelsBulk(c.UserContext(), gchs)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
+	}
+	lastMsg := make(map[int64]int64, len(chModels))
+	for _, ch := range chModels {
+		lastMsg[ch.Id] = ch.LastMessage
+	}
+
+	// Build a list of channels that actually have new messages for the user.
+	active := make([]int64, 0, len(gchs))
+	for _, ch := range gchs {
+		var threshold int64
+		if rid, ok := rs[ch]; ok {
+			threshold = rid
+		} else {
+			threshold = ch
+		}
+		if lm, ok := lastMsg[ch]; ok {
+			if lm <= threshold {
+				continue
+			}
+		} else {
+			continue
+		}
+		active = append(active, ch)
+	}
+
+	// fetch mentions concurrently with a small worker pool.
+	var (
+		mentions        = make(map[int64][]model.Mention, len(active))
+		channelMentions = make(map[int64][]model.ChannelMention, len(active))
+		mu              sync.Mutex
+	)
+
+	const workers = 8
+	tasks := make(chan int64, len(active))
+	ctx := c.UserContext()
+
+	var wg sync.WaitGroup
+	worker := func() {
+		defer wg.Done()
+		for ch := range tasks {
+			id := ch
+			if rid, ok := rs[ch]; ok {
+				id = rid
+			}
+			if m, err := e.mention.GetMentionsAfter(ctx, user.Id, ch, id); err != nil {
+				e.log.Error("unable to get mentions for channel", slog.String("error", err.Error()))
+			} else if len(m) > 0 {
+				mu.Lock()
+				mentions[ch] = m
+				mu.Unlock()
+			}
+			if cm, err := e.mention.GetChannelMentionsAfter(ctx, ch, id); err != nil {
+				e.log.Error("unable to get channel mentions", slog.String("error", err.Error()))
+			} else if len(cm) > 0 {
+				mu.Lock()
+				channelMentions[ch] = cm
+				mu.Unlock()
+			}
+		}
+	}
+
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go worker()
+	}
+
+	for _, ch := range active {
+		tasks <- ch
+	}
+	close(tasks)
+	wg.Wait()
+
 	settings, err := modelToSettings(&s, e.guildModelToGuildMany(c, guilds), rs, gclm)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUnmarshalUserSettings)
 	}
+	settings.Mentions = mentions
+	settings.ChannelMentions = channelMentions
 	return c.JSON(settings)
 }
 

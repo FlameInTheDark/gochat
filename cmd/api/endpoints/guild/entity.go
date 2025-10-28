@@ -3,16 +3,14 @@ package guild
 import (
 	"log/slog"
 
-	"github.com/FlameInTheDark/gochat/internal/cache"
-	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
@@ -23,8 +21,10 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/invite"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/role"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
+	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
@@ -143,7 +143,7 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.Ind
 		gc:                 guildchannels.New(pg.Conn()),
 		msg:                message.New(dbcon),
 		at:                 attachment.New(dbcon),
-		perm:               rolecheck.New(dbcon, pg),
+		perm:               rolecheck.New(pg),
 		uperm:              channeluserperm.New(pg.Conn()),
 		rperm:              channelroleperm.New(pg.Conn()),
 		role:               role.New(pg.Conn()),

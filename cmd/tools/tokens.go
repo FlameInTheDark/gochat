@@ -29,7 +29,7 @@ func webhook() *cli.Command {
 				Aliases: []string{"gen"},
 				Usage:   "Generate webhook JWT token and id for a service (works with webhook auth)",
 				Flags: []cli.Flag{
-					&cli.StringFlag{Name: "type", Aliases: []string{"t"}, Usage: "service type: sfu|attachments", Required: true},
+					&cli.StringFlag{Name: "type", Aliases: []string{"t"}, Usage: "service type: sfu|attachments|prom", Required: true},
 					&cli.StringFlag{Name: "id", Aliases: []string{"i"}, Usage: "service id (UUIDv4). If empty, a new UUID is generated."},
 					&cli.StringFlag{Name: "secret", Aliases: []string{"s"}, Usage: "HS256 secret (webhook jwt_secret)", Required: true},
 					&cli.StringFlag{Name: "format", Aliases: []string{"f"}, Value: "text", Usage: "output: text|json"},
@@ -39,7 +39,7 @@ func webhook() *cli.Command {
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					typ := cmd.String("type")
 					switch typ {
-					case "sfu", "attachments":
+					case "sfu", "attachments", "prom":
 					default:
 						return fmt.Errorf("unknown type: %s", typ)
 					}

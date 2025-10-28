@@ -8,13 +8,13 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
 	"github.com/nats-io/nats.go"
 
 	"github.com/FlameInTheDark/gochat/cmd/ws/auth"
 	"github.com/FlameInTheDark/gochat/cmd/ws/subscriber"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
@@ -78,7 +78,7 @@ func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v 
 		gdm:      groupdmchannel.New(pg.Conn()),
 		u:        user.New(pg.Conn()),
 		gc:       guildchannels.New(pg.Conn()),
-		perm:     rolecheck.New(c, pg),
+		perm:     rolecheck.New(pg),
 		jwt:      jwt,
 		sendJSON: sendJSON,
 		nats:     nats,

@@ -3,27 +3,29 @@ package message
 import (
 	"log/slog"
 
-	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/mention"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channeluserperm"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/friend"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/role"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
@@ -52,26 +54,29 @@ type entity struct {
 	mqt mq.SendTransporter
 	imq *indexmq.IndexMQ
 
-	// DB entities
-	user  user.User
-	m     member.Member
-	disc  discriminator.Discriminator
-	ch    channel.Channel
-	g     guild.Guild
-	gc    guildchannels.GuildChannels
-	dmc   dmchannel.DmChannel
-	gdmc  groupdmchannel.GroupDMChannel
-	msg   message.Message
-	at    attachment.Attachment
-	perm  rolecheck.RoleCheck
-	uperm channeluserperm.ChannelUserPerm
-	rperm channelroleperm.ChannelRolePerm
-	role  role.Role
-	ur    userrole.UserRole
-	rs    readstates.ReadStates
-	gclm  guildchannelmessages.GuildChannelMessages
-	av    avatar.Avatar
 	cache cache.Cache
+
+	// DB entities
+	user    user.User
+	m       member.Member
+	disc    discriminator.Discriminator
+	ch      channel.Channel
+	g       guild.Guild
+	gc      guildchannels.GuildChannels
+	dmc     dmchannel.DmChannel
+	gdmc    groupdmchannel.GroupDMChannel
+	msg     message.Message
+	at      attachment.Attachment
+	perm    rolecheck.RoleCheck
+	uperm   channeluserperm.ChannelUserPerm
+	rperm   channelroleperm.ChannelRolePerm
+	role    role.Role
+	ur      userrole.UserRole
+	rs      readstates.ReadStates
+	gclm    guildchannelmessages.GuildChannelMessages
+	av      avatar.Avatar
+	mention mention.Mention
+	fr      friend.Friend
 }
 
 func (e *entity) Name() string {
@@ -99,12 +104,14 @@ func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ
 		gc:          guildchannels.New(pg.Conn()),
 		msg:         message.New(cql),
 		at:          attachment.New(cql),
-		perm:        rolecheck.New(cql, pg),
+		perm:        rolecheck.New(pg),
 		uperm:       channeluserperm.New(pg.Conn()),
 		rperm:       channelroleperm.New(pg.Conn()),
 		role:        role.New(pg.Conn()),
 		ur:          userrole.New(pg.Conn()),
 		rs:          readstates.New(cql),
 		gclm:        guildchannelmessages.New(cql),
+		mention:     mention.New(cql),
+		fr:          friend.New(pg.Conn()),
 	}
 }
