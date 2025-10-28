@@ -139,6 +139,27 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Extract metadata for WEBHOOK image
+        id: meta_webhook
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/gochat-webhook
+          tags: |
+            type=ref,event=tag
+            # Always tag as latest on release
+            type=raw,value=latest,enable=true
+
+      - name: Build and push WEBHOOK image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./webhook.Dockerfile
+          push: true
+          tags: ${{ steps.meta_webhook.outputs.tags }}
+          labels: ${{ steps.meta_webhook.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Extract metadata for SFU image
         id: meta_sfu
         uses: docker/metadata-action@v5
