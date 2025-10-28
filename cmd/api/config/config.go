@@ -21,11 +21,8 @@ type Config struct {
 	AuthSecret                 string   `yaml:"auth_secret" env:"AUTH_SECRET" env-default:"change_me_before_use_it_in_production"`
 	Swagger                    bool     `yaml:"swagger" env:"SWAGGER" env-default:"false"`
 	KeyDB                      string   `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1"`
-	S3Endpoint                 string   `yaml:"s3_endpoint" env:"S3_ENDPOINT" env-default:""`
-	S3AccessKeyID              string   `yaml:"s3_access_key_id" env:"S3_ACCESS_KEY_ID" env-default:""`
-	S3SecretAccessKey          string   `yaml:"s3_secret_access_key" env:"S3_SECRET_ACCESS_KEY" env-default:""`
-	S3UseSSL                   bool     `yaml:"s3_use_ssl" env:"S3_USE_SSL" env-default:"false"`
 	UploadLimit                int64    `yaml:"upload_limit" env:"UPLOAD_LIMIT" env-default:"50000000"`
+	AttachmentTTLMinutes       int64    `yaml:"attachment_ttl_minutes" env:"ATTACHMENT_TTL_MINUTES" env-default:"10"`
 	NatsConnString             string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 	IndexerNatsConnString      string   `yaml:"indexer_nats_conn_string" env:"INDEX_NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`
 	PGDSN                      string   `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
@@ -34,6 +31,18 @@ type Config struct {
 	OSAddresses                []string `yaml:"os_addresses" env:"OS_ADDRESSES"`
 	OSUsername                 string   `yaml:"os_username" env:"OS_USERNAME"`
 	OSPassword                 string   `yaml:"os_password" env:"OS_PASSWORD"`
+	// Voice/Discovery
+	VoiceRegions       []VoiceRegion `yaml:"voice_regions"`
+	VoiceDefaultRegion string        `yaml:"voice_region" env:"VOICE_REGION" env-default:"global"`
+	EtcdEndpoints      []string      `yaml:"etcd_endpoints" env:"ETCD_ENDPOINTS" env-separator:","`
+	EtcdPrefix         string        `yaml:"etcd_prefix" env:"ETCD_PREFIX" env-default:"/gochat/sfu"`
+	EtcdUsername       string        `yaml:"etcd_username" env:"ETCD_USERNAME"`
+	EtcdPassword       string        `yaml:"etcd_password" env:"ETCD_PASSWORD"`
+}
+
+type VoiceRegion struct {
+	ID   string `yaml:"id"`
+	Name string `yaml:"name"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {

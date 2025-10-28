@@ -19,6 +19,11 @@ import (
 )
 
 func (a *App) wsHandler(c *websocket.Conn) {
+	// Track active clients
+	if a.wsActive != nil {
+		a.wsActive.Inc()
+		defer a.wsActive.Dec()
+	}
 	type outMsg struct {
 		kind int
 		data []byte
@@ -164,7 +169,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 
 	h := handler.New(a.cdb, a.pg, subs, sendJSON, a.jwt, a.cfg.HearthBeatTimeout, func() {
 		sendClose("Closed")
-	}, a.log, a.natsConn, pstore)
+	}, a.log, a.natsConn, pstore, a.cache)
 
 	defer func() { _ = h.Close() }()
 
@@ -213,6 +218,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 			a.log.Error("Read WS message error", "error", err)
 			continue
 		}
+
 		switch mt {
 		case websocket.TextMessage:
 			var message mqmsg.Message

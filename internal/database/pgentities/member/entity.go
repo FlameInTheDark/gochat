@@ -11,6 +11,7 @@ import (
 type Member interface {
 	AddMember(ctx context.Context, userID, guildID int64) error
 	RemoveMember(ctx context.Context, userID, guildID int64) error
+	RemoveMembersByGuild(ctx context.Context, guildID int64) error
 	GetMember(ctx context.Context, userId, guildId int64) (model.Member, error)
 	GetMembersList(ctx context.Context, guildId int64, ids []int64) ([]model.Member, error)
 	GetGuildMembers(ctx context.Context, guildId int64) ([]model.Member, error)

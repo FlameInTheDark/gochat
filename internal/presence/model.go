@@ -5,6 +5,7 @@ type Presence struct {
 	Status           string `json:"status"`
 	Since            int64  `json:"since"`
 	CustomStatusText string `json:"custom_status_text,omitempty"`
+	VoiceChannelID   *int64 `json:"voice_channel_id,omitempty"`
 }
 
 // SessionPresence represents a single device/session presence record.
@@ -17,6 +18,7 @@ type SessionPresence struct {
 	UpdatedAt        int64  `json:"updated_at"`
 	ExpiresAt        int64  `json:"expires_at"`
 	CustomStatusText string `json:"custom_status_text,omitempty"`
+	VoiceChannelID   *int64 `json:"voice_channel_id,omitempty"`
 }
 
 const (

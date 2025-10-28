@@ -1,0 +1,29 @@
+server_address: ":3300"
+auth_secret: "change_me_before_use_it_in_production"
+stun_servers:
+  - "stun:stun.l.google.com:19302"
+region: "eu-central"
+public_base_url: "https://sfu-eu.example.com"
+
+# Webhook discovery
+webhook_url: "http://webhook:3200/api/v1/webhook/sfu/heartbeat"
+# Pre-generated JWT token for webhook authentication (typ=sfu, id=<service_id>)
+webhook_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+# Should match service_id from the token
+service_id: ""
+
+# Optional: cap maximum audio bitrate (per sender) via SDP constraints
+# 0 disables capping. Common values: 64, 96, 128 (in kbps)
+# This sets Opus fmtp maxaveragebitrate and b=AS/TIAS for audio m-lines.
+max_audio_bitrate_kbps: 0
+
+# Optional: enforce max audio bitrate by disconnecting peers exceeding the cap.
+# If true and max_audio_bitrate_kbps > 0, SFU monitors inbound audio RTP and
+# closes the peer connection if sustained bitrate exceeds the configured limit.
+enforce_audio_bitrate: false
+
+# Optional: percent margin for bitrate enforcement to account for RTP/SRTP/UDP/IP
+# overhead and brief jitter. Disconnects only if sustained bitrate exceeds
+# (1 + margin_percent/100.0) * max_audio_bitrate_kbps.
+# Typical values: 10..20
+audio_bitrate_margin_percent: 15

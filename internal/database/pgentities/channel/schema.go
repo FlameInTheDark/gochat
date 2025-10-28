@@ -167,6 +167,46 @@ func (e *Entity) SetChannelTopic(ctx context.Context, id int64, topic *string) e
 	return nil
 }
 
+// SetChannelVoiceRegion sets preferred SFU region for a voice channel (nullable)
+func (e *Entity) SetChannelVoiceRegion(ctx context.Context, id int64, region *string) error {
+	q := squirrel.Update("channels").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"id": id})
+	if region == nil || *region == "" {
+		q = q.Set("voice_region", nil)
+	} else {
+		q = q.Set("voice_region", *region)
+	}
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	_, err = e.c.ExecContext(ctx, raw, args...)
+	if err != nil {
+		return fmt.Errorf("unable to set voice region: %w", err)
+	}
+	return nil
+}
+
+// GetChannelVoiceRegion returns preferred SFU region if set
+func (e *Entity) GetChannelVoiceRegion(ctx context.Context, id int64) (*string, error) {
+	var region *string
+	q := squirrel.Select("voice_region").
+		PlaceholderFormat(squirrel.Dollar).
+		From("channels").
+		Where(squirrel.Eq{"id": id}).
+		Limit(1)
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	err = e.c.GetContext(ctx, &region, raw, args...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get voice region: %w", err)
+	}
+	return region, nil
+}
+
 func (e *Entity) SetChannelParent(ctx context.Context, id int64, parent *int64) error {
 	q := squirrel.Update("channels").
 		PlaceholderFormat(squirrel.Dollar).

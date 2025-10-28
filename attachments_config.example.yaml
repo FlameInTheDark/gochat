@@ -1,0 +1,27 @@
+# Attachments Service Config
+
+# Network
+server_address: ":3200"
+
+# Auth
+auth_secret: "change_me_before_use_it_in_production"
+
+# Cassandra
+cluster: ["scylla"]
+cluster_keyspace: "gochat"
+
+# Nats
+# nats_conn_string: "nats://nats:4222"
+
+# S3
+s3_endpoint: "minio:9000"
+s3_access_key_id: "admin"
+s3_secret_access_key: "password"
+s3_bucket: "gochat"
+# Optional external URL (leave empty to derive from endpoint + bucket)
+s3_external_url: ""
+s3_use_ssl: false
+
+# PostgreSQL (for setting active avatar)
+pg_dsn: "host=citus-master port=5432 user=postgres dbname=gochat sslmode=disable"
+pg_retries: 5

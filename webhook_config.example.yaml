@@ -1,0 +1,23 @@
+server_address: ":3200"
+api_log: true
+swagger: false
+
+# Discovery (for SFU heartbeats)
+etcd_endpoints:
+  - "http://etcd:2379"
+etcd_prefix: "/gochat/sfu"
+etcd_username: "root"
+etcd_password: "${ETCD_ROOT_PASSWORD}"
+
+# Cassandra (for attachment finalization)
+cluster: ["scylla"]
+cluster_keyspace: "gochat"
+
+# Webhook JWT secret (HS256). Tokens include {"typ":"<service>", "id":"<uuid>"}.
+jwt_secret: "supersecret-webhook-jwt"
+
+# Redis
+keydb: "keydb:6379"
+
+# NATS
+nats_conn_string: "nats://nats:4222"

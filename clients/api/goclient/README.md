@@ -93,9 +93,17 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdChannelGet**](docs/GuildAPI.md#guildguildidchannelget) | **Get** /guild/{guild_id}/channel | Get guild channels
 *GuildAPI* | [**GuildGuildIdChannelOrderPatch**](docs/GuildAPI.md#guildguildidchannelorderpatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 *GuildAPI* | [**GuildGuildIdChannelPost**](docs/GuildAPI.md#guildguildidchannelpost) | **Post** /guild/{guild_id}/channel | Create guild channel
+*GuildAPI* | [**GuildGuildIdDelete**](docs/GuildAPI.md#guildguildiddelete) | **Delete** /guild/{guild_id} | Delete guild
 *GuildAPI* | [**GuildGuildIdGet**](docs/GuildAPI.md#guildguildidget) | **Get** /guild/{guild_id} | Get guild
+*GuildAPI* | [**GuildGuildIdIconPost**](docs/GuildAPI.md#guildguildidiconpost) | **Post** /guild/{guild_id}/icon | Create guild icon metadata
+*GuildAPI* | [**GuildGuildIdIconsGet**](docs/GuildAPI.md#guildguildidiconsget) | **Get** /guild/{guild_id}/icons | List guild icons
+*GuildAPI* | [**GuildGuildIdIconsIconIdDelete**](docs/GuildAPI.md#guildguildidiconsiconiddelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
 *GuildAPI* | [**GuildGuildIdMembersGet**](docs/GuildAPI.md#guildguildidmembersget) | **Get** /guild/{guild_id}/members | Get guild members
 *GuildAPI* | [**GuildGuildIdPatch**](docs/GuildAPI.md#guildguildidpatch) | **Patch** /guild/{guild_id} | Update guild
+*GuildAPI* | [**GuildGuildIdSystemchPatch**](docs/GuildAPI.md#guildguildidsystemchpatch) | **Patch** /guild/{guild_id}/systemch | Set system messages channel
+*GuildAPI* | [**GuildGuildIdVoiceChannelIdJoinPost**](docs/GuildAPI.md#guildguildidvoicechannelidjoinpost) | **Post** /guild/{guild_id}/voice/{channel_id}/join | Join voice channel (get SFU signaling info)
+*GuildAPI* | [**GuildGuildIdVoiceChannelIdRegionPatch**](docs/GuildAPI.md#guildguildidvoicechannelidregionpatch) | **Patch** /guild/{guild_id}/voice/{channel_id}/region | Set channel voice region
+*GuildAPI* | [**GuildGuildIdVoiceMovePost**](docs/GuildAPI.md#guildguildidvoicemovepost) | **Post** /guild/{guild_id}/voice/move | Move member to voice channel
 *GuildAPI* | [**GuildPost**](docs/GuildAPI.md#guildpost) | **Post** /guild | Create guild
 *GuildInvitesAPI* | [**GuildInvitesAcceptInviteCodePost**](docs/GuildInvitesAPI.md#guildinvitesacceptinvitecodepost) | **Post** /guild/invites/accept/{invite_code} | Accept invite and join guild
 *GuildInvitesAPI* | [**GuildInvitesGuildIdGet**](docs/GuildInvitesAPI.md#guildinvitesguildidget) | **Get** /guild/invites/{guild_id} | List active invites for guild
@@ -120,9 +128,24 @@ Class | Method | HTTP request | Description
 *MessageAPI* | [**MessageChannelChannelIdMessageIdDelete**](docs/MessageAPI.md#messagechannelchannelidmessageiddelete) | **Delete** /message/channel/{channel_id}/{message_id} | Delete message
 *MessageAPI* | [**MessageChannelChannelIdMessageIdPatch**](docs/MessageAPI.md#messagechannelchannelidmessageidpatch) | **Patch** /message/channel/{channel_id}/{message_id} | Update message
 *MessageAPI* | [**MessageChannelChannelIdPost**](docs/MessageAPI.md#messagechannelchannelidpost) | **Post** /message/channel/{channel_id} | Send message
+*MessageAPI* | [**MessageChannelChannelIdTypingPost**](docs/MessageAPI.md#messagechannelchannelidtypingpost) | **Post** /message/channel/{channel_id}/typing | Send user typing event in the channel
 *SearchAPI* | [**SearchGuildIdMessagesPost**](docs/SearchAPI.md#searchguildidmessagespost) | **Post** /search/{guild_id}/messages | Search messages
+*UploadAPI* | [**UploadAttachmentsChannelIdAttachmentIdPost**](docs/UploadAPI.md#uploadattachmentschannelidattachmentidpost) | **Post** /upload/attachments/{channel_id}/{attachment_id} | Upload attachment
+*UploadAPI* | [**UploadAvatarsUserIdAvatarIdPost**](docs/UploadAPI.md#uploadavatarsuseridavataridpost) | **Post** /upload/avatars/{user_id}/{avatar_id} | Upload user avatar
+*UploadAPI* | [**UploadIconsGuildIdIconIdPost**](docs/UploadAPI.md#uploadiconsguildidiconidpost) | **Post** /upload/icons/{guild_id}/{icon_id} | Upload guild icon
+*UserAPI* | [**UserMeAvatarPost**](docs/UserAPI.md#usermeavatarpost) | **Post** /user/me/avatar | Create avatar metadata
+*UserAPI* | [**UserMeAvatarsAvatarIdDelete**](docs/UserAPI.md#usermeavatarsavatariddelete) | **Delete** /user/me/avatars/{avatar_id} | Delete my avatar by ID
+*UserAPI* | [**UserMeAvatarsGet**](docs/UserAPI.md#usermeavatarsget) | **Get** /user/me/avatars | List my avatars
+*UserAPI* | [**UserMeChannelsGet**](docs/UserAPI.md#usermechannelsget) | **Get** /user/me/channels | List all DM and Group DM channels for current user
 *UserAPI* | [**UserMeChannelsGroupPost**](docs/UserAPI.md#usermechannelsgrouppost) | **Post** /user/me/channels/group | Create group DM channel
 *UserAPI* | [**UserMeChannelsPost**](docs/UserAPI.md#usermechannelspost) | **Post** /user/me/channels | Create DM channel
+*UserAPI* | [**UserMeFriendsDelete**](docs/UserAPI.md#usermefriendsdelete) | **Delete** /user/me/friends | Remove user from friends
+*UserAPI* | [**UserMeFriendsGet**](docs/UserAPI.md#usermefriendsget) | **Get** /user/me/friends | Get my friends
+*UserAPI* | [**UserMeFriendsPost**](docs/UserAPI.md#usermefriendspost) | **Post** /user/me/friends | Send a friend request by discriminator
+*UserAPI* | [**UserMeFriendsRequestsDelete**](docs/UserAPI.md#usermefriendsrequestsdelete) | **Delete** /user/me/friends/requests | Decline a friend request
+*UserAPI* | [**UserMeFriendsRequestsGet**](docs/UserAPI.md#usermefriendsrequestsget) | **Get** /user/me/friends/requests | Get incoming friend requests
+*UserAPI* | [**UserMeFriendsRequestsPost**](docs/UserAPI.md#usermefriendsrequestspost) | **Post** /user/me/friends/requests | Accept a friend request
+*UserAPI* | [**UserMeFriendsUserIdGet**](docs/UserAPI.md#usermefriendsuseridget) | **Get** /user/me/friends/{user_id} | Get or create DM with a user
 *UserAPI* | [**UserMeGuildsGet**](docs/UserAPI.md#usermeguildsget) | **Get** /user/me/guilds | Get user guilds
 *UserAPI* | [**UserMeGuildsGuildIdDelete**](docs/UserAPI.md#usermeguildsguildiddelete) | **Delete** /user/me/guilds/{guild_id} | Leave guild
 *UserAPI* | [**UserMeGuildsGuildIdMemberGet**](docs/UserAPI.md#usermeguildsguildidmemberget) | **Get** /user/me/guilds/{guild_id}/member | Get user guild member
@@ -130,11 +153,17 @@ Class | Method | HTTP request | Description
 *UserAPI* | [**UserMeSettingsGet**](docs/UserAPI.md#usermesettingsget) | **Get** /user/me/settings | Get current user settings (optional version gating)
 *UserAPI* | [**UserMeSettingsPost**](docs/UserAPI.md#usermesettingspost) | **Post** /user/me/settings | Update current user settings (replaces and bumps version)
 *UserAPI* | [**UserUserIdGet**](docs/UserAPI.md#useruseridget) | **Get** /user/{user_id} | Get user
-*WebhookAPI* | [**WebhookStorageEventsPost**](docs/WebhookAPI.md#webhookstorageeventspost) | **Post** /webhook/storage/events | Storage event
+*VoiceAPI* | [**VoiceRegionsGet**](docs/VoiceAPI.md#voiceregionsget) | **Get** /voice/regions | List available voice regions
+*WebhookAPI* | [**WebhookAttachmentsFinalizePost**](docs/WebhookAPI.md#webhookattachmentsfinalizepost) | **Post** /webhook/attachments/finalize | Finalize attachment metadata
+*WebhookAPI* | [**WebhookSfuChannelAlivePost**](docs/WebhookAPI.md#webhooksfuchannelalivepost) | **Post** /webhook/sfu/channel/alive | SFU update channel TTL
+*WebhookAPI* | [**WebhookSfuHeartbeatPost**](docs/WebhookAPI.md#webhooksfuheartbeatpost) | **Post** /webhook/sfu/heartbeat | SFU heartbeat
+*WebhookAPI* | [**WebhookSfuVoiceJoinPost**](docs/WebhookAPI.md#webhooksfuvoicejoinpost) | **Post** /webhook/sfu/voice/join | SFU voice join
+*WebhookAPI* | [**WebhookSfuVoiceLeavePost**](docs/WebhookAPI.md#webhooksfuvoiceleavepost) | **Post** /webhook/sfu/voice/leave | SFU voice leave
 
 
 ## Documentation For Models
 
+ - [AttachmentsFinalizeRequest](docs/AttachmentsFinalizeRequest.md)
  - [AuthConfirmationRequest](docs/AuthConfirmationRequest.md)
  - [AuthLoginRequest](docs/AuthLoginRequest.md)
  - [AuthLoginResponse](docs/AuthLoginResponse.md)
@@ -144,9 +173,14 @@ Class | Method | HTTP request | Description
  - [AuthRegisterRequest](docs/AuthRegisterRequest.md)
  - [DtoAttachment](docs/DtoAttachment.md)
  - [DtoAttachmentUpload](docs/DtoAttachmentUpload.md)
+ - [DtoAvatar](docs/DtoAvatar.md)
+ - [DtoAvatarData](docs/DtoAvatarData.md)
+ - [DtoAvatarUpload](docs/DtoAvatarUpload.md)
  - [DtoChannel](docs/DtoChannel.md)
  - [DtoGuild](docs/DtoGuild.md)
  - [DtoGuildInvite](docs/DtoGuildInvite.md)
+ - [DtoIcon](docs/DtoIcon.md)
+ - [DtoIconUpload](docs/DtoIconUpload.md)
  - [DtoInvitePreview](docs/DtoInvitePreview.md)
  - [DtoMember](docs/DtoMember.md)
  - [DtoMessage](docs/DtoMessage.md)
@@ -159,34 +193,50 @@ Class | Method | HTTP request | Description
  - [GuildCreateGuildChannelRequest](docs/GuildCreateGuildChannelRequest.md)
  - [GuildCreateGuildRequest](docs/GuildCreateGuildRequest.md)
  - [GuildCreateGuildRoleRequest](docs/GuildCreateGuildRoleRequest.md)
+ - [GuildCreateIconRequest](docs/GuildCreateIconRequest.md)
  - [GuildCreateInviteRequest](docs/GuildCreateInviteRequest.md)
+ - [GuildJoinVoiceResponse](docs/GuildJoinVoiceResponse.md)
+ - [GuildMoveMemberRequest](docs/GuildMoveMemberRequest.md)
+ - [GuildMoveMemberResponse](docs/GuildMoveMemberResponse.md)
  - [GuildPatchGuildChannelOrderRequest](docs/GuildPatchGuildChannelOrderRequest.md)
  - [GuildPatchGuildChannelRequest](docs/GuildPatchGuildChannelRequest.md)
  - [GuildPatchGuildRoleRequest](docs/GuildPatchGuildRoleRequest.md)
+ - [GuildSetGuildSystemMessagesChannelRequest](docs/GuildSetGuildSystemMessagesChannelRequest.md)
+ - [GuildSetVoiceRegionRequest](docs/GuildSetVoiceRegionRequest.md)
+ - [GuildSetVoiceRegionResponse](docs/GuildSetVoiceRegionResponse.md)
  - [GuildUpdateGuildRequest](docs/GuildUpdateGuildRequest.md)
  - [MessageSendMessageRequest](docs/MessageSendMessageRequest.md)
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)
  - [MessageUploadAttachmentRequest](docs/MessageUploadAttachmentRequest.md)
+ - [ModelChannelMention](docs/ModelChannelMention.md)
+ - [ModelDevices](docs/ModelDevices.md)
+ - [ModelMention](docs/ModelMention.md)
  - [ModelStatus](docs/ModelStatus.md)
+ - [ModelUserDMChannels](docs/ModelUserDMChannels.md)
  - [ModelUserSettingsAppearance](docs/ModelUserSettingsAppearance.md)
+ - [ModelUserSettingsChannel](docs/ModelUserSettingsChannel.md)
  - [ModelUserSettingsData](docs/ModelUserSettingsData.md)
  - [ModelUserSettingsGuildFolders](docs/ModelUserSettingsGuildFolders.md)
  - [ModelUserSettingsGuilds](docs/ModelUserSettingsGuilds.md)
  - [ModelUserSettingsNotifications](docs/ModelUserSettingsNotifications.md)
+ - [ModelUserSettingsUsers](docs/ModelUserSettingsUsers.md)
+ - [ModelUserUISounds](docs/ModelUserUISounds.md)
  - [SearchMessageSearchRequest](docs/SearchMessageSearchRequest.md)
  - [SearchMessageSearchResponse](docs/SearchMessageSearchResponse.md)
+ - [SfuChannelAlive](docs/SfuChannelAlive.md)
+ - [SfuChannelUserJoin](docs/SfuChannelUserJoin.md)
+ - [SfuChannelUserLeave](docs/SfuChannelUserLeave.md)
+ - [SfuHeartbeatRequest](docs/SfuHeartbeatRequest.md)
+ - [UserCreateAvatarRequest](docs/UserCreateAvatarRequest.md)
  - [UserCreateDMManyRequest](docs/UserCreateDMManyRequest.md)
  - [UserCreateDMRequest](docs/UserCreateDMRequest.md)
+ - [UserCreateFriendRequestRequest](docs/UserCreateFriendRequestRequest.md)
+ - [UserFriendRequestAction](docs/UserFriendRequestAction.md)
  - [UserModifyUserRequest](docs/UserModifyUserRequest.md)
+ - [UserUnfriendRequest](docs/UserUnfriendRequest.md)
  - [UserUserSettingsResponse](docs/UserUserSettingsResponse.md)
- - [WebhookS3Bucket](docs/WebhookS3Bucket.md)
- - [WebhookS3Element](docs/WebhookS3Element.md)
- - [WebhookS3Event](docs/WebhookS3Event.md)
- - [WebhookS3EventRecord](docs/WebhookS3EventRecord.md)
- - [WebhookS3Identity](docs/WebhookS3Identity.md)
- - [WebhookS3Object](docs/WebhookS3Object.md)
- - [WebhookS3RequestParameters](docs/WebhookS3RequestParameters.md)
- - [WebhookS3Source](docs/WebhookS3Source.md)
+ - [VoiceRegion](docs/VoiceRegion.md)
+ - [VoiceVoiceRegionsResponse](docs/VoiceVoiceRegionsResponse.md)
 
 
 ## Documentation For Authorization

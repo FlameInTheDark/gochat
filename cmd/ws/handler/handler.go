@@ -8,11 +8,16 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
+	"github.com/nats-io/nats.go"
+
 	"github.com/FlameInTheDark/gochat/cmd/ws/auth"
 	"github.com/FlameInTheDark/gochat/cmd/ws/subscriber"
+	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
@@ -21,7 +26,6 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/presence"
-	"github.com/nats-io/nats.go"
 )
 
 type helloMessage struct {
@@ -39,6 +43,8 @@ type Handler struct {
 	sub      *subscriber.Subscriber
 	g        guild.Guild
 	m        member.Member
+	dm       dmchannel.DmChannel
+	gdm      groupdmchannel.GroupDMChannel
 	u        user.User
 	gc       guildchannels.GuildChannels
 	perm     rolecheck.RoleCheck
@@ -59,17 +65,20 @@ type Handler struct {
 	initTimer   *time.Timer
 	closer      func()
 	log         *slog.Logger
+	cache       *kvs.Cache
 }
 
-func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v any) error, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger, nats *nats.Conn, pstore *presence.Store) *Handler {
+func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v any) error, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger, nats *nats.Conn, pstore *presence.Store, cache *kvs.Cache) *Handler {
 	initTimer := time.AfterFunc(time.Second*5, closer)
 	return &Handler{
 		sub:      sub,
 		g:        guild.New(pg.Conn()),
 		m:        member.New(pg.Conn()),
+		dm:       dmchannel.New(pg.Conn()),
+		gdm:      groupdmchannel.New(pg.Conn()),
 		u:        user.New(pg.Conn()),
 		gc:       guildchannels.New(pg.Conn()),
-		perm:     rolecheck.New(c, pg),
+		perm:     rolecheck.New(pg),
 		jwt:      jwt,
 		sendJSON: sendJSON,
 		nats:     nats,
@@ -80,6 +89,7 @@ func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v 
 		initTimer: initTimer,
 		closer:    closer,
 		log:       logger,
+		cache:     cache,
 	}
 }
 
@@ -101,7 +111,6 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			return
 		}
 		if m.LastEventId >= h.lastEventId {
-			prev := h.lastEventId
 			// add grace to tolerate network jitter (10s)
 			h.hTimer.Reset(time.Millisecond * time.Duration(h.hbTimeout+10000))
 			// Refresh this session TTL: heartbeat_interval * 2
@@ -116,12 +125,6 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 				cancel()
 			}
 			h.lastEventId = m.LastEventId
-			h.log.Info("Heartbeat OK; timer reset", "user_id", func() any {
-				if h.user != nil {
-					return h.user.Id
-				}
-				return int64(0)
-			}(), "prev_e", prev, "new_e", m.LastEventId)
 		}
 	case mqmsg.OPCodeChannelSubscription:
 		var m mqmsg.Subscribe
@@ -132,20 +135,42 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		}
 
 		if m.Channel != nil {
-			gc, err := h.gc.GetGuildByChannel(context.Background(), *m.Channel)
-			if err != nil {
-				h.log.Warn("Error getting guild channel", "error", err, "channel_id", *m.Channel)
-			} else {
-				_, _, _, ok, err := h.perm.ChannelPerm(context.Background(), gc.GuildId, gc.ChannelId, h.user.Id, permissions.PermServerViewChannels)
-				if err != nil {
-					h.log.Warn("Error checking channel permissions", "error", err)
+			subscribed := false
+			if gcinfo, err := h.gc.GetGuildByChannel(context.Background(), *m.Channel); err == nil {
+				_, _, _, ok, perr := h.perm.ChannelPerm(context.Background(), gcinfo.GuildId, gcinfo.ChannelId, h.user.Id, permissions.PermServerViewChannels)
+				if perr != nil {
+					h.log.Warn("Error checking channel permissions", "error", perr)
 				} else if ok {
-					err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel))
-					if err != nil {
+					if err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel)); err != nil {
 						h.log.Warn("Error subscribing to channel", "error", err)
+					} else {
+						subscribed = true
 					}
-				} else {
-					h.log.Warn("User does not have permission to view channel", "user_id", h.user.Id, "channel_id", *m.Channel)
+				}
+			}
+
+			if !subscribed {
+				if ok, err := h.dm.IsDmChannelParticipant(context.Background(), *m.Channel, h.user.Id); err == nil && ok {
+					if err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel)); err != nil {
+						h.log.Warn("Error subscribing to DM channel", "error", err)
+					}
+					subscribed = true
+				} else if err != nil {
+					h.log.Warn("Error checking DM participation", "error", err)
+				}
+
+				if !subscribed {
+					if ok, err := h.gdm.IsGroupDmParticipant(context.Background(), *m.Channel, h.user.Id); err == nil && ok {
+						if err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel)); err != nil {
+							h.log.Warn("Error subscribing to Group DM channel", "error", err)
+						}
+						subscribed = true
+					} else if err != nil {
+						h.log.Warn("Error checking Group DM participation", "error", err)
+					}
+				}
+				if !subscribed {
+					h.log.Warn("User does not have permission/access to channel", "user_id", h.user.Id, "channel_id", *m.Channel)
 				}
 			}
 		}
@@ -214,15 +239,46 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			delete(h.psubs, uid)
 		}
 
+	case mqmsg.OPCodeRTC:
+		// Only handle RTCBindingAlive keepalive to refresh per-channel route TTL
+		if e.EventType == nil {
+			return
+		}
+		if *e.EventType != mqmsg.EventTypeRTCBindingAlive {
+			return
+		}
+		if h.cache == nil {
+			return
+		}
+		var m struct {
+			Channel int64 `json:"channel"`
+		}
+		if err := json.Unmarshal(e.Data, &m); err != nil {
+			return
+		}
+		if m.Channel <= 0 {
+			return
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		_ = h.cache.SetTTL(ctx, fmt.Sprintf("voice:route:%d", m.Channel), 60)
+		// Update this session's voice channel and publish aggregated presence
+		if h.pstore != nil && h.sessionID != "" && h.user != nil {
+			// Set session voice channel
+			ch := m.Channel
+			_ = h.pstore.SetSessionVoiceChannel(ctx, h.user.Id, h.sessionID, &ch, h.hbTimeout*2/1000)
+			agg, _, _ := h.pstore.Aggregate(ctx, h.user.Id, time.Now().Unix())
+			// cache aggregated presence and publish
+			_ = h.pstore.SetAggregated(ctx, agg, h.hbTimeout*2/1000)
+			h.publishPresence(agg)
+		}
+		cancel()
+		return
 	case mqmsg.OPCodePresenceUpdate:
 		if h.user == nil || h.sessionID == "" || h.pstore == nil {
 			return
 		}
-		var m struct {
-			Status           string `json:"status"`
-			Platform         string `json:"platform,omitempty"`
-			CustomStatusText string `json:"custom_status_text,omitempty"`
-		}
+
+		var m mqmsg.PresenceUpdateRequest
 		if err := json.Unmarshal(e.Data, &m); err != nil {
 			h.log.Warn("Error unmarshalling presence update msg", "error", err)
 			return
@@ -233,8 +289,10 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		if ttl < 1 {
 			ttl = 1
 		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 		defer cancel()
+
 		if m.Status == presence.StatusOffline {
 			// Set global override to appear offline
 			if err := h.pstore.SetOverride(ctx, h.user.Id, presence.StatusOffline, now, m.CustomStatusText); err != nil {
@@ -246,6 +304,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			h.publishPresence(agg)
 			return
 		}
+
 		// Clear override and upsert session presence
 		if err := h.pstore.ClearOverride(ctx, h.user.Id); err != nil {
 			h.log.Warn("Error clearing presence override", "error", err)
@@ -253,16 +312,25 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		if h.sessionID == "" {
 			h.sessionID = fmt.Sprintf("%d-%d", h.user.Id, now)
 		}
+
 		switch m.Status {
 		case presence.StatusOnline, presence.StatusIdle, presence.StatusDND:
 		default:
 			return
 		}
-		sp := presence.SessionPresence{SessionID: h.sessionID, Status: m.Status, Platform: m.Platform, Since: now, UpdatedAt: now, ExpiresAt: now + ttl, CustomStatusText: m.CustomStatusText}
+
+		var voicePtr *int64
+		if m.VoiceChannelID != nil && *m.VoiceChannelID > 0 {
+			v := *m.VoiceChannelID
+			voicePtr = &v
+		}
+
+		sp := presence.SessionPresence{SessionID: h.sessionID, Status: m.Status, Platform: m.Platform, Since: now, UpdatedAt: now, ExpiresAt: now + ttl, CustomStatusText: m.CustomStatusText, VoiceChannelID: voicePtr}
 		if err := h.pstore.UpsertSession(ctx, h.user.Id, h.sessionID, sp, ttl); err != nil {
 			h.log.Warn("Error upserting session presence", "error", err)
 			return
 		}
+
 		agg, _, _ := h.pstore.Aggregate(ctx, h.user.Id, now)
 		_ = h.pstore.SetAggregated(ctx, agg, ttl)
 		h.publishPresence(agg)
@@ -314,12 +382,18 @@ func (h *Handler) sendPresenceSnapshot(userID int64) {
 	status := presence.StatusOffline
 	since := time.Now().Unix()
 	text := ""
+	var voiceID *int64
 	if ok {
 		status = p.Status
 		since = p.Since
 		text = p.CustomStatusText
 	}
-	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{UserID: userID, Status: status, Since: since, CustomStatusText: text})
+	// include voice channel id if present
+	if ok && p.VoiceChannelID != nil {
+		vid := *p.VoiceChannelID
+		voiceID = &vid
+	}
+	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{UserID: userID, Status: status, Since: since, CustomStatusText: text, VoiceChannelID: voiceID})
 	if err != nil {
 		return
 	}
@@ -330,7 +404,7 @@ func (h *Handler) publishPresence(agg presence.Presence) {
 	if h.nats == nil {
 		return
 	}
-	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{UserID: agg.UserID, Status: agg.Status, Since: agg.Since, CustomStatusText: agg.CustomStatusText})
+	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{UserID: agg.UserID, Status: agg.Status, Since: agg.Since, CustomStatusText: agg.CustomStatusText, VoiceChannelID: agg.VoiceChannelID})
 	if err != nil {
 		return
 	}

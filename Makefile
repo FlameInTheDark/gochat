@@ -14,7 +14,7 @@ down:
 
 tools:
 	go install -tags "postgres cassandra" github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-	go install github.com/swaggo/swag@latest
+	go install github.com/swaggo/swag/v2/cmd/swag@latest
 
 run:
 	go run ./cmd/api
@@ -95,3 +95,15 @@ rebuild_ws:
 rebuild_indexer:
 	docker compose down indexer
 	docker compose up -d --no-deps --build indexer
+
+rebuild_attachments:
+	docker compose down attachments
+	docker compose up -d --no-deps --build attachments
+
+rebuild_sfu:
+	docker compose down sfu
+	docker compose up -d --no-deps --build sfu
+
+rebuild_webhook:
+	docker compose down webhook
+	docker compose up -d --no-deps --build webhook

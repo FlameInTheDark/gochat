@@ -4,8 +4,19 @@ All URIs are relative to *http://localhost/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**UserMeAvatarPost**](UserAPI.md#UserMeAvatarPost) | **Post** /user/me/avatar | Create avatar metadata
+[**UserMeAvatarsAvatarIdDelete**](UserAPI.md#UserMeAvatarsAvatarIdDelete) | **Delete** /user/me/avatars/{avatar_id} | Delete my avatar by ID
+[**UserMeAvatarsGet**](UserAPI.md#UserMeAvatarsGet) | **Get** /user/me/avatars | List my avatars
+[**UserMeChannelsGet**](UserAPI.md#UserMeChannelsGet) | **Get** /user/me/channels | List all DM and Group DM channels for current user
 [**UserMeChannelsGroupPost**](UserAPI.md#UserMeChannelsGroupPost) | **Post** /user/me/channels/group | Create group DM channel
 [**UserMeChannelsPost**](UserAPI.md#UserMeChannelsPost) | **Post** /user/me/channels | Create DM channel
+[**UserMeFriendsDelete**](UserAPI.md#UserMeFriendsDelete) | **Delete** /user/me/friends | Remove user from friends
+[**UserMeFriendsGet**](UserAPI.md#UserMeFriendsGet) | **Get** /user/me/friends | Get my friends
+[**UserMeFriendsPost**](UserAPI.md#UserMeFriendsPost) | **Post** /user/me/friends | Send a friend request by discriminator
+[**UserMeFriendsRequestsDelete**](UserAPI.md#UserMeFriendsRequestsDelete) | **Delete** /user/me/friends/requests | Decline a friend request
+[**UserMeFriendsRequestsGet**](UserAPI.md#UserMeFriendsRequestsGet) | **Get** /user/me/friends/requests | Get incoming friend requests
+[**UserMeFriendsRequestsPost**](UserAPI.md#UserMeFriendsRequestsPost) | **Post** /user/me/friends/requests | Accept a friend request
+[**UserMeFriendsUserIdGet**](UserAPI.md#UserMeFriendsUserIdGet) | **Get** /user/me/friends/{user_id} | Get or create DM with a user
 [**UserMeGuildsGet**](UserAPI.md#UserMeGuildsGet) | **Get** /user/me/guilds | Get user guilds
 [**UserMeGuildsGuildIdDelete**](UserAPI.md#UserMeGuildsGuildIdDelete) | **Delete** /user/me/guilds/{guild_id} | Leave guild
 [**UserMeGuildsGuildIdMemberGet**](UserAPI.md#UserMeGuildsGuildIdMemberGet) | **Get** /user/me/guilds/{guild_id}/member | Get user guild member
@@ -14,6 +25,260 @@ Method | HTTP request | Description
 [**UserMeSettingsPost**](UserAPI.md#UserMeSettingsPost) | **Post** /user/me/settings | Update current user settings (replaces and bumps version)
 [**UserUserIdGet**](UserAPI.md#UserUserIdGet) | **Get** /user/{user_id} | Get user
 
+
+
+## UserMeAvatarPost
+
+> DtoAvatarUpload UserMeAvatarPost(ctx).UserCreateAvatarRequest(userCreateAvatarRequest).Execute()
+
+Create avatar metadata
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	userCreateAvatarRequest := *openapiclient.NewUserCreateAvatarRequest() // UserCreateAvatarRequest | Avatar creation request
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeAvatarPost(context.Background()).UserCreateAvatarRequest(userCreateAvatarRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeAvatarPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeAvatarPost`: DtoAvatarUpload
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeAvatarPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeAvatarPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **userCreateAvatarRequest** | [**UserCreateAvatarRequest**](UserCreateAvatarRequest.md) | Avatar creation request | 
+
+### Return type
+
+[**DtoAvatarUpload**](DtoAvatarUpload.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeAvatarsAvatarIdDelete
+
+> string UserMeAvatarsAvatarIdDelete(ctx, avatarId).Execute()
+
+Delete my avatar by ID
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	avatarId := int32(56) // int32 | Avatar ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeAvatarsAvatarIdDelete(context.Background(), avatarId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeAvatarsAvatarIdDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeAvatarsAvatarIdDelete`: string
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeAvatarsAvatarIdDelete`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**avatarId** | **int32** | Avatar ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeAvatarsAvatarIdDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeAvatarsGet
+
+> []DtoAvatar UserMeAvatarsGet(ctx).Execute()
+
+List my avatars
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeAvatarsGet(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeAvatarsGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeAvatarsGet`: []DtoAvatar
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeAvatarsGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeAvatarsGetRequest struct via the builder pattern
+
+
+### Return type
+
+[**[]DtoAvatar**](DtoAvatar.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeChannelsGet
+
+> []DtoChannel UserMeChannelsGet(ctx).Execute()
+
+List all DM and Group DM channels for current user
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeChannelsGet(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeChannelsGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeChannelsGet`: []DtoChannel
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeChannelsGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeChannelsGetRequest struct via the builder pattern
+
+
+### Return type
+
+[**[]DtoChannel**](DtoChannel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
 ## UserMeChannelsGroupPost
@@ -137,6 +402,448 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeFriendsDelete
+
+> string UserMeFriendsDelete(ctx).UserUnfriendRequest(userUnfriendRequest).Execute()
+
+Remove user from friends
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	userUnfriendRequest := *openapiclient.NewUserUnfriendRequest() // UserUnfriendRequest | Unfriend
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeFriendsDelete(context.Background()).UserUnfriendRequest(userUnfriendRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeFriendsDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeFriendsDelete`: string
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeFriendsDelete`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeFriendsDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **userUnfriendRequest** | [**UserUnfriendRequest**](UserUnfriendRequest.md) | Unfriend | 
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeFriendsGet
+
+> []DtoUser UserMeFriendsGet(ctx).Execute()
+
+Get my friends
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeFriendsGet(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeFriendsGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeFriendsGet`: []DtoUser
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeFriendsGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeFriendsGetRequest struct via the builder pattern
+
+
+### Return type
+
+[**[]DtoUser**](DtoUser.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeFriendsPost
+
+> string UserMeFriendsPost(ctx).UserCreateFriendRequestRequest(userCreateFriendRequestRequest).Execute()
+
+Send a friend request by discriminator
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	userCreateFriendRequestRequest := *openapiclient.NewUserCreateFriendRequestRequest() // UserCreateFriendRequestRequest | Friend request
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeFriendsPost(context.Background()).UserCreateFriendRequestRequest(userCreateFriendRequestRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeFriendsPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeFriendsPost`: string
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeFriendsPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeFriendsPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **userCreateFriendRequestRequest** | [**UserCreateFriendRequestRequest**](UserCreateFriendRequestRequest.md) | Friend request | 
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeFriendsRequestsDelete
+
+> string UserMeFriendsRequestsDelete(ctx).UserFriendRequestAction(userFriendRequestAction).Execute()
+
+Decline a friend request
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	userFriendRequestAction := *openapiclient.NewUserFriendRequestAction() // UserFriendRequestAction | Decline
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeFriendsRequestsDelete(context.Background()).UserFriendRequestAction(userFriendRequestAction).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeFriendsRequestsDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeFriendsRequestsDelete`: string
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeFriendsRequestsDelete`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeFriendsRequestsDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **userFriendRequestAction** | [**UserFriendRequestAction**](UserFriendRequestAction.md) | Decline | 
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeFriendsRequestsGet
+
+> []DtoUser UserMeFriendsRequestsGet(ctx).Execute()
+
+Get incoming friend requests
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeFriendsRequestsGet(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeFriendsRequestsGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeFriendsRequestsGet`: []DtoUser
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeFriendsRequestsGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeFriendsRequestsGetRequest struct via the builder pattern
+
+
+### Return type
+
+[**[]DtoUser**](DtoUser.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeFriendsRequestsPost
+
+> string UserMeFriendsRequestsPost(ctx).UserFriendRequestAction(userFriendRequestAction).Execute()
+
+Accept a friend request
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	userFriendRequestAction := *openapiclient.NewUserFriendRequestAction() // UserFriendRequestAction | Accept
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeFriendsRequestsPost(context.Background()).UserFriendRequestAction(userFriendRequestAction).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeFriendsRequestsPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeFriendsRequestsPost`: string
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeFriendsRequestsPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeFriendsRequestsPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **userFriendRequestAction** | [**UserFriendRequestAction**](UserFriendRequestAction.md) | Accept | 
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeFriendsUserIdGet
+
+> DtoChannel UserMeFriendsUserIdGet(ctx, userId).Execute()
+
+Get or create DM with a user
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	userId := int32(2230469276416868352) // int32 | User id
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeFriendsUserIdGet(context.Background(), userId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeFriendsUserIdGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeFriendsUserIdGet`: DtoChannel
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeFriendsUserIdGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**userId** | **int32** | User id | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeFriendsUserIdGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**DtoChannel**](DtoChannel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

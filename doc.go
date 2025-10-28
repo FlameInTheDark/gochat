@@ -15,4 +15,4 @@ package main
 //	@BasePath	/api/v1
 //	@schemes	http https
 
-// @securitydefinitions.bearerauth BearerAuth
+//	@securitydefinitions.bearerauth	BearerAuth

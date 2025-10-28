@@ -23,6 +23,7 @@ const (
 	ErrUnableToReadFromThisChannel  = "unable to read from this channel"
 	ErrUnableToGetMessage           = "unable to get message"
 	ErrUnableToSetReadState         = "unable to set read state"
+	ErrUnableToSendTypingEvent      = "unable to send typing event"
 
 	// Validation error messages
 	ErrMessageContentRequired = "message content is required"
@@ -74,10 +75,11 @@ func (r UpdateMessageRequest) Validate() error {
 }
 
 type UploadAttachmentRequest struct {
-	Filename string `json:"filename" example:"image.png"` // File name
-	FileSize int64  `json:"file_size" example:"100000"`   // File size in bytes
-	Width    int64  `json:"width" example:"800"`          // Image width in pixels
-	Height   int64  `json:"height" example:"600"`         // Image height in pixels
+	Filename    string `json:"filename" example:"image.png"`     // File name
+	FileSize    int64  `json:"file_size" example:"100000"`       // File size in bytes
+	Width       int64  `json:"width" example:"800"`              // Image width in pixels
+	Height      int64  `json:"height" example:"600"`             // Image height in pixels
+	ContentType string `json:"content_type" example:"image/png"` // File content-type meta data
 }
 
 func (r UploadAttachmentRequest) Validate() error {

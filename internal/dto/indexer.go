@@ -10,6 +10,7 @@ type IndexMessage struct {
 	Mentions []int64 `json:"mentions"`
 	// Has is a list of features that the message contains (url, image, video, file)
 	Has     []string `json:"has"`
+	Type    int      `json:"type"`
 	Content string   `json:"content"`
 }
 

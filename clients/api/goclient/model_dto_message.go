@@ -26,7 +26,8 @@ type DtoMessage struct {
 	ChannelId *int32  `json:"channel_id,omitempty"`
 	Content   *string `json:"content,omitempty"`
 	// Message ID
-	Id *int32 `json:"id,omitempty"`
+	Id   *int32 `json:"id,omitempty"`
+	Type *int32 `json:"type,omitempty"`
 	// Timestamp of the last message edit
 	UpdatedAt *string `json:"updated_at,omitempty"`
 }
@@ -208,6 +209,38 @@ func (o *DtoMessage) SetId(v int32) {
 	o.Id = &v
 }
 
+// GetType returns the Type field value if set, zero value otherwise.
+func (o *DtoMessage) GetType() int32 {
+	if o == nil || IsNil(o.Type) {
+		var ret int32
+		return ret
+	}
+	return *o.Type
+}
+
+// GetTypeOk returns a tuple with the Type field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoMessage) GetTypeOk() (*int32, bool) {
+	if o == nil || IsNil(o.Type) {
+		return nil, false
+	}
+	return o.Type, true
+}
+
+// HasType returns a boolean if a field has been set.
+func (o *DtoMessage) HasType() bool {
+	if o != nil && !IsNil(o.Type) {
+		return true
+	}
+
+	return false
+}
+
+// SetType gets a reference to the given int32 and assigns it to the Type field.
+func (o *DtoMessage) SetType(v int32) {
+	o.Type = &v
+}
+
 // GetUpdatedAt returns the UpdatedAt field value if set, zero value otherwise.
 func (o *DtoMessage) GetUpdatedAt() string {
 	if o == nil || IsNil(o.UpdatedAt) {
@@ -264,6 +297,9 @@ func (o DtoMessage) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Id) {
 		toSerialize["id"] = o.Id
+	}
+	if !IsNil(o.Type) {
+		toSerialize["type"] = o.Type
 	}
 	if !IsNil(o.UpdatedAt) {
 		toSerialize["updated_at"] = o.UpdatedAt

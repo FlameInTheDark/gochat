@@ -23,7 +23,7 @@ func (e *Entity) GetGuildById(ctx context.Context, id int64) (model.Guild, error
 	}
 	err = e.c.GetContext(ctx, &g, sql, args...)
 	if err != nil {
-		return g, fmt.Errorf("unable to get guild: %w", err)
+		return g, fmt.Errorf("unable to get guild by id: %w", err)
 	}
 	return g, nil
 }
@@ -156,7 +156,11 @@ func (e *Entity) UpdateGuild(ctx context.Context, id int64, name *string, icon *
 		q = q.Set("name", *name)
 	}
 	if icon != nil {
-		q = q.Set("icon", *icon)
+		if *icon == 0 {
+			q = q.Set("icon", nil)
+		} else {
+			q = q.Set("icon", *icon)
+		}
 	}
 	if public != nil {
 		q = q.Set("public", *public)
@@ -172,6 +176,27 @@ func (e *Entity) UpdateGuild(ctx context.Context, id int64, name *string, icon *
 	_, err = e.c.ExecContext(ctx, sql, args...)
 	if err != nil {
 		return fmt.Errorf("unable to update guild: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) SetSystemMessagesChannel(ctx context.Context, id int64, channelId *int64) error {
+	q := squirrel.Update("guilds").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"id": id})
+	if channelId != nil {
+		q = q.Set("system_messages", *channelId)
+	} else {
+		q = q.Set("system_messages", nil)
+	}
+
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	_, err = e.c.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("unable to set system messages channel: %w", err)
 	}
 	return nil
 }

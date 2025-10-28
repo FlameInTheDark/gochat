@@ -9,6 +9,7 @@ type Channel struct {
 	ParentID    *int64      `db:"parent_id"`
 	Permissions *int64      `db:"permissions"`
 	Topic       *string     `db:"topic"`
+	VoiceRegion *string     `db:"voice_region"`
 	Private     bool        `db:"private"`
 	LastMessage int64       `db:"last_message"`
 	CreatedAt   time.Time   `db:"created_at"`

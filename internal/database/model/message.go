@@ -17,7 +17,7 @@ type Message struct {
 type MessageType int
 
 const (
-	MessageTypeSystem MessageType = iota
-	MessageTypeChat
+	MessageTypeChat MessageType = iota
 	MessageTypeReply
+	MessageTypeJoin
 )

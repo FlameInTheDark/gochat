@@ -32,6 +32,8 @@ type DtoChannel struct {
 	Name *string `json:"name,omitempty"`
 	// Parent channel id
 	ParentId *int32 `json:"parent_id,omitempty"`
+	// For DM channels: the other participant's user ID
+	ParticipantId *int32 `json:"participant_id,omitempty"`
 	// Permissions. Check the permissions documentation for more info.
 	Permissions *int32 `json:"permissions,omitempty"`
 	// Channel position
@@ -259,6 +261,38 @@ func (o *DtoChannel) SetParentId(v int32) {
 	o.ParentId = &v
 }
 
+// GetParticipantId returns the ParticipantId field value if set, zero value otherwise.
+func (o *DtoChannel) GetParticipantId() int32 {
+	if o == nil || IsNil(o.ParticipantId) {
+		var ret int32
+		return ret
+	}
+	return *o.ParticipantId
+}
+
+// GetParticipantIdOk returns a tuple with the ParticipantId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoChannel) GetParticipantIdOk() (*int32, bool) {
+	if o == nil || IsNil(o.ParticipantId) {
+		return nil, false
+	}
+	return o.ParticipantId, true
+}
+
+// HasParticipantId returns a boolean if a field has been set.
+func (o *DtoChannel) HasParticipantId() bool {
+	if o != nil && !IsNil(o.ParticipantId) {
+		return true
+	}
+
+	return false
+}
+
+// SetParticipantId gets a reference to the given int32 and assigns it to the ParticipantId field.
+func (o *DtoChannel) SetParticipantId(v int32) {
+	o.ParticipantId = &v
+}
+
 // GetPermissions returns the Permissions field value if set, zero value otherwise.
 func (o *DtoChannel) GetPermissions() int32 {
 	if o == nil || IsNil(o.Permissions) {
@@ -478,6 +512,9 @@ func (o DtoChannel) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.ParentId) {
 		toSerialize["parent_id"] = o.ParentId
+	}
+	if !IsNil(o.ParticipantId) {
+		toSerialize["participant_id"] = o.ParticipantId
 	}
 	if !IsNil(o.Permissions) {
 		toSerialize["permissions"] = o.Permissions

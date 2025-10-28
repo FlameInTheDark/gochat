@@ -3,7 +3,6 @@ package auth
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -153,7 +152,7 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 
 	err = e.mailer.Send(c.UserContext(), id, req.Email, token, mailer.EmailTypeRegistration)
 	if err != nil {
-		fmt.Println("Send email error: ", err.Error())
+		e.log.Error("send email error", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendEmail)
 	}
 	return c.SendStatus(fiber.StatusCreated)

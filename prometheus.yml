@@ -30,6 +30,40 @@ scrape_configs:
       - targets:
           - api:3100
 
+  - job_name: gochat-attachments
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - attachments:3200
+
+  - job_name: gochat-ws
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - ws:3100
+
+  - job_name: gochat-sfu
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    metrics_path: /metrics
+    http_sd_configs:
+      - url: http://webhook:3200/api/v1/webhook/sfu/prom_sd
+        refresh_interval: 5s
+        authorization:
+          type: Bearer
+          credentials: "REPLACE_ME_WITH_PROM_TOKEN"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [region]
+        target_label: region
+      - source_labels: [sfu_id]
+        target_label: sfu_id
+
   - job_name: gochat-auth
     scrape_interval: 10s
     scrape_timeout: 5s

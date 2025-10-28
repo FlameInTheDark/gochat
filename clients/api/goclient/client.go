@@ -61,7 +61,11 @@ type APIClient struct {
 
 	SearchAPI *SearchAPIService
 
+	UploadAPI *UploadAPIService
+
 	UserAPI *UserAPIService
+
+	VoiceAPI *VoiceAPIService
 
 	WebhookAPI *WebhookAPIService
 }
@@ -88,7 +92,9 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.GuildRolesAPI = (*GuildRolesAPIService)(&c.common)
 	c.MessageAPI = (*MessageAPIService)(&c.common)
 	c.SearchAPI = (*SearchAPIService)(&c.common)
+	c.UploadAPI = (*UploadAPIService)(&c.common)
 	c.UserAPI = (*UserAPIService)(&c.common)
+	c.VoiceAPI = (*VoiceAPIService)(&c.common)
 	c.WebhookAPI = (*WebhookAPIService)(&c.common)
 
 	return c
