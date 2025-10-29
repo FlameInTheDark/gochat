@@ -1,3 +1,17 @@
+# [1.5.0](https://github.com/FlameInTheDark/gochat/compare/v1.4.0...v1.5.0) (2025-10-29)
+
+
+### Features
+
+* added attachments service that handle attachments upload and preview creation ([db1e439](https://github.com/FlameInTheDark/gochat/commit/db1e4398f3a4b1958eb64adbd706af6fb9e65480))
+* added attachments uploading service and managing routes for icons/avatars, added guild deletion route ([b1ea3d5](https://github.com/FlameInTheDark/gochat/commit/b1ea3d515958ed8284c5f92185de972ac8752202))
+* added DMs and file upload ([d823320](https://github.com/FlameInTheDark/gochat/commit/d823320e0acaec235f9181175b8214fb2a1f309f))
+* added read states, changed user settings ([70323e1](https://github.com/FlameInTheDark/gochat/commit/70323e143373905a38e4a61f84676f1d155a0e63))
+* added user presence statuses ([8de710e](https://github.com/FlameInTheDark/gochat/commit/8de710ec28e8a92a0bd177d4f27eccd114b3a913))
+* mention notifications and video calls ([a3bcbdf](https://github.com/FlameInTheDark/gochat/commit/a3bcbdf27d9539cee9000c72473ef07febbc1653))
+* SFU voice server ([5342ac6](https://github.com/FlameInTheDark/gochat/commit/5342ac6f2cb700a56d07b7af75c65804051d8961))
+* system messages and user typing ([046b041](https://github.com/FlameInTheDark/gochat/commit/046b0416b95bdce945c9c5b0fb628a62aaba8582))
+
 # [1.4.0](https://github.com/FlameInTheDark/gochat/compare/v1.3.0...v1.4.0) (2025-10-04)
 
 
