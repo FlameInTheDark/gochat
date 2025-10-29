@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/FlameInTheDark/gochat/compare/v1.5.0...v1.6.0) (2025-10-29)
+
+
+### Features
+
+* added DashaMail transactional email provider ([bf10891](https://github.com/FlameInTheDark/gochat/commit/bf108917c74047f55748e1aca24892cf505b4587))
+
 # [1.5.0](https://github.com/FlameInTheDark/gochat/compare/v1.4.0...v1.5.0) (2025-10-29)
 
 
