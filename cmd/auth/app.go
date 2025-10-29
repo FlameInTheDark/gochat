@@ -14,6 +14,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/mailer"
+	"github.com/FlameInTheDark/gochat/internal/mailer/providers/dashamail"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/logmailer"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/resendp"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/sendpulse"
@@ -62,6 +63,8 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		provider = smtp.New(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPUseTLS)
 	case "resend":
 		provider = resendp.New(cfg.ResendAPIKey)
+	case "dashamail":
+		provider = dashamail.New(cfg.DashaMailAPIKey)
 	default:
 		provider = logmailer.New(logger)
 	}

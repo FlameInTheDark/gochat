@@ -29,6 +29,7 @@ type Config struct {
 	SendpulseUserId            string `yaml:"sendpulse_user_id" env:"SENDPULSE_USER_ID" env-default:""`
 	SendpulseSecret            string `yaml:"sendpulse_secret" env:"SENDPULSE_SECRET" env-default:""`
 	ResendAPIKey               string `yaml:"resend_api_key" env:"RESEND_API_KEY" env-default:""`
+	DashaMailAPIKey            string `yaml:"dashamail_api_key" env:"DASHAMAIL_API_KEY" env-default:""`
 	AuthSecret                 string `yaml:"auth_secret" env:"AUTH_SECRET" env-default:"change_me_before_use_it_in_production"`
 	Swagger                    bool   `yaml:"swagger" env:"SWAGGER" env-default:"false"`
 	KeyDB                      string `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1"`
