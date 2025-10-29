@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **ContentType** | Pointer to **string** | File mime type | [optional] 
 **Filename** | Pointer to **string** | File name | [optional] 
 **Height** | Pointer to **int32** | Image dimensions in pixels | [optional] 
+**PreviewUrl** | Pointer to **string** | Preview URL for image/video | [optional] 
 **Size** | Pointer to **int32** | FileSize in bytes | [optional] 
 **Url** | Pointer to **string** | URL to download the file | [optional] 
 **Width** | Pointer to **int32** | Image dimensions in pixels | [optional] 
@@ -104,6 +105,31 @@ SetHeight sets Height field to given value.
 `func (o *DtoAttachment) HasHeight() bool`
 
 HasHeight returns a boolean if a field has been set.
+
+### GetPreviewUrl
+
+`func (o *DtoAttachment) GetPreviewUrl() string`
+
+GetPreviewUrl returns the PreviewUrl field if non-nil, zero value otherwise.
+
+### GetPreviewUrlOk
+
+`func (o *DtoAttachment) GetPreviewUrlOk() (*string, bool)`
+
+GetPreviewUrlOk returns a tuple with the PreviewUrl field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPreviewUrl
+
+`func (o *DtoAttachment) SetPreviewUrl(v string)`
+
+SetPreviewUrl sets PreviewUrl field to given value.
+
+### HasPreviewUrl
+
+`func (o *DtoAttachment) HasPreviewUrl() bool`
+
+HasPreviewUrl returns a boolean if a field has been set.
 
 ### GetSize
 

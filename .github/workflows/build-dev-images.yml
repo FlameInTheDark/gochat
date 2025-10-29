@@ -32,6 +32,18 @@ jobs:
             dockerfile: indexer.Dockerfile
             image: gochat-indexer
             cache_scope: indexer-dev
+          - service: attachments
+            dockerfile: attachments.Dockerfile
+            image: gochat-attachments
+            cache_scope: attachments-dev
+          - service: sfu
+            dockerfile: sfu.Dockerfile
+            image: gochat-sfu
+            cache_scope: sfu-dev
+          - service: webhook
+            dockerfile: webhook.Dockerfile
+            image: gochat-webhook
+            cache_scope: webhook-dev
     steps:
       - name: Check out code from dev branch
         uses: actions/checkout@v4

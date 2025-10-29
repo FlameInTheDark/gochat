@@ -26,6 +26,8 @@ type DtoAttachment struct {
 	Filename *string `json:"filename,omitempty"`
 	// Image dimensions in pixels
 	Height *int32 `json:"height,omitempty"`
+	// Preview URL for image/video
+	PreviewUrl *string `json:"preview_url,omitempty"`
 	// FileSize in bytes
 	Size *int32 `json:"size,omitempty"`
 	// URL to download the file
@@ -147,6 +149,38 @@ func (o *DtoAttachment) SetHeight(v int32) {
 	o.Height = &v
 }
 
+// GetPreviewUrl returns the PreviewUrl field value if set, zero value otherwise.
+func (o *DtoAttachment) GetPreviewUrl() string {
+	if o == nil || IsNil(o.PreviewUrl) {
+		var ret string
+		return ret
+	}
+	return *o.PreviewUrl
+}
+
+// GetPreviewUrlOk returns a tuple with the PreviewUrl field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoAttachment) GetPreviewUrlOk() (*string, bool) {
+	if o == nil || IsNil(o.PreviewUrl) {
+		return nil, false
+	}
+	return o.PreviewUrl, true
+}
+
+// HasPreviewUrl returns a boolean if a field has been set.
+func (o *DtoAttachment) HasPreviewUrl() bool {
+	if o != nil && !IsNil(o.PreviewUrl) {
+		return true
+	}
+
+	return false
+}
+
+// SetPreviewUrl gets a reference to the given string and assigns it to the PreviewUrl field.
+func (o *DtoAttachment) SetPreviewUrl(v string) {
+	o.PreviewUrl = &v
+}
+
 // GetSize returns the Size field value if set, zero value otherwise.
 func (o *DtoAttachment) GetSize() int32 {
 	if o == nil || IsNil(o.Size) {
@@ -261,6 +295,9 @@ func (o DtoAttachment) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Height) {
 		toSerialize["height"] = o.Height
+	}
+	if !IsNil(o.PreviewUrl) {
+		toSerialize["preview_url"] = o.PreviewUrl
 	}
 	if !IsNil(o.Size) {
 		toSerialize["size"] = o.Size

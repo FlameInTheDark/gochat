@@ -22,8 +22,6 @@ func (s *Server) AuthMiddleware(secret string) {
 			switch string(c.Request().RequestURI()) {
 			case "/docs/swagger":
 				return true
-			case "/api/v1/webhook/storage/events":
-				return true
 			case "/api/v1/auth/login":
 				return true
 			case "/api/v1/auth/registration", "/api/v1/auth/confirmation":
@@ -48,8 +46,6 @@ func (s *Server) RateLimitMiddleware(limit, exp int) {
 		Next: func(c *fiber.Ctx) bool {
 			// Skip rate limiting for public endpoints (handle both with and without /api/v1 prefix)
 			switch string(c.Request().RequestURI()) {
-			case "/api/v1/webhook/storage/events", "/webhook/storage/events":
-				return true
 			case "/api/v1/auth/login", "/auth/login":
 				return true
 			case "/api/v1/auth/registration", "/auth/registration":
@@ -119,8 +115,7 @@ func (s *Server) RateLimitPipedMiddleware(limit, exp int) {
 		},
 		Next: func(c *fiber.Ctx) bool {
 			switch string(c.Request().RequestURI()) {
-			case "/api/v1/webhook/storage/events", "/webhook/storage/events",
-				"/api/v1/auth/login", "/auth/login",
+			case "/api/v1/auth/login", "/auth/login",
 				"/api/v1/auth/registration", "/auth/registration",
 				"/api/v1/auth/confirmation", "/auth/confirmation",
 				"/api/v1/auth/recovery", "/auth/recovery",

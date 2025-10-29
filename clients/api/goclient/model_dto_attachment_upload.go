@@ -26,8 +26,6 @@ type DtoAttachmentUpload struct {
 	FileName *string `json:"file_name,omitempty"`
 	// Attachment ID
 	Id *int32 `json:"id,omitempty"`
-	// Upload URL. S3 presigned URL
-	UploadUrl *string `json:"upload_url,omitempty"`
 }
 
 // NewDtoAttachmentUpload instantiates a new DtoAttachmentUpload object
@@ -143,38 +141,6 @@ func (o *DtoAttachmentUpload) SetId(v int32) {
 	o.Id = &v
 }
 
-// GetUploadUrl returns the UploadUrl field value if set, zero value otherwise.
-func (o *DtoAttachmentUpload) GetUploadUrl() string {
-	if o == nil || IsNil(o.UploadUrl) {
-		var ret string
-		return ret
-	}
-	return *o.UploadUrl
-}
-
-// GetUploadUrlOk returns a tuple with the UploadUrl field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *DtoAttachmentUpload) GetUploadUrlOk() (*string, bool) {
-	if o == nil || IsNil(o.UploadUrl) {
-		return nil, false
-	}
-	return o.UploadUrl, true
-}
-
-// HasUploadUrl returns a boolean if a field has been set.
-func (o *DtoAttachmentUpload) HasUploadUrl() bool {
-	if o != nil && !IsNil(o.UploadUrl) {
-		return true
-	}
-
-	return false
-}
-
-// SetUploadUrl gets a reference to the given string and assigns it to the UploadUrl field.
-func (o *DtoAttachmentUpload) SetUploadUrl(v string) {
-	o.UploadUrl = &v
-}
-
 func (o DtoAttachmentUpload) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -193,9 +159,6 @@ func (o DtoAttachmentUpload) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Id) {
 		toSerialize["id"] = o.Id
-	}
-	if !IsNil(o.UploadUrl) {
-		toSerialize["upload_url"] = o.UploadUrl
 	}
 	return toSerialize, nil
 }

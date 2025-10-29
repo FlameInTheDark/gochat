@@ -20,10 +20,9 @@ var _ MappedNullable = &ModelUserSettingsNotifications{}
 
 // ModelUserSettingsNotifications struct for ModelUserSettingsNotifications
 type ModelUserSettingsNotifications struct {
-	Global        *bool  `json:"global,omitempty"`
-	Muted         *bool  `json:"muted,omitempty"`
-	Notifications *int32 `json:"notifications,omitempty"`
-	Roles         *bool  `json:"roles,omitempty"`
+	Muted         *bool   `json:"muted,omitempty"`
+	MutedUntil    *string `json:"muted_until,omitempty"`
+	Notifications *int32  `json:"notifications,omitempty"`
 }
 
 // NewModelUserSettingsNotifications instantiates a new ModelUserSettingsNotifications object
@@ -41,38 +40,6 @@ func NewModelUserSettingsNotifications() *ModelUserSettingsNotifications {
 func NewModelUserSettingsNotificationsWithDefaults() *ModelUserSettingsNotifications {
 	this := ModelUserSettingsNotifications{}
 	return &this
-}
-
-// GetGlobal returns the Global field value if set, zero value otherwise.
-func (o *ModelUserSettingsNotifications) GetGlobal() bool {
-	if o == nil || IsNil(o.Global) {
-		var ret bool
-		return ret
-	}
-	return *o.Global
-}
-
-// GetGlobalOk returns a tuple with the Global field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *ModelUserSettingsNotifications) GetGlobalOk() (*bool, bool) {
-	if o == nil || IsNil(o.Global) {
-		return nil, false
-	}
-	return o.Global, true
-}
-
-// HasGlobal returns a boolean if a field has been set.
-func (o *ModelUserSettingsNotifications) HasGlobal() bool {
-	if o != nil && !IsNil(o.Global) {
-		return true
-	}
-
-	return false
-}
-
-// SetGlobal gets a reference to the given bool and assigns it to the Global field.
-func (o *ModelUserSettingsNotifications) SetGlobal(v bool) {
-	o.Global = &v
 }
 
 // GetMuted returns the Muted field value if set, zero value otherwise.
@@ -107,6 +74,38 @@ func (o *ModelUserSettingsNotifications) SetMuted(v bool) {
 	o.Muted = &v
 }
 
+// GetMutedUntil returns the MutedUntil field value if set, zero value otherwise.
+func (o *ModelUserSettingsNotifications) GetMutedUntil() string {
+	if o == nil || IsNil(o.MutedUntil) {
+		var ret string
+		return ret
+	}
+	return *o.MutedUntil
+}
+
+// GetMutedUntilOk returns a tuple with the MutedUntil field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsNotifications) GetMutedUntilOk() (*string, bool) {
+	if o == nil || IsNil(o.MutedUntil) {
+		return nil, false
+	}
+	return o.MutedUntil, true
+}
+
+// HasMutedUntil returns a boolean if a field has been set.
+func (o *ModelUserSettingsNotifications) HasMutedUntil() bool {
+	if o != nil && !IsNil(o.MutedUntil) {
+		return true
+	}
+
+	return false
+}
+
+// SetMutedUntil gets a reference to the given string and assigns it to the MutedUntil field.
+func (o *ModelUserSettingsNotifications) SetMutedUntil(v string) {
+	o.MutedUntil = &v
+}
+
 // GetNotifications returns the Notifications field value if set, zero value otherwise.
 func (o *ModelUserSettingsNotifications) GetNotifications() int32 {
 	if o == nil || IsNil(o.Notifications) {
@@ -139,38 +138,6 @@ func (o *ModelUserSettingsNotifications) SetNotifications(v int32) {
 	o.Notifications = &v
 }
 
-// GetRoles returns the Roles field value if set, zero value otherwise.
-func (o *ModelUserSettingsNotifications) GetRoles() bool {
-	if o == nil || IsNil(o.Roles) {
-		var ret bool
-		return ret
-	}
-	return *o.Roles
-}
-
-// GetRolesOk returns a tuple with the Roles field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *ModelUserSettingsNotifications) GetRolesOk() (*bool, bool) {
-	if o == nil || IsNil(o.Roles) {
-		return nil, false
-	}
-	return o.Roles, true
-}
-
-// HasRoles returns a boolean if a field has been set.
-func (o *ModelUserSettingsNotifications) HasRoles() bool {
-	if o != nil && !IsNil(o.Roles) {
-		return true
-	}
-
-	return false
-}
-
-// SetRoles gets a reference to the given bool and assigns it to the Roles field.
-func (o *ModelUserSettingsNotifications) SetRoles(v bool) {
-	o.Roles = &v
-}
-
 func (o ModelUserSettingsNotifications) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -181,17 +148,14 @@ func (o ModelUserSettingsNotifications) MarshalJSON() ([]byte, error) {
 
 func (o ModelUserSettingsNotifications) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.Global) {
-		toSerialize["global"] = o.Global
-	}
 	if !IsNil(o.Muted) {
 		toSerialize["muted"] = o.Muted
 	}
+	if !IsNil(o.MutedUntil) {
+		toSerialize["muted_until"] = o.MutedUntil
+	}
 	if !IsNil(o.Notifications) {
 		toSerialize["notifications"] = o.Notifications
-	}
-	if !IsNil(o.Roles) {
-		toSerialize["roles"] = o.Roles
 	}
 	return toSerialize, nil
 }

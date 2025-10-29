@@ -8,5 +8,8 @@ type Attachment struct {
 	ContentType *string
 	Height      *int64
 	Width       *int64
+	URL         *string
+	PreviewURL  *string
+	AuthorId    *int64
 	Done        bool
 }

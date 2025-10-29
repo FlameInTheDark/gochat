@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Avatar** | Pointer to **int32** |  | [optional] 
+**Avatar** | Pointer to [**DtoAvatarData**](DtoAvatarData.md) |  | [optional] 
 **Discriminator** | Pointer to **string** |  | [optional] 
 **Id** | Pointer to **int32** |  | [optional] 
 **Name** | Pointer to **string** |  | [optional] 
@@ -30,20 +30,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetAvatar
 
-`func (o *DtoUser) GetAvatar() int32`
+`func (o *DtoUser) GetAvatar() DtoAvatarData`
 
 GetAvatar returns the Avatar field if non-nil, zero value otherwise.
 
 ### GetAvatarOk
 
-`func (o *DtoUser) GetAvatarOk() (*int32, bool)`
+`func (o *DtoUser) GetAvatarOk() (*DtoAvatarData, bool)`
 
 GetAvatarOk returns a tuple with the Avatar field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetAvatar
 
-`func (o *DtoUser) SetAvatar(v int32)`
+`func (o *DtoUser) SetAvatar(v DtoAvatarData)`
 
 SetAvatar sets Avatar field to given value.
 

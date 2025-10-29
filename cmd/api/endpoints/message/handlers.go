@@ -1,11 +1,12 @@
 package message
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -19,24 +20,8 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
 
-// Performance optimization constants
 const (
-	MaxBatchSize = 50 // Maximum messages to process at once
-)
-
-// Object pools for memory optimization
-var (
-	messagePool = sync.Pool{
-		New: func() interface{} {
-			return &dto.Message{}
-		},
-	}
-
-	attachmentPool = sync.Pool{
-		New: func() interface{} {
-			return make([]dto.Attachment, 0, 5)
-		},
-	}
+	MaxBatchSize = 50
 )
 
 // Send
@@ -69,6 +54,10 @@ func (e *entity) Send(c *fiber.Ctx) error {
 	message, err := e.createAndSendMessage(c, req, user, channel, guildId)
 	if err != nil {
 		return err
+	}
+
+	if err := e.rs.SetReadState(c.UserContext(), user.Id, channelId, message.Id); err != nil {
+		e.log.Error("unable to set read state after message sent", slog.String("error", err.Error()))
 	}
 
 	return c.JSON(message)
@@ -155,8 +144,113 @@ func (e *entity) createAndSendMessage(c *fiber.Ctx, req *SendMessageRequest, jwt
 		return dto.Message{}, err
 	}
 
+	if guildId != nil {
+		err := e.gclm.SetChannelLastMessage(c.UserContext(), *guildId, channel.Id, messageId)
+		if err != nil {
+			slog.Error("unable to set guild channel last message id", slog.String("error", err.Error()))
+		}
+	}
+
 	// Send events (non-blocking)
 	go e.sendMessageEvents(channel.Id, guildId, message, userData, req)
+
+	// Mentions
+	users, roles, everyone, here := MentionsExtractor(req.Content)
+	if users != nil || roles != nil || everyone || here {
+		go func() {
+			for _, u := range users {
+				switch channel.Type {
+				case model.ChannelTypeGuild:
+					if guildId != nil {
+						if ok, err := e.m.IsGuildMember(context.Background(), *guildId, u); err == nil && ok {
+							if err := e.mention.AddMention(context.Background(), u, channel.Id, messageId, message.Author.Id); err != nil {
+								e.log.Error("unable to save mention", slog.String("error", err.Error()))
+							}
+							if err := e.mqt.SendUserUpdate(u, &mqmsg.Mention{
+								GuildId:   guildId,
+								ChannelId: channel.Id,
+								MessageId: messageId,
+								AuthorId:  message.Author.Id,
+								Type:      int(model.ChannelMentionUser),
+							}); err != nil {
+								e.log.Error("unable to send mention notification", slog.String("error", err.Error()))
+							}
+						}
+					}
+				default:
+					if ok, err := e.fr.IsFriend(context.Background(), u, message.Author.Id); err == nil && ok {
+						if err := e.mention.AddMention(context.Background(), u, channel.Id, messageId, message.Author.Id); err != nil {
+							e.log.Error("unable to save mention", slog.String("error", err.Error()))
+						}
+						if err := e.mqt.SendUserUpdate(u, &mqmsg.Mention{
+							GuildId:   nil,
+							ChannelId: channel.Id,
+							MessageId: messageId,
+							AuthorId:  message.Author.Id,
+							Type:      int(model.ChannelMentionUser),
+						}); err != nil {
+							e.log.Error("unable to send mention notification", slog.String("error", err.Error()))
+						}
+					}
+				}
+			}
+			if guildId != nil {
+				for _, r := range roles {
+					if err := e.mention.AddChannelMention(
+						context.Background(),
+						*guildId,
+						channel.Id,
+						messageId,
+						message.Author.Id,
+						&r,
+						model.ChannelMentionRole); err != nil {
+						e.log.Error("unable to save role mention", slog.String("error", err.Error()))
+					}
+					if err := e.mqt.SendGuildUpdate(*guildId, &mqmsg.Mention{
+						GuildId:   guildId,
+						ChannelId: channel.Id,
+						MessageId: messageId,
+						AuthorId:  message.Author.Id,
+						Type:      int(model.ChannelMentionRole),
+					}); err != nil {
+						e.log.Error("unable to send role mention notification", slog.String("error", err.Error()))
+					}
+				}
+				if everyone {
+					if err := e.mention.AddChannelMention(
+						context.Background(),
+						*guildId,
+						channel.Id,
+						messageId,
+						message.Author.Id,
+						nil,
+						model.ChannelMentionEveryone); err != nil {
+						e.log.Error("unable to save role mention", slog.String("error", err.Error()))
+					}
+					if err := e.mqt.SendGuildUpdate(*guildId, &mqmsg.Mention{
+						GuildId:   guildId,
+						ChannelId: channel.Id,
+						MessageId: messageId,
+						AuthorId:  message.Author.Id,
+						Type:      int(model.ChannelMentionEveryone),
+					}); err != nil {
+						e.log.Error("unable to send role mention notification", slog.String("error", err.Error()))
+					}
+				}
+				if here {
+					if err := e.mqt.SendGuildUpdate(*guildId, &mqmsg.Mention{
+						GuildId:   guildId,
+						ChannelId: channel.Id,
+						MessageId: messageId,
+						AuthorId:  message.Author.Id,
+						Type:      int(model.ChannelMentionHere),
+					}); err != nil {
+						e.log.Error("unable to send role mention notification", slog.String("error", err.Error()))
+					}
+				}
+			}
+		}()
+	}
 
 	return message, nil
 }
@@ -226,35 +320,45 @@ func (e *entity) createMessageWithCleanup(c *fiber.Ctx, messageId, channelId, us
 
 // buildMessageResponse constructs the message response DTO
 func (e *entity) buildMessageResponse(c *fiber.Ctx, messageId int64, channel *model.Channel, userData *messageUserData, req *SendMessageRequest) (dto.Message, error) {
-	// Fetch attachments if any
 	var attachments []dto.Attachment
 	if len(req.Attachments) > 0 {
 		ats, err := e.at.SelectAttachmentByIDs(c.UserContext(), req.Attachments)
 		if err != nil {
 			return dto.Message{}, helper.HttpDbError(err, ErrUnableToGetAttachements)
 		}
-
 		for _, at := range ats {
+			var url string
+			if at.URL != nil {
+				url = *at.URL
+			}
 			attachments = append(attachments, dto.Attachment{
 				ContentType: at.ContentType,
 				Filename:    at.Name,
 				Height:      at.Height,
 				Width:       at.Width,
-				URL:         fmt.Sprintf("media/%d/%d/%s", at.ChannelId, at.Id, at.Name),
+				URL:         url,
+				PreviewURL:  at.PreviewURL,
 				Size:        at.FileSize,
 			})
 		}
 	}
 
+	// Build author with avatar data if present
+	author := dto.User{
+		Id:            userData.User.Id,
+		Name:          userData.User.Name,
+		Discriminator: userData.Discriminator.Discriminator,
+	}
+	if userData.User.Avatar != nil {
+		if ad, err := e.getAvatarDataCached(c.UserContext(), userData.User.Id, *userData.User.Avatar); err == nil && ad != nil {
+			author.Avatar = ad
+		}
+	}
+
 	return dto.Message{
-		Id:        messageId,
-		ChannelId: channel.Id,
-		Author: dto.User{
-			Id:            userData.User.Id,
-			Name:          userData.User.Name,
-			Discriminator: userData.Discriminator.Discriminator,
-			Avatar:        userData.User.Avatar,
-		},
+		Id:          messageId,
+		ChannelId:   channel.Id,
+		Author:      author,
 		Content:     req.Content,
 		Attachments: attachments,
 	}, nil
@@ -271,6 +375,17 @@ func (e *entity) sendMessageEvents(channelId int64, guildId *int64, message dto.
 			"message_id", message.Id,
 			"channel_id", channelId,
 			"error", err.Error())
+	}
+
+	if guildId != nil {
+		if err := e.mqt.SendGuildUpdate(*guildId, &mqmsg.GuildChannelMessage{
+			GuildId:   guildId,
+			ChannelId: channelId,
+			MessageId: message.Id,
+		}); err != nil {
+			e.log.Error("failed to send guild message event",
+				slog.String("error", err.Error()))
+		}
 	}
 
 	// Send indexing event
@@ -291,12 +406,75 @@ func (e *entity) sendMessageEvents(channelId int64, guildId *int64, message dto.
 		GuildId:   guildId,
 		Mentions:  req.Mentions,
 		Has:       UniqueAttachmentTypes(hasTypes),
+		Type:      int(model.MessageTypeChat),
 		Content:   message.Content,
 	}); err != nil {
 		e.log.Error("failed to send index message event",
 			"message_id", message.Id,
 			"error", err.Error())
 	}
+
+	// Notify DM recipient via user topic for 1:1 DMs
+	if guildId == nil {
+		// Determine channel type and DM participants
+		ch, err := e.ch.GetChannel(context.Background(), channelId)
+		if err == nil && ch.Type == model.ChannelTypeDM {
+			// Fetch both rows for this DM channel and pick the other user
+			rows, rerr := e.dmc.GetDmChannelByChannelId(context.Background(), channelId)
+			if rerr == nil {
+				var recipientId int64
+				for _, r := range rows {
+					if r.UserId != message.Author.Id {
+						recipientId = r.UserId
+						break
+					}
+				}
+				if recipientId != 0 {
+					var ad *dto.AvatarData
+					if userData.User.Avatar != nil {
+						if v, err := e.getAvatarDataCached(context.Background(), userData.User.Id, *userData.User.Avatar); err == nil {
+							ad = v
+						}
+					}
+					_ = e.mqt.SendUserUpdate(recipientId, &mqmsg.DMMessage{
+						ChannelId: channelId,
+						MessageId: message.Id,
+						From:      mqmsg.UserBrief{Id: userData.User.Id, Name: userData.User.Name, Discriminator: userData.Discriminator.Discriminator, Avatar: userData.User.Avatar, AvatarData: ad},
+					})
+				}
+			}
+		}
+	}
+}
+
+const avatarCacheTTLSeconds = 3600 // 1 hour
+
+func (e *entity) getAvatarDataCached(ctx context.Context, userId, avatarId int64) (*dto.AvatarData, error) {
+	key := fmt.Sprintf("avatars:%d:%d", userId, avatarId)
+	var ad dto.AvatarData
+	if e.cache != nil {
+		if err := e.cache.GetJSON(ctx, key, &ad); err == nil && ad.URL != "" {
+			return &ad, nil
+		}
+	}
+	av, err := e.av.GetAvatar(ctx, avatarId, userId)
+	if err != nil {
+		return nil, err
+	}
+	if av.URL == nil || *av.URL == "" {
+		return nil, nil
+	}
+	ad = dto.AvatarData{
+		URL:         *av.URL,
+		ContentType: av.ContentType,
+		Width:       av.Width,
+		Height:      av.Height,
+		Size:        av.FileSize,
+	}
+	if e.cache != nil {
+		_ = e.cache.SetTimedJSON(ctx, key, ad, avatarCacheTTLSeconds)
+	}
+	return &ad, nil
 }
 
 // GetMessages
@@ -484,6 +662,7 @@ type messageRelatedData struct {
 	Users       map[int64]*model.User
 	Members     map[int64]*model.Member
 	Attachments map[int64]*model.Attachment
+	AvData      map[int64]*dto.AvatarData
 }
 
 // fetchMessageRelatedData fetches users, members, and attachments concurrently
@@ -553,10 +732,17 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 		Users:       make(map[int64]*model.User),
 		Members:     make(map[int64]*model.Member),
 		Attachments: make(map[int64]*model.Attachment),
+		AvData:      make(map[int64]*dto.AvatarData),
 	}
 
 	for i := range usersRes.users {
-		data.Users[usersRes.users[i].Id] = &usersRes.users[i]
+		u := usersRes.users[i]
+		data.Users[u.Id] = &u
+		if u.Avatar != nil {
+			if ad, err := e.getAvatarDataCached(c.UserContext(), u.Id, *u.Avatar); err == nil && ad != nil {
+				data.AvData[u.Id] = ad
+			}
+		}
 	}
 
 	if membersRes.members != nil {
@@ -621,9 +807,11 @@ func (e *entity) buildAuthor(userId int64, data *messageRelatedData) dto.User {
 	member := data.Members[userId]
 
 	author := dto.User{
-		Id:     userId,
-		Name:   user.Name,
-		Avatar: user.Avatar,
+		Id:   userId,
+		Name: user.Name,
+	}
+	if ad, ok := data.AvData[userId]; ok {
+		author.Avatar = ad
 	}
 
 	// Override with member data if available
@@ -631,8 +819,11 @@ func (e *entity) buildAuthor(userId int64, data *messageRelatedData) dto.User {
 		if member.Username != nil {
 			author.Name = *member.Username
 		}
+		// If member has guild-specific avatar, override avatar data
 		if member.Avatar != nil {
-			author.Avatar = member.Avatar
+			if ad, err := e.getAvatarDataCached(context.Background(), userId, *member.Avatar); err == nil && ad != nil {
+				author.Avatar = ad
+			}
 		}
 	}
 
@@ -648,12 +839,17 @@ func (e *entity) buildAttachments(attachmentIds []int64, data *messageRelatedDat
 	attachments := make([]dto.Attachment, 0, len(attachmentIds))
 	for _, id := range attachmentIds {
 		if attachment, exists := data.Attachments[id]; exists {
+			var full string
+			if attachment.URL != nil {
+				full = *attachment.URL
+			}
 			attachments = append(attachments, dto.Attachment{
 				ContentType: attachment.ContentType,
 				Filename:    attachment.Name,
 				Height:      attachment.Height,
 				Width:       attachment.Width,
-				URL:         fmt.Sprintf("media/%d/%d/%s", attachment.ChannelId, attachment.Id, attachment.Name),
+				URL:         full,
+				PreviewURL:  attachment.PreviewURL,
 				Size:        attachment.FileSize,
 			})
 		}
@@ -774,15 +970,26 @@ func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageR
 
 	// Build response
 	updatedAt := time.Now()
+	// Build author with avatar override if any
+	author := dto.User{
+		Id:            userData.User.Id,
+		Name:          userData.DisplayName,
+		Discriminator: userData.Discriminator.Discriminator,
+	}
+	if userData.Avatar != nil {
+		if ad, err := e.getAvatarDataCached(c.UserContext(), userData.User.Id, *userData.Avatar); err == nil && ad != nil {
+			author.Avatar = ad
+		}
+	} else if userData.User.Avatar != nil {
+		if ad, err := e.getAvatarDataCached(c.UserContext(), userData.User.Id, *userData.User.Avatar); err == nil && ad != nil {
+			author.Avatar = ad
+		}
+	}
+
 	return dto.Message{
 		Id:        message.Id,
 		ChannelId: message.ChannelId,
-		Author: dto.User{
-			Id:            userData.User.Id,
-			Name:          userData.DisplayName,
-			Discriminator: userData.Discriminator.Discriminator,
-			Avatar:        userData.Avatar,
-		},
+		Author:    author,
 		Content:   req.Content,
 		UpdatedAt: &updatedAt,
 	}, nil
@@ -1143,19 +1350,12 @@ func (e *entity) validateUploadPermissions(c *fiber.Ctx, channelId, userId int64
 func (e *entity) createAttachmentUpload(c *fiber.Ctx, req *UploadAttachmentRequest, channelId int64) (dto.AttachmentUpload, error) {
 	attachmentId := idgen.Next()
 
-	// Generate upload URL
-	uploadURL, err := e.storage.MakeUploadAttachment(c.UserContext(), channelId, attachmentId, req.FileSize, req.Filename)
+	user, err := helper.GetUser(c)
 	if err != nil {
-		e.log.Error("failed to create upload URL",
-			"channel_id", channelId,
-			"attachment_id", attachmentId,
-			"filename", req.Filename,
-			"error", err.Error())
-		return dto.AttachmentUpload{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateUploadURL)
+		return dto.AttachmentUpload{}, fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	// Create attachment record
-	if err := e.at.CreateAttachment(c.UserContext(), attachmentId, channelId, req.FileSize, req.Height, req.Width, req.Filename); err != nil {
+	if err := e.at.CreateAttachment(c.UserContext(), attachmentId, channelId, user.Id, e.attachTTL, req.FileSize, req.Filename); err != nil {
 		return dto.AttachmentUpload{}, helper.HttpDbError(err, ErrUnableToCreateAttachment)
 	}
 
@@ -1163,51 +1363,32 @@ func (e *entity) createAttachmentUpload(c *fiber.Ctx, req *UploadAttachmentReque
 		Id:        attachmentId,
 		ChannelId: channelId,
 		FileName:  req.Filename,
-		UploadURL: uploadURL,
 	}, nil
 }
 
-// Performance optimization functions for GetMessages
-
-// buildMessageDTOsOptimized constructs message DTOs with memory optimization using object pools
+// buildMessageDTOsOptimized constructs message DTOs efficiently
 func (e *entity) buildMessageDTOsOptimized(messages []model.Message, data *messageRelatedData) []dto.Message {
 	result := make([]dto.Message, len(messages))
 
 	for i, message := range messages {
-		// Get message from pool
-		msg := messagePool.Get().(*dto.Message)
-
-		// Reset the message
-		*msg = dto.Message{}
-
-		// Build author
-		author := e.buildAuthorOptimized(message.UserId, data)
-
-		// Build attachments with pool
-		attachments := e.buildAttachmentsOptimized(message.Attachments, data)
-
-		// Set message fields
-		msg.Id = message.Id
-		msg.ChannelId = message.ChannelId
-		msg.Author = author
-		msg.Content = message.Content
-		msg.Attachments = attachments
-		msg.UpdatedAt = message.EditedAt
-
-		result[i] = *msg
-
-		// Return message to pool
-		messagePool.Put(msg)
+		result[i] = dto.Message{
+			Id:          message.Id,
+			ChannelId:   message.ChannelId,
+			Author:      e.buildAuthorOptimized(message.UserId, data),
+			Content:     message.Content,
+			Attachments: e.buildAttachmentsOptimized(message.Attachments, data),
+			UpdatedAt:   message.EditedAt,
+			Type:        message.Type,
+		}
 	}
 
 	return result
 }
 
-// buildAuthorOptimized constructs author DTO with member override if available (optimized version)
+// buildAuthorOptimized constructs author DTO with member override if available
 func (e *entity) buildAuthorOptimized(userId int64, data *messageRelatedData) dto.User {
 	user, userExists := data.Users[userId]
 	if !userExists {
-		// Fallback for missing user data
 		return dto.User{
 			Id:   userId,
 			Name: "Unknown User",
@@ -1215,53 +1396,140 @@ func (e *entity) buildAuthorOptimized(userId int64, data *messageRelatedData) dt
 	}
 
 	author := dto.User{
-		Id:     userId,
-		Name:   user.Name,
-		Avatar: user.Avatar,
+		Id:   userId,
+		Name: user.Name,
+	}
+	if ad, ok := data.AvData[userId]; ok {
+		author.Avatar = ad
 	}
 
-	// Override with member data if available
 	if member, memberExists := data.Members[userId]; memberExists {
 		if member.Username != nil {
 			author.Name = *member.Username
 		}
 		if member.Avatar != nil {
-			author.Avatar = member.Avatar
+			if ad, err := e.getAvatarDataCached(context.Background(), userId, *member.Avatar); err == nil && ad != nil {
+				author.Avatar = ad
+			}
 		}
 	}
 
 	return author
 }
 
-// buildAttachmentsOptimized constructs attachment DTOs using object pools
+// buildAttachmentsOptimized constructs attachment DTOs efficiently
 func (e *entity) buildAttachmentsOptimized(attachmentIds []int64, data *messageRelatedData) []dto.Attachment {
 	if len(attachmentIds) == 0 {
 		return nil
 	}
 
-	// Get attachment slice from pool
-	attachments := attachmentPool.Get().([]dto.Attachment)
-	attachments = attachments[:0] // Reset length but keep capacity
+	// Pre-allocate with exact capacity to avoid reallocation
+	attachments := make([]dto.Attachment, 0, len(attachmentIds))
 
 	for _, id := range attachmentIds {
 		if attachment, exists := data.Attachments[id]; exists {
+			var full string
+			if attachment.URL != nil {
+				full = *attachment.URL
+			}
 			attachments = append(attachments, dto.Attachment{
 				ContentType: attachment.ContentType,
 				Filename:    attachment.Name,
 				Height:      attachment.Height,
 				Width:       attachment.Width,
-				URL:         fmt.Sprintf("media/%d/%d/%s", attachment.ChannelId, attachment.Id, attachment.Name),
+				URL:         full,
+				PreviewURL:  attachment.PreviewURL,
 				Size:        attachment.FileSize,
 			})
 		}
 	}
 
-	// Create result copy and return slice to pool
-	result := make([]dto.Attachment, len(attachments))
-	copy(result, attachments)
+	return attachments
+}
 
-	// Return to pool
-	attachmentPool.Put(attachments)
+// SetReadState
+//
+//	@Summary	Set channel read state for current user
+//	@Produce	json
+//	@Tags		Message
+//	@Param		channel_id	path		int64	true	"Channel id"
+//	@Param		message_id	path		int64	true	"Message id"
+//	@Success	200			{string}	string	"Read state updated"
+//	@failure	400			{string}	string	"Bad request"
+//	@failure	500			{string}	string	"Internal server error"
+//	@Router		/message/channel/{channel_id}/{message_id}/ack [post]
+func (e *entity) SetReadState(c *fiber.Ctx) error {
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+	channelIdStr := c.Params("channel_id")
+	channelId, err := strconv.ParseInt(channelIdStr, 10, 64)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+	}
 
-	return result
+	messageIdStr := c.Params("message_id")
+	messageId, err := strconv.ParseInt(messageIdStr, 10, 64)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+	}
+
+	// Validate channel and permissions
+	channel, _, err := e.validateReadPermissions(c, channelId, user.Id)
+	if err != nil {
+		return err
+	}
+
+	err = e.rs.SetReadState(c.UserContext(), user.Id, channel.Id, messageId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetReadState)
+	}
+
+	go func() {
+		if err := e.mqt.SendUserUpdate(user.Id, &mqmsg.UpdateReadState{
+			ChannelId: channelId,
+			MessageId: messageId,
+		}); err != nil {
+			slog.Error("unable to send user update read state event",
+				slog.String("error", err.Error()))
+		}
+	}()
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+// Typing
+//
+//	@Summary	Send user typing event in the channel
+//	@Produce	json
+//	@Tags		Message
+//	@Param		channel_id	path		int64	true	"Channel id"
+//	@Success	200			{string}	string	"typing status sent"
+//	@failure	400			{string}	string	"Bad request"
+//	@failure	500			{string}	string	"Internal server error"
+//	@Router		/message/channel/{channel_id}/typing [post]
+func (e *entity) Typing(c *fiber.Ctx) error {
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+	channelIdStr := c.Params("channel_id")
+	channelId, err := strconv.ParseInt(channelIdStr, 10, 64)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+	}
+	// Validate channel and permissions
+	channel, _, err := e.validateSendPermissions(c, channelId, user.Id)
+	if err != nil {
+		return err
+	}
+	err = e.mqt.SendChannelMessage(channelId, &mqmsg.ChannelUserTyping{
+		ChannelId: channel.Id,
+		UserId:    user.Id,
+	})
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendTypingEvent)
+	}
+	return c.SendStatus(fiber.StatusOK)
 }

@@ -23,7 +23,10 @@ type Server struct {
 }
 
 func NewServer() *Server {
-	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
+		BodyLimit:             100 * 1024 * 1024, // 100MB
+	})
 	rc := recover.ConfigDefault
 	rc.EnableStackTrace = true
 	app.Get("/healthz", healthzHandler)

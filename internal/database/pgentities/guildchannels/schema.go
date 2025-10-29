@@ -2,6 +2,8 @@ package guildchannels
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -28,7 +30,7 @@ func (e *Entity) AddChannel(ctx context.Context, guildID, channelID int64, chann
 		Values(channelID, channelName, channelType, parentID, private, 0)
 	sql, args, err := chq.ToSql()
 	if err != nil {
-		return fmt.Errorf("unable to create SQL query for create channel: %w")
+		return fmt.Errorf("unable to create SQL query for create channel: %w", err)
 	}
 	_, err = tx.ExecContext(ctx, sql, args...)
 	if err != nil {
@@ -222,4 +224,25 @@ func (e *Entity) ResetGuildChannelPositionBulk(ctx context.Context, chs []int64,
 		return fmt.Errorf("unable to reset guild channel position bulk: %w", err)
 	}
 	return nil
+}
+
+func (e *Entity) GetGuildsChannelsIDsMany(ctx context.Context, guilds []int64) ([]int64, error) {
+	if len(guilds) == 0 {
+		return nil, nil
+	}
+	var gcs []int64
+	q := squirrel.Select("channel_id").
+		PlaceholderFormat(squirrel.Dollar).
+		From("guild_channels").
+		Where(squirrel.Eq{"guild_id": guilds})
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	// Pass SQL args as variadic, not as a single slice
+	err = e.c.SelectContext(ctx, &gcs, raw, args...)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("unable to get guilds channels: %w", err)
+	}
+	return gcs, nil
 }

@@ -15,6 +15,7 @@ type GuildChannels interface {
 	RemoveChannel(ctx context.Context, guildID, channelID int64) error
 	SetGuildChannelPosition(ctx context.Context, updates []model.GuildChannelUpdatePosition) error
 	ResetGuildChannelPositionBulk(ctx context.Context, chs []int64, guildId int64) error
+	GetGuildsChannelsIDsMany(ctx context.Context, guilds []int64) ([]int64, error)
 }
 
 type Entity struct {

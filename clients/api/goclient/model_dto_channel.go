@@ -26,10 +26,14 @@ type DtoChannel struct {
 	GuildId *int32 `json:"guild_id,omitempty"`
 	// Channel ID
 	Id *int32 `json:"id,omitempty"`
+	// ID of the last message in the channel
+	LastMessageId *int32 `json:"last_message_id,omitempty"`
 	// Channel name, without spaces
 	Name *string `json:"name,omitempty"`
 	// Parent channel id
 	ParentId *int32 `json:"parent_id,omitempty"`
+	// For DM channels: the other participant's user ID
+	ParticipantId *int32 `json:"participant_id,omitempty"`
 	// Permissions. Check the permissions documentation for more info.
 	Permissions *int32 `json:"permissions,omitempty"`
 	// Channel position
@@ -161,6 +165,38 @@ func (o *DtoChannel) SetId(v int32) {
 	o.Id = &v
 }
 
+// GetLastMessageId returns the LastMessageId field value if set, zero value otherwise.
+func (o *DtoChannel) GetLastMessageId() int32 {
+	if o == nil || IsNil(o.LastMessageId) {
+		var ret int32
+		return ret
+	}
+	return *o.LastMessageId
+}
+
+// GetLastMessageIdOk returns a tuple with the LastMessageId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoChannel) GetLastMessageIdOk() (*int32, bool) {
+	if o == nil || IsNil(o.LastMessageId) {
+		return nil, false
+	}
+	return o.LastMessageId, true
+}
+
+// HasLastMessageId returns a boolean if a field has been set.
+func (o *DtoChannel) HasLastMessageId() bool {
+	if o != nil && !IsNil(o.LastMessageId) {
+		return true
+	}
+
+	return false
+}
+
+// SetLastMessageId gets a reference to the given int32 and assigns it to the LastMessageId field.
+func (o *DtoChannel) SetLastMessageId(v int32) {
+	o.LastMessageId = &v
+}
+
 // GetName returns the Name field value if set, zero value otherwise.
 func (o *DtoChannel) GetName() string {
 	if o == nil || IsNil(o.Name) {
@@ -223,6 +259,38 @@ func (o *DtoChannel) HasParentId() bool {
 // SetParentId gets a reference to the given int32 and assigns it to the ParentId field.
 func (o *DtoChannel) SetParentId(v int32) {
 	o.ParentId = &v
+}
+
+// GetParticipantId returns the ParticipantId field value if set, zero value otherwise.
+func (o *DtoChannel) GetParticipantId() int32 {
+	if o == nil || IsNil(o.ParticipantId) {
+		var ret int32
+		return ret
+	}
+	return *o.ParticipantId
+}
+
+// GetParticipantIdOk returns a tuple with the ParticipantId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoChannel) GetParticipantIdOk() (*int32, bool) {
+	if o == nil || IsNil(o.ParticipantId) {
+		return nil, false
+	}
+	return o.ParticipantId, true
+}
+
+// HasParticipantId returns a boolean if a field has been set.
+func (o *DtoChannel) HasParticipantId() bool {
+	if o != nil && !IsNil(o.ParticipantId) {
+		return true
+	}
+
+	return false
+}
+
+// SetParticipantId gets a reference to the given int32 and assigns it to the ParticipantId field.
+func (o *DtoChannel) SetParticipantId(v int32) {
+	o.ParticipantId = &v
 }
 
 // GetPermissions returns the Permissions field value if set, zero value otherwise.
@@ -436,11 +504,17 @@ func (o DtoChannel) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Id) {
 		toSerialize["id"] = o.Id
 	}
+	if !IsNil(o.LastMessageId) {
+		toSerialize["last_message_id"] = o.LastMessageId
+	}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
 	}
 	if !IsNil(o.ParentId) {
 		toSerialize["parent_id"] = o.ParentId
+	}
+	if !IsNil(o.ParticipantId) {
+		toSerialize["participant_id"] = o.ParticipantId
 	}
 	if !IsNil(o.Permissions) {
 		toSerialize["permissions"] = o.Permissions

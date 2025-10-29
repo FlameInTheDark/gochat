@@ -7,8 +7,10 @@ Name | Type | Description | Notes
 **CreatedAt** | Pointer to **string** | Timestamp of channel creation | [optional] 
 **GuildId** | Pointer to **int32** | Guild ID channel was created in | [optional] 
 **Id** | Pointer to **int32** | Channel ID | [optional] 
+**LastMessageId** | Pointer to **int32** | ID of the last message in the channel | [optional] 
 **Name** | Pointer to **string** | Channel name, without spaces | [optional] 
 **ParentId** | Pointer to **int32** | Parent channel id | [optional] 
+**ParticipantId** | Pointer to **int32** | For DM channels: the other participant&#39;s user ID | [optional] 
 **Permissions** | Pointer to **int32** | Permissions. Check the permissions documentation for more info. | [optional] 
 **Position** | Pointer to **int32** | Channel position | [optional] 
 **Private** | Pointer to **bool** | Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel. | [optional] [default to false]
@@ -110,6 +112,31 @@ SetId sets Id field to given value.
 
 HasId returns a boolean if a field has been set.
 
+### GetLastMessageId
+
+`func (o *DtoChannel) GetLastMessageId() int32`
+
+GetLastMessageId returns the LastMessageId field if non-nil, zero value otherwise.
+
+### GetLastMessageIdOk
+
+`func (o *DtoChannel) GetLastMessageIdOk() (*int32, bool)`
+
+GetLastMessageIdOk returns a tuple with the LastMessageId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetLastMessageId
+
+`func (o *DtoChannel) SetLastMessageId(v int32)`
+
+SetLastMessageId sets LastMessageId field to given value.
+
+### HasLastMessageId
+
+`func (o *DtoChannel) HasLastMessageId() bool`
+
+HasLastMessageId returns a boolean if a field has been set.
+
 ### GetName
 
 `func (o *DtoChannel) GetName() string`
@@ -159,6 +186,31 @@ SetParentId sets ParentId field to given value.
 `func (o *DtoChannel) HasParentId() bool`
 
 HasParentId returns a boolean if a field has been set.
+
+### GetParticipantId
+
+`func (o *DtoChannel) GetParticipantId() int32`
+
+GetParticipantId returns the ParticipantId field if non-nil, zero value otherwise.
+
+### GetParticipantIdOk
+
+`func (o *DtoChannel) GetParticipantIdOk() (*int32, bool)`
+
+GetParticipantIdOk returns a tuple with the ParticipantId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetParticipantId
+
+`func (o *DtoChannel) SetParticipantId(v int32)`
+
+SetParticipantId sets ParticipantId field to given value.
+
+### HasParticipantId
+
+`func (o *DtoChannel) HasParticipantId() bool`
+
+HasParticipantId returns a boolean if a field has been set.
 
 ### GetPermissions
 

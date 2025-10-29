@@ -1,72 +1,6 @@
 services:
-  minio:
-    image: minio/minio:latest
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: password
-    command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 5s
-      timeout: 2s
-      retries: 5
-    restart: always
 
-  minio-init:
-    image: minio/mc
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      MINIO_ENDPOINT: "http://minio:9000"
-      MINIO_ROOT_USER: admin # Match the minio service credentials
-      MINIO_ROOT_PASSWORD: password # Match the minio service credentials
-    volumes:
-      - ./init/init-minio.sh:/init-minio.sh
-    entrypoint: ["/bin/sh", "/init-minio.sh"]
-    restart: "no"
-
-  scylla:
-    image: scylladb/scylla:6.2
-    volumes:
-      - scylla-data:/var/lib/scylla
-      - ./init/init-scylladb.sh:/init-scylladb.sh
-    ports:
-      - "7000:7000"
-      - "9042:9042"
-      - "7199:7199"
-    environment:
-      - SCYLLA_DEVELOPER_MODE=1
-    healthcheck:
-      test: ["CMD", "cqlsh", "-e", "SELECT now() FROM system.local;"]
-      interval: 10s
-      retries: 5
-    restart: always
-
-  nats:
-    image: nats:2.10.22-alpine3.20
-    ports:
-      - "4222:4222"
-      - "8222:8222"
-      - "6222:6222"
-    restart: always
-
-  indexer-nats:
-    image: nats:2.10.22-alpine3.20
-    ports:
-      - "4333:4222"
-      - "8333:8222"
-      - "6333:6222"
-    restart: always
-
-  keydb:
-    image: eqalpha/keydb:alpine
-    ports:
-      - "6379:6379"
-    restart: always
+# ---------- Application services ----------
 
   auth:
     image: gochat/auth
@@ -118,6 +52,29 @@ services:
       - traefik
       - default
 
+  attachments:
+    image: gochat/attachments
+    build:
+      dockerfile: attachments.Dockerfile
+    restart: always
+    volumes:
+      - ./attachments_config.yaml:/dist/config.yaml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.attachments.rule=PathPrefix(`/api/v1/upload`)"
+      - "traefik.http.routers.attachments.priority=100"
+      - "traefik.http.routers.attachments.service=attachments"
+      - "traefik.http.services.attachments.loadbalancer.server.port=3200"
+      - "traefik.docker.network=gochat_traefik"
+    depends_on:
+      scylla:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    networks:
+      - traefik
+      - default
+
   ws:
     image: gochat/ws
     build:
@@ -141,6 +98,48 @@ services:
       - traefik
       - default
 
+  sfu:
+    image: gochat/sfu
+    build:
+      dockerfile: sfu.Dockerfile
+    restart: always
+    volumes:
+      - ./sfu_config.yaml:/dist/config.yaml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sfu.rule=PathPrefix(`/sfu`)"
+      - "traefik.http.routers.sfu.middlewares=sfu-stripprefix"
+      - "traefik.http.middlewares.sfu-stripprefix.stripprefix.prefixes=/sfu"
+      - "traefik.http.middlewares.sfu-stripprefix.stripprefix.forceslash=true"
+      - "traefik.http.routers.sfu.service=sfu"
+      - "traefik.http.services.sfu.loadbalancer.server.port=3300"
+      - "traefik.docker.network=gochat_traefik"
+    depends_on:
+      - traefik
+    networks:
+      - traefik
+      - default
+
+  webhook:
+    image: gochat/webhook
+    build:
+      dockerfile: webhook.Dockerfile
+    restart: always
+    volumes:
+      - ./webhook_config.yaml:/dist/config.yaml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webhook.rule=PathPrefix(`/api/v1/webhook`)"
+      - "traefik.http.routers.webhook.priority=100"
+      - "traefik.http.routers.webhook.service=webhook"
+      - "traefik.http.services.webhook.loadbalancer.server.port=3200"
+      - "traefik.docker.network=gochat_traefik"
+    depends_on:
+      - traefik
+    networks:
+      - traefik
+      - default
+
   indexer:
     image: gochat/indexer
     build:
@@ -153,6 +152,47 @@ services:
         condition: service_started
       opensearch:
         condition: service_started
+
+  # ---------- Environment services ----------
+
+  scylla:
+    image: scylladb/scylla:6.2
+    volumes:
+      - scylla-data:/var/lib/scylla
+      - ./init/init-scylladb.sh:/init-scylladb.sh
+    ports:
+      - "7000:7000"
+      - "9042:9042"
+      - "7199:7199"
+    environment:
+      - SCYLLA_DEVELOPER_MODE=1
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "SELECT now() FROM system.local;"]
+      interval: 10s
+      retries: 5
+    restart: always
+
+  nats:
+    image: nats:2.10.22-alpine3.20
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+      - "6222:6222"
+    restart: always
+
+  indexer-nats:
+    image: nats:2.10.22-alpine3.20
+    ports:
+      - "4333:4222"
+      - "8333:8222"
+      - "6333:6222"
+    restart: always
+
+  keydb:
+    image: eqalpha/keydb:alpine
+    ports:
+      - "6379:6379"
+    restart: always
 
   opensearch:
     image: opensearchproject/opensearch:2.13.0
@@ -188,6 +228,10 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedByDefault=false"
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.transport.respondingTimeouts.idleTimeout=120s"
+      - "--entrypoints.web.transport.respondingTimeouts.readTimeout=0s"
+      - "--entrypoints.web.transport.respondingTimeouts.writeTimeout=0s"
+      - "--serversTransport.forwardingTimeouts.idleConnTimeout=120s"
     ports:
       - "80:80"
       - "8080:8080"
@@ -311,6 +355,21 @@ services:
     entrypoint: ["/bin/sh", "-c", "until pg_isready -h citus-master -p 5432 -U ${POSTGRES_USER:-postgres}; do sleep 1; done; psql -h citus-master -U ${POSTGRES_USER:-postgres} -d gochat -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS citus;'" ]
     networks:
       - citus
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.0
+    restart: always
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=no
+      - ETCD_ROOT_PASSWORD=${ETCD_ROOT_PASSWORD:-changeme}
+      - ETCD_ENABLE_V2=false
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd:2380
+      - ETCD_INITIAL_CLUSTER=etcd=http://etcd:2380
+      - ETCD_INITIAL_CLUSTER_STATE=new
+      - ETCD_NAME=etcd
 
 volumes:
   scylla-data:

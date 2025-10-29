@@ -14,6 +14,7 @@ type GroupDMChannel interface {
 	LeaveGroupDmChannel(ctx context.Context, channelId, userId int64) error
 	GetGroupDmParticipants(ctx context.Context, channelId int64) ([]model.GroupDMChannel, error)
 	IsGroupDmParticipant(ctx context.Context, channelId int64, userId int64) (bool, error)
+	GetUserGroupDmChannels(ctx context.Context, userId int64) ([]model.GroupDMChannel, error)
 }
 
 type Entity struct {

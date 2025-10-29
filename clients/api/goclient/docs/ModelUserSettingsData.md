@@ -5,11 +5,17 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Appearance** | Pointer to [**ModelUserSettingsAppearance**](ModelUserSettingsAppearance.md) |  | [optional] 
+**Channels** | Pointer to [**[]ModelUserSettingsChannel**](ModelUserSettingsChannel.md) |  | [optional] 
+**Devices** | Pointer to [**ModelDevices**](ModelDevices.md) |  | [optional] 
+**DmChannels** | Pointer to [**[]ModelUserDMChannels**](ModelUserDMChannels.md) |  | [optional] 
 **FavoriteGifs** | Pointer to **[]string** |  | [optional] 
+**ForcedPresence** | Pointer to **string** |  | [optional] 
 **GuildFolders** | Pointer to [**[]ModelUserSettingsGuildFolders**](ModelUserSettingsGuildFolders.md) |  | [optional] 
 **Guilds** | Pointer to [**[]ModelUserSettingsGuilds**](ModelUserSettingsGuilds.md) |  | [optional] 
 **Language** | Pointer to **string** |  | [optional] 
-**SelectedGuild** | Pointer to **int32** |  | [optional] 
+**Status** | Pointer to [**ModelStatus**](ModelStatus.md) |  | [optional] 
+**UiSounds** | Pointer to [**ModelUserUISounds**](ModelUserUISounds.md) |  | [optional] 
+**Users** | Pointer to [**[]ModelUserSettingsUsers**](ModelUserSettingsUsers.md) |  | [optional] 
 
 ## Methods
 
@@ -55,6 +61,81 @@ SetAppearance sets Appearance field to given value.
 
 HasAppearance returns a boolean if a field has been set.
 
+### GetChannels
+
+`func (o *ModelUserSettingsData) GetChannels() []ModelUserSettingsChannel`
+
+GetChannels returns the Channels field if non-nil, zero value otherwise.
+
+### GetChannelsOk
+
+`func (o *ModelUserSettingsData) GetChannelsOk() (*[]ModelUserSettingsChannel, bool)`
+
+GetChannelsOk returns a tuple with the Channels field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetChannels
+
+`func (o *ModelUserSettingsData) SetChannels(v []ModelUserSettingsChannel)`
+
+SetChannels sets Channels field to given value.
+
+### HasChannels
+
+`func (o *ModelUserSettingsData) HasChannels() bool`
+
+HasChannels returns a boolean if a field has been set.
+
+### GetDevices
+
+`func (o *ModelUserSettingsData) GetDevices() ModelDevices`
+
+GetDevices returns the Devices field if non-nil, zero value otherwise.
+
+### GetDevicesOk
+
+`func (o *ModelUserSettingsData) GetDevicesOk() (*ModelDevices, bool)`
+
+GetDevicesOk returns a tuple with the Devices field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDevices
+
+`func (o *ModelUserSettingsData) SetDevices(v ModelDevices)`
+
+SetDevices sets Devices field to given value.
+
+### HasDevices
+
+`func (o *ModelUserSettingsData) HasDevices() bool`
+
+HasDevices returns a boolean if a field has been set.
+
+### GetDmChannels
+
+`func (o *ModelUserSettingsData) GetDmChannels() []ModelUserDMChannels`
+
+GetDmChannels returns the DmChannels field if non-nil, zero value otherwise.
+
+### GetDmChannelsOk
+
+`func (o *ModelUserSettingsData) GetDmChannelsOk() (*[]ModelUserDMChannels, bool)`
+
+GetDmChannelsOk returns a tuple with the DmChannels field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDmChannels
+
+`func (o *ModelUserSettingsData) SetDmChannels(v []ModelUserDMChannels)`
+
+SetDmChannels sets DmChannels field to given value.
+
+### HasDmChannels
+
+`func (o *ModelUserSettingsData) HasDmChannels() bool`
+
+HasDmChannels returns a boolean if a field has been set.
+
 ### GetFavoriteGifs
 
 `func (o *ModelUserSettingsData) GetFavoriteGifs() []string`
@@ -79,6 +160,31 @@ SetFavoriteGifs sets FavoriteGifs field to given value.
 `func (o *ModelUserSettingsData) HasFavoriteGifs() bool`
 
 HasFavoriteGifs returns a boolean if a field has been set.
+
+### GetForcedPresence
+
+`func (o *ModelUserSettingsData) GetForcedPresence() string`
+
+GetForcedPresence returns the ForcedPresence field if non-nil, zero value otherwise.
+
+### GetForcedPresenceOk
+
+`func (o *ModelUserSettingsData) GetForcedPresenceOk() (*string, bool)`
+
+GetForcedPresenceOk returns a tuple with the ForcedPresence field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetForcedPresence
+
+`func (o *ModelUserSettingsData) SetForcedPresence(v string)`
+
+SetForcedPresence sets ForcedPresence field to given value.
+
+### HasForcedPresence
+
+`func (o *ModelUserSettingsData) HasForcedPresence() bool`
+
+HasForcedPresence returns a boolean if a field has been set.
 
 ### GetGuildFolders
 
@@ -155,30 +261,80 @@ SetLanguage sets Language field to given value.
 
 HasLanguage returns a boolean if a field has been set.
 
-### GetSelectedGuild
+### GetStatus
 
-`func (o *ModelUserSettingsData) GetSelectedGuild() int32`
+`func (o *ModelUserSettingsData) GetStatus() ModelStatus`
 
-GetSelectedGuild returns the SelectedGuild field if non-nil, zero value otherwise.
+GetStatus returns the Status field if non-nil, zero value otherwise.
 
-### GetSelectedGuildOk
+### GetStatusOk
 
-`func (o *ModelUserSettingsData) GetSelectedGuildOk() (*int32, bool)`
+`func (o *ModelUserSettingsData) GetStatusOk() (*ModelStatus, bool)`
 
-GetSelectedGuildOk returns a tuple with the SelectedGuild field if it's non-nil, zero value otherwise
+GetStatusOk returns a tuple with the Status field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetSelectedGuild
+### SetStatus
 
-`func (o *ModelUserSettingsData) SetSelectedGuild(v int32)`
+`func (o *ModelUserSettingsData) SetStatus(v ModelStatus)`
 
-SetSelectedGuild sets SelectedGuild field to given value.
+SetStatus sets Status field to given value.
 
-### HasSelectedGuild
+### HasStatus
 
-`func (o *ModelUserSettingsData) HasSelectedGuild() bool`
+`func (o *ModelUserSettingsData) HasStatus() bool`
 
-HasSelectedGuild returns a boolean if a field has been set.
+HasStatus returns a boolean if a field has been set.
+
+### GetUiSounds
+
+`func (o *ModelUserSettingsData) GetUiSounds() ModelUserUISounds`
+
+GetUiSounds returns the UiSounds field if non-nil, zero value otherwise.
+
+### GetUiSoundsOk
+
+`func (o *ModelUserSettingsData) GetUiSoundsOk() (*ModelUserUISounds, bool)`
+
+GetUiSoundsOk returns a tuple with the UiSounds field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetUiSounds
+
+`func (o *ModelUserSettingsData) SetUiSounds(v ModelUserUISounds)`
+
+SetUiSounds sets UiSounds field to given value.
+
+### HasUiSounds
+
+`func (o *ModelUserSettingsData) HasUiSounds() bool`
+
+HasUiSounds returns a boolean if a field has been set.
+
+### GetUsers
+
+`func (o *ModelUserSettingsData) GetUsers() []ModelUserSettingsUsers`
+
+GetUsers returns the Users field if non-nil, zero value otherwise.
+
+### GetUsersOk
+
+`func (o *ModelUserSettingsData) GetUsersOk() (*[]ModelUserSettingsUsers, bool)`
+
+GetUsersOk returns a tuple with the Users field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetUsers
+
+`func (o *ModelUserSettingsData) SetUsers(v []ModelUserSettingsUsers)`
+
+SetUsers sets Users field to given value.
+
+### HasUsers
+
+`func (o *ModelUserSettingsData) HasUsers() bool`
+
+HasUsers returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

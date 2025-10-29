@@ -47,6 +47,22 @@ func (e *Entity) RemoveMember(ctx context.Context, userID, guildID int64) error 
 	return nil
 }
 
+// RemoveMembersByGuild removes all membership records for a given guild.
+func (e *Entity) RemoveMembersByGuild(ctx context.Context, guildID int64) error {
+	q := squirrel.Delete("members").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"guild_id": guildID})
+
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	if _, err = e.c.ExecContext(ctx, sql, args...); err != nil {
+		return fmt.Errorf("unable to remove members by guild: %w", err)
+	}
+	return nil
+}
+
 func (e *Entity) GetMember(ctx context.Context, userId, guildId int64) (model.Member, error) {
 	var m model.Member
 	q := squirrel.Select("*").

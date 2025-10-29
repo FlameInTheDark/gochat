@@ -8,7 +8,6 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
-	"github.com/FlameInTheDark/gochat/internal/database/entities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
@@ -17,6 +16,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/role"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/msgsearch"
@@ -60,7 +60,7 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, search *msgsearch.Search, log *slog.Logg
 		name:   entityName,
 		log:    log,
 		search: search,
-		perm:   rolecheck.New(dbcon, pg),
+		perm:   rolecheck.New(pg),
 		user:   user.New(pg.Conn()),
 		disc:   discriminator.New(pg.Conn()),
 		ch:     channel.New(pg.Conn()),

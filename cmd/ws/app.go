@@ -7,18 +7,21 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/FlameInTheDark/gochat/internal/database/db"
-	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
-	"github.com/FlameInTheDark/gochat/internal/shutter"
-	slogfiber "github.com/samber/slog-fiber"
-
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	recm "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/nats-io/nats.go"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	slogfiber "github.com/samber/slog-fiber"
+	"github.com/valyala/fasthttp/fasthttpadaptor"
 
 	"github.com/FlameInTheDark/gochat/cmd/ws/auth"
 	"github.com/FlameInTheDark/gochat/cmd/ws/config"
+	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
+	"github.com/FlameInTheDark/gochat/internal/database/db"
+	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
 
 type App struct {
@@ -27,10 +30,14 @@ type App struct {
 	app      *fiber.App
 	cdb      *db.CQLCon
 	pg       *pgdb.DB
+	cache    *kvs.Cache
 
 	shut *shutter.Shut
 	cfg  *config.Config
 	log  *slog.Logger
+
+	// Metrics
+	wsActive prometheus.Gauge
 }
 
 func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
@@ -64,6 +71,14 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 
 	jwtauth := auth.New(cfg.AuthSecret, "gochat", "api")
 
+	// Cache (Redis)
+	kv, err := kvs.New(cfg.CacheAddr)
+	if err != nil {
+		logger.Error("unable to connect to cache", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	shut.Up(kv)
+
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
 	logMiddleware := slogfiber.NewWithFilters(
 		logger,
@@ -72,23 +87,47 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	app.Use(logMiddleware)
 	app.Use(recm.New())
 
-	app.Use("/", func(c *fiber.Ctx) error {
+	// Enforce WebSocket upgrade for all paths except explicit HTTP endpoints like /metrics.
+	// This preserves the external WS address routed by Traefik (PathPrefix `/ws` with StripPrefix),
+	// while allowing Prometheus to scrape /metrics over plain HTTP.
+	app.Use(func(c *fiber.Ctx) error {
+		if c.Path() == "/metrics" {
+			return c.Next()
+		}
 		if websocket.IsWebSocketUpgrade(c) {
 			return c.Next()
 		}
 		return fiber.ErrUpgradeRequired
 	})
 
-	return &App{
+	a := &App{
 		jwt:      jwtauth,
 		natsConn: natsCon,
 		app:      app,
 		cdb:      dbcon,
 		pg:       pg,
+		cache:    kv,
 		cfg:      cfg,
 		log:      logger,
 		shut:     shut,
 	}
+
+	// Metrics setup
+	a.wsActive = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: "gochat",
+		Subsystem: "ws",
+		Name:      "active_clients",
+		Help:      "Number of active WebSocket connections",
+	})
+	prometheus.MustRegister(a.wsActive)
+	// Expose /metrics
+	h := promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{})
+	app.Get("/metrics", func(c *fiber.Ctx) error {
+		fasthttpadaptor.NewFastHTTPHandler(h)(c.Context())
+		return nil
+	})
+
+	return a
 }
 
 func (a *App) Start() {

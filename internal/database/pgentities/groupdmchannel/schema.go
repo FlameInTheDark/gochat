@@ -144,3 +144,22 @@ func (e *Entity) IsGroupDmParticipant(ctx context.Context, channelId int64, user
 	}
 	return count > 0, nil
 }
+
+func (e *Entity) GetUserGroupDmChannels(ctx context.Context, userId int64) ([]model.GroupDMChannel, error) {
+	var items []model.GroupDMChannel
+	q := squirrel.Select("channel_id", "user_id").
+		PlaceholderFormat(squirrel.Dollar).
+		From("group_dm_channels").
+		Where(squirrel.Eq{"user_id": userId})
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	err = e.c.SelectContext(ctx, &items, raw, args...)
+	if errors.Is(err, sql.ErrNoRows) {
+		return []model.GroupDMChannel{}, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("get group dm channels for user error: %w", err)
+	}
+	return items, nil
+}

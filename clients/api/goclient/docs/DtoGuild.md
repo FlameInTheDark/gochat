@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Icon** | Pointer to **int32** | Icon ID | [optional] 
+**Icon** | Pointer to [**DtoIcon**](DtoIcon.md) |  | [optional] 
 **Id** | Pointer to **int32** | Guild ID | [optional] 
 **Name** | Pointer to **string** | Guild Name | [optional] 
 **Owner** | Pointer to **int32** | Owner ID | [optional] 
@@ -32,20 +32,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetIcon
 
-`func (o *DtoGuild) GetIcon() int32`
+`func (o *DtoGuild) GetIcon() DtoIcon`
 
 GetIcon returns the Icon field if non-nil, zero value otherwise.
 
 ### GetIconOk
 
-`func (o *DtoGuild) GetIconOk() (*int32, bool)`
+`func (o *DtoGuild) GetIconOk() (*DtoIcon, bool)`
 
 GetIconOk returns a tuple with the Icon field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetIcon
 
-`func (o *DtoGuild) SetIcon(v int32)`
+`func (o *DtoGuild) SetIcon(v DtoIcon)`
 
 SetIcon sets Icon field to given value.
 

@@ -4,9 +4,11 @@ base_url: "http://example.com"
 
 # API
 swagger: true
+api_log: true
+server_address: ":3100"
 rate_limit_time: 1
 rate_limit_requests: 10
-server_address: ":3100"
+idempotency_storage_lifetime: 10 # seconds
 
 # Auth
 auth_secret: "change_me_before_use_it_in_production"
@@ -18,13 +20,9 @@ cluster_keyspace: "gochat"
 # Redis
 keydb: "keydb:6379"
 
-# S3
-s3_endpoint: minio:9000
-s3_access_key_id: lF0b7V15OZCv2eGggCg5
-s3_secret_access_key: 55ug80hPgx4nFPoFJXvwBHns1XwXmZrcKli8UHoz
-
 # PostgreSQL
 pg_dsn: "host=citus-master port=5432 user=postgres dbname=gochat sslmode=disable"
+pg_retries: 5
 
 # OpenSearch
 os_insecure_skip_verify: true
@@ -35,3 +33,24 @@ os_password: "CustOM-Pa55w0Rd"
 # NATS
 nats_conn_string: "nats://nats:4222"
 indexer_nats_conn_string: "nats://indexer-nats:4222"
+
+# Uploads / Attachments
+upload_limit: 50000000 # bytes
+attachment_ttl_minutes: 10
+
+voice_region: global # default region id
+voice_regions:
+  - id: global
+    name: Global
+  - id: eu
+    name: Europe (Frankfurt)
+  - id: us-east
+    name: US East (Ashburn)
+
+# Discovery (required by API to select SFU routes)
+etcd_endpoints:
+  - "http://etcd:2379"
+etcd_prefix: "/gochat/sfu"
+# Optional etcd auth (recommended in production)
+etcd_username: "root"
+etcd_password: "changeme"

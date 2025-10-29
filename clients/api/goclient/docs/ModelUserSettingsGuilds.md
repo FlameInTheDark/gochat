@@ -7,7 +7,6 @@ Name | Type | Description | Notes
 **GuildId** | Pointer to **int32** |  | [optional] 
 **Notifications** | Pointer to [**ModelUserSettingsNotifications**](ModelUserSettingsNotifications.md) |  | [optional] 
 **Position** | Pointer to **int32** |  | [optional] 
-**ReadStates** | Pointer to [**[]ModelGuildChannelReadState**](ModelGuildChannelReadState.md) |  | [optional] 
 **SelectedChannel** | Pointer to **int32** |  | [optional] 
 
 ## Methods
@@ -103,31 +102,6 @@ SetPosition sets Position field to given value.
 `func (o *ModelUserSettingsGuilds) HasPosition() bool`
 
 HasPosition returns a boolean if a field has been set.
-
-### GetReadStates
-
-`func (o *ModelUserSettingsGuilds) GetReadStates() []ModelGuildChannelReadState`
-
-GetReadStates returns the ReadStates field if non-nil, zero value otherwise.
-
-### GetReadStatesOk
-
-`func (o *ModelUserSettingsGuilds) GetReadStatesOk() (*[]ModelGuildChannelReadState, bool)`
-
-GetReadStatesOk returns a tuple with the ReadStates field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetReadStates
-
-`func (o *ModelUserSettingsGuilds) SetReadStates(v []ModelGuildChannelReadState)`
-
-SetReadStates sets ReadStates field to given value.
-
-### HasReadStates
-
-`func (o *ModelUserSettingsGuilds) HasReadStates() bool`
-
-HasReadStates returns a boolean if a field has been set.
 
 ### GetSelectedChannel
 

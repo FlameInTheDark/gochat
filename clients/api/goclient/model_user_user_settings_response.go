@@ -20,8 +20,13 @@ var _ MappedNullable = &UserUserSettingsResponse{}
 
 // UserUserSettingsResponse struct for UserUserSettingsResponse
 type UserUserSettingsResponse struct {
-	Settings *ModelUserSettingsData `json:"settings,omitempty"`
-	Version  *int32                 `json:"version,omitempty"`
+	ChannelMentions    map[string][]ModelChannelMention `json:"channel_mentions,omitempty"`
+	Guilds             []DtoGuild                       `json:"guilds,omitempty"`
+	GuildsLastMessages map[string]map[string]int32      `json:"guilds_last_messages,omitempty"`
+	Mentions           map[string][]ModelMention        `json:"mentions,omitempty"`
+	ReadStates         map[string]int32                 `json:"read_states,omitempty"`
+	Settings           *ModelUserSettingsData           `json:"settings,omitempty"`
+	Version            *int32                           `json:"version,omitempty"`
 }
 
 // NewUserUserSettingsResponse instantiates a new UserUserSettingsResponse object
@@ -39,6 +44,166 @@ func NewUserUserSettingsResponse() *UserUserSettingsResponse {
 func NewUserUserSettingsResponseWithDefaults() *UserUserSettingsResponse {
 	this := UserUserSettingsResponse{}
 	return &this
+}
+
+// GetChannelMentions returns the ChannelMentions field value if set, zero value otherwise.
+func (o *UserUserSettingsResponse) GetChannelMentions() map[string][]ModelChannelMention {
+	if o == nil || IsNil(o.ChannelMentions) {
+		var ret map[string][]ModelChannelMention
+		return ret
+	}
+	return o.ChannelMentions
+}
+
+// GetChannelMentionsOk returns a tuple with the ChannelMentions field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserUserSettingsResponse) GetChannelMentionsOk() (map[string][]ModelChannelMention, bool) {
+	if o == nil || IsNil(o.ChannelMentions) {
+		return map[string][]ModelChannelMention{}, false
+	}
+	return o.ChannelMentions, true
+}
+
+// HasChannelMentions returns a boolean if a field has been set.
+func (o *UserUserSettingsResponse) HasChannelMentions() bool {
+	if o != nil && !IsNil(o.ChannelMentions) {
+		return true
+	}
+
+	return false
+}
+
+// SetChannelMentions gets a reference to the given map[string][]ModelChannelMention and assigns it to the ChannelMentions field.
+func (o *UserUserSettingsResponse) SetChannelMentions(v map[string][]ModelChannelMention) {
+	o.ChannelMentions = v
+}
+
+// GetGuilds returns the Guilds field value if set, zero value otherwise.
+func (o *UserUserSettingsResponse) GetGuilds() []DtoGuild {
+	if o == nil || IsNil(o.Guilds) {
+		var ret []DtoGuild
+		return ret
+	}
+	return o.Guilds
+}
+
+// GetGuildsOk returns a tuple with the Guilds field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserUserSettingsResponse) GetGuildsOk() ([]DtoGuild, bool) {
+	if o == nil || IsNil(o.Guilds) {
+		return nil, false
+	}
+	return o.Guilds, true
+}
+
+// HasGuilds returns a boolean if a field has been set.
+func (o *UserUserSettingsResponse) HasGuilds() bool {
+	if o != nil && !IsNil(o.Guilds) {
+		return true
+	}
+
+	return false
+}
+
+// SetGuilds gets a reference to the given []DtoGuild and assigns it to the Guilds field.
+func (o *UserUserSettingsResponse) SetGuilds(v []DtoGuild) {
+	o.Guilds = v
+}
+
+// GetGuildsLastMessages returns the GuildsLastMessages field value if set, zero value otherwise.
+func (o *UserUserSettingsResponse) GetGuildsLastMessages() map[string]map[string]int32 {
+	if o == nil || IsNil(o.GuildsLastMessages) {
+		var ret map[string]map[string]int32
+		return ret
+	}
+	return o.GuildsLastMessages
+}
+
+// GetGuildsLastMessagesOk returns a tuple with the GuildsLastMessages field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserUserSettingsResponse) GetGuildsLastMessagesOk() (map[string]map[string]int32, bool) {
+	if o == nil || IsNil(o.GuildsLastMessages) {
+		return map[string]map[string]int32{}, false
+	}
+	return o.GuildsLastMessages, true
+}
+
+// HasGuildsLastMessages returns a boolean if a field has been set.
+func (o *UserUserSettingsResponse) HasGuildsLastMessages() bool {
+	if o != nil && !IsNil(o.GuildsLastMessages) {
+		return true
+	}
+
+	return false
+}
+
+// SetGuildsLastMessages gets a reference to the given map[string]map[string]int32 and assigns it to the GuildsLastMessages field.
+func (o *UserUserSettingsResponse) SetGuildsLastMessages(v map[string]map[string]int32) {
+	o.GuildsLastMessages = v
+}
+
+// GetMentions returns the Mentions field value if set, zero value otherwise.
+func (o *UserUserSettingsResponse) GetMentions() map[string][]ModelMention {
+	if o == nil || IsNil(o.Mentions) {
+		var ret map[string][]ModelMention
+		return ret
+	}
+	return o.Mentions
+}
+
+// GetMentionsOk returns a tuple with the Mentions field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserUserSettingsResponse) GetMentionsOk() (map[string][]ModelMention, bool) {
+	if o == nil || IsNil(o.Mentions) {
+		return map[string][]ModelMention{}, false
+	}
+	return o.Mentions, true
+}
+
+// HasMentions returns a boolean if a field has been set.
+func (o *UserUserSettingsResponse) HasMentions() bool {
+	if o != nil && !IsNil(o.Mentions) {
+		return true
+	}
+
+	return false
+}
+
+// SetMentions gets a reference to the given map[string][]ModelMention and assigns it to the Mentions field.
+func (o *UserUserSettingsResponse) SetMentions(v map[string][]ModelMention) {
+	o.Mentions = v
+}
+
+// GetReadStates returns the ReadStates field value if set, zero value otherwise.
+func (o *UserUserSettingsResponse) GetReadStates() map[string]int32 {
+	if o == nil || IsNil(o.ReadStates) {
+		var ret map[string]int32
+		return ret
+	}
+	return o.ReadStates
+}
+
+// GetReadStatesOk returns a tuple with the ReadStates field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserUserSettingsResponse) GetReadStatesOk() (map[string]int32, bool) {
+	if o == nil || IsNil(o.ReadStates) {
+		return map[string]int32{}, false
+	}
+	return o.ReadStates, true
+}
+
+// HasReadStates returns a boolean if a field has been set.
+func (o *UserUserSettingsResponse) HasReadStates() bool {
+	if o != nil && !IsNil(o.ReadStates) {
+		return true
+	}
+
+	return false
+}
+
+// SetReadStates gets a reference to the given map[string]int32 and assigns it to the ReadStates field.
+func (o *UserUserSettingsResponse) SetReadStates(v map[string]int32) {
+	o.ReadStates = v
 }
 
 // GetSettings returns the Settings field value if set, zero value otherwise.
@@ -115,6 +280,21 @@ func (o UserUserSettingsResponse) MarshalJSON() ([]byte, error) {
 
 func (o UserUserSettingsResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.ChannelMentions) {
+		toSerialize["channel_mentions"] = o.ChannelMentions
+	}
+	if !IsNil(o.Guilds) {
+		toSerialize["guilds"] = o.Guilds
+	}
+	if !IsNil(o.GuildsLastMessages) {
+		toSerialize["guilds_last_messages"] = o.GuildsLastMessages
+	}
+	if !IsNil(o.Mentions) {
+		toSerialize["mentions"] = o.Mentions
+	}
+	if !IsNil(o.ReadStates) {
+		toSerialize["read_states"] = o.ReadStates
+	}
 	if !IsNil(o.Settings) {
 		toSerialize["settings"] = o.Settings
 	}
