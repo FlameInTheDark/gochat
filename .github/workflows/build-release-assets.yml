@@ -6,7 +6,7 @@ on:
     types: [published]
 
 permissions:
-  contents: read # Only read access required to checkout code
+  contents: write # Need write to upload assets to a release
   packages: write # Needed to push container images to GHCR
 
 jobs:
@@ -222,11 +222,12 @@ jobs:
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          fail_on_unmatched_files: true
           files: |
             dist/sfu_linux_amd64
             dist/sfu_linux_arm64
             dist/gctools_linux_amd64
             dist/gctools_linux_arm64
             dist/SHA256SUMS.txt
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
