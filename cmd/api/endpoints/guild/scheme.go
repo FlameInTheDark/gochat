@@ -46,8 +46,6 @@ const (
 	ErrUnableToCreateChannelGroup       = "unable to create channel group"
 	ErrUnableToGetChannel               = "unable to get channel"
 	ErrUnableToUpdateChannel            = "unable to update channel"
-	ErrUnableToSetParentAsSelf          = "unable to set parent as self"
-	ErrUnableToSetParentForCategory     = "unable to set parent for category"
 	ErrNotAMember                       = "not a member"
 	ErrUnableToGetReadState             = "unable to get read state"
 	ErrUnableToSetReadState             = "unable to set read state"
@@ -189,8 +187,8 @@ func (r CreateGuildChannelRequest) Validate() error {
 }
 
 type ChannelOrder struct {
-	Id       int64 `json:"id" example:"2230469276416868352"` // Channel ID.
-	Position int   `json:"position" example:"4"`             // New channel position.
+	Id       int64 `json:"id,string" example:"2230469276416868352"` // Channel ID.
+	Position int   `json:"position" example:"4"`                    // New channel position.
 }
 
 type PatchGuildChannelOrderRequest struct {
@@ -222,10 +220,9 @@ func (r PatchGuildChannelOrderRequest) Validate() error {
 }
 
 type PatchGuildChannelRequest struct {
-	Name     *string `json:"name,omitempty" example:"new-channel-name"`         // Channel name.
-	ParentId *int64  `json:"parent_id,omitempty" example:"2230469276416868352"` // Parent channel ID. A Parent channel can only be a category channel.
-	Private  *bool   `json:"private,omitempty" default:"false"`                 // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
-	Topic    *string `json:"topic,omitempty" example:"Just a channel topic"`    // Channel topic.
+	Name    *string `json:"name,omitempty" example:"new-channel-name"`      // Channel name.
+	Private *bool   `json:"private,omitempty" default:"false"`              // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
+	Topic   *string `json:"topic,omitempty" example:"Just a channel topic"` // Channel topic.
 }
 
 func (r PatchGuildChannelRequest) Validate() error {
@@ -236,9 +233,6 @@ func (r PatchGuildChannelRequest) Validate() error {
 				validation.RuneLength(0, 100).Error(ErrChannelNameTooLong),
 				validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
 			),
-		),
-		validation.Field(&r.ParentId, validation.When(r.ParentId != nil,
-			validation.Min(int64(1)).Error(ErrParentIdInvalid)),
 		),
 	)
 }
@@ -308,6 +302,7 @@ func channelModelToDTO(c *model.Channel, guildId *int64, position int, roles []i
 		CreatedAt:     c.CreatedAt,
 		Private:       c.Private,
 		Roles:         roles,
+		VoiceRegion:   c.VoiceRegion,
 		LastMessageId: c.LastMessage,
 	}
 }
@@ -486,6 +481,7 @@ type MoveMemberResponse struct {
 // voiceRouteBinding is the cached binding of a channel to a specific SFU instance
 // stored under key `voice:route:{channel}`.
 type voiceRouteBinding struct {
-	ID  string `json:"id"`
-	URL string `json:"url"`
+	ID     string `json:"id"`
+	URL    string `json:"url"`
+	Region string `json:"region,omitempty"`
 }

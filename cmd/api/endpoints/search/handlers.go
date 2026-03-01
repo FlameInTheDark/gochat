@@ -59,7 +59,7 @@ func (e *entity) Search(c *fiber.Ctx) error {
 		ChannelId: req.ChannelId,
 		UserId:    req.AuthorId,
 		Content:   req.Content,
-		Mentions:  req.Mentions,
+		Mentions:  []int64(req.Mentions),
 		Has:       req.Has,
 		From:      req.Page * 10,
 	})

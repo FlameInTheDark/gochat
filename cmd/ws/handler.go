@@ -18,17 +18,40 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/presence"
 )
 
+// wsConn implements hub.Conn for a single WebSocket connection.
+// It wraps the writer pump's outbound channel so the hub can deliver
+// messages without blocking.
+type wsConn struct {
+	id  string
+	out chan<- outMsg
+}
+
+func (w *wsConn) Send(data []byte) {
+	// Copy the data so the hub's buffer can be reused.
+	cp := make([]byte, len(data))
+	copy(cp, data)
+	// Non-blocking: drop the message if the connection's buffer is full.
+	select {
+	case w.out <- outMsg{kind: 1, data: cp}:
+	default:
+		// Slow consumer — message dropped. The ping/heartbeat timeout
+		// will eventually evict this connection.
+	}
+}
+
+// outMsg is an internal message sent through the writer pump channel.
+type outMsg struct {
+	kind int
+	data []byte
+	v    any
+	done chan error
+}
+
 func (a *App) wsHandler(c *websocket.Conn) {
 	// Track active clients
 	if a.wsActive != nil {
 		a.wsActive.Inc()
 		defer a.wsActive.Dec()
-	}
-	type outMsg struct {
-		kind int
-		data []byte
-		v    any
-		done chan error
 	}
 	out := make(chan outMsg, 256)
 	writerClosed := make(chan struct{})
@@ -113,19 +136,6 @@ func (a *App) wsHandler(c *websocket.Conn) {
 	var closed int32
 	var closeOnce sync.Once
 	errWriterClosed := errors.New("ws writer closed")
-	emitText := func(b []byte) error {
-		if atomic.LoadInt32(&closed) == 1 {
-			return errWriterClosed
-		}
-		done := make(chan error, 1)
-		select {
-		case out <- outMsg{kind: 1, data: b, done: done}:
-			return <-done
-		case <-writerClosed:
-			atomic.StoreInt32(&closed, 1)
-			return errWriterClosed
-		}
-	}
 	sendJSON := func(v any) error {
 		if atomic.LoadInt32(&closed) == 1 {
 			return errWriterClosed
@@ -158,7 +168,8 @@ func (a *App) wsHandler(c *websocket.Conn) {
 		}
 	}()
 
-	subs := subscriber.New(emitText, a.natsConn)
+	conn := &wsConn{id: c.RemoteAddr().String(), out: out}
+	subs := subscriber.New(a.hub, conn)
 	defer func() {
 		cerr := subs.Close()
 		if cerr != nil {

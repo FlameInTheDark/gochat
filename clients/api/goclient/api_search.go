@@ -57,7 +57,7 @@ func (a *SearchAPIService) SearchGuildIdMessagesPost(ctx context.Context, guildI
 
 // Execute executes the request
 //
-//	@return []SearchMessageSearchResponse
+//	@return	[]SearchMessageSearchResponse
 func (a *SearchAPIService) SearchGuildIdMessagesPostExecute(r ApiSearchGuildIdMessagesPostRequest) ([]SearchMessageSearchResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

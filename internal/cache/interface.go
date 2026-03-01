@@ -15,6 +15,9 @@ type Cache interface {
 	GetInt64(ctx context.Context, key string) (int64, error)
 	SetJSON(ctx context.Context, key string, val interface{}) error
 	SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64) error
+	// SetTimedJSONNX marshals val and sets it only if the key does not already exist (SET NX).
+	// Returns true if the key was set, false if it already existed.
+	SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64) (bool, error)
 	GetJSON(ctx context.Context, key string, v interface{}) error
 	HGet(ctx context.Context, key, field string) (string, error)
 	HSet(ctx context.Context, key, field, value string) error

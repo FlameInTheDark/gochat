@@ -224,54 +224,33 @@ func (e *Entity) SetChannelParent(ctx context.Context, id int64, parent *int64) 
 }
 
 func (e *Entity) SetChannelParentBulk(ctx context.Context, id []int64, parent *int64) error {
-	tx, err := e.c.Beginx()
-	if err != nil {
-		return fmt.Errorf("unable to start transaction: %w", err)
-	}
-
 	q := squirrel.Update("channels").
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{"id": id}).
 		Set("parent_id", parent)
 	raw, args, err := q.ToSql()
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = tx.ExecContext(ctx, raw, args...)
+	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("unable to set channel parent bulk: %w", err)
-	}
-	err = tx.Commit()
-	if err != nil {
-		return fmt.Errorf("unable to commit transaction: %w", err)
 	}
 	return nil
 }
 
 func (e *Entity) SetLastMessage(ctx context.Context, id, lastMessage int64) error {
-	tx, err := e.c.Beginx()
-	if err != nil {
-		return fmt.Errorf("unable to start transaction: %w", err)
-	}
 	q := squirrel.Update("channels").
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{"id": id}).
 		Set("last_message", lastMessage)
 	raw, args, err := q.ToSql()
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = tx.ExecContext(ctx, raw, args...)
+	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("unable to set channel last message: %w", err)
-	}
-	err = tx.Commit()
-	if err != nil {
-		return fmt.Errorf("unable to commit transaction: %w", err)
 	}
 	return nil
 }

@@ -4,7 +4,8 @@ import "encoding/json"
 
 // VoiceRebind notifies clients in a voice channel to reconnect (route changed).
 type VoiceRebind struct {
-	Channel int64 `json:"channel"`
+	Channel  int64 `json:"channel"`
+	JitterMs int   `json:"jitter_ms,omitempty"`
 }
 
 func (m *VoiceRebind) EventType() *EventType    { t := EventTypeRTCServerRebind; return &t }

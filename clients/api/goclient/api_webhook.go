@@ -216,7 +216,7 @@ func (a *WebhookAPIService) WebhookSfuChannelAlivePost(ctx context.Context) ApiW
 
 // Execute executes the request
 //
-//	@return map[string]interface{}
+//	@return	map[string]interface{}
 func (a *WebhookAPIService) WebhookSfuChannelAlivePostExecute(r ApiWebhookSfuChannelAlivePostRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -547,7 +547,7 @@ func (a *WebhookAPIService) WebhookSfuVoiceJoinPost(ctx context.Context) ApiWebh
 
 // Execute executes the request
 //
-//	@return map[string]interface{}
+//	@return	map[string]interface{}
 func (a *WebhookAPIService) WebhookSfuVoiceJoinPostExecute(r ApiWebhookSfuVoiceJoinPostRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -724,7 +724,7 @@ func (a *WebhookAPIService) WebhookSfuVoiceLeavePost(ctx context.Context) ApiWeb
 
 // Execute executes the request
 //
-//	@return map[string]interface{}
+//	@return	map[string]interface{}
 func (a *WebhookAPIService) WebhookSfuVoiceLeavePostExecute(r ApiWebhookSfuVoiceLeavePostRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

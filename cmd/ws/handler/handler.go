@@ -66,6 +66,10 @@ type Handler struct {
 	closer      func()
 	log         *slog.Logger
 	cache       *kvs.Cache
+
+	// lastPresenceTouch throttles TouchSessionTTL calls to avoid
+	// redundant Redis round-trips on every heartbeat.
+	lastPresenceTouch time.Time
 }
 
 func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v any) error, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger, nats *nats.Conn, pstore *presence.Store, cache *kvs.Cache) *Handler {
@@ -114,7 +118,9 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			// add grace to tolerate network jitter (10s)
 			h.hTimer.Reset(time.Millisecond * time.Duration(h.hbTimeout+10000))
 			// Refresh this session TTL: heartbeat_interval * 2
-			if h.user != nil && h.pstore != nil && h.sessionID != "" && h.presenceSet {
+			// Throttled: skip if we touched within the last 10s.
+			if h.user != nil && h.pstore != nil && h.sessionID != "" && h.presenceSet &&
+				time.Since(h.lastPresenceTouch) > 10*time.Second {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 				// TTL expects seconds
 				ttl := h.hbTimeout * 2 / 1000
@@ -123,6 +129,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 				}
 				_ = h.pstore.TouchSessionTTL(ctx, h.user.Id, h.sessionID, ttl)
 				cancel()
+				h.lastPresenceTouch = time.Now()
 			}
 			h.lastEventId = m.LastEventId
 		}

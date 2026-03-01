@@ -62,7 +62,7 @@ func (a *UploadAPIService) UploadAttachmentsChannelIdAttachmentIdPost(ctx contex
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *UploadAPIService) UploadAttachmentsChannelIdAttachmentIdPostExecute(r ApiUploadAttachmentsChannelIdAttachmentIdPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -247,7 +247,7 @@ func (a *UploadAPIService) UploadAvatarsUserIdAvatarIdPost(ctx context.Context, 
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *UploadAPIService) UploadAvatarsUserIdAvatarIdPostExecute(r ApiUploadAvatarsUserIdAvatarIdPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -443,7 +443,7 @@ func (a *UploadAPIService) UploadIconsGuildIdIconIdPost(ctx context.Context, gui
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *UploadAPIService) UploadIconsGuildIdIconIdPostExecute(r ApiUploadIconsGuildIdIconIdPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

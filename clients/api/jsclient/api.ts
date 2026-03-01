@@ -494,11 +494,19 @@ export interface DtoChannel {
     'topic'?: string;
     /**
      * Channel type
-     * @type {number}
+     * @type {ModelChannelType}
      * @memberof DtoChannel
      */
-    'type'?: number;
+    'type'?: ModelChannelType;
+    /**
+     * Voice channel region
+     * @type {string}
+     * @memberof DtoChannel
+     */
+    'voice_region'?: string;
 }
+
+
 /**
  * 
  * @export
@@ -506,7 +514,7 @@ export interface DtoChannel {
  */
 export interface DtoGuild {
     /**
-     * 
+     * Icon metadata
      * @type {DtoIcon}
      * @memberof DtoGuild
      */
@@ -586,7 +594,7 @@ export interface DtoGuildInvite {
     'id'?: number;
 }
 /**
- * Icon metadata
+ * 
  * @export
  * @interface DtoIcon
  */
@@ -715,7 +723,7 @@ export interface DtoMember {
      */
     'roles'?: Array<number>;
     /**
-     * 
+     * Guild member data
      * @type {DtoUser}
      * @memberof DtoMember
      */
@@ -814,7 +822,7 @@ export interface DtoRole {
     'permissions'?: number;
 }
 /**
- * Guild member data
+ * 
  * @export
  * @interface DtoUser
  */
@@ -964,11 +972,13 @@ export interface GuildCreateGuildChannelRequest {
     'private'?: boolean;
     /**
      * Channel type
-     * @type {number}
+     * @type {ModelChannelType}
      * @memberof GuildCreateGuildChannelRequest
      */
-    'type'?: number;
+    'type'?: ModelChannelType;
 }
+
+
 /**
  * 
  * @export
@@ -1145,12 +1155,6 @@ export interface GuildPatchGuildChannelRequest {
      * @memberof GuildPatchGuildChannelRequest
      */
     'name'?: string;
-    /**
-     * Parent channel ID. A Parent channel can only be a category channel.
-     * @type {number}
-     * @memberof GuildPatchGuildChannelRequest
-     */
-    'parent_id'?: number;
     /**
      * Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
      * @type {boolean}
@@ -1354,34 +1358,34 @@ export interface MessageUploadAttachmentRequest {
 export interface ModelChannelMention {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ModelChannelMention
      */
-    'authorId'?: number;
+    'authorId'?: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ModelChannelMention
      */
-    'channelId'?: number;
+    'channelId'?: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ModelChannelMention
      */
-    'guildId'?: number;
+    'guildId'?: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ModelChannelMention
      */
-    'messageId'?: number;
+    'messageId'?: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ModelChannelMention
      */
-    'roleId'?: number;
+    'roleId'?: string;
     /**
      * 
      * @type {number}
@@ -1389,6 +1393,42 @@ export interface ModelChannelMention {
      */
     'type'?: number;
 }
+/**
+ * 
+ * @export
+ * @enum {number}
+ */
+
+export const ModelChannelType = {
+    /**
+    * Default text channel in guild
+    */
+    ChannelTypeGuild: 0,
+    /**
+    * Voice channel in guild
+    */
+    ChannelTypeGuildVoice: 1,
+    /**
+    * Category channel in guild
+    */
+    ChannelTypeGuildCategory: 2,
+    /**
+    * DM channel. Can&#39;t be created in Guild
+    */
+    ChannelTypeDM: 3,
+    /**
+    * Group DM channel. Can&#39;t be created in Guild&#39;
+    */
+    ChannelTypeGroupDM: 4,
+    /**
+    * Thread channel
+    */
+    ChannelTypeThread: 5
+} as const;
+
+export type ModelChannelType = typeof ModelChannelType[keyof typeof ModelChannelType];
+
+
 /**
  * 
  * @export
@@ -1458,29 +1498,44 @@ export interface ModelDevices {
 export interface ModelMention {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ModelMention
      */
-    'authorId'?: number;
+    'authorId'?: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ModelMention
      */
-    'channelId'?: number;
+    'channelId'?: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ModelMention
      */
-    'messageId'?: number;
+    'messageId'?: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ModelMention
      */
-    'userId'?: number;
+    'userId'?: string;
 }
+/**
+ * 
+ * @export
+ * @enum {number}
+ */
+
+export const ModelNotificationsType = {
+    NotificationsAll: 0,
+    NotificationsMentions: 1,
+    NotificationsNone: 2
+} as const;
+
+export type ModelNotificationsType = typeof ModelNotificationsType[keyof typeof ModelNotificationsType];
+
+
 /**
  * 
  * @export
@@ -1736,11 +1791,13 @@ export interface ModelUserSettingsNotifications {
     'muted_until'?: string;
     /**
      * 
-     * @type {number}
+     * @type {ModelNotificationsType}
      * @memberof ModelUserSettingsNotifications
      */
-    'notifications'?: number;
+    'notifications'?: ModelNotificationsType;
 }
+
+
 /**
  * 
  * @export
@@ -2092,10 +2149,10 @@ export interface UserUserSettingsResponse {
     'guilds'?: Array<DtoGuild>;
     /**
      * 
-     * @type {{ [key: string]: { [key: string]: number; }; }}
+     * @type {{ [key: string]: { [key: string]: string; }; }}
      * @memberof UserUserSettingsResponse
      */
-    'guilds_last_messages'?: { [key: string]: { [key: string]: number; }; };
+    'guilds_last_messages'?: { [key: string]: { [key: string]: string; }; };
     /**
      * 
      * @type {{ [key: string]: Array<ModelMention>; }}
@@ -2104,10 +2161,10 @@ export interface UserUserSettingsResponse {
     'mentions'?: { [key: string]: Array<ModelMention>; };
     /**
      * 
-     * @type {{ [key: string]: number; }}
+     * @type {{ [key: string]: string; }}
      * @memberof UserUserSettingsResponse
      */
-    'read_states'?: { [key: string]: number; };
+    'read_states'?: { [key: string]: string; };
     /**
      * 
      * @type {ModelUserSettingsData}
@@ -2163,13 +2220,13 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Confirmation
-         * @param {AuthConfirmationRequest} authConfirmationRequest Login data
+         * @param {AuthConfirmationRequest} request Login data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        authConfirmationPost: async (authConfirmationRequest: AuthConfirmationRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'authConfirmationRequest' is not null or undefined
-            assertParamExists('authConfirmationPost', 'authConfirmationRequest', authConfirmationRequest)
+        authConfirmationPost: async (request: AuthConfirmationRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('authConfirmationPost', 'request', request)
             const localVarPath = `/auth/confirmation`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -2189,7 +2246,7 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(authConfirmationRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2199,13 +2256,13 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Authentication
-         * @param {AuthLoginRequest} authLoginRequest Login data
+         * @param {AuthLoginRequest} request Login data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        authLoginPost: async (authLoginRequest: AuthLoginRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'authLoginRequest' is not null or undefined
-            assertParamExists('authLoginPost', 'authLoginRequest', authLoginRequest)
+        authLoginPost: async (request: AuthLoginRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('authLoginPost', 'request', request)
             const localVarPath = `/auth/login`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -2225,7 +2282,7 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(authLoginRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2235,13 +2292,13 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Password Recovery
-         * @param {AuthPasswordRecoveryRequest} authPasswordRecoveryRequest Email for password recovery
+         * @param {AuthPasswordRecoveryRequest} request Email for password recovery
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        authRecoveryPost: async (authPasswordRecoveryRequest: AuthPasswordRecoveryRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'authPasswordRecoveryRequest' is not null or undefined
-            assertParamExists('authRecoveryPost', 'authPasswordRecoveryRequest', authPasswordRecoveryRequest)
+        authRecoveryPost: async (request: AuthPasswordRecoveryRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('authRecoveryPost', 'request', request)
             const localVarPath = `/auth/recovery`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -2261,7 +2318,7 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(authPasswordRecoveryRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2307,13 +2364,13 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Registration
-         * @param {AuthRegisterRequest} authRegisterRequest Login data
+         * @param {AuthRegisterRequest} request Login data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        authRegistrationPost: async (authRegisterRequest: AuthRegisterRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'authRegisterRequest' is not null or undefined
-            assertParamExists('authRegistrationPost', 'authRegisterRequest', authRegisterRequest)
+        authRegistrationPost: async (request: AuthRegisterRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('authRegistrationPost', 'request', request)
             const localVarPath = `/auth/registration`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -2333,7 +2390,7 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(authRegisterRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2343,13 +2400,13 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Password Reset
-         * @param {AuthPasswordResetRequest} authPasswordResetRequest Password reset data
+         * @param {AuthPasswordResetRequest} request Password reset data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        authResetPost: async (authPasswordResetRequest: AuthPasswordResetRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'authPasswordResetRequest' is not null or undefined
-            assertParamExists('authResetPost', 'authPasswordResetRequest', authPasswordResetRequest)
+        authResetPost: async (request: AuthPasswordResetRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('authResetPost', 'request', request)
             const localVarPath = `/auth/reset`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -2369,7 +2426,7 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(authPasswordResetRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2389,12 +2446,12 @@ export const AuthApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Confirmation
-         * @param {AuthConfirmationRequest} authConfirmationRequest Login data
+         * @param {AuthConfirmationRequest} request Login data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async authConfirmationPost(authConfirmationRequest: AuthConfirmationRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.authConfirmationPost(authConfirmationRequest, options);
+        async authConfirmationPost(request: AuthConfirmationRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authConfirmationPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AuthApi.authConfirmationPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -2402,12 +2459,12 @@ export const AuthApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Authentication
-         * @param {AuthLoginRequest} authLoginRequest Login data
+         * @param {AuthLoginRequest} request Login data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async authLoginPost(authLoginRequest: AuthLoginRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthLoginResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.authLoginPost(authLoginRequest, options);
+        async authLoginPost(request: AuthLoginRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthLoginResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authLoginPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AuthApi.authLoginPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -2415,12 +2472,12 @@ export const AuthApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Password Recovery
-         * @param {AuthPasswordRecoveryRequest} authPasswordRecoveryRequest Email for password recovery
+         * @param {AuthPasswordRecoveryRequest} request Email for password recovery
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async authRecoveryPost(authPasswordRecoveryRequest: AuthPasswordRecoveryRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.authRecoveryPost(authPasswordRecoveryRequest, options);
+        async authRecoveryPost(request: AuthPasswordRecoveryRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authRecoveryPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AuthApi.authRecoveryPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -2441,12 +2498,12 @@ export const AuthApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Registration
-         * @param {AuthRegisterRequest} authRegisterRequest Login data
+         * @param {AuthRegisterRequest} request Login data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async authRegistrationPost(authRegisterRequest: AuthRegisterRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.authRegistrationPost(authRegisterRequest, options);
+        async authRegistrationPost(request: AuthRegisterRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authRegistrationPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AuthApi.authRegistrationPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -2454,12 +2511,12 @@ export const AuthApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Password Reset
-         * @param {AuthPasswordResetRequest} authPasswordResetRequest Password reset data
+         * @param {AuthPasswordResetRequest} request Password reset data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async authResetPost(authPasswordResetRequest: AuthPasswordResetRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.authResetPost(authPasswordResetRequest, options);
+        async authResetPost(request: AuthPasswordResetRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authResetPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AuthApi.authResetPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -2482,7 +2539,7 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         authConfirmationPost(requestParameters: AuthApiAuthConfirmationPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.authConfirmationPost(requestParameters.authConfirmationRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.authConfirmationPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -2492,7 +2549,7 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         authLoginPost(requestParameters: AuthApiAuthLoginPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse> {
-            return localVarFp.authLoginPost(requestParameters.authLoginRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.authLoginPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -2502,7 +2559,7 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         authRecoveryPost(requestParameters: AuthApiAuthRecoveryPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.authRecoveryPost(requestParameters.authPasswordRecoveryRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.authRecoveryPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -2522,7 +2579,7 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         authRegistrationPost(requestParameters: AuthApiAuthRegistrationPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.authRegistrationPost(requestParameters.authRegisterRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.authRegistrationPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -2532,7 +2589,7 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         authResetPost(requestParameters: AuthApiAuthResetPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.authResetPost(requestParameters.authPasswordResetRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.authResetPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -2616,7 +2673,7 @@ export interface AuthApiAuthConfirmationPostRequest {
      * @type {AuthConfirmationRequest}
      * @memberof AuthApiAuthConfirmationPost
      */
-    readonly authConfirmationRequest: AuthConfirmationRequest
+    readonly request: AuthConfirmationRequest
 }
 
 /**
@@ -2630,7 +2687,7 @@ export interface AuthApiAuthLoginPostRequest {
      * @type {AuthLoginRequest}
      * @memberof AuthApiAuthLoginPost
      */
-    readonly authLoginRequest: AuthLoginRequest
+    readonly request: AuthLoginRequest
 }
 
 /**
@@ -2644,7 +2701,7 @@ export interface AuthApiAuthRecoveryPostRequest {
      * @type {AuthPasswordRecoveryRequest}
      * @memberof AuthApiAuthRecoveryPost
      */
-    readonly authPasswordRecoveryRequest: AuthPasswordRecoveryRequest
+    readonly request: AuthPasswordRecoveryRequest
 }
 
 /**
@@ -2672,7 +2729,7 @@ export interface AuthApiAuthRegistrationPostRequest {
      * @type {AuthRegisterRequest}
      * @memberof AuthApiAuthRegistrationPost
      */
-    readonly authRegisterRequest: AuthRegisterRequest
+    readonly request: AuthRegisterRequest
 }
 
 /**
@@ -2686,7 +2743,7 @@ export interface AuthApiAuthResetPostRequest {
      * @type {AuthPasswordResetRequest}
      * @memberof AuthApiAuthResetPost
      */
-    readonly authPasswordResetRequest: AuthPasswordResetRequest
+    readonly request: AuthPasswordResetRequest
 }
 
 /**
@@ -2705,7 +2762,7 @@ export class AuthApi extends BaseAPI implements AuthApiInterface {
      * @memberof AuthApi
      */
     public authConfirmationPost(requestParameters: AuthApiAuthConfirmationPostRequest, options?: RawAxiosRequestConfig) {
-        return AuthApiFp(this.configuration).authConfirmationPost(requestParameters.authConfirmationRequest, options).then((request) => request(this.axios, this.basePath));
+        return AuthApiFp(this.configuration).authConfirmationPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2717,7 +2774,7 @@ export class AuthApi extends BaseAPI implements AuthApiInterface {
      * @memberof AuthApi
      */
     public authLoginPost(requestParameters: AuthApiAuthLoginPostRequest, options?: RawAxiosRequestConfig) {
-        return AuthApiFp(this.configuration).authLoginPost(requestParameters.authLoginRequest, options).then((request) => request(this.axios, this.basePath));
+        return AuthApiFp(this.configuration).authLoginPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2729,7 +2786,7 @@ export class AuthApi extends BaseAPI implements AuthApiInterface {
      * @memberof AuthApi
      */
     public authRecoveryPost(requestParameters: AuthApiAuthRecoveryPostRequest, options?: RawAxiosRequestConfig) {
-        return AuthApiFp(this.configuration).authRecoveryPost(requestParameters.authPasswordRecoveryRequest, options).then((request) => request(this.axios, this.basePath));
+        return AuthApiFp(this.configuration).authRecoveryPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2753,7 +2810,7 @@ export class AuthApi extends BaseAPI implements AuthApiInterface {
      * @memberof AuthApi
      */
     public authRegistrationPost(requestParameters: AuthApiAuthRegistrationPostRequest, options?: RawAxiosRequestConfig) {
-        return AuthApiFp(this.configuration).authRegistrationPost(requestParameters.authRegisterRequest, options).then((request) => request(this.axios, this.basePath));
+        return AuthApiFp(this.configuration).authRegistrationPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2765,7 +2822,7 @@ export class AuthApi extends BaseAPI implements AuthApiInterface {
      * @memberof AuthApi
      */
     public authResetPost(requestParameters: AuthApiAuthResetPostRequest, options?: RawAxiosRequestConfig) {
-        return AuthApiFp(this.configuration).authResetPost(requestParameters.authPasswordResetRequest, options).then((request) => request(this.axios, this.basePath));
+        return AuthApiFp(this.configuration).authResetPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -2780,12 +2837,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Delete channel category
-         * @param {number} guildId Guild ID
-         * @param {number} categoryId Category ID (actually a channel with special type)
+         * @param {string} guildId Guild ID
+         * @param {string} categoryId Category ID (actually a channel with special type)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdCategoryCategoryIdDelete: async (guildId: number, categoryId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdCategoryCategoryIdDelete: async (guildId: string, categoryId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdCategoryCategoryIdDelete', 'guildId', guildId)
             // verify required parameter 'categoryId' is not null or undefined
@@ -2818,16 +2875,16 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Create guild channel category
-         * @param {number} guildId Guild ID
-         * @param {GuildCreateGuildChannelCategoryRequest} guildCreateGuildChannelCategoryRequest Create category data
+         * @param {string} guildId Guild ID
+         * @param {GuildCreateGuildChannelCategoryRequest} request Create category data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdCategoryPost: async (guildId: number, guildCreateGuildChannelCategoryRequest: GuildCreateGuildChannelCategoryRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdCategoryPost: async (guildId: string, request: GuildCreateGuildChannelCategoryRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdCategoryPost', 'guildId', guildId)
-            // verify required parameter 'guildCreateGuildChannelCategoryRequest' is not null or undefined
-            assertParamExists('guildGuildIdCategoryPost', 'guildCreateGuildChannelCategoryRequest', guildCreateGuildChannelCategoryRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdCategoryPost', 'request', request)
             const localVarPath = `/guild/{guild_id}/category`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -2848,7 +2905,7 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildCreateGuildChannelCategoryRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2858,12 +2915,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Delete channel
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdDelete: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdDelete: async (guildId: string, channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdDelete', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -2896,12 +2953,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get guild channel
-         * @param {number} guildId Guild id
-         * @param {number} channelId Channel id
+         * @param {string} guildId Guild id
+         * @param {string} channelId Channel id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdGet: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdGet: async (guildId: string, channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdGet', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -2934,19 +2991,19 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Change channels data
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
-         * @param {GuildPatchGuildChannelRequest} guildPatchGuildChannelRequest Request body
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
+         * @param {GuildPatchGuildChannelRequest} req Request body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdPatch: async (guildId: number, channelId: number, guildPatchGuildChannelRequest: GuildPatchGuildChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdPatch: async (guildId: string, channelId: string, req: GuildPatchGuildChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdPatch', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdPatch', 'channelId', channelId)
-            // verify required parameter 'guildPatchGuildChannelRequest' is not null or undefined
-            assertParamExists('guildGuildIdChannelChannelIdPatch', 'guildPatchGuildChannelRequest', guildPatchGuildChannelRequest)
+            // verify required parameter 'req' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdPatch', 'req', req)
             const localVarPath = `/guild/{guild_id}/channel/{channel_id}`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
                 .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
@@ -2968,7 +3025,7 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildPatchGuildChannelRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(req, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2978,11 +3035,11 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get guild channels
-         * @param {number} guildId Guild id
+         * @param {string} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelGet', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}/channel`
@@ -3012,16 +3069,16 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Change channels order
-         * @param {number} guildId Guild ID
-         * @param {GuildPatchGuildChannelOrderRequest} guildPatchGuildChannelOrderRequest Update channel order data
+         * @param {string} guildId Guild ID
+         * @param {GuildPatchGuildChannelOrderRequest} request Update channel order data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelOrderPatch: async (guildId: number, guildPatchGuildChannelOrderRequest: GuildPatchGuildChannelOrderRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelOrderPatch: async (guildId: string, request: GuildPatchGuildChannelOrderRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelOrderPatch', 'guildId', guildId)
-            // verify required parameter 'guildPatchGuildChannelOrderRequest' is not null or undefined
-            assertParamExists('guildGuildIdChannelOrderPatch', 'guildPatchGuildChannelOrderRequest', guildPatchGuildChannelOrderRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdChannelOrderPatch', 'request', request)
             const localVarPath = `/guild/{guild_id}/channel/order`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -3042,7 +3099,7 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildPatchGuildChannelOrderRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3052,16 +3109,16 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Create guild channel
-         * @param {number} guildId Guild ID
-         * @param {GuildCreateGuildChannelRequest} guildCreateGuildChannelRequest Create channel data
+         * @param {string} guildId Guild ID
+         * @param {GuildCreateGuildChannelRequest} request Create channel data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelPost: async (guildId: number, guildCreateGuildChannelRequest: GuildCreateGuildChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelPost: async (guildId: string, request: GuildCreateGuildChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelPost', 'guildId', guildId)
-            // verify required parameter 'guildCreateGuildChannelRequest' is not null or undefined
-            assertParamExists('guildGuildIdChannelPost', 'guildCreateGuildChannelRequest', guildCreateGuildChannelRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdChannelPost', 'request', request)
             const localVarPath = `/guild/{guild_id}/channel`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -3082,7 +3139,7 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildCreateGuildChannelRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3092,11 +3149,11 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Deletes a guild. Only the guild owner can delete a guild. This removes all members, all guild icons, and all guild channels.
          * @summary Delete guild
-         * @param {number} guildId Guild ID
+         * @param {string} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdDelete: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdDelete: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdDelete', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}`
@@ -3126,11 +3183,11 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get guild
-         * @param {number} guildId Guild id
+         * @param {string} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdGet', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}`
@@ -3160,16 +3217,16 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Creates an icon placeholder and returns upload info. Only guild owner may create.
          * @summary Create guild icon metadata
-         * @param {number} guildId Guild ID
-         * @param {GuildCreateIconRequest} guildCreateIconRequest Icon creation request
+         * @param {string} guildId Guild ID
+         * @param {GuildCreateIconRequest} request Icon creation request
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdIconPost: async (guildId: number, guildCreateIconRequest: GuildCreateIconRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdIconPost: async (guildId: string, request: GuildCreateIconRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdIconPost', 'guildId', guildId)
-            // verify required parameter 'guildCreateIconRequest' is not null or undefined
-            assertParamExists('guildGuildIdIconPost', 'guildCreateIconRequest', guildCreateIconRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdIconPost', 'request', request)
             const localVarPath = `/guild/{guild_id}/icon`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -3190,7 +3247,7 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildCreateIconRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3200,11 +3257,11 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Returns a list of previously created icons for a guild. Only the guild owner may access this list.
          * @summary List guild icons
-         * @param {number} guildId Guild ID
+         * @param {string} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdIconsGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdIconsGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdIconsGet', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}/icons`
@@ -3234,12 +3291,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Deletes a guild icon. Only the guild owner may delete.
          * @summary Delete guild icon by ID
-         * @param {number} guildId Guild ID
-         * @param {number} iconId Icon ID
+         * @param {string} guildId Guild ID
+         * @param {string} iconId Icon ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdIconsIconIdDelete: async (guildId: number, iconId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdIconsIconIdDelete: async (guildId: string, iconId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdIconsIconIdDelete', 'guildId', guildId)
             // verify required parameter 'iconId' is not null or undefined
@@ -3272,11 +3329,11 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get guild members
-         * @param {number} guildId Guild ID
+         * @param {string} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdMembersGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdMembersGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdMembersGet', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}/members`
@@ -3306,16 +3363,16 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Update guild
-         * @param {number} guildId Guild ID
-         * @param {GuildUpdateGuildRequest} guildUpdateGuildRequest Update guild data
+         * @param {string} guildId Guild ID
+         * @param {GuildUpdateGuildRequest} request Update guild data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdPatch: async (guildId: number, guildUpdateGuildRequest: GuildUpdateGuildRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdPatch: async (guildId: string, request: GuildUpdateGuildRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdPatch', 'guildId', guildId)
-            // verify required parameter 'guildUpdateGuildRequest' is not null or undefined
-            assertParamExists('guildGuildIdPatch', 'guildUpdateGuildRequest', guildUpdateGuildRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdPatch', 'request', request)
             const localVarPath = `/guild/{guild_id}`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -3336,7 +3393,7 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildUpdateGuildRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3346,16 +3403,16 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Set system messages channel
-         * @param {number} guildId Guild ID
-         * @param {GuildSetGuildSystemMessagesChannelRequest} guildSetGuildSystemMessagesChannelRequest Set system messages channel
+         * @param {string} guildId Guild ID
+         * @param {GuildSetGuildSystemMessagesChannelRequest} request Set system messages channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdSystemchPatch: async (guildId: number, guildSetGuildSystemMessagesChannelRequest: GuildSetGuildSystemMessagesChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdSystemchPatch: async (guildId: string, request: GuildSetGuildSystemMessagesChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdSystemchPatch', 'guildId', guildId)
-            // verify required parameter 'guildSetGuildSystemMessagesChannelRequest' is not null or undefined
-            assertParamExists('guildGuildIdSystemchPatch', 'guildSetGuildSystemMessagesChannelRequest', guildSetGuildSystemMessagesChannelRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdSystemchPatch', 'request', request)
             const localVarPath = `/guild/{guild_id}/systemch`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -3376,7 +3433,7 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildSetGuildSystemMessagesChannelRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3386,12 +3443,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Returns signaling path and a short-lived SFU token to connect to the SFU for this channel.
          * @summary Join voice channel (get SFU signaling info)
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdVoiceChannelIdJoinPost: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdVoiceChannelIdJoinPost: async (guildId: string, channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdVoiceChannelIdJoinPost', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -3424,19 +3481,19 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Sets or clears preferred SFU region for a voice channel. Empty region clears override.
          * @summary Set channel voice region
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
-         * @param {GuildSetVoiceRegionRequest} guildSetVoiceRegionRequest Region payload
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
+         * @param {GuildSetVoiceRegionRequest} request Region payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdVoiceChannelIdRegionPatch: async (guildId: number, channelId: number, guildSetVoiceRegionRequest: GuildSetVoiceRegionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdVoiceChannelIdRegionPatch: async (guildId: string, channelId: string, request: GuildSetVoiceRegionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdVoiceChannelIdRegionPatch', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('guildGuildIdVoiceChannelIdRegionPatch', 'channelId', channelId)
-            // verify required parameter 'guildSetVoiceRegionRequest' is not null or undefined
-            assertParamExists('guildGuildIdVoiceChannelIdRegionPatch', 'guildSetVoiceRegionRequest', guildSetVoiceRegionRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdVoiceChannelIdRegionPatch', 'request', request)
             const localVarPath = `/guild/{guild_id}/voice/{channel_id}/region`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
                 .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
@@ -3458,7 +3515,7 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildSetVoiceRegionRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3468,16 +3525,16 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Move a member to another voice channel and send them connection info (SFU URL + token). Requires administrator or PermVoiceMoveMembers.
          * @summary Move member to voice channel
-         * @param {number} guildId Guild ID
-         * @param {GuildMoveMemberRequest} guildMoveMemberRequest Move request
+         * @param {string} guildId Guild ID
+         * @param {GuildMoveMemberRequest} request Move request
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdVoiceMovePost: async (guildId: number, guildMoveMemberRequest: GuildMoveMemberRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdVoiceMovePost: async (guildId: string, request: GuildMoveMemberRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdVoiceMovePost', 'guildId', guildId)
-            // verify required parameter 'guildMoveMemberRequest' is not null or undefined
-            assertParamExists('guildGuildIdVoiceMovePost', 'guildMoveMemberRequest', guildMoveMemberRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdVoiceMovePost', 'request', request)
             const localVarPath = `/guild/{guild_id}/voice/move`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -3498,7 +3555,7 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildMoveMemberRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3508,13 +3565,13 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Create guild
-         * @param {GuildCreateGuildRequest} guildCreateGuildRequest Guild data
+         * @param {GuildCreateGuildRequest} request Guild data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildPost: async (guildCreateGuildRequest: GuildCreateGuildRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'guildCreateGuildRequest' is not null or undefined
-            assertParamExists('guildPost', 'guildCreateGuildRequest', guildCreateGuildRequest)
+        guildPost: async (request: GuildCreateGuildRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildPost', 'request', request)
             const localVarPath = `/guild`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -3534,7 +3591,7 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildCreateGuildRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -3554,12 +3611,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete channel category
-         * @param {number} guildId Guild ID
-         * @param {number} categoryId Category ID (actually a channel with special type)
+         * @param {string} guildId Guild ID
+         * @param {string} categoryId Category ID (actually a channel with special type)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdCategoryCategoryIdDelete(guildId: number, categoryId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdCategoryCategoryIdDelete(guildId: string, categoryId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdCategoryCategoryIdDelete(guildId, categoryId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdCategoryCategoryIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -3568,13 +3625,13 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create guild channel category
-         * @param {number} guildId Guild ID
-         * @param {GuildCreateGuildChannelCategoryRequest} guildCreateGuildChannelCategoryRequest Create category data
+         * @param {string} guildId Guild ID
+         * @param {GuildCreateGuildChannelCategoryRequest} request Create category data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdCategoryPost(guildId: number, guildCreateGuildChannelCategoryRequest: GuildCreateGuildChannelCategoryRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdCategoryPost(guildId, guildCreateGuildChannelCategoryRequest, options);
+        async guildGuildIdCategoryPost(guildId: string, request: GuildCreateGuildChannelCategoryRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdCategoryPost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdCategoryPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -3582,12 +3639,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete channel
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdDelete(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdChannelChannelIdDelete(guildId: string, channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdDelete(guildId, channelId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelChannelIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -3596,12 +3653,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get guild channel
-         * @param {number} guildId Guild id
-         * @param {number} channelId Channel id
+         * @param {string} guildId Guild id
+         * @param {string} channelId Channel id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdGet(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
+        async guildGuildIdChannelChannelIdGet(guildId: string, channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdGet(guildId, channelId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelChannelIdGet']?.[localVarOperationServerIndex]?.url;
@@ -3610,14 +3667,14 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Change channels data
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
-         * @param {GuildPatchGuildChannelRequest} guildPatchGuildChannelRequest Request body
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
+         * @param {GuildPatchGuildChannelRequest} req Request body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdPatch(guildId: number, channelId: number, guildPatchGuildChannelRequest: GuildPatchGuildChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdPatch(guildId, channelId, guildPatchGuildChannelRequest, options);
+        async guildGuildIdChannelChannelIdPatch(guildId: string, channelId: string, req: GuildPatchGuildChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdPatch(guildId, channelId, req, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelChannelIdPatch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -3625,11 +3682,11 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get guild channels
-         * @param {number} guildId Guild id
+         * @param {string} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoChannel>>> {
+        async guildGuildIdChannelGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoChannel>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelGet']?.[localVarOperationServerIndex]?.url;
@@ -3638,13 +3695,13 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Change channels order
-         * @param {number} guildId Guild ID
-         * @param {GuildPatchGuildChannelOrderRequest} guildPatchGuildChannelOrderRequest Update channel order data
+         * @param {string} guildId Guild ID
+         * @param {GuildPatchGuildChannelOrderRequest} request Update channel order data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelOrderPatch(guildId: number, guildPatchGuildChannelOrderRequest: GuildPatchGuildChannelOrderRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelOrderPatch(guildId, guildPatchGuildChannelOrderRequest, options);
+        async guildGuildIdChannelOrderPatch(guildId: string, request: GuildPatchGuildChannelOrderRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelOrderPatch(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelOrderPatch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -3652,13 +3709,13 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create guild channel
-         * @param {number} guildId Guild ID
-         * @param {GuildCreateGuildChannelRequest} guildCreateGuildChannelRequest Create channel data
+         * @param {string} guildId Guild ID
+         * @param {GuildCreateGuildChannelRequest} request Create channel data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelPost(guildId: number, guildCreateGuildChannelRequest: GuildCreateGuildChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelPost(guildId, guildCreateGuildChannelRequest, options);
+        async guildGuildIdChannelPost(guildId: string, request: GuildCreateGuildChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelPost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -3666,11 +3723,11 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Deletes a guild. Only the guild owner can delete a guild. This removes all members, all guild icons, and all guild channels.
          * @summary Delete guild
-         * @param {number} guildId Guild ID
+         * @param {string} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdDelete(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdDelete(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdDelete(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -3679,11 +3736,11 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get guild
-         * @param {number} guildId Guild id
+         * @param {string} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
+        async guildGuildIdGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdGet']?.[localVarOperationServerIndex]?.url;
@@ -3692,13 +3749,13 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Creates an icon placeholder and returns upload info. Only guild owner may create.
          * @summary Create guild icon metadata
-         * @param {number} guildId Guild ID
-         * @param {GuildCreateIconRequest} guildCreateIconRequest Icon creation request
+         * @param {string} guildId Guild ID
+         * @param {GuildCreateIconRequest} request Icon creation request
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdIconPost(guildId: number, guildCreateIconRequest: GuildCreateIconRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoIconUpload>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdIconPost(guildId, guildCreateIconRequest, options);
+        async guildGuildIdIconPost(guildId: string, request: GuildCreateIconRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoIconUpload>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdIconPost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdIconPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -3706,11 +3763,11 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Returns a list of previously created icons for a guild. Only the guild owner may access this list.
          * @summary List guild icons
-         * @param {number} guildId Guild ID
+         * @param {string} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdIconsGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoIcon>>> {
+        async guildGuildIdIconsGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoIcon>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdIconsGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdIconsGet']?.[localVarOperationServerIndex]?.url;
@@ -3719,12 +3776,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Deletes a guild icon. Only the guild owner may delete.
          * @summary Delete guild icon by ID
-         * @param {number} guildId Guild ID
-         * @param {number} iconId Icon ID
+         * @param {string} guildId Guild ID
+         * @param {string} iconId Icon ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdIconsIconIdDelete(guildId: number, iconId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdIconsIconIdDelete(guildId: string, iconId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdIconsIconIdDelete(guildId, iconId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdIconsIconIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -3733,11 +3790,11 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get guild members
-         * @param {number} guildId Guild ID
+         * @param {string} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdMembersGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoMember>>> {
+        async guildGuildIdMembersGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoMember>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMembersGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdMembersGet']?.[localVarOperationServerIndex]?.url;
@@ -3746,13 +3803,13 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Update guild
-         * @param {number} guildId Guild ID
-         * @param {GuildUpdateGuildRequest} guildUpdateGuildRequest Update guild data
+         * @param {string} guildId Guild ID
+         * @param {GuildUpdateGuildRequest} request Update guild data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdPatch(guildId: number, guildUpdateGuildRequest: GuildUpdateGuildRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdPatch(guildId, guildUpdateGuildRequest, options);
+        async guildGuildIdPatch(guildId: string, request: GuildUpdateGuildRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdPatch(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdPatch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -3760,13 +3817,13 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Set system messages channel
-         * @param {number} guildId Guild ID
-         * @param {GuildSetGuildSystemMessagesChannelRequest} guildSetGuildSystemMessagesChannelRequest Set system messages channel
+         * @param {string} guildId Guild ID
+         * @param {GuildSetGuildSystemMessagesChannelRequest} request Set system messages channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdSystemchPatch(guildId: number, guildSetGuildSystemMessagesChannelRequest: GuildSetGuildSystemMessagesChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdSystemchPatch(guildId, guildSetGuildSystemMessagesChannelRequest, options);
+        async guildGuildIdSystemchPatch(guildId: string, request: GuildSetGuildSystemMessagesChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdSystemchPatch(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdSystemchPatch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -3774,12 +3831,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Returns signaling path and a short-lived SFU token to connect to the SFU for this channel.
          * @summary Join voice channel (get SFU signaling info)
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdVoiceChannelIdJoinPost(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildJoinVoiceResponse>> {
+        async guildGuildIdVoiceChannelIdJoinPost(guildId: string, channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildJoinVoiceResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdVoiceChannelIdJoinPost(guildId, channelId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdVoiceChannelIdJoinPost']?.[localVarOperationServerIndex]?.url;
@@ -3788,14 +3845,14 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Sets or clears preferred SFU region for a voice channel. Empty region clears override.
          * @summary Set channel voice region
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
-         * @param {GuildSetVoiceRegionRequest} guildSetVoiceRegionRequest Region payload
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
+         * @param {GuildSetVoiceRegionRequest} request Region payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdVoiceChannelIdRegionPatch(guildId: number, channelId: number, guildSetVoiceRegionRequest: GuildSetVoiceRegionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildSetVoiceRegionResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdVoiceChannelIdRegionPatch(guildId, channelId, guildSetVoiceRegionRequest, options);
+        async guildGuildIdVoiceChannelIdRegionPatch(guildId: string, channelId: string, request: GuildSetVoiceRegionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildSetVoiceRegionResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdVoiceChannelIdRegionPatch(guildId, channelId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdVoiceChannelIdRegionPatch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -3803,13 +3860,13 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Move a member to another voice channel and send them connection info (SFU URL + token). Requires administrator or PermVoiceMoveMembers.
          * @summary Move member to voice channel
-         * @param {number} guildId Guild ID
-         * @param {GuildMoveMemberRequest} guildMoveMemberRequest Move request
+         * @param {string} guildId Guild ID
+         * @param {GuildMoveMemberRequest} request Move request
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdVoiceMovePost(guildId: number, guildMoveMemberRequest: GuildMoveMemberRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildMoveMemberResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdVoiceMovePost(guildId, guildMoveMemberRequest, options);
+        async guildGuildIdVoiceMovePost(guildId: string, request: GuildMoveMemberRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildMoveMemberResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdVoiceMovePost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdVoiceMovePost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -3817,12 +3874,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create guild
-         * @param {GuildCreateGuildRequest} guildCreateGuildRequest Guild data
+         * @param {GuildCreateGuildRequest} request Guild data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildPost(guildCreateGuildRequest: GuildCreateGuildRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildPost(guildCreateGuildRequest, options);
+        async guildPost(request: GuildCreateGuildRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -3855,7 +3912,7 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
          * @throws {RequiredError}
          */
         guildGuildIdCategoryPost(requestParameters: GuildApiGuildGuildIdCategoryPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.guildGuildIdCategoryPost(requestParameters.guildId, requestParameters.guildCreateGuildChannelCategoryRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdCategoryPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -3885,7 +3942,7 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
          * @throws {RequiredError}
          */
         guildGuildIdChannelChannelIdPatch(requestParameters: GuildApiGuildGuildIdChannelChannelIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoChannel> {
-            return localVarFp.guildGuildIdChannelChannelIdPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.guildPatchGuildChannelRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdChannelChannelIdPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.req, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -3905,7 +3962,7 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
          * @throws {RequiredError}
          */
         guildGuildIdChannelOrderPatch(requestParameters: GuildApiGuildGuildIdChannelOrderPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.guildGuildIdChannelOrderPatch(requestParameters.guildId, requestParameters.guildPatchGuildChannelOrderRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdChannelOrderPatch(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -3915,7 +3972,7 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
          * @throws {RequiredError}
          */
         guildGuildIdChannelPost(requestParameters: GuildApiGuildGuildIdChannelPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.guildGuildIdChannelPost(requestParameters.guildId, requestParameters.guildCreateGuildChannelRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdChannelPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * Deletes a guild. Only the guild owner can delete a guild. This removes all members, all guild icons, and all guild channels.
@@ -3945,7 +4002,7 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
          * @throws {RequiredError}
          */
         guildGuildIdIconPost(requestParameters: GuildApiGuildGuildIdIconPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoIconUpload> {
-            return localVarFp.guildGuildIdIconPost(requestParameters.guildId, requestParameters.guildCreateIconRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdIconPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * Returns a list of previously created icons for a guild. Only the guild owner may access this list.
@@ -3985,7 +4042,7 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
          * @throws {RequiredError}
          */
         guildGuildIdPatch(requestParameters: GuildApiGuildGuildIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild> {
-            return localVarFp.guildGuildIdPatch(requestParameters.guildId, requestParameters.guildUpdateGuildRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdPatch(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -3995,7 +4052,7 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
          * @throws {RequiredError}
          */
         guildGuildIdSystemchPatch(requestParameters: GuildApiGuildGuildIdSystemchPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild> {
-            return localVarFp.guildGuildIdSystemchPatch(requestParameters.guildId, requestParameters.guildSetGuildSystemMessagesChannelRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdSystemchPatch(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * Returns signaling path and a short-lived SFU token to connect to the SFU for this channel.
@@ -4015,7 +4072,7 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
          * @throws {RequiredError}
          */
         guildGuildIdVoiceChannelIdRegionPatch(requestParameters: GuildApiGuildGuildIdVoiceChannelIdRegionPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<GuildSetVoiceRegionResponse> {
-            return localVarFp.guildGuildIdVoiceChannelIdRegionPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.guildSetVoiceRegionRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdVoiceChannelIdRegionPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * Move a member to another voice channel and send them connection info (SFU URL + token). Requires administrator or PermVoiceMoveMembers.
@@ -4025,7 +4082,7 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
          * @throws {RequiredError}
          */
         guildGuildIdVoiceMovePost(requestParameters: GuildApiGuildGuildIdVoiceMovePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GuildMoveMemberResponse> {
-            return localVarFp.guildGuildIdVoiceMovePost(requestParameters.guildId, requestParameters.guildMoveMemberRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdVoiceMovePost(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -4035,7 +4092,7 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
          * @throws {RequiredError}
          */
         guildPost(requestParameters: GuildApiGuildPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild> {
-            return localVarFp.guildPost(requestParameters.guildCreateGuildRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -4256,17 +4313,17 @@ export interface GuildApiInterface {
 export interface GuildApiGuildGuildIdCategoryCategoryIdDeleteRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdCategoryCategoryIdDelete
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Category ID (actually a channel with special type)
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdCategoryCategoryIdDelete
      */
-    readonly categoryId: number
+    readonly categoryId: string
 }
 
 /**
@@ -4277,17 +4334,17 @@ export interface GuildApiGuildGuildIdCategoryCategoryIdDeleteRequest {
 export interface GuildApiGuildGuildIdCategoryPostRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdCategoryPost
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Create category data
      * @type {GuildCreateGuildChannelCategoryRequest}
      * @memberof GuildApiGuildGuildIdCategoryPost
      */
-    readonly guildCreateGuildChannelCategoryRequest: GuildCreateGuildChannelCategoryRequest
+    readonly request: GuildCreateGuildChannelCategoryRequest
 }
 
 /**
@@ -4298,17 +4355,17 @@ export interface GuildApiGuildGuildIdCategoryPostRequest {
 export interface GuildApiGuildGuildIdChannelChannelIdDeleteRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdChannelChannelIdDelete
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Channel ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdChannelChannelIdDelete
      */
-    readonly channelId: number
+    readonly channelId: string
 }
 
 /**
@@ -4319,17 +4376,17 @@ export interface GuildApiGuildGuildIdChannelChannelIdDeleteRequest {
 export interface GuildApiGuildGuildIdChannelChannelIdGetRequest {
     /**
      * Guild id
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdChannelChannelIdGet
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Channel id
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdChannelChannelIdGet
      */
-    readonly channelId: number
+    readonly channelId: string
 }
 
 /**
@@ -4340,24 +4397,24 @@ export interface GuildApiGuildGuildIdChannelChannelIdGetRequest {
 export interface GuildApiGuildGuildIdChannelChannelIdPatchRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdChannelChannelIdPatch
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Channel ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdChannelChannelIdPatch
      */
-    readonly channelId: number
+    readonly channelId: string
 
     /**
      * Request body
      * @type {GuildPatchGuildChannelRequest}
      * @memberof GuildApiGuildGuildIdChannelChannelIdPatch
      */
-    readonly guildPatchGuildChannelRequest: GuildPatchGuildChannelRequest
+    readonly req: GuildPatchGuildChannelRequest
 }
 
 /**
@@ -4368,10 +4425,10 @@ export interface GuildApiGuildGuildIdChannelChannelIdPatchRequest {
 export interface GuildApiGuildGuildIdChannelGetRequest {
     /**
      * Guild id
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdChannelGet
      */
-    readonly guildId: number
+    readonly guildId: string
 }
 
 /**
@@ -4382,17 +4439,17 @@ export interface GuildApiGuildGuildIdChannelGetRequest {
 export interface GuildApiGuildGuildIdChannelOrderPatchRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdChannelOrderPatch
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Update channel order data
      * @type {GuildPatchGuildChannelOrderRequest}
      * @memberof GuildApiGuildGuildIdChannelOrderPatch
      */
-    readonly guildPatchGuildChannelOrderRequest: GuildPatchGuildChannelOrderRequest
+    readonly request: GuildPatchGuildChannelOrderRequest
 }
 
 /**
@@ -4403,17 +4460,17 @@ export interface GuildApiGuildGuildIdChannelOrderPatchRequest {
 export interface GuildApiGuildGuildIdChannelPostRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdChannelPost
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Create channel data
      * @type {GuildCreateGuildChannelRequest}
      * @memberof GuildApiGuildGuildIdChannelPost
      */
-    readonly guildCreateGuildChannelRequest: GuildCreateGuildChannelRequest
+    readonly request: GuildCreateGuildChannelRequest
 }
 
 /**
@@ -4424,10 +4481,10 @@ export interface GuildApiGuildGuildIdChannelPostRequest {
 export interface GuildApiGuildGuildIdDeleteRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdDelete
      */
-    readonly guildId: number
+    readonly guildId: string
 }
 
 /**
@@ -4438,10 +4495,10 @@ export interface GuildApiGuildGuildIdDeleteRequest {
 export interface GuildApiGuildGuildIdGetRequest {
     /**
      * Guild id
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdGet
      */
-    readonly guildId: number
+    readonly guildId: string
 }
 
 /**
@@ -4452,17 +4509,17 @@ export interface GuildApiGuildGuildIdGetRequest {
 export interface GuildApiGuildGuildIdIconPostRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdIconPost
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Icon creation request
      * @type {GuildCreateIconRequest}
      * @memberof GuildApiGuildGuildIdIconPost
      */
-    readonly guildCreateIconRequest: GuildCreateIconRequest
+    readonly request: GuildCreateIconRequest
 }
 
 /**
@@ -4473,10 +4530,10 @@ export interface GuildApiGuildGuildIdIconPostRequest {
 export interface GuildApiGuildGuildIdIconsGetRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdIconsGet
      */
-    readonly guildId: number
+    readonly guildId: string
 }
 
 /**
@@ -4487,17 +4544,17 @@ export interface GuildApiGuildGuildIdIconsGetRequest {
 export interface GuildApiGuildGuildIdIconsIconIdDeleteRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdIconsIconIdDelete
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Icon ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdIconsIconIdDelete
      */
-    readonly iconId: number
+    readonly iconId: string
 }
 
 /**
@@ -4508,10 +4565,10 @@ export interface GuildApiGuildGuildIdIconsIconIdDeleteRequest {
 export interface GuildApiGuildGuildIdMembersGetRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdMembersGet
      */
-    readonly guildId: number
+    readonly guildId: string
 }
 
 /**
@@ -4522,17 +4579,17 @@ export interface GuildApiGuildGuildIdMembersGetRequest {
 export interface GuildApiGuildGuildIdPatchRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdPatch
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Update guild data
      * @type {GuildUpdateGuildRequest}
      * @memberof GuildApiGuildGuildIdPatch
      */
-    readonly guildUpdateGuildRequest: GuildUpdateGuildRequest
+    readonly request: GuildUpdateGuildRequest
 }
 
 /**
@@ -4543,17 +4600,17 @@ export interface GuildApiGuildGuildIdPatchRequest {
 export interface GuildApiGuildGuildIdSystemchPatchRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdSystemchPatch
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Set system messages channel
      * @type {GuildSetGuildSystemMessagesChannelRequest}
      * @memberof GuildApiGuildGuildIdSystemchPatch
      */
-    readonly guildSetGuildSystemMessagesChannelRequest: GuildSetGuildSystemMessagesChannelRequest
+    readonly request: GuildSetGuildSystemMessagesChannelRequest
 }
 
 /**
@@ -4564,17 +4621,17 @@ export interface GuildApiGuildGuildIdSystemchPatchRequest {
 export interface GuildApiGuildGuildIdVoiceChannelIdJoinPostRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdVoiceChannelIdJoinPost
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Channel ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdVoiceChannelIdJoinPost
      */
-    readonly channelId: number
+    readonly channelId: string
 }
 
 /**
@@ -4585,24 +4642,24 @@ export interface GuildApiGuildGuildIdVoiceChannelIdJoinPostRequest {
 export interface GuildApiGuildGuildIdVoiceChannelIdRegionPatchRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdVoiceChannelIdRegionPatch
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Channel ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdVoiceChannelIdRegionPatch
      */
-    readonly channelId: number
+    readonly channelId: string
 
     /**
      * Region payload
      * @type {GuildSetVoiceRegionRequest}
      * @memberof GuildApiGuildGuildIdVoiceChannelIdRegionPatch
      */
-    readonly guildSetVoiceRegionRequest: GuildSetVoiceRegionRequest
+    readonly request: GuildSetVoiceRegionRequest
 }
 
 /**
@@ -4613,17 +4670,17 @@ export interface GuildApiGuildGuildIdVoiceChannelIdRegionPatchRequest {
 export interface GuildApiGuildGuildIdVoiceMovePostRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildApiGuildGuildIdVoiceMovePost
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Move request
      * @type {GuildMoveMemberRequest}
      * @memberof GuildApiGuildGuildIdVoiceMovePost
      */
-    readonly guildMoveMemberRequest: GuildMoveMemberRequest
+    readonly request: GuildMoveMemberRequest
 }
 
 /**
@@ -4637,7 +4694,7 @@ export interface GuildApiGuildPostRequest {
      * @type {GuildCreateGuildRequest}
      * @memberof GuildApiGuildPost
      */
-    readonly guildCreateGuildRequest: GuildCreateGuildRequest
+    readonly request: GuildCreateGuildRequest
 }
 
 /**
@@ -4668,7 +4725,7 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      * @memberof GuildApi
      */
     public guildGuildIdCategoryPost(requestParameters: GuildApiGuildGuildIdCategoryPostRequest, options?: RawAxiosRequestConfig) {
-        return GuildApiFp(this.configuration).guildGuildIdCategoryPost(requestParameters.guildId, requestParameters.guildCreateGuildChannelCategoryRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildApiFp(this.configuration).guildGuildIdCategoryPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -4704,7 +4761,7 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      * @memberof GuildApi
      */
     public guildGuildIdChannelChannelIdPatch(requestParameters: GuildApiGuildGuildIdChannelChannelIdPatchRequest, options?: RawAxiosRequestConfig) {
-        return GuildApiFp(this.configuration).guildGuildIdChannelChannelIdPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.guildPatchGuildChannelRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildApiFp(this.configuration).guildGuildIdChannelChannelIdPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.req, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -4728,7 +4785,7 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      * @memberof GuildApi
      */
     public guildGuildIdChannelOrderPatch(requestParameters: GuildApiGuildGuildIdChannelOrderPatchRequest, options?: RawAxiosRequestConfig) {
-        return GuildApiFp(this.configuration).guildGuildIdChannelOrderPatch(requestParameters.guildId, requestParameters.guildPatchGuildChannelOrderRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildApiFp(this.configuration).guildGuildIdChannelOrderPatch(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -4740,7 +4797,7 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      * @memberof GuildApi
      */
     public guildGuildIdChannelPost(requestParameters: GuildApiGuildGuildIdChannelPostRequest, options?: RawAxiosRequestConfig) {
-        return GuildApiFp(this.configuration).guildGuildIdChannelPost(requestParameters.guildId, requestParameters.guildCreateGuildChannelRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildApiFp(this.configuration).guildGuildIdChannelPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -4776,7 +4833,7 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      * @memberof GuildApi
      */
     public guildGuildIdIconPost(requestParameters: GuildApiGuildGuildIdIconPostRequest, options?: RawAxiosRequestConfig) {
-        return GuildApiFp(this.configuration).guildGuildIdIconPost(requestParameters.guildId, requestParameters.guildCreateIconRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildApiFp(this.configuration).guildGuildIdIconPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -4824,7 +4881,7 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      * @memberof GuildApi
      */
     public guildGuildIdPatch(requestParameters: GuildApiGuildGuildIdPatchRequest, options?: RawAxiosRequestConfig) {
-        return GuildApiFp(this.configuration).guildGuildIdPatch(requestParameters.guildId, requestParameters.guildUpdateGuildRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildApiFp(this.configuration).guildGuildIdPatch(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -4836,7 +4893,7 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      * @memberof GuildApi
      */
     public guildGuildIdSystemchPatch(requestParameters: GuildApiGuildGuildIdSystemchPatchRequest, options?: RawAxiosRequestConfig) {
-        return GuildApiFp(this.configuration).guildGuildIdSystemchPatch(requestParameters.guildId, requestParameters.guildSetGuildSystemMessagesChannelRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildApiFp(this.configuration).guildGuildIdSystemchPatch(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -4860,7 +4917,7 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      * @memberof GuildApi
      */
     public guildGuildIdVoiceChannelIdRegionPatch(requestParameters: GuildApiGuildGuildIdVoiceChannelIdRegionPatchRequest, options?: RawAxiosRequestConfig) {
-        return GuildApiFp(this.configuration).guildGuildIdVoiceChannelIdRegionPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.guildSetVoiceRegionRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildApiFp(this.configuration).guildGuildIdVoiceChannelIdRegionPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -4872,7 +4929,7 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      * @memberof GuildApi
      */
     public guildGuildIdVoiceMovePost(requestParameters: GuildApiGuildGuildIdVoiceMovePostRequest, options?: RawAxiosRequestConfig) {
-        return GuildApiFp(this.configuration).guildGuildIdVoiceMovePost(requestParameters.guildId, requestParameters.guildMoveMemberRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildApiFp(this.configuration).guildGuildIdVoiceMovePost(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -4884,7 +4941,7 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      * @memberof GuildApi
      */
     public guildPost(requestParameters: GuildApiGuildPostRequest, options?: RawAxiosRequestConfig) {
-        return GuildApiFp(this.configuration).guildPost(requestParameters.guildCreateGuildRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildApiFp(this.configuration).guildPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -4933,11 +4990,11 @@ export const GuildInvitesApiAxiosParamCreator = function (configuration?: Config
         /**
          * 
          * @summary List active invites for guild
-         * @param {number} guildId Guild id
+         * @param {string} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildInvitesGuildIdGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildInvitesGuildIdGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildInvitesGuildIdGet', 'guildId', guildId)
             const localVarPath = `/guild/invites/{guild_id}`
@@ -4967,12 +5024,12 @@ export const GuildInvitesApiAxiosParamCreator = function (configuration?: Config
         /**
          * 
          * @summary Delete an invite by id
-         * @param {number} guildId Guild id
-         * @param {number} inviteId Invite id
+         * @param {string} guildId Guild id
+         * @param {string} inviteId Invite id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildInvitesGuildIdInviteIdDelete: async (guildId: number, inviteId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildInvitesGuildIdInviteIdDelete: async (guildId: string, inviteId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildInvitesGuildIdInviteIdDelete', 'guildId', guildId)
             // verify required parameter 'inviteId' is not null or undefined
@@ -5005,16 +5062,16 @@ export const GuildInvitesApiAxiosParamCreator = function (configuration?: Config
         /**
          * 
          * @summary Create a new invite
-         * @param {number} guildId Guild id
-         * @param {GuildCreateInviteRequest} guildCreateInviteRequest Invite options
+         * @param {string} guildId Guild id
+         * @param {GuildCreateInviteRequest} request Invite options
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildInvitesGuildIdPost: async (guildId: number, guildCreateInviteRequest: GuildCreateInviteRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildInvitesGuildIdPost: async (guildId: string, request: GuildCreateInviteRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildInvitesGuildIdPost', 'guildId', guildId)
-            // verify required parameter 'guildCreateInviteRequest' is not null or undefined
-            assertParamExists('guildInvitesGuildIdPost', 'guildCreateInviteRequest', guildCreateInviteRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildInvitesGuildIdPost', 'request', request)
             const localVarPath = `/guild/invites/{guild_id}`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -5035,7 +5092,7 @@ export const GuildInvitesApiAxiosParamCreator = function (configuration?: Config
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildCreateInviteRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -5102,11 +5159,11 @@ export const GuildInvitesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary List active invites for guild
-         * @param {number} guildId Guild id
+         * @param {string} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildInvitesGuildIdGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoGuildInvite>>> {
+        async guildInvitesGuildIdGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoGuildInvite>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildInvitesGuildIdGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildInvitesApi.guildInvitesGuildIdGet']?.[localVarOperationServerIndex]?.url;
@@ -5115,12 +5172,12 @@ export const GuildInvitesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete an invite by id
-         * @param {number} guildId Guild id
-         * @param {number} inviteId Invite id
+         * @param {string} guildId Guild id
+         * @param {string} inviteId Invite id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildInvitesGuildIdInviteIdDelete(guildId: number, inviteId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildInvitesGuildIdInviteIdDelete(guildId: string, inviteId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildInvitesGuildIdInviteIdDelete(guildId, inviteId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildInvitesApi.guildInvitesGuildIdInviteIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -5129,13 +5186,13 @@ export const GuildInvitesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create a new invite
-         * @param {number} guildId Guild id
-         * @param {GuildCreateInviteRequest} guildCreateInviteRequest Invite options
+         * @param {string} guildId Guild id
+         * @param {GuildCreateInviteRequest} request Invite options
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildInvitesGuildIdPost(guildId: number, guildCreateInviteRequest: GuildCreateInviteRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuildInvite>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildInvitesGuildIdPost(guildId, guildCreateInviteRequest, options);
+        async guildInvitesGuildIdPost(guildId: string, request: GuildCreateInviteRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuildInvite>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildInvitesGuildIdPost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildInvitesApi.guildInvitesGuildIdPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -5201,7 +5258,7 @@ export const GuildInvitesApiFactory = function (configuration?: Configuration, b
          * @throws {RequiredError}
          */
         guildInvitesGuildIdPost(requestParameters: GuildInvitesApiGuildInvitesGuildIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuildInvite> {
-            return localVarFp.guildInvitesGuildIdPost(requestParameters.guildId, requestParameters.guildCreateInviteRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildInvitesGuildIdPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -5296,10 +5353,10 @@ export interface GuildInvitesApiGuildInvitesAcceptInviteCodePostRequest {
 export interface GuildInvitesApiGuildInvitesGuildIdGetRequest {
     /**
      * Guild id
-     * @type {number}
+     * @type {string}
      * @memberof GuildInvitesApiGuildInvitesGuildIdGet
      */
-    readonly guildId: number
+    readonly guildId: string
 }
 
 /**
@@ -5310,17 +5367,17 @@ export interface GuildInvitesApiGuildInvitesGuildIdGetRequest {
 export interface GuildInvitesApiGuildInvitesGuildIdInviteIdDeleteRequest {
     /**
      * Guild id
-     * @type {number}
+     * @type {string}
      * @memberof GuildInvitesApiGuildInvitesGuildIdInviteIdDelete
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Invite id
-     * @type {number}
+     * @type {string}
      * @memberof GuildInvitesApiGuildInvitesGuildIdInviteIdDelete
      */
-    readonly inviteId: number
+    readonly inviteId: string
 }
 
 /**
@@ -5331,17 +5388,17 @@ export interface GuildInvitesApiGuildInvitesGuildIdInviteIdDeleteRequest {
 export interface GuildInvitesApiGuildInvitesGuildIdPostRequest {
     /**
      * Guild id
-     * @type {number}
+     * @type {string}
      * @memberof GuildInvitesApiGuildInvitesGuildIdPost
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Invite options
      * @type {GuildCreateInviteRequest}
      * @memberof GuildInvitesApiGuildInvitesGuildIdPost
      */
-    readonly guildCreateInviteRequest: GuildCreateInviteRequest
+    readonly request: GuildCreateInviteRequest
 }
 
 /**
@@ -5410,7 +5467,7 @@ export class GuildInvitesApi extends BaseAPI implements GuildInvitesApiInterface
      * @memberof GuildInvitesApi
      */
     public guildInvitesGuildIdPost(requestParameters: GuildInvitesApiGuildInvitesGuildIdPostRequest, options?: RawAxiosRequestConfig) {
-        return GuildInvitesApiFp(this.configuration).guildInvitesGuildIdPost(requestParameters.guildId, requestParameters.guildCreateInviteRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildInvitesApiFp(this.configuration).guildInvitesGuildIdPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -5437,12 +5494,12 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary List channel role permissions
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdRolesGet: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdRolesGet: async (guildId: string, channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesGet', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -5475,13 +5532,13 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Remove channel role permission
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
-         * @param {number} roleId Role ID
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
+         * @param {string} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdRolesRoleIdDelete: async (guildId: number, channelId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdRolesRoleIdDelete: async (guildId: string, channelId: string, roleId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdDelete', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -5517,13 +5574,13 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Get channel role permission
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
-         * @param {number} roleId Role ID
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
+         * @param {string} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdRolesRoleIdGet: async (guildId: number, channelId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdRolesRoleIdGet: async (guildId: string, channelId: string, roleId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdGet', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -5559,22 +5616,22 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Update channel role permission
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
-         * @param {number} roleId Role ID
-         * @param {GuildChannelRolePermissionRequest} guildChannelRolePermissionRequest Permission mask
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
+         * @param {string} roleId Role ID
+         * @param {GuildChannelRolePermissionRequest} req Permission mask
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdRolesRoleIdPatch: async (guildId: number, channelId: number, roleId: number, guildChannelRolePermissionRequest: GuildChannelRolePermissionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdRolesRoleIdPatch: async (guildId: string, channelId: string, roleId: string, req: GuildChannelRolePermissionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPatch', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPatch', 'channelId', channelId)
             // verify required parameter 'roleId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPatch', 'roleId', roleId)
-            // verify required parameter 'guildChannelRolePermissionRequest' is not null or undefined
-            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPatch', 'guildChannelRolePermissionRequest', guildChannelRolePermissionRequest)
+            // verify required parameter 'req' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPatch', 'req', req)
             const localVarPath = `/guild/{guild_id}/channel/{channel_id}/roles/{role_id}`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
                 .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
@@ -5597,7 +5654,7 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildChannelRolePermissionRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(req, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -5607,22 +5664,22 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Set channel role permission (create or replace)
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
-         * @param {number} roleId Role ID
-         * @param {GuildChannelRolePermissionRequest} guildChannelRolePermissionRequest Permission mask
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
+         * @param {string} roleId Role ID
+         * @param {GuildChannelRolePermissionRequest} req Permission mask
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdRolesRoleIdPut: async (guildId: number, channelId: number, roleId: number, guildChannelRolePermissionRequest: GuildChannelRolePermissionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdRolesRoleIdPut: async (guildId: string, channelId: string, roleId: string, req: GuildChannelRolePermissionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPut', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPut', 'channelId', channelId)
             // verify required parameter 'roleId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPut', 'roleId', roleId)
-            // verify required parameter 'guildChannelRolePermissionRequest' is not null or undefined
-            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPut', 'guildChannelRolePermissionRequest', guildChannelRolePermissionRequest)
+            // verify required parameter 'req' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPut', 'req', req)
             const localVarPath = `/guild/{guild_id}/channel/{channel_id}/roles/{role_id}`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
                 .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
@@ -5645,7 +5702,7 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildChannelRolePermissionRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(req, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -5655,12 +5712,12 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Get member roles
-         * @param {number} guildId Guild ID
-         * @param {number} userId User ID
+         * @param {string} guildId Guild ID
+         * @param {string} userId User ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdMemberUserIdRolesGet: async (guildId: number, userId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdMemberUserIdRolesGet: async (guildId: string, userId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdMemberUserIdRolesGet', 'guildId', guildId)
             // verify required parameter 'userId' is not null or undefined
@@ -5693,13 +5750,13 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Remove role from member
-         * @param {number} guildId Guild ID
-         * @param {number} userId User ID
-         * @param {number} roleId Role ID
+         * @param {string} guildId Guild ID
+         * @param {string} userId User ID
+         * @param {string} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdMemberUserIdRolesRoleIdDelete: async (guildId: number, userId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdMemberUserIdRolesRoleIdDelete: async (guildId: string, userId: string, roleId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdMemberUserIdRolesRoleIdDelete', 'guildId', guildId)
             // verify required parameter 'userId' is not null or undefined
@@ -5735,13 +5792,13 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Assign role to member
-         * @param {number} guildId Guild ID
-         * @param {number} userId User ID
-         * @param {number} roleId Role ID
+         * @param {string} guildId Guild ID
+         * @param {string} userId User ID
+         * @param {string} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdMemberUserIdRolesRoleIdPut: async (guildId: number, userId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdMemberUserIdRolesRoleIdPut: async (guildId: string, userId: string, roleId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdMemberUserIdRolesRoleIdPut', 'guildId', guildId)
             // verify required parameter 'userId' is not null or undefined
@@ -5777,11 +5834,11 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Get guild roles
-         * @param {number} guildId Guild ID
+         * @param {string} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdRolesGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdRolesGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdRolesGet', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}/roles`
@@ -5811,16 +5868,16 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Create guild role
-         * @param {number} guildId Guild ID
-         * @param {GuildCreateGuildRoleRequest} guildCreateGuildRoleRequest Role data
+         * @param {string} guildId Guild ID
+         * @param {GuildCreateGuildRoleRequest} req Role data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdRolesPost: async (guildId: number, guildCreateGuildRoleRequest: GuildCreateGuildRoleRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdRolesPost: async (guildId: string, req: GuildCreateGuildRoleRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdRolesPost', 'guildId', guildId)
-            // verify required parameter 'guildCreateGuildRoleRequest' is not null or undefined
-            assertParamExists('guildGuildIdRolesPost', 'guildCreateGuildRoleRequest', guildCreateGuildRoleRequest)
+            // verify required parameter 'req' is not null or undefined
+            assertParamExists('guildGuildIdRolesPost', 'req', req)
             const localVarPath = `/guild/{guild_id}/roles`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -5841,7 +5898,7 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildCreateGuildRoleRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(req, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -5851,12 +5908,12 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Delete guild role
-         * @param {number} guildId Guild ID
-         * @param {number} roleId Role ID
+         * @param {string} guildId Guild ID
+         * @param {string} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdRolesRoleIdDelete: async (guildId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdRolesRoleIdDelete: async (guildId: string, roleId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdRolesRoleIdDelete', 'guildId', guildId)
             // verify required parameter 'roleId' is not null or undefined
@@ -5889,19 +5946,19 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Update guild role
-         * @param {number} guildId Guild ID
-         * @param {number} roleId Role ID
-         * @param {GuildPatchGuildRoleRequest} guildPatchGuildRoleRequest Role changes
+         * @param {string} guildId Guild ID
+         * @param {string} roleId Role ID
+         * @param {GuildPatchGuildRoleRequest} req Role changes
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdRolesRoleIdPatch: async (guildId: number, roleId: number, guildPatchGuildRoleRequest: GuildPatchGuildRoleRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdRolesRoleIdPatch: async (guildId: string, roleId: string, req: GuildPatchGuildRoleRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdRolesRoleIdPatch', 'guildId', guildId)
             // verify required parameter 'roleId' is not null or undefined
             assertParamExists('guildGuildIdRolesRoleIdPatch', 'roleId', roleId)
-            // verify required parameter 'guildPatchGuildRoleRequest' is not null or undefined
-            assertParamExists('guildGuildIdRolesRoleIdPatch', 'guildPatchGuildRoleRequest', guildPatchGuildRoleRequest)
+            // verify required parameter 'req' is not null or undefined
+            assertParamExists('guildGuildIdRolesRoleIdPatch', 'req', req)
             const localVarPath = `/guild/{guild_id}/roles/{role_id}`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
                 .replace(`{${"role_id"}}`, encodeURIComponent(String(roleId)));
@@ -5923,7 +5980,7 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(guildPatchGuildRoleRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(req, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -5943,12 +6000,12 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary List channel role permissions
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdRolesGet(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<GuildChannelRolePermission>>> {
+        async guildGuildIdChannelChannelIdRolesGet(guildId: string, channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<GuildChannelRolePermission>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesGet(guildId, channelId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesGet']?.[localVarOperationServerIndex]?.url;
@@ -5957,13 +6014,13 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Remove channel role permission
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
-         * @param {number} roleId Role ID
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
+         * @param {string} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdRolesRoleIdDelete(guildId: number, channelId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdChannelChannelIdRolesRoleIdDelete(guildId: string, channelId: string, roleId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdDelete(guildId, channelId, roleId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesRoleIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -5972,13 +6029,13 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get channel role permission
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
-         * @param {number} roleId Role ID
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
+         * @param {string} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdRolesRoleIdGet(guildId: number, channelId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildChannelRolePermission>> {
+        async guildGuildIdChannelChannelIdRolesRoleIdGet(guildId: string, channelId: string, roleId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildChannelRolePermission>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdGet(guildId, channelId, roleId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesRoleIdGet']?.[localVarOperationServerIndex]?.url;
@@ -5987,15 +6044,15 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Update channel role permission
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
-         * @param {number} roleId Role ID
-         * @param {GuildChannelRolePermissionRequest} guildChannelRolePermissionRequest Permission mask
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
+         * @param {string} roleId Role ID
+         * @param {GuildChannelRolePermissionRequest} req Permission mask
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdRolesRoleIdPatch(guildId: number, channelId: number, roleId: number, guildChannelRolePermissionRequest: GuildChannelRolePermissionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdPatch(guildId, channelId, roleId, guildChannelRolePermissionRequest, options);
+        async guildGuildIdChannelChannelIdRolesRoleIdPatch(guildId: string, channelId: string, roleId: string, req: GuildChannelRolePermissionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdPatch(guildId, channelId, roleId, req, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesRoleIdPatch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -6003,15 +6060,15 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Set channel role permission (create or replace)
-         * @param {number} guildId Guild ID
-         * @param {number} channelId Channel ID
-         * @param {number} roleId Role ID
-         * @param {GuildChannelRolePermissionRequest} guildChannelRolePermissionRequest Permission mask
+         * @param {string} guildId Guild ID
+         * @param {string} channelId Channel ID
+         * @param {string} roleId Role ID
+         * @param {GuildChannelRolePermissionRequest} req Permission mask
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdRolesRoleIdPut(guildId: number, channelId: number, roleId: number, guildChannelRolePermissionRequest: GuildChannelRolePermissionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdPut(guildId, channelId, roleId, guildChannelRolePermissionRequest, options);
+        async guildGuildIdChannelChannelIdRolesRoleIdPut(guildId: string, channelId: string, roleId: string, req: GuildChannelRolePermissionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdPut(guildId, channelId, roleId, req, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesRoleIdPut']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -6019,12 +6076,12 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get member roles
-         * @param {number} guildId Guild ID
-         * @param {number} userId User ID
+         * @param {string} guildId Guild ID
+         * @param {string} userId User ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdMemberUserIdRolesGet(guildId: number, userId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoRole>>> {
+        async guildGuildIdMemberUserIdRolesGet(guildId: string, userId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoRole>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdRolesGet(guildId, userId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdMemberUserIdRolesGet']?.[localVarOperationServerIndex]?.url;
@@ -6033,13 +6090,13 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Remove role from member
-         * @param {number} guildId Guild ID
-         * @param {number} userId User ID
-         * @param {number} roleId Role ID
+         * @param {string} guildId Guild ID
+         * @param {string} userId User ID
+         * @param {string} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdMemberUserIdRolesRoleIdDelete(guildId: number, userId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdMemberUserIdRolesRoleIdDelete(guildId: string, userId: string, roleId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdRolesRoleIdDelete(guildId, userId, roleId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdMemberUserIdRolesRoleIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -6048,13 +6105,13 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Assign role to member
-         * @param {number} guildId Guild ID
-         * @param {number} userId User ID
-         * @param {number} roleId Role ID
+         * @param {string} guildId Guild ID
+         * @param {string} userId User ID
+         * @param {string} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdMemberUserIdRolesRoleIdPut(guildId: number, userId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdMemberUserIdRolesRoleIdPut(guildId: string, userId: string, roleId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdRolesRoleIdPut(guildId, userId, roleId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdMemberUserIdRolesRoleIdPut']?.[localVarOperationServerIndex]?.url;
@@ -6063,11 +6120,11 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get guild roles
-         * @param {number} guildId Guild ID
+         * @param {string} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdRolesGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoRole>>> {
+        async guildGuildIdRolesGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoRole>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesGet']?.[localVarOperationServerIndex]?.url;
@@ -6076,13 +6133,13 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create guild role
-         * @param {number} guildId Guild ID
-         * @param {GuildCreateGuildRoleRequest} guildCreateGuildRoleRequest Role data
+         * @param {string} guildId Guild ID
+         * @param {GuildCreateGuildRoleRequest} req Role data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdRolesPost(guildId: number, guildCreateGuildRoleRequest: GuildCreateGuildRoleRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoRole>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesPost(guildId, guildCreateGuildRoleRequest, options);
+        async guildGuildIdRolesPost(guildId: string, req: GuildCreateGuildRoleRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoRole>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesPost(guildId, req, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -6090,12 +6147,12 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete guild role
-         * @param {number} guildId Guild ID
-         * @param {number} roleId Role ID
+         * @param {string} guildId Guild ID
+         * @param {string} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdRolesRoleIdDelete(guildId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdRolesRoleIdDelete(guildId: string, roleId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesRoleIdDelete(guildId, roleId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesRoleIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -6104,14 +6161,14 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Update guild role
-         * @param {number} guildId Guild ID
-         * @param {number} roleId Role ID
-         * @param {GuildPatchGuildRoleRequest} guildPatchGuildRoleRequest Role changes
+         * @param {string} guildId Guild ID
+         * @param {string} roleId Role ID
+         * @param {GuildPatchGuildRoleRequest} req Role changes
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdRolesRoleIdPatch(guildId: number, roleId: number, guildPatchGuildRoleRequest: GuildPatchGuildRoleRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoRole>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesRoleIdPatch(guildId, roleId, guildPatchGuildRoleRequest, options);
+        async guildGuildIdRolesRoleIdPatch(guildId: string, roleId: string, req: GuildPatchGuildRoleRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoRole>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesRoleIdPatch(guildId, roleId, req, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesRoleIdPatch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -6164,7 +6221,7 @@ export const GuildRolesApiFactory = function (configuration?: Configuration, bas
          * @throws {RequiredError}
          */
         guildGuildIdChannelChannelIdRolesRoleIdPatch(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.guildGuildIdChannelChannelIdRolesRoleIdPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, requestParameters.guildChannelRolePermissionRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdChannelChannelIdRolesRoleIdPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, requestParameters.req, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -6174,7 +6231,7 @@ export const GuildRolesApiFactory = function (configuration?: Configuration, bas
          * @throws {RequiredError}
          */
         guildGuildIdChannelChannelIdRolesRoleIdPut(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.guildGuildIdChannelChannelIdRolesRoleIdPut(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, requestParameters.guildChannelRolePermissionRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdChannelChannelIdRolesRoleIdPut(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, requestParameters.req, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -6224,7 +6281,7 @@ export const GuildRolesApiFactory = function (configuration?: Configuration, bas
          * @throws {RequiredError}
          */
         guildGuildIdRolesPost(requestParameters: GuildRolesApiGuildGuildIdRolesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoRole> {
-            return localVarFp.guildGuildIdRolesPost(requestParameters.guildId, requestParameters.guildCreateGuildRoleRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdRolesPost(requestParameters.guildId, requestParameters.req, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -6244,7 +6301,7 @@ export const GuildRolesApiFactory = function (configuration?: Configuration, bas
          * @throws {RequiredError}
          */
         guildGuildIdRolesRoleIdPatch(requestParameters: GuildRolesApiGuildGuildIdRolesRoleIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoRole> {
-            return localVarFp.guildGuildIdRolesRoleIdPatch(requestParameters.guildId, requestParameters.roleId, requestParameters.guildPatchGuildRoleRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.guildGuildIdRolesRoleIdPatch(requestParameters.guildId, requestParameters.roleId, requestParameters.req, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -6385,17 +6442,17 @@ export interface GuildRolesApiInterface {
 export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesGetRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesGet
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Channel ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesGet
      */
-    readonly channelId: number
+    readonly channelId: string
 }
 
 /**
@@ -6406,24 +6463,24 @@ export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesGetRequest {
 export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDelete
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Channel ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDelete
      */
-    readonly channelId: number
+    readonly channelId: string
 
     /**
      * Role ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDelete
      */
-    readonly roleId: number
+    readonly roleId: string
 }
 
 /**
@@ -6434,24 +6491,24 @@ export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteReque
 export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGet
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Channel ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGet
      */
-    readonly channelId: number
+    readonly channelId: string
 
     /**
      * Role ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGet
      */
-    readonly roleId: number
+    readonly roleId: string
 }
 
 /**
@@ -6462,31 +6519,31 @@ export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest 
 export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatch
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Channel ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatch
      */
-    readonly channelId: number
+    readonly channelId: string
 
     /**
      * Role ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatch
      */
-    readonly roleId: number
+    readonly roleId: string
 
     /**
      * Permission mask
      * @type {GuildChannelRolePermissionRequest}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatch
      */
-    readonly guildChannelRolePermissionRequest: GuildChannelRolePermissionRequest
+    readonly req: GuildChannelRolePermissionRequest
 }
 
 /**
@@ -6497,31 +6554,31 @@ export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchReques
 export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPut
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Channel ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPut
      */
-    readonly channelId: number
+    readonly channelId: string
 
     /**
      * Role ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPut
      */
-    readonly roleId: number
+    readonly roleId: string
 
     /**
      * Permission mask
      * @type {GuildChannelRolePermissionRequest}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPut
      */
-    readonly guildChannelRolePermissionRequest: GuildChannelRolePermissionRequest
+    readonly req: GuildChannelRolePermissionRequest
 }
 
 /**
@@ -6532,17 +6589,17 @@ export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest 
 export interface GuildRolesApiGuildGuildIdMemberUserIdRolesGetRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesGet
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * User ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesGet
      */
-    readonly userId: number
+    readonly userId: string
 }
 
 /**
@@ -6553,24 +6610,24 @@ export interface GuildRolesApiGuildGuildIdMemberUserIdRolesGetRequest {
 export interface GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDelete
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * User ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDelete
      */
-    readonly userId: number
+    readonly userId: string
 
     /**
      * Role ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDelete
      */
-    readonly roleId: number
+    readonly roleId: string
 }
 
 /**
@@ -6581,24 +6638,24 @@ export interface GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest {
 export interface GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPut
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * User ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPut
      */
-    readonly userId: number
+    readonly userId: string
 
     /**
      * Role ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPut
      */
-    readonly roleId: number
+    readonly roleId: string
 }
 
 /**
@@ -6609,10 +6666,10 @@ export interface GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest {
 export interface GuildRolesApiGuildGuildIdRolesGetRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdRolesGet
      */
-    readonly guildId: number
+    readonly guildId: string
 }
 
 /**
@@ -6623,17 +6680,17 @@ export interface GuildRolesApiGuildGuildIdRolesGetRequest {
 export interface GuildRolesApiGuildGuildIdRolesPostRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdRolesPost
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Role data
      * @type {GuildCreateGuildRoleRequest}
      * @memberof GuildRolesApiGuildGuildIdRolesPost
      */
-    readonly guildCreateGuildRoleRequest: GuildCreateGuildRoleRequest
+    readonly req: GuildCreateGuildRoleRequest
 }
 
 /**
@@ -6644,17 +6701,17 @@ export interface GuildRolesApiGuildGuildIdRolesPostRequest {
 export interface GuildRolesApiGuildGuildIdRolesRoleIdDeleteRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdRolesRoleIdDelete
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Role ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdRolesRoleIdDelete
      */
-    readonly roleId: number
+    readonly roleId: string
 }
 
 /**
@@ -6665,24 +6722,24 @@ export interface GuildRolesApiGuildGuildIdRolesRoleIdDeleteRequest {
 export interface GuildRolesApiGuildGuildIdRolesRoleIdPatchRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdRolesRoleIdPatch
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Role ID
-     * @type {number}
+     * @type {string}
      * @memberof GuildRolesApiGuildGuildIdRolesRoleIdPatch
      */
-    readonly roleId: number
+    readonly roleId: string
 
     /**
      * Role changes
      * @type {GuildPatchGuildRoleRequest}
      * @memberof GuildRolesApiGuildGuildIdRolesRoleIdPatch
      */
-    readonly guildPatchGuildRoleRequest: GuildPatchGuildRoleRequest
+    readonly req: GuildPatchGuildRoleRequest
 }
 
 /**
@@ -6737,7 +6794,7 @@ export class GuildRolesApi extends BaseAPI implements GuildRolesApiInterface {
      * @memberof GuildRolesApi
      */
     public guildGuildIdChannelChannelIdRolesRoleIdPatch(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest, options?: RawAxiosRequestConfig) {
-        return GuildRolesApiFp(this.configuration).guildGuildIdChannelChannelIdRolesRoleIdPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, requestParameters.guildChannelRolePermissionRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildRolesApiFp(this.configuration).guildGuildIdChannelChannelIdRolesRoleIdPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, requestParameters.req, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -6749,7 +6806,7 @@ export class GuildRolesApi extends BaseAPI implements GuildRolesApiInterface {
      * @memberof GuildRolesApi
      */
     public guildGuildIdChannelChannelIdRolesRoleIdPut(requestParameters: GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest, options?: RawAxiosRequestConfig) {
-        return GuildRolesApiFp(this.configuration).guildGuildIdChannelChannelIdRolesRoleIdPut(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, requestParameters.guildChannelRolePermissionRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildRolesApiFp(this.configuration).guildGuildIdChannelChannelIdRolesRoleIdPut(requestParameters.guildId, requestParameters.channelId, requestParameters.roleId, requestParameters.req, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -6809,7 +6866,7 @@ export class GuildRolesApi extends BaseAPI implements GuildRolesApiInterface {
      * @memberof GuildRolesApi
      */
     public guildGuildIdRolesPost(requestParameters: GuildRolesApiGuildGuildIdRolesPostRequest, options?: RawAxiosRequestConfig) {
-        return GuildRolesApiFp(this.configuration).guildGuildIdRolesPost(requestParameters.guildId, requestParameters.guildCreateGuildRoleRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildRolesApiFp(this.configuration).guildGuildIdRolesPost(requestParameters.guildId, requestParameters.req, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -6833,7 +6890,7 @@ export class GuildRolesApi extends BaseAPI implements GuildRolesApiInterface {
      * @memberof GuildRolesApi
      */
     public guildGuildIdRolesRoleIdPatch(requestParameters: GuildRolesApiGuildGuildIdRolesRoleIdPatchRequest, options?: RawAxiosRequestConfig) {
-        return GuildRolesApiFp(this.configuration).guildGuildIdRolesRoleIdPatch(requestParameters.guildId, requestParameters.roleId, requestParameters.guildPatchGuildRoleRequest, options).then((request) => request(this.axios, this.basePath));
+        return GuildRolesApiFp(this.configuration).guildGuildIdRolesRoleIdPatch(requestParameters.guildId, requestParameters.roleId, requestParameters.req, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -6848,16 +6905,16 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Create attachment
-         * @param {number} channelId Channel id
-         * @param {MessageUploadAttachmentRequest} messageUploadAttachmentRequest Attachment data
+         * @param {string} channelId Channel id
+         * @param {MessageUploadAttachmentRequest} request Attachment data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdAttachmentPost: async (channelId: number, messageUploadAttachmentRequest: MessageUploadAttachmentRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdAttachmentPost: async (channelId: string, request: MessageUploadAttachmentRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('messageChannelChannelIdAttachmentPost', 'channelId', channelId)
-            // verify required parameter 'messageUploadAttachmentRequest' is not null or undefined
-            assertParamExists('messageChannelChannelIdAttachmentPost', 'messageUploadAttachmentRequest', messageUploadAttachmentRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('messageChannelChannelIdAttachmentPost', 'request', request)
             const localVarPath = `/message/channel/{channel_id}/attachment`
                 .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -6878,7 +6935,7 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(messageUploadAttachmentRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -6888,14 +6945,14 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get messages
-         * @param {number} channelId Channel id
-         * @param {number} [from] Start point for messages
+         * @param {string} channelId Channel id
+         * @param {string} [from] Start point for messages
          * @param {MessageChannelChannelIdGetDirectionEnum} [direction] Select direction
          * @param {number} [limit] Message count limit
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdGet: async (channelId: number, from?: number, direction?: MessageChannelChannelIdGetDirectionEnum, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdGet: async (channelId: string, from?: string, direction?: MessageChannelChannelIdGetDirectionEnum, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('messageChannelChannelIdGet', 'channelId', channelId)
             const localVarPath = `/message/channel/{channel_id}`
@@ -6937,12 +6994,12 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Set channel read state for current user
-         * @param {number} channelId Channel id
-         * @param {number} messageId Message id
+         * @param {string} channelId Channel id
+         * @param {string} messageId Message id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdMessageIdAckPost: async (channelId: number, messageId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdMessageIdAckPost: async (channelId: string, messageId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('messageChannelChannelIdMessageIdAckPost', 'channelId', channelId)
             // verify required parameter 'messageId' is not null or undefined
@@ -6975,12 +7032,12 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Delete message
-         * @param {number} messageId Message id
-         * @param {number} channelId Channel id
+         * @param {string} messageId Message id
+         * @param {string} channelId Channel id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdMessageIdDelete: async (messageId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdMessageIdDelete: async (messageId: string, channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'messageId' is not null or undefined
             assertParamExists('messageChannelChannelIdMessageIdDelete', 'messageId', messageId)
             // verify required parameter 'channelId' is not null or undefined
@@ -7013,19 +7070,19 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Update message
-         * @param {number} messageId Message id
-         * @param {number} channelId Channel id
-         * @param {MessageUpdateMessageRequest} messageUpdateMessageRequest Message data
+         * @param {string} messageId Message id
+         * @param {string} channelId Channel id
+         * @param {MessageUpdateMessageRequest} request Message data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdMessageIdPatch: async (messageId: number, channelId: number, messageUpdateMessageRequest: MessageUpdateMessageRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdMessageIdPatch: async (messageId: string, channelId: string, request: MessageUpdateMessageRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'messageId' is not null or undefined
             assertParamExists('messageChannelChannelIdMessageIdPatch', 'messageId', messageId)
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('messageChannelChannelIdMessageIdPatch', 'channelId', channelId)
-            // verify required parameter 'messageUpdateMessageRequest' is not null or undefined
-            assertParamExists('messageChannelChannelIdMessageIdPatch', 'messageUpdateMessageRequest', messageUpdateMessageRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdPatch', 'request', request)
             const localVarPath = `/message/channel/{channel_id}/{message_id}`
                 .replace(`{${"message_id"}}`, encodeURIComponent(String(messageId)))
                 .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
@@ -7047,7 +7104,7 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(messageUpdateMessageRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -7057,16 +7114,16 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Send message
-         * @param {number} channelId Channel id
-         * @param {MessageSendMessageRequest} messageSendMessageRequest Message data
+         * @param {string} channelId Channel id
+         * @param {MessageSendMessageRequest} request Message data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdPost: async (channelId: number, messageSendMessageRequest: MessageSendMessageRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdPost: async (channelId: string, request: MessageSendMessageRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('messageChannelChannelIdPost', 'channelId', channelId)
-            // verify required parameter 'messageSendMessageRequest' is not null or undefined
-            assertParamExists('messageChannelChannelIdPost', 'messageSendMessageRequest', messageSendMessageRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('messageChannelChannelIdPost', 'request', request)
             const localVarPath = `/message/channel/{channel_id}`
                 .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -7087,7 +7144,7 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(messageSendMessageRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -7097,11 +7154,11 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Send user typing event in the channel
-         * @param {number} channelId Channel id
+         * @param {string} channelId Channel id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdTypingPost: async (channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdTypingPost: async (channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('messageChannelChannelIdTypingPost', 'channelId', channelId)
             const localVarPath = `/message/channel/{channel_id}/typing`
@@ -7141,13 +7198,13 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create attachment
-         * @param {number} channelId Channel id
-         * @param {MessageUploadAttachmentRequest} messageUploadAttachmentRequest Attachment data
+         * @param {string} channelId Channel id
+         * @param {MessageUploadAttachmentRequest} request Attachment data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdAttachmentPost(channelId: number, messageUploadAttachmentRequest: MessageUploadAttachmentRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoAttachmentUpload>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdAttachmentPost(channelId, messageUploadAttachmentRequest, options);
+        async messageChannelChannelIdAttachmentPost(channelId: string, request: MessageUploadAttachmentRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoAttachmentUpload>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdAttachmentPost(channelId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdAttachmentPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -7155,14 +7212,14 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get messages
-         * @param {number} channelId Channel id
-         * @param {number} [from] Start point for messages
+         * @param {string} channelId Channel id
+         * @param {string} [from] Start point for messages
          * @param {MessageChannelChannelIdGetDirectionEnum} [direction] Select direction
          * @param {number} [limit] Message count limit
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdGet(channelId: number, from?: number, direction?: MessageChannelChannelIdGetDirectionEnum, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoMessage>>> {
+        async messageChannelChannelIdGet(channelId: string, from?: string, direction?: MessageChannelChannelIdGetDirectionEnum, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoMessage>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdGet(channelId, from, direction, limit, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdGet']?.[localVarOperationServerIndex]?.url;
@@ -7171,12 +7228,12 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Set channel read state for current user
-         * @param {number} channelId Channel id
-         * @param {number} messageId Message id
+         * @param {string} channelId Channel id
+         * @param {string} messageId Message id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdMessageIdAckPost(channelId: number, messageId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async messageChannelChannelIdMessageIdAckPost(channelId: string, messageId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdMessageIdAckPost(channelId, messageId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdMessageIdAckPost']?.[localVarOperationServerIndex]?.url;
@@ -7185,12 +7242,12 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete message
-         * @param {number} messageId Message id
-         * @param {number} channelId Channel id
+         * @param {string} messageId Message id
+         * @param {string} channelId Channel id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdMessageIdDelete(messageId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async messageChannelChannelIdMessageIdDelete(messageId: string, channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdMessageIdDelete(messageId, channelId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdMessageIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -7199,14 +7256,14 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Update message
-         * @param {number} messageId Message id
-         * @param {number} channelId Channel id
-         * @param {MessageUpdateMessageRequest} messageUpdateMessageRequest Message data
+         * @param {string} messageId Message id
+         * @param {string} channelId Channel id
+         * @param {MessageUpdateMessageRequest} request Message data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdMessageIdPatch(messageId: number, channelId: number, messageUpdateMessageRequest: MessageUpdateMessageRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessage>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdMessageIdPatch(messageId, channelId, messageUpdateMessageRequest, options);
+        async messageChannelChannelIdMessageIdPatch(messageId: string, channelId: string, request: MessageUpdateMessageRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdMessageIdPatch(messageId, channelId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdMessageIdPatch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -7214,13 +7271,13 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Send message
-         * @param {number} channelId Channel id
-         * @param {MessageSendMessageRequest} messageSendMessageRequest Message data
+         * @param {string} channelId Channel id
+         * @param {MessageSendMessageRequest} request Message data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdPost(channelId: number, messageSendMessageRequest: MessageSendMessageRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessage>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdPost(channelId, messageSendMessageRequest, options);
+        async messageChannelChannelIdPost(channelId: string, request: MessageSendMessageRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdPost(channelId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -7228,11 +7285,11 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Send user typing event in the channel
-         * @param {number} channelId Channel id
+         * @param {string} channelId Channel id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdTypingPost(channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async messageChannelChannelIdTypingPost(channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdTypingPost(channelId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdTypingPost']?.[localVarOperationServerIndex]?.url;
@@ -7256,7 +7313,7 @@ export const MessageApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         messageChannelChannelIdAttachmentPost(requestParameters: MessageApiMessageChannelChannelIdAttachmentPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoAttachmentUpload> {
-            return localVarFp.messageChannelChannelIdAttachmentPost(requestParameters.channelId, requestParameters.messageUploadAttachmentRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.messageChannelChannelIdAttachmentPost(requestParameters.channelId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -7296,7 +7353,7 @@ export const MessageApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         messageChannelChannelIdMessageIdPatch(requestParameters: MessageApiMessageChannelChannelIdMessageIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessage> {
-            return localVarFp.messageChannelChannelIdMessageIdPatch(requestParameters.messageId, requestParameters.channelId, requestParameters.messageUpdateMessageRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.messageChannelChannelIdMessageIdPatch(requestParameters.messageId, requestParameters.channelId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -7306,7 +7363,7 @@ export const MessageApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         messageChannelChannelIdPost(requestParameters: MessageApiMessageChannelChannelIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessage> {
-            return localVarFp.messageChannelChannelIdPost(requestParameters.channelId, requestParameters.messageSendMessageRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.messageChannelChannelIdPost(requestParameters.channelId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -7407,17 +7464,17 @@ export interface MessageApiInterface {
 export interface MessageApiMessageChannelChannelIdAttachmentPostRequest {
     /**
      * Channel id
-     * @type {number}
+     * @type {string}
      * @memberof MessageApiMessageChannelChannelIdAttachmentPost
      */
-    readonly channelId: number
+    readonly channelId: string
 
     /**
      * Attachment data
      * @type {MessageUploadAttachmentRequest}
      * @memberof MessageApiMessageChannelChannelIdAttachmentPost
      */
-    readonly messageUploadAttachmentRequest: MessageUploadAttachmentRequest
+    readonly request: MessageUploadAttachmentRequest
 }
 
 /**
@@ -7428,17 +7485,17 @@ export interface MessageApiMessageChannelChannelIdAttachmentPostRequest {
 export interface MessageApiMessageChannelChannelIdGetRequest {
     /**
      * Channel id
-     * @type {number}
+     * @type {string}
      * @memberof MessageApiMessageChannelChannelIdGet
      */
-    readonly channelId: number
+    readonly channelId: string
 
     /**
      * Start point for messages
-     * @type {number}
+     * @type {string}
      * @memberof MessageApiMessageChannelChannelIdGet
      */
-    readonly from?: number
+    readonly from?: string
 
     /**
      * Select direction
@@ -7463,17 +7520,17 @@ export interface MessageApiMessageChannelChannelIdGetRequest {
 export interface MessageApiMessageChannelChannelIdMessageIdAckPostRequest {
     /**
      * Channel id
-     * @type {number}
+     * @type {string}
      * @memberof MessageApiMessageChannelChannelIdMessageIdAckPost
      */
-    readonly channelId: number
+    readonly channelId: string
 
     /**
      * Message id
-     * @type {number}
+     * @type {string}
      * @memberof MessageApiMessageChannelChannelIdMessageIdAckPost
      */
-    readonly messageId: number
+    readonly messageId: string
 }
 
 /**
@@ -7484,17 +7541,17 @@ export interface MessageApiMessageChannelChannelIdMessageIdAckPostRequest {
 export interface MessageApiMessageChannelChannelIdMessageIdDeleteRequest {
     /**
      * Message id
-     * @type {number}
+     * @type {string}
      * @memberof MessageApiMessageChannelChannelIdMessageIdDelete
      */
-    readonly messageId: number
+    readonly messageId: string
 
     /**
      * Channel id
-     * @type {number}
+     * @type {string}
      * @memberof MessageApiMessageChannelChannelIdMessageIdDelete
      */
-    readonly channelId: number
+    readonly channelId: string
 }
 
 /**
@@ -7505,24 +7562,24 @@ export interface MessageApiMessageChannelChannelIdMessageIdDeleteRequest {
 export interface MessageApiMessageChannelChannelIdMessageIdPatchRequest {
     /**
      * Message id
-     * @type {number}
+     * @type {string}
      * @memberof MessageApiMessageChannelChannelIdMessageIdPatch
      */
-    readonly messageId: number
+    readonly messageId: string
 
     /**
      * Channel id
-     * @type {number}
+     * @type {string}
      * @memberof MessageApiMessageChannelChannelIdMessageIdPatch
      */
-    readonly channelId: number
+    readonly channelId: string
 
     /**
      * Message data
      * @type {MessageUpdateMessageRequest}
      * @memberof MessageApiMessageChannelChannelIdMessageIdPatch
      */
-    readonly messageUpdateMessageRequest: MessageUpdateMessageRequest
+    readonly request: MessageUpdateMessageRequest
 }
 
 /**
@@ -7533,17 +7590,17 @@ export interface MessageApiMessageChannelChannelIdMessageIdPatchRequest {
 export interface MessageApiMessageChannelChannelIdPostRequest {
     /**
      * Channel id
-     * @type {number}
+     * @type {string}
      * @memberof MessageApiMessageChannelChannelIdPost
      */
-    readonly channelId: number
+    readonly channelId: string
 
     /**
      * Message data
      * @type {MessageSendMessageRequest}
      * @memberof MessageApiMessageChannelChannelIdPost
      */
-    readonly messageSendMessageRequest: MessageSendMessageRequest
+    readonly request: MessageSendMessageRequest
 }
 
 /**
@@ -7554,10 +7611,10 @@ export interface MessageApiMessageChannelChannelIdPostRequest {
 export interface MessageApiMessageChannelChannelIdTypingPostRequest {
     /**
      * Channel id
-     * @type {number}
+     * @type {string}
      * @memberof MessageApiMessageChannelChannelIdTypingPost
      */
-    readonly channelId: number
+    readonly channelId: string
 }
 
 /**
@@ -7576,7 +7633,7 @@ export class MessageApi extends BaseAPI implements MessageApiInterface {
      * @memberof MessageApi
      */
     public messageChannelChannelIdAttachmentPost(requestParameters: MessageApiMessageChannelChannelIdAttachmentPostRequest, options?: RawAxiosRequestConfig) {
-        return MessageApiFp(this.configuration).messageChannelChannelIdAttachmentPost(requestParameters.channelId, requestParameters.messageUploadAttachmentRequest, options).then((request) => request(this.axios, this.basePath));
+        return MessageApiFp(this.configuration).messageChannelChannelIdAttachmentPost(requestParameters.channelId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -7624,7 +7681,7 @@ export class MessageApi extends BaseAPI implements MessageApiInterface {
      * @memberof MessageApi
      */
     public messageChannelChannelIdMessageIdPatch(requestParameters: MessageApiMessageChannelChannelIdMessageIdPatchRequest, options?: RawAxiosRequestConfig) {
-        return MessageApiFp(this.configuration).messageChannelChannelIdMessageIdPatch(requestParameters.messageId, requestParameters.channelId, requestParameters.messageUpdateMessageRequest, options).then((request) => request(this.axios, this.basePath));
+        return MessageApiFp(this.configuration).messageChannelChannelIdMessageIdPatch(requestParameters.messageId, requestParameters.channelId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -7636,7 +7693,7 @@ export class MessageApi extends BaseAPI implements MessageApiInterface {
      * @memberof MessageApi
      */
     public messageChannelChannelIdPost(requestParameters: MessageApiMessageChannelChannelIdPostRequest, options?: RawAxiosRequestConfig) {
-        return MessageApiFp(this.configuration).messageChannelChannelIdPost(requestParameters.channelId, requestParameters.messageSendMessageRequest, options).then((request) => request(this.axios, this.basePath));
+        return MessageApiFp(this.configuration).messageChannelChannelIdPost(requestParameters.channelId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -7672,16 +7729,16 @@ export const SearchApiAxiosParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Search messages
-         * @param {number} guildId Guild id
-         * @param {SearchMessageSearchRequest} searchMessageSearchRequest Search request data
+         * @param {string} guildId Guild id
+         * @param {SearchMessageSearchRequest} request Search request data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchGuildIdMessagesPost: async (guildId: number, searchMessageSearchRequest: SearchMessageSearchRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        searchGuildIdMessagesPost: async (guildId: string, request: SearchMessageSearchRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('searchGuildIdMessagesPost', 'guildId', guildId)
-            // verify required parameter 'searchMessageSearchRequest' is not null or undefined
-            assertParamExists('searchGuildIdMessagesPost', 'searchMessageSearchRequest', searchMessageSearchRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('searchGuildIdMessagesPost', 'request', request)
             const localVarPath = `/search/{guild_id}/messages`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -7702,7 +7759,7 @@ export const SearchApiAxiosParamCreator = function (configuration?: Configuratio
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(searchMessageSearchRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -7722,13 +7779,13 @@ export const SearchApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Search messages
-         * @param {number} guildId Guild id
-         * @param {SearchMessageSearchRequest} searchMessageSearchRequest Search request data
+         * @param {string} guildId Guild id
+         * @param {SearchMessageSearchRequest} request Search request data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async searchGuildIdMessagesPost(guildId: number, searchMessageSearchRequest: SearchMessageSearchRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<SearchMessageSearchResponse>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.searchGuildIdMessagesPost(guildId, searchMessageSearchRequest, options);
+        async searchGuildIdMessagesPost(guildId: string, request: SearchMessageSearchRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<SearchMessageSearchResponse>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.searchGuildIdMessagesPost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['SearchApi.searchGuildIdMessagesPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -7751,7 +7808,7 @@ export const SearchApiFactory = function (configuration?: Configuration, basePat
          * @throws {RequiredError}
          */
         searchGuildIdMessagesPost(requestParameters: SearchApiSearchGuildIdMessagesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<SearchMessageSearchResponse>> {
-            return localVarFp.searchGuildIdMessagesPost(requestParameters.guildId, requestParameters.searchMessageSearchRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.searchGuildIdMessagesPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -7782,17 +7839,17 @@ export interface SearchApiInterface {
 export interface SearchApiSearchGuildIdMessagesPostRequest {
     /**
      * Guild id
-     * @type {number}
+     * @type {string}
      * @memberof SearchApiSearchGuildIdMessagesPost
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Search request data
      * @type {SearchMessageSearchRequest}
      * @memberof SearchApiSearchGuildIdMessagesPost
      */
-    readonly searchMessageSearchRequest: SearchMessageSearchRequest
+    readonly request: SearchMessageSearchRequest
 }
 
 /**
@@ -7811,7 +7868,7 @@ export class SearchApi extends BaseAPI implements SearchApiInterface {
      * @memberof SearchApi
      */
     public searchGuildIdMessagesPost(requestParameters: SearchApiSearchGuildIdMessagesPostRequest, options?: RawAxiosRequestConfig) {
-        return SearchApiFp(this.configuration).searchGuildIdMessagesPost(requestParameters.guildId, requestParameters.searchMessageSearchRequest, options).then((request) => request(this.axios, this.basePath));
+        return SearchApiFp(this.configuration).searchGuildIdMessagesPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -7826,19 +7883,19 @@ export const UploadApiAxiosParamCreator = function (configuration?: Configuratio
         /**
          * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
          * @summary Upload attachment
-         * @param {number} channelId Channel ID
-         * @param {number} attachmentId Attachment ID
-         * @param {Array<number>} requestBody Binary file to upload
+         * @param {string} channelId Channel ID
+         * @param {string} attachmentId Attachment ID
+         * @param {Array<number>} file Binary file to upload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        uploadAttachmentsChannelIdAttachmentIdPost: async (channelId: number, attachmentId: number, requestBody: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        uploadAttachmentsChannelIdAttachmentIdPost: async (channelId: string, attachmentId: string, file: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('uploadAttachmentsChannelIdAttachmentIdPost', 'channelId', channelId)
             // verify required parameter 'attachmentId' is not null or undefined
             assertParamExists('uploadAttachmentsChannelIdAttachmentIdPost', 'attachmentId', attachmentId)
-            // verify required parameter 'requestBody' is not null or undefined
-            assertParamExists('uploadAttachmentsChannelIdAttachmentIdPost', 'requestBody', requestBody)
+            // verify required parameter 'file' is not null or undefined
+            assertParamExists('uploadAttachmentsChannelIdAttachmentIdPost', 'file', file)
             const localVarPath = `/upload/attachments/{channel_id}/{attachment_id}`
                 .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
                 .replace(`{${"attachment_id"}}`, encodeURIComponent(String(attachmentId)));
@@ -7860,7 +7917,7 @@ export const UploadApiAxiosParamCreator = function (configuration?: Configuratio
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(file, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -7870,19 +7927,19 @@ export const UploadApiAxiosParamCreator = function (configuration?: Configuratio
         /**
          * Uploads an avatar image. Resizes to max 128x128 and converts to WebP <= 250KB. Finalizes avatar metadata.
          * @summary Upload user avatar
-         * @param {number} userId User ID
-         * @param {number} avatarId Avatar ID
-         * @param {Array<number>} requestBody Binary image payload
+         * @param {string} userId User ID
+         * @param {string} avatarId Avatar ID
+         * @param {Array<number>} file Binary image payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        uploadAvatarsUserIdAvatarIdPost: async (userId: number, avatarId: number, requestBody: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        uploadAvatarsUserIdAvatarIdPost: async (userId: string, avatarId: string, file: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'userId' is not null or undefined
             assertParamExists('uploadAvatarsUserIdAvatarIdPost', 'userId', userId)
             // verify required parameter 'avatarId' is not null or undefined
             assertParamExists('uploadAvatarsUserIdAvatarIdPost', 'avatarId', avatarId)
-            // verify required parameter 'requestBody' is not null or undefined
-            assertParamExists('uploadAvatarsUserIdAvatarIdPost', 'requestBody', requestBody)
+            // verify required parameter 'file' is not null or undefined
+            assertParamExists('uploadAvatarsUserIdAvatarIdPost', 'file', file)
             const localVarPath = `/upload/avatars/{user_id}/{avatar_id}`
                 .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
                 .replace(`{${"avatar_id"}}`, encodeURIComponent(String(avatarId)));
@@ -7904,7 +7961,7 @@ export const UploadApiAxiosParamCreator = function (configuration?: Configuratio
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(file, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -7914,19 +7971,19 @@ export const UploadApiAxiosParamCreator = function (configuration?: Configuratio
         /**
          * Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
          * @summary Upload guild icon
-         * @param {number} guildId Guild ID
-         * @param {number} iconId Icon ID
-         * @param {Array<number>} requestBody Binary image payload
+         * @param {string} guildId Guild ID
+         * @param {string} iconId Icon ID
+         * @param {Array<number>} file Binary image payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        uploadIconsGuildIdIconIdPost: async (guildId: number, iconId: number, requestBody: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        uploadIconsGuildIdIconIdPost: async (guildId: string, iconId: string, file: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('uploadIconsGuildIdIconIdPost', 'guildId', guildId)
             // verify required parameter 'iconId' is not null or undefined
             assertParamExists('uploadIconsGuildIdIconIdPost', 'iconId', iconId)
-            // verify required parameter 'requestBody' is not null or undefined
-            assertParamExists('uploadIconsGuildIdIconIdPost', 'requestBody', requestBody)
+            // verify required parameter 'file' is not null or undefined
+            assertParamExists('uploadIconsGuildIdIconIdPost', 'file', file)
             const localVarPath = `/upload/icons/{guild_id}/{icon_id}`
                 .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
                 .replace(`{${"icon_id"}}`, encodeURIComponent(String(iconId)));
@@ -7948,7 +8005,7 @@ export const UploadApiAxiosParamCreator = function (configuration?: Configuratio
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(requestBody, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(file, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -7968,14 +8025,14 @@ export const UploadApiFp = function(configuration?: Configuration) {
         /**
          * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
          * @summary Upload attachment
-         * @param {number} channelId Channel ID
-         * @param {number} attachmentId Attachment ID
-         * @param {Array<number>} requestBody Binary file to upload
+         * @param {string} channelId Channel ID
+         * @param {string} attachmentId Attachment ID
+         * @param {Array<number>} file Binary file to upload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async uploadAttachmentsChannelIdAttachmentIdPost(channelId: number, attachmentId: number, requestBody: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.uploadAttachmentsChannelIdAttachmentIdPost(channelId, attachmentId, requestBody, options);
+        async uploadAttachmentsChannelIdAttachmentIdPost(channelId: string, attachmentId: string, file: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.uploadAttachmentsChannelIdAttachmentIdPost(channelId, attachmentId, file, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UploadApi.uploadAttachmentsChannelIdAttachmentIdPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -7983,14 +8040,14 @@ export const UploadApiFp = function(configuration?: Configuration) {
         /**
          * Uploads an avatar image. Resizes to max 128x128 and converts to WebP <= 250KB. Finalizes avatar metadata.
          * @summary Upload user avatar
-         * @param {number} userId User ID
-         * @param {number} avatarId Avatar ID
-         * @param {Array<number>} requestBody Binary image payload
+         * @param {string} userId User ID
+         * @param {string} avatarId Avatar ID
+         * @param {Array<number>} file Binary image payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async uploadAvatarsUserIdAvatarIdPost(userId: number, avatarId: number, requestBody: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.uploadAvatarsUserIdAvatarIdPost(userId, avatarId, requestBody, options);
+        async uploadAvatarsUserIdAvatarIdPost(userId: string, avatarId: string, file: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.uploadAvatarsUserIdAvatarIdPost(userId, avatarId, file, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UploadApi.uploadAvatarsUserIdAvatarIdPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -7998,14 +8055,14 @@ export const UploadApiFp = function(configuration?: Configuration) {
         /**
          * Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
          * @summary Upload guild icon
-         * @param {number} guildId Guild ID
-         * @param {number} iconId Icon ID
-         * @param {Array<number>} requestBody Binary image payload
+         * @param {string} guildId Guild ID
+         * @param {string} iconId Icon ID
+         * @param {Array<number>} file Binary image payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async uploadIconsGuildIdIconIdPost(guildId: number, iconId: number, requestBody: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.uploadIconsGuildIdIconIdPost(guildId, iconId, requestBody, options);
+        async uploadIconsGuildIdIconIdPost(guildId: string, iconId: string, file: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.uploadIconsGuildIdIconIdPost(guildId, iconId, file, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UploadApi.uploadIconsGuildIdIconIdPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -8028,7 +8085,7 @@ export const UploadApiFactory = function (configuration?: Configuration, basePat
          * @throws {RequiredError}
          */
         uploadAttachmentsChannelIdAttachmentIdPost(requestParameters: UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.uploadAttachmentsChannelIdAttachmentIdPost(requestParameters.channelId, requestParameters.attachmentId, requestParameters.requestBody, options).then((request) => request(axios, basePath));
+            return localVarFp.uploadAttachmentsChannelIdAttachmentIdPost(requestParameters.channelId, requestParameters.attachmentId, requestParameters.file, options).then((request) => request(axios, basePath));
         },
         /**
          * Uploads an avatar image. Resizes to max 128x128 and converts to WebP <= 250KB. Finalizes avatar metadata.
@@ -8038,7 +8095,7 @@ export const UploadApiFactory = function (configuration?: Configuration, basePat
          * @throws {RequiredError}
          */
         uploadAvatarsUserIdAvatarIdPost(requestParameters: UploadApiUploadAvatarsUserIdAvatarIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.uploadAvatarsUserIdAvatarIdPost(requestParameters.userId, requestParameters.avatarId, requestParameters.requestBody, options).then((request) => request(axios, basePath));
+            return localVarFp.uploadAvatarsUserIdAvatarIdPost(requestParameters.userId, requestParameters.avatarId, requestParameters.file, options).then((request) => request(axios, basePath));
         },
         /**
          * Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
@@ -8048,7 +8105,7 @@ export const UploadApiFactory = function (configuration?: Configuration, basePat
          * @throws {RequiredError}
          */
         uploadIconsGuildIdIconIdPost(requestParameters: UploadApiUploadIconsGuildIdIconIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.uploadIconsGuildIdIconIdPost(requestParameters.guildId, requestParameters.iconId, requestParameters.requestBody, options).then((request) => request(axios, basePath));
+            return localVarFp.uploadIconsGuildIdIconIdPost(requestParameters.guildId, requestParameters.iconId, requestParameters.file, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -8099,24 +8156,24 @@ export interface UploadApiInterface {
 export interface UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest {
     /**
      * Channel ID
-     * @type {number}
+     * @type {string}
      * @memberof UploadApiUploadAttachmentsChannelIdAttachmentIdPost
      */
-    readonly channelId: number
+    readonly channelId: string
 
     /**
      * Attachment ID
-     * @type {number}
+     * @type {string}
      * @memberof UploadApiUploadAttachmentsChannelIdAttachmentIdPost
      */
-    readonly attachmentId: number
+    readonly attachmentId: string
 
     /**
      * Binary file to upload
      * @type {Array<number>}
      * @memberof UploadApiUploadAttachmentsChannelIdAttachmentIdPost
      */
-    readonly requestBody: Array<number>
+    readonly file: Array<number>
 }
 
 /**
@@ -8127,24 +8184,24 @@ export interface UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest {
 export interface UploadApiUploadAvatarsUserIdAvatarIdPostRequest {
     /**
      * User ID
-     * @type {number}
+     * @type {string}
      * @memberof UploadApiUploadAvatarsUserIdAvatarIdPost
      */
-    readonly userId: number
+    readonly userId: string
 
     /**
      * Avatar ID
-     * @type {number}
+     * @type {string}
      * @memberof UploadApiUploadAvatarsUserIdAvatarIdPost
      */
-    readonly avatarId: number
+    readonly avatarId: string
 
     /**
      * Binary image payload
      * @type {Array<number>}
      * @memberof UploadApiUploadAvatarsUserIdAvatarIdPost
      */
-    readonly requestBody: Array<number>
+    readonly file: Array<number>
 }
 
 /**
@@ -8155,24 +8212,24 @@ export interface UploadApiUploadAvatarsUserIdAvatarIdPostRequest {
 export interface UploadApiUploadIconsGuildIdIconIdPostRequest {
     /**
      * Guild ID
-     * @type {number}
+     * @type {string}
      * @memberof UploadApiUploadIconsGuildIdIconIdPost
      */
-    readonly guildId: number
+    readonly guildId: string
 
     /**
      * Icon ID
-     * @type {number}
+     * @type {string}
      * @memberof UploadApiUploadIconsGuildIdIconIdPost
      */
-    readonly iconId: number
+    readonly iconId: string
 
     /**
      * Binary image payload
      * @type {Array<number>}
      * @memberof UploadApiUploadIconsGuildIdIconIdPost
      */
-    readonly requestBody: Array<number>
+    readonly file: Array<number>
 }
 
 /**
@@ -8191,7 +8248,7 @@ export class UploadApi extends BaseAPI implements UploadApiInterface {
      * @memberof UploadApi
      */
     public uploadAttachmentsChannelIdAttachmentIdPost(requestParameters: UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest, options?: RawAxiosRequestConfig) {
-        return UploadApiFp(this.configuration).uploadAttachmentsChannelIdAttachmentIdPost(requestParameters.channelId, requestParameters.attachmentId, requestParameters.requestBody, options).then((request) => request(this.axios, this.basePath));
+        return UploadApiFp(this.configuration).uploadAttachmentsChannelIdAttachmentIdPost(requestParameters.channelId, requestParameters.attachmentId, requestParameters.file, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -8203,7 +8260,7 @@ export class UploadApi extends BaseAPI implements UploadApiInterface {
      * @memberof UploadApi
      */
     public uploadAvatarsUserIdAvatarIdPost(requestParameters: UploadApiUploadAvatarsUserIdAvatarIdPostRequest, options?: RawAxiosRequestConfig) {
-        return UploadApiFp(this.configuration).uploadAvatarsUserIdAvatarIdPost(requestParameters.userId, requestParameters.avatarId, requestParameters.requestBody, options).then((request) => request(this.axios, this.basePath));
+        return UploadApiFp(this.configuration).uploadAvatarsUserIdAvatarIdPost(requestParameters.userId, requestParameters.avatarId, requestParameters.file, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -8215,7 +8272,7 @@ export class UploadApi extends BaseAPI implements UploadApiInterface {
      * @memberof UploadApi
      */
     public uploadIconsGuildIdIconIdPost(requestParameters: UploadApiUploadIconsGuildIdIconIdPostRequest, options?: RawAxiosRequestConfig) {
-        return UploadApiFp(this.configuration).uploadIconsGuildIdIconIdPost(requestParameters.guildId, requestParameters.iconId, requestParameters.requestBody, options).then((request) => request(this.axios, this.basePath));
+        return UploadApiFp(this.configuration).uploadIconsGuildIdIconIdPost(requestParameters.guildId, requestParameters.iconId, requestParameters.file, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -8230,13 +8287,13 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * Creates an avatar placeholder and returns upload info. Upload the binary to attachments service.
          * @summary Create avatar metadata
-         * @param {UserCreateAvatarRequest} userCreateAvatarRequest Avatar creation request
+         * @param {UserCreateAvatarRequest} request Avatar creation request
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeAvatarPost: async (userCreateAvatarRequest: UserCreateAvatarRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'userCreateAvatarRequest' is not null or undefined
-            assertParamExists('userMeAvatarPost', 'userCreateAvatarRequest', userCreateAvatarRequest)
+        userMeAvatarPost: async (request: UserCreateAvatarRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('userMeAvatarPost', 'request', request)
             const localVarPath = `/user/me/avatar`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8256,7 +8313,7 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(userCreateAvatarRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -8266,11 +8323,11 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Delete my avatar by ID
-         * @param {number} avatarId Avatar ID
+         * @param {string} avatarId Avatar ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeAvatarsAvatarIdDelete: async (avatarId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        userMeAvatarsAvatarIdDelete: async (avatarId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'avatarId' is not null or undefined
             assertParamExists('userMeAvatarsAvatarIdDelete', 'avatarId', avatarId)
             const localVarPath = `/user/me/avatars/{avatar_id}`
@@ -8360,13 +8417,13 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Create group DM channel
-         * @param {UserCreateDMManyRequest} userCreateDMManyRequest Group DM data
+         * @param {UserCreateDMManyRequest} request Group DM data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeChannelsGroupPost: async (userCreateDMManyRequest: UserCreateDMManyRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'userCreateDMManyRequest' is not null or undefined
-            assertParamExists('userMeChannelsGroupPost', 'userCreateDMManyRequest', userCreateDMManyRequest)
+        userMeChannelsGroupPost: async (request: UserCreateDMManyRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('userMeChannelsGroupPost', 'request', request)
             const localVarPath = `/user/me/channels/group`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8386,7 +8443,7 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(userCreateDMManyRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -8396,13 +8453,13 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Create DM channel
-         * @param {UserCreateDMRequest} userCreateDMRequest Recipient data
+         * @param {UserCreateDMRequest} request Recipient data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeChannelsPost: async (userCreateDMRequest: UserCreateDMRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'userCreateDMRequest' is not null or undefined
-            assertParamExists('userMeChannelsPost', 'userCreateDMRequest', userCreateDMRequest)
+        userMeChannelsPost: async (request: UserCreateDMRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('userMeChannelsPost', 'request', request)
             const localVarPath = `/user/me/channels`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8422,7 +8479,7 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(userCreateDMRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -8432,13 +8489,13 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Remove user from friends
-         * @param {UserUnfriendRequest} userUnfriendRequest Unfriend
+         * @param {UserUnfriendRequest} request Unfriend
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeFriendsDelete: async (userUnfriendRequest: UserUnfriendRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'userUnfriendRequest' is not null or undefined
-            assertParamExists('userMeFriendsDelete', 'userUnfriendRequest', userUnfriendRequest)
+        userMeFriendsDelete: async (request: UserUnfriendRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('userMeFriendsDelete', 'request', request)
             const localVarPath = `/user/me/friends`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8458,7 +8515,7 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(userUnfriendRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -8498,13 +8555,13 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Send a friend request by discriminator
-         * @param {UserCreateFriendRequestRequest} userCreateFriendRequestRequest Friend request
+         * @param {UserCreateFriendRequestRequest} request Friend request
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeFriendsPost: async (userCreateFriendRequestRequest: UserCreateFriendRequestRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'userCreateFriendRequestRequest' is not null or undefined
-            assertParamExists('userMeFriendsPost', 'userCreateFriendRequestRequest', userCreateFriendRequestRequest)
+        userMeFriendsPost: async (request: UserCreateFriendRequestRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('userMeFriendsPost', 'request', request)
             const localVarPath = `/user/me/friends`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8524,7 +8581,7 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(userCreateFriendRequestRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -8534,13 +8591,13 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Decline a friend request
-         * @param {UserFriendRequestAction} userFriendRequestAction Decline
+         * @param {UserFriendRequestAction} request Decline
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeFriendsRequestsDelete: async (userFriendRequestAction: UserFriendRequestAction, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'userFriendRequestAction' is not null or undefined
-            assertParamExists('userMeFriendsRequestsDelete', 'userFriendRequestAction', userFriendRequestAction)
+        userMeFriendsRequestsDelete: async (request: UserFriendRequestAction, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('userMeFriendsRequestsDelete', 'request', request)
             const localVarPath = `/user/me/friends/requests`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8560,7 +8617,7 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(userFriendRequestAction, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -8600,13 +8657,13 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Accept a friend request
-         * @param {UserFriendRequestAction} userFriendRequestAction Accept
+         * @param {UserFriendRequestAction} request Accept
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeFriendsRequestsPost: async (userFriendRequestAction: UserFriendRequestAction, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'userFriendRequestAction' is not null or undefined
-            assertParamExists('userMeFriendsRequestsPost', 'userFriendRequestAction', userFriendRequestAction)
+        userMeFriendsRequestsPost: async (request: UserFriendRequestAction, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('userMeFriendsRequestsPost', 'request', request)
             const localVarPath = `/user/me/friends/requests`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8626,7 +8683,7 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(userFriendRequestAction, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -8636,11 +8693,11 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Get or create DM with a user
-         * @param {number} userId User id
+         * @param {string} userId User id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeFriendsUserIdGet: async (userId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        userMeFriendsUserIdGet: async (userId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'userId' is not null or undefined
             assertParamExists('userMeFriendsUserIdGet', 'userId', userId)
             const localVarPath = `/user/me/friends/{user_id}`
@@ -8734,11 +8791,11 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Get user guild member
-         * @param {number} guildId Guild id
+         * @param {string} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeGuildsGuildIdMemberGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        userMeGuildsGuildIdMemberGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('userMeGuildsGuildIdMemberGet', 'guildId', guildId)
             const localVarPath = `/user/me/guilds/{guild_id}/member`
@@ -8768,13 +8825,13 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Get user
-         * @param {UserModifyUserRequest} userModifyUserRequest Modify user data
+         * @param {UserModifyUserRequest} request Modify user data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMePatch: async (userModifyUserRequest: UserModifyUserRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'userModifyUserRequest' is not null or undefined
-            assertParamExists('userMePatch', 'userModifyUserRequest', userModifyUserRequest)
+        userMePatch: async (request: UserModifyUserRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('userMePatch', 'request', request)
             const localVarPath = `/user/me`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8794,7 +8851,7 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(userModifyUserRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -8839,13 +8896,13 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Update current user settings (replaces and bumps version)
-         * @param {ModelUserSettingsData} modelUserSettingsData User settings
+         * @param {ModelUserSettingsData} request User settings
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeSettingsPost: async (modelUserSettingsData: ModelUserSettingsData, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'modelUserSettingsData' is not null or undefined
-            assertParamExists('userMeSettingsPost', 'modelUserSettingsData', modelUserSettingsData)
+        userMeSettingsPost: async (request: ModelUserSettingsData, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('userMeSettingsPost', 'request', request)
             const localVarPath = `/user/me/settings`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -8865,7 +8922,7 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(modelUserSettingsData, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -8919,12 +8976,12 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * Creates an avatar placeholder and returns upload info. Upload the binary to attachments service.
          * @summary Create avatar metadata
-         * @param {UserCreateAvatarRequest} userCreateAvatarRequest Avatar creation request
+         * @param {UserCreateAvatarRequest} request Avatar creation request
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeAvatarPost(userCreateAvatarRequest: UserCreateAvatarRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoAvatarUpload>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeAvatarPost(userCreateAvatarRequest, options);
+        async userMeAvatarPost(request: UserCreateAvatarRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoAvatarUpload>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeAvatarPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeAvatarPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -8932,11 +8989,11 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete my avatar by ID
-         * @param {number} avatarId Avatar ID
+         * @param {string} avatarId Avatar ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeAvatarsAvatarIdDelete(avatarId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async userMeAvatarsAvatarIdDelete(avatarId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.userMeAvatarsAvatarIdDelete(avatarId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeAvatarsAvatarIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -8969,12 +9026,12 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create group DM channel
-         * @param {UserCreateDMManyRequest} userCreateDMManyRequest Group DM data
+         * @param {UserCreateDMManyRequest} request Group DM data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeChannelsGroupPost(userCreateDMManyRequest: UserCreateDMManyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsGroupPost(userCreateDMManyRequest, options);
+        async userMeChannelsGroupPost(request: UserCreateDMManyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsGroupPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeChannelsGroupPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -8982,12 +9039,12 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create DM channel
-         * @param {UserCreateDMRequest} userCreateDMRequest Recipient data
+         * @param {UserCreateDMRequest} request Recipient data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeChannelsPost(userCreateDMRequest: UserCreateDMRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsPost(userCreateDMRequest, options);
+        async userMeChannelsPost(request: UserCreateDMRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeChannelsPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -8995,12 +9052,12 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Remove user from friends
-         * @param {UserUnfriendRequest} userUnfriendRequest Unfriend
+         * @param {UserUnfriendRequest} request Unfriend
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeFriendsDelete(userUnfriendRequest: UserUnfriendRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsDelete(userUnfriendRequest, options);
+        async userMeFriendsDelete(request: UserUnfriendRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsDelete(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsDelete']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -9020,12 +9077,12 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Send a friend request by discriminator
-         * @param {UserCreateFriendRequestRequest} userCreateFriendRequestRequest Friend request
+         * @param {UserCreateFriendRequestRequest} request Friend request
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeFriendsPost(userCreateFriendRequestRequest: UserCreateFriendRequestRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsPost(userCreateFriendRequestRequest, options);
+        async userMeFriendsPost(request: UserCreateFriendRequestRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -9033,12 +9090,12 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Decline a friend request
-         * @param {UserFriendRequestAction} userFriendRequestAction Decline
+         * @param {UserFriendRequestAction} request Decline
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeFriendsRequestsDelete(userFriendRequestAction: UserFriendRequestAction, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsRequestsDelete(userFriendRequestAction, options);
+        async userMeFriendsRequestsDelete(request: UserFriendRequestAction, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsRequestsDelete(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsRequestsDelete']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -9058,12 +9115,12 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Accept a friend request
-         * @param {UserFriendRequestAction} userFriendRequestAction Accept
+         * @param {UserFriendRequestAction} request Accept
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeFriendsRequestsPost(userFriendRequestAction: UserFriendRequestAction, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsRequestsPost(userFriendRequestAction, options);
+        async userMeFriendsRequestsPost(request: UserFriendRequestAction, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsRequestsPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsRequestsPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -9071,11 +9128,11 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get or create DM with a user
-         * @param {number} userId User id
+         * @param {string} userId User id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeFriendsUserIdGet(userId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
+        async userMeFriendsUserIdGet(userId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsUserIdGet(userId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsUserIdGet']?.[localVarOperationServerIndex]?.url;
@@ -9109,11 +9166,11 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get user guild member
-         * @param {number} guildId Guild id
+         * @param {string} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeGuildsGuildIdMemberGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMember>> {
+        async userMeGuildsGuildIdMemberGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMember>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.userMeGuildsGuildIdMemberGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeGuildsGuildIdMemberGet']?.[localVarOperationServerIndex]?.url;
@@ -9122,12 +9179,12 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get user
-         * @param {UserModifyUserRequest} userModifyUserRequest Modify user data
+         * @param {UserModifyUserRequest} request Modify user data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMePatch(userModifyUserRequest: UserModifyUserRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.userMePatch(userModifyUserRequest, options);
+        async userMePatch(request: UserModifyUserRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMePatch(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMePatch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -9148,12 +9205,12 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Update current user settings (replaces and bumps version)
-         * @param {ModelUserSettingsData} modelUserSettingsData User settings
+         * @param {ModelUserSettingsData} request User settings
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeSettingsPost(modelUserSettingsData: ModelUserSettingsData, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeSettingsPost(modelUserSettingsData, options);
+        async userMeSettingsPost(request: ModelUserSettingsData, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeSettingsPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeSettingsPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -9189,7 +9246,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         userMeAvatarPost(requestParameters: UserApiUserMeAvatarPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoAvatarUpload> {
-            return localVarFp.userMeAvatarPost(requestParameters.userCreateAvatarRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.userMeAvatarPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -9227,7 +9284,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         userMeChannelsGroupPost(requestParameters: UserApiUserMeChannelsGroupPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoChannel> {
-            return localVarFp.userMeChannelsGroupPost(requestParameters.userCreateDMManyRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.userMeChannelsGroupPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -9237,7 +9294,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         userMeChannelsPost(requestParameters: UserApiUserMeChannelsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoChannel> {
-            return localVarFp.userMeChannelsPost(requestParameters.userCreateDMRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.userMeChannelsPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -9247,7 +9304,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         userMeFriendsDelete(requestParameters: UserApiUserMeFriendsDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.userMeFriendsDelete(requestParameters.userUnfriendRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.userMeFriendsDelete(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -9266,7 +9323,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         userMeFriendsPost(requestParameters: UserApiUserMeFriendsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.userMeFriendsPost(requestParameters.userCreateFriendRequestRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.userMeFriendsPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -9276,7 +9333,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         userMeFriendsRequestsDelete(requestParameters: UserApiUserMeFriendsRequestsDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.userMeFriendsRequestsDelete(requestParameters.userFriendRequestAction, options).then((request) => request(axios, basePath));
+            return localVarFp.userMeFriendsRequestsDelete(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -9295,7 +9352,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         userMeFriendsRequestsPost(requestParameters: UserApiUserMeFriendsRequestsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.userMeFriendsRequestsPost(requestParameters.userFriendRequestAction, options).then((request) => request(axios, basePath));
+            return localVarFp.userMeFriendsRequestsPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -9344,7 +9401,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         userMePatch(requestParameters: UserApiUserMePatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.userMePatch(requestParameters.userModifyUserRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.userMePatch(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -9364,7 +9421,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         userMeSettingsPost(requestParameters: UserApiUserMeSettingsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.userMeSettingsPost(requestParameters.modelUserSettingsData, options).then((request) => request(axios, basePath));
+            return localVarFp.userMeSettingsPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -9593,7 +9650,7 @@ export interface UserApiUserMeAvatarPostRequest {
      * @type {UserCreateAvatarRequest}
      * @memberof UserApiUserMeAvatarPost
      */
-    readonly userCreateAvatarRequest: UserCreateAvatarRequest
+    readonly request: UserCreateAvatarRequest
 }
 
 /**
@@ -9604,10 +9661,10 @@ export interface UserApiUserMeAvatarPostRequest {
 export interface UserApiUserMeAvatarsAvatarIdDeleteRequest {
     /**
      * Avatar ID
-     * @type {number}
+     * @type {string}
      * @memberof UserApiUserMeAvatarsAvatarIdDelete
      */
-    readonly avatarId: number
+    readonly avatarId: string
 }
 
 /**
@@ -9621,7 +9678,7 @@ export interface UserApiUserMeChannelsGroupPostRequest {
      * @type {UserCreateDMManyRequest}
      * @memberof UserApiUserMeChannelsGroupPost
      */
-    readonly userCreateDMManyRequest: UserCreateDMManyRequest
+    readonly request: UserCreateDMManyRequest
 }
 
 /**
@@ -9635,7 +9692,7 @@ export interface UserApiUserMeChannelsPostRequest {
      * @type {UserCreateDMRequest}
      * @memberof UserApiUserMeChannelsPost
      */
-    readonly userCreateDMRequest: UserCreateDMRequest
+    readonly request: UserCreateDMRequest
 }
 
 /**
@@ -9649,7 +9706,7 @@ export interface UserApiUserMeFriendsDeleteRequest {
      * @type {UserUnfriendRequest}
      * @memberof UserApiUserMeFriendsDelete
      */
-    readonly userUnfriendRequest: UserUnfriendRequest
+    readonly request: UserUnfriendRequest
 }
 
 /**
@@ -9663,7 +9720,7 @@ export interface UserApiUserMeFriendsPostRequest {
      * @type {UserCreateFriendRequestRequest}
      * @memberof UserApiUserMeFriendsPost
      */
-    readonly userCreateFriendRequestRequest: UserCreateFriendRequestRequest
+    readonly request: UserCreateFriendRequestRequest
 }
 
 /**
@@ -9677,7 +9734,7 @@ export interface UserApiUserMeFriendsRequestsDeleteRequest {
      * @type {UserFriendRequestAction}
      * @memberof UserApiUserMeFriendsRequestsDelete
      */
-    readonly userFriendRequestAction: UserFriendRequestAction
+    readonly request: UserFriendRequestAction
 }
 
 /**
@@ -9691,7 +9748,7 @@ export interface UserApiUserMeFriendsRequestsPostRequest {
      * @type {UserFriendRequestAction}
      * @memberof UserApiUserMeFriendsRequestsPost
      */
-    readonly userFriendRequestAction: UserFriendRequestAction
+    readonly request: UserFriendRequestAction
 }
 
 /**
@@ -9702,10 +9759,10 @@ export interface UserApiUserMeFriendsRequestsPostRequest {
 export interface UserApiUserMeFriendsUserIdGetRequest {
     /**
      * User id
-     * @type {number}
+     * @type {string}
      * @memberof UserApiUserMeFriendsUserIdGet
      */
-    readonly userId: number
+    readonly userId: string
 }
 
 /**
@@ -9730,10 +9787,10 @@ export interface UserApiUserMeGuildsGuildIdDeleteRequest {
 export interface UserApiUserMeGuildsGuildIdMemberGetRequest {
     /**
      * Guild id
-     * @type {number}
+     * @type {string}
      * @memberof UserApiUserMeGuildsGuildIdMemberGet
      */
-    readonly guildId: number
+    readonly guildId: string
 }
 
 /**
@@ -9747,7 +9804,7 @@ export interface UserApiUserMePatchRequest {
      * @type {UserModifyUserRequest}
      * @memberof UserApiUserMePatch
      */
-    readonly userModifyUserRequest: UserModifyUserRequest
+    readonly request: UserModifyUserRequest
 }
 
 /**
@@ -9775,7 +9832,7 @@ export interface UserApiUserMeSettingsPostRequest {
      * @type {ModelUserSettingsData}
      * @memberof UserApiUserMeSettingsPost
      */
-    readonly modelUserSettingsData: ModelUserSettingsData
+    readonly request: ModelUserSettingsData
 }
 
 /**
@@ -9808,7 +9865,7 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      * @memberof UserApi
      */
     public userMeAvatarPost(requestParameters: UserApiUserMeAvatarPostRequest, options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).userMeAvatarPost(requestParameters.userCreateAvatarRequest, options).then((request) => request(this.axios, this.basePath));
+        return UserApiFp(this.configuration).userMeAvatarPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -9854,7 +9911,7 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      * @memberof UserApi
      */
     public userMeChannelsGroupPost(requestParameters: UserApiUserMeChannelsGroupPostRequest, options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).userMeChannelsGroupPost(requestParameters.userCreateDMManyRequest, options).then((request) => request(this.axios, this.basePath));
+        return UserApiFp(this.configuration).userMeChannelsGroupPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -9866,7 +9923,7 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      * @memberof UserApi
      */
     public userMeChannelsPost(requestParameters: UserApiUserMeChannelsPostRequest, options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).userMeChannelsPost(requestParameters.userCreateDMRequest, options).then((request) => request(this.axios, this.basePath));
+        return UserApiFp(this.configuration).userMeChannelsPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -9878,7 +9935,7 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      * @memberof UserApi
      */
     public userMeFriendsDelete(requestParameters: UserApiUserMeFriendsDeleteRequest, options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).userMeFriendsDelete(requestParameters.userUnfriendRequest, options).then((request) => request(this.axios, this.basePath));
+        return UserApiFp(this.configuration).userMeFriendsDelete(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -9901,7 +9958,7 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      * @memberof UserApi
      */
     public userMeFriendsPost(requestParameters: UserApiUserMeFriendsPostRequest, options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).userMeFriendsPost(requestParameters.userCreateFriendRequestRequest, options).then((request) => request(this.axios, this.basePath));
+        return UserApiFp(this.configuration).userMeFriendsPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -9913,7 +9970,7 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      * @memberof UserApi
      */
     public userMeFriendsRequestsDelete(requestParameters: UserApiUserMeFriendsRequestsDeleteRequest, options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).userMeFriendsRequestsDelete(requestParameters.userFriendRequestAction, options).then((request) => request(this.axios, this.basePath));
+        return UserApiFp(this.configuration).userMeFriendsRequestsDelete(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -9936,7 +9993,7 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      * @memberof UserApi
      */
     public userMeFriendsRequestsPost(requestParameters: UserApiUserMeFriendsRequestsPostRequest, options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).userMeFriendsRequestsPost(requestParameters.userFriendRequestAction, options).then((request) => request(this.axios, this.basePath));
+        return UserApiFp(this.configuration).userMeFriendsRequestsPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -9995,7 +10052,7 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      * @memberof UserApi
      */
     public userMePatch(requestParameters: UserApiUserMePatchRequest, options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).userMePatch(requestParameters.userModifyUserRequest, options).then((request) => request(this.axios, this.basePath));
+        return UserApiFp(this.configuration).userMePatch(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -10019,7 +10076,7 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      * @memberof UserApi
      */
     public userMeSettingsPost(requestParameters: UserApiUserMeSettingsPostRequest, options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).userMeSettingsPost(requestParameters.modelUserSettingsData, options).then((request) => request(this.axios, this.basePath));
+        return UserApiFp(this.configuration).userMeSettingsPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -10165,15 +10222,15 @@ export const WebhookApiAxiosParamCreator = function (configuration?: Configurati
          * Persist completed attachment metadata after upload
          * @summary Finalize attachment metadata
          * @param {string} xWebhookToken JWT token
-         * @param {AttachmentsFinalizeRequest} attachmentsFinalizeRequest Finalize payload
+         * @param {AttachmentsFinalizeRequest} request Finalize payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        webhookAttachmentsFinalizePost: async (xWebhookToken: string, attachmentsFinalizeRequest: AttachmentsFinalizeRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        webhookAttachmentsFinalizePost: async (xWebhookToken: string, request: AttachmentsFinalizeRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'xWebhookToken' is not null or undefined
             assertParamExists('webhookAttachmentsFinalizePost', 'xWebhookToken', xWebhookToken)
-            // verify required parameter 'attachmentsFinalizeRequest' is not null or undefined
-            assertParamExists('webhookAttachmentsFinalizePost', 'attachmentsFinalizeRequest', attachmentsFinalizeRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('webhookAttachmentsFinalizePost', 'request', request)
             const localVarPath = `/webhook/attachments/finalize`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10196,7 +10253,7 @@ export const WebhookApiAxiosParamCreator = function (configuration?: Configurati
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(attachmentsFinalizeRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -10207,15 +10264,15 @@ export const WebhookApiAxiosParamCreator = function (configuration?: Configurati
          * Updates channel TTL to keep it alive in system cache for next connections
          * @summary SFU update channel TTL
          * @param {string} xWebhookToken JWT token
-         * @param {SfuChannelAlive} sfuChannelAlive Channel liveness data
+         * @param {SfuChannelAlive} request Channel liveness data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        webhookSfuChannelAlivePost: async (xWebhookToken: string, sfuChannelAlive: SfuChannelAlive, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        webhookSfuChannelAlivePost: async (xWebhookToken: string, request: SfuChannelAlive, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'xWebhookToken' is not null or undefined
             assertParamExists('webhookSfuChannelAlivePost', 'xWebhookToken', xWebhookToken)
-            // verify required parameter 'sfuChannelAlive' is not null or undefined
-            assertParamExists('webhookSfuChannelAlivePost', 'sfuChannelAlive', sfuChannelAlive)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('webhookSfuChannelAlivePost', 'request', request)
             const localVarPath = `/webhook/sfu/channel/alive`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10238,7 +10295,7 @@ export const WebhookApiAxiosParamCreator = function (configuration?: Configurati
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(sfuChannelAlive, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -10249,15 +10306,15 @@ export const WebhookApiAxiosParamCreator = function (configuration?: Configurati
          * Register or refresh SFU instance for discovery
          * @summary SFU heartbeat
          * @param {string} xWebhookToken JWT token
-         * @param {SfuHeartbeatRequest} sfuHeartbeatRequest Heartbeat payload
+         * @param {SfuHeartbeatRequest} request Heartbeat payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        webhookSfuHeartbeatPost: async (xWebhookToken: string, sfuHeartbeatRequest: SfuHeartbeatRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        webhookSfuHeartbeatPost: async (xWebhookToken: string, request: SfuHeartbeatRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'xWebhookToken' is not null or undefined
             assertParamExists('webhookSfuHeartbeatPost', 'xWebhookToken', xWebhookToken)
-            // verify required parameter 'sfuHeartbeatRequest' is not null or undefined
-            assertParamExists('webhookSfuHeartbeatPost', 'sfuHeartbeatRequest', sfuHeartbeatRequest)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('webhookSfuHeartbeatPost', 'request', request)
             const localVarPath = `/webhook/sfu/heartbeat`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10280,7 +10337,7 @@ export const WebhookApiAxiosParamCreator = function (configuration?: Configurati
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(sfuHeartbeatRequest, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -10291,15 +10348,15 @@ export const WebhookApiAxiosParamCreator = function (configuration?: Configurati
          * Add client to voice channel participants list
          * @summary SFU voice join
          * @param {string} xWebhookToken JWT token
-         * @param {SfuChannelUserJoin} sfuChannelUserJoin Client join data
+         * @param {SfuChannelUserJoin} request Client join data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        webhookSfuVoiceJoinPost: async (xWebhookToken: string, sfuChannelUserJoin: SfuChannelUserJoin, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        webhookSfuVoiceJoinPost: async (xWebhookToken: string, request: SfuChannelUserJoin, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'xWebhookToken' is not null or undefined
             assertParamExists('webhookSfuVoiceJoinPost', 'xWebhookToken', xWebhookToken)
-            // verify required parameter 'sfuChannelUserJoin' is not null or undefined
-            assertParamExists('webhookSfuVoiceJoinPost', 'sfuChannelUserJoin', sfuChannelUserJoin)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('webhookSfuVoiceJoinPost', 'request', request)
             const localVarPath = `/webhook/sfu/voice/join`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10322,7 +10379,7 @@ export const WebhookApiAxiosParamCreator = function (configuration?: Configurati
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(sfuChannelUserJoin, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -10333,15 +10390,15 @@ export const WebhookApiAxiosParamCreator = function (configuration?: Configurati
          * Remove client from voice channel participants list
          * @summary SFU voice leave
          * @param {string} xWebhookToken JWT token
-         * @param {SfuChannelUserLeave} sfuChannelUserLeave Client join data
+         * @param {SfuChannelUserLeave} request Client join data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        webhookSfuVoiceLeavePost: async (xWebhookToken: string, sfuChannelUserLeave: SfuChannelUserLeave, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        webhookSfuVoiceLeavePost: async (xWebhookToken: string, request: SfuChannelUserLeave, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'xWebhookToken' is not null or undefined
             assertParamExists('webhookSfuVoiceLeavePost', 'xWebhookToken', xWebhookToken)
-            // verify required parameter 'sfuChannelUserLeave' is not null or undefined
-            assertParamExists('webhookSfuVoiceLeavePost', 'sfuChannelUserLeave', sfuChannelUserLeave)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('webhookSfuVoiceLeavePost', 'request', request)
             const localVarPath = `/webhook/sfu/voice/leave`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -10364,7 +10421,7 @@ export const WebhookApiAxiosParamCreator = function (configuration?: Configurati
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(sfuChannelUserLeave, localVarRequestOptions, configuration)
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -10385,12 +10442,12 @@ export const WebhookApiFp = function(configuration?: Configuration) {
          * Persist completed attachment metadata after upload
          * @summary Finalize attachment metadata
          * @param {string} xWebhookToken JWT token
-         * @param {AttachmentsFinalizeRequest} attachmentsFinalizeRequest Finalize payload
+         * @param {AttachmentsFinalizeRequest} request Finalize payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async webhookAttachmentsFinalizePost(xWebhookToken: string, attachmentsFinalizeRequest: AttachmentsFinalizeRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookAttachmentsFinalizePost(xWebhookToken, attachmentsFinalizeRequest, options);
+        async webhookAttachmentsFinalizePost(xWebhookToken: string, request: AttachmentsFinalizeRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookAttachmentsFinalizePost(xWebhookToken, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['WebhookApi.webhookAttachmentsFinalizePost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -10399,12 +10456,12 @@ export const WebhookApiFp = function(configuration?: Configuration) {
          * Updates channel TTL to keep it alive in system cache for next connections
          * @summary SFU update channel TTL
          * @param {string} xWebhookToken JWT token
-         * @param {SfuChannelAlive} sfuChannelAlive Channel liveness data
+         * @param {SfuChannelAlive} request Channel liveness data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async webhookSfuChannelAlivePost(xWebhookToken: string, sfuChannelAlive: SfuChannelAlive, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<object>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookSfuChannelAlivePost(xWebhookToken, sfuChannelAlive, options);
+        async webhookSfuChannelAlivePost(xWebhookToken: string, request: SfuChannelAlive, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookSfuChannelAlivePost(xWebhookToken, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['WebhookApi.webhookSfuChannelAlivePost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -10413,12 +10470,12 @@ export const WebhookApiFp = function(configuration?: Configuration) {
          * Register or refresh SFU instance for discovery
          * @summary SFU heartbeat
          * @param {string} xWebhookToken JWT token
-         * @param {SfuHeartbeatRequest} sfuHeartbeatRequest Heartbeat payload
+         * @param {SfuHeartbeatRequest} request Heartbeat payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async webhookSfuHeartbeatPost(xWebhookToken: string, sfuHeartbeatRequest: SfuHeartbeatRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookSfuHeartbeatPost(xWebhookToken, sfuHeartbeatRequest, options);
+        async webhookSfuHeartbeatPost(xWebhookToken: string, request: SfuHeartbeatRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookSfuHeartbeatPost(xWebhookToken, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['WebhookApi.webhookSfuHeartbeatPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -10427,12 +10484,12 @@ export const WebhookApiFp = function(configuration?: Configuration) {
          * Add client to voice channel participants list
          * @summary SFU voice join
          * @param {string} xWebhookToken JWT token
-         * @param {SfuChannelUserJoin} sfuChannelUserJoin Client join data
+         * @param {SfuChannelUserJoin} request Client join data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async webhookSfuVoiceJoinPost(xWebhookToken: string, sfuChannelUserJoin: SfuChannelUserJoin, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<object>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookSfuVoiceJoinPost(xWebhookToken, sfuChannelUserJoin, options);
+        async webhookSfuVoiceJoinPost(xWebhookToken: string, request: SfuChannelUserJoin, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookSfuVoiceJoinPost(xWebhookToken, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['WebhookApi.webhookSfuVoiceJoinPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -10441,12 +10498,12 @@ export const WebhookApiFp = function(configuration?: Configuration) {
          * Remove client from voice channel participants list
          * @summary SFU voice leave
          * @param {string} xWebhookToken JWT token
-         * @param {SfuChannelUserLeave} sfuChannelUserLeave Client join data
+         * @param {SfuChannelUserLeave} request Client join data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async webhookSfuVoiceLeavePost(xWebhookToken: string, sfuChannelUserLeave: SfuChannelUserLeave, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<object>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookSfuVoiceLeavePost(xWebhookToken, sfuChannelUserLeave, options);
+        async webhookSfuVoiceLeavePost(xWebhookToken: string, request: SfuChannelUserLeave, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.webhookSfuVoiceLeavePost(xWebhookToken, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['WebhookApi.webhookSfuVoiceLeavePost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -10469,7 +10526,7 @@ export const WebhookApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         webhookAttachmentsFinalizePost(requestParameters: WebhookApiWebhookAttachmentsFinalizePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.webhookAttachmentsFinalizePost(requestParameters.xWebhookToken, requestParameters.attachmentsFinalizeRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.webhookAttachmentsFinalizePost(requestParameters.xWebhookToken, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * Updates channel TTL to keep it alive in system cache for next connections
@@ -10478,8 +10535,8 @@ export const WebhookApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        webhookSfuChannelAlivePost(requestParameters: WebhookApiWebhookSfuChannelAlivePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<object> {
-            return localVarFp.webhookSfuChannelAlivePost(requestParameters.xWebhookToken, requestParameters.sfuChannelAlive, options).then((request) => request(axios, basePath));
+        webhookSfuChannelAlivePost(requestParameters: WebhookApiWebhookSfuChannelAlivePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.webhookSfuChannelAlivePost(requestParameters.xWebhookToken, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * Register or refresh SFU instance for discovery
@@ -10489,7 +10546,7 @@ export const WebhookApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         webhookSfuHeartbeatPost(requestParameters: WebhookApiWebhookSfuHeartbeatPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.webhookSfuHeartbeatPost(requestParameters.xWebhookToken, requestParameters.sfuHeartbeatRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.webhookSfuHeartbeatPost(requestParameters.xWebhookToken, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * Add client to voice channel participants list
@@ -10498,8 +10555,8 @@ export const WebhookApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        webhookSfuVoiceJoinPost(requestParameters: WebhookApiWebhookSfuVoiceJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<object> {
-            return localVarFp.webhookSfuVoiceJoinPost(requestParameters.xWebhookToken, requestParameters.sfuChannelUserJoin, options).then((request) => request(axios, basePath));
+        webhookSfuVoiceJoinPost(requestParameters: WebhookApiWebhookSfuVoiceJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.webhookSfuVoiceJoinPost(requestParameters.xWebhookToken, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * Remove client from voice channel participants list
@@ -10508,8 +10565,8 @@ export const WebhookApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        webhookSfuVoiceLeavePost(requestParameters: WebhookApiWebhookSfuVoiceLeavePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<object> {
-            return localVarFp.webhookSfuVoiceLeavePost(requestParameters.xWebhookToken, requestParameters.sfuChannelUserLeave, options).then((request) => request(axios, basePath));
+        webhookSfuVoiceLeavePost(requestParameters: WebhookApiWebhookSfuVoiceLeavePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.webhookSfuVoiceLeavePost(requestParameters.xWebhookToken, requestParameters.request, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -10538,7 +10595,7 @@ export interface WebhookApiInterface {
      * @throws {RequiredError}
      * @memberof WebhookApiInterface
      */
-    webhookSfuChannelAlivePost(requestParameters: WebhookApiWebhookSfuChannelAlivePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<object>;
+    webhookSfuChannelAlivePost(requestParameters: WebhookApiWebhookSfuChannelAlivePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
      * Register or refresh SFU instance for discovery
@@ -10558,7 +10615,7 @@ export interface WebhookApiInterface {
      * @throws {RequiredError}
      * @memberof WebhookApiInterface
      */
-    webhookSfuVoiceJoinPost(requestParameters: WebhookApiWebhookSfuVoiceJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<object>;
+    webhookSfuVoiceJoinPost(requestParameters: WebhookApiWebhookSfuVoiceJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
      * Remove client from voice channel participants list
@@ -10568,7 +10625,7 @@ export interface WebhookApiInterface {
      * @throws {RequiredError}
      * @memberof WebhookApiInterface
      */
-    webhookSfuVoiceLeavePost(requestParameters: WebhookApiWebhookSfuVoiceLeavePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<object>;
+    webhookSfuVoiceLeavePost(requestParameters: WebhookApiWebhookSfuVoiceLeavePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
 }
 
@@ -10590,7 +10647,7 @@ export interface WebhookApiWebhookAttachmentsFinalizePostRequest {
      * @type {AttachmentsFinalizeRequest}
      * @memberof WebhookApiWebhookAttachmentsFinalizePost
      */
-    readonly attachmentsFinalizeRequest: AttachmentsFinalizeRequest
+    readonly request: AttachmentsFinalizeRequest
 }
 
 /**
@@ -10611,7 +10668,7 @@ export interface WebhookApiWebhookSfuChannelAlivePostRequest {
      * @type {SfuChannelAlive}
      * @memberof WebhookApiWebhookSfuChannelAlivePost
      */
-    readonly sfuChannelAlive: SfuChannelAlive
+    readonly request: SfuChannelAlive
 }
 
 /**
@@ -10632,7 +10689,7 @@ export interface WebhookApiWebhookSfuHeartbeatPostRequest {
      * @type {SfuHeartbeatRequest}
      * @memberof WebhookApiWebhookSfuHeartbeatPost
      */
-    readonly sfuHeartbeatRequest: SfuHeartbeatRequest
+    readonly request: SfuHeartbeatRequest
 }
 
 /**
@@ -10653,7 +10710,7 @@ export interface WebhookApiWebhookSfuVoiceJoinPostRequest {
      * @type {SfuChannelUserJoin}
      * @memberof WebhookApiWebhookSfuVoiceJoinPost
      */
-    readonly sfuChannelUserJoin: SfuChannelUserJoin
+    readonly request: SfuChannelUserJoin
 }
 
 /**
@@ -10674,7 +10731,7 @@ export interface WebhookApiWebhookSfuVoiceLeavePostRequest {
      * @type {SfuChannelUserLeave}
      * @memberof WebhookApiWebhookSfuVoiceLeavePost
      */
-    readonly sfuChannelUserLeave: SfuChannelUserLeave
+    readonly request: SfuChannelUserLeave
 }
 
 /**
@@ -10693,7 +10750,7 @@ export class WebhookApi extends BaseAPI implements WebhookApiInterface {
      * @memberof WebhookApi
      */
     public webhookAttachmentsFinalizePost(requestParameters: WebhookApiWebhookAttachmentsFinalizePostRequest, options?: RawAxiosRequestConfig) {
-        return WebhookApiFp(this.configuration).webhookAttachmentsFinalizePost(requestParameters.xWebhookToken, requestParameters.attachmentsFinalizeRequest, options).then((request) => request(this.axios, this.basePath));
+        return WebhookApiFp(this.configuration).webhookAttachmentsFinalizePost(requestParameters.xWebhookToken, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -10705,7 +10762,7 @@ export class WebhookApi extends BaseAPI implements WebhookApiInterface {
      * @memberof WebhookApi
      */
     public webhookSfuChannelAlivePost(requestParameters: WebhookApiWebhookSfuChannelAlivePostRequest, options?: RawAxiosRequestConfig) {
-        return WebhookApiFp(this.configuration).webhookSfuChannelAlivePost(requestParameters.xWebhookToken, requestParameters.sfuChannelAlive, options).then((request) => request(this.axios, this.basePath));
+        return WebhookApiFp(this.configuration).webhookSfuChannelAlivePost(requestParameters.xWebhookToken, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -10717,7 +10774,7 @@ export class WebhookApi extends BaseAPI implements WebhookApiInterface {
      * @memberof WebhookApi
      */
     public webhookSfuHeartbeatPost(requestParameters: WebhookApiWebhookSfuHeartbeatPostRequest, options?: RawAxiosRequestConfig) {
-        return WebhookApiFp(this.configuration).webhookSfuHeartbeatPost(requestParameters.xWebhookToken, requestParameters.sfuHeartbeatRequest, options).then((request) => request(this.axios, this.basePath));
+        return WebhookApiFp(this.configuration).webhookSfuHeartbeatPost(requestParameters.xWebhookToken, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -10729,7 +10786,7 @@ export class WebhookApi extends BaseAPI implements WebhookApiInterface {
      * @memberof WebhookApi
      */
     public webhookSfuVoiceJoinPost(requestParameters: WebhookApiWebhookSfuVoiceJoinPostRequest, options?: RawAxiosRequestConfig) {
-        return WebhookApiFp(this.configuration).webhookSfuVoiceJoinPost(requestParameters.xWebhookToken, requestParameters.sfuChannelUserJoin, options).then((request) => request(this.axios, this.basePath));
+        return WebhookApiFp(this.configuration).webhookSfuVoiceJoinPost(requestParameters.xWebhookToken, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -10741,7 +10798,7 @@ export class WebhookApi extends BaseAPI implements WebhookApiInterface {
      * @memberof WebhookApi
      */
     public webhookSfuVoiceLeavePost(requestParameters: WebhookApiWebhookSfuVoiceLeavePostRequest, options?: RawAxiosRequestConfig) {
-        return WebhookApiFp(this.configuration).webhookSfuVoiceLeavePost(requestParameters.xWebhookToken, requestParameters.sfuChannelUserLeave, options).then((request) => request(this.axios, this.basePath));
+        return WebhookApiFp(this.configuration).webhookSfuVoiceLeavePost(requestParameters.xWebhookToken, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

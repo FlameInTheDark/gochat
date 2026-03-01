@@ -304,7 +304,7 @@ type messageUserData struct {
 // createMessageWithCleanup creates message and updates channel with proper error handling
 func (e *entity) createMessageWithCleanup(c *fiber.Ctx, messageId, channelId, userId int64, req *SendMessageRequest) error {
 	// Create the message
-	if err := e.msg.CreateMessage(c.UserContext(), messageId, channelId, userId, req.Content, req.Attachments); err != nil {
+	if err := e.msg.CreateMessage(c.UserContext(), messageId, channelId, userId, req.Content, []int64(req.Attachments)); err != nil {
 		return helper.HttpDbError(err, ErrUnableToSendMessage)
 	}
 
@@ -322,7 +322,7 @@ func (e *entity) createMessageWithCleanup(c *fiber.Ctx, messageId, channelId, us
 func (e *entity) buildMessageResponse(c *fiber.Ctx, messageId int64, channel *model.Channel, userData *messageUserData, req *SendMessageRequest) (dto.Message, error) {
 	var attachments []dto.Attachment
 	if len(req.Attachments) > 0 {
-		ats, err := e.at.SelectAttachmentByIDs(c.UserContext(), req.Attachments)
+		ats, err := e.at.SelectAttachmentByIDs(c.UserContext(), []int64(req.Attachments))
 		if err != nil {
 			return dto.Message{}, helper.HttpDbError(err, ErrUnableToGetAttachements)
 		}

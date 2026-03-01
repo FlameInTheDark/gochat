@@ -310,6 +310,11 @@ services:
       PGPASSWORD: "${POSTGRES_PASSWORD:-postgres}"
       POSTGRES_HOST_AUTH_METHOD: "${POSTGRES_HOST_AUTH_METHOD:-trust}"
       POSTGRES_DB: "gochat"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -d gochat -U ${POSTGRES_USER:-postgres} --quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       default:
         aliases:
@@ -323,6 +328,11 @@ services:
     depends_on: [ citus-manager ]
     environment: *AUTH
     command: "/wait-for-manager.sh"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U ${POSTGRES_USER:-postgres} --quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - healthcheck-volume:/healthcheck
     networks:

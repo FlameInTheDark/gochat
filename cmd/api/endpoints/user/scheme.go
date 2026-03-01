@@ -121,9 +121,11 @@ type UserSettingsResponse struct {
 
 func modelToSettings(m *model.UserSettings, guilds []dto.Guild, rs map[int64]int64, glms map[int64]map[int64]int64) (UserSettingsResponse, error) {
 	var settings model.UserSettingsData
-	err := json.Unmarshal(m.Settings, &settings)
-	if err != nil {
-		return UserSettingsResponse{ReadStates: rs}, err
+	// m.Settings is nil when no row exists (new user) or version filter matched nothing.
+	if len(m.Settings) > 0 {
+		if err := json.Unmarshal(m.Settings, &settings); err != nil {
+			return UserSettingsResponse{ReadStates: rs}, err
+		}
 	}
 	return UserSettingsResponse{
 		Version:            m.Version,

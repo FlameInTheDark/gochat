@@ -110,6 +110,21 @@ func (c *Cache) SetTimedJSON(ctx context.Context, key string, val interface{}, t
 	return res.Err()
 }
 
+func (c *Cache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64) (bool, error) {
+	msg, err := json.Marshal(val)
+	if err != nil {
+		return false, err
+	}
+	res := c.c.SetArgs(ctx, key, string(msg), redis.SetArgs{
+		TTL:  time.Duration(ttl) * time.Second,
+		Mode: "NX",
+	})
+	if err := res.Err(); err != nil && err != redis.Nil {
+		return false, err
+	}
+	return res.Val() == "OK", nil
+}
+
 // GetJSON unmarshal json into v
 func (c *Cache) GetJSON(ctx context.Context, key string, v interface{}) error {
 	res := c.c.Get(ctx, key)

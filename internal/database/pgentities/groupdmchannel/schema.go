@@ -19,21 +19,22 @@ func (e *Entity) JoinGroupDmChannelMany(ctx context.Context, channelId int64, us
 		return err
 	}
 
+	// Batch all users into a single multi-row INSERT
+	q := squirrel.Insert("group_dm_channels").
+		PlaceholderFormat(squirrel.Dollar).
+		Columns("channel_id", "user_id")
 	for _, user := range users {
-		q := squirrel.Insert("group_dm_channels").
-			PlaceholderFormat(squirrel.Dollar).
-			Columns("channel_id", "user_id").
-			Values(channelId, user)
-		raw, args, err := q.ToSql()
-		if err != nil {
-			tx.Rollback()
-			return fmt.Errorf("unable to create SQL query: %w", err)
-		}
-		_, err = tx.ExecContext(ctx, raw, args...)
-		if err != nil {
-			tx.Rollback()
-			return fmt.Errorf("unable to add user to dm channel: %w", err)
-		}
+		q = q.Values(channelId, user)
+	}
+	raw, args, err := q.ToSql()
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	_, err = tx.ExecContext(ctx, raw, args...)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("unable to add users to dm channel: %w", err)
 	}
 
 	err = tx.Commit()
@@ -122,27 +123,13 @@ func (e *Entity) GetGroupDmParticipants(ctx context.Context, channelId int64) ([
 }
 
 func (e *Entity) IsGroupDmParticipant(ctx context.Context, channelId int64, userId int64) (bool, error) {
-	var count int64
-	q := squirrel.Select("count(*)").
-		PlaceholderFormat(squirrel.Dollar).
-		From("group_dm_channels").
-		Where(
-			squirrel.And{
-				squirrel.Eq{"channel_id": channelId},
-				squirrel.Eq{"user_id": userId},
-			},
-		)
-	raw, args, err := q.ToSql()
+	var exists bool
+	raw := "SELECT EXISTS(SELECT 1 FROM group_dm_channels WHERE channel_id = $1 AND user_id = $2)"
+	err := e.c.GetContext(ctx, &exists, raw, channelId, userId)
 	if err != nil {
-		return false, fmt.Errorf("unable to create SQL query: %w", err)
-	}
-	err = e.c.GetContext(ctx, &count, raw, args...)
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	} else if err != nil {
 		return false, fmt.Errorf("check group dm participant error: %w", err)
 	}
-	return count > 0, nil
+	return exists, nil
 }
 
 func (e *Entity) GetUserGroupDmChannels(ctx context.Context, userId int64) ([]model.GroupDMChannel, error) {

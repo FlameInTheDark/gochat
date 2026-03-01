@@ -1,6 +1,7 @@
 package message
 
 import (
+	"github.com/FlameInTheDark/gochat/internal/dto"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -41,9 +42,9 @@ const (
 )
 
 type SendMessageRequest struct {
-	Content     string  `json:"content" example:"Hello world!"`            // Message content
-	Attachments []int64 `json:"attachments" example:"2230469276416868352"` // IDs of attached files
-	Mentions    []int64 `json:"mentions" example:"2230469276416868352"`    // IDs of mentioned users
+	Content     string               `json:"content" example:"Hello world!"`            // Message content
+	Attachments dto.StringInt64Array `json:"attachments" example:"2230469276416868352"` // IDs of attached files
+	Mentions    dto.StringInt64Array `json:"mentions" example:"2230469276416868352"`    // IDs of mentioned users
 }
 
 func (r SendMessageRequest) Validate() error {

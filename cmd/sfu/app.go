@@ -21,10 +21,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	slogfiber "github.com/samber/slog-fiber"
-	"resty.dev/v3"
 
 	"github.com/FlameInTheDark/gochat/cmd/sfu/config"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
 
@@ -36,6 +36,7 @@ type App struct {
 	sfu  *SFU
 
 	iceConfig webrtc.Configuration
+	webrtcAPI *webrtc.API // Custom API with restricted MediaEngine
 
 	instID      string
 	totalPeers  atomic.Int64
@@ -93,6 +94,55 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	}
 	sfu := NewSFU(cfg.WebhookURL, cfg.WebhookToken, logger, maxAudioBps, cfg.EnforceAudioBitrate, marginPct)
 
+	// Build a custom WebRTC API with restricted codecs to reduce SDP bloat
+	// and avoid negotiating unused codecs (H264, AV1, etc.).
+	me := &webrtc.MediaEngine{}
+	// Audio: Opus only (48kHz, 2ch)
+	if err := me.RegisterCodec(webrtc.RTPCodecParameters{
+		RTPCodecCapability: webrtc.RTPCodecCapability{
+			MimeType:    webrtc.MimeTypeOpus,
+			ClockRate:   48000,
+			Channels:    2,
+			SDPFmtpLine: "minptime=10;useinbandfec=1",
+		},
+		PayloadType: 111,
+	}, webrtc.RTPCodecTypeAudio); err != nil {
+		logger.Error("failed to register Opus codec", slog.String("error", err.Error()))
+	}
+	// Video: VP8 (widely supported, low complexity)
+	if err := me.RegisterCodec(webrtc.RTPCodecParameters{
+		RTPCodecCapability: webrtc.RTPCodecCapability{
+			MimeType:  webrtc.MimeTypeVP8,
+			ClockRate: 90000,
+		},
+		PayloadType: 96,
+	}, webrtc.RTPCodecTypeVideo); err != nil {
+		logger.Error("failed to register VP8 codec", slog.String("error", err.Error()))
+	}
+	// Video: VP9 (better quality at same bitrate, optional)
+	if err := me.RegisterCodec(webrtc.RTPCodecParameters{
+		RTPCodecCapability: webrtc.RTPCodecCapability{
+			MimeType:  webrtc.MimeTypeVP9,
+			ClockRate: 90000,
+		},
+		PayloadType: 98,
+	}, webrtc.RTPCodecTypeVideo); err != nil {
+		logger.Error("failed to register VP9 codec", slog.String("error", err.Error()))
+	}
+	// Register TWCC header extension for bandwidth estimation
+	for _, ext := range []string{
+		"http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01",
+	} {
+		if err := me.RegisterHeaderExtension(webrtc.RTPHeaderExtensionCapability{URI: ext}, webrtc.RTPCodecTypeVideo); err != nil {
+			logger.Warn("failed to register TWCC extension for video", slog.String("error", err.Error()))
+		}
+		if err := me.RegisterHeaderExtension(webrtc.RTPHeaderExtensionCapability{URI: ext}, webrtc.RTPCodecTypeAudio); err != nil {
+			logger.Warn("failed to register TWCC extension for audio", slog.String("error", err.Error()))
+		}
+	}
+
+	api := webrtc.NewAPI(webrtc.WithMediaEngine(me))
+
 	a := &App{
 		app:       fiberApp,
 		cfg:       cfg,
@@ -101,9 +151,11 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 		sfu:       sfu,
 		instID:    cfg.ServiceID,
 		iceConfig: iceCfg,
+		webrtcAPI: api,
 	}
 
 	fiberApp.Get("/signal", websocket.New(a.handleSignalWS, websocket.Config{}))
+	fiberApp.Post("/admin/channel/close", a.handleAdminCloseChannel)
 	go sfu.RunKeyFrameTicker()
 
 	return a
@@ -136,16 +188,22 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: "invalid message"}})
 		return
 	}
-	uid, channelID, guildID, _, _, err := a.authorizeJoin(joinEnv)
+	uid, channelID, guildID, perms, _, err := a.authorizeJoin(joinEnv)
 	if err != nil {
 		a.log.Warn("join unauthorized", slog.String("error", err.Error()))
 		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: err.Error()}})
 		return
 	}
 
+	// Check if user is blocked from this channel
+	if a.sfu.IsBlocked(channelID, uid) {
+		a.log.Warn("blocked user tried to join", slog.Int64("user", uid), slog.Int64("channel", channelID))
+		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: "blocked"}})
+		return
+	}
+
 	go func() {
-		resp, err := resty.New().R().
-			SetTimeout(5*time.Second).
+		resp, err := a.sfu.httpClient.R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
 			SetBody(UserJoinNotify{
@@ -154,14 +212,15 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 				GuildId:   guildID,
 			}).
 			Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/voice/join")
-		if err != nil && resp.StatusCode() != 200 {
-			a.log.Error("user join notify request failed", slog.String("error", err.Error()))
+		if err != nil {
+			a.log.Error("user join notify failed", slog.String("error", err.Error()))
+		} else if resp.StatusCode() != 200 {
+			a.log.Warn("user join notify unexpected status", slog.Int("status", resp.StatusCode()))
 		}
 	}()
 
 	defer func() {
-		resp, err := resty.New().R().
-			SetTimeout(5*time.Second).
+		resp, err := a.sfu.httpClient.R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
 			SetBody(UserLeaveNotify{
@@ -170,12 +229,14 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 				GuildId:   guildID,
 			}).
 			Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/voice/leave")
-		if err != nil && resp.StatusCode() != 200 {
-			a.log.Error("user join notify request failed", slog.String("error", err.Error()))
+		if err != nil {
+			a.log.Error("user leave notify failed", slog.String("error", err.Error()))
+		} else if resp.StatusCode() != 200 {
+			a.log.Warn("user leave notify unexpected status", slog.Int("status", resp.StatusCode()))
 		}
 	}()
 
-	pc, err := webrtc.NewPeerConnection(a.iceConfig)
+	pc, err := a.webrtcAPI.NewPeerConnection(a.iceConfig)
 	if err != nil {
 		a.log.Error("failed to create peer connection", slog.String("error", err.Error()))
 		return
@@ -183,7 +244,7 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 	defer pc.Close()
 
 	writer := &threadSafeWriter{conn: c.Conn}
-	state := &peerConnectionState{peerConnection: pc, websocket: writer, userID: uid}
+	state := &peerConnectionState{peerConnection: pc, websocket: writer, userID: uid, perms: perms}
 
 	for _, typ := range []webrtc.RTPCodecType{webrtc.RTPCodecTypeVideo, webrtc.RTPCodecTypeAudio} {
 		if _, err := pc.AddTransceiverFromKind(typ, webrtc.RTPTransceiverInit{
@@ -216,6 +277,23 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 
 	pc.OnTrack(func(t *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
 		a.log.Info("inbound track", slog.String("kind", t.Kind().String()), slog.String("id", t.ID()))
+
+		// Permission enforcement: reject tracks from users without the right permission
+		if t.Kind() == webrtc.RTPCodecTypeAudio && !hasPerm(perms, permissions.PermVoiceSpeak) {
+			a.log.Warn("rejecting audio track: no PermVoiceSpeak", slog.Int64("user", uid))
+			return
+		}
+		if t.Kind() == webrtc.RTPCodecTypeVideo && !hasPerm(perms, permissions.PermVoiceVideo) {
+			a.log.Warn("rejecting video track: no PermVoiceVideo", slog.Int64("user", uid))
+			return
+		}
+
+		// Server mute check: don't forward tracks from server-muted users
+		if state.serverMuted {
+			a.log.Info("rejecting track: user is server-muted", slog.Int64("user", uid))
+			return
+		}
+
 		// Attach userID to the outgoing stream ID so receivers can map track -> user
 		trackLocal := a.sfu.AddTrack(channelID, uid, t)
 		if trackLocal == nil {
@@ -360,7 +438,7 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 
 		var env envelope
 		if err := json.Unmarshal(raw, &env); err == nil && env.OP != 0 {
-			if a.handleLegacyEnvelope(env, pc, writer) {
+			if a.handleLegacyEnvelope(env, pc, writer, uid, perms, channelID) {
 				return
 			}
 			continue
@@ -392,7 +470,7 @@ func (a *App) discoveryHeartbeat() {
 		}
 	}
 
-	client := resty.New().SetTimeout(5 * time.Second)
+	client := a.sfu.httpClient
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
@@ -429,6 +507,26 @@ func (a *App) discoveryHeartbeat() {
 	}
 }
 
+// handleAdminCloseChannel closes all peer connections in a voice channel.
+// Requires a valid admin JWT in the Authorization header.
+func (a *App) handleAdminCloseChannel(c *fiber.Ctx) error {
+	token := c.Get("Authorization")
+	channelID, err := a.validateAdminToken(token)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
+	var req CloseChannelRequest
+	if err := c.BodyParser(&req); err != nil || req.ChannelID == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+	// Honour channel_id from both the token and the body; they must match.
+	if channelID != 0 && channelID != req.ChannelID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "channel mismatch"})
+	}
+	a.sfu.KickAll(req.ChannelID)
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
 func (a *App) readJoinEnvelope(c *websocket.Conn) (rtcJoinEnvelope, error) {
 	var env rtcJoinEnvelope
 	if c.Conn != nil {
@@ -457,7 +555,7 @@ func (a *App) authorizeJoin(env rtcJoinEnvelope) (int64, int64, *int64, int64, b
 	return uid, env.D.Channel, tokGuild, perms, moved, nil
 }
 
-func (a *App) handleLegacyEnvelope(env envelope, pc *webrtc.PeerConnection, writer *threadSafeWriter) bool {
+func (a *App) handleLegacyEnvelope(env envelope, pc *webrtc.PeerConnection, writer *threadSafeWriter, uid int64, perms int64, channelID int64) bool {
 	switch env.OP {
 	case int(mqmsg.OPCodeHeartBeat):
 		var hb heartbeatData
@@ -496,6 +594,51 @@ func (a *App) handleLegacyEnvelope(env envelope, pc *webrtc.PeerConnection, writ
 			}
 		case int(mqmsg.EventTypeRTCLeave):
 			return true
+
+		// ── Server control events ──────────────────────────────────────
+		case int(mqmsg.EventTypeRTCServerMuteUser):
+			if !hasPerm(perms, permissions.PermVoiceMuteMembers) {
+				a.log.Warn("mute denied: insufficient permissions", slog.Int64("user", uid))
+				return false
+			}
+			var data muteUserData
+			if err := json.Unmarshal(env.D, &data); err != nil {
+				return false
+			}
+			a.sfu.ServerMuteUser(channelID, data.User, data.Muted)
+
+		case int(mqmsg.EventTypeRTCServerDeafenUser):
+			if !hasPerm(perms, permissions.PermVoiceDeafenMembers) {
+				a.log.Warn("deafen denied: insufficient permissions", slog.Int64("user", uid))
+				return false
+			}
+			var data deafenUserData
+			if err := json.Unmarshal(env.D, &data); err != nil {
+				return false
+			}
+			a.sfu.ServerDeafenUser(channelID, data.User, data.Deafened)
+
+		case int(mqmsg.EventTypeRTCServerKickUser):
+			if !hasPerm(perms, permissions.PermVoiceMoveMembers) {
+				a.log.Warn("kick denied: insufficient permissions", slog.Int64("user", uid))
+				return false
+			}
+			var data kickUserData
+			if err := json.Unmarshal(env.D, &data); err != nil {
+				return false
+			}
+			a.sfu.KickUser(channelID, data.User)
+
+		case int(mqmsg.EventTypeRTCServerBlockUser):
+			if !hasPerm(perms, permissions.PermVoiceMoveMembers) {
+				a.log.Warn("block denied: insufficient permissions", slog.Int64("user", uid))
+				return false
+			}
+			var data blockEvent
+			if err := json.Unmarshal(env.D, &data); err != nil {
+				return false
+			}
+			a.sfu.BlockUser(channelID, data.UserId, data.Block)
 		}
 	}
 	return false

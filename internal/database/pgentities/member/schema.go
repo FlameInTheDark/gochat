@@ -125,17 +125,8 @@ func (e *Entity) GetGuildMembers(ctx context.Context, guildId int64) ([]model.Me
 
 func (e *Entity) IsGuildMember(ctx context.Context, guildId, userId int64) (bool, error) {
 	var exists bool
-	expr, args, err := squirrel.Expr("EXISTS(SELECT 1 FROM members WHERE user_id = ? AND guild_id = ?)", userId, guildId).ToSql()
-	if err != nil {
-		return false, fmt.Errorf("unable to create SQL expression: %w", err)
-	}
-	q := squirrel.Select(expr).
-		PlaceholderFormat(squirrel.Dollar)
-	sql, _, err := q.ToSql()
-	if err != nil {
-		return false, fmt.Errorf("unable to create SQL query: %w", err)
-	}
-	err = e.c.GetContext(ctx, &exists, sql, args...)
+	raw := "SELECT EXISTS(SELECT 1 FROM members WHERE user_id = $1 AND guild_id = $2)"
+	err := e.c.GetContext(ctx, &exists, raw, userId, guildId)
 	if err != nil {
 		return false, fmt.Errorf("unable to check if guild member exists: %w", err)
 	}

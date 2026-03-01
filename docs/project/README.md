@@ -12,6 +12,7 @@ Here goes the project documentation.
 - [Voice](voice/README.md)
 
 - [Services Overview](Services.md)
+- [Presence System](Presence.md)
 - [Tools CLI](Tools.md)
 
 

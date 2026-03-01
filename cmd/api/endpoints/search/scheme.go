@@ -20,12 +20,12 @@ const (
 )
 
 type MessageSearchRequest struct {
-	ChannelId int64    `json:"channel_id" example:"2230469276416868352"` // Channel ID to search in. Required.
-	Mentions  []int64  `json:"mentions" example:"2230469276416868352"`   // Mentions contains a list of int64 user IDs.
-	AuthorId  *int64   `json:"author_id" example:"2230469276416868352"`  // Author ID to search by.
-	Content   *string  `json:"content" example:"Hello world!"`           // Content contains a string to search for. Might be empty if need to search by other parameters.
-	Has       []string `json:"has" enums:"url,image,video,file"`         // List of specific features to search for.
-	Page      int      `json:"page" default:"0"`                         // Page number to get. Starts from 0.
+	ChannelId int64                `json:"channel_id,string" example:"2230469276416868352"` // Channel ID to search in. Required.
+	Mentions  dto.StringInt64Array `json:"mentions" example:"2230469276416868352"`          // Mentions contains a list of int64 user IDs.
+	AuthorId  *int64               `json:"author_id,string" example:"2230469276416868352"`  // Author ID to search by.
+	Content   *string              `json:"content" example:"Hello world!"`                  // Content contains a string to search for. Might be empty if need to search by other parameters.
+	Has       []string             `json:"has" enums:"url,image,video,file"`                // List of specific features to search for.
+	Page      int                  `json:"page" default:"0"`                                // Page number to get. Starts from 0.
 }
 
 type MessageSearchResponse struct {

@@ -2,4 +2,4 @@
 
 # Guild
 
-- [Permissions](Permissions.md)
+- [Roles and Permissions](RolesAndPermissions.md)

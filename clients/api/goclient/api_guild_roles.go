@@ -53,7 +53,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesGet(ctx context.
 
 // Execute executes the request
 //
-//	@return []GuildChannelRolePermission
+//	@return	[]GuildChannelRolePermission
 func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesGetExecute(r ApiGuildGuildIdChannelChannelIdRolesGetRequest) ([]GuildChannelRolePermission, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -205,7 +205,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdDelete(ctx
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdDeleteExecute(r ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -369,7 +369,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdGet(ctx co
 
 // Execute executes the request
 //
-//	@return GuildChannelRolePermission
+//	@return	GuildChannelRolePermission
 func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdGetExecute(r ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest) (*GuildChannelRolePermission, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -540,7 +540,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatch(ctx 
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatchExecute(r ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -716,7 +716,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPut(ctx co
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPutExecute(r ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut
@@ -882,7 +882,7 @@ func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesGet(ctx context.Cont
 
 // Execute executes the request
 //
-//	@return []DtoRole
+//	@return	[]DtoRole
 func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesGetExecute(r ApiGuildGuildIdMemberUserIdRolesGetRequest) ([]DtoRole, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1034,7 +1034,7 @@ func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdDelete(ctx con
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdDeleteExecute(r ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1198,7 +1198,7 @@ func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdPut(ctx contex
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdPutExecute(r ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut
@@ -1356,7 +1356,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesGet(ctx context.Context, guildId
 
 // Execute executes the request
 //
-//	@return []DtoRole
+//	@return	[]DtoRole
 func (a *GuildRolesAPIService) GuildGuildIdRolesGetExecute(r ApiGuildGuildIdRolesGetRequest) ([]DtoRole, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1497,7 +1497,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesPost(ctx context.Context, guildI
 
 // Execute executes the request
 //
-//	@return DtoRole
+//	@return	DtoRole
 func (a *GuildRolesAPIService) GuildGuildIdRolesPostExecute(r ApiGuildGuildIdRolesPostRequest) (*DtoRole, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1650,7 +1650,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdDelete(ctx context.Context
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdDeleteExecute(r ApiGuildGuildIdRolesRoleIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1817,7 +1817,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatch(ctx context.Context,
 
 // Execute executes the request
 //
-//	@return DtoRole
+//	@return	DtoRole
 func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatchExecute(r ApiGuildGuildIdRolesRoleIdPatchRequest) (*DtoRole, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch

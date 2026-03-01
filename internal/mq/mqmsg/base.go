@@ -54,6 +54,12 @@ const (
 )
 
 const (
+	// EventTypeGuildVoiceRegionChanging is sent to guild members before a voice region
+	// migration begins, giving clients time to prepare for the upcoming reconnect.
+	EventTypeGuildVoiceRegionChanging EventType = 208
+)
+
+const (
 	EventTypeGuildChannelMessage EventType = 300 + iota
 	EventTypeChannelUserTyping
 	EventTypeMention

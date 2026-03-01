@@ -16,7 +16,7 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/message"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/search"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/user"
-	voice "github.com/FlameInTheDark/gochat/cmd/api/endpoints/voice"
+	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/voice"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
@@ -47,6 +47,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
+	logger.Info("Connecting to ScyllaDB")
 	// Database connection
 	database, err := db.NewCQLCon(cfg.ClusterKeyspace, db.NewDBLogger(logger), cfg.Cluster...)
 	if err != nil {
@@ -54,6 +55,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 	shut.Up(database)
 
+	logger.Info("Connecting to PostgreSQL")
 	pg := pgdb.NewDB(logger)
 	err = pg.Connect(cfg.PGDSN, cfg.PGRetries)
 	if err != nil {
@@ -61,6 +63,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 	shut.Up(pg)
 
+	logger.Info("Connecting to NATS")
 	var qt mq.SendTransporter
 	nt, err := nats.New(cfg.NatsConnString)
 	if err != nil {
@@ -69,17 +72,20 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	shut.Up(nt)
 	qt = nt
 
+	logger.Info("Connecting to Indexer NATS")
 	imq, err := indexmq.NewIndexMQ(cfg.IndexerNatsConnString)
 	if err != nil {
 		return nil, err
 	}
 
+	logger.Info("Connecting to KeyDB")
 	cache, err := kvs.New(cfg.KeyDB)
 	if err != nil {
 		return nil, err
 	}
 	shut.Up(cache)
 
+	logger.Info("Connecting to NATS for SFU occupancy updates")
 	// Subscribe to SFU occupancy updates and maintain bindings purely in API/cache
 	// Subject: voice.occ  Payload: {"channel":<id>,"delta":+1|-1}
 	if cfg.NatsConnString != "" {
@@ -115,11 +121,13 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 
 	// Initialize message search service
+	logger.Info("Connecting to OpenSearch")
 	searchService, err := msgsearch.NewSearch(cfg.OSAddresses, cfg.OSInsecureSkipVerify, cfg.OSUsername, cfg.OSPassword)
 	if err != nil {
 		return nil, err
 	}
 
+	logger.Info("Connecting to Etcd")
 	disco, err := discovery.NewManager(cfg.EtcdEndpoints, cfg.EtcdPrefix, cfg.EtcdUsername, cfg.EtcdPassword)
 	if err != nil {
 		return nil, err
@@ -129,6 +137,8 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	idgen.New(0)
 
 	// HTTP Server
+
+	logger.Info("Registering HTTP server")
 	s := server.NewServer()
 	shut.Up(s)
 

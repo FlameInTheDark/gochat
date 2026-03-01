@@ -56,7 +56,6 @@ add_migration_cassandra:
 swag:
 	swag fmt
 	swag init -g doc.go \
-	  	--v3.1 \
 		--o ./docs/api \
 		--ot json \
 		--parseDependency \
@@ -67,7 +66,10 @@ client: js_client go_client
 
 js_client:
 	docker run --rm -v "./:/local/" mirror.gcr.io/openapitools/openapi-generator-cli:v7.12.0 \
-			generate -i /local/docs/api/swagger.json -g typescript-axios -o /local/clients/api/jsclient --additional-properties=useSingleRequestParameter=true,withInterfaces=false,supportsES6=true
+			generate -i /local/docs/api/swagger.json -g typescript-axios -o /local/clients/api/jsclient \
+			--additional-properties=useSingleRequestParameter=true,withInterfaces=false,supportsES6=true \
+			--type-mappings=integer+int64=string \
+			--skip-validate-spec
 
 go_client:
 	docker run --rm -v "./:/local/" mirror.gcr.io/openapitools/openapi-generator-cli:v7.12.0 \

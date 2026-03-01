@@ -70,7 +70,7 @@ func (e *entity) GetMemberRoles(c *fiber.Ctx) error {
 		roleIds = append(roleIds, role.RoleId)
 	}
 
-	roles, err := e.role.GetRolesBulk(c.UserContext(), roleIds)
+	roles, err := e.role.GetRolesBulk(c.UserContext(), guildId, roleIds)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
