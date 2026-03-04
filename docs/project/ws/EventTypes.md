@@ -34,6 +34,33 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 }
 ```
 
+**Payload (t=101, Message Update):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "message": {
+    "id": 2228801793842741200,
+    "channel_id": 2226022078341972000,
+    "author": {
+      "id": 2226021950625415200,
+      "name": "FlameInTheDark",
+      "discriminator": "flameinthedark"
+    },
+    "content": "Hello, edited!",
+    "updated_at": "2026-01-15T10:30:00Z"
+  }
+}
+```
+
+**Payload (t=102, Message Delete):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel_id": 2226022078341972000,
+  "message_id": 2228801793842741200
+}
+```
+
 ---
 
 ## Guild Events (103–105)
@@ -44,6 +71,20 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 | 104 | Guild Update | `guild.{guildId}` | Guild properties changed |
 | 105 | Guild Delete | `guild.{guildId}` | Guild deleted |
 
+**Payload (t=103, Guild Create):**
+```json
+{
+  "guild": {
+    "id": 2226022078304223200,
+    "name": "My Server",
+    "icon": null,
+    "owner": 2226021950625415200,
+    "public": false,
+    "permissions": 7927905
+  }
+}
+```
+
 **Payload (t=104, Guild Update):**
 ```json
 {
@@ -52,6 +93,13 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
     "name": "My Server",
     "icon": "..."
   }
+}
+```
+
+**Payload (t=105, Guild Delete):**
+```json
+{
+  "guild_id": 2226022078304223200
 }
 ```
 
@@ -66,6 +114,63 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 | 108 | Channel Order Update | `guild.{guildId}` | Channel ordering/position changed |
 | 109 | Channel Delete | `guild.{guildId}` | Channel deleted |
 
+**Payload (t=106, Channel Create):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel": {
+    "id": 2226022078341972000,
+    "type": 0,
+    "guild_id": 2226022078304223200,
+    "name": "general",
+    "position": 0,
+    "topic": null,
+    "private": false,
+    "last_message_id": 0,
+    "created_at": "2026-01-15T10:00:00Z"
+  }
+}
+```
+
+**Payload (t=107, Channel Update):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel": {
+    "id": 2226022078341972000,
+    "type": 0,
+    "guild_id": 2226022078304223200,
+    "name": "general-chat",
+    "position": 0,
+    "topic": "General discussion",
+    "private": false,
+    "last_message_id": 2228801793842741200,
+    "created_at": "2026-01-15T10:00:00Z"
+  }
+}
+```
+
+**Payload (t=108, Channel Order Update):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channels": [
+    { "id": 2226022078341972000, "position": 0 },
+    { "id": 2226022078341972001, "position": 1 },
+    { "id": 2226022078341972002, "position": 2 }
+  ]
+}
+```
+
+**Payload (t=109, Channel Delete):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel_type": 0,
+  "channel_id": 2226022078341972000
+}
+```
+
 ---
 
 ## Guild Role Events (110–112)
@@ -76,6 +181,40 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 | 111 | Guild Role Update | `guild.{guildId}` | Role permissions/properties changed |
 | 112 | Guild Role Delete | `guild.{guildId}` | Role removed |
 
+**Payload (t=110, Guild Role Create):**
+```json
+{
+  "role": {
+    "id": 2230469276416868352,
+    "guild_id": 2226022078304223200,
+    "name": "Moderator",
+    "color": 3447003,
+    "permissions": 274877910022
+  }
+}
+```
+
+**Payload (t=111, Guild Role Update):**
+```json
+{
+  "role": {
+    "id": 2230469276416868352,
+    "guild_id": 2226022078304223200,
+    "name": "Super Moderator",
+    "color": 15158332,
+    "permissions": 274877910022
+  }
+}
+```
+
+**Payload (t=112, Guild Role Delete):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "role_id": 2230469276416868352
+}
+```
+
 ---
 
 ## Thread Events (113–115)
@@ -85,6 +224,53 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 | 113 | Thread Create | `guild.{guildId}` | Thread created |
 | 114 | Thread Update | `guild.{guildId}` | Thread properties changed |
 | 115 | Thread Delete | `guild.{guildId}` | Thread deleted |
+
+**Payload (t=113, Thread Create):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel": {
+    "id": 2226022078341973000,
+    "type": 2,
+    "guild_id": 2226022078304223200,
+    "name": "thread-discussion",
+    "parent_id": 2226022078341972000,
+    "position": 0,
+    "topic": null,
+    "private": false,
+    "last_message_id": 0,
+    "created_at": "2026-01-15T10:30:00Z"
+  }
+}
+```
+
+**Payload (t=114, Thread Update):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel": {
+    "id": 2226022078341973000,
+    "type": 2,
+    "guild_id": 2226022078304223200,
+    "name": "updated-thread-name",
+    "parent_id": 2226022078341972000,
+    "position": 0,
+    "topic": "Updated topic",
+    "private": false,
+    "last_message_id": 2228801793842741300,
+    "created_at": "2026-01-15T10:30:00Z"
+  }
+}
+```
+
+**Payload (t=115, Thread Delete):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel_type": 2,
+  "channel_id": 2226022078341973000
+}
+```
 
 ---
 
@@ -100,7 +286,81 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 | 205 | Guild Member Join Voice | `guild.{guildId}` | Member joined a voice channel |
 | 206 | Guild Member Leave Voice | `guild.{guildId}` | Member left a voice channel |
 
+**Payload (t=200, Guild Member Added):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "user_id": 2226021950625415200,
+  "member": {
+    "user": {
+      "id": 2226021950625415200,
+      "name": "NewUser",
+      "discriminator": "newuser",
+      "avatar": null
+    },
+    "username": "FancyNickname",
+    "avatar": null,
+    "join_at": "2026-01-15T10:00:00Z",
+    "roles": []
+  }
+}
+```
+
+**Payload (t=201, Guild Member Update):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "member": {
+    "user": {
+      "id": 2226021950625415200,
+      "name": "NewUser",
+      "discriminator": "newuser",
+      "avatar": null
+    },
+    "username": "UpdatedNickname",
+    "avatar": null,
+    "join_at": "2026-01-15T10:00:00Z",
+    "roles": [2230469276416868352]
+  }
+}
+```
+
+**Payload (t=202, Guild Member Remove):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "user_id": 2226021950625415200
+}
+```
+
+**Payload (t=203, Guild Member Role Added):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "role_id": 2230469276416868352,
+  "user_id": 2226021950625415200
+}
+```
+
+**Payload (t=204, Guild Member Role Removed):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "role_id": 2230469276416868352,
+  "user_id": 2226021950625415200
+}
+```
+
 **Payload (t=205, Guild Member Join Voice):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "user_id": 2226021950625415200,
+  "channel_id": 2230469276416868352
+}
+```
+
+**Payload (t=206, Guild Member Leave Voice):**
 ```json
 {
   "guild_id": 2226022078304223200,
@@ -138,11 +398,31 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 | 301 | Channel Typing Event | `channel.{channelId}` | User started typing |
 | 302 | Mention | `user.{userId}` | User was mentioned |
 
+**Payload (t=300, Guild Channel Message):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel_id": 2226022078341972000,
+  "message_id": 2228801793842741200
+}
+```
+
 **Payload (t=301, Channel Typing):**
 ```json
 {
   "channel_id": 2226022078341972000,
   "user_id": 2226021950625415200
+}
+```
+
+**Payload (t=302, Mention):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel_id": 2226022078341972000,
+  "message_id": 2228801793842741200,
+  "author_id": 2226021950625415201,
+  "type": 0
 }
 ```
 
@@ -165,6 +445,82 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 {
   "channel_id": 2226022078341972000,
   "message_id": 2228801793842741200
+}
+```
+
+**Payload (t=401, User Update Settings):**
+```json
+{
+  "settings": {
+    "theme": "dark",
+    "locale": "en-US",
+    "notifications": {
+      "enable": true,
+      "sound": true
+    }
+  }
+}
+```
+
+**Payload (t=402, Incoming Friend Request):**
+```json
+{
+  "from": {
+    "id": 2226021950625415200,
+    "name": "FriendRequester",
+    "discriminator": "frienduser",
+    "avatar": null
+  }
+}
+```
+
+**Payload (t=403, Friend Added):**
+```json
+{
+  "friend": {
+    "id": 2226021950625415200,
+    "name": "NewFriend",
+    "discriminator": "newfriend",
+    "avatar": null
+  }
+}
+```
+
+**Payload (t=404, Friend Removed):**
+```json
+{
+  "friend": {
+    "id": 2226021950625415200,
+    "name": "OldFriend",
+    "discriminator": "oldfriend",
+    "avatar": null
+  }
+}
+```
+
+**Payload (t=405, User DM Message):**
+```json
+{
+  "channel_id": 2226022078341974000,
+  "message_id": 2228801793842741300,
+  "from": {
+    "id": 2226021950625415200,
+    "name": "SenderName",
+    "discriminator": "senderuser",
+    "avatar": null
+  }
+}
+```
+
+**Payload (t=406, User Update):**
+```json
+{
+  "user": {
+    "id": 2226021950625415200,
+    "name": "UpdatedName",
+    "discriminator": "updatedname",
+    "avatar": null
+  }
 }
 ```
 

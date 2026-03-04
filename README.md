@@ -4,7 +4,6 @@ GoChat is a real-time chat platform written in Go, designed around a set of focu
 
 [Documentation](docs/project/README.md)
 
-
 [UI Repository](https://github.com/FlameInTheDark/gochatui)
 
 [Deployment Repository](https://github.com/FlameInTheDark/gochat-deployment)
