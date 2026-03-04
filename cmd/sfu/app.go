@@ -28,6 +28,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
 
+// App is the top-level SFU application.
 type App struct {
 	app  *fiber.App
 	cfg  *config.Config
@@ -43,11 +44,13 @@ type App struct {
 	discoverLog sync.Once
 }
 
+// websocketMessage is the simple event-based message format used over WebSocket.
 type websocketMessage struct {
 	Event string `json:"event"`
 	Data  string `json:"data"`
 }
 
+// NewApp creates a fully configured SFU application.
 func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -55,28 +58,15 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 		panic(err)
 	}
 
-	iceCfg := webrtc.Configuration{}
-	for _, raw := range cfg.STUNServers {
-		url := strings.TrimSpace(raw)
-		if url == "" {
-			continue
-		}
-		iceCfg.ICEServers = append(iceCfg.ICEServers, webrtc.ICEServer{URLs: []string{url}})
-	}
-	if len(iceCfg.ICEServers) == 0 {
-		iceCfg.ICEServers = []webrtc.ICEServer{{URLs: []string{"stun:stun.l.google.com:19302"}}}
-	}
+	iceCfg := buildICEConfig(cfg.STUNServers)
+	api := buildWebRTCAPI(logger)
 
 	fiberApp := fiber.New(fiber.Config{DisableStartupMessage: true})
-	lm := slogfiber.NewWithFilters(
-		logger,
-		slogfiber.IgnorePath("/metrics"),
-	)
+	lm := slogfiber.NewWithFilters(logger, slogfiber.IgnorePath("/metrics"))
 	fiberApp.Use(lm)
 	fiberApp.Use(recm.New())
 
-	// Metrics: expose default Prometheus registry at /metrics
-	// (Default registry already includes Go & process collectors.)
+	// Prometheus metrics
 	h := promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{})
 	fiberApp.Get("/metrics", adaptor.HTTPHandler(h))
 
@@ -93,55 +83,6 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 		marginPct = 100
 	}
 	sfu := NewSFU(cfg.WebhookURL, cfg.WebhookToken, logger, maxAudioBps, cfg.EnforceAudioBitrate, marginPct)
-
-	// Build a custom WebRTC API with restricted codecs to reduce SDP bloat
-	// and avoid negotiating unused codecs (H264, AV1, etc.).
-	me := &webrtc.MediaEngine{}
-	// Audio: Opus only (48kHz, 2ch)
-	if err := me.RegisterCodec(webrtc.RTPCodecParameters{
-		RTPCodecCapability: webrtc.RTPCodecCapability{
-			MimeType:    webrtc.MimeTypeOpus,
-			ClockRate:   48000,
-			Channels:    2,
-			SDPFmtpLine: "minptime=10;useinbandfec=1",
-		},
-		PayloadType: 111,
-	}, webrtc.RTPCodecTypeAudio); err != nil {
-		logger.Error("failed to register Opus codec", slog.String("error", err.Error()))
-	}
-	// Video: VP8 (widely supported, low complexity)
-	if err := me.RegisterCodec(webrtc.RTPCodecParameters{
-		RTPCodecCapability: webrtc.RTPCodecCapability{
-			MimeType:  webrtc.MimeTypeVP8,
-			ClockRate: 90000,
-		},
-		PayloadType: 96,
-	}, webrtc.RTPCodecTypeVideo); err != nil {
-		logger.Error("failed to register VP8 codec", slog.String("error", err.Error()))
-	}
-	// Video: VP9 (better quality at same bitrate, optional)
-	if err := me.RegisterCodec(webrtc.RTPCodecParameters{
-		RTPCodecCapability: webrtc.RTPCodecCapability{
-			MimeType:  webrtc.MimeTypeVP9,
-			ClockRate: 90000,
-		},
-		PayloadType: 98,
-	}, webrtc.RTPCodecTypeVideo); err != nil {
-		logger.Error("failed to register VP9 codec", slog.String("error", err.Error()))
-	}
-	// Register TWCC header extension for bandwidth estimation
-	for _, ext := range []string{
-		"http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01",
-	} {
-		if err := me.RegisterHeaderExtension(webrtc.RTPHeaderExtensionCapability{URI: ext}, webrtc.RTPCodecTypeVideo); err != nil {
-			logger.Warn("failed to register TWCC extension for video", slog.String("error", err.Error()))
-		}
-		if err := me.RegisterHeaderExtension(webrtc.RTPHeaderExtensionCapability{URI: ext}, webrtc.RTPCodecTypeAudio); err != nil {
-			logger.Warn("failed to register TWCC extension for audio", slog.String("error", err.Error()))
-		}
-	}
-
-	api := webrtc.NewAPI(webrtc.WithMediaEngine(me))
 
 	a := &App{
 		app:       fiberApp,
@@ -161,6 +102,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	return a
 }
 
+// Start begins listening and blocks until SIGINT/SIGTERM.
 func (a *App) Start() {
 	a.log.Info("SFU starting", slog.String("addr", a.cfg.ServerAddress))
 	go func() {
@@ -177,11 +119,128 @@ func (a *App) Start() {
 	<-sigCh
 }
 
-func (a *App) Close() error { return a.app.Shutdown() }
+// Close gracefully stops the application and underlying SFU.
+func (a *App) Close() error {
+	a.sfu.Close()
+	return a.app.Shutdown()
+}
+
+// ---------------------------------------------------------------------------
+// WebRTC setup helpers
+// ---------------------------------------------------------------------------
+
+// buildICEConfig creates a webrtc.Configuration from a list of STUN server URLs.
+func buildICEConfig(stunServers []string) webrtc.Configuration {
+	iceCfg := webrtc.Configuration{}
+	for _, raw := range stunServers {
+		url := strings.TrimSpace(raw)
+		if url == "" {
+			continue
+		}
+		iceCfg.ICEServers = append(iceCfg.ICEServers, webrtc.ICEServer{URLs: []string{url}})
+	}
+	if len(iceCfg.ICEServers) == 0 {
+		iceCfg.ICEServers = []webrtc.ICEServer{{URLs: []string{"stun:stun.l.google.com:19302"}}}
+	}
+	return iceCfg
+}
+
+// buildWebRTCAPI creates a webrtc.API with a restricted MediaEngine (Opus + VP8 + VP9 only)
+// and TWCC header extensions registered for bandwidth estimation.
+// Uses minimal interceptors to avoid crashes in the RTCP receiver report interceptor.
+func buildWebRTCAPI(logger *slog.Logger) *webrtc.API {
+	me := &webrtc.MediaEngine{}
+
+	// Audio: Opus only (48kHz, 2ch)
+	if err := me.RegisterCodec(webrtc.RTPCodecParameters{
+		RTPCodecCapability: webrtc.RTPCodecCapability{
+			MimeType:    webrtc.MimeTypeOpus,
+			ClockRate:   48000,
+			Channels:    2,
+			SDPFmtpLine: "minptime=10;useinbandfec=1",
+		},
+		PayloadType: 111,
+	}, webrtc.RTPCodecTypeAudio); err != nil {
+		logger.Error("failed to register Opus codec", slog.String("error", err.Error()))
+	}
+
+	// Video: VP8 (widely supported, low complexity)
+	if err := me.RegisterCodec(webrtc.RTPCodecParameters{
+		RTPCodecCapability: webrtc.RTPCodecCapability{
+			MimeType:  webrtc.MimeTypeVP8,
+			ClockRate: 90000,
+		},
+		PayloadType: 96,
+	}, webrtc.RTPCodecTypeVideo); err != nil {
+		logger.Error("failed to register VP8 codec", slog.String("error", err.Error()))
+	}
+
+	// Video: VP9 (better quality at same bitrate, optional)
+	if err := me.RegisterCodec(webrtc.RTPCodecParameters{
+		RTPCodecCapability: webrtc.RTPCodecCapability{
+			MimeType:  webrtc.MimeTypeVP9,
+			ClockRate: 90000,
+		},
+		PayloadType: 98,
+	}, webrtc.RTPCodecTypeVideo); err != nil {
+		logger.Error("failed to register VP9 codec", slog.String("error", err.Error()))
+	}
+
+	// Register TWCC header extension for bandwidth estimation
+	twccURI := "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
+	if err := me.RegisterHeaderExtension(webrtc.RTPHeaderExtensionCapability{URI: twccURI}, webrtc.RTPCodecTypeVideo); err != nil {
+		logger.Warn("failed to register TWCC extension for video", slog.String("error", err.Error()))
+	}
+	if err := me.RegisterHeaderExtension(webrtc.RTPHeaderExtensionCapability{URI: twccURI}, webrtc.RTPCodecTypeAudio); err != nil {
+		logger.Warn("failed to register TWCC extension for audio", slog.String("error", err.Error()))
+	}
+
+	return webrtc.NewAPI(webrtc.WithMediaEngine(me))
+}
+
+// ---------------------------------------------------------------------------
+// Webhook notification helpers
+// ---------------------------------------------------------------------------
+
+// notifyUserJoin sends an async webhook notification for a user joining voice.
+func (a *App) notifyUserJoin(uid, channelID int64, guildID *int64) {
+	go func() {
+		resp, err := a.sfu.httpClient.R().
+			SetHeader("Content-Type", "application/json").
+			SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
+			SetBody(UserJoinNotify{UserId: uid, ChannelId: channelID, GuildId: guildID}).
+			Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/voice/join")
+		if err != nil {
+			a.log.Error("user join notify failed", slog.String("error", err.Error()))
+		} else if resp.StatusCode() != 200 {
+			a.log.Warn("user join notify unexpected status", slog.Int("status", resp.StatusCode()))
+		}
+	}()
+}
+
+// notifyUserLeave sends a synchronous webhook notification for a user leaving voice.
+// Called in a defer, so it runs before the WebSocket is torn down.
+func (a *App) notifyUserLeave(uid, channelID int64, guildID *int64) {
+	resp, err := a.sfu.httpClient.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
+		SetBody(UserLeaveNotify{UserId: uid, ChannelId: channelID, GuildId: guildID}).
+		Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/voice/leave")
+	if err != nil {
+		a.log.Error("user leave notify failed", slog.String("error", err.Error()))
+	} else if resp.StatusCode() != 200 {
+		a.log.Warn("user leave notify unexpected status", slog.Int("status", resp.StatusCode()))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// WebSocket signal handler
+// ---------------------------------------------------------------------------
 
 func (a *App) handleSignalWS(c *websocket.Conn) {
 	defer c.Close()
 
+	// Phase 1: Handshake — read join envelope and authorize.
 	joinEnv, err := a.readJoinEnvelope(c)
 	if err != nil {
 		a.log.Warn("invalid join envelope", slog.String("error", err.Error()))
@@ -195,46 +254,15 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 		return
 	}
 
-	// Check if user is blocked from this channel
 	if a.sfu.IsBlocked(channelID, uid) {
 		a.log.Warn("blocked user tried to join", slog.Int64("user", uid), slog.Int64("channel", channelID))
 		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: "blocked"}})
 		return
 	}
 
-	go func() {
-		resp, err := a.sfu.httpClient.R().
-			SetHeader("Content-Type", "application/json").
-			SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
-			SetBody(UserJoinNotify{
-				UserId:    uid,
-				ChannelId: channelID,
-				GuildId:   guildID,
-			}).
-			Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/voice/join")
-		if err != nil {
-			a.log.Error("user join notify failed", slog.String("error", err.Error()))
-		} else if resp.StatusCode() != 200 {
-			a.log.Warn("user join notify unexpected status", slog.Int("status", resp.StatusCode()))
-		}
-	}()
-
-	defer func() {
-		resp, err := a.sfu.httpClient.R().
-			SetHeader("Content-Type", "application/json").
-			SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
-			SetBody(UserLeaveNotify{
-				UserId:    uid,
-				ChannelId: channelID,
-				GuildId:   guildID,
-			}).
-			Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/voice/leave")
-		if err != nil {
-			a.log.Error("user leave notify failed", slog.String("error", err.Error()))
-		} else if resp.StatusCode() != 200 {
-			a.log.Warn("user leave notify unexpected status", slog.Int("status", resp.StatusCode()))
-		}
-	}()
+	// Phase 2: Setup — create PeerConnection and register it.
+	a.notifyUserJoin(uid, channelID, guildID)
+	defer a.notifyUserLeave(uid, channelID, guildID)
 
 	pc, err := a.webrtcAPI.NewPeerConnection(a.iceConfig)
 	if err != nil {
@@ -246,117 +274,12 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 	writer := &threadSafeWriter{conn: c.Conn}
 	state := &peerConnectionState{peerConnection: pc, websocket: writer, userID: uid, perms: perms}
 
-	for _, typ := range []webrtc.RTPCodecType{webrtc.RTPCodecTypeVideo, webrtc.RTPCodecTypeAudio} {
-		if _, err := pc.AddTransceiverFromKind(typ, webrtc.RTPTransceiverInit{
-			// Use sendrecv to allow remote to send immediately and for SFU to later
-			// add outbound tracks to the same m-line without introducing new sections.
-			Direction: webrtc.RTPTransceiverDirectionSendrecv,
-		}); err != nil {
-			a.log.Error("failed to add transceiver", slog.String("error", err.Error()))
-			return
-		}
+	if err := a.setupTransceivers(pc); err != nil {
+		a.log.Error("failed to setup transceivers", slog.String("error", err.Error()))
+		return
 	}
 
-	pc.OnICECandidate(func(i *webrtc.ICECandidate) {
-		if err := writer.SendRTCCandidate(i); err != nil {
-			a.log.Warn("failed to send candidate", slog.String("error", err.Error()))
-		}
-	})
-
-	pc.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
-		a.log.Info("connection state change", slog.String("state", state.String()))
-		if state == webrtc.PeerConnectionStateFailed {
-			if err := pc.Close(); err != nil {
-				a.log.Warn("failed to close peer connection", slog.String("error", err.Error()))
-			}
-		}
-		if state == webrtc.PeerConnectionStateClosed {
-			a.sfu.SignalChannel(channelID)
-		}
-	})
-
-	pc.OnTrack(func(t *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
-		a.log.Info("inbound track", slog.String("kind", t.Kind().String()), slog.String("id", t.ID()))
-
-		// Permission enforcement: reject tracks from users without the right permission
-		if t.Kind() == webrtc.RTPCodecTypeAudio && !hasPerm(perms, permissions.PermVoiceSpeak) {
-			a.log.Warn("rejecting audio track: no PermVoiceSpeak", slog.Int64("user", uid))
-			return
-		}
-		if t.Kind() == webrtc.RTPCodecTypeVideo && !hasPerm(perms, permissions.PermVoiceVideo) {
-			a.log.Warn("rejecting video track: no PermVoiceVideo", slog.Int64("user", uid))
-			return
-		}
-
-		// Server mute check: don't forward tracks from server-muted users
-		if state.serverMuted {
-			a.log.Info("rejecting track: user is server-muted", slog.Int64("user", uid))
-			return
-		}
-
-		// Attach userID to the outgoing stream ID so receivers can map track -> user
-		trackLocal := a.sfu.AddTrack(channelID, uid, t)
-		if trackLocal == nil {
-			return
-		}
-		defer a.sfu.RemoveTrack(channelID, trackLocal)
-
-		buf := make([]byte, 1500)
-		rtpPacket := &rtp.Packet{}
-
-		// Bitrate enforcement for audio if configured
-		enforce := a.sfu.enforceAudioBitrate && a.sfu.maxAudioBitrateBps > 0 && t.Kind() == webrtc.RTPCodecTypeAudio
-		// Effective limit with margin (headers/overhead tolerance)
-		limitWithMargin := float64(a.sfu.maxAudioBitrateBps)
-		if a.sfu.audioBitrateMarginPct > 0 {
-			limitWithMargin *= 1.0 + float64(a.sfu.audioBitrateMarginPct)/100.0
-		}
-		var (
-			windowStart   = time.Now()
-			bytesInWindow int64
-			overCount     int
-		)
-
-		for {
-			n, _, err := t.Read(buf)
-			if err != nil {
-				return
-			}
-			if err = rtpPacket.Unmarshal(buf[:n]); err != nil {
-				a.log.Warn("failed to unmarshal rtp packet", slog.String("error", err.Error()))
-				return
-			}
-			// Preserve RTP header extensions to maintain negotiated features
-			// like MID, RID, audio levels, or TWCC where applicable.
-			if enforce {
-				bytesInWindow += int64(n)
-				elapsed := time.Since(windowStart)
-				if elapsed >= time.Second {
-					bps := (float64(bytesInWindow) * 8.0) / elapsed.Seconds()
-					if bps > limitWithMargin {
-						overCount++
-					} else if overCount > 0 {
-						overCount = 0
-					}
-					// Reset window
-					windowStart = time.Now()
-					bytesInWindow = 0
-					if overCount >= 2 { // allow brief spikes, disconnect on sustained exceed
-						a.log.Warn("disconnecting peer due to audio bitrate limit exceed",
-							slog.Float64("bps", bps),
-							slog.Float64("limit_bps", limitWithMargin),
-							slog.Int64("channel", channelID))
-						// Close the PeerConnection; this will stop all tracks
-						_ = pc.Close()
-						return
-					}
-				}
-			}
-			if err = trackLocal.WriteRTP(rtpPacket); err != nil {
-				return
-			}
-		}
-	})
+	a.registerPeerCallbacks(pc, writer, state, uid, channelID, perms)
 
 	if err := writer.SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: JoinAck{Ok: true}}); err != nil {
 		a.log.Warn("failed to send join ack", slog.String("error", err.Error()))
@@ -368,12 +291,236 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 	a.sfu.AddPeer(channelID, state)
 	a.totalPeers.Add(1)
 	defer func() {
+		writer.Close()
 		a.sfu.RemovePeer(channelID, pc)
 		a.totalPeers.Add(-1)
+		a.log.Info("client left", slog.Int64("user", uid), slog.Int64("channel", channelID))
 	}()
 
 	a.sfu.SignalChannel(channelID)
 
+	// Phase 3: Message loop
+	a.messageLoop(c, pc, writer, uid, perms, channelID)
+}
+
+// setupTransceivers adds audio and video sendrecv transceivers to the peer connection.
+func (a *App) setupTransceivers(pc *webrtc.PeerConnection) error {
+	for _, typ := range []webrtc.RTPCodecType{webrtc.RTPCodecTypeVideo, webrtc.RTPCodecTypeAudio} {
+		if _, err := pc.AddTransceiverFromKind(typ, webrtc.RTPTransceiverInit{
+			Direction: webrtc.RTPTransceiverDirectionSendrecv,
+		}); err != nil {
+			return fmt.Errorf("add transceiver %s: %w", typ, err)
+		}
+	}
+	return nil
+}
+
+// registerPeerCallbacks sets up OnICECandidate, OnConnectionStateChange, and OnTrack.
+func (a *App) registerPeerCallbacks(
+	pc *webrtc.PeerConnection,
+	writer *threadSafeWriter,
+	state *peerConnectionState,
+	uid, channelID, perms int64,
+) {
+	pc.OnICECandidate(func(i *webrtc.ICECandidate) {
+		if err := writer.SendRTCCandidate(i); err != nil {
+			a.log.Warn("failed to send candidate", slog.String("error", err.Error()))
+		}
+	})
+
+	pc.OnConnectionStateChange(func(connState webrtc.PeerConnectionState) {
+		a.log.Info("connection state change", slog.String("state", connState.String()), slog.Int64("user", uid))
+		switch connState {
+		case webrtc.PeerConnectionStateFailed:
+			if err := pc.Close(); err != nil {
+				a.log.Warn("failed to close peer connection", slog.String("error", err.Error()))
+			}
+		case webrtc.PeerConnectionStateClosed:
+			a.sfu.SignalChannel(channelID)
+		}
+	})
+
+	pc.OnTrack(func(t *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
+		a.handleInboundTrack(pc, state, t, uid, channelID, perms)
+	})
+}
+
+// handleInboundTrack processes a single inbound track, forwarding RTP packets to
+// a local track while enforcing permissions and bitrate limits.
+func (a *App) handleInboundTrack(
+	pc *webrtc.PeerConnection,
+	state *peerConnectionState,
+	t *webrtc.TrackRemote,
+	uid, channelID, perms int64,
+) {
+	// Recover from panics in the track read loop. Pion's internal buffers
+	// can trigger a fault when the PeerConnection is closed during a read.
+	defer func() {
+		if r := recover(); r != nil {
+			a.log.Error("recovered panic in OnTrack goroutine",
+				slog.Any("panic", r),
+				slog.Int64("user", uid),
+				slog.Int64("channel", channelID),
+				slog.String("track", t.ID()),
+			)
+		}
+	}()
+
+	a.log.Info("inbound track", slog.String("kind", t.Kind().String()), slog.String("id", t.ID()))
+
+	// Permission enforcement
+	if t.Kind() == webrtc.RTPCodecTypeAudio && !hasPerm(perms, permissions.PermVoiceSpeak) {
+		a.log.Warn("rejecting audio track: no PermVoiceSpeak", slog.Int64("user", uid))
+		return
+	}
+	if t.Kind() == webrtc.RTPCodecTypeVideo && !hasPerm(perms, permissions.PermVoiceVideo) {
+		a.log.Warn("rejecting video track: no PermVoiceVideo", slog.Int64("user", uid))
+		return
+	}
+
+	// Server mute check
+	if state.serverMuted {
+		a.log.Info("rejecting track: user is server-muted", slog.Int64("user", uid))
+		return
+	}
+
+	trackLocal := a.sfu.AddTrack(channelID, uid, t)
+	if trackLocal == nil {
+		a.log.Warn("failed to create forwarding track", slog.Int64("user", uid), slog.Int64("channel", channelID), slog.String("track", t.ID()), slog.String("kind", t.Kind().String()))
+		return
+	}
+	defer a.sfu.RemoveTrack(channelID, trackLocal)
+
+	a.forwardRTP(pc, t, trackLocal, uid, channelID)
+}
+
+// forwardRTP reads RTP packets from the remote track and writes them to the local track.
+// Handles audio bitrate enforcement when configured.
+func (a *App) forwardRTP(
+	pc *webrtc.PeerConnection,
+	remote *webrtc.TrackRemote,
+	local *webrtc.TrackLocalStaticRTP,
+	uid, channelID int64,
+) {
+	// Recover from panics in pion's interceptor chain. The RTCP receiver report
+	// interceptor can crash with a nil pointer dereference when the PeerConnection
+	// is closed during RTP processing (race condition in pion/interceptor v0.1.41).
+	defer func() {
+		if r := recover(); r != nil {
+			a.log.Error("recovered panic in forwardRTP",
+				slog.Any("panic", r),
+				slog.Int64("user", uid),
+				slog.Int64("channel", channelID),
+				slog.String("track", remote.ID()),
+			)
+		}
+	}()
+
+	buf := make([]byte, 1500)
+	rtpPacket := &rtp.Packet{}
+
+	// Bitrate enforcement for audio if configured
+	enforce := a.sfu.enforceAudioBitrate &&
+		a.sfu.maxAudioBitrateBps > 0 &&
+		remote.Kind() == webrtc.RTPCodecTypeAudio
+
+	limitWithMargin := float64(a.sfu.maxAudioBitrateBps)
+	if a.sfu.audioBitrateMarginPct > 0 {
+		limitWithMargin *= 1.0 + float64(a.sfu.audioBitrateMarginPct)/100.0
+	}
+
+	var (
+		windowStart   = time.Now()
+		bytesInWindow int64
+		overCount     int
+		firstPacket   = true
+	)
+
+	for {
+		// Bail out early if the PeerConnection is no longer active.
+		if pcState := pc.ConnectionState(); pcState == webrtc.PeerConnectionStateClosed || pcState == webrtc.PeerConnectionStateFailed {
+			return
+		}
+
+		n, _, err := remote.Read(buf)
+		if err != nil {
+			// EOF / closed are expected on normal disconnect — debug only.
+			if pc.ConnectionState() == webrtc.PeerConnectionStateClosed ||
+				pc.ConnectionState() == webrtc.PeerConnectionStateFailed {
+				a.log.Debug("rtp read stopped (peer closed)",
+					slog.Int64("user", uid), slog.Int64("channel", channelID),
+					slog.String("track", remote.ID()), slog.String("kind", remote.Kind().String()))
+			} else {
+				a.log.Warn("rtp read error",
+					slog.Int64("user", uid), slog.Int64("channel", channelID),
+					slog.String("track", remote.ID()), slog.String("kind", remote.Kind().String()),
+					slog.String("error", err.Error()))
+			}
+			return
+		}
+
+		if firstPacket {
+			firstPacket = false
+			a.log.Debug("first rtp packet received",
+				slog.Int64("user", uid), slog.Int64("channel", channelID),
+				slog.String("track", remote.ID()), slog.String("kind", remote.Kind().String()),
+				slog.String("codec", remote.Codec().MimeType))
+		}
+
+		if err = rtpPacket.Unmarshal(buf[:n]); err != nil {
+			a.log.Warn("failed to unmarshal rtp packet",
+				slog.Int64("user", uid), slog.Int64("channel", channelID),
+				slog.String("error", err.Error()))
+			return
+		}
+
+		if enforce {
+			bytesInWindow += int64(n)
+			elapsed := time.Since(windowStart)
+			if elapsed >= time.Second {
+				bps := (float64(bytesInWindow) * 8.0) / elapsed.Seconds()
+				a.log.Debug("audio bitrate window",
+					slog.Int64("user", uid), slog.Int64("channel", channelID),
+					slog.Float64("bps", bps), slog.Float64("limit_bps", limitWithMargin))
+				if bps > limitWithMargin {
+					overCount++
+				} else {
+					overCount = 0
+				}
+				windowStart = time.Now()
+				bytesInWindow = 0
+				// Allow brief spikes, disconnect on sustained exceed (2+ consecutive windows)
+				if overCount >= 2 {
+					a.log.Warn("disconnecting peer due to audio bitrate limit exceed",
+						slog.Int64("user", uid),
+						slog.Float64("bps", bps),
+						slog.Float64("limit_bps", limitWithMargin),
+						slog.Int64("channel", channelID))
+					_ = pc.Close()
+					return
+				}
+			}
+		}
+
+		if err = local.WriteRTP(rtpPacket); err != nil {
+			a.log.Warn("failed to write rtp to local track",
+				slog.Int64("user", uid), slog.Int64("channel", channelID),
+				slog.String("track", remote.ID()), slog.String("error", err.Error()))
+			return
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Message loop
+// ---------------------------------------------------------------------------
+
+func (a *App) messageLoop(
+	c *websocket.Conn,
+	pc *webrtc.PeerConnection,
+	writer *threadSafeWriter,
+	uid, perms, channelID int64,
+) {
 	for {
 		_, raw, err := c.ReadMessage()
 		if err != nil {
@@ -381,61 +528,16 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 			return
 		}
 
+		// Try simple event-based format first
 		var msg websocketMessage
 		if err := json.Unmarshal(raw, &msg); err == nil && msg.Event != "" {
-			switch msg.Event {
-			case "candidate":
-				var cand webrtc.ICECandidateInit
-				if err := json.Unmarshal([]byte(msg.Data), &cand); err != nil {
-					a.log.Warn("failed to parse candidate", slog.String("error", err.Error()))
-					return
-				}
-				if err := pc.AddICECandidate(cand); err != nil {
-					a.log.Warn("failed to add candidate", slog.String("error", err.Error()))
-					return
-				}
-			case "answer":
-				var answer webrtc.SessionDescription
-				if err := json.Unmarshal([]byte(msg.Data), &answer); err != nil {
-					a.log.Warn("failed to parse answer", slog.String("error", err.Error()))
-					return
-				}
-				if answer.Type == webrtc.SDPType(0) {
-					answer.Type = webrtc.SDPTypeAnswer
-				}
-				if err := pc.SetRemoteDescription(answer); err != nil {
-					a.log.Warn("failed to set remote description", slog.String("error", err.Error()))
-					return
-				}
-			case "negotiate":
-				// Client requests a new offer (eg after enabling camera/screenshare)
-				a.log.Info("client requested renegotiation", slog.Int64("channel", channelID), slog.Int64("user", uid))
-				a.sfu.SignalChannel(channelID)
-			case "speaking":
-				// Client speaking indicator: data is expected to be "1" or "0" (string),
-				// tolerate JSON like {"speaking":1} as well.
-				speaking := 0
-				// Try plain payload first
-				if msg.Data == "1" || msg.Data == "\"1\"" {
-					speaking = 1
-				} else if msg.Data == "0" || msg.Data == "\"0\"" {
-					speaking = 0
-				} else if msg.Data != "" {
-					var aux struct {
-						Speaking int `json:"speaking"`
-					}
-					_ = json.Unmarshal([]byte(msg.Data), &aux)
-					if aux.Speaking != 0 {
-						speaking = 1
-					}
-				}
-				a.sfu.BroadcastSpeaking(channelID, uid, speaking)
-			default:
-				a.log.Warn("unknown message", slog.String("event", msg.Event))
+			if a.handleSimpleMessage(msg, pc, writer, uid, channelID) {
+				return
 			}
 			continue
 		}
 
+		// Fall back to legacy envelope format
 		var env envelope
 		if err := json.Unmarshal(raw, &env); err == nil && env.OP != 0 {
 			if a.handleLegacyEnvelope(env, pc, writer, uid, perms, channelID) {
@@ -444,68 +546,185 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 			continue
 		}
 
-		a.log.Warn("unrecognized message format")
+		a.log.Warn("unrecognized message format", slog.Int64("user", uid), slog.Int64("channel", channelID))
 	}
 }
 
-func (a *App) discoveryHeartbeat() {
-	if a.cfg.WebhookURL == "" {
-		a.log.Warn("discovery heartbeat disabled", slog.String("reason", "webhook url missing"))
-		return
+// handleSimpleMessage processes simple event-based WebSocket messages.
+// Returns true if the connection should be closed.
+func (a *App) handleSimpleMessage(
+	msg websocketMessage,
+	pc *webrtc.PeerConnection,
+	writer *threadSafeWriter,
+	uid, channelID int64,
+) bool {
+	switch msg.Event {
+	case "candidate":
+		var cand webrtc.ICECandidateInit
+		if err := json.Unmarshal([]byte(msg.Data), &cand); err != nil {
+			a.log.Warn("failed to parse candidate", slog.String("error", err.Error()))
+			return true
+		}
+		if err := pc.AddICECandidate(cand); err != nil {
+			a.log.Warn("failed to add candidate", slog.String("error", err.Error()))
+			return true
+		}
+
+	case "answer":
+		var answer webrtc.SessionDescription
+		if err := json.Unmarshal([]byte(msg.Data), &answer); err != nil {
+			a.log.Warn("failed to parse answer", slog.String("error", err.Error()))
+			return true
+		}
+		if answer.Type == webrtc.SDPType(0) {
+			answer.Type = webrtc.SDPTypeAnswer
+		}
+		if err := pc.SetRemoteDescription(answer); err != nil {
+			a.log.Warn("failed to set remote description", slog.String("error", err.Error()))
+			return true
+		}
+
+	case "negotiate":
+		a.log.Info("client requested renegotiation", slog.Int64("channel", channelID), slog.Int64("user", uid))
+		a.sfu.SignalChannel(channelID)
+
+	case "speaking":
+		speaking := parseSpeakingData(msg.Data)
+		a.log.Debug("speaking event", slog.Int64("user", uid), slog.Int64("channel", channelID), slog.Int("speaking", speaking))
+		a.sfu.BroadcastSpeaking(channelID, uid, speaking)
+
+	default:
+		a.log.Warn("unknown message", slog.String("event", msg.Event))
 	}
+	return false
+}
 
-	url := a.cfg.PublicBaseURL
-	if url == "" {
-		url = "ws://localhost:3300/signal"
-	} else {
-		lower := strings.ToLower(url)
-		switch {
-		case strings.HasPrefix(lower, "https://"):
-			url = "wss://" + strings.TrimPrefix(url, "https://")
-		case strings.HasPrefix(lower, "http://"):
-			url = "ws://" + strings.TrimPrefix(url, "http://")
-		}
-		if !strings.HasSuffix(url, "/signal") {
-			url = strings.TrimRight(url, "/") + "/signal"
-		}
+// parseSpeakingData extracts a speaking indicator (0 or 1) from various payload formats.
+func parseSpeakingData(data string) int {
+	switch data {
+	case "1", "\"1\"":
+		return 1
+	case "0", "\"0\"", "":
+		return 0
 	}
-
-	client := a.sfu.httpClient
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-
-	type heartbeatPayload struct {
-		ID     string `json:"id"`
-		Region string `json:"region"`
-		URL    string `json:"url"`
-		Load   int64  `json:"load"`
+	var aux struct {
+		Speaking int `json:"speaking"`
 	}
+	_ = json.Unmarshal([]byte(data), &aux)
+	if aux.Speaking != 0 {
+		return 1
+	}
+	return 0
+}
 
-	for range ticker.C {
-		payload := heartbeatPayload{
-			ID:     a.instID,
-			Region: a.cfg.Region,
-			URL:    url,
-			Load:   a.totalPeers.Load(),
+// ---------------------------------------------------------------------------
+// Legacy envelope handler
+// ---------------------------------------------------------------------------
+
+func (a *App) handleLegacyEnvelope(env envelope, pc *webrtc.PeerConnection, writer *threadSafeWriter, uid int64, perms int64, channelID int64) bool {
+	switch env.OP {
+	case int(mqmsg.OPCodeHeartBeat):
+		var hb heartbeatData
+		_ = json.Unmarshal(env.D, &hb)
+		_ = writer.SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeHeartBeat), D: HeartbeatReply{Pong: true, ServerTS: time.Now().UnixMilli(), Nonce: hb.Nonce, TS: hb.TS}})
+		return false
+
+	case int(mqmsg.OPCodeRTC):
+		return a.handleLegacyRTCEvent(env, pc, writer, uid, perms, channelID)
+	}
+	return false
+}
+
+func (a *App) handleLegacyRTCEvent(env envelope, pc *webrtc.PeerConnection, writer *threadSafeWriter, uid int64, perms int64, channelID int64) bool {
+	switch env.T {
+	case int(mqmsg.EventTypeRTCAnswer):
+		var ans rtcAnswer
+		if err := json.Unmarshal(env.D, &ans); err != nil || ans.SDP == "" {
+			return false
 		}
-		resp, err := client.R().
-			SetHeader("Content-Type", "application/json").
-			SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
-			SetBody(payload).
-			Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/heartbeat")
-		if err != nil {
-			a.log.Error("heartbeat request failed", slog.String("error", err.Error()))
-			continue
+		descType := parseLegacySDPType(ans.Type)
+		desc := webrtc.SessionDescription{Type: descType, SDP: ans.SDP}
+		if err := pc.SetRemoteDescription(desc); err != nil {
+			a.log.Warn("failed to apply legacy answer", slog.String("error", err.Error()))
 		}
-		if resp.StatusCode() != 204 {
-			a.log.Warn("heartbeat unexpected status", slog.Int("status", resp.StatusCode()), slog.String("body", resp.String()))
-			continue
+
+	case int(mqmsg.EventTypeRTCCandidate):
+		var cand rtcCandidate
+		if err := json.Unmarshal(env.D, &cand); err != nil || cand.Candidate == "" {
+			return false
 		}
-		a.discoverLog.Do(func() {
-			a.log.Info("Service registered and discoverable")
-		})
+		if err := pc.AddICECandidate(webrtc.ICECandidateInit{Candidate: cand.Candidate, SDPMid: cand.SDPMid, SDPMLineIndex: cand.SDPMLineIndex}); err != nil {
+			a.log.Warn("failed to add legacy candidate", slog.String("error", err.Error()))
+		}
+
+	case int(mqmsg.EventTypeRTCLeave):
+		return true
+
+	// ── Server control events ──────────────────────────────────────
+	case int(mqmsg.EventTypeRTCServerMuteUser):
+		if !hasPerm(perms, permissions.PermVoiceMuteMembers) {
+			a.log.Warn("mute denied: insufficient permissions", slog.Int64("user", uid))
+			return false
+		}
+		var data muteUserData
+		if err := json.Unmarshal(env.D, &data); err != nil {
+			return false
+		}
+		a.sfu.ServerMuteUser(channelID, data.User, data.Muted)
+
+	case int(mqmsg.EventTypeRTCServerDeafenUser):
+		if !hasPerm(perms, permissions.PermVoiceDeafenMembers) {
+			a.log.Warn("deafen denied: insufficient permissions", slog.Int64("user", uid))
+			return false
+		}
+		var data deafenUserData
+		if err := json.Unmarshal(env.D, &data); err != nil {
+			return false
+		}
+		a.sfu.ServerDeafenUser(channelID, data.User, data.Deafened)
+
+	case int(mqmsg.EventTypeRTCServerKickUser):
+		if !hasPerm(perms, permissions.PermVoiceMoveMembers) {
+			a.log.Warn("kick denied: insufficient permissions", slog.Int64("user", uid))
+			return false
+		}
+		var data kickUserData
+		if err := json.Unmarshal(env.D, &data); err != nil {
+			return false
+		}
+		a.sfu.KickUser(channelID, data.User)
+
+	case int(mqmsg.EventTypeRTCServerBlockUser):
+		if !hasPerm(perms, permissions.PermVoiceMoveMembers) {
+			a.log.Warn("block denied: insufficient permissions", slog.Int64("user", uid))
+			return false
+		}
+		var data blockEvent
+		if err := json.Unmarshal(env.D, &data); err != nil {
+			return false
+		}
+		a.sfu.BlockUser(channelID, data.UserId, data.Block)
+	}
+	return false
+}
+
+// parseLegacySDPType maps a string SDP type to webrtc.SDPType, defaulting to answer.
+func parseLegacySDPType(t string) webrtc.SDPType {
+	switch {
+	case strings.EqualFold(t, webrtc.SDPTypeOffer.String()):
+		return webrtc.SDPTypeOffer
+	case strings.EqualFold(t, webrtc.SDPTypePranswer.String()):
+		return webrtc.SDPTypePranswer
+	case strings.EqualFold(t, webrtc.SDPTypeRollback.String()):
+		return webrtc.SDPTypeRollback
+	default:
+		return webrtc.SDPTypeAnswer
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Admin endpoint
+// ---------------------------------------------------------------------------
 
 // handleAdminCloseChannel closes all peer connections in a voice channel.
 // Requires a valid admin JWT in the Authorization header.
@@ -526,6 +745,84 @@ func (a *App) handleAdminCloseChannel(c *fiber.Ctx) error {
 	a.sfu.KickAll(req.ChannelID)
 	return c.SendStatus(fiber.StatusNoContent)
 }
+
+// ---------------------------------------------------------------------------
+// Discovery heartbeat
+// ---------------------------------------------------------------------------
+
+func (a *App) discoveryHeartbeat() {
+	if a.cfg.WebhookURL == "" {
+		a.log.Warn("discovery heartbeat disabled", slog.String("reason", "webhook url missing"))
+		return
+	}
+
+	url := buildSignalURL(a.cfg.PublicBaseURL)
+
+	client := a.sfu.httpClient
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	type heartbeatPayload struct {
+		ID     string `json:"id"`
+		Region string `json:"region"`
+		URL    string `json:"url"`
+		Load   int64  `json:"load"`
+	}
+
+	for {
+		select {
+		case <-ticker.C:
+			payload := heartbeatPayload{
+				ID:     a.instID,
+				Region: a.cfg.Region,
+				URL:    url,
+				Load:   a.totalPeers.Load(),
+			}
+			resp, err := client.R().
+				SetHeader("Content-Type", "application/json").
+				SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
+				SetBody(payload).
+				Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/heartbeat")
+			if err != nil {
+				a.log.Error("heartbeat request failed", slog.String("error", err.Error()))
+				continue
+			}
+			if resp.StatusCode() != 204 {
+				a.log.Warn("heartbeat unexpected status", slog.Int("status", resp.StatusCode()), slog.String("body", resp.String()))
+				continue
+			}
+			a.discoverLog.Do(func() {
+				a.log.Info("Service registered and discoverable")
+			})
+
+		case <-a.sfu.done:
+			return
+		}
+	}
+}
+
+// buildSignalURL converts a public base URL to a WebSocket signal endpoint URL.
+func buildSignalURL(publicBaseURL string) string {
+	if publicBaseURL == "" {
+		return "ws://localhost:3300/signal"
+	}
+	url := publicBaseURL
+	lower := strings.ToLower(url)
+	switch {
+	case strings.HasPrefix(lower, "https://"):
+		url = "wss://" + url[len("https://"):]
+	case strings.HasPrefix(lower, "http://"):
+		url = "ws://" + url[len("http://"):]
+	}
+	if !strings.HasSuffix(url, "/signal") {
+		url = strings.TrimRight(url, "/") + "/signal"
+	}
+	return url
+}
+
+// ---------------------------------------------------------------------------
+// Handshake helpers
+// ---------------------------------------------------------------------------
 
 func (a *App) readJoinEnvelope(c *websocket.Conn) (rtcJoinEnvelope, error) {
 	var env rtcJoinEnvelope
@@ -553,93 +850,4 @@ func (a *App) authorizeJoin(env rtcJoinEnvelope) (int64, int64, *int64, int64, b
 		return 0, 0, nil, 0, false, fmt.Errorf("unauthorized")
 	}
 	return uid, env.D.Channel, tokGuild, perms, moved, nil
-}
-
-func (a *App) handleLegacyEnvelope(env envelope, pc *webrtc.PeerConnection, writer *threadSafeWriter, uid int64, perms int64, channelID int64) bool {
-	switch env.OP {
-	case int(mqmsg.OPCodeHeartBeat):
-		var hb heartbeatData
-		_ = json.Unmarshal(env.D, &hb)
-		_ = writer.SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeHeartBeat), D: HeartbeatReply{Pong: true, ServerTS: time.Now().UnixMilli(), Nonce: hb.Nonce, TS: hb.TS}})
-		return false
-	case int(mqmsg.OPCodeRTC):
-		switch env.T {
-		case int(mqmsg.EventTypeRTCAnswer):
-			var ans rtcAnswer
-			if err := json.Unmarshal(env.D, &ans); err != nil || ans.SDP == "" {
-				return false
-			}
-			descType := webrtc.SDPTypeAnswer
-			switch {
-			case strings.EqualFold(ans.Type, webrtc.SDPTypeOffer.String()):
-				descType = webrtc.SDPTypeOffer
-			case strings.EqualFold(ans.Type, webrtc.SDPTypePranswer.String()):
-				descType = webrtc.SDPTypePranswer
-			case strings.EqualFold(ans.Type, webrtc.SDPTypeRollback.String()):
-				descType = webrtc.SDPTypeRollback
-			case strings.EqualFold(ans.Type, webrtc.SDPTypeAnswer.String()):
-				descType = webrtc.SDPTypeAnswer
-			}
-			desc := webrtc.SessionDescription{Type: descType, SDP: ans.SDP}
-			if err := pc.SetRemoteDescription(desc); err != nil {
-				a.log.Warn("failed to apply legacy answer", slog.String("error", err.Error()))
-			}
-		case int(mqmsg.EventTypeRTCCandidate):
-			var cand rtcCandidate
-			if err := json.Unmarshal(env.D, &cand); err != nil || cand.Candidate == "" {
-				return false
-			}
-			if err := pc.AddICECandidate(webrtc.ICECandidateInit{Candidate: cand.Candidate, SDPMid: cand.SDPMid, SDPMLineIndex: cand.SDPMLineIndex}); err != nil {
-				a.log.Warn("failed to add legacy candidate", slog.String("error", err.Error()))
-			}
-		case int(mqmsg.EventTypeRTCLeave):
-			return true
-
-		// ── Server control events ──────────────────────────────────────
-		case int(mqmsg.EventTypeRTCServerMuteUser):
-			if !hasPerm(perms, permissions.PermVoiceMuteMembers) {
-				a.log.Warn("mute denied: insufficient permissions", slog.Int64("user", uid))
-				return false
-			}
-			var data muteUserData
-			if err := json.Unmarshal(env.D, &data); err != nil {
-				return false
-			}
-			a.sfu.ServerMuteUser(channelID, data.User, data.Muted)
-
-		case int(mqmsg.EventTypeRTCServerDeafenUser):
-			if !hasPerm(perms, permissions.PermVoiceDeafenMembers) {
-				a.log.Warn("deafen denied: insufficient permissions", slog.Int64("user", uid))
-				return false
-			}
-			var data deafenUserData
-			if err := json.Unmarshal(env.D, &data); err != nil {
-				return false
-			}
-			a.sfu.ServerDeafenUser(channelID, data.User, data.Deafened)
-
-		case int(mqmsg.EventTypeRTCServerKickUser):
-			if !hasPerm(perms, permissions.PermVoiceMoveMembers) {
-				a.log.Warn("kick denied: insufficient permissions", slog.Int64("user", uid))
-				return false
-			}
-			var data kickUserData
-			if err := json.Unmarshal(env.D, &data); err != nil {
-				return false
-			}
-			a.sfu.KickUser(channelID, data.User)
-
-		case int(mqmsg.EventTypeRTCServerBlockUser):
-			if !hasPerm(perms, permissions.PermVoiceMoveMembers) {
-				a.log.Warn("block denied: insufficient permissions", slog.Int64("user", uid))
-				return false
-			}
-			var data blockEvent
-			if err := json.Unmarshal(env.D, &data); err != nil {
-				return false
-			}
-			a.sfu.BlockUser(channelID, data.UserId, data.Block)
-		}
-	}
-	return false
 }

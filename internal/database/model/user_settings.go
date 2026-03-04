@@ -52,8 +52,8 @@ type Devices struct {
 
 func (d Devices) Validate() error {
 	return validation.ValidateStruct(&d,
-		validation.Field(&d.AudioInputLevel, validation.Min(0.0), validation.Max(100.0)),
-		validation.Field(&d.AudioOutputLevel, validation.Min(0.0), validation.Max(150.0)),
+		validation.Field(&d.AudioInputLevel, validation.Min(0.0), validation.Max(200.0)),
+		validation.Field(&d.AudioOutputLevel, validation.Min(0.0), validation.Max(200.0)),
 	)
 }
 
@@ -77,7 +77,7 @@ type UserDMChannels struct {
 }
 
 type UserSettingsGuilds struct {
-	GuildId         int64                     `json:"guild_id"`
+	GuildId         int64                     `json:"guild_id,string"`
 	Position        int64                     `json:"position"`
 	SelectedChannel int64                     `json:"selected_channel"`
 	Notifications   UserSettingsNotifications `json:"notifications"`

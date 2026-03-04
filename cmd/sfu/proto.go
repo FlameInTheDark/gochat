@@ -11,7 +11,7 @@ type rtcJoinEnvelope struct {
 	OP int `json:"op"`
 	T  int `json:"t"`
 	D  struct {
-		Channel int64  `json:"channel"`
+		Channel int64  `json:"channel,string"`
 		Token   string `json:"token"`
 	} `json:"d"`
 }
