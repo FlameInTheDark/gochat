@@ -148,13 +148,14 @@ func (s *Store) Aggregate(ctx context.Context, userID int64, nowUnix int64) (Pre
 			continue
 		}
 		any = true
-		if sp.Status == StatusDND {
+		switch sp.Status {
+		case StatusDND:
 			best = StatusDND
-		} else if sp.Status == StatusOnline {
+		case StatusOnline:
 			if best != StatusDND {
 				best = StatusOnline
 			}
-		} else if sp.Status == StatusIdle {
+		case StatusIdle:
 			if best != StatusDND && best != StatusOnline {
 				best = StatusIdle
 			}

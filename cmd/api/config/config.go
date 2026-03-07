@@ -20,7 +20,7 @@ type Config struct {
 	ClusterKeyspace            string        `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
 	AuthSecret                 string        `yaml:"auth_secret" env:"AUTH_SECRET" env-default:"change_me_before_use_it_in_production"`
 	Swagger                    bool          `yaml:"swagger" env:"SWAGGER" env-default:"false"`
-	KeyDB                      string        `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1"`
+	KeyDB                      string        `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
 	UploadLimit                int64         `yaml:"upload_limit" env:"UPLOAD_LIMIT" env-default:"50000000"`
 	AttachmentTTLMinutes       int64         `yaml:"attachment_ttl_minutes" env:"ATTACHMENT_TTL_MINUTES" env-default:"10"`
 	NatsConnString             string        `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`

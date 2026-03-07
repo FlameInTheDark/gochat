@@ -34,7 +34,7 @@ func (w *wsConn) Send(data []byte) {
 	select {
 	case w.out <- outMsg{kind: 1, data: cp}:
 	default:
-		// Slow consumer — message dropped. The ping/heartbeat timeout
+		// Slow consumer вЂ” message dropped. The ping/heartbeat timeout
 		// will eventually evict this connection.
 	}
 }
@@ -70,7 +70,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 			case 1:
 				if compressMode {
 					if c.Conn != nil {
-						_ = c.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+						_ = c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 					}
 					if zw != nil {
 						_, _ = zw.Write(m.data)
@@ -81,14 +81,14 @@ func (a *App) wsHandler(c *websocket.Conn) {
 					}
 				} else {
 					if c.Conn != nil {
-						_ = c.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+						_ = c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 					}
 					err = c.WriteMessage(websocket.TextMessage, m.data)
 				}
 			case 2:
 				if compressMode {
 					if c.Conn != nil {
-						_ = c.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+						_ = c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 					}
 					b, jerr := json.Marshal(m.v)
 					if jerr != nil {
@@ -104,7 +104,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 					}
 				} else {
 					if c.Conn != nil {
-						_ = c.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+						_ = c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 					}
 					err = c.WriteJSON(m.v)
 				}
@@ -117,7 +117,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 				_ = c.Close()
 			case 4:
 				if c.Conn != nil {
-					_ = c.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+					_ = c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 				}
 				err = c.WriteControl(websocket.PingMessage, nil, time.Now().Add(5*time.Second))
 			}

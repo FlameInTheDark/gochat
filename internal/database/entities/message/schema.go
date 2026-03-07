@@ -133,7 +133,7 @@ func (e *Entity) GetMessagesBefore(ctx context.Context, channelId, msgId int64, 
 		}
 	}
 	var uids []int64
-	for id, _ := range users {
+	for id := range users {
 		uids = append(uids, id)
 	}
 	return msgs, uids, nil
@@ -169,7 +169,7 @@ func (e *Entity) GetMessagesAfter(ctx context.Context, channelId, msgId, lastCha
 		}
 	}
 	var uids []int64
-	for id, _ := range users {
+	for id := range users {
 		uids = append(uids, id)
 	}
 	return msgs, uids, nil

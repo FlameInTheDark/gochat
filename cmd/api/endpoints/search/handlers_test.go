@@ -101,9 +101,6 @@ type fakeRoleCheck struct {
 	lastUserID   int64
 }
 
-func (f *fakeRoleCheck) getUserRoleIDs(ctx context.Context, guildID, userID int64) ([]int64, error) {
-	return nil, nil
-}
 func (f *fakeRoleCheck) ChannelPerm(ctx context.Context, guildID, channelID, userID int64, perm ...permissions.RolePermission) (*model.Channel, *model.GuildChannel, *model.Guild, bool, error) {
 	f.lastGuildID = guildID
 	f.lastChannel = channelID

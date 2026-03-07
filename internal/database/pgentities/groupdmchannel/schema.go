@@ -28,12 +28,12 @@ func (e *Entity) JoinGroupDmChannelMany(ctx context.Context, channelId int64, us
 	}
 	raw, args, err := q.ToSql()
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
 	_, err = tx.ExecContext(ctx, raw, args...)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("unable to add users to dm channel: %w", err)
 	}
 

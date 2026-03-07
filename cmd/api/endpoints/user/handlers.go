@@ -422,7 +422,9 @@ func (e *entity) LeaveGuild(c *fiber.Ctx) error {
 		return helper.HttpDbError(err, ErrUnableToRemoveMember)
 	}
 
-	go e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMember{GuildId: guildId, UserId: user.Id})
+	go func() {
+		_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMember{GuildId: guildId, UserId: user.Id})
+	}()
 
 	return c.SendStatus(fiber.StatusOK)
 }

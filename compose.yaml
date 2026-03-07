@@ -69,6 +69,10 @@ services:
     depends_on:
       scylla:
         condition: service_healthy
+      keydb:
+        condition: service_started
+      nats:
+        condition: service_started
       auth:
         condition: service_started
     networks:
@@ -393,3 +397,4 @@ networks:
     name: gochat_traefik
   citus:
     name: gochat_citus
+

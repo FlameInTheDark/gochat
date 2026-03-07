@@ -401,14 +401,6 @@ func (c *channelState) isBlocked(userID int64) bool {
 	return blocked
 }
 
-// peerCount returns the number of connected peers.
-func (c *channelState) peerCount() int {
-	c.mu.RLock()
-	n := len(c.peers)
-	c.mu.RUnlock()
-	return n
-}
-
 // snapshotPeers returns a shallow copy of the peer slice for iteration outside the lock.
 func (c *channelState) snapshotPeers() []*peerConnectionState {
 	c.mu.RLock()

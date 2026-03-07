@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"log/slog"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -68,6 +69,14 @@ func (e *entity) Upload(c *fiber.Ctx) error {
 
 	result, err := e.uploader.Upload(c.UserContext(), guildId, emojiId, body)
 	if err != nil {
+		if e.log != nil {
+			e.log.Error("emoji upload failed",
+				slog.String("error", err.Error()),
+				slog.Int64("guild_id", guildId),
+				slog.Int64("emoji_id", emojiId),
+				slog.Int64("user_id", user.Id),
+			)
+		}
 		return emojiUploadError(err)
 	}
 	if result.AlreadyDone {

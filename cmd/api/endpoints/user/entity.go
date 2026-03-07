@@ -83,7 +83,6 @@ type entity struct {
 	gc      guildchannels.GuildChannels
 	emoji   emojirepo.Emoji
 
-	s3Base    string
 	attachTTL int64
 }
 

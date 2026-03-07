@@ -23,7 +23,7 @@ type Config struct {
 	S3ExternalURL     string   `yaml:"s3_external_url" env:"S3_EXTERNAL_URL"`
 	PGDSN             string   `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
 	PGRetries         int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
-	KeyDB             string   `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1"`
+	KeyDB             string   `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
 	NatsConnString    string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 }
 

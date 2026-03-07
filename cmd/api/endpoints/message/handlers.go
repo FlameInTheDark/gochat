@@ -839,87 +839,6 @@ func (e *entity) extractAttachmentIds(messages []model.Message) []int64 {
 	return attachmentIds
 }
 
-// buildMessageDTOs constructs message DTOs from raw data
-func (e *entity) buildMessageDTOs(messages []model.Message, data *messageRelatedData) []dto.Message {
-	result := make([]dto.Message, len(messages))
-
-	for i, message := range messages {
-		// Build author
-		author := e.buildAuthor(message.UserId, data)
-
-		// Build attachments
-		attachments := e.buildAttachments(message.Attachments, data)
-
-		result[i] = dto.Message{
-			Id:          message.Id,
-			ChannelId:   message.ChannelId,
-			Author:      author,
-			Content:     message.Content,
-			Attachments: attachments,
-			UpdatedAt:   message.EditedAt,
-		}
-	}
-
-	return result
-}
-
-// buildAuthor constructs author DTO with member override if available
-func (e *entity) buildAuthor(userId int64, data *messageRelatedData) dto.User {
-	user := data.Users[userId]
-	member := data.Members[userId]
-
-	author := dto.User{
-		Id:   userId,
-		Name: user.Name,
-	}
-	if ad, ok := data.AvData[userId]; ok {
-		author.Avatar = ad
-	}
-
-	// Override with member data if available
-	if member != nil {
-		if member.Username != nil {
-			author.Name = *member.Username
-		}
-		// If member has guild-specific avatar, override avatar data
-		if member.Avatar != nil {
-			if ad, err := e.getAvatarDataCached(context.Background(), userId, *member.Avatar); err == nil && ad != nil {
-				author.Avatar = ad
-			}
-		}
-	}
-
-	return author
-}
-
-// buildAttachments constructs attachment DTOs
-func (e *entity) buildAttachments(attachmentIds []int64, data *messageRelatedData) []dto.Attachment {
-	if len(attachmentIds) == 0 {
-		return nil
-	}
-
-	attachments := make([]dto.Attachment, 0, len(attachmentIds))
-	for _, id := range attachmentIds {
-		if attachment, exists := data.Attachments[id]; exists {
-			var full string
-			if attachment.URL != nil {
-				full = *attachment.URL
-			}
-			attachments = append(attachments, dto.Attachment{
-				ContentType: attachment.ContentType,
-				Filename:    attachment.Name,
-				Height:      attachment.Height,
-				Width:       attachment.Width,
-				URL:         full,
-				PreviewURL:  attachment.PreviewURL,
-				Size:        attachment.FileSize,
-			})
-		}
-	}
-
-	return attachments
-}
-
 // Update
 //
 //	@Summary	Update message
@@ -1385,8 +1304,8 @@ func (e *entity) validateUploadPermissions(c *fiber.Ctx, channelId, userId int64
 		return fiber.NewError(fiber.StatusNotFound, "channel not found")
 	}
 
-	// Check guild permissions
-	if channel.Type == model.ChannelTypeGuild {
+	switch channel.Type {
+	case model.ChannelTypeGuild:
 		guildChannel, err := e.gc.GetGuildByChannel(c.UserContext(), channelId)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusInternalServerError, "failed to get guild channel")
@@ -1401,7 +1320,7 @@ func (e *entity) validateUploadPermissions(c *fiber.Ctx, channelId, userId int64
 				return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
 			}
 		}
-	} else if channel.Type == model.ChannelTypeGroupDM {
+	case model.ChannelTypeGroupDM:
 		// Check if user is participant in group DM
 		if channel.ParentID != nil && *channel.ParentID != userId {
 			// TODO: Implement proper group DM participant check

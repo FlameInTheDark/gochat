@@ -80,7 +80,9 @@ func (s *EmojiService) Upload(ctx context.Context, guildID, emojiID int64, body 
 		for _, key := range uploadedKeys {
 			_ = s.storage.RemoveAttachment(ctx, key)
 		}
-		_, _ = s.repo.Delete(ctx, guildID, emojiID)
+		if errors.Is(err, ErrUploadExpired) {
+			_, _ = s.repo.Delete(ctx, guildID, emojiID)
+		}
 	}()
 
 	masterKey := EmojiMasterKey(emojiID)
@@ -120,6 +122,24 @@ func (p *FFmpegProcessor) ProcessEmoji(ctx context.Context, source []byte, sourc
 	animated, err := DetectAnimated(source)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrMediaProcess, err)
+	}
+
+	// FFmpeg in this runtime can encode animated WebP but does not reliably decode
+	// uploaded animated WebP inputs. Preserve the validated source and reuse it
+	// for the public variants so the placeholder can still be finalized.
+	if animated && isWEBP(source) {
+		if int64(len(source)) > sizeLimit {
+			return nil, ErrTooLarge
+		}
+		master := append([]byte(nil), source...)
+		return &ProcessedEmoji{
+			Master:   master,
+			Size96:   master,
+			Size44:   master,
+			Animated: true,
+			Width:    sourceWidth,
+			Height:   sourceHeight,
+		}, nil
 	}
 
 	master, err := p.convertEmojiVariant(ctx, bytes.NewReader(source), 0, sizeLimit, animated)

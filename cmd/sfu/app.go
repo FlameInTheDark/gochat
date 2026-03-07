@@ -238,9 +238,9 @@ func (a *App) notifyUserLeave(uid, channelID int64, guildID *int64) {
 // ---------------------------------------------------------------------------
 
 func (a *App) handleSignalWS(c *websocket.Conn) {
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
-	// Phase 1: Handshake — read join envelope and authorize.
+	// Phase 1: Handshake вЂ” read join envelope and authorize.
 	joinEnv, err := a.readJoinEnvelope(c)
 	if err != nil {
 		a.log.Warn("invalid join envelope", slog.String("error", err.Error()))
@@ -260,7 +260,7 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 		return
 	}
 
-	// Phase 2: Setup — create PeerConnection and register it.
+	// Phase 2: Setup вЂ” create PeerConnection and register it.
 	a.notifyUserJoin(uid, channelID, guildID)
 	defer a.notifyUserLeave(uid, channelID, guildID)
 
@@ -269,7 +269,7 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 		a.log.Error("failed to create peer connection", slog.String("error", err.Error()))
 		return
 	}
-	defer pc.Close()
+	defer func() { _ = pc.Close() }()
 
 	writer := &threadSafeWriter{conn: c.Conn}
 	state := &peerConnectionState{peerConnection: pc, websocket: writer, userID: uid, perms: perms}
@@ -444,7 +444,7 @@ func (a *App) forwardRTP(
 
 		n, _, err := remote.Read(buf)
 		if err != nil {
-			// EOF / closed are expected on normal disconnect — debug only.
+			// EOF / closed are expected on normal disconnect вЂ” debug only.
 			if pc.ConnectionState() == webrtc.PeerConnectionStateClosed ||
 				pc.ConnectionState() == webrtc.PeerConnectionStateFailed {
 				a.log.Debug("rtp read stopped (peer closed)",
@@ -660,7 +660,7 @@ func (a *App) handleLegacyRTCEvent(env envelope, pc *webrtc.PeerConnection, writ
 	case int(mqmsg.EventTypeRTCLeave):
 		return true
 
-	// ── Server control events ──────────────────────────────────────
+	// в”Ђв”Ђ Server control events в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 	case int(mqmsg.EventTypeRTCServerMuteUser):
 		if !hasPerm(perms, permissions.PermVoiceMuteMembers) {
 			a.log.Warn("mute denied: insufficient permissions", slog.Int64("user", uid))
@@ -827,13 +827,13 @@ func buildSignalURL(publicBaseURL string) string {
 func (a *App) readJoinEnvelope(c *websocket.Conn) (rtcJoinEnvelope, error) {
 	var env rtcJoinEnvelope
 	if c.Conn != nil {
-		_ = c.Conn.SetReadDeadline(time.Now().Add(joinHandshakeTimeout))
+		_ = c.SetReadDeadline(time.Now().Add(joinHandshakeTimeout))
 	}
 	if err := c.ReadJSON(&env); err != nil {
 		return rtcJoinEnvelope{}, err
 	}
 	if c.Conn != nil {
-		_ = c.Conn.SetReadDeadline(time.Time{})
+		_ = c.SetReadDeadline(time.Time{})
 	}
 	return env, nil
 }

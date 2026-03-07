@@ -47,12 +47,12 @@ func (e *Entity) CreateDmChannel(ctx context.Context, userId, participantId, cha
 		Suffix("ON CONFLICT (channel_id, user_id) DO NOTHING")
 	raw, args, err := q.ToSql()
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
 	_, err = tx.ExecContext(ctx, raw, args...)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("unable to create dm channel: %w", err)
 	}
 

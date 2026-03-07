@@ -99,13 +99,13 @@ func (m *SmtpMailer) Send(ctx context.Context, notify mailer.MailNotification) e
 			return err
 		}
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	c, err := smtppkg.NewClient(conn, m.host)
 	if err != nil {
 		return err
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	// If we connected without implicit TLS, try STARTTLS when available
 	if !m.useTls {

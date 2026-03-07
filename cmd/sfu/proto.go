@@ -116,11 +116,6 @@ type CloseChannelRequest struct {
 	ChannelID int64 `json:"channel_id"`
 }
 
-// muteSelfData payload for self-mute toggle.
-type muteSelfData struct {
-	Muted bool `json:"muted"`
-}
-
 // muteUserData payload for local/server mute of another user.
 type muteUserData struct {
 	User  int64 `json:"user"`

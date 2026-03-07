@@ -94,6 +94,85 @@ func (e *Entity) CreatePlaceholder(ctx context.Context, emoji model.GuildEmoji) 
 	return nil
 }
 
+func (e *Entity) ReusePendingPlaceholder(ctx context.Context, emoji model.GuildEmoji) (_ model.GuildEmoji, err error) {
+	tx, err := e.c.BeginTxx(ctx, nil)
+	if err != nil {
+		return model.GuildEmoji{}, fmt.Errorf("begin reuse emoji placeholder tx: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			_ = tx.Commit()
+		}
+	}()
+
+	existing, err := getGuildEmojiByNameForUpdate(ctx, tx, emoji.GuildId, emoji.NameNormalized)
+	if err != nil {
+		return model.GuildEmoji{}, err
+	}
+	if existing.Done || existing.CreatorId != emoji.CreatorId {
+		return model.GuildEmoji{}, ErrEmojiNameTaken
+	}
+	if time.Now().UTC().After(existing.UploadExpiresAt) {
+		if err = deleteEmojiByID(ctx, tx, existing.GuildId, existing.Id); err != nil {
+			return model.GuildEmoji{}, err
+		}
+		return model.GuildEmoji{}, ErrEmojiNotFound
+	}
+
+	now := time.Now().UTC()
+	update := `
+		UPDATE guild_emojis
+		SET name = $3,
+		    name_normalized = $4,
+		    done = FALSE,
+		    animated = FALSE,
+		    declared_file_size = $5,
+		    actual_file_size = NULL,
+		    content_type = NULL,
+		    width = NULL,
+		    height = NULL,
+		    upload_expires_at = $6,
+		    updated_at = $7
+		WHERE guild_id = $1 AND id = $2 AND done = FALSE AND creator_id = $8`
+	result, err := tx.ExecContext(ctx, update, emoji.GuildId, existing.Id, emoji.Name, emoji.NameNormalized, emoji.DeclaredFileSize, emoji.UploadExpiresAt, now, emoji.CreatorId)
+	if err != nil {
+		return model.GuildEmoji{}, fmt.Errorf("refresh guild emoji placeholder: %w", err)
+	}
+	if rows, rowsErr := result.RowsAffected(); rowsErr != nil {
+		return model.GuildEmoji{}, fmt.Errorf("refresh guild emoji placeholder rows affected: %w", rowsErr)
+	} else if rows == 0 {
+		return model.GuildEmoji{}, ErrEmojiNotFound
+	}
+
+	updateLookup := `
+		UPDATE emoji_lookup
+		SET name = $2,
+		    done = FALSE,
+		    animated = FALSE,
+		    width = NULL,
+		    height = NULL,
+		    updated_at = $3
+		WHERE id = $1`
+	if _, err = tx.ExecContext(ctx, updateLookup, existing.Id, emoji.Name, now); err != nil {
+		return model.GuildEmoji{}, fmt.Errorf("refresh emoji lookup placeholder: %w", err)
+	}
+
+	existing.Name = emoji.Name
+	existing.NameNormalized = emoji.NameNormalized
+	existing.Done = false
+	existing.Animated = false
+	existing.DeclaredFileSize = emoji.DeclaredFileSize
+	existing.ActualFileSize = nil
+	existing.ContentType = nil
+	existing.Width = nil
+	existing.Height = nil
+	existing.UploadExpiresAt = emoji.UploadExpiresAt
+	existing.UpdatedAt = now
+	return existing, nil
+}
+
 func (e *Entity) GetGuildEmoji(ctx context.Context, guildID, emojiID int64) (model.GuildEmoji, error) {
 	var emoji model.GuildEmoji
 	q := squirrel.Select("*").
@@ -414,6 +493,32 @@ func getGuildEmojiForUpdate(ctx context.Context, tx *sqlx.Tx, guildID, emojiID i
 		return emoji, fmt.Errorf("get guild emoji for update: %w", err)
 	}
 	return emoji, nil
+}
+
+func getGuildEmojiByNameForUpdate(ctx context.Context, tx *sqlx.Tx, guildID int64, normalized string) (model.GuildEmoji, error) {
+	var emoji model.GuildEmoji
+	query := `
+		SELECT *
+		FROM guild_emojis
+		WHERE guild_id = $1 AND name_normalized = $2
+		FOR UPDATE`
+	if err := tx.GetContext(ctx, &emoji, query, guildID, normalized); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return emoji, ErrEmojiNotFound
+		}
+		return emoji, fmt.Errorf("get guild emoji by name for update: %w", err)
+	}
+	return emoji, nil
+}
+
+func deleteEmojiByID(ctx context.Context, tx *sqlx.Tx, guildID, emojiID int64) error {
+	if _, err := tx.ExecContext(ctx, `DELETE FROM guild_emojis WHERE guild_id = $1 AND id = $2`, guildID, emojiID); err != nil {
+		return fmt.Errorf("delete guild emoji placeholder: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, `DELETE FROM emoji_lookup WHERE id = $1`, emojiID); err != nil {
+		return fmt.Errorf("delete emoji lookup placeholder: %w", err)
+	}
+	return nil
 }
 
 func countReadyByAnimated(ctx context.Context, tx *sqlx.Tx, guildID int64, animated bool, excludeID int64) (int64, error) {

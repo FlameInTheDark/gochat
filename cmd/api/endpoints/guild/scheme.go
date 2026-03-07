@@ -274,20 +274,6 @@ type guildContext struct {
 	Member *model.Member
 }
 
-type channelPermissionContext struct {
-	User    *helper.JWTUser
-	Guild   *model.Guild
-	Channel *model.Channel
-	Roles   map[int64]*model.Role
-}
-
-type memberRole struct {
-	Id          int64  `json:"id"`
-	Name        string `json:"name"`
-	Color       int    `json:"color"`
-	Permissions int64  `json:"permissions"`
-}
-
 // DTO conversion functions
 func channelModelToDTO(c *model.Channel, guildId *int64, position int, roles []int64) dto.Channel {
 	return dto.Channel{

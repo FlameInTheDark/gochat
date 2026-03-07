@@ -55,33 +55,62 @@ func (e *entity) CreateEmoji(c *fiber.Ctx) error {
 	if err := e.ensureGuildEmojiPermission(c.UserContext(), guildId, user.Id, permissions.PermCreateExpressions); err != nil {
 		return err
 	}
-	_ = e.emoji.PruneExpired(c.UserContext(), guildId)
-	count, err := e.emoji.CountActiveGuildEmojis(c.UserContext(), guildId)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateEmoji)
-	}
-	if count >= emojiutil.MaxActivePerGuild {
-		return fiber.NewError(fiber.StatusConflict, ErrEmojiActiveLimitExceeded)
-	}
 
-	id := idgen.Next()
+	uploadMeta, err := e.reserveEmojiUpload(c.UserContext(), guildId, user.Id, req)
+	if err != nil {
+		return err
+	}
+	_ = e.invalidateEmojiCache(c.UserContext(), guildId, uploadMeta.Id)
+	return c.JSON(uploadMeta)
+}
+
+func (e *entity) reserveEmojiUpload(ctx context.Context, guildId, userId int64, req CreateEmojiRequest) (dto.EmojiUpload, error) {
+	_ = e.emoji.PruneExpired(ctx, guildId)
+
 	record := model.GuildEmoji{
 		GuildId:          guildId,
-		Id:               id,
+		Id:               idgen.Next(),
 		Name:             req.Name,
 		NameNormalized:   emojiutil.NormalizeName(req.Name),
-		CreatorId:        user.Id,
+		CreatorId:        userId,
 		DeclaredFileSize: req.FileSize,
 		UploadExpiresAt:  time.Now().UTC().Add(time.Duration(e.attachTTL) * time.Second),
 	}
-	if err := e.emoji.CreatePlaceholder(c.UserContext(), record); err != nil {
-		if errors.Is(err, emojirepo.ErrEmojiNameTaken) {
-			return fiber.NewError(fiber.StatusConflict, ErrEmojiNameTaken)
-		}
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateEmoji)
+
+	reused, err := e.emoji.ReusePendingPlaceholder(ctx, record)
+	switch {
+	case err == nil:
+		return dto.EmojiUpload{Id: reused.Id, GuildId: reused.GuildId, Name: reused.Name}, nil
+	case errors.Is(err, emojirepo.ErrEmojiNameTaken):
+		return dto.EmojiUpload{}, fiber.NewError(fiber.StatusConflict, ErrEmojiNameTaken)
+	case err != nil && !errors.Is(err, emojirepo.ErrEmojiNotFound):
+		return dto.EmojiUpload{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateEmoji)
 	}
-	_ = e.invalidateEmojiCache(c.UserContext(), guildId, id)
-	return c.JSON(dto.EmojiUpload{Id: id, GuildId: guildId, Name: req.Name})
+
+	count, err := e.emoji.CountActiveGuildEmojis(ctx, guildId)
+	if err != nil {
+		return dto.EmojiUpload{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateEmoji)
+	}
+	if count >= emojiutil.MaxActivePerGuild {
+		return dto.EmojiUpload{}, fiber.NewError(fiber.StatusConflict, ErrEmojiActiveLimitExceeded)
+	}
+
+	if err := e.emoji.CreatePlaceholder(ctx, record); err != nil {
+		if errors.Is(err, emojirepo.ErrEmojiNameTaken) {
+			reused, reuseErr := e.emoji.ReusePendingPlaceholder(ctx, record)
+			switch {
+			case reuseErr == nil:
+				return dto.EmojiUpload{Id: reused.Id, GuildId: reused.GuildId, Name: reused.Name}, nil
+			case errors.Is(reuseErr, emojirepo.ErrEmojiNameTaken):
+				return dto.EmojiUpload{}, fiber.NewError(fiber.StatusConflict, ErrEmojiNameTaken)
+			default:
+				return dto.EmojiUpload{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateEmoji)
+			}
+		}
+		return dto.EmojiUpload{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateEmoji)
+	}
+
+	return dto.EmojiUpload{Id: record.Id, GuildId: record.GuildId, Name: record.Name}, nil
 }
 
 // ListEmojis
