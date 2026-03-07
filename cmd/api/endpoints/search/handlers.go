@@ -86,7 +86,7 @@ func (e *entity) Search(c *fiber.Ctx) error {
 
 	attMap := make(map[int64]model.Attachment)
 	if len(attIds) > 0 {
-		ats, err := e.at.SelectAttachmentByIDs(c.UserContext(), attIds)
+		ats, err := e.at.SelectAttachmentsByChannel(c.UserContext(), req.ChannelId, attIds)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetMessages)
 		}

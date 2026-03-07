@@ -25,6 +25,7 @@ const (
 	ErrUnableToGetMessage           = "unable to get message"
 	ErrUnableToSetReadState         = "unable to set read state"
 	ErrUnableToSendTypingEvent      = "unable to send typing event"
+	ErrInvalidAttachments           = "invalid attachments"
 
 	// Validation error messages
 	ErrMessageContentRequired = "message content is required"

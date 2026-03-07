@@ -1,12 +1,12 @@
 package s3
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"time"
-
-	"io"
 
 	aws "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -16,6 +16,7 @@ import (
 
 const (
 	attachmentDirectory = "media"
+	multipartPartSize   = 8 * 1024 * 1024
 )
 
 type Client struct {
@@ -60,6 +61,17 @@ func (c *Client) MakeUploadAttachment(ctx context.Context, channelId, objectId, 
 	return req.Presign(1 * time.Minute)
 }
 
+func (c *Client) MakeDownloadURL(ctx context.Context, key string, ttl time.Duration) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+	req, _ := c.s3.GetObjectRequest(&awss3.GetObjectInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
+	})
+	return req.Presign(ttl)
+}
+
 func (c *Client) RemoveAttachment(ctx context.Context, key string) error {
 	_, err := c.s3.DeleteObjectWithContext(ctx, &awss3.DeleteObjectInput{
 		Bucket: aws.String(c.bucket),
@@ -68,15 +80,91 @@ func (c *Client) RemoveAttachment(ctx context.Context, key string) error {
 	return err
 }
 
-// UploadObject uploads an object from a byte stream to S3 at the given key.
-func (c *Client) UploadObject(ctx context.Context, key string, body io.ReadSeeker, contentType string) error {
-	_, err := c.s3.PutObjectWithContext(ctx, &awss3.PutObjectInput{
-		Bucket:      aws.String(c.bucket),
-		Key:         aws.String(key),
-		Body:        aws.ReadSeekCloser(body),
-		ContentType: aws.String(contentType),
+// UploadObject uploads an object from a stream to S3 without requiring local disk.
+func (c *Client) UploadObject(ctx context.Context, key string, body io.Reader, contentType string) (err error) {
+	createIn := &awss3.CreateMultipartUploadInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
+	}
+	if contentType != "" {
+		createIn.ContentType = aws.String(contentType)
+	}
+
+	created, err := c.s3.CreateMultipartUploadWithContext(ctx, createIn)
+	if err != nil {
+		return err
+	}
+
+	uploadID := created.UploadId
+	defer func() {
+		if err == nil || uploadID == nil {
+			return
+		}
+		_, _ = c.s3.AbortMultipartUploadWithContext(context.Background(), &awss3.AbortMultipartUploadInput{
+			Bucket:   aws.String(c.bucket),
+			Key:      aws.String(key),
+			UploadId: uploadID,
+		})
+	}()
+
+	parts := make([]*awss3.CompletedPart, 0, 4)
+	for partNumber := int64(1); ; partNumber++ {
+		payload, readErr := readNextUploadChunk(body, multipartPartSize)
+		if readErr != nil {
+			return readErr
+		}
+		if len(payload) == 0 {
+			break
+		}
+
+		partOut, err := c.s3.UploadPartWithContext(ctx, &awss3.UploadPartInput{
+			Bucket:        aws.String(c.bucket),
+			Key:           aws.String(key),
+			UploadId:      uploadID,
+			PartNumber:    aws.Int64(partNumber),
+			Body:          bytes.NewReader(payload),
+			ContentLength: aws.Int64(int64(len(payload))),
+		})
+		if err != nil {
+			return err
+		}
+
+		parts = append(parts, &awss3.CompletedPart{
+			ETag:       partOut.ETag,
+			PartNumber: aws.Int64(partNumber),
+		})
+	}
+
+	if len(parts) == 0 {
+		return fmt.Errorf("empty upload body")
+	}
+
+	_, err = c.s3.CompleteMultipartUploadWithContext(ctx, &awss3.CompleteMultipartUploadInput{
+		Bucket:   aws.String(c.bucket),
+		Key:      aws.String(key),
+		UploadId: uploadID,
+		MultipartUpload: &awss3.CompletedMultipartUpload{
+			Parts: parts,
+		},
 	})
 	return err
+}
+
+func readNextUploadChunk(reader io.Reader, maxSize int64) ([]byte, error) {
+	var buf bytes.Buffer
+	buf.Grow(int(maxSize))
+
+	_, err := io.CopyN(&buf, reader, maxSize)
+	switch err {
+	case nil:
+		return buf.Bytes(), nil
+	case io.EOF:
+		return nil, nil
+	case io.ErrUnexpectedEOF:
+		return buf.Bytes(), nil
+	default:
+		return nil, err
+	}
 }
 
 // StatObject performs a HEAD request to retrieve object size and content type

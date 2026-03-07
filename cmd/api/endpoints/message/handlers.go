@@ -50,8 +50,13 @@ func (e *entity) Send(c *fiber.Ctx) error {
 		return err
 	}
 
+	validatedAttachments, err := e.validateMessageAttachments(c.UserContext(), channel.Id, user.Id, []int64(req.Attachments))
+	if err != nil {
+		return err
+	}
+
 	// Create and send message
-	message, err := e.createAndSendMessage(c, req, user, channel, guildId)
+	message, err := e.createAndSendMessage(c, req, user, channel, guildId, validatedAttachments)
 	if err != nil {
 		return err
 	}
@@ -123,7 +128,7 @@ func (e *entity) validateSendPermissions(c *fiber.Ctx, channelId, userId int64) 
 }
 
 // createAndSendMessage creates the message and handles all related operations
-func (e *entity) createAndSendMessage(c *fiber.Ctx, req *SendMessageRequest, jwtUser *helper.JWTUser, channel *model.Channel, guildId *int64) (dto.Message, error) {
+func (e *entity) createAndSendMessage(c *fiber.Ctx, req *SendMessageRequest, jwtUser *helper.JWTUser, channel *model.Channel, guildId *int64, validatedAttachments []model.Attachment) (dto.Message, error) {
 	// Fetch user data concurrently
 	userData, err := e.fetchUserDataForMessage(c, jwtUser.Id)
 	if err != nil {
@@ -137,7 +142,7 @@ func (e *entity) createAndSendMessage(c *fiber.Ctx, req *SendMessageRequest, jwt
 	}
 
 	// Build response message
-	message, err := e.buildMessageResponse(c, messageId, channel, userData, req)
+	message, err := e.buildMessageResponse(c, messageId, channel, userData, req, validatedAttachments)
 	if err != nil {
 		// Cleanup on failure
 		_ = e.msg.DeleteMessage(c.UserContext(), messageId, channel.Id)
@@ -318,30 +323,83 @@ func (e *entity) createMessageWithCleanup(c *fiber.Ctx, messageId, channelId, us
 	return nil
 }
 
-// buildMessageResponse constructs the message response DTO
-func (e *entity) buildMessageResponse(c *fiber.Ctx, messageId int64, channel *model.Channel, userData *messageUserData, req *SendMessageRequest) (dto.Message, error) {
-	var attachments []dto.Attachment
-	if len(req.Attachments) > 0 {
-		ats, err := e.at.SelectAttachmentByIDs(c.UserContext(), []int64(req.Attachments))
-		if err != nil {
-			return dto.Message{}, helper.HttpDbError(err, ErrUnableToGetAttachements)
-		}
-		for _, at := range ats {
-			var url string
-			if at.URL != nil {
-				url = *at.URL
-			}
-			attachments = append(attachments, dto.Attachment{
-				ContentType: at.ContentType,
-				Filename:    at.Name,
-				Height:      at.Height,
-				Width:       at.Width,
-				URL:         url,
-				PreviewURL:  at.PreviewURL,
-				Size:        at.FileSize,
-			})
-		}
+func (e *entity) validateMessageAttachments(ctx context.Context, channelId, userId int64, attachmentIds []int64) ([]model.Attachment, error) {
+	if len(attachmentIds) == 0 {
+		return nil, nil
 	}
+
+	requested := make(map[int64]struct{}, len(attachmentIds))
+	for _, attachmentId := range attachmentIds {
+		if _, exists := requested[attachmentId]; exists {
+			return nil, fiber.NewError(fiber.StatusBadRequest, ErrInvalidAttachments)
+		}
+		requested[attachmentId] = struct{}{}
+	}
+
+	attachments, err := e.at.SelectAttachmentsByChannel(ctx, channelId, attachmentIds)
+	if err != nil {
+		return nil, helper.HttpDbError(err, ErrUnableToGetAttachements)
+	}
+	if len(attachments) != len(requested) {
+		return nil, fiber.NewError(fiber.StatusBadRequest, ErrInvalidAttachments)
+	}
+
+	attachmentMap := make(map[int64]model.Attachment, len(attachments))
+	for _, attachment := range attachments {
+		if attachment.ChannelId != channelId || !attachment.Done || attachment.AuthorId == nil || *attachment.AuthorId != userId {
+			return nil, fiber.NewError(fiber.StatusBadRequest, ErrInvalidAttachments)
+		}
+		attachmentMap[attachment.Id] = attachment
+	}
+
+	result := make([]model.Attachment, 0, len(attachmentIds))
+	for _, attachmentId := range attachmentIds {
+		attachment, exists := attachmentMap[attachmentId]
+		if !exists {
+			return nil, fiber.NewError(fiber.StatusBadRequest, ErrInvalidAttachments)
+		}
+		result = append(result, attachment)
+	}
+
+	return result, nil
+}
+
+func (e *entity) buildAttachmentDTOs(attachmentIds []int64, attachments []model.Attachment) []dto.Attachment {
+	if len(attachmentIds) == 0 || len(attachments) == 0 {
+		return nil
+	}
+
+	attachmentMap := make(map[int64]model.Attachment, len(attachments))
+	for _, attachment := range attachments {
+		attachmentMap[attachment.Id] = attachment
+	}
+
+	result := make([]dto.Attachment, 0, len(attachmentIds))
+	for _, attachmentId := range attachmentIds {
+		attachment, exists := attachmentMap[attachmentId]
+		if !exists {
+			continue
+		}
+		var url string
+		if attachment.URL != nil {
+			url = *attachment.URL
+		}
+		result = append(result, dto.Attachment{
+			ContentType: attachment.ContentType,
+			Filename:    attachment.Name,
+			Height:      attachment.Height,
+			Width:       attachment.Width,
+			URL:         url,
+			PreviewURL:  attachment.PreviewURL,
+			Size:        attachment.FileSize,
+		})
+	}
+	return result
+}
+
+// buildMessageResponse constructs the message response DTO
+func (e *entity) buildMessageResponse(c *fiber.Ctx, messageId int64, channel *model.Channel, userData *messageUserData, req *SendMessageRequest, validatedAttachments []model.Attachment) (dto.Message, error) {
+	attachments := e.buildAttachmentDTOs([]int64(req.Attachments), validatedAttachments)
 
 	// Build author with avatar data if present
 	author := dto.User{
@@ -703,8 +761,8 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 	// Fetch attachments
 	go func() {
 		attachmentIds := e.extractAttachmentIds(messages)
-		if len(attachmentIds) > 0 {
-			attachments, err := e.at.SelectAttachmentByIDs(c.UserContext(), attachmentIds)
+		if len(attachmentIds) > 0 && len(messages) > 0 {
+			attachments, err := e.at.SelectAttachmentsByChannel(c.UserContext(), messages[0].ChannelId, attachmentIds)
 			attachmentsCh <- attachmentsResult{attachments, err}
 		} else {
 			attachmentsCh <- attachmentsResult{nil, nil}
