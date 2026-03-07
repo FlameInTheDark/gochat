@@ -9,6 +9,8 @@ type PresenceUpdate struct {
 	Since            int64             `json:"since"`
 	ClientStatus     map[string]string `json:"client_status,omitempty"`
 	VoiceChannelID   *int64            `json:"voice_channel_id,omitempty"`
+	Mute             bool              `json:"mute,omitempty"`
+	Deafen           bool              `json:"deafen,omitempty"`
 }
 
 func (m *PresenceUpdate) EventType() *EventType    { return nil }

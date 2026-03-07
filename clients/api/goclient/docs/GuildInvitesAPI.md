@@ -31,7 +31,7 @@ import (
 )
 
 func main() {
-	inviteCode := "PWBJ124G" // string | Invite code
+	inviteCode := "inviteCode_example" // string | Invite code
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -99,7 +99,7 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild id
+	guildId := int64(789) // int64 | Guild id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -119,7 +119,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int32** | Guild id | 
+**guildId** | **int64** | Guild id | 
 
 ### Other Parameters
 
@@ -167,8 +167,8 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild id
-	inviteId := int32(2230469276416868352) // int32 | Invite id
+	guildId := int64(789) // int64 | Guild id
+	inviteId := int64(789) // int64 | Invite id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -188,8 +188,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int32** | Guild id | 
-**inviteId** | **int32** | Invite id | 
+**guildId** | **int64** | Guild id | 
+**inviteId** | **int64** | Invite id | 
 
 ### Other Parameters
 
@@ -221,7 +221,7 @@ No authorization required
 
 ## GuildInvitesGuildIdPost
 
-> DtoGuildInvite GuildInvitesGuildIdPost(ctx, guildId).GuildCreateInviteRequest(guildCreateInviteRequest).Execute()
+> DtoGuildInvite GuildInvitesGuildIdPost(ctx, guildId).Request(request).Execute()
 
 Create a new invite
 
@@ -238,12 +238,12 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild id
-	guildCreateInviteRequest := *openapiclient.NewGuildCreateInviteRequest() // GuildCreateInviteRequest | Invite options
+	guildId := int64(789) // int64 | Guild id
+	request := *openapiclient.NewGuildCreateInviteRequest() // GuildCreateInviteRequest | Invite options
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildInvitesAPI.GuildInvitesGuildIdPost(context.Background(), guildId).GuildCreateInviteRequest(guildCreateInviteRequest).Execute()
+	resp, r, err := apiClient.GuildInvitesAPI.GuildInvitesGuildIdPost(context.Background(), guildId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildInvitesAPI.GuildInvitesGuildIdPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -259,7 +259,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int32** | Guild id | 
+**guildId** | **int64** | Guild id | 
 
 ### Other Parameters
 
@@ -269,7 +269,7 @@ Other parameters are passed through a pointer to a apiGuildInvitesGuildIdPostReq
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **guildCreateInviteRequest** | [**GuildCreateInviteRequest**](GuildCreateInviteRequest.md) | Invite options | 
+ **request** | [**GuildCreateInviteRequest**](GuildCreateInviteRequest.md) | Invite options | 
 
 ### Return type
 
@@ -281,7 +281,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -308,7 +308,7 @@ import (
 )
 
 func main() {
-	inviteCode := "PWBJ124G" // string | Invite code
+	inviteCode := "inviteCode_example" // string | Invite code
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)

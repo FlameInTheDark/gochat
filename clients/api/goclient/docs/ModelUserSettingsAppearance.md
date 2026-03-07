@@ -4,8 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**ChatFontScale** | Pointer to **int32** |  | [optional] 
-**ChatSpacing** | Pointer to **int32** |  | [optional] 
+**ChatFontScale** | Pointer to **float32** |  | [optional] 
+**ChatSpacing** | Pointer to **float32** |  | [optional] 
 **ColorScheme** | Pointer to **string** |  | [optional] 
 
 ## Methods
@@ -29,20 +29,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetChatFontScale
 
-`func (o *ModelUserSettingsAppearance) GetChatFontScale() int32`
+`func (o *ModelUserSettingsAppearance) GetChatFontScale() float32`
 
 GetChatFontScale returns the ChatFontScale field if non-nil, zero value otherwise.
 
 ### GetChatFontScaleOk
 
-`func (o *ModelUserSettingsAppearance) GetChatFontScaleOk() (*int32, bool)`
+`func (o *ModelUserSettingsAppearance) GetChatFontScaleOk() (*float32, bool)`
 
 GetChatFontScaleOk returns a tuple with the ChatFontScale field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetChatFontScale
 
-`func (o *ModelUserSettingsAppearance) SetChatFontScale(v int32)`
+`func (o *ModelUserSettingsAppearance) SetChatFontScale(v float32)`
 
 SetChatFontScale sets ChatFontScale field to given value.
 
@@ -54,20 +54,20 @@ HasChatFontScale returns a boolean if a field has been set.
 
 ### GetChatSpacing
 
-`func (o *ModelUserSettingsAppearance) GetChatSpacing() int32`
+`func (o *ModelUserSettingsAppearance) GetChatSpacing() float32`
 
 GetChatSpacing returns the ChatSpacing field if non-nil, zero value otherwise.
 
 ### GetChatSpacingOk
 
-`func (o *ModelUserSettingsAppearance) GetChatSpacingOk() (*int32, bool)`
+`func (o *ModelUserSettingsAppearance) GetChatSpacingOk() (*float32, bool)`
 
 GetChatSpacingOk returns a tuple with the ChatSpacing field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetChatSpacing
 
-`func (o *ModelUserSettingsAppearance) SetChatSpacing(v int32)`
+`func (o *ModelUserSettingsAppearance) SetChatSpacing(v float32)`
 
 SetChatSpacing sets ChatSpacing field to given value.
 

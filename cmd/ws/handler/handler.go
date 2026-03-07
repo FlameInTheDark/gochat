@@ -333,6 +333,26 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		}
 
 		sp := presence.SessionPresence{SessionID: h.sessionID, Status: m.Status, Platform: m.Platform, Since: now, UpdatedAt: now, ExpiresAt: now + ttl, CustomStatusText: m.CustomStatusText, VoiceChannelID: voicePtr}
+
+		// Handle voice state updates (mute/deafen)
+		if m.Mute != nil || m.Deafen != nil {
+			mute := false
+			deafen := false
+			if m.Mute != nil {
+				mute = *m.Mute
+			}
+			if m.Deafen != nil {
+				deafen = *m.Deafen
+			}
+			sp.Mute = mute
+			sp.Deafen = deafen
+
+			// Update voice state in store
+			if err := h.pstore.SetSessionVoiceState(ctx, h.user.Id, h.sessionID, mute, deafen, ttl); err != nil {
+				h.log.Warn("Error setting session voice state", "error", err)
+			}
+		}
+
 		if err := h.pstore.UpsertSession(ctx, h.user.Id, h.sessionID, sp, ttl); err != nil {
 			h.log.Warn("Error upserting session presence", "error", err)
 			return
@@ -411,7 +431,7 @@ func (h *Handler) publishPresence(agg presence.Presence) {
 	if h.nats == nil {
 		return
 	}
-	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{UserID: agg.UserID, Status: agg.Status, Since: agg.Since, CustomStatusText: agg.CustomStatusText, VoiceChannelID: agg.VoiceChannelID})
+	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{UserID: agg.UserID, Status: agg.Status, Since: agg.Since, CustomStatusText: agg.CustomStatusText, VoiceChannelID: agg.VoiceChannelID, Mute: agg.Mute, Deafen: agg.Deafen})
 	if err != nil {
 		return
 	}

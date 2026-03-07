@@ -5,7 +5,6 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Name** | Pointer to **string** | Channel name. | [optional] 
-**ParentId** | Pointer to **int32** | Parent channel ID. A Parent channel can only be a category channel. | [optional] 
 **Private** | Pointer to **bool** | Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel. | [optional] [default to false]
 **Topic** | Pointer to **string** | Channel topic. | [optional] 
 
@@ -52,31 +51,6 @@ SetName sets Name field to given value.
 `func (o *GuildPatchGuildChannelRequest) HasName() bool`
 
 HasName returns a boolean if a field has been set.
-
-### GetParentId
-
-`func (o *GuildPatchGuildChannelRequest) GetParentId() int32`
-
-GetParentId returns the ParentId field if non-nil, zero value otherwise.
-
-### GetParentIdOk
-
-`func (o *GuildPatchGuildChannelRequest) GetParentIdOk() (*int32, bool)`
-
-GetParentIdOk returns a tuple with the ParentId field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetParentId
-
-`func (o *GuildPatchGuildChannelRequest) SetParentId(v int32)`
-
-SetParentId sets ParentId field to given value.
-
-### HasParentId
-
-`func (o *GuildPatchGuildChannelRequest) HasParentId() bool`
-
-HasParentId returns a boolean if a field has been set.
 
 ### GetPrivate
 

@@ -36,8 +36,6 @@ type GuildUpdateGuildRequest struct {
 // will change when the set of required properties is changed
 func NewGuildUpdateGuildRequest() *GuildUpdateGuildRequest {
 	this := GuildUpdateGuildRequest{}
-	var permissions int32 = 7927905
-	this.Permissions = &permissions
 	var public bool = false
 	this.Public = &public
 	return &this
@@ -48,8 +46,6 @@ func NewGuildUpdateGuildRequest() *GuildUpdateGuildRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewGuildUpdateGuildRequestWithDefaults() *GuildUpdateGuildRequest {
 	this := GuildUpdateGuildRequest{}
-	var permissions int32 = 7927905
-	this.Permissions = &permissions
 	var public bool = false
 	this.Public = &public
 	return &this

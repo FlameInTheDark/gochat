@@ -274,7 +274,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## Guild Member Events (200–206)
+## Guild Member Events (200–209)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -285,6 +285,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 | 204 | Guild Member Role Removed | `guild.{guildId}` | Role removed from member |
 | 205 | Guild Member Join Voice | `guild.{guildId}` | Member joined a voice channel |
 | 206 | Guild Member Leave Voice | `guild.{guildId}` | Member left a voice channel |
+| 209 | Voice State Update | `guild.{guildId}` | User's mute/deafen status changed in voice channel |
 
 **Payload (t=200, Guild Member Added):**
 ```json
@@ -387,6 +388,31 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 ```
 
 **Client action:** Display countdown or preparation notice. After `delay_ms` milliseconds, a `VoiceRebind` (t=513) event will follow for clients in that channel. Clients should prepare to call `JoinVoice` API again after the rebind fires.
+
+---
+
+## Voice State Events (209)
+
+| Type | Name | NATS Topic | Description |
+|------|------|------------|-------------|
+| 209 | Voice State Update | `guild.{guildId}` | User's mute/deafen status changed in voice channel |
+
+**Payload (t=209, Voice State Update):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "user_id": 2226021950625415200,
+  "channel_id": 2230469276416868352,
+  "mute": true,
+  "deafen": false
+}
+```
+
+**Notes:**
+- This event is sent when a user mutes/unmutes themselves or is server-muted/deafened
+- The `mute` field indicates if the user is muted (cannot speak)
+- The `deafen` field indicates if the user is deafened (cannot hear others)
+- This event is broadcast to all guild members, not just those in the voice channel
 
 ---
 
@@ -538,6 +564,8 @@ Presence updates are dispatched with `op: 3` (not `op: 0`). They are delivered v
   "custom_status_text": "Coding...",
   "since": 1700000000,
   "voice_channel_id": 2230469276416868352,
+  "mute": false,
+  "deafen": false,
   "client_status": {
     "web": "online"
   }
@@ -551,6 +579,8 @@ Presence updates are dispatched with `op: 3` (not `op: 0`). They are delivered v
 | `custom_status_text` | string | Free-text status message |
 | `since` | int64 | Unix timestamp when status was set |
 | `voice_channel_id` | int64 | Voice channel user is in (omitted if none) |
+| `mute` | bool | Whether the user is muted in voice (only present if in voice channel) |
+| `deafen` | bool | Whether the user is deafened in voice (only present if in voice channel) |
 | `client_status` | map | Per-platform status (optional) |
 
 ---

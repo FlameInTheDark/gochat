@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -919,9 +920,9 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 //	@Router		/user/me/settings [post]
 func (e *entity) SetUserSettings(c *fiber.Ctx) error {
 	var req model.UserSettingsData
-	if err := c.BodyParser(&req); err != nil {
+	if err := json.Unmarshal(c.Body(), &req); err != nil {
 		slog.Error("failed to parse request body", slog.String("error", err.Error()))
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
+		return fiber.NewError(fiber.StatusBadRequest, "parse error: "+err.Error())
 	}
 	if err := req.Validate(); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())

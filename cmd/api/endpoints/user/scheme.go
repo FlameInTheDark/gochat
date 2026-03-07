@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -211,7 +212,7 @@ func (r CreateFriendRequestRequest) Validate() error {
 }
 
 type UnfriendRequest struct {
-	UserId int64 `json:"user_id"`
+	UserId int64 `json:"user_id,string"`
 }
 
 func (r UnfriendRequest) Validate() error {
@@ -224,7 +225,7 @@ func (r UnfriendRequest) Validate() error {
 }
 
 type FriendRequestAction struct {
-	UserId int64 `json:"user_id"`
+	UserId int64 `json:"user_id,string"`
 }
 
 func (r FriendRequestAction) Validate() error {
@@ -255,7 +256,7 @@ func usersWithDiscriminators(users []model.User, discs []model.Discriminator) []
 
 // DM channels last messages request
 type DMChannelsLastRequest struct {
-	ChannelIds []int64 `json:"channel_ids"`
+	ChannelIds []helper.StringInt64Array `json:"channel_ids"`
 }
 
 func (r DMChannelsLastRequest) Validate() error {

@@ -263,6 +263,9 @@ After ICE + DTLS:
 
 ### Step 8 — Speaking Indicator
 
+Frontend track mapping:
+- The SFU tags outgoing streams with the sender's user id: `stream.id = "u:<user_id>"`. Use this to attach tracks to the correct UI tile.
+
 When a client detects voice activity (VAD), it sends:
 
 ```json
@@ -300,7 +303,36 @@ When the user stops speaking:
 
 ---
 
-### Step 9 — Client Leaves Voice Channel
+### Step 9 — Mute/Deafen Controls
+
+- Local (client-side only):
+  - Mute self: `{ "op":7, "t":505, "d": { "muted": true } }` — stops forwarding this publisher's audio.
+  - Mute a user locally: `{ "op":7, "t":506, "d": { "user": 123, "muted": true } }` — detaches that user's track for this peer only.
+- Server-wide (privileged):
+  - Mute user for everyone: `{ "op":7, "t":507, "d": { "user": 123, "muted": true } }` (requires `PermVoiceMuteMembers`).
+  - Deafen user: `{ "op":7, "t":508, "d": { "user": 123, "deafened": true } }` (requires `PermVoiceDeafenMembers`).
+  - Kick/move user to another channel: requires `PermVoiceMoveMembers` (handled by API/protocol; see Section 4).
+
+---
+
+### Step 10 — Measuring Latency (Ping/Pong)
+
+Client can measure RTT anytime via `op=2`:
+
+```json
+{ "op": 2, "d": { "nonce": "abc", "ts": 1717171717 } }
+```
+
+SFU replies:
+```json
+{ "op": 2, "d": { "pong": true, "server_ts": 1717171720, "nonce": "abc", "ts": 1717171717 } }
+```
+
+Compute RTT as `now_ms - send_ts` on the client.
+
+---
+
+### Step 11 — Client Leaves Voice Channel
 
 **Normal disconnect:**
 1. Client closes the WebSocket connection.
@@ -607,7 +639,13 @@ The SFU monitors state changes via `OnConnectionStateChange`. On `Failed` or `Cl
 
 ---
 
-## 9. Codec Negotiation Details
+## 9. Discovery & Regions
+
+- SFU sends heartbeats to the Webhook service (`/webhook/sfu/heartbeat`) including `{ id, region, url, load }`.
+- Webhook validates `X-Webhook-Token` (HS256) and writes/refreshes the SFU instance in etcd.
+- API lists instances from etcd for the requested region and returns `sfu_url`. If none exist, API returns `503` (no SFU).
+
+## 10. Codec Negotiation Details
 
 The SFU presents only permitted codecs in SDP. The offer always includes:
 

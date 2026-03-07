@@ -42,7 +42,7 @@ All messages exchanged over the Gateway WebSocket share a single JSON envelope:
 |----|------|-------------|
 | 0 | **Dispatch** | Server-push event (message created, guild updated, etc.). Always includes `t` field |
 | 1 | **Hello Reply** | Response to Hello — contains heartbeat interval and session ID |
-| 3 | **Presence Update** | Dispatched presence snapshot for a subscribed user |
+| 3 | **Presence Update** | Dispatched presence snapshot for a subscribed user (includes voice state: mute/deafen) |
 | 7 | **RTC** | Voice/WebRTC events (offer, candidate, speaking, mute, kick, etc.) |
 
 ---
@@ -124,7 +124,9 @@ Update own presence status. Presence is **not** auto-set on Hello — the client
     "status": "online",
     "platform": "web",
     "custom_status_text": "Coding...",
-    "voice_channel_id": 2230469276416868352
+    "voice_channel_id": 2230469276416868352,
+    "mute": false,
+    "deafen": false
   }
 }
 ```
@@ -135,11 +137,27 @@ Update own presence status. Presence is **not** auto-set on Hello — the client
 | `platform` | string | ❌ | `"web"`, `"mobile"`, `"desktop"` — informational only |
 | `custom_status_text` | string | ❌ | Free-text status message |
 | `voice_channel_id` | int64 | ❌ | Set to a channel ID to indicate voice presence; set to `0` to clear |
+| `mute` | bool | ❌ | Set to `true`/`false` to update mute status while in voice channel |
+| `deafen` | bool | ❌ | Set to `true`/`false` to update deafen status while in voice channel |
 
 **Behavior:**
 - `"offline"` sets a global override — the user appears offline to all watchers, even though the session is active.
 - Any other valid status clears the offline override and upserts the session.
 - The aggregated presence is published to NATS (`presence.user.{userId}`) for all presence subscribers.
+- When `mute` or `deafen` is provided and the user is in a voice channel, the voice state is updated and a **Voice State Update** event (t=209) is broadcast to all guild members.
+
+**Voice State Update Flow:**
+```
+Client A → OP 3 (mute: true) → WS Service
+                                   ↓
+                              Update presence
+                                   ↓
+                         Broadcast t=209 to guild.{guildId}
+                                   ↓
+                    All guild members receive voice state update
+```
+
+See [Event Types](EventTypes.md#voice-state-events-209) for the Voice State Update event details.
 
 ---
 
@@ -216,3 +234,69 @@ Used for voice-related **control** over the Gateway WS connection. Only `t=509` 
 ```
 
 This refreshes `voice:route:{channelId}` TTL (60s) in Redis and updates the session's voice channel presence. Clients should send this periodically while in a voice channel.
+
+---
+
+## Server → Client Payloads
+
+### OP 3 — Presence Update (Dispatch)
+
+When you subscribe to a user's presence via [OP 6](#op-6--presence-subscription), you receive their presence updates via OP 3 dispatches:
+
+```json
+{
+  "op": 3,
+  "d": {
+    "user_id": 2226021950625415200,
+    "status": "online",
+    "custom_status_text": "In a meeting",
+    "since": 1700000000,
+    "voice_channel_id": 2230469276416868352,
+    "mute": true,
+    "deafen": false,
+    "client_status": {
+      "web": "online"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `user_id` | int64 | User whose presence changed |
+| `status` | string | Current status: `online`, `idle`, `dnd`, or `offline` |
+| `custom_status_text` | string | User's custom status message |
+| `since` | int64 | Unix timestamp when this status was set |
+| `voice_channel_id` | int64 | Voice channel ID if in voice (omitted if not in voice) |
+| `mute` | bool | Whether the user is muted (only present if in voice channel) |
+| `deafen` | bool | Whether the user is deafened (only present if in voice channel) |
+| `client_status` | map | Per-platform status (e.g., `web`, `desktop`, `mobile`) |
+
+**Voice State Fields:**
+- `mute: true` — User has muted themselves (cannot speak)
+- `deafen: true` — User has deafened themselves (cannot hear others)
+- These fields are only included when the user is currently in a voice channel
+- They are updated via OP 3 (client → server) and then broadcast to all presence subscribers
+
+---
+
+### OP 0 — Dispatch (Events)
+
+Server-push events with `t` field indicating event type. See [Event Types](EventTypes.md) for complete list.
+
+**Example — Voice State Update (t=209):**
+```json
+{
+  "op": 0,
+  "t": 209,
+  "d": {
+    "guild_id": 2226022078304223200,
+    "user_id": 2226021950625415200,
+    "channel_id": 2230469276416868352,
+    "mute": true,
+    "deafen": false
+  }
+}
+```
+
+This event is broadcast to all guild members when any user's voice state (mute/deafen) changes.

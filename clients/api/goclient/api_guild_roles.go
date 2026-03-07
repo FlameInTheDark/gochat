@@ -26,8 +26,8 @@ type GuildRolesAPIService service
 type ApiGuildGuildIdChannelChannelIdRolesGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildRolesAPIService
-	guildId    int32
-	channelId  int32
+	guildId    int64
+	channelId  int64
 }
 
 func (r ApiGuildGuildIdChannelChannelIdRolesGetRequest) Execute() ([]GuildChannelRolePermission, *http.Response, error) {
@@ -42,7 +42,7 @@ GuildGuildIdChannelChannelIdRolesGet List channel role permissions
 	@param channelId Channel ID
 	@return ApiGuildGuildIdChannelChannelIdRolesGetRequest
 */
-func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesGet(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdChannelChannelIdRolesGetRequest {
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesGet(ctx context.Context, guildId int64, channelId int64) ApiGuildGuildIdChannelChannelIdRolesGetRequest {
 	return ApiGuildGuildIdChannelChannelIdRolesGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -53,7 +53,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesGet(ctx context.
 
 // Execute executes the request
 //
-//	@return	[]GuildChannelRolePermission
+//	@return []GuildChannelRolePermission
 func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesGetExecute(r ApiGuildGuildIdChannelChannelIdRolesGetRequest) ([]GuildChannelRolePermission, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -175,9 +175,9 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesGetExecute(r Api
 type ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildRolesAPIService
-	guildId    int32
-	channelId  int32
-	roleId     int32
+	guildId    int64
+	channelId  int64
+	roleId     int64
 }
 
 func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -193,7 +193,7 @@ GuildGuildIdChannelChannelIdRolesRoleIdDelete Remove channel role permission
 	@param roleId Role ID
 	@return ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest
 */
-func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdDelete(ctx context.Context, guildId int32, channelId int32, roleId int32) ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest {
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdDelete(ctx context.Context, guildId int64, channelId int64, roleId int64) ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest {
 	return ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -205,7 +205,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdDelete(ctx
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdDeleteExecute(r ApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -339,9 +339,9 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdDeleteExec
 type ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildRolesAPIService
-	guildId    int32
-	channelId  int32
-	roleId     int32
+	guildId    int64
+	channelId  int64
+	roleId     int64
 }
 
 func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest) Execute() (*GuildChannelRolePermission, *http.Response, error) {
@@ -357,7 +357,7 @@ GuildGuildIdChannelChannelIdRolesRoleIdGet Get channel role permission
 	@param roleId Role ID
 	@return ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest
 */
-func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdGet(ctx context.Context, guildId int32, channelId int32, roleId int32) ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest {
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdGet(ctx context.Context, guildId int64, channelId int64, roleId int64) ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest {
 	return ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -369,7 +369,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdGet(ctx co
 
 // Execute executes the request
 //
-//	@return	GuildChannelRolePermission
+//	@return GuildChannelRolePermission
 func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdGetExecute(r ApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest) (*GuildChannelRolePermission, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -501,17 +501,17 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdGetExecute
 }
 
 type ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest struct {
-	ctx                               context.Context
-	ApiService                        *GuildRolesAPIService
-	guildId                           int32
-	channelId                         int32
-	roleId                            int32
-	guildChannelRolePermissionRequest *GuildChannelRolePermissionRequest
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int64
+	channelId  int64
+	roleId     int64
+	req        *GuildChannelRolePermissionRequest
 }
 
 // Permission mask
-func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest) GuildChannelRolePermissionRequest(guildChannelRolePermissionRequest GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
-	r.guildChannelRolePermissionRequest = &guildChannelRolePermissionRequest
+func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest) Req(req GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
+	r.req = &req
 	return r
 }
 
@@ -528,7 +528,7 @@ GuildGuildIdChannelChannelIdRolesRoleIdPatch Update channel role permission
 	@param roleId Role ID
 	@return ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest
 */
-func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatch(ctx context.Context, guildId int32, channelId int32, roleId int32) ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatch(ctx context.Context, guildId int64, channelId int64, roleId int64) ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
 	return ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -540,7 +540,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatch(ctx 
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatchExecute(r ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -562,12 +562,12 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatchExecu
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildChannelRolePermissionRequest == nil {
-		return localVarReturnValue, nil, reportError("guildChannelRolePermissionRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -584,7 +584,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatchExecu
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildChannelRolePermissionRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -677,17 +677,17 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatchExecu
 }
 
 type ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest struct {
-	ctx                               context.Context
-	ApiService                        *GuildRolesAPIService
-	guildId                           int32
-	channelId                         int32
-	roleId                            int32
-	guildChannelRolePermissionRequest *GuildChannelRolePermissionRequest
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int64
+	channelId  int64
+	roleId     int64
+	req        *GuildChannelRolePermissionRequest
 }
 
 // Permission mask
-func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest) GuildChannelRolePermissionRequest(guildChannelRolePermissionRequest GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
-	r.guildChannelRolePermissionRequest = &guildChannelRolePermissionRequest
+func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest) Req(req GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
+	r.req = &req
 	return r
 }
 
@@ -704,7 +704,7 @@ GuildGuildIdChannelChannelIdRolesRoleIdPut Set channel role permission (create o
 	@param roleId Role ID
 	@return ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest
 */
-func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPut(ctx context.Context, guildId int32, channelId int32, roleId int32) ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
+func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPut(ctx context.Context, guildId int64, channelId int64, roleId int64) ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
 	return ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -716,7 +716,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPut(ctx co
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPutExecute(r ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut
@@ -738,12 +738,12 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPutExecute
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildChannelRolePermissionRequest == nil {
-		return localVarReturnValue, nil, reportError("guildChannelRolePermissionRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -760,7 +760,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPutExecute
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildChannelRolePermissionRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -855,8 +855,8 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPutExecute
 type ApiGuildGuildIdMemberUserIdRolesGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildRolesAPIService
-	guildId    int32
-	userId     int32
+	guildId    int64
+	userId     int64
 }
 
 func (r ApiGuildGuildIdMemberUserIdRolesGetRequest) Execute() ([]DtoRole, *http.Response, error) {
@@ -871,7 +871,7 @@ GuildGuildIdMemberUserIdRolesGet Get member roles
 	@param userId User ID
 	@return ApiGuildGuildIdMemberUserIdRolesGetRequest
 */
-func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesGet(ctx context.Context, guildId int32, userId int32) ApiGuildGuildIdMemberUserIdRolesGetRequest {
+func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesGet(ctx context.Context, guildId int64, userId int64) ApiGuildGuildIdMemberUserIdRolesGetRequest {
 	return ApiGuildGuildIdMemberUserIdRolesGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -882,7 +882,7 @@ func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesGet(ctx context.Cont
 
 // Execute executes the request
 //
-//	@return	[]DtoRole
+//	@return []DtoRole
 func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesGetExecute(r ApiGuildGuildIdMemberUserIdRolesGetRequest) ([]DtoRole, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1004,9 +1004,9 @@ func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesGetExecute(r ApiGuil
 type ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildRolesAPIService
-	guildId    int32
-	userId     int32
-	roleId     int32
+	guildId    int64
+	userId     int64
+	roleId     int64
 }
 
 func (r ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -1022,7 +1022,7 @@ GuildGuildIdMemberUserIdRolesRoleIdDelete Remove role from member
 	@param roleId Role ID
 	@return ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest
 */
-func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdDelete(ctx context.Context, guildId int32, userId int32, roleId int32) ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest {
+func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdDelete(ctx context.Context, guildId int64, userId int64, roleId int64) ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest {
 	return ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1034,7 +1034,7 @@ func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdDelete(ctx con
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdDeleteExecute(r ApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1168,9 +1168,9 @@ func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdDeleteExecute(
 type ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest struct {
 	ctx        context.Context
 	ApiService *GuildRolesAPIService
-	guildId    int32
-	userId     int32
-	roleId     int32
+	guildId    int64
+	userId     int64
+	roleId     int64
 }
 
 func (r ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest) Execute() (string, *http.Response, error) {
@@ -1186,7 +1186,7 @@ GuildGuildIdMemberUserIdRolesRoleIdPut Assign role to member
 	@param roleId Role ID
 	@return ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest
 */
-func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdPut(ctx context.Context, guildId int32, userId int32, roleId int32) ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest {
+func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdPut(ctx context.Context, guildId int64, userId int64, roleId int64) ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest {
 	return ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1198,7 +1198,7 @@ func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdPut(ctx contex
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdPutExecute(r ApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut
@@ -1332,7 +1332,7 @@ func (a *GuildRolesAPIService) GuildGuildIdMemberUserIdRolesRoleIdPutExecute(r A
 type ApiGuildGuildIdRolesGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildRolesAPIService
-	guildId    int32
+	guildId    int64
 }
 
 func (r ApiGuildGuildIdRolesGetRequest) Execute() ([]DtoRole, *http.Response, error) {
@@ -1346,7 +1346,7 @@ GuildGuildIdRolesGet Get guild roles
 	@param guildId Guild ID
 	@return ApiGuildGuildIdRolesGetRequest
 */
-func (a *GuildRolesAPIService) GuildGuildIdRolesGet(ctx context.Context, guildId int32) ApiGuildGuildIdRolesGetRequest {
+func (a *GuildRolesAPIService) GuildGuildIdRolesGet(ctx context.Context, guildId int64) ApiGuildGuildIdRolesGetRequest {
 	return ApiGuildGuildIdRolesGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1356,7 +1356,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesGet(ctx context.Context, guildId
 
 // Execute executes the request
 //
-//	@return	[]DtoRole
+//	@return []DtoRole
 func (a *GuildRolesAPIService) GuildGuildIdRolesGetExecute(r ApiGuildGuildIdRolesGetRequest) ([]DtoRole, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1464,15 +1464,15 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesGetExecute(r ApiGuildGuildIdRole
 }
 
 type ApiGuildGuildIdRolesPostRequest struct {
-	ctx                         context.Context
-	ApiService                  *GuildRolesAPIService
-	guildId                     int32
-	guildCreateGuildRoleRequest *GuildCreateGuildRoleRequest
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int64
+	req        *GuildCreateGuildRoleRequest
 }
 
 // Role data
-func (r ApiGuildGuildIdRolesPostRequest) GuildCreateGuildRoleRequest(guildCreateGuildRoleRequest GuildCreateGuildRoleRequest) ApiGuildGuildIdRolesPostRequest {
-	r.guildCreateGuildRoleRequest = &guildCreateGuildRoleRequest
+func (r ApiGuildGuildIdRolesPostRequest) Req(req GuildCreateGuildRoleRequest) ApiGuildGuildIdRolesPostRequest {
+	r.req = &req
 	return r
 }
 
@@ -1487,7 +1487,7 @@ GuildGuildIdRolesPost Create guild role
 	@param guildId Guild ID
 	@return ApiGuildGuildIdRolesPostRequest
 */
-func (a *GuildRolesAPIService) GuildGuildIdRolesPost(ctx context.Context, guildId int32) ApiGuildGuildIdRolesPostRequest {
+func (a *GuildRolesAPIService) GuildGuildIdRolesPost(ctx context.Context, guildId int64) ApiGuildGuildIdRolesPostRequest {
 	return ApiGuildGuildIdRolesPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1497,7 +1497,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesPost(ctx context.Context, guildI
 
 // Execute executes the request
 //
-//	@return	DtoRole
+//	@return DtoRole
 func (a *GuildRolesAPIService) GuildGuildIdRolesPostExecute(r ApiGuildGuildIdRolesPostRequest) (*DtoRole, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1517,12 +1517,12 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesPostExecute(r ApiGuildGuildIdRol
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildCreateGuildRoleRequest == nil {
-		return localVarReturnValue, nil, reportError("guildCreateGuildRoleRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1539,7 +1539,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesPostExecute(r ApiGuildGuildIdRol
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildCreateGuildRoleRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1623,8 +1623,8 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesPostExecute(r ApiGuildGuildIdRol
 type ApiGuildGuildIdRolesRoleIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildRolesAPIService
-	guildId    int32
-	roleId     int32
+	guildId    int64
+	roleId     int64
 }
 
 func (r ApiGuildGuildIdRolesRoleIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -1639,7 +1639,7 @@ GuildGuildIdRolesRoleIdDelete Delete guild role
 	@param roleId Role ID
 	@return ApiGuildGuildIdRolesRoleIdDeleteRequest
 */
-func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdDelete(ctx context.Context, guildId int32, roleId int32) ApiGuildGuildIdRolesRoleIdDeleteRequest {
+func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdDelete(ctx context.Context, guildId int64, roleId int64) ApiGuildGuildIdRolesRoleIdDeleteRequest {
 	return ApiGuildGuildIdRolesRoleIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1650,7 +1650,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdDelete(ctx context.Context
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdDeleteExecute(r ApiGuildGuildIdRolesRoleIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1781,16 +1781,16 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdDeleteExecute(r ApiGuildGu
 }
 
 type ApiGuildGuildIdRolesRoleIdPatchRequest struct {
-	ctx                        context.Context
-	ApiService                 *GuildRolesAPIService
-	guildId                    int32
-	roleId                     int32
-	guildPatchGuildRoleRequest *GuildPatchGuildRoleRequest
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int64
+	roleId     int64
+	req        *GuildPatchGuildRoleRequest
 }
 
 // Role changes
-func (r ApiGuildGuildIdRolesRoleIdPatchRequest) GuildPatchGuildRoleRequest(guildPatchGuildRoleRequest GuildPatchGuildRoleRequest) ApiGuildGuildIdRolesRoleIdPatchRequest {
-	r.guildPatchGuildRoleRequest = &guildPatchGuildRoleRequest
+func (r ApiGuildGuildIdRolesRoleIdPatchRequest) Req(req GuildPatchGuildRoleRequest) ApiGuildGuildIdRolesRoleIdPatchRequest {
+	r.req = &req
 	return r
 }
 
@@ -1806,7 +1806,7 @@ GuildGuildIdRolesRoleIdPatch Update guild role
 	@param roleId Role ID
 	@return ApiGuildGuildIdRolesRoleIdPatchRequest
 */
-func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatch(ctx context.Context, guildId int32, roleId int32) ApiGuildGuildIdRolesRoleIdPatchRequest {
+func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatch(ctx context.Context, guildId int64, roleId int64) ApiGuildGuildIdRolesRoleIdPatchRequest {
 	return ApiGuildGuildIdRolesRoleIdPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1817,7 +1817,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatch(ctx context.Context,
 
 // Execute executes the request
 //
-//	@return	DtoRole
+//	@return DtoRole
 func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatchExecute(r ApiGuildGuildIdRolesRoleIdPatchRequest) (*DtoRole, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -1838,12 +1838,12 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatchExecute(r ApiGuildGui
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildPatchGuildRoleRequest == nil {
-		return localVarReturnValue, nil, reportError("guildPatchGuildRoleRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1860,7 +1860,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatchExecute(r ApiGuildGui
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildPatchGuildRoleRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

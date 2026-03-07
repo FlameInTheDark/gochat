@@ -860,10 +860,10 @@ export interface DtoUser {
 export interface GuildChannelOrder {
     /**
      * Channel ID.
-     * @type {number}
+     * @type {string}
      * @memberof GuildChannelOrder
      */
-    'id'?: number;
+    'id'?: string;
     /**
      * New channel position.
      * @type {number}
@@ -1856,16 +1856,16 @@ export interface ModelUserUISounds {
 export interface SearchMessageSearchRequest {
     /**
      * Author ID to search by.
-     * @type {number}
+     * @type {string}
      * @memberof SearchMessageSearchRequest
      */
-    'author_id'?: number;
+    'author_id'?: string;
     /**
      * Channel ID to search in. Required.
-     * @type {number}
+     * @type {string}
      * @memberof SearchMessageSearchRequest
      */
-    'channel_id'?: number;
+    'channel_id'?: string;
     /**
      * Content contains a string to search for. Might be empty if need to search by other parameters.
      * @type {string}
@@ -2092,10 +2092,10 @@ export interface UserCreateFriendRequestRequest {
 export interface UserFriendRequestAction {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof UserFriendRequestAction
      */
-    'user_id'?: number;
+    'user_id'?: string;
 }
 /**
  * 
@@ -2124,10 +2124,10 @@ export interface UserModifyUserRequest {
 export interface UserUnfriendRequest {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof UserUnfriendRequest
      */
-    'user_id'?: number;
+    'user_id'?: string;
 }
 /**
  * 

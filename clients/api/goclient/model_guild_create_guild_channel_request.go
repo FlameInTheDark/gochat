@@ -29,7 +29,7 @@ type GuildCreateGuildChannelRequest struct {
 	// Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
 	Private *bool `json:"private,omitempty"`
 	// Channel type
-	Type *int32 `json:"type,omitempty"`
+	Type *ModelChannelType `json:"type,omitempty"`
 }
 
 // NewGuildCreateGuildChannelRequest instantiates a new GuildCreateGuildChannelRequest object
@@ -38,8 +38,6 @@ type GuildCreateGuildChannelRequest struct {
 // will change when the set of required properties is changed
 func NewGuildCreateGuildChannelRequest() *GuildCreateGuildChannelRequest {
 	this := GuildCreateGuildChannelRequest{}
-	var position int32 = 0
-	this.Position = &position
 	var private bool = false
 	this.Private = &private
 	return &this
@@ -50,8 +48,6 @@ func NewGuildCreateGuildChannelRequest() *GuildCreateGuildChannelRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewGuildCreateGuildChannelRequestWithDefaults() *GuildCreateGuildChannelRequest {
 	this := GuildCreateGuildChannelRequest{}
-	var position int32 = 0
-	this.Position = &position
 	var private bool = false
 	this.Private = &private
 	return &this
@@ -186,9 +182,9 @@ func (o *GuildCreateGuildChannelRequest) SetPrivate(v bool) {
 }
 
 // GetType returns the Type field value if set, zero value otherwise.
-func (o *GuildCreateGuildChannelRequest) GetType() int32 {
+func (o *GuildCreateGuildChannelRequest) GetType() ModelChannelType {
 	if o == nil || IsNil(o.Type) {
-		var ret int32
+		var ret ModelChannelType
 		return ret
 	}
 	return *o.Type
@@ -196,7 +192,7 @@ func (o *GuildCreateGuildChannelRequest) GetType() int32 {
 
 // GetTypeOk returns a tuple with the Type field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *GuildCreateGuildChannelRequest) GetTypeOk() (*int32, bool) {
+func (o *GuildCreateGuildChannelRequest) GetTypeOk() (*ModelChannelType, bool) {
 	if o == nil || IsNil(o.Type) {
 		return nil, false
 	}
@@ -212,8 +208,8 @@ func (o *GuildCreateGuildChannelRequest) HasType() bool {
 	return false
 }
 
-// SetType gets a reference to the given int32 and assigns it to the Type field.
-func (o *GuildCreateGuildChannelRequest) SetType(v int32) {
+// SetType gets a reference to the given ModelChannelType and assigns it to the Type field.
+func (o *GuildCreateGuildChannelRequest) SetType(v ModelChannelType) {
 	o.Type = &v
 }
 

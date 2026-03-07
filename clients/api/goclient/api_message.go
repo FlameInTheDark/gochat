@@ -24,15 +24,15 @@ import (
 type MessageAPIService service
 
 type ApiMessageChannelChannelIdAttachmentPostRequest struct {
-	ctx                            context.Context
-	ApiService                     *MessageAPIService
-	channelId                      int32
-	messageUploadAttachmentRequest *MessageUploadAttachmentRequest
+	ctx        context.Context
+	ApiService *MessageAPIService
+	channelId  int64
+	request    *MessageUploadAttachmentRequest
 }
 
 // Attachment data
-func (r ApiMessageChannelChannelIdAttachmentPostRequest) MessageUploadAttachmentRequest(messageUploadAttachmentRequest MessageUploadAttachmentRequest) ApiMessageChannelChannelIdAttachmentPostRequest {
-	r.messageUploadAttachmentRequest = &messageUploadAttachmentRequest
+func (r ApiMessageChannelChannelIdAttachmentPostRequest) Request(request MessageUploadAttachmentRequest) ApiMessageChannelChannelIdAttachmentPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -47,7 +47,7 @@ MessageChannelChannelIdAttachmentPost Create attachment
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdAttachmentPostRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdAttachmentPost(ctx context.Context, channelId int32) ApiMessageChannelChannelIdAttachmentPostRequest {
+func (a *MessageAPIService) MessageChannelChannelIdAttachmentPost(ctx context.Context, channelId int64) ApiMessageChannelChannelIdAttachmentPostRequest {
 	return ApiMessageChannelChannelIdAttachmentPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -57,7 +57,7 @@ func (a *MessageAPIService) MessageChannelChannelIdAttachmentPost(ctx context.Co
 
 // Execute executes the request
 //
-//	@return	DtoAttachmentUpload
+//	@return DtoAttachmentUpload
 func (a *MessageAPIService) MessageChannelChannelIdAttachmentPostExecute(r ApiMessageChannelChannelIdAttachmentPostRequest) (*DtoAttachmentUpload, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -77,12 +77,12 @@ func (a *MessageAPIService) MessageChannelChannelIdAttachmentPostExecute(r ApiMe
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.messageUploadAttachmentRequest == nil {
-		return localVarReturnValue, nil, reportError("messageUploadAttachmentRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -99,7 +99,7 @@ func (a *MessageAPIService) MessageChannelChannelIdAttachmentPostExecute(r ApiMe
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.messageUploadAttachmentRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -183,14 +183,14 @@ func (a *MessageAPIService) MessageChannelChannelIdAttachmentPostExecute(r ApiMe
 type ApiMessageChannelChannelIdGetRequest struct {
 	ctx        context.Context
 	ApiService *MessageAPIService
-	channelId  int32
-	from       *int32
+	channelId  int64
+	from       *int64
 	direction  *string
 	limit      *int32
 }
 
 // Start point for messages
-func (r ApiMessageChannelChannelIdGetRequest) From(from int32) ApiMessageChannelChannelIdGetRequest {
+func (r ApiMessageChannelChannelIdGetRequest) From(from int64) ApiMessageChannelChannelIdGetRequest {
 	r.from = &from
 	return r
 }
@@ -218,7 +218,7 @@ MessageChannelChannelIdGet Get messages
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdGetRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdGet(ctx context.Context, channelId int32) ApiMessageChannelChannelIdGetRequest {
+func (a *MessageAPIService) MessageChannelChannelIdGet(ctx context.Context, channelId int64) ApiMessageChannelChannelIdGetRequest {
 	return ApiMessageChannelChannelIdGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -228,7 +228,7 @@ func (a *MessageAPIService) MessageChannelChannelIdGet(ctx context.Context, chan
 
 // Execute executes the request
 //
-//	@return	[]DtoMessage
+//	@return []DtoMessage
 func (a *MessageAPIService) MessageChannelChannelIdGetExecute(r ApiMessageChannelChannelIdGetRequest) ([]DtoMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -250,13 +250,13 @@ func (a *MessageAPIService) MessageChannelChannelIdGetExecute(r ApiMessageChanne
 	localVarFormParams := url.Values{}
 
 	if r.from != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "from", r.from, "form", "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "from", r.from, "", "")
 	}
 	if r.direction != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "direction", r.direction, "form", "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "direction", r.direction, "", "")
 	}
 	if r.limit != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -358,8 +358,8 @@ func (a *MessageAPIService) MessageChannelChannelIdGetExecute(r ApiMessageChanne
 type ApiMessageChannelChannelIdMessageIdAckPostRequest struct {
 	ctx        context.Context
 	ApiService *MessageAPIService
-	channelId  int32
-	messageId  int32
+	channelId  int64
+	messageId  int64
 }
 
 func (r ApiMessageChannelChannelIdMessageIdAckPostRequest) Execute() (string, *http.Response, error) {
@@ -374,7 +374,7 @@ MessageChannelChannelIdMessageIdAckPost Set channel read state for current user
 	@param messageId Message id
 	@return ApiMessageChannelChannelIdMessageIdAckPostRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPost(ctx context.Context, channelId int32, messageId int32) ApiMessageChannelChannelIdMessageIdAckPostRequest {
+func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPost(ctx context.Context, channelId int64, messageId int64) ApiMessageChannelChannelIdMessageIdAckPostRequest {
 	return ApiMessageChannelChannelIdMessageIdAckPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -385,7 +385,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPost(ctx context.
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPostExecute(r ApiMessageChannelChannelIdMessageIdAckPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -485,8 +485,8 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPostExecute(r Api
 type ApiMessageChannelChannelIdMessageIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *MessageAPIService
-	messageId  int32
-	channelId  int32
+	messageId  int64
+	channelId  int64
 }
 
 func (r ApiMessageChannelChannelIdMessageIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -501,7 +501,7 @@ MessageChannelChannelIdMessageIdDelete Delete message
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdMessageIdDeleteRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdMessageIdDelete(ctx context.Context, messageId int32, channelId int32) ApiMessageChannelChannelIdMessageIdDeleteRequest {
+func (a *MessageAPIService) MessageChannelChannelIdMessageIdDelete(ctx context.Context, messageId int64, channelId int64) ApiMessageChannelChannelIdMessageIdDeleteRequest {
 	return ApiMessageChannelChannelIdMessageIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -512,7 +512,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdDelete(ctx context.C
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdDeleteExecute(r ApiMessageChannelChannelIdMessageIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -632,16 +632,16 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdDeleteExecute(r ApiM
 }
 
 type ApiMessageChannelChannelIdMessageIdPatchRequest struct {
-	ctx                         context.Context
-	ApiService                  *MessageAPIService
-	messageId                   int32
-	channelId                   int32
-	messageUpdateMessageRequest *MessageUpdateMessageRequest
+	ctx        context.Context
+	ApiService *MessageAPIService
+	messageId  int64
+	channelId  int64
+	request    *MessageUpdateMessageRequest
 }
 
 // Message data
-func (r ApiMessageChannelChannelIdMessageIdPatchRequest) MessageUpdateMessageRequest(messageUpdateMessageRequest MessageUpdateMessageRequest) ApiMessageChannelChannelIdMessageIdPatchRequest {
-	r.messageUpdateMessageRequest = &messageUpdateMessageRequest
+func (r ApiMessageChannelChannelIdMessageIdPatchRequest) Request(request MessageUpdateMessageRequest) ApiMessageChannelChannelIdMessageIdPatchRequest {
+	r.request = &request
 	return r
 }
 
@@ -657,7 +657,7 @@ MessageChannelChannelIdMessageIdPatch Update message
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdMessageIdPatchRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatch(ctx context.Context, messageId int32, channelId int32) ApiMessageChannelChannelIdMessageIdPatchRequest {
+func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatch(ctx context.Context, messageId int64, channelId int64) ApiMessageChannelChannelIdMessageIdPatchRequest {
 	return ApiMessageChannelChannelIdMessageIdPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -668,7 +668,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatch(ctx context.Co
 
 // Execute executes the request
 //
-//	@return	DtoMessage
+//	@return DtoMessage
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatchExecute(r ApiMessageChannelChannelIdMessageIdPatchRequest) (*DtoMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -689,12 +689,12 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatchExecute(r ApiMe
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.messageUpdateMessageRequest == nil {
-		return localVarReturnValue, nil, reportError("messageUpdateMessageRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -711,7 +711,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatchExecute(r ApiMe
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.messageUpdateMessageRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -793,15 +793,15 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatchExecute(r ApiMe
 }
 
 type ApiMessageChannelChannelIdPostRequest struct {
-	ctx                       context.Context
-	ApiService                *MessageAPIService
-	channelId                 int32
-	messageSendMessageRequest *MessageSendMessageRequest
+	ctx        context.Context
+	ApiService *MessageAPIService
+	channelId  int64
+	request    *MessageSendMessageRequest
 }
 
 // Message data
-func (r ApiMessageChannelChannelIdPostRequest) MessageSendMessageRequest(messageSendMessageRequest MessageSendMessageRequest) ApiMessageChannelChannelIdPostRequest {
-	r.messageSendMessageRequest = &messageSendMessageRequest
+func (r ApiMessageChannelChannelIdPostRequest) Request(request MessageSendMessageRequest) ApiMessageChannelChannelIdPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -816,7 +816,7 @@ MessageChannelChannelIdPost Send message
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdPostRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdPost(ctx context.Context, channelId int32) ApiMessageChannelChannelIdPostRequest {
+func (a *MessageAPIService) MessageChannelChannelIdPost(ctx context.Context, channelId int64) ApiMessageChannelChannelIdPostRequest {
 	return ApiMessageChannelChannelIdPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -826,7 +826,7 @@ func (a *MessageAPIService) MessageChannelChannelIdPost(ctx context.Context, cha
 
 // Execute executes the request
 //
-//	@return	DtoMessage
+//	@return DtoMessage
 func (a *MessageAPIService) MessageChannelChannelIdPostExecute(r ApiMessageChannelChannelIdPostRequest) (*DtoMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -846,12 +846,12 @@ func (a *MessageAPIService) MessageChannelChannelIdPostExecute(r ApiMessageChann
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.messageSendMessageRequest == nil {
-		return localVarReturnValue, nil, reportError("messageSendMessageRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -868,7 +868,7 @@ func (a *MessageAPIService) MessageChannelChannelIdPostExecute(r ApiMessageChann
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.messageSendMessageRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -952,7 +952,7 @@ func (a *MessageAPIService) MessageChannelChannelIdPostExecute(r ApiMessageChann
 type ApiMessageChannelChannelIdTypingPostRequest struct {
 	ctx        context.Context
 	ApiService *MessageAPIService
-	channelId  int32
+	channelId  int64
 }
 
 func (r ApiMessageChannelChannelIdTypingPostRequest) Execute() (string, *http.Response, error) {
@@ -966,7 +966,7 @@ MessageChannelChannelIdTypingPost Send user typing event in the channel
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdTypingPostRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdTypingPost(ctx context.Context, channelId int32) ApiMessageChannelChannelIdTypingPostRequest {
+func (a *MessageAPIService) MessageChannelChannelIdTypingPost(ctx context.Context, channelId int64) ApiMessageChannelChannelIdTypingPostRequest {
 	return ApiMessageChannelChannelIdTypingPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -976,7 +976,7 @@ func (a *MessageAPIService) MessageChannelChannelIdTypingPost(ctx context.Contex
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *MessageAPIService) MessageChannelChannelIdTypingPostExecute(r ApiMessageChannelChannelIdTypingPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

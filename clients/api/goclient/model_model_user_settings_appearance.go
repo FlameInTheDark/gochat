@@ -20,9 +20,9 @@ var _ MappedNullable = &ModelUserSettingsAppearance{}
 
 // ModelUserSettingsAppearance struct for ModelUserSettingsAppearance
 type ModelUserSettingsAppearance struct {
-	ChatFontScale *int32  `json:"chat_font_scale,omitempty"`
-	ChatSpacing   *int32  `json:"chat_spacing,omitempty"`
-	ColorScheme   *string `json:"color_scheme,omitempty"`
+	ChatFontScale *float32 `json:"chat_font_scale,omitempty"`
+	ChatSpacing   *float32 `json:"chat_spacing,omitempty"`
+	ColorScheme   *string  `json:"color_scheme,omitempty"`
 }
 
 // NewModelUserSettingsAppearance instantiates a new ModelUserSettingsAppearance object
@@ -43,9 +43,9 @@ func NewModelUserSettingsAppearanceWithDefaults() *ModelUserSettingsAppearance {
 }
 
 // GetChatFontScale returns the ChatFontScale field value if set, zero value otherwise.
-func (o *ModelUserSettingsAppearance) GetChatFontScale() int32 {
+func (o *ModelUserSettingsAppearance) GetChatFontScale() float32 {
 	if o == nil || IsNil(o.ChatFontScale) {
-		var ret int32
+		var ret float32
 		return ret
 	}
 	return *o.ChatFontScale
@@ -53,7 +53,7 @@ func (o *ModelUserSettingsAppearance) GetChatFontScale() int32 {
 
 // GetChatFontScaleOk returns a tuple with the ChatFontScale field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ModelUserSettingsAppearance) GetChatFontScaleOk() (*int32, bool) {
+func (o *ModelUserSettingsAppearance) GetChatFontScaleOk() (*float32, bool) {
 	if o == nil || IsNil(o.ChatFontScale) {
 		return nil, false
 	}
@@ -69,15 +69,15 @@ func (o *ModelUserSettingsAppearance) HasChatFontScale() bool {
 	return false
 }
 
-// SetChatFontScale gets a reference to the given int32 and assigns it to the ChatFontScale field.
-func (o *ModelUserSettingsAppearance) SetChatFontScale(v int32) {
+// SetChatFontScale gets a reference to the given float32 and assigns it to the ChatFontScale field.
+func (o *ModelUserSettingsAppearance) SetChatFontScale(v float32) {
 	o.ChatFontScale = &v
 }
 
 // GetChatSpacing returns the ChatSpacing field value if set, zero value otherwise.
-func (o *ModelUserSettingsAppearance) GetChatSpacing() int32 {
+func (o *ModelUserSettingsAppearance) GetChatSpacing() float32 {
 	if o == nil || IsNil(o.ChatSpacing) {
-		var ret int32
+		var ret float32
 		return ret
 	}
 	return *o.ChatSpacing
@@ -85,7 +85,7 @@ func (o *ModelUserSettingsAppearance) GetChatSpacing() int32 {
 
 // GetChatSpacingOk returns a tuple with the ChatSpacing field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ModelUserSettingsAppearance) GetChatSpacingOk() (*int32, bool) {
+func (o *ModelUserSettingsAppearance) GetChatSpacingOk() (*float32, bool) {
 	if o == nil || IsNil(o.ChatSpacing) {
 		return nil, false
 	}
@@ -101,8 +101,8 @@ func (o *ModelUserSettingsAppearance) HasChatSpacing() bool {
 	return false
 }
 
-// SetChatSpacing gets a reference to the given int32 and assigns it to the ChatSpacing field.
-func (o *ModelUserSettingsAppearance) SetChatSpacing(v int32) {
+// SetChatSpacing gets a reference to the given float32 and assigns it to the ChatSpacing field.
+func (o *ModelUserSettingsAppearance) SetChatSpacing(v float32) {
 	o.ChatSpacing = &v
 }
 

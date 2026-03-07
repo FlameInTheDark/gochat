@@ -24,14 +24,14 @@ import (
 type UserAPIService service
 
 type ApiUserMeAvatarPostRequest struct {
-	ctx                     context.Context
-	ApiService              *UserAPIService
-	userCreateAvatarRequest *UserCreateAvatarRequest
+	ctx        context.Context
+	ApiService *UserAPIService
+	request    *UserCreateAvatarRequest
 }
 
 // Avatar creation request
-func (r ApiUserMeAvatarPostRequest) UserCreateAvatarRequest(userCreateAvatarRequest UserCreateAvatarRequest) ApiUserMeAvatarPostRequest {
-	r.userCreateAvatarRequest = &userCreateAvatarRequest
+func (r ApiUserMeAvatarPostRequest) Request(request UserCreateAvatarRequest) ApiUserMeAvatarPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -56,7 +56,7 @@ func (a *UserAPIService) UserMeAvatarPost(ctx context.Context) ApiUserMeAvatarPo
 
 // Execute executes the request
 //
-//	@return	DtoAvatarUpload
+//	@return DtoAvatarUpload
 func (a *UserAPIService) UserMeAvatarPostExecute(r ApiUserMeAvatarPostRequest) (*DtoAvatarUpload, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -75,8 +75,8 @@ func (a *UserAPIService) UserMeAvatarPostExecute(r ApiUserMeAvatarPostRequest) (
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.userCreateAvatarRequest == nil {
-		return localVarReturnValue, nil, reportError("userCreateAvatarRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -97,7 +97,7 @@ func (a *UserAPIService) UserMeAvatarPostExecute(r ApiUserMeAvatarPostRequest) (
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.userCreateAvatarRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -138,7 +138,7 @@ func (a *UserAPIService) UserMeAvatarPostExecute(r ApiUserMeAvatarPostRequest) (
 type ApiUserMeAvatarsAvatarIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
-	avatarId   int32
+	avatarId   int64
 }
 
 func (r ApiUserMeAvatarsAvatarIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -152,7 +152,7 @@ UserMeAvatarsAvatarIdDelete Delete my avatar by ID
 	@param avatarId Avatar ID
 	@return ApiUserMeAvatarsAvatarIdDeleteRequest
 */
-func (a *UserAPIService) UserMeAvatarsAvatarIdDelete(ctx context.Context, avatarId int32) ApiUserMeAvatarsAvatarIdDeleteRequest {
+func (a *UserAPIService) UserMeAvatarsAvatarIdDelete(ctx context.Context, avatarId int64) ApiUserMeAvatarsAvatarIdDeleteRequest {
 	return ApiUserMeAvatarsAvatarIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -162,7 +162,7 @@ func (a *UserAPIService) UserMeAvatarsAvatarIdDelete(ctx context.Context, avatar
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeAvatarsAvatarIdDeleteExecute(r ApiUserMeAvatarsAvatarIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -193,7 +193,7 @@ func (a *UserAPIService) UserMeAvatarsAvatarIdDeleteExecute(r ApiUserMeAvatarsAv
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
+	localVarHTTPHeaderAccepts := []string{"*/*"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -295,7 +295,7 @@ func (a *UserAPIService) UserMeAvatarsGet(ctx context.Context) ApiUserMeAvatarsG
 
 // Execute executes the request
 //
-//	@return	[]DtoAvatar
+//	@return []DtoAvatar
 func (a *UserAPIService) UserMeAvatarsGetExecute(r ApiUserMeAvatarsGetRequest) ([]DtoAvatar, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -403,7 +403,7 @@ func (a *UserAPIService) UserMeChannelsGet(ctx context.Context) ApiUserMeChannel
 
 // Execute executes the request
 //
-//	@return	[]DtoChannel
+//	@return []DtoChannel
 func (a *UserAPIService) UserMeChannelsGetExecute(r ApiUserMeChannelsGetRequest) ([]DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -499,14 +499,14 @@ func (a *UserAPIService) UserMeChannelsGetExecute(r ApiUserMeChannelsGetRequest)
 }
 
 type ApiUserMeChannelsGroupPostRequest struct {
-	ctx                     context.Context
-	ApiService              *UserAPIService
-	userCreateDMManyRequest *UserCreateDMManyRequest
+	ctx        context.Context
+	ApiService *UserAPIService
+	request    *UserCreateDMManyRequest
 }
 
 // Group DM data
-func (r ApiUserMeChannelsGroupPostRequest) UserCreateDMManyRequest(userCreateDMManyRequest UserCreateDMManyRequest) ApiUserMeChannelsGroupPostRequest {
-	r.userCreateDMManyRequest = &userCreateDMManyRequest
+func (r ApiUserMeChannelsGroupPostRequest) Request(request UserCreateDMManyRequest) ApiUserMeChannelsGroupPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -529,7 +529,7 @@ func (a *UserAPIService) UserMeChannelsGroupPost(ctx context.Context) ApiUserMeC
 
 // Execute executes the request
 //
-//	@return	DtoChannel
+//	@return DtoChannel
 func (a *UserAPIService) UserMeChannelsGroupPostExecute(r ApiUserMeChannelsGroupPostRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -548,12 +548,12 @@ func (a *UserAPIService) UserMeChannelsGroupPostExecute(r ApiUserMeChannelsGroup
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.userCreateDMManyRequest == nil {
-		return localVarReturnValue, nil, reportError("userCreateDMManyRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -570,7 +570,7 @@ func (a *UserAPIService) UserMeChannelsGroupPostExecute(r ApiUserMeChannelsGroup
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.userCreateDMManyRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -652,14 +652,14 @@ func (a *UserAPIService) UserMeChannelsGroupPostExecute(r ApiUserMeChannelsGroup
 }
 
 type ApiUserMeChannelsPostRequest struct {
-	ctx                 context.Context
-	ApiService          *UserAPIService
-	userCreateDMRequest *UserCreateDMRequest
+	ctx        context.Context
+	ApiService *UserAPIService
+	request    *UserCreateDMRequest
 }
 
 // Recipient data
-func (r ApiUserMeChannelsPostRequest) UserCreateDMRequest(userCreateDMRequest UserCreateDMRequest) ApiUserMeChannelsPostRequest {
-	r.userCreateDMRequest = &userCreateDMRequest
+func (r ApiUserMeChannelsPostRequest) Request(request UserCreateDMRequest) ApiUserMeChannelsPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -682,7 +682,7 @@ func (a *UserAPIService) UserMeChannelsPost(ctx context.Context) ApiUserMeChanne
 
 // Execute executes the request
 //
-//	@return	DtoChannel
+//	@return DtoChannel
 func (a *UserAPIService) UserMeChannelsPostExecute(r ApiUserMeChannelsPostRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -701,12 +701,12 @@ func (a *UserAPIService) UserMeChannelsPostExecute(r ApiUserMeChannelsPostReques
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.userCreateDMRequest == nil {
-		return localVarReturnValue, nil, reportError("userCreateDMRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -723,7 +723,7 @@ func (a *UserAPIService) UserMeChannelsPostExecute(r ApiUserMeChannelsPostReques
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.userCreateDMRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -794,14 +794,14 @@ func (a *UserAPIService) UserMeChannelsPostExecute(r ApiUserMeChannelsPostReques
 }
 
 type ApiUserMeFriendsDeleteRequest struct {
-	ctx                 context.Context
-	ApiService          *UserAPIService
-	userUnfriendRequest *UserUnfriendRequest
+	ctx        context.Context
+	ApiService *UserAPIService
+	request    *UserUnfriendRequest
 }
 
 // Unfriend
-func (r ApiUserMeFriendsDeleteRequest) UserUnfriendRequest(userUnfriendRequest UserUnfriendRequest) ApiUserMeFriendsDeleteRequest {
-	r.userUnfriendRequest = &userUnfriendRequest
+func (r ApiUserMeFriendsDeleteRequest) Request(request UserUnfriendRequest) ApiUserMeFriendsDeleteRequest {
+	r.request = &request
 	return r
 }
 
@@ -824,7 +824,7 @@ func (a *UserAPIService) UserMeFriendsDelete(ctx context.Context) ApiUserMeFrien
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeFriendsDeleteExecute(r ApiUserMeFriendsDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -843,8 +843,8 @@ func (a *UserAPIService) UserMeFriendsDeleteExecute(r ApiUserMeFriendsDeleteRequ
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.userUnfriendRequest == nil {
-		return localVarReturnValue, nil, reportError("userUnfriendRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -865,7 +865,7 @@ func (a *UserAPIService) UserMeFriendsDeleteExecute(r ApiUserMeFriendsDeleteRequ
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.userUnfriendRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -948,7 +948,7 @@ func (a *UserAPIService) UserMeFriendsGet(ctx context.Context) ApiUserMeFriendsG
 
 // Execute executes the request
 //
-//	@return	[]DtoUser
+//	@return []DtoUser
 func (a *UserAPIService) UserMeFriendsGetExecute(r ApiUserMeFriendsGetRequest) ([]DtoUser, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1044,14 +1044,14 @@ func (a *UserAPIService) UserMeFriendsGetExecute(r ApiUserMeFriendsGetRequest) (
 }
 
 type ApiUserMeFriendsPostRequest struct {
-	ctx                            context.Context
-	ApiService                     *UserAPIService
-	userCreateFriendRequestRequest *UserCreateFriendRequestRequest
+	ctx        context.Context
+	ApiService *UserAPIService
+	request    *UserCreateFriendRequestRequest
 }
 
 // Friend request
-func (r ApiUserMeFriendsPostRequest) UserCreateFriendRequestRequest(userCreateFriendRequestRequest UserCreateFriendRequestRequest) ApiUserMeFriendsPostRequest {
-	r.userCreateFriendRequestRequest = &userCreateFriendRequestRequest
+func (r ApiUserMeFriendsPostRequest) Request(request UserCreateFriendRequestRequest) ApiUserMeFriendsPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -1074,7 +1074,7 @@ func (a *UserAPIService) UserMeFriendsPost(ctx context.Context) ApiUserMeFriends
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeFriendsPostExecute(r ApiUserMeFriendsPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1093,8 +1093,8 @@ func (a *UserAPIService) UserMeFriendsPostExecute(r ApiUserMeFriendsPostRequest)
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.userCreateFriendRequestRequest == nil {
-		return localVarReturnValue, nil, reportError("userCreateFriendRequestRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -1115,7 +1115,7 @@ func (a *UserAPIService) UserMeFriendsPostExecute(r ApiUserMeFriendsPostRequest)
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.userCreateFriendRequestRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1175,14 +1175,14 @@ func (a *UserAPIService) UserMeFriendsPostExecute(r ApiUserMeFriendsPostRequest)
 }
 
 type ApiUserMeFriendsRequestsDeleteRequest struct {
-	ctx                     context.Context
-	ApiService              *UserAPIService
-	userFriendRequestAction *UserFriendRequestAction
+	ctx        context.Context
+	ApiService *UserAPIService
+	request    *UserFriendRequestAction
 }
 
 // Decline
-func (r ApiUserMeFriendsRequestsDeleteRequest) UserFriendRequestAction(userFriendRequestAction UserFriendRequestAction) ApiUserMeFriendsRequestsDeleteRequest {
-	r.userFriendRequestAction = &userFriendRequestAction
+func (r ApiUserMeFriendsRequestsDeleteRequest) Request(request UserFriendRequestAction) ApiUserMeFriendsRequestsDeleteRequest {
+	r.request = &request
 	return r
 }
 
@@ -1205,7 +1205,7 @@ func (a *UserAPIService) UserMeFriendsRequestsDelete(ctx context.Context) ApiUse
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeFriendsRequestsDeleteExecute(r ApiUserMeFriendsRequestsDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1224,8 +1224,8 @@ func (a *UserAPIService) UserMeFriendsRequestsDeleteExecute(r ApiUserMeFriendsRe
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.userFriendRequestAction == nil {
-		return localVarReturnValue, nil, reportError("userFriendRequestAction is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -1246,7 +1246,7 @@ func (a *UserAPIService) UserMeFriendsRequestsDeleteExecute(r ApiUserMeFriendsRe
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.userFriendRequestAction
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1329,7 +1329,7 @@ func (a *UserAPIService) UserMeFriendsRequestsGet(ctx context.Context) ApiUserMe
 
 // Execute executes the request
 //
-//	@return	[]DtoUser
+//	@return []DtoUser
 func (a *UserAPIService) UserMeFriendsRequestsGetExecute(r ApiUserMeFriendsRequestsGetRequest) ([]DtoUser, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1425,14 +1425,14 @@ func (a *UserAPIService) UserMeFriendsRequestsGetExecute(r ApiUserMeFriendsReque
 }
 
 type ApiUserMeFriendsRequestsPostRequest struct {
-	ctx                     context.Context
-	ApiService              *UserAPIService
-	userFriendRequestAction *UserFriendRequestAction
+	ctx        context.Context
+	ApiService *UserAPIService
+	request    *UserFriendRequestAction
 }
 
 // Accept
-func (r ApiUserMeFriendsRequestsPostRequest) UserFriendRequestAction(userFriendRequestAction UserFriendRequestAction) ApiUserMeFriendsRequestsPostRequest {
-	r.userFriendRequestAction = &userFriendRequestAction
+func (r ApiUserMeFriendsRequestsPostRequest) Request(request UserFriendRequestAction) ApiUserMeFriendsRequestsPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -1455,7 +1455,7 @@ func (a *UserAPIService) UserMeFriendsRequestsPost(ctx context.Context) ApiUserM
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeFriendsRequestsPostExecute(r ApiUserMeFriendsRequestsPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1474,8 +1474,8 @@ func (a *UserAPIService) UserMeFriendsRequestsPostExecute(r ApiUserMeFriendsRequ
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.userFriendRequestAction == nil {
-		return localVarReturnValue, nil, reportError("userFriendRequestAction is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -1496,7 +1496,7 @@ func (a *UserAPIService) UserMeFriendsRequestsPostExecute(r ApiUserMeFriendsRequ
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.userFriendRequestAction
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1558,7 +1558,7 @@ func (a *UserAPIService) UserMeFriendsRequestsPostExecute(r ApiUserMeFriendsRequ
 type ApiUserMeFriendsUserIdGetRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
-	userId     int32
+	userId     int64
 }
 
 func (r ApiUserMeFriendsUserIdGetRequest) Execute() (*DtoChannel, *http.Response, error) {
@@ -1572,7 +1572,7 @@ UserMeFriendsUserIdGet Get or create DM with a user
 	@param userId User id
 	@return ApiUserMeFriendsUserIdGetRequest
 */
-func (a *UserAPIService) UserMeFriendsUserIdGet(ctx context.Context, userId int32) ApiUserMeFriendsUserIdGetRequest {
+func (a *UserAPIService) UserMeFriendsUserIdGet(ctx context.Context, userId int64) ApiUserMeFriendsUserIdGetRequest {
 	return ApiUserMeFriendsUserIdGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1582,7 +1582,7 @@ func (a *UserAPIService) UserMeFriendsUserIdGet(ctx context.Context, userId int3
 
 // Execute executes the request
 //
-//	@return	DtoChannel
+//	@return DtoChannel
 func (a *UserAPIService) UserMeFriendsUserIdGetExecute(r ApiUserMeFriendsUserIdGetRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1713,7 +1713,7 @@ func (a *UserAPIService) UserMeGuildsGet(ctx context.Context) ApiUserMeGuildsGet
 
 // Execute executes the request
 //
-//	@return	[]DtoGuild
+//	@return []DtoGuild
 func (a *UserAPIService) UserMeGuildsGetExecute(r ApiUserMeGuildsGetRequest) ([]DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1846,7 +1846,7 @@ func (a *UserAPIService) UserMeGuildsGuildIdDelete(ctx context.Context, guildId 
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeGuildsGuildIdDeleteExecute(r ApiUserMeGuildsGuildIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1967,7 +1967,7 @@ func (a *UserAPIService) UserMeGuildsGuildIdDeleteExecute(r ApiUserMeGuildsGuild
 type ApiUserMeGuildsGuildIdMemberGetRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
-	guildId    int32
+	guildId    int64
 }
 
 func (r ApiUserMeGuildsGuildIdMemberGetRequest) Execute() (*DtoMember, *http.Response, error) {
@@ -1981,7 +1981,7 @@ UserMeGuildsGuildIdMemberGet Get user guild member
 	@param guildId Guild id
 	@return ApiUserMeGuildsGuildIdMemberGetRequest
 */
-func (a *UserAPIService) UserMeGuildsGuildIdMemberGet(ctx context.Context, guildId int32) ApiUserMeGuildsGuildIdMemberGetRequest {
+func (a *UserAPIService) UserMeGuildsGuildIdMemberGet(ctx context.Context, guildId int64) ApiUserMeGuildsGuildIdMemberGetRequest {
 	return ApiUserMeGuildsGuildIdMemberGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1991,7 +1991,7 @@ func (a *UserAPIService) UserMeGuildsGuildIdMemberGet(ctx context.Context, guild
 
 // Execute executes the request
 //
-//	@return	DtoMember
+//	@return DtoMember
 func (a *UserAPIService) UserMeGuildsGuildIdMemberGetExecute(r ApiUserMeGuildsGuildIdMemberGetRequest) (*DtoMember, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2099,14 +2099,14 @@ func (a *UserAPIService) UserMeGuildsGuildIdMemberGetExecute(r ApiUserMeGuildsGu
 }
 
 type ApiUserMePatchRequest struct {
-	ctx                   context.Context
-	ApiService            *UserAPIService
-	userModifyUserRequest *UserModifyUserRequest
+	ctx        context.Context
+	ApiService *UserAPIService
+	request    *UserModifyUserRequest
 }
 
 // Modify user data
-func (r ApiUserMePatchRequest) UserModifyUserRequest(userModifyUserRequest UserModifyUserRequest) ApiUserMePatchRequest {
-	r.userModifyUserRequest = &userModifyUserRequest
+func (r ApiUserMePatchRequest) Request(request UserModifyUserRequest) ApiUserMePatchRequest {
+	r.request = &request
 	return r
 }
 
@@ -2129,7 +2129,7 @@ func (a *UserAPIService) UserMePatch(ctx context.Context) ApiUserMePatchRequest 
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMePatchExecute(r ApiUserMePatchRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -2148,12 +2148,12 @@ func (a *UserAPIService) UserMePatchExecute(r ApiUserMePatchRequest) (string, *h
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.userModifyUserRequest == nil {
-		return localVarReturnValue, nil, reportError("userModifyUserRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -2170,7 +2170,7 @@ func (a *UserAPIService) UserMePatchExecute(r ApiUserMePatchRequest) (string, *h
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.userModifyUserRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -2271,7 +2271,7 @@ func (a *UserAPIService) UserMeSettingsGet(ctx context.Context) ApiUserMeSetting
 
 // Execute executes the request
 //
-//	@return	UserUserSettingsResponse
+//	@return UserUserSettingsResponse
 func (a *UserAPIService) UserMeSettingsGetExecute(r ApiUserMeSettingsGetRequest) (*UserUserSettingsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2292,7 +2292,7 @@ func (a *UserAPIService) UserMeSettingsGetExecute(r ApiUserMeSettingsGetRequest)
 	localVarFormParams := url.Values{}
 
 	if r.version != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "version", r.version, "form", "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "version", r.version, "", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2370,14 +2370,14 @@ func (a *UserAPIService) UserMeSettingsGetExecute(r ApiUserMeSettingsGetRequest)
 }
 
 type ApiUserMeSettingsPostRequest struct {
-	ctx                   context.Context
-	ApiService            *UserAPIService
-	modelUserSettingsData *ModelUserSettingsData
+	ctx        context.Context
+	ApiService *UserAPIService
+	request    *ModelUserSettingsData
 }
 
 // User settings
-func (r ApiUserMeSettingsPostRequest) ModelUserSettingsData(modelUserSettingsData ModelUserSettingsData) ApiUserMeSettingsPostRequest {
-	r.modelUserSettingsData = &modelUserSettingsData
+func (r ApiUserMeSettingsPostRequest) Request(request ModelUserSettingsData) ApiUserMeSettingsPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -2400,7 +2400,7 @@ func (a *UserAPIService) UserMeSettingsPost(ctx context.Context) ApiUserMeSettin
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeSettingsPostExecute(r ApiUserMeSettingsPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -2419,8 +2419,8 @@ func (a *UserAPIService) UserMeSettingsPostExecute(r ApiUserMeSettingsPostReques
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.modelUserSettingsData == nil {
-		return localVarReturnValue, nil, reportError("modelUserSettingsData is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -2441,7 +2441,7 @@ func (a *UserAPIService) UserMeSettingsPostExecute(r ApiUserMeSettingsPostReques
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.modelUserSettingsData
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -2527,7 +2527,7 @@ func (a *UserAPIService) UserUserIdGet(ctx context.Context, userId string) ApiUs
 
 // Execute executes the request
 //
-//	@return	DtoUser
+//	@return DtoUser
 func (a *UserAPIService) UserUserIdGetExecute(r ApiUserUserIdGetRequest) (*DtoUser, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet

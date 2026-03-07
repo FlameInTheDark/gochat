@@ -5119,8 +5119,8 @@
             "properties": {
                 "id": {
                     "description": "Channel ID.",
-                    "type": "integer",
-                    "example": 2230469276416868352
+                    "type": "string",
+                    "example": "2230469276416868352"
                 },
                 "position": {
                     "description": "New channel position.",
@@ -5659,10 +5659,10 @@
             "type": "object",
             "properties": {
                 "chat_font_scale": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "chat_spacing": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "color_scheme": {
                     "type": "string"
@@ -5823,13 +5823,13 @@
             "properties": {
                 "author_id": {
                     "description": "Author ID to search by.",
-                    "type": "integer",
-                    "example": 2230469276416868352
+                    "type": "string",
+                    "example": "2230469276416868352"
                 },
                 "channel_id": {
                     "description": "Channel ID to search in. Required.",
-                    "type": "integer",
-                    "example": 2230469276416868352
+                    "type": "string",
+                    "example": "2230469276416868352"
                 },
                 "content": {
                     "description": "Content contains a string to search for. Might be empty if need to search by other parameters.",
@@ -5985,7 +5985,8 @@
             "type": "object",
             "properties": {
                 "user_id": {
-                    "type": "integer"
+                    "type": "string",
+                    "example": "0"
                 }
             }
         },
@@ -6008,7 +6009,8 @@
             "type": "object",
             "properties": {
                 "user_id": {
-                    "type": "integer"
+                    "type": "string",
+                    "example": "0"
                 }
             }
         },

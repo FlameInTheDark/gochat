@@ -24,15 +24,15 @@ import (
 type SearchAPIService service
 
 type ApiSearchGuildIdMessagesPostRequest struct {
-	ctx                        context.Context
-	ApiService                 *SearchAPIService
-	guildId                    int32
-	searchMessageSearchRequest *SearchMessageSearchRequest
+	ctx        context.Context
+	ApiService *SearchAPIService
+	guildId    int64
+	request    *SearchMessageSearchRequest
 }
 
 // Search request data
-func (r ApiSearchGuildIdMessagesPostRequest) SearchMessageSearchRequest(searchMessageSearchRequest SearchMessageSearchRequest) ApiSearchGuildIdMessagesPostRequest {
-	r.searchMessageSearchRequest = &searchMessageSearchRequest
+func (r ApiSearchGuildIdMessagesPostRequest) Request(request SearchMessageSearchRequest) ApiSearchGuildIdMessagesPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -47,7 +47,7 @@ SearchGuildIdMessagesPost Search messages
 	@param guildId Guild id
 	@return ApiSearchGuildIdMessagesPostRequest
 */
-func (a *SearchAPIService) SearchGuildIdMessagesPost(ctx context.Context, guildId int32) ApiSearchGuildIdMessagesPostRequest {
+func (a *SearchAPIService) SearchGuildIdMessagesPost(ctx context.Context, guildId int64) ApiSearchGuildIdMessagesPostRequest {
 	return ApiSearchGuildIdMessagesPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -57,7 +57,7 @@ func (a *SearchAPIService) SearchGuildIdMessagesPost(ctx context.Context, guildI
 
 // Execute executes the request
 //
-//	@return	[]SearchMessageSearchResponse
+//	@return []SearchMessageSearchResponse
 func (a *SearchAPIService) SearchGuildIdMessagesPostExecute(r ApiSearchGuildIdMessagesPostRequest) ([]SearchMessageSearchResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -77,12 +77,12 @@ func (a *SearchAPIService) SearchGuildIdMessagesPostExecute(r ApiSearchGuildIdMe
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.searchMessageSearchRequest == nil {
-		return localVarReturnValue, nil, reportError("searchMessageSearchRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -99,7 +99,7 @@ func (a *SearchAPIService) SearchGuildIdMessagesPostExecute(r ApiSearchGuildIdMe
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.searchMessageSearchRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

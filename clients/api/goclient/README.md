@@ -209,8 +209,10 @@ Class | Method | HTTP request | Description
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)
  - [MessageUploadAttachmentRequest](docs/MessageUploadAttachmentRequest.md)
  - [ModelChannelMention](docs/ModelChannelMention.md)
+ - [ModelChannelType](docs/ModelChannelType.md)
  - [ModelDevices](docs/ModelDevices.md)
  - [ModelMention](docs/ModelMention.md)
+ - [ModelNotificationsType](docs/ModelNotificationsType.md)
  - [ModelStatus](docs/ModelStatus.md)
  - [ModelUserDMChannels](docs/ModelUserDMChannels.md)
  - [ModelUserSettingsAppearance](docs/ModelUserSettingsAppearance.md)
@@ -241,18 +243,7 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Authorization
 
-
-Authentication schemes defined for the API:
-### bearerauth
-
-- **Type**: HTTP Bearer token authentication
-
-Example
-
-```go
-auth := context.WithValue(context.Background(), goclient.ContextAccessToken, "BEARER_TOKEN_STRING")
-r, err := client.Service.Operation(auth, args)
-```
+Endpoints do not require authorization.
 
 
 ## Documentation for Utility Methods

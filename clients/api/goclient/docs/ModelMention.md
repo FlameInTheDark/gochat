@@ -4,10 +4,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AuthorId** | Pointer to **int32** |  | [optional] 
-**ChannelId** | Pointer to **int32** |  | [optional] 
-**MessageId** | Pointer to **int32** |  | [optional] 
-**UserId** | Pointer to **int32** |  | [optional] 
+**AuthorId** | Pointer to **int64** |  | [optional] 
+**ChannelId** | Pointer to **int64** |  | [optional] 
+**MessageId** | Pointer to **int64** |  | [optional] 
+**UserId** | Pointer to **int64** |  | [optional] 
 
 ## Methods
 
@@ -30,20 +30,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetAuthorId
 
-`func (o *ModelMention) GetAuthorId() int32`
+`func (o *ModelMention) GetAuthorId() int64`
 
 GetAuthorId returns the AuthorId field if non-nil, zero value otherwise.
 
 ### GetAuthorIdOk
 
-`func (o *ModelMention) GetAuthorIdOk() (*int32, bool)`
+`func (o *ModelMention) GetAuthorIdOk() (*int64, bool)`
 
 GetAuthorIdOk returns a tuple with the AuthorId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetAuthorId
 
-`func (o *ModelMention) SetAuthorId(v int32)`
+`func (o *ModelMention) SetAuthorId(v int64)`
 
 SetAuthorId sets AuthorId field to given value.
 
@@ -55,20 +55,20 @@ HasAuthorId returns a boolean if a field has been set.
 
 ### GetChannelId
 
-`func (o *ModelMention) GetChannelId() int32`
+`func (o *ModelMention) GetChannelId() int64`
 
 GetChannelId returns the ChannelId field if non-nil, zero value otherwise.
 
 ### GetChannelIdOk
 
-`func (o *ModelMention) GetChannelIdOk() (*int32, bool)`
+`func (o *ModelMention) GetChannelIdOk() (*int64, bool)`
 
 GetChannelIdOk returns a tuple with the ChannelId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetChannelId
 
-`func (o *ModelMention) SetChannelId(v int32)`
+`func (o *ModelMention) SetChannelId(v int64)`
 
 SetChannelId sets ChannelId field to given value.
 
@@ -80,20 +80,20 @@ HasChannelId returns a boolean if a field has been set.
 
 ### GetMessageId
 
-`func (o *ModelMention) GetMessageId() int32`
+`func (o *ModelMention) GetMessageId() int64`
 
 GetMessageId returns the MessageId field if non-nil, zero value otherwise.
 
 ### GetMessageIdOk
 
-`func (o *ModelMention) GetMessageIdOk() (*int32, bool)`
+`func (o *ModelMention) GetMessageIdOk() (*int64, bool)`
 
 GetMessageIdOk returns a tuple with the MessageId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetMessageId
 
-`func (o *ModelMention) SetMessageId(v int32)`
+`func (o *ModelMention) SetMessageId(v int64)`
 
 SetMessageId sets MessageId field to given value.
 
@@ -105,20 +105,20 @@ HasMessageId returns a boolean if a field has been set.
 
 ### GetUserId
 
-`func (o *ModelMention) GetUserId() int32`
+`func (o *ModelMention) GetUserId() int64`
 
 GetUserId returns the UserId field if non-nil, zero value otherwise.
 
 ### GetUserIdOk
 
-`func (o *ModelMention) GetUserIdOk() (*int32, bool)`
+`func (o *ModelMention) GetUserIdOk() (*int64, bool)`
 
 GetUserIdOk returns a tuple with the UserId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetUserId
 
-`func (o *ModelMention) SetUserId(v int32)`
+`func (o *ModelMention) SetUserId(v int64)`
 
 SetUserId sets UserId field to given value.
 

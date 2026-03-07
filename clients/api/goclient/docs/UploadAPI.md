@@ -12,7 +12,7 @@ Method | HTTP request | Description
 
 ## UploadAttachmentsChannelIdAttachmentIdPost
 
-> string UploadAttachmentsChannelIdAttachmentIdPost(ctx, channelId, attachmentId).RequestBody(requestBody).Execute()
+> string UploadAttachmentsChannelIdAttachmentIdPost(ctx, channelId, attachmentId).File(file).Execute()
 
 Upload attachment
 
@@ -31,13 +31,13 @@ import (
 )
 
 func main() {
-	channelId := int32(56) // int32 | Channel ID
-	attachmentId := int32(56) // int32 | Attachment ID
-	requestBody := []int32{int32(123)} // []int32 | Binary file to upload
+	channelId := int64(789) // int64 | Channel ID
+	attachmentId := int64(789) // int64 | Attachment ID
+	file := []int32{int32(123)} // []int32 | Binary file to upload
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UploadAPI.UploadAttachmentsChannelIdAttachmentIdPost(context.Background(), channelId, attachmentId).RequestBody(requestBody).Execute()
+	resp, r, err := apiClient.UploadAPI.UploadAttachmentsChannelIdAttachmentIdPost(context.Background(), channelId, attachmentId).File(file).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UploadAPI.UploadAttachmentsChannelIdAttachmentIdPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -53,8 +53,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**channelId** | **int32** | Channel ID | 
-**attachmentId** | **int32** | Attachment ID | 
+**channelId** | **int64** | Channel ID | 
+**attachmentId** | **int64** | Attachment ID | 
 
 ### Other Parameters
 
@@ -65,7 +65,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
 
- **requestBody** | **[]int32** | Binary file to upload | 
+ **file** | **[]int32** | Binary file to upload | 
 
 ### Return type
 
@@ -87,7 +87,7 @@ No authorization required
 
 ## UploadAvatarsUserIdAvatarIdPost
 
-> string UploadAvatarsUserIdAvatarIdPost(ctx, userId, avatarId).RequestBody(requestBody).Execute()
+> string UploadAvatarsUserIdAvatarIdPost(ctx, userId, avatarId).File(file).Execute()
 
 Upload user avatar
 
@@ -106,13 +106,13 @@ import (
 )
 
 func main() {
-	userId := int32(56) // int32 | User ID
-	avatarId := int32(56) // int32 | Avatar ID
-	requestBody := []int32{int32(123)} // []int32 | Binary image payload
+	userId := int64(789) // int64 | User ID
+	avatarId := int64(789) // int64 | Avatar ID
+	file := []int32{int32(123)} // []int32 | Binary image payload
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UploadAPI.UploadAvatarsUserIdAvatarIdPost(context.Background(), userId, avatarId).RequestBody(requestBody).Execute()
+	resp, r, err := apiClient.UploadAPI.UploadAvatarsUserIdAvatarIdPost(context.Background(), userId, avatarId).File(file).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UploadAPI.UploadAvatarsUserIdAvatarIdPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -128,8 +128,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**userId** | **int32** | User ID | 
-**avatarId** | **int32** | Avatar ID | 
+**userId** | **int64** | User ID | 
+**avatarId** | **int64** | Avatar ID | 
 
 ### Other Parameters
 
@@ -140,7 +140,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
 
- **requestBody** | **[]int32** | Binary image payload | 
+ **file** | **[]int32** | Binary image payload | 
 
 ### Return type
 
@@ -162,7 +162,7 @@ No authorization required
 
 ## UploadIconsGuildIdIconIdPost
 
-> string UploadIconsGuildIdIconIdPost(ctx, guildId, iconId).RequestBody(requestBody).Execute()
+> string UploadIconsGuildIdIconIdPost(ctx, guildId, iconId).File(file).Execute()
 
 Upload guild icon
 
@@ -181,13 +181,13 @@ import (
 )
 
 func main() {
-	guildId := int32(56) // int32 | Guild ID
-	iconId := int32(56) // int32 | Icon ID
-	requestBody := []int32{int32(123)} // []int32 | Binary image payload
+	guildId := int64(789) // int64 | Guild ID
+	iconId := int64(789) // int64 | Icon ID
+	file := []int32{int32(123)} // []int32 | Binary image payload
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UploadAPI.UploadIconsGuildIdIconIdPost(context.Background(), guildId, iconId).RequestBody(requestBody).Execute()
+	resp, r, err := apiClient.UploadAPI.UploadIconsGuildIdIconIdPost(context.Background(), guildId, iconId).File(file).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UploadAPI.UploadIconsGuildIdIconIdPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -203,8 +203,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int32** | Guild ID | 
-**iconId** | **int32** | Icon ID | 
+**guildId** | **int64** | Guild ID | 
+**iconId** | **int64** | Icon ID | 
 
 ### Other Parameters
 
@@ -215,7 +215,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
 
- **requestBody** | **[]int32** | Binary image payload | 
+ **file** | **[]int32** | Binary image payload | 
 
 ### Return type
 

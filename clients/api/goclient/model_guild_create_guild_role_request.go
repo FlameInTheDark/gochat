@@ -34,8 +34,6 @@ type GuildCreateGuildRoleRequest struct {
 // will change when the set of required properties is changed
 func NewGuildCreateGuildRoleRequest() *GuildCreateGuildRoleRequest {
 	this := GuildCreateGuildRoleRequest{}
-	var permissions int32 = 0
-	this.Permissions = &permissions
 	return &this
 }
 
@@ -44,8 +42,6 @@ func NewGuildCreateGuildRoleRequest() *GuildCreateGuildRoleRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewGuildCreateGuildRoleRequestWithDefaults() *GuildCreateGuildRoleRequest {
 	this := GuildCreateGuildRoleRequest{}
-	var permissions int32 = 0
-	this.Permissions = &permissions
 	return &this
 }
 

@@ -46,7 +46,7 @@ func (a *VoiceAPIService) VoiceRegionsGet(ctx context.Context) ApiVoiceRegionsGe
 
 // Execute executes the request
 //
-//	@return	VoiceVoiceRegionsResponse
+//	@return VoiceVoiceRegionsResponse
 func (a *VoiceAPIService) VoiceRegionsGetExecute(r ApiVoiceRegionsGetRequest) (*VoiceVoiceRegionsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet

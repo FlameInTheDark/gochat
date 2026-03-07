@@ -18,7 +18,7 @@ import (
 // checks if the DtoIcon type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &DtoIcon{}
 
-// DtoIcon Icon metadata
+// DtoIcon struct for DtoIcon
 type DtoIcon struct {
 	Filesize *int32  `json:"filesize,omitempty"`
 	Height   *int32  `json:"height,omitempty"`

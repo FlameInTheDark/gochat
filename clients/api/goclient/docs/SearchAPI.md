@@ -10,7 +10,7 @@ Method | HTTP request | Description
 
 ## SearchGuildIdMessagesPost
 
-> []SearchMessageSearchResponse SearchGuildIdMessagesPost(ctx, guildId).SearchMessageSearchRequest(searchMessageSearchRequest).Execute()
+> []SearchMessageSearchResponse SearchGuildIdMessagesPost(ctx, guildId).Request(request).Execute()
 
 Search messages
 
@@ -27,12 +27,12 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild id
-	searchMessageSearchRequest := *openapiclient.NewSearchMessageSearchRequest() // SearchMessageSearchRequest | Search request data
+	guildId := int64(789) // int64 | Guild id
+	request := *openapiclient.NewSearchMessageSearchRequest() // SearchMessageSearchRequest | Search request data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.SearchAPI.SearchGuildIdMessagesPost(context.Background(), guildId).SearchMessageSearchRequest(searchMessageSearchRequest).Execute()
+	resp, r, err := apiClient.SearchAPI.SearchGuildIdMessagesPost(context.Background(), guildId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `SearchAPI.SearchGuildIdMessagesPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -48,7 +48,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int32** | Guild id | 
+**guildId** | **int64** | Guild id | 
 
 ### Other Parameters
 
@@ -58,7 +58,7 @@ Other parameters are passed through a pointer to a apiSearchGuildIdMessagesPostR
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **searchMessageSearchRequest** | [**SearchMessageSearchRequest**](SearchMessageSearchRequest.md) | Search request data | 
+ **request** | [**SearchMessageSearchRequest**](SearchMessageSearchRequest.md) | Search request data | 
 
 ### Return type
 
@@ -70,7 +70,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

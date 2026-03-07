@@ -18,7 +18,7 @@ import (
 // checks if the DtoUser type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &DtoUser{}
 
-// DtoUser Guild member data
+// DtoUser struct for DtoUser
 type DtoUser struct {
 	Avatar        *DtoAvatarData `json:"avatar,omitempty"`
 	Discriminator *string        `json:"discriminator,omitempty"`

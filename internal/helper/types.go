@@ -1,4 +1,4 @@
-package dto
+package helper
 
 import (
 	"encoding/json"
@@ -29,5 +29,27 @@ func (a *StringInt64Array) UnmarshalJSON(b []byte) error {
 		}
 	}
 	*a = res
+	return nil
+}
+
+type StringInt64 int64
+
+func (s *StringInt64) UnmarshalJSON(b []byte) error {
+	var raw interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	switch val := raw.(type) {
+	case string:
+		parsed, err := strconv.ParseInt(val, 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid int64: %w", err)
+		}
+		*s = StringInt64(parsed)
+	case float64:
+		*s = StringInt64(int64(val))
+	default:
+		return fmt.Errorf("invalid int64 type")
+	}
 	return nil
 }

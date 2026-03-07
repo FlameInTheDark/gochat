@@ -20,7 +20,7 @@ var _ MappedNullable = &UserUnfriendRequest{}
 
 // UserUnfriendRequest struct for UserUnfriendRequest
 type UserUnfriendRequest struct {
-	UserId *int32 `json:"user_id,omitempty"`
+	UserId *string `json:"user_id,omitempty"`
 }
 
 // NewUserUnfriendRequest instantiates a new UserUnfriendRequest object
@@ -41,9 +41,9 @@ func NewUserUnfriendRequestWithDefaults() *UserUnfriendRequest {
 }
 
 // GetUserId returns the UserId field value if set, zero value otherwise.
-func (o *UserUnfriendRequest) GetUserId() int32 {
+func (o *UserUnfriendRequest) GetUserId() string {
 	if o == nil || IsNil(o.UserId) {
-		var ret int32
+		var ret string
 		return ret
 	}
 	return *o.UserId
@@ -51,7 +51,7 @@ func (o *UserUnfriendRequest) GetUserId() int32 {
 
 // GetUserIdOk returns a tuple with the UserId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *UserUnfriendRequest) GetUserIdOk() (*int32, bool) {
+func (o *UserUnfriendRequest) GetUserIdOk() (*string, bool) {
 	if o == nil || IsNil(o.UserId) {
 		return nil, false
 	}
@@ -67,8 +67,8 @@ func (o *UserUnfriendRequest) HasUserId() bool {
 	return false
 }
 
-// SetUserId gets a reference to the given int32 and assigns it to the UserId field.
-func (o *UserUnfriendRequest) SetUserId(v int32) {
+// SetUserId gets a reference to the given string and assigns it to the UserId field.
+func (o *UserUnfriendRequest) SetUserId(v string) {
 	o.UserId = &v
 }
 

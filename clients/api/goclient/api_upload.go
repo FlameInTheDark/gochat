@@ -26,14 +26,14 @@ type UploadAPIService service
 type ApiUploadAttachmentsChannelIdAttachmentIdPostRequest struct {
 	ctx          context.Context
 	ApiService   *UploadAPIService
-	channelId    int32
-	attachmentId int32
-	requestBody  *[]int32
+	channelId    int64
+	attachmentId int64
+	file         *[]int32
 }
 
 // Binary file to upload
-func (r ApiUploadAttachmentsChannelIdAttachmentIdPostRequest) RequestBody(requestBody []int32) ApiUploadAttachmentsChannelIdAttachmentIdPostRequest {
-	r.requestBody = &requestBody
+func (r ApiUploadAttachmentsChannelIdAttachmentIdPostRequest) File(file []int32) ApiUploadAttachmentsChannelIdAttachmentIdPostRequest {
+	r.file = &file
 	return r
 }
 
@@ -51,7 +51,7 @@ Uploads a file for an existing attachment. Stores the original as-is and generat
 	@param attachmentId Attachment ID
 	@return ApiUploadAttachmentsChannelIdAttachmentIdPostRequest
 */
-func (a *UploadAPIService) UploadAttachmentsChannelIdAttachmentIdPost(ctx context.Context, channelId int32, attachmentId int32) ApiUploadAttachmentsChannelIdAttachmentIdPostRequest {
+func (a *UploadAPIService) UploadAttachmentsChannelIdAttachmentIdPost(ctx context.Context, channelId int64, attachmentId int64) ApiUploadAttachmentsChannelIdAttachmentIdPostRequest {
 	return ApiUploadAttachmentsChannelIdAttachmentIdPostRequest{
 		ApiService:   a,
 		ctx:          ctx,
@@ -62,7 +62,7 @@ func (a *UploadAPIService) UploadAttachmentsChannelIdAttachmentIdPost(ctx contex
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UploadAPIService) UploadAttachmentsChannelIdAttachmentIdPostExecute(r ApiUploadAttachmentsChannelIdAttachmentIdPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -83,8 +83,8 @@ func (a *UploadAPIService) UploadAttachmentsChannelIdAttachmentIdPostExecute(r A
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.requestBody == nil {
-		return localVarReturnValue, nil, reportError("requestBody is required and must be specified")
+	if r.file == nil {
+		return localVarReturnValue, nil, reportError("file is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -105,7 +105,7 @@ func (a *UploadAPIService) UploadAttachmentsChannelIdAttachmentIdPostExecute(r A
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.requestBody
+	localVarPostBody = r.file
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -209,16 +209,16 @@ func (a *UploadAPIService) UploadAttachmentsChannelIdAttachmentIdPostExecute(r A
 }
 
 type ApiUploadAvatarsUserIdAvatarIdPostRequest struct {
-	ctx         context.Context
-	ApiService  *UploadAPIService
-	userId      int32
-	avatarId    int32
-	requestBody *[]int32
+	ctx        context.Context
+	ApiService *UploadAPIService
+	userId     int64
+	avatarId   int64
+	file       *[]int32
 }
 
 // Binary image payload
-func (r ApiUploadAvatarsUserIdAvatarIdPostRequest) RequestBody(requestBody []int32) ApiUploadAvatarsUserIdAvatarIdPostRequest {
-	r.requestBody = &requestBody
+func (r ApiUploadAvatarsUserIdAvatarIdPostRequest) File(file []int32) ApiUploadAvatarsUserIdAvatarIdPostRequest {
+	r.file = &file
 	return r
 }
 
@@ -236,7 +236,7 @@ Uploads an avatar image. Resizes to max 128x128 and converts to WebP <= 250KB. F
 	@param avatarId Avatar ID
 	@return ApiUploadAvatarsUserIdAvatarIdPostRequest
 */
-func (a *UploadAPIService) UploadAvatarsUserIdAvatarIdPost(ctx context.Context, userId int32, avatarId int32) ApiUploadAvatarsUserIdAvatarIdPostRequest {
+func (a *UploadAPIService) UploadAvatarsUserIdAvatarIdPost(ctx context.Context, userId int64, avatarId int64) ApiUploadAvatarsUserIdAvatarIdPostRequest {
 	return ApiUploadAvatarsUserIdAvatarIdPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -247,7 +247,7 @@ func (a *UploadAPIService) UploadAvatarsUserIdAvatarIdPost(ctx context.Context, 
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UploadAPIService) UploadAvatarsUserIdAvatarIdPostExecute(r ApiUploadAvatarsUserIdAvatarIdPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -268,8 +268,8 @@ func (a *UploadAPIService) UploadAvatarsUserIdAvatarIdPostExecute(r ApiUploadAva
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.requestBody == nil {
-		return localVarReturnValue, nil, reportError("requestBody is required and must be specified")
+	if r.file == nil {
+		return localVarReturnValue, nil, reportError("file is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -290,7 +290,7 @@ func (a *UploadAPIService) UploadAvatarsUserIdAvatarIdPostExecute(r ApiUploadAva
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.requestBody
+	localVarPostBody = r.file
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -405,16 +405,16 @@ func (a *UploadAPIService) UploadAvatarsUserIdAvatarIdPostExecute(r ApiUploadAva
 }
 
 type ApiUploadIconsGuildIdIconIdPostRequest struct {
-	ctx         context.Context
-	ApiService  *UploadAPIService
-	guildId     int32
-	iconId      int32
-	requestBody *[]int32
+	ctx        context.Context
+	ApiService *UploadAPIService
+	guildId    int64
+	iconId     int64
+	file       *[]int32
 }
 
 // Binary image payload
-func (r ApiUploadIconsGuildIdIconIdPostRequest) RequestBody(requestBody []int32) ApiUploadIconsGuildIdIconIdPostRequest {
-	r.requestBody = &requestBody
+func (r ApiUploadIconsGuildIdIconIdPostRequest) File(file []int32) ApiUploadIconsGuildIdIconIdPostRequest {
+	r.file = &file
 	return r
 }
 
@@ -432,7 +432,7 @@ Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only
 	@param iconId Icon ID
 	@return ApiUploadIconsGuildIdIconIdPostRequest
 */
-func (a *UploadAPIService) UploadIconsGuildIdIconIdPost(ctx context.Context, guildId int32, iconId int32) ApiUploadIconsGuildIdIconIdPostRequest {
+func (a *UploadAPIService) UploadIconsGuildIdIconIdPost(ctx context.Context, guildId int64, iconId int64) ApiUploadIconsGuildIdIconIdPostRequest {
 	return ApiUploadIconsGuildIdIconIdPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -443,7 +443,7 @@ func (a *UploadAPIService) UploadIconsGuildIdIconIdPost(ctx context.Context, gui
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UploadAPIService) UploadIconsGuildIdIconIdPostExecute(r ApiUploadIconsGuildIdIconIdPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -464,8 +464,8 @@ func (a *UploadAPIService) UploadIconsGuildIdIconIdPostExecute(r ApiUploadIconsG
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.requestBody == nil {
-		return localVarReturnValue, nil, reportError("requestBody is required and must be specified")
+	if r.file == nil {
+		return localVarReturnValue, nil, reportError("file is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -486,7 +486,7 @@ func (a *UploadAPIService) UploadIconsGuildIdIconIdPostExecute(r ApiUploadIconsG
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.requestBody
+	localVarPostBody = r.file
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

@@ -50,7 +50,7 @@ func (a *GuildInvitesAPIService) GuildInvitesAcceptInviteCodePost(ctx context.Co
 
 // Execute executes the request
 //
-//	@return	DtoGuild
+//	@return DtoGuild
 func (a *GuildInvitesAPIService) GuildInvitesAcceptInviteCodePostExecute(r ApiGuildInvitesAcceptInviteCodePostRequest) (*DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -149,7 +149,7 @@ func (a *GuildInvitesAPIService) GuildInvitesAcceptInviteCodePostExecute(r ApiGu
 type ApiGuildInvitesGuildIdGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildInvitesAPIService
-	guildId    int32
+	guildId    int64
 }
 
 func (r ApiGuildInvitesGuildIdGetRequest) Execute() ([]DtoGuildInvite, *http.Response, error) {
@@ -163,7 +163,7 @@ GuildInvitesGuildIdGet List active invites for guild
 	@param guildId Guild id
 	@return ApiGuildInvitesGuildIdGetRequest
 */
-func (a *GuildInvitesAPIService) GuildInvitesGuildIdGet(ctx context.Context, guildId int32) ApiGuildInvitesGuildIdGetRequest {
+func (a *GuildInvitesAPIService) GuildInvitesGuildIdGet(ctx context.Context, guildId int64) ApiGuildInvitesGuildIdGetRequest {
 	return ApiGuildInvitesGuildIdGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -173,7 +173,7 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdGet(ctx context.Context, gui
 
 // Execute executes the request
 //
-//	@return	[]DtoGuildInvite
+//	@return []DtoGuildInvite
 func (a *GuildInvitesAPIService) GuildInvitesGuildIdGetExecute(r ApiGuildInvitesGuildIdGetRequest) ([]DtoGuildInvite, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -261,8 +261,8 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdGetExecute(r ApiGuildInvites
 type ApiGuildInvitesGuildIdInviteIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildInvitesAPIService
-	guildId    int32
-	inviteId   int32
+	guildId    int64
+	inviteId   int64
 }
 
 func (r ApiGuildInvitesGuildIdInviteIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -277,7 +277,7 @@ GuildInvitesGuildIdInviteIdDelete Delete an invite by id
 	@param inviteId Invite id
 	@return ApiGuildInvitesGuildIdInviteIdDeleteRequest
 */
-func (a *GuildInvitesAPIService) GuildInvitesGuildIdInviteIdDelete(ctx context.Context, guildId int32, inviteId int32) ApiGuildInvitesGuildIdInviteIdDeleteRequest {
+func (a *GuildInvitesAPIService) GuildInvitesGuildIdInviteIdDelete(ctx context.Context, guildId int64, inviteId int64) ApiGuildInvitesGuildIdInviteIdDeleteRequest {
 	return ApiGuildInvitesGuildIdInviteIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -288,7 +288,7 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdInviteIdDelete(ctx context.C
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildInvitesAPIService) GuildInvitesGuildIdInviteIdDeleteExecute(r ApiGuildInvitesGuildIdInviteIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -375,15 +375,15 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdInviteIdDeleteExecute(r ApiG
 }
 
 type ApiGuildInvitesGuildIdPostRequest struct {
-	ctx                      context.Context
-	ApiService               *GuildInvitesAPIService
-	guildId                  int32
-	guildCreateInviteRequest *GuildCreateInviteRequest
+	ctx        context.Context
+	ApiService *GuildInvitesAPIService
+	guildId    int64
+	request    *GuildCreateInviteRequest
 }
 
 // Invite options
-func (r ApiGuildInvitesGuildIdPostRequest) GuildCreateInviteRequest(guildCreateInviteRequest GuildCreateInviteRequest) ApiGuildInvitesGuildIdPostRequest {
-	r.guildCreateInviteRequest = &guildCreateInviteRequest
+func (r ApiGuildInvitesGuildIdPostRequest) Request(request GuildCreateInviteRequest) ApiGuildInvitesGuildIdPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -398,7 +398,7 @@ GuildInvitesGuildIdPost Create a new invite
 	@param guildId Guild id
 	@return ApiGuildInvitesGuildIdPostRequest
 */
-func (a *GuildInvitesAPIService) GuildInvitesGuildIdPost(ctx context.Context, guildId int32) ApiGuildInvitesGuildIdPostRequest {
+func (a *GuildInvitesAPIService) GuildInvitesGuildIdPost(ctx context.Context, guildId int64) ApiGuildInvitesGuildIdPostRequest {
 	return ApiGuildInvitesGuildIdPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -408,7 +408,7 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdPost(ctx context.Context, gu
 
 // Execute executes the request
 //
-//	@return	DtoGuildInvite
+//	@return DtoGuildInvite
 func (a *GuildInvitesAPIService) GuildInvitesGuildIdPostExecute(r ApiGuildInvitesGuildIdPostRequest) (*DtoGuildInvite, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -428,12 +428,12 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdPostExecute(r ApiGuildInvite
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildCreateInviteRequest == nil {
-		return localVarReturnValue, nil, reportError("guildCreateInviteRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -450,7 +450,7 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdPostExecute(r ApiGuildInvite
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildCreateInviteRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -525,7 +525,7 @@ func (a *GuildInvitesAPIService) GuildInvitesReceiveInviteCodeGet(ctx context.Co
 
 // Execute executes the request
 //
-//	@return	DtoInvitePreview
+//	@return DtoInvitePreview
 func (a *GuildInvitesAPIService) GuildInvitesReceiveInviteCodeGetExecute(r ApiGuildInvitesReceiveInviteCodeGetRequest) (*DtoInvitePreview, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet

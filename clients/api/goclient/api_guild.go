@@ -26,8 +26,8 @@ type GuildAPIService service
 type ApiGuildGuildIdCategoryCategoryIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int32
-	categoryId int32
+	guildId    int64
+	categoryId int64
 }
 
 func (r ApiGuildGuildIdCategoryCategoryIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -42,7 +42,7 @@ GuildGuildIdCategoryCategoryIdDelete Delete channel category
 	@param categoryId Category ID (actually a channel with special type)
 	@return ApiGuildGuildIdCategoryCategoryIdDeleteRequest
 */
-func (a *GuildAPIService) GuildGuildIdCategoryCategoryIdDelete(ctx context.Context, guildId int32, categoryId int32) ApiGuildGuildIdCategoryCategoryIdDeleteRequest {
+func (a *GuildAPIService) GuildGuildIdCategoryCategoryIdDelete(ctx context.Context, guildId int64, categoryId int64) ApiGuildGuildIdCategoryCategoryIdDeleteRequest {
 	return ApiGuildGuildIdCategoryCategoryIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -53,7 +53,7 @@ func (a *GuildAPIService) GuildGuildIdCategoryCategoryIdDelete(ctx context.Conte
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdCategoryCategoryIdDeleteExecute(r ApiGuildGuildIdCategoryCategoryIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -162,15 +162,15 @@ func (a *GuildAPIService) GuildGuildIdCategoryCategoryIdDeleteExecute(r ApiGuild
 }
 
 type ApiGuildGuildIdCategoryPostRequest struct {
-	ctx                                    context.Context
-	ApiService                             *GuildAPIService
-	guildId                                int32
-	guildCreateGuildChannelCategoryRequest *GuildCreateGuildChannelCategoryRequest
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int64
+	request    *GuildCreateGuildChannelCategoryRequest
 }
 
 // Create category data
-func (r ApiGuildGuildIdCategoryPostRequest) GuildCreateGuildChannelCategoryRequest(guildCreateGuildChannelCategoryRequest GuildCreateGuildChannelCategoryRequest) ApiGuildGuildIdCategoryPostRequest {
-	r.guildCreateGuildChannelCategoryRequest = &guildCreateGuildChannelCategoryRequest
+func (r ApiGuildGuildIdCategoryPostRequest) Request(request GuildCreateGuildChannelCategoryRequest) ApiGuildGuildIdCategoryPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -185,7 +185,7 @@ GuildGuildIdCategoryPost Create guild channel category
 	@param guildId Guild ID
 	@return ApiGuildGuildIdCategoryPostRequest
 */
-func (a *GuildAPIService) GuildGuildIdCategoryPost(ctx context.Context, guildId int32) ApiGuildGuildIdCategoryPostRequest {
+func (a *GuildAPIService) GuildGuildIdCategoryPost(ctx context.Context, guildId int64) ApiGuildGuildIdCategoryPostRequest {
 	return ApiGuildGuildIdCategoryPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -195,7 +195,7 @@ func (a *GuildAPIService) GuildGuildIdCategoryPost(ctx context.Context, guildId 
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdCategoryPostExecute(r ApiGuildGuildIdCategoryPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -215,12 +215,12 @@ func (a *GuildAPIService) GuildGuildIdCategoryPostExecute(r ApiGuildGuildIdCateg
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildCreateGuildChannelCategoryRequest == nil {
-		return localVarReturnValue, nil, reportError("guildCreateGuildChannelCategoryRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -237,7 +237,7 @@ func (a *GuildAPIService) GuildGuildIdCategoryPostExecute(r ApiGuildGuildIdCateg
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildCreateGuildChannelCategoryRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -310,8 +310,8 @@ func (a *GuildAPIService) GuildGuildIdCategoryPostExecute(r ApiGuildGuildIdCateg
 type ApiGuildGuildIdChannelChannelIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int32
-	channelId  int32
+	guildId    int64
+	channelId  int64
 }
 
 func (r ApiGuildGuildIdChannelChannelIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -326,7 +326,7 @@ GuildGuildIdChannelChannelIdDelete Delete channel
 	@param channelId Channel ID
 	@return ApiGuildGuildIdChannelChannelIdDeleteRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelChannelIdDelete(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdChannelChannelIdDeleteRequest {
+func (a *GuildAPIService) GuildGuildIdChannelChannelIdDelete(ctx context.Context, guildId int64, channelId int64) ApiGuildGuildIdChannelChannelIdDeleteRequest {
 	return ApiGuildGuildIdChannelChannelIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -337,7 +337,7 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdDelete(ctx context.Context
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdChannelChannelIdDeleteExecute(r ApiGuildGuildIdChannelChannelIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -448,8 +448,8 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdDeleteExecute(r ApiGuildGu
 type ApiGuildGuildIdChannelChannelIdGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int32
-	channelId  int32
+	guildId    int64
+	channelId  int64
 }
 
 func (r ApiGuildGuildIdChannelChannelIdGetRequest) Execute() (*DtoChannel, *http.Response, error) {
@@ -464,7 +464,7 @@ GuildGuildIdChannelChannelIdGet Get guild channel
 	@param channelId Channel id
 	@return ApiGuildGuildIdChannelChannelIdGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelChannelIdGet(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdChannelChannelIdGetRequest {
+func (a *GuildAPIService) GuildGuildIdChannelChannelIdGet(ctx context.Context, guildId int64, channelId int64) ApiGuildGuildIdChannelChannelIdGetRequest {
 	return ApiGuildGuildIdChannelChannelIdGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -475,7 +475,7 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdGet(ctx context.Context, g
 
 // Execute executes the request
 //
-//	@return	DtoChannel
+//	@return DtoChannel
 func (a *GuildAPIService) GuildGuildIdChannelChannelIdGetExecute(r ApiGuildGuildIdChannelChannelIdGetRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -584,16 +584,16 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdGetExecute(r ApiGuildGuild
 }
 
 type ApiGuildGuildIdChannelChannelIdPatchRequest struct {
-	ctx                           context.Context
-	ApiService                    *GuildAPIService
-	guildId                       int32
-	channelId                     int32
-	guildPatchGuildChannelRequest *GuildPatchGuildChannelRequest
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int64
+	channelId  int64
+	req        *GuildPatchGuildChannelRequest
 }
 
 // Request body
-func (r ApiGuildGuildIdChannelChannelIdPatchRequest) GuildPatchGuildChannelRequest(guildPatchGuildChannelRequest GuildPatchGuildChannelRequest) ApiGuildGuildIdChannelChannelIdPatchRequest {
-	r.guildPatchGuildChannelRequest = &guildPatchGuildChannelRequest
+func (r ApiGuildGuildIdChannelChannelIdPatchRequest) Req(req GuildPatchGuildChannelRequest) ApiGuildGuildIdChannelChannelIdPatchRequest {
+	r.req = &req
 	return r
 }
 
@@ -609,7 +609,7 @@ GuildGuildIdChannelChannelIdPatch Change channels data
 	@param channelId Channel ID
 	@return ApiGuildGuildIdChannelChannelIdPatchRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatch(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdChannelChannelIdPatchRequest {
+func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatch(ctx context.Context, guildId int64, channelId int64) ApiGuildGuildIdChannelChannelIdPatchRequest {
 	return ApiGuildGuildIdChannelChannelIdPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -620,7 +620,7 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatch(ctx context.Context,
 
 // Execute executes the request
 //
-//	@return	DtoChannel
+//	@return DtoChannel
 func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatchExecute(r ApiGuildGuildIdChannelChannelIdPatchRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -641,12 +641,12 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatchExecute(r ApiGuildGui
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildPatchGuildChannelRequest == nil {
-		return localVarReturnValue, nil, reportError("guildPatchGuildChannelRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -663,7 +663,7 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatchExecute(r ApiGuildGui
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildPatchGuildChannelRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -758,7 +758,7 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatchExecute(r ApiGuildGui
 type ApiGuildGuildIdChannelGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int32
+	guildId    int64
 }
 
 func (r ApiGuildGuildIdChannelGetRequest) Execute() ([]DtoChannel, *http.Response, error) {
@@ -772,7 +772,7 @@ GuildGuildIdChannelGet Get guild channels
 	@param guildId Guild id
 	@return ApiGuildGuildIdChannelGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelGet(ctx context.Context, guildId int32) ApiGuildGuildIdChannelGetRequest {
+func (a *GuildAPIService) GuildGuildIdChannelGet(ctx context.Context, guildId int64) ApiGuildGuildIdChannelGetRequest {
 	return ApiGuildGuildIdChannelGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -782,7 +782,7 @@ func (a *GuildAPIService) GuildGuildIdChannelGet(ctx context.Context, guildId in
 
 // Execute executes the request
 //
-//	@return	[]DtoChannel
+//	@return []DtoChannel
 func (a *GuildAPIService) GuildGuildIdChannelGetExecute(r ApiGuildGuildIdChannelGetRequest) ([]DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -890,15 +890,15 @@ func (a *GuildAPIService) GuildGuildIdChannelGetExecute(r ApiGuildGuildIdChannel
 }
 
 type ApiGuildGuildIdChannelOrderPatchRequest struct {
-	ctx                                context.Context
-	ApiService                         *GuildAPIService
-	guildId                            int32
-	guildPatchGuildChannelOrderRequest *GuildPatchGuildChannelOrderRequest
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int64
+	request    *GuildPatchGuildChannelOrderRequest
 }
 
 // Update channel order data
-func (r ApiGuildGuildIdChannelOrderPatchRequest) GuildPatchGuildChannelOrderRequest(guildPatchGuildChannelOrderRequest GuildPatchGuildChannelOrderRequest) ApiGuildGuildIdChannelOrderPatchRequest {
-	r.guildPatchGuildChannelOrderRequest = &guildPatchGuildChannelOrderRequest
+func (r ApiGuildGuildIdChannelOrderPatchRequest) Request(request GuildPatchGuildChannelOrderRequest) ApiGuildGuildIdChannelOrderPatchRequest {
+	r.request = &request
 	return r
 }
 
@@ -913,7 +913,7 @@ GuildGuildIdChannelOrderPatch Change channels order
 	@param guildId Guild ID
 	@return ApiGuildGuildIdChannelOrderPatchRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelOrderPatch(ctx context.Context, guildId int32) ApiGuildGuildIdChannelOrderPatchRequest {
+func (a *GuildAPIService) GuildGuildIdChannelOrderPatch(ctx context.Context, guildId int64) ApiGuildGuildIdChannelOrderPatchRequest {
 	return ApiGuildGuildIdChannelOrderPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -923,7 +923,7 @@ func (a *GuildAPIService) GuildGuildIdChannelOrderPatch(ctx context.Context, gui
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdChannelOrderPatchExecute(r ApiGuildGuildIdChannelOrderPatchRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -943,12 +943,12 @@ func (a *GuildAPIService) GuildGuildIdChannelOrderPatchExecute(r ApiGuildGuildId
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildPatchGuildChannelOrderRequest == nil {
-		return localVarReturnValue, nil, reportError("guildPatchGuildChannelOrderRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -965,7 +965,7 @@ func (a *GuildAPIService) GuildGuildIdChannelOrderPatchExecute(r ApiGuildGuildId
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildPatchGuildChannelOrderRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1058,15 +1058,15 @@ func (a *GuildAPIService) GuildGuildIdChannelOrderPatchExecute(r ApiGuildGuildId
 }
 
 type ApiGuildGuildIdChannelPostRequest struct {
-	ctx                            context.Context
-	ApiService                     *GuildAPIService
-	guildId                        int32
-	guildCreateGuildChannelRequest *GuildCreateGuildChannelRequest
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int64
+	request    *GuildCreateGuildChannelRequest
 }
 
 // Create channel data
-func (r ApiGuildGuildIdChannelPostRequest) GuildCreateGuildChannelRequest(guildCreateGuildChannelRequest GuildCreateGuildChannelRequest) ApiGuildGuildIdChannelPostRequest {
-	r.guildCreateGuildChannelRequest = &guildCreateGuildChannelRequest
+func (r ApiGuildGuildIdChannelPostRequest) Request(request GuildCreateGuildChannelRequest) ApiGuildGuildIdChannelPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -1081,7 +1081,7 @@ GuildGuildIdChannelPost Create guild channel
 	@param guildId Guild ID
 	@return ApiGuildGuildIdChannelPostRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelPost(ctx context.Context, guildId int32) ApiGuildGuildIdChannelPostRequest {
+func (a *GuildAPIService) GuildGuildIdChannelPost(ctx context.Context, guildId int64) ApiGuildGuildIdChannelPostRequest {
 	return ApiGuildGuildIdChannelPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1091,7 +1091,7 @@ func (a *GuildAPIService) GuildGuildIdChannelPost(ctx context.Context, guildId i
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdChannelPostExecute(r ApiGuildGuildIdChannelPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1111,12 +1111,12 @@ func (a *GuildAPIService) GuildGuildIdChannelPostExecute(r ApiGuildGuildIdChanne
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildCreateGuildChannelRequest == nil {
-		return localVarReturnValue, nil, reportError("guildCreateGuildChannelRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1133,7 +1133,7 @@ func (a *GuildAPIService) GuildGuildIdChannelPostExecute(r ApiGuildGuildIdChanne
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildCreateGuildChannelRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1206,7 +1206,7 @@ func (a *GuildAPIService) GuildGuildIdChannelPostExecute(r ApiGuildGuildIdChanne
 type ApiGuildGuildIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int32
+	guildId    int64
 }
 
 func (r ApiGuildGuildIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -1222,7 +1222,7 @@ Deletes a guild. Only the guild owner can delete a guild. This removes all membe
 	@param guildId Guild ID
 	@return ApiGuildGuildIdDeleteRequest
 */
-func (a *GuildAPIService) GuildGuildIdDelete(ctx context.Context, guildId int32) ApiGuildGuildIdDeleteRequest {
+func (a *GuildAPIService) GuildGuildIdDelete(ctx context.Context, guildId int64) ApiGuildGuildIdDeleteRequest {
 	return ApiGuildGuildIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1232,7 +1232,7 @@ func (a *GuildAPIService) GuildGuildIdDelete(ctx context.Context, guildId int32)
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdDeleteExecute(r ApiGuildGuildIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1263,7 +1263,7 @@ func (a *GuildAPIService) GuildGuildIdDeleteExecute(r ApiGuildGuildIdDeleteReque
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
+	localVarHTTPHeaderAccepts := []string{"*/*"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -1342,7 +1342,7 @@ func (a *GuildAPIService) GuildGuildIdDeleteExecute(r ApiGuildGuildIdDeleteReque
 type ApiGuildGuildIdGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int32
+	guildId    int64
 }
 
 func (r ApiGuildGuildIdGetRequest) Execute() (*DtoGuild, *http.Response, error) {
@@ -1356,7 +1356,7 @@ GuildGuildIdGet Get guild
 	@param guildId Guild id
 	@return ApiGuildGuildIdGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdGet(ctx context.Context, guildId int32) ApiGuildGuildIdGetRequest {
+func (a *GuildAPIService) GuildGuildIdGet(ctx context.Context, guildId int64) ApiGuildGuildIdGetRequest {
 	return ApiGuildGuildIdGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1366,7 +1366,7 @@ func (a *GuildAPIService) GuildGuildIdGet(ctx context.Context, guildId int32) Ap
 
 // Execute executes the request
 //
-//	@return	DtoGuild
+//	@return DtoGuild
 func (a *GuildAPIService) GuildGuildIdGetExecute(r ApiGuildGuildIdGetRequest) (*DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1474,15 +1474,15 @@ func (a *GuildAPIService) GuildGuildIdGetExecute(r ApiGuildGuildIdGetRequest) (*
 }
 
 type ApiGuildGuildIdIconPostRequest struct {
-	ctx                    context.Context
-	ApiService             *GuildAPIService
-	guildId                int32
-	guildCreateIconRequest *GuildCreateIconRequest
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int64
+	request    *GuildCreateIconRequest
 }
 
 // Icon creation request
-func (r ApiGuildGuildIdIconPostRequest) GuildCreateIconRequest(guildCreateIconRequest GuildCreateIconRequest) ApiGuildGuildIdIconPostRequest {
-	r.guildCreateIconRequest = &guildCreateIconRequest
+func (r ApiGuildGuildIdIconPostRequest) Request(request GuildCreateIconRequest) ApiGuildGuildIdIconPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -1499,7 +1499,7 @@ Creates an icon placeholder and returns upload info. Only guild owner may create
 	@param guildId Guild ID
 	@return ApiGuildGuildIdIconPostRequest
 */
-func (a *GuildAPIService) GuildGuildIdIconPost(ctx context.Context, guildId int32) ApiGuildGuildIdIconPostRequest {
+func (a *GuildAPIService) GuildGuildIdIconPost(ctx context.Context, guildId int64) ApiGuildGuildIdIconPostRequest {
 	return ApiGuildGuildIdIconPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1509,7 +1509,7 @@ func (a *GuildAPIService) GuildGuildIdIconPost(ctx context.Context, guildId int3
 
 // Execute executes the request
 //
-//	@return	DtoIconUpload
+//	@return DtoIconUpload
 func (a *GuildAPIService) GuildGuildIdIconPostExecute(r ApiGuildGuildIdIconPostRequest) (*DtoIconUpload, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1529,8 +1529,8 @@ func (a *GuildAPIService) GuildGuildIdIconPostExecute(r ApiGuildGuildIdIconPostR
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildCreateIconRequest == nil {
-		return localVarReturnValue, nil, reportError("guildCreateIconRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -1551,7 +1551,7 @@ func (a *GuildAPIService) GuildGuildIdIconPostExecute(r ApiGuildGuildIdIconPostR
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildCreateIconRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1635,7 +1635,7 @@ func (a *GuildAPIService) GuildGuildIdIconPostExecute(r ApiGuildGuildIdIconPostR
 type ApiGuildGuildIdIconsGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int32
+	guildId    int64
 }
 
 func (r ApiGuildGuildIdIconsGetRequest) Execute() ([]DtoIcon, *http.Response, error) {
@@ -1651,7 +1651,7 @@ Returns a list of previously created icons for a guild. Only the guild owner may
 	@param guildId Guild ID
 	@return ApiGuildGuildIdIconsGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdIconsGet(ctx context.Context, guildId int32) ApiGuildGuildIdIconsGetRequest {
+func (a *GuildAPIService) GuildGuildIdIconsGet(ctx context.Context, guildId int64) ApiGuildGuildIdIconsGetRequest {
 	return ApiGuildGuildIdIconsGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1661,7 +1661,7 @@ func (a *GuildAPIService) GuildGuildIdIconsGet(ctx context.Context, guildId int3
 
 // Execute executes the request
 //
-//	@return	[]DtoIcon
+//	@return []DtoIcon
 func (a *GuildAPIService) GuildGuildIdIconsGetExecute(r ApiGuildGuildIdIconsGetRequest) ([]DtoIcon, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1771,8 +1771,8 @@ func (a *GuildAPIService) GuildGuildIdIconsGetExecute(r ApiGuildGuildIdIconsGetR
 type ApiGuildGuildIdIconsIconIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int32
-	iconId     int32
+	guildId    int64
+	iconId     int64
 }
 
 func (r ApiGuildGuildIdIconsIconIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -1789,7 +1789,7 @@ Deletes a guild icon. Only the guild owner may delete.
 	@param iconId Icon ID
 	@return ApiGuildGuildIdIconsIconIdDeleteRequest
 */
-func (a *GuildAPIService) GuildGuildIdIconsIconIdDelete(ctx context.Context, guildId int32, iconId int32) ApiGuildGuildIdIconsIconIdDeleteRequest {
+func (a *GuildAPIService) GuildGuildIdIconsIconIdDelete(ctx context.Context, guildId int64, iconId int64) ApiGuildGuildIdIconsIconIdDeleteRequest {
 	return ApiGuildGuildIdIconsIconIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1800,7 +1800,7 @@ func (a *GuildAPIService) GuildGuildIdIconsIconIdDelete(ctx context.Context, gui
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdIconsIconIdDeleteExecute(r ApiGuildGuildIdIconsIconIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1832,7 +1832,7 @@ func (a *GuildAPIService) GuildGuildIdIconsIconIdDeleteExecute(r ApiGuildGuildId
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
+	localVarHTTPHeaderAccepts := []string{"*/*"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -1911,7 +1911,7 @@ func (a *GuildAPIService) GuildGuildIdIconsIconIdDeleteExecute(r ApiGuildGuildId
 type ApiGuildGuildIdMembersGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int32
+	guildId    int64
 }
 
 func (r ApiGuildGuildIdMembersGetRequest) Execute() ([]DtoMember, *http.Response, error) {
@@ -1925,7 +1925,7 @@ GuildGuildIdMembersGet Get guild members
 	@param guildId Guild ID
 	@return ApiGuildGuildIdMembersGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdMembersGet(ctx context.Context, guildId int32) ApiGuildGuildIdMembersGetRequest {
+func (a *GuildAPIService) GuildGuildIdMembersGet(ctx context.Context, guildId int64) ApiGuildGuildIdMembersGetRequest {
 	return ApiGuildGuildIdMembersGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1935,7 +1935,7 @@ func (a *GuildAPIService) GuildGuildIdMembersGet(ctx context.Context, guildId in
 
 // Execute executes the request
 //
-//	@return	[]DtoMember
+//	@return []DtoMember
 func (a *GuildAPIService) GuildGuildIdMembersGetExecute(r ApiGuildGuildIdMembersGetRequest) ([]DtoMember, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2043,15 +2043,15 @@ func (a *GuildAPIService) GuildGuildIdMembersGetExecute(r ApiGuildGuildIdMembers
 }
 
 type ApiGuildGuildIdPatchRequest struct {
-	ctx                     context.Context
-	ApiService              *GuildAPIService
-	guildId                 int32
-	guildUpdateGuildRequest *GuildUpdateGuildRequest
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int64
+	request    *GuildUpdateGuildRequest
 }
 
 // Update guild data
-func (r ApiGuildGuildIdPatchRequest) GuildUpdateGuildRequest(guildUpdateGuildRequest GuildUpdateGuildRequest) ApiGuildGuildIdPatchRequest {
-	r.guildUpdateGuildRequest = &guildUpdateGuildRequest
+func (r ApiGuildGuildIdPatchRequest) Request(request GuildUpdateGuildRequest) ApiGuildGuildIdPatchRequest {
+	r.request = &request
 	return r
 }
 
@@ -2066,7 +2066,7 @@ GuildGuildIdPatch Update guild
 	@param guildId Guild ID
 	@return ApiGuildGuildIdPatchRequest
 */
-func (a *GuildAPIService) GuildGuildIdPatch(ctx context.Context, guildId int32) ApiGuildGuildIdPatchRequest {
+func (a *GuildAPIService) GuildGuildIdPatch(ctx context.Context, guildId int64) ApiGuildGuildIdPatchRequest {
 	return ApiGuildGuildIdPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2076,7 +2076,7 @@ func (a *GuildAPIService) GuildGuildIdPatch(ctx context.Context, guildId int32) 
 
 // Execute executes the request
 //
-//	@return	DtoGuild
+//	@return DtoGuild
 func (a *GuildAPIService) GuildGuildIdPatchExecute(r ApiGuildGuildIdPatchRequest) (*DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -2096,12 +2096,12 @@ func (a *GuildAPIService) GuildGuildIdPatchExecute(r ApiGuildGuildIdPatchRequest
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildUpdateGuildRequest == nil {
-		return localVarReturnValue, nil, reportError("guildUpdateGuildRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -2118,7 +2118,7 @@ func (a *GuildAPIService) GuildGuildIdPatchExecute(r ApiGuildGuildIdPatchRequest
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildUpdateGuildRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -2189,15 +2189,15 @@ func (a *GuildAPIService) GuildGuildIdPatchExecute(r ApiGuildGuildIdPatchRequest
 }
 
 type ApiGuildGuildIdSystemchPatchRequest struct {
-	ctx                                       context.Context
-	ApiService                                *GuildAPIService
-	guildId                                   int32
-	guildSetGuildSystemMessagesChannelRequest *GuildSetGuildSystemMessagesChannelRequest
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int64
+	request    *GuildSetGuildSystemMessagesChannelRequest
 }
 
 // Set system messages channel
-func (r ApiGuildGuildIdSystemchPatchRequest) GuildSetGuildSystemMessagesChannelRequest(guildSetGuildSystemMessagesChannelRequest GuildSetGuildSystemMessagesChannelRequest) ApiGuildGuildIdSystemchPatchRequest {
-	r.guildSetGuildSystemMessagesChannelRequest = &guildSetGuildSystemMessagesChannelRequest
+func (r ApiGuildGuildIdSystemchPatchRequest) Request(request GuildSetGuildSystemMessagesChannelRequest) ApiGuildGuildIdSystemchPatchRequest {
+	r.request = &request
 	return r
 }
 
@@ -2212,7 +2212,7 @@ GuildGuildIdSystemchPatch Set system messages channel
 	@param guildId Guild ID
 	@return ApiGuildGuildIdSystemchPatchRequest
 */
-func (a *GuildAPIService) GuildGuildIdSystemchPatch(ctx context.Context, guildId int32) ApiGuildGuildIdSystemchPatchRequest {
+func (a *GuildAPIService) GuildGuildIdSystemchPatch(ctx context.Context, guildId int64) ApiGuildGuildIdSystemchPatchRequest {
 	return ApiGuildGuildIdSystemchPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2222,7 +2222,7 @@ func (a *GuildAPIService) GuildGuildIdSystemchPatch(ctx context.Context, guildId
 
 // Execute executes the request
 //
-//	@return	DtoGuild
+//	@return DtoGuild
 func (a *GuildAPIService) GuildGuildIdSystemchPatchExecute(r ApiGuildGuildIdSystemchPatchRequest) (*DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -2242,12 +2242,12 @@ func (a *GuildAPIService) GuildGuildIdSystemchPatchExecute(r ApiGuildGuildIdSyst
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildSetGuildSystemMessagesChannelRequest == nil {
-		return localVarReturnValue, nil, reportError("guildSetGuildSystemMessagesChannelRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -2264,7 +2264,7 @@ func (a *GuildAPIService) GuildGuildIdSystemchPatchExecute(r ApiGuildGuildIdSyst
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildSetGuildSystemMessagesChannelRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -2337,8 +2337,8 @@ func (a *GuildAPIService) GuildGuildIdSystemchPatchExecute(r ApiGuildGuildIdSyst
 type ApiGuildGuildIdVoiceChannelIdJoinPostRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int32
-	channelId  int32
+	guildId    int64
+	channelId  int64
 }
 
 func (r ApiGuildGuildIdVoiceChannelIdJoinPostRequest) Execute() (*GuildJoinVoiceResponse, *http.Response, error) {
@@ -2355,7 +2355,7 @@ Returns signaling path and a short-lived SFU token to connect to the SFU for thi
 	@param channelId Channel ID
 	@return ApiGuildGuildIdVoiceChannelIdJoinPostRequest
 */
-func (a *GuildAPIService) GuildGuildIdVoiceChannelIdJoinPost(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdVoiceChannelIdJoinPostRequest {
+func (a *GuildAPIService) GuildGuildIdVoiceChannelIdJoinPost(ctx context.Context, guildId int64, channelId int64) ApiGuildGuildIdVoiceChannelIdJoinPostRequest {
 	return ApiGuildGuildIdVoiceChannelIdJoinPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2366,7 +2366,7 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdJoinPost(ctx context.Context
 
 // Execute executes the request
 //
-//	@return	GuildJoinVoiceResponse
+//	@return GuildJoinVoiceResponse
 func (a *GuildAPIService) GuildGuildIdVoiceChannelIdJoinPostExecute(r ApiGuildGuildIdVoiceChannelIdJoinPostRequest) (*GuildJoinVoiceResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -2398,7 +2398,7 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdJoinPostExecute(r ApiGuildGu
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
+	localVarHTTPHeaderAccepts := []string{"*/*"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -2475,16 +2475,16 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdJoinPostExecute(r ApiGuildGu
 }
 
 type ApiGuildGuildIdVoiceChannelIdRegionPatchRequest struct {
-	ctx                        context.Context
-	ApiService                 *GuildAPIService
-	guildId                    int32
-	channelId                  int32
-	guildSetVoiceRegionRequest *GuildSetVoiceRegionRequest
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int64
+	channelId  int64
+	request    *GuildSetVoiceRegionRequest
 }
 
 // Region payload
-func (r ApiGuildGuildIdVoiceChannelIdRegionPatchRequest) GuildSetVoiceRegionRequest(guildSetVoiceRegionRequest GuildSetVoiceRegionRequest) ApiGuildGuildIdVoiceChannelIdRegionPatchRequest {
-	r.guildSetVoiceRegionRequest = &guildSetVoiceRegionRequest
+func (r ApiGuildGuildIdVoiceChannelIdRegionPatchRequest) Request(request GuildSetVoiceRegionRequest) ApiGuildGuildIdVoiceChannelIdRegionPatchRequest {
+	r.request = &request
 	return r
 }
 
@@ -2502,7 +2502,7 @@ Sets or clears preferred SFU region for a voice channel. Empty region clears ove
 	@param channelId Channel ID
 	@return ApiGuildGuildIdVoiceChannelIdRegionPatchRequest
 */
-func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatch(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdVoiceChannelIdRegionPatchRequest {
+func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatch(ctx context.Context, guildId int64, channelId int64) ApiGuildGuildIdVoiceChannelIdRegionPatchRequest {
 	return ApiGuildGuildIdVoiceChannelIdRegionPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2513,7 +2513,7 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatch(ctx context.Cont
 
 // Execute executes the request
 //
-//	@return	GuildSetVoiceRegionResponse
+//	@return GuildSetVoiceRegionResponse
 func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatchExecute(r ApiGuildGuildIdVoiceChannelIdRegionPatchRequest) (*GuildSetVoiceRegionResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -2534,12 +2534,12 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatchExecute(r ApiGuil
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildSetVoiceRegionRequest == nil {
-		return localVarReturnValue, nil, reportError("guildSetVoiceRegionRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -2548,7 +2548,7 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatchExecute(r ApiGuil
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
+	localVarHTTPHeaderAccepts := []string{"*/*"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -2556,7 +2556,7 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatchExecute(r ApiGuil
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildSetVoiceRegionRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -2610,6 +2610,17 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatchExecute(r ApiGuil
 			}
 			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2627,15 +2638,15 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatchExecute(r ApiGuil
 }
 
 type ApiGuildGuildIdVoiceMovePostRequest struct {
-	ctx                    context.Context
-	ApiService             *GuildAPIService
-	guildId                int32
-	guildMoveMemberRequest *GuildMoveMemberRequest
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int64
+	request    *GuildMoveMemberRequest
 }
 
 // Move request
-func (r ApiGuildGuildIdVoiceMovePostRequest) GuildMoveMemberRequest(guildMoveMemberRequest GuildMoveMemberRequest) ApiGuildGuildIdVoiceMovePostRequest {
-	r.guildMoveMemberRequest = &guildMoveMemberRequest
+func (r ApiGuildGuildIdVoiceMovePostRequest) Request(request GuildMoveMemberRequest) ApiGuildGuildIdVoiceMovePostRequest {
+	r.request = &request
 	return r
 }
 
@@ -2652,7 +2663,7 @@ Move a member to another voice channel and send them connection info (SFU URL + 
 	@param guildId Guild ID
 	@return ApiGuildGuildIdVoiceMovePostRequest
 */
-func (a *GuildAPIService) GuildGuildIdVoiceMovePost(ctx context.Context, guildId int32) ApiGuildGuildIdVoiceMovePostRequest {
+func (a *GuildAPIService) GuildGuildIdVoiceMovePost(ctx context.Context, guildId int64) ApiGuildGuildIdVoiceMovePostRequest {
 	return ApiGuildGuildIdVoiceMovePostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2662,7 +2673,7 @@ func (a *GuildAPIService) GuildGuildIdVoiceMovePost(ctx context.Context, guildId
 
 // Execute executes the request
 //
-//	@return	GuildMoveMemberResponse
+//	@return GuildMoveMemberResponse
 func (a *GuildAPIService) GuildGuildIdVoiceMovePostExecute(r ApiGuildGuildIdVoiceMovePostRequest) (*GuildMoveMemberResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -2682,12 +2693,12 @@ func (a *GuildAPIService) GuildGuildIdVoiceMovePostExecute(r ApiGuildGuildIdVoic
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildMoveMemberRequest == nil {
-		return localVarReturnValue, nil, reportError("guildMoveMemberRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -2696,7 +2707,7 @@ func (a *GuildAPIService) GuildGuildIdVoiceMovePostExecute(r ApiGuildGuildIdVoic
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
+	localVarHTTPHeaderAccepts := []string{"*/*"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
@@ -2704,7 +2715,7 @@ func (a *GuildAPIService) GuildGuildIdVoiceMovePostExecute(r ApiGuildGuildIdVoic
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildMoveMemberRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -2775,14 +2786,14 @@ func (a *GuildAPIService) GuildGuildIdVoiceMovePostExecute(r ApiGuildGuildIdVoic
 }
 
 type ApiGuildPostRequest struct {
-	ctx                     context.Context
-	ApiService              *GuildAPIService
-	guildCreateGuildRequest *GuildCreateGuildRequest
+	ctx        context.Context
+	ApiService *GuildAPIService
+	request    *GuildCreateGuildRequest
 }
 
 // Guild data
-func (r ApiGuildPostRequest) GuildCreateGuildRequest(guildCreateGuildRequest GuildCreateGuildRequest) ApiGuildPostRequest {
-	r.guildCreateGuildRequest = &guildCreateGuildRequest
+func (r ApiGuildPostRequest) Request(request GuildCreateGuildRequest) ApiGuildPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -2805,7 +2816,7 @@ func (a *GuildAPIService) GuildPost(ctx context.Context) ApiGuildPostRequest {
 
 // Execute executes the request
 //
-//	@return	DtoGuild
+//	@return DtoGuild
 func (a *GuildAPIService) GuildPostExecute(r ApiGuildPostRequest) (*DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -2824,12 +2835,12 @@ func (a *GuildAPIService) GuildPostExecute(r ApiGuildPostRequest) (*DtoGuild, *h
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildCreateGuildRequest == nil {
-		return localVarReturnValue, nil, reportError("guildCreateGuildRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -2846,7 +2857,7 @@ func (a *GuildAPIService) GuildPostExecute(r ApiGuildPostRequest) (*DtoGuild, *h
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildCreateGuildRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
