@@ -13,6 +13,7 @@ const (
 	ErrUnableToFindMessages = "unable to find messages"
 	ErrUnableToGetMessages  = "unable to get messages"
 	ErrUnableToGetUsers     = "unable to get users"
+	ErrUnsupportedChannel   = "search is only available in text channels"
 
 	// Validation error messages
 	ErrMentionIdInvalid   = "mention ID must be positive"

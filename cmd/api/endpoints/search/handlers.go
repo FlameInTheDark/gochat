@@ -1,6 +1,9 @@
 package search
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"strconv"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -11,6 +14,31 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/msgsearch"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
+
+// SearchChannel
+//
+//	@Summary	Search messages in a channel
+//	@Produce	json
+//	@Tags		Search
+//	@Param		request	body		MessageSearchRequest	true	"Search request data"
+//	@Success	200		{array}		MessageSearchResponse	"Messages"
+//	@failure	400		{string}	string					"Bad request"
+//	@failure	401		{string}	string					"Unauthorized"
+//	@failure	403		{string}	string					"Forbidden"
+//	@failure	500		{string}	string					"Internal server error"
+//	@Router		/search/messages [post]
+func (e *entity) SearchChannel(c *fiber.Ctx) error {
+	req, user, err := e.parseSearchRequest(c)
+	if err != nil {
+		return err
+	}
+
+	if _, err := e.authorizeSearchScope(c.UserContext(), req.ChannelId, user.Id, nil); err != nil {
+		return err
+	}
+
+	return e.executeSearch(c, req, nil)
+}
 
 // Search
 //
@@ -32,30 +60,105 @@ func (e *entity) Search(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
 	}
 
+	req, user, err := e.parseSearchRequest(c)
+	if err != nil {
+		return err
+	}
+
+	searchGuildID, err := e.authorizeSearchScope(c.UserContext(), req.ChannelId, user.Id, &guildId)
+	if err != nil {
+		return err
+	}
+
+	return e.executeSearch(c, req, searchGuildID)
+}
+
+func (e *entity) parseSearchRequest(c *fiber.Ctx) (*MessageSearchRequest, *helper.JWTUser, error) {
 	var req MessageSearchRequest
 	if err := c.BodyParser(&req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+		return nil, nil, fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
 
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	user, err := helper.GetUser(c)
 	if err != nil {
-		return fiber.NewError(fiber.StatusUnauthorized, "unable to get user token")
+		return nil, nil, fiber.NewError(fiber.StatusUnauthorized, "unable to get user token")
 	}
 
-	_, gc, _, canRead, err := e.perm.ChannelPerm(c.UserContext(), guildId, req.ChannelId, user.Id, permissions.PermServerViewChannels, permissions.PermTextReadMessageHistory)
+	return &req, user, nil
+}
+
+func (e *entity) authorizeSearchScope(ctx context.Context, channelID, userID int64, requestedGuildID *int64) (*int64, error) {
+	channel, err := e.ch.GetChannel(ctx, channelID)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
-	}
-	if !canRead || gc == nil {
-		return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		return nil, fiber.NewError(fiber.StatusNotFound, "channel not found")
 	}
 
+	switch channel.Type {
+	case model.ChannelTypeGuild, model.ChannelTypeThread:
+		guildID := requestedGuildID
+		if guildID == nil {
+			guildChannel, err := e.gc.GetGuildByChannel(ctx, channelID)
+			if err != nil {
+				return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to get guild channel")
+			}
+			guildID = &guildChannel.GuildId
+		}
+
+		_, gc, _, canRead, err := e.perm.ChannelPerm(
+			ctx,
+			*guildID,
+			channelID,
+			userID,
+			permissions.PermServerViewChannels,
+			permissions.PermTextReadMessageHistory,
+		)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+			}
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
+		}
+		if !canRead || gc == nil {
+			return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		}
+
+		resolvedGuildID := gc.GuildId
+		return &resolvedGuildID, nil
+
+	case model.ChannelTypeDM, model.ChannelTypeGroupDM:
+		if requestedGuildID != nil {
+			return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		}
+
+		_, _, _, canRead, err := e.perm.ChannelPerm(
+			ctx,
+			0,
+			channelID,
+			userID,
+			permissions.PermServerViewChannels,
+			permissions.PermTextReadMessageHistory,
+		)
+		if err != nil {
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
+		}
+		if !canRead {
+			return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		}
+
+		return nil, nil
+
+	default:
+		return nil, fiber.NewError(fiber.StatusBadRequest, ErrUnsupportedChannel)
+	}
+}
+
+func (e *entity) executeSearch(c *fiber.Ctx, req *MessageSearchRequest, guildID *int64) error {
 	res, err := e.search.Search(c.UserContext(), msgsearch.SearchRequest{
-		GuildId:   guildId,
+		GuildId:   guildID,
 		ChannelId: req.ChannelId,
 		UserId:    req.AuthorId,
 		Content:   req.Content,
@@ -72,7 +175,7 @@ func (e *entity) Search(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetMessages)
 	}
 
-	var attIds []int64
+	var attIDs []int64
 	attSeen := make(map[int64]struct{})
 	for _, m := range msgs {
 		for _, aid := range m.Attachments {
@@ -80,13 +183,13 @@ func (e *entity) Search(c *fiber.Ctx) error {
 				continue
 			}
 			attSeen[aid] = struct{}{}
-			attIds = append(attIds, aid)
+			attIDs = append(attIDs, aid)
 		}
 	}
 
 	attMap := make(map[int64]model.Attachment)
-	if len(attIds) > 0 {
-		ats, err := e.at.SelectAttachmentsByChannel(c.UserContext(), req.ChannelId, attIds)
+	if len(attIDs) > 0 {
+		ats, err := e.at.SelectAttachmentsByChannel(c.UserContext(), req.ChannelId, attIDs)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetMessages)
 		}
@@ -95,27 +198,27 @@ func (e *entity) Search(c *fiber.Ctx) error {
 		}
 	}
 
-	var uidsmap = make(map[int64]bool)
-	var uids []int64
-
+	uidSeen := make(map[int64]struct{})
+	var userIDs []int64
 	for _, m := range msgs {
-		if _, ok := uidsmap[m.UserId]; !ok {
-			uids = append(uids, m.UserId)
-			uidsmap[m.UserId] = true
+		if _, ok := uidSeen[m.UserId]; ok {
+			continue
 		}
+		uidSeen[m.UserId] = struct{}{}
+		userIDs = append(userIDs, m.UserId)
 	}
 
-	users, err := e.user.GetUsersList(c.UserContext(), uids)
+	users, err := e.user.GetUsersList(c.UserContext(), userIDs)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUsers)
 	}
 
-	var umap = make(map[int64]*model.User)
-	for _, u := range users {
-		umap[u.Id] = &u
+	userMap := make(map[int64]*model.User)
+	for i := range users {
+		userMap[users[i].Id] = &users[i]
 	}
 
-	var resp = MessageSearchResponse{Pages: (res.Total + 10 - 1) / 10}
+	resp := MessageSearchResponse{Pages: (res.Total + 10 - 1) / 10}
 	for _, m := range msgs {
 		var dtoAts []dto.Attachment
 		if len(m.Attachments) > 0 {
@@ -141,7 +244,8 @@ func (e *entity) Search(c *fiber.Ctx) error {
 				}
 			}
 		}
-		if u, ok := umap[m.UserId]; ok {
+
+		if u, ok := userMap[m.UserId]; ok {
 			resp.Messages = append(resp.Messages, dto.Message{
 				Id:        m.Id,
 				ChannelId: m.ChannelId,
@@ -156,6 +260,7 @@ func (e *entity) Search(c *fiber.Ctx) error {
 			})
 			continue
 		}
+
 		resp.Messages = append(resp.Messages, dto.Message{
 			Id:          m.Id,
 			ChannelId:   m.ChannelId,

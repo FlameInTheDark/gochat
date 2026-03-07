@@ -16,6 +16,28 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/upload"
 )
 
+// Upload
+//
+//	@Summary		Upload guild emoji image
+//	@Description	Uploads and finalizes the binary payload for a previously created guild emoji placeholder.
+//	@Tags			Upload
+//	@Accept			application/octet-stream
+//	@Produce		json
+//	@Param			guild_id	path		int64	true	"Guild ID"
+//	@Param			emoji_id	path		int64	true	"Emoji ID"
+//	@Param			file		body		[]byte	true	"Binary emoji image"
+//	@Success		201			{string}	string	"Created"
+//	@Success		204			{string}	string	"No Content (already uploaded)"
+//	@failure		400			{string}	string	"Bad request"
+//	@failure		401			{string}	string	"Unauthorized"
+//	@failure		403			{string}	string	"Forbidden"
+//	@failure		404			{string}	string	"Emoji not found"
+//	@failure		409			{string}	string	"Conflict"
+//	@failure		410			{string}	string	"Upload expired"
+//	@failure		413			{string}	string	"File too large"
+//	@failure		415			{string}	string	"Unsupported media type"
+//	@failure		500			{string}	string	"Internal server error"
+//	@Router			/upload/emojis/{guild_id}/{emoji_id} [post]
 func (e *entity) Upload(c *fiber.Ctx) error {
 	guildId, err := strconv.ParseInt(c.Params("guild_id"), 10, 64)
 	if err != nil {

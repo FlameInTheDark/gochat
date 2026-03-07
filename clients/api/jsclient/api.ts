@@ -510,6 +510,50 @@ export interface DtoChannel {
 /**
  * 
  * @export
+ * @interface DtoEmojiRef
+ */
+export interface DtoEmojiRef {
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoEmojiRef
+     */
+    'id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoEmojiRef
+     */
+    'name'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface DtoEmojiUpload
+ */
+export interface DtoEmojiUpload {
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoEmojiUpload
+     */
+    'guild_id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoEmojiUpload
+     */
+    'id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoEmojiUpload
+     */
+    'name'?: string;
+}
+/**
+ * 
+ * @export
  * @interface DtoGuild
  */
 export interface DtoGuild {
@@ -549,6 +593,37 @@ export interface DtoGuild {
      * @memberof DtoGuild
      */
     'public'?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface DtoGuildEmoji
+ */
+export interface DtoGuildEmoji {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DtoGuildEmoji
+     */
+    'animated'?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoGuildEmoji
+     */
+    'guild_id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoGuildEmoji
+     */
+    'id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoGuildEmoji
+     */
+    'name'?: string;
 }
 /**
  * 
@@ -918,6 +993,31 @@ export interface GuildChannelRolePermissionRequest {
 /**
  * 
  * @export
+ * @interface GuildCreateEmojiRequest
+ */
+export interface GuildCreateEmojiRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildCreateEmojiRequest
+     */
+    'content_type'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildCreateEmojiRequest
+     */
+    'file_size'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildCreateEmojiRequest
+     */
+    'name'?: string;
+}
+/**
+ * 
+ * @export
  * @interface GuildCreateGuildChannelCategoryRequest
  */
 export interface GuildCreateGuildChannelCategoryRequest {
@@ -1243,6 +1343,19 @@ export interface GuildSetVoiceRegionResponse {
      * @memberof GuildSetVoiceRegionResponse
      */
     'region'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface GuildUpdateEmojiRequest
+ */
+export interface GuildUpdateEmojiRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildUpdateEmojiRequest
+     */
+    'name'?: string;
 }
 /**
  * 
@@ -2141,6 +2254,12 @@ export interface UserUserSettingsResponse {
      * @memberof UserUserSettingsResponse
      */
     'channel_mentions'?: { [key: string]: Array<ModelChannelMention>; };
+    /**
+     * 
+     * @type {{ [key: string]: Array<DtoEmojiRef>; }}
+     * @memberof UserUserSettingsResponse
+     */
+    'guild_emojis'?: { [key: string]: Array<DtoEmojiRef>; };
     /**
      * 
      * @type {Array<DtoGuild>}
@@ -3182,6 +3301,162 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Delete guild emoji
+         * @param {string} guildId Guild ID
+         * @param {string} emojiId Emoji ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdEmojisEmojiIdDelete: async (guildId: string, emojiId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdEmojisEmojiIdDelete', 'guildId', guildId)
+            // verify required parameter 'emojiId' is not null or undefined
+            assertParamExists('guildGuildIdEmojisEmojiIdDelete', 'emojiId', emojiId)
+            const localVarPath = `/guild/{guild_id}/emojis/{emoji_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"emoji_id"}}`, encodeURIComponent(String(emojiId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Update guild emoji
+         * @param {string} guildId Guild ID
+         * @param {string} emojiId Emoji ID
+         * @param {GuildUpdateEmojiRequest} request Emoji update data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdEmojisEmojiIdPatch: async (guildId: string, emojiId: string, request: GuildUpdateEmojiRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdEmojisEmojiIdPatch', 'guildId', guildId)
+            // verify required parameter 'emojiId' is not null or undefined
+            assertParamExists('guildGuildIdEmojisEmojiIdPatch', 'emojiId', emojiId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdEmojisEmojiIdPatch', 'request', request)
+            const localVarPath = `/guild/{guild_id}/emojis/{emoji_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"emoji_id"}}`, encodeURIComponent(String(emojiId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List guild emojis
+         * @param {string} guildId Guild ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdEmojisGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdEmojisGet', 'guildId', guildId)
+            const localVarPath = `/guild/{guild_id}/emojis`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create guild emoji metadata
+         * @param {string} guildId Guild ID
+         * @param {GuildCreateEmojiRequest} request Emoji metadata
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdEmojisPost: async (guildId: string, request: GuildCreateEmojiRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdEmojisPost', 'guildId', guildId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdEmojisPost', 'request', request)
+            const localVarPath = `/guild/{guild_id}/emojis`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get guild
          * @param {string} guildId Guild id
          * @param {*} [options] Override http request option.
@@ -3735,6 +4010,62 @@ export const GuildApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Delete guild emoji
+         * @param {string} guildId Guild ID
+         * @param {string} emojiId Emoji ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdEmojisEmojiIdDelete(guildId: string, emojiId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdEmojisEmojiIdDelete(guildId, emojiId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdEmojisEmojiIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Update guild emoji
+         * @param {string} guildId Guild ID
+         * @param {string} emojiId Emoji ID
+         * @param {GuildUpdateEmojiRequest} request Emoji update data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdEmojisEmojiIdPatch(guildId: string, emojiId: string, request: GuildUpdateEmojiRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuildEmoji>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdEmojisEmojiIdPatch(guildId, emojiId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdEmojisEmojiIdPatch']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary List guild emojis
+         * @param {string} guildId Guild ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdEmojisGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoGuildEmoji>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdEmojisGet(guildId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdEmojisGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Create guild emoji metadata
+         * @param {string} guildId Guild ID
+         * @param {GuildCreateEmojiRequest} request Emoji metadata
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdEmojisPost(guildId: string, request: GuildCreateEmojiRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoEmojiUpload>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdEmojisPost(guildId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdEmojisPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Get guild
          * @param {string} guildId Guild id
          * @param {*} [options] Override http request option.
@@ -3986,6 +4317,46 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
         },
         /**
          * 
+         * @summary Delete guild emoji
+         * @param {GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdEmojisEmojiIdDelete(requestParameters: GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdEmojisEmojiIdDelete(requestParameters.guildId, requestParameters.emojiId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Update guild emoji
+         * @param {GuildApiGuildGuildIdEmojisEmojiIdPatchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdEmojisEmojiIdPatch(requestParameters: GuildApiGuildGuildIdEmojisEmojiIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuildEmoji> {
+            return localVarFp.guildGuildIdEmojisEmojiIdPatch(requestParameters.guildId, requestParameters.emojiId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary List guild emojis
+         * @param {GuildApiGuildGuildIdEmojisGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdEmojisGet(requestParameters: GuildApiGuildGuildIdEmojisGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoGuildEmoji>> {
+            return localVarFp.guildGuildIdEmojisGet(requestParameters.guildId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Create guild emoji metadata
+         * @param {GuildApiGuildGuildIdEmojisPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdEmojisPost(requestParameters: GuildApiGuildGuildIdEmojisPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoEmojiUpload> {
+            return localVarFp.guildGuildIdEmojisPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Get guild
          * @param {GuildApiGuildGuildIdGetRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -4192,6 +4563,46 @@ export interface GuildApiInterface {
      * @memberof GuildApiInterface
      */
     guildGuildIdDelete(requestParameters: GuildApiGuildGuildIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Delete guild emoji
+     * @param {GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdEmojisEmojiIdDelete(requestParameters: GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Update guild emoji
+     * @param {GuildApiGuildGuildIdEmojisEmojiIdPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdEmojisEmojiIdPatch(requestParameters: GuildApiGuildGuildIdEmojisEmojiIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuildEmoji>;
+
+    /**
+     * 
+     * @summary List guild emojis
+     * @param {GuildApiGuildGuildIdEmojisGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdEmojisGet(requestParameters: GuildApiGuildGuildIdEmojisGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoGuildEmoji>>;
+
+    /**
+     * 
+     * @summary Create guild emoji metadata
+     * @param {GuildApiGuildGuildIdEmojisPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdEmojisPost(requestParameters: GuildApiGuildGuildIdEmojisPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoEmojiUpload>;
 
     /**
      * 
@@ -4485,6 +4896,90 @@ export interface GuildApiGuildGuildIdDeleteRequest {
      * @memberof GuildApiGuildGuildIdDelete
      */
     readonly guildId: string
+}
+
+/**
+ * Request parameters for guildGuildIdEmojisEmojiIdDelete operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest
+ */
+export interface GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest {
+    /**
+     * Guild ID
+     * @type {string}
+     * @memberof GuildApiGuildGuildIdEmojisEmojiIdDelete
+     */
+    readonly guildId: string
+
+    /**
+     * Emoji ID
+     * @type {string}
+     * @memberof GuildApiGuildGuildIdEmojisEmojiIdDelete
+     */
+    readonly emojiId: string
+}
+
+/**
+ * Request parameters for guildGuildIdEmojisEmojiIdPatch operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdEmojisEmojiIdPatchRequest
+ */
+export interface GuildApiGuildGuildIdEmojisEmojiIdPatchRequest {
+    /**
+     * Guild ID
+     * @type {string}
+     * @memberof GuildApiGuildGuildIdEmojisEmojiIdPatch
+     */
+    readonly guildId: string
+
+    /**
+     * Emoji ID
+     * @type {string}
+     * @memberof GuildApiGuildGuildIdEmojisEmojiIdPatch
+     */
+    readonly emojiId: string
+
+    /**
+     * Emoji update data
+     * @type {GuildUpdateEmojiRequest}
+     * @memberof GuildApiGuildGuildIdEmojisEmojiIdPatch
+     */
+    readonly request: GuildUpdateEmojiRequest
+}
+
+/**
+ * Request parameters for guildGuildIdEmojisGet operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdEmojisGetRequest
+ */
+export interface GuildApiGuildGuildIdEmojisGetRequest {
+    /**
+     * Guild ID
+     * @type {string}
+     * @memberof GuildApiGuildGuildIdEmojisGet
+     */
+    readonly guildId: string
+}
+
+/**
+ * Request parameters for guildGuildIdEmojisPost operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdEmojisPostRequest
+ */
+export interface GuildApiGuildGuildIdEmojisPostRequest {
+    /**
+     * Guild ID
+     * @type {string}
+     * @memberof GuildApiGuildGuildIdEmojisPost
+     */
+    readonly guildId: string
+
+    /**
+     * Emoji metadata
+     * @type {GuildCreateEmojiRequest}
+     * @memberof GuildApiGuildGuildIdEmojisPost
+     */
+    readonly request: GuildCreateEmojiRequest
 }
 
 /**
@@ -4810,6 +5305,54 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      */
     public guildGuildIdDelete(requestParameters: GuildApiGuildGuildIdDeleteRequest, options?: RawAxiosRequestConfig) {
         return GuildApiFp(this.configuration).guildGuildIdDelete(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Delete guild emoji
+     * @param {GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdEmojisEmojiIdDelete(requestParameters: GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdEmojisEmojiIdDelete(requestParameters.guildId, requestParameters.emojiId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Update guild emoji
+     * @param {GuildApiGuildGuildIdEmojisEmojiIdPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdEmojisEmojiIdPatch(requestParameters: GuildApiGuildGuildIdEmojisEmojiIdPatchRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdEmojisEmojiIdPatch(requestParameters.guildId, requestParameters.emojiId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary List guild emojis
+     * @param {GuildApiGuildGuildIdEmojisGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdEmojisGet(requestParameters: GuildApiGuildGuildIdEmojisGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdEmojisGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Create guild emoji metadata
+     * @param {GuildApiGuildGuildIdEmojisPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdEmojisPost(requestParameters: GuildApiGuildGuildIdEmojisPostRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdEmojisPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -7766,6 +8309,42 @@ export const SearchApiAxiosParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Search messages in a channel
+         * @param {SearchMessageSearchRequest} request Search request data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchMessagesPost: async (request: SearchMessageSearchRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('searchMessagesPost', 'request', request)
+            const localVarPath = `/search/messages`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -7790,6 +8369,19 @@ export const SearchApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['SearchApi.searchGuildIdMessagesPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * 
+         * @summary Search messages in a channel
+         * @param {SearchMessageSearchRequest} request Search request data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async searchMessagesPost(request: SearchMessageSearchRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<SearchMessageSearchResponse>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.searchMessagesPost(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SearchApi.searchMessagesPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -7810,6 +8402,16 @@ export const SearchApiFactory = function (configuration?: Configuration, basePat
         searchGuildIdMessagesPost(requestParameters: SearchApiSearchGuildIdMessagesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<SearchMessageSearchResponse>> {
             return localVarFp.searchGuildIdMessagesPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
+        /**
+         * 
+         * @summary Search messages in a channel
+         * @param {SearchApiSearchMessagesPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchMessagesPost(requestParameters: SearchApiSearchMessagesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<SearchMessageSearchResponse>> {
+            return localVarFp.searchMessagesPost(requestParameters.request, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -7828,6 +8430,16 @@ export interface SearchApiInterface {
      * @memberof SearchApiInterface
      */
     searchGuildIdMessagesPost(requestParameters: SearchApiSearchGuildIdMessagesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<SearchMessageSearchResponse>>;
+
+    /**
+     * 
+     * @summary Search messages in a channel
+     * @param {SearchApiSearchMessagesPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SearchApiInterface
+     */
+    searchMessagesPost(requestParameters: SearchApiSearchMessagesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<SearchMessageSearchResponse>>;
 
 }
 
@@ -7853,6 +8465,20 @@ export interface SearchApiSearchGuildIdMessagesPostRequest {
 }
 
 /**
+ * Request parameters for searchMessagesPost operation in SearchApi.
+ * @export
+ * @interface SearchApiSearchMessagesPostRequest
+ */
+export interface SearchApiSearchMessagesPostRequest {
+    /**
+     * Search request data
+     * @type {SearchMessageSearchRequest}
+     * @memberof SearchApiSearchMessagesPost
+     */
+    readonly request: SearchMessageSearchRequest
+}
+
+/**
  * SearchApi - object-oriented interface
  * @export
  * @class SearchApi
@@ -7869,6 +8495,18 @@ export class SearchApi extends BaseAPI implements SearchApiInterface {
      */
     public searchGuildIdMessagesPost(requestParameters: SearchApiSearchGuildIdMessagesPostRequest, options?: RawAxiosRequestConfig) {
         return SearchApiFp(this.configuration).searchGuildIdMessagesPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Search messages in a channel
+     * @param {SearchApiSearchMessagesPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SearchApi
+     */
+    public searchMessagesPost(requestParameters: SearchApiSearchMessagesPostRequest, options?: RawAxiosRequestConfig) {
+        return SearchApiFp(this.configuration).searchMessagesPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

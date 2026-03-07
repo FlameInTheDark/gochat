@@ -94,6 +94,10 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdChannelOrderPatch**](docs/GuildAPI.md#guildguildidchannelorderpatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 *GuildAPI* | [**GuildGuildIdChannelPost**](docs/GuildAPI.md#guildguildidchannelpost) | **Post** /guild/{guild_id}/channel | Create guild channel
 *GuildAPI* | [**GuildGuildIdDelete**](docs/GuildAPI.md#guildguildiddelete) | **Delete** /guild/{guild_id} | Delete guild
+*GuildAPI* | [**GuildGuildIdEmojisEmojiIdDelete**](docs/GuildAPI.md#guildguildidemojisemojiiddelete) | **Delete** /guild/{guild_id}/emojis/{emoji_id} | Delete guild emoji
+*GuildAPI* | [**GuildGuildIdEmojisEmojiIdPatch**](docs/GuildAPI.md#guildguildidemojisemojiidpatch) | **Patch** /guild/{guild_id}/emojis/{emoji_id} | Update guild emoji
+*GuildAPI* | [**GuildGuildIdEmojisGet**](docs/GuildAPI.md#guildguildidemojisget) | **Get** /guild/{guild_id}/emojis | List guild emojis
+*GuildAPI* | [**GuildGuildIdEmojisPost**](docs/GuildAPI.md#guildguildidemojispost) | **Post** /guild/{guild_id}/emojis | Create guild emoji metadata
 *GuildAPI* | [**GuildGuildIdGet**](docs/GuildAPI.md#guildguildidget) | **Get** /guild/{guild_id} | Get guild
 *GuildAPI* | [**GuildGuildIdIconPost**](docs/GuildAPI.md#guildguildidiconpost) | **Post** /guild/{guild_id}/icon | Create guild icon metadata
 *GuildAPI* | [**GuildGuildIdIconsGet**](docs/GuildAPI.md#guildguildidiconsget) | **Get** /guild/{guild_id}/icons | List guild icons
@@ -130,6 +134,7 @@ Class | Method | HTTP request | Description
 *MessageAPI* | [**MessageChannelChannelIdPost**](docs/MessageAPI.md#messagechannelchannelidpost) | **Post** /message/channel/{channel_id} | Send message
 *MessageAPI* | [**MessageChannelChannelIdTypingPost**](docs/MessageAPI.md#messagechannelchannelidtypingpost) | **Post** /message/channel/{channel_id}/typing | Send user typing event in the channel
 *SearchAPI* | [**SearchGuildIdMessagesPost**](docs/SearchAPI.md#searchguildidmessagespost) | **Post** /search/{guild_id}/messages | Search messages
+*SearchAPI* | [**SearchMessagesPost**](docs/SearchAPI.md#searchmessagespost) | **Post** /search/messages | Search messages in a channel
 *UploadAPI* | [**UploadAttachmentsChannelIdAttachmentIdPost**](docs/UploadAPI.md#uploadattachmentschannelidattachmentidpost) | **Post** /upload/attachments/{channel_id}/{attachment_id} | Upload attachment
 *UploadAPI* | [**UploadAvatarsUserIdAvatarIdPost**](docs/UploadAPI.md#uploadavatarsuseridavataridpost) | **Post** /upload/avatars/{user_id}/{avatar_id} | Upload user avatar
 *UploadAPI* | [**UploadIconsGuildIdIconIdPost**](docs/UploadAPI.md#uploadiconsguildidiconidpost) | **Post** /upload/icons/{guild_id}/{icon_id} | Upload guild icon
@@ -177,7 +182,10 @@ Class | Method | HTTP request | Description
  - [DtoAvatarData](docs/DtoAvatarData.md)
  - [DtoAvatarUpload](docs/DtoAvatarUpload.md)
  - [DtoChannel](docs/DtoChannel.md)
+ - [DtoEmojiRef](docs/DtoEmojiRef.md)
+ - [DtoEmojiUpload](docs/DtoEmojiUpload.md)
  - [DtoGuild](docs/DtoGuild.md)
+ - [DtoGuildEmoji](docs/DtoGuildEmoji.md)
  - [DtoGuildInvite](docs/DtoGuildInvite.md)
  - [DtoIcon](docs/DtoIcon.md)
  - [DtoIconUpload](docs/DtoIconUpload.md)
@@ -189,6 +197,7 @@ Class | Method | HTTP request | Description
  - [GuildChannelOrder](docs/GuildChannelOrder.md)
  - [GuildChannelRolePermission](docs/GuildChannelRolePermission.md)
  - [GuildChannelRolePermissionRequest](docs/GuildChannelRolePermissionRequest.md)
+ - [GuildCreateEmojiRequest](docs/GuildCreateEmojiRequest.md)
  - [GuildCreateGuildChannelCategoryRequest](docs/GuildCreateGuildChannelCategoryRequest.md)
  - [GuildCreateGuildChannelRequest](docs/GuildCreateGuildChannelRequest.md)
  - [GuildCreateGuildRequest](docs/GuildCreateGuildRequest.md)
@@ -204,6 +213,7 @@ Class | Method | HTTP request | Description
  - [GuildSetGuildSystemMessagesChannelRequest](docs/GuildSetGuildSystemMessagesChannelRequest.md)
  - [GuildSetVoiceRegionRequest](docs/GuildSetVoiceRegionRequest.md)
  - [GuildSetVoiceRegionResponse](docs/GuildSetVoiceRegionResponse.md)
+ - [GuildUpdateEmojiRequest](docs/GuildUpdateEmojiRequest.md)
  - [GuildUpdateGuildRequest](docs/GuildUpdateGuildRequest.md)
  - [MessageSendMessageRequest](docs/MessageSendMessageRequest.md)
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)

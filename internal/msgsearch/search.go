@@ -147,11 +147,13 @@ func buildOSQuery(req SearchRequest) ([]byte, error) {
 		osSearchQuery{Term: map[string]any{"channel_id": req.ChannelId}},
 	)
 
-	// Required guild filter
-	osreq.Query.Bool.Filter = append(
-		osreq.Query.Bool.Filter,
-		osSearchQuery{Term: map[string]any{"guild_id": req.GuildId}},
-	)
+	// Guild filter is optional so DM/private channel documents without guild_id remain searchable.
+	if req.GuildId != nil {
+		osreq.Query.Bool.Filter = append(
+			osreq.Query.Bool.Filter,
+			osSearchQuery{Term: map[string]any{"guild_id": *req.GuildId}},
+		)
+	}
 
 	// Optional filters
 	if req.UserId != nil {

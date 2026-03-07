@@ -13,6 +13,10 @@ Method | HTTP request | Description
 [**GuildGuildIdChannelOrderPatch**](GuildAPI.md#GuildGuildIdChannelOrderPatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 [**GuildGuildIdChannelPost**](GuildAPI.md#GuildGuildIdChannelPost) | **Post** /guild/{guild_id}/channel | Create guild channel
 [**GuildGuildIdDelete**](GuildAPI.md#GuildGuildIdDelete) | **Delete** /guild/{guild_id} | Delete guild
+[**GuildGuildIdEmojisEmojiIdDelete**](GuildAPI.md#GuildGuildIdEmojisEmojiIdDelete) | **Delete** /guild/{guild_id}/emojis/{emoji_id} | Delete guild emoji
+[**GuildGuildIdEmojisEmojiIdPatch**](GuildAPI.md#GuildGuildIdEmojisEmojiIdPatch) | **Patch** /guild/{guild_id}/emojis/{emoji_id} | Update guild emoji
+[**GuildGuildIdEmojisGet**](GuildAPI.md#GuildGuildIdEmojisGet) | **Get** /guild/{guild_id}/emojis | List guild emojis
+[**GuildGuildIdEmojisPost**](GuildAPI.md#GuildGuildIdEmojisPost) | **Post** /guild/{guild_id}/emojis | Create guild emoji metadata
 [**GuildGuildIdGet**](GuildAPI.md#GuildGuildIdGet) | **Get** /guild/{guild_id} | Get guild
 [**GuildGuildIdIconPost**](GuildAPI.md#GuildGuildIdIconPost) | **Post** /guild/{guild_id}/icon | Create guild icon metadata
 [**GuildGuildIdIconsGet**](GuildAPI.md#GuildGuildIdIconsGet) | **Get** /guild/{guild_id}/icons | List guild icons
@@ -655,6 +659,288 @@ No authorization required
 
 - **Content-Type**: Not defined
 - **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdEmojisEmojiIdDelete
+
+> string GuildGuildIdEmojisEmojiIdDelete(ctx, guildId, emojiId).Execute()
+
+Delete guild emoji
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int64(789) // int64 | Guild ID
+	emojiId := int64(789) // int64 | Emoji ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdEmojisEmojiIdDelete(context.Background(), guildId, emojiId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdEmojisEmojiIdDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdEmojisEmojiIdDelete`: string
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdEmojisEmojiIdDelete`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int64** | Guild ID | 
+**emojiId** | **int64** | Emoji ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdEmojisEmojiIdDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdEmojisEmojiIdPatch
+
+> DtoGuildEmoji GuildGuildIdEmojisEmojiIdPatch(ctx, guildId, emojiId).Request(request).Execute()
+
+Update guild emoji
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int64(789) // int64 | Guild ID
+	emojiId := int64(789) // int64 | Emoji ID
+	request := *openapiclient.NewGuildUpdateEmojiRequest() // GuildUpdateEmojiRequest | Emoji update data
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdEmojisEmojiIdPatch(context.Background(), guildId, emojiId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdEmojisEmojiIdPatch``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdEmojisEmojiIdPatch`: DtoGuildEmoji
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdEmojisEmojiIdPatch`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int64** | Guild ID | 
+**emojiId** | **int64** | Emoji ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdEmojisEmojiIdPatchRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+ **request** | [**GuildUpdateEmojiRequest**](GuildUpdateEmojiRequest.md) | Emoji update data | 
+
+### Return type
+
+[**DtoGuildEmoji**](DtoGuildEmoji.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdEmojisGet
+
+> []DtoGuildEmoji GuildGuildIdEmojisGet(ctx, guildId).Execute()
+
+List guild emojis
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int64(789) // int64 | Guild ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdEmojisGet(context.Background(), guildId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdEmojisGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdEmojisGet`: []DtoGuildEmoji
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdEmojisGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int64** | Guild ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdEmojisGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**[]DtoGuildEmoji**](DtoGuildEmoji.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdEmojisPost
+
+> DtoEmojiUpload GuildGuildIdEmojisPost(ctx, guildId).Request(request).Execute()
+
+Create guild emoji metadata
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int64(789) // int64 | Guild ID
+	request := *openapiclient.NewGuildCreateEmojiRequest() // GuildCreateEmojiRequest | Emoji metadata
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdEmojisPost(context.Background(), guildId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdEmojisPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdEmojisPost`: DtoEmojiUpload
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdEmojisPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int64** | Guild ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdEmojisPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **request** | [**GuildCreateEmojiRequest**](GuildCreateEmojiRequest.md) | Emoji metadata | 
+
+### Return type
+
+[**DtoEmojiUpload**](DtoEmojiUpload.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)

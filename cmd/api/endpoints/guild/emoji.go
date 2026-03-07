@@ -20,6 +20,20 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/upload"
 )
 
+// CreateEmoji
+//
+//	@Summary	Create guild emoji metadata
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		guild_id	path		int64				true	"Guild ID"
+//	@Param		request		body		CreateEmojiRequest	true	"Emoji metadata"
+//	@Success	200			{object}	dto.EmojiUpload		"Emoji upload metadata"
+//	@failure	400			{string}	string				"Bad request"
+//	@failure	401			{string}	string				"Unauthorized"
+//	@failure	403			{string}	string				"Forbidden"
+//	@failure	409			{string}	string				"Conflict"
+//	@failure	500			{string}	string				"Internal server error"
+//	@Router		/guild/{guild_id}/emojis [post]
 func (e *entity) CreateEmoji(c *fiber.Ctx) error {
 	var req CreateEmojiRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -70,6 +84,18 @@ func (e *entity) CreateEmoji(c *fiber.Ctx) error {
 	return c.JSON(dto.EmojiUpload{Id: id, GuildId: guildId, Name: req.Name})
 }
 
+// ListEmojis
+//
+//	@Summary	List guild emojis
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		guild_id	path		int64			true	"Guild ID"
+//	@Success	200			{array}		dto.GuildEmoji	"Guild emojis"
+//	@failure	400			{string}	string			"Bad request"
+//	@failure	401			{string}	string			"Unauthorized"
+//	@failure	403			{string}	string			"Forbidden"
+//	@failure	500			{string}	string			"Internal server error"
+//	@Router		/guild/{guild_id}/emojis [get]
 func (e *entity) ListEmojis(c *fiber.Ctx) error {
 	guildId, err := e.parseGuildID(c)
 	if err != nil {
@@ -86,6 +112,22 @@ func (e *entity) ListEmojis(c *fiber.Ctx) error {
 	return c.JSON(emojis)
 }
 
+// UpdateEmoji
+//
+//	@Summary	Update guild emoji
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		guild_id	path		int64				true	"Guild ID"
+//	@Param		emoji_id	path		int64				true	"Emoji ID"
+//	@Param		request		body		UpdateEmojiRequest	true	"Emoji update data"
+//	@Success	200			{object}	dto.GuildEmoji		"Updated emoji"
+//	@failure	400			{string}	string				"Bad request"
+//	@failure	401			{string}	string				"Unauthorized"
+//	@failure	403			{string}	string				"Forbidden"
+//	@failure	404			{string}	string				"Not found"
+//	@failure	409			{string}	string				"Conflict"
+//	@failure	500			{string}	string				"Internal server error"
+//	@Router		/guild/{guild_id}/emojis/{emoji_id} [patch]
 func (e *entity) UpdateEmoji(c *fiber.Ctx) error {
 	var req UpdateEmojiRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -128,6 +170,20 @@ func (e *entity) UpdateEmoji(c *fiber.Ctx) error {
 	return c.JSON(guildEmojiToDTO(updated))
 }
 
+// DeleteEmoji
+//
+//	@Summary	Delete guild emoji
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		guild_id	path		int64	true	"Guild ID"
+//	@Param		emoji_id	path		int64	true	"Emoji ID"
+//	@Success	200			{string}	string	"OK"
+//	@failure	400			{string}	string	"Bad request"
+//	@failure	401			{string}	string	"Unauthorized"
+//	@failure	403			{string}	string	"Forbidden"
+//	@failure	404			{string}	string	"Not found"
+//	@failure	500			{string}	string	"Internal server error"
+//	@Router		/guild/{guild_id}/emojis/{emoji_id} [delete]
 func (e *entity) DeleteEmoji(c *fiber.Ctx) error {
 	guildId, err := e.parseGuildID(c)
 	if err != nil {

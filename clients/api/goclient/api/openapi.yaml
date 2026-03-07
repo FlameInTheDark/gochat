@@ -1290,6 +1290,236 @@ paths:
       tags:
       - Guild Roles
       x-codegen-request-body-name: req
+  /guild/{guild_id}/emojis:
+    get:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.GuildEmoji'
+                type: array
+          description: Guild emojis
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: List guild emojis
+      tags:
+      - Guild
+    post:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/guild.CreateEmojiRequest'
+        description: Emoji metadata
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.EmojiUpload'
+          description: Emoji upload metadata
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Create guild emoji metadata
+      tags:
+      - Guild
+      x-codegen-request-body-name: request
+  /guild/{guild_id}/emojis/{emoji_id}:
+    delete:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+      - description: Emoji ID
+        in: path
+        name: emoji_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Delete guild emoji
+      tags:
+      - Guild
+    patch:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+      - description: Emoji ID
+        in: path
+        name: emoji_id
+        required: true
+        schema:
+          format: int64
+          type: integer
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/guild.UpdateEmojiRequest'
+        description: Emoji update data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.GuildEmoji'
+          description: Updated emoji
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Update guild emoji
+      tags:
+      - Guild
+      x-codegen-request-body-name: request
   /guild/{guild_id}/icon:
     post:
       description: Creates an icon placeholder and returns upload info. Only guild
@@ -2415,6 +2645,52 @@ paths:
       summary: Set channel read state for current user
       tags:
       - Message
+  /search/messages:
+    post:
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/search.MessageSearchRequest'
+        description: Search request data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/search.MessageSearchResponse'
+                type: array
+          description: Messages
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Search messages in a channel
+      tags:
+      - Search
+      x-codegen-request-body-name: request
   /search/{guild_id}/messages:
     post:
       parameters:
@@ -2541,6 +2817,12 @@ paths:
               schema:
                 type: string
           description: File too large
+        "415":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unsupported media type
         "500":
           content:
             application/json:
@@ -2673,6 +2955,12 @@ paths:
               schema:
                 type: string
           description: Created
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content (already uploaded)
         "400":
           content:
             application/json:
@@ -2691,6 +2979,12 @@ paths:
               schema:
                 type: string
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Icon not found
         "413":
           content:
             application/json:
@@ -3963,6 +4257,32 @@ components:
           example: us-east
           type: string
       type: object
+    dto.EmojiRef:
+      example:
+        name: name
+        id: "0"
+      properties:
+        id:
+          example: "0"
+          type: string
+        name:
+          type: string
+      type: object
+    dto.EmojiUpload:
+      example:
+        guild_id: "0"
+        name: name
+        id: "0"
+      properties:
+        guild_id:
+          example: "0"
+          type: string
+        id:
+          example: "0"
+          type: string
+        name:
+          type: string
+      type: object
     dto.Guild:
       example:
         owner: 2230469276416868352
@@ -3997,6 +4317,24 @@ components:
           default: false
           description: Whether the guild is public
           type: boolean
+      type: object
+    dto.GuildEmoji:
+      example:
+        guild_id: "0"
+        name: name
+        animated: true
+        id: "0"
+      properties:
+        animated:
+          type: boolean
+        guild_id:
+          example: "0"
+          type: string
+        id:
+          example: "0"
+          type: string
+        name:
+          type: string
       type: object
     dto.GuildInvite:
       example:
@@ -4273,6 +4611,15 @@ components:
           example: 0
           type: integer
       type: object
+    guild.CreateEmojiRequest:
+      properties:
+        content_type:
+          type: string
+        file_size:
+          type: integer
+        name:
+          type: string
+      type: object
     guild.CreateGuildChannelCategoryRequest:
       properties:
         name:
@@ -4454,6 +4801,11 @@ components:
         guild_id:
           type: integer
         region:
+          type: string
+      type: object
+    guild.UpdateEmojiRequest:
+      properties:
+        name:
           type: string
       type: object
     guild.UpdateGuildRequest:
@@ -5227,6 +5579,12 @@ components:
             authorId: 9
             userId: 4
             channelId: 3
+        guild_emojis:
+          key:
+          - name: name
+            id: "0"
+          - name: name
+            id: "0"
         read_states:
           key: 7
         version: 2
@@ -5238,6 +5596,12 @@ components:
           additionalProperties:
             items:
               $ref: '#/components/schemas/model.ChannelMention'
+            type: array
+          type: object
+        guild_emojis:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/dto.EmojiRef'
             type: array
           type: object
         guilds:

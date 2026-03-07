@@ -21,6 +21,7 @@ var _ MappedNullable = &UserUserSettingsResponse{}
 // UserUserSettingsResponse struct for UserUserSettingsResponse
 type UserUserSettingsResponse struct {
 	ChannelMentions    *map[string][]ModelChannelMention `json:"channel_mentions,omitempty"`
+	GuildEmojis        *map[string][]DtoEmojiRef         `json:"guild_emojis,omitempty"`
 	Guilds             []DtoGuild                        `json:"guilds,omitempty"`
 	GuildsLastMessages *map[string]map[string]int64      `json:"guilds_last_messages,omitempty"`
 	Mentions           *map[string][]ModelMention        `json:"mentions,omitempty"`
@@ -76,6 +77,38 @@ func (o *UserUserSettingsResponse) HasChannelMentions() bool {
 // SetChannelMentions gets a reference to the given map[string][]ModelChannelMention and assigns it to the ChannelMentions field.
 func (o *UserUserSettingsResponse) SetChannelMentions(v map[string][]ModelChannelMention) {
 	o.ChannelMentions = &v
+}
+
+// GetGuildEmojis returns the GuildEmojis field value if set, zero value otherwise.
+func (o *UserUserSettingsResponse) GetGuildEmojis() map[string][]DtoEmojiRef {
+	if o == nil || IsNil(o.GuildEmojis) {
+		var ret map[string][]DtoEmojiRef
+		return ret
+	}
+	return *o.GuildEmojis
+}
+
+// GetGuildEmojisOk returns a tuple with the GuildEmojis field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserUserSettingsResponse) GetGuildEmojisOk() (*map[string][]DtoEmojiRef, bool) {
+	if o == nil || IsNil(o.GuildEmojis) {
+		return nil, false
+	}
+	return o.GuildEmojis, true
+}
+
+// HasGuildEmojis returns a boolean if a field has been set.
+func (o *UserUserSettingsResponse) HasGuildEmojis() bool {
+	if o != nil && !IsNil(o.GuildEmojis) {
+		return true
+	}
+
+	return false
+}
+
+// SetGuildEmojis gets a reference to the given map[string][]DtoEmojiRef and assigns it to the GuildEmojis field.
+func (o *UserUserSettingsResponse) SetGuildEmojis(v map[string][]DtoEmojiRef) {
+	o.GuildEmojis = &v
 }
 
 // GetGuilds returns the Guilds field value if set, zero value otherwise.
@@ -282,6 +315,9 @@ func (o UserUserSettingsResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.ChannelMentions) {
 		toSerialize["channel_mentions"] = o.ChannelMentions
+	}
+	if !IsNil(o.GuildEmojis) {
+		toSerialize["guild_emojis"] = o.GuildEmojis
 	}
 	if !IsNil(o.Guilds) {
 		toSerialize["guilds"] = o.Guilds

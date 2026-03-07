@@ -31,6 +31,16 @@ func (e *entity) Init(router fiber.Router) {
 	router.Get("/:emoji_id", e.Redirect)
 }
 
+// Redirect
+//
+//	@Summary	Redirect to public emoji asset
+//	@Produce	plain
+//	@Tags		Emoji
+//	@Param		emoji_id	path		string	true	"Emoji filename ending in .webp"
+//	@Param		size		query		int		false	"Preferred rendered size"
+//	@Success	307			{string}	string	"Temporary Redirect"
+//	@failure	404			{string}	string	"Not found"
+//	@Router		/emoji/{emoji_id} [get]
 func (e *entity) Redirect(c *fiber.Ctx) error {
 	rawID := c.Params("emoji_id")
 	if !strings.HasSuffix(rawID, ".webp") {
