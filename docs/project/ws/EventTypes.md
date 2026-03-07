@@ -274,6 +274,47 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
+## Guild Emoji Events (116-118)
+
+| Type | Name | NATS Topic | Description |
+|------|------|------------|-------------|
+| 116 | Guild Emoji Create | `guild.{guildId}` | Emoji upload finalized and ready |
+| 117 | Guild Emoji Update | `guild.{guildId}` | Emoji metadata changed |
+| 118 | Guild Emoji Delete | `guild.{guildId}` | Emoji removed |
+
+**Payload (t=116, Guild Emoji Create):**
+```json
+{
+  "emoji": {
+    "id": "2230469276416868352",
+    "guild_id": "2226022078304223200",
+    "name": "party-cat",
+    "animated": true
+  }
+}
+```
+
+**Payload (t=117, Guild Emoji Update):**
+```json
+{
+  "emoji": {
+    "id": "2230469276416868352",
+    "guild_id": "2226022078304223200",
+    "name": "party-cat-fast",
+    "animated": true
+  }
+}
+```
+
+**Payload (t=118, Guild Emoji Delete):**
+```json
+{
+  "guild_id": "2226022078304223200",
+  "emoji_id": "2230469276416868352"
+}
+```
+
+---
 ## Guild Member Events (200–209)
 
 | Type | Name | NATS Topic | Description |

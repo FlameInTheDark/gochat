@@ -55,6 +55,10 @@ func (e *entity) Send(c *fiber.Ctx) error {
 		return err
 	}
 
+	req.Content, err = e.sanitizeEmojiContent(c.UserContext(), user.Id, req.Content)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendMessage)
+	}
 	// Create and send message
 	message, err := e.createAndSendMessage(c, req, user, channel, guildId, validatedAttachments)
 	if err != nil {
@@ -943,6 +947,10 @@ func (e *entity) Update(c *fiber.Ctx) error {
 		return err
 	}
 
+	req.Content, err = e.sanitizeEmojiContent(c.UserContext(), user.Id, req.Content)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUpdateMessage)
+	}
 	// Update message and build response
 	updatedMessage, err := e.updateMessageAndBuildResponse(c, req, message, user, guildId)
 	if err != nil {

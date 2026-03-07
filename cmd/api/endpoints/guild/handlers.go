@@ -524,12 +524,24 @@ func (e *entity) Delete(c *fiber.Ctx) error {
 		}
 	}
 
-	// 3) Remove all members
+	// 3) Remove all guild emojis
+	emojis, err := e.emoji.DeleteGuildEmojis(c.UserContext(), guildId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToDeleteEmoji)
+	}
+	for _, emoji := range emojis {
+		if err := e.removeEmojiObjects(c.UserContext(), emoji.Id); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToDeleteEmoji)
+		}
+		_ = e.invalidateEmojiCache(c.UserContext(), guildId, emoji.Id)
+	}
+
+	// 4) Remove all members
 	if err := e.memb.RemoveMembersByGuild(c.UserContext(), guildId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMembers)
 	}
 
-	// 4) Delete the guild itself
+	// 5) Delete the guild itself
 	if err := e.g.DeleteGuild(c.UserContext(), guildId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToDeleteGuild)
 	}

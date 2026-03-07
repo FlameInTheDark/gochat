@@ -807,6 +807,11 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUserGuilds)
 	}
 
+	guildEmojis, err := e.getGuildEmojiSettingsMap(c.UserContext(), gids)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetEmojis)
+	}
+
 	gclm, err := e.gclm.GetChannelsMessagesForGuilds(c.UserContext(), gids)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuilds)
@@ -898,7 +903,7 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	close(tasks)
 	wg.Wait()
 
-	settings, err := modelToSettings(&s, e.guildModelToGuildMany(c, guilds), rs, gclm)
+	settings, err := modelToSettings(&s, e.guildModelToGuildMany(c, guilds), guildEmojis, rs, gclm)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUnmarshalUserSettings)
 	}

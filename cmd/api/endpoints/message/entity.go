@@ -19,6 +19,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channeluserperm"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
+	emojirepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/emoji"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/friend"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
@@ -49,14 +50,12 @@ type entity struct {
 	name        string
 	uploadLimit int64
 	attachTTL   int64
-	// Services
-	log *slog.Logger
-	mqt mq.SendTransporter
-	imq *indexmq.IndexMQ
+	log         *slog.Logger
+	mqt         mq.SendTransporter
+	imq         *indexmq.IndexMQ
 
 	cache cache.Cache
 
-	// DB entities
 	user    user.User
 	m       member.Member
 	disc    discriminator.Discriminator
@@ -77,6 +76,7 @@ type entity struct {
 	av      avatar.Avatar
 	mention mention.Mention
 	fr      friend.Friend
+	emoji   emojirepo.Emoji
 }
 
 func (e *entity) Name() string {
@@ -84,7 +84,6 @@ func (e *entity) Name() string {
 }
 
 func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ, uploadLimit int64, attachTTLSeconds int64, cache cache.Cache, log *slog.Logger) server.Entity {
-
 	return &entity{
 		name:        entityName,
 		uploadLimit: uploadLimit,
@@ -113,5 +112,6 @@ func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ
 		gclm:        guildchannelmessages.New(cql),
 		mention:     mention.New(cql),
 		fr:          friend.New(pg.Conn()),
+		emoji:       emojirepo.New(pg.Conn()),
 	}
 }

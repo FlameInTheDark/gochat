@@ -61,7 +61,7 @@ services:
       - ./attachments_config.yaml:/dist/config.yaml
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.attachments.rule=PathPrefix(`/api/v1/upload`)"
+      - "traefik.http.routers.attachments.rule=PathPrefix(`/api/v1/upload`) || PathPrefix(`/emoji`)"
       - "traefik.http.routers.attachments.priority=100"
       - "traefik.http.routers.attachments.service=attachments"
       - "traefik.http.services.attachments.loadbalancer.server.port=3200"

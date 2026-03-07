@@ -41,6 +41,9 @@ const (
 	EventTypeThreadCreate
 	EventTypeThreadUpdate
 	EventTypeThreadDelete
+	EventTypeGuildEmojiCreate
+	EventTypeGuildEmojiUpdate
+	EventTypeGuildEmojiDelete
 )
 
 const (

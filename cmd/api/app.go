@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
 	"time"
 
 	"github.com/FlameInTheDark/gochat/cmd/api/config"
@@ -26,6 +25,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/nats"
 	"github.com/FlameInTheDark/gochat/internal/msgsearch"
+	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
@@ -48,7 +48,6 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 
 	logger.Info("Connecting to ScyllaDB")
-	// Database connection
 	database, err := db.NewCQLCon(cfg.ClusterKeyspace, db.NewDBLogger(logger), cfg.Cluster...)
 	if err != nil {
 		return nil, err
@@ -62,6 +61,15 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 	shut.Up(pg)
+
+	var storage *s3.Client
+	if cfg.S3Endpoint != "" {
+		logger.Info("Connecting to S3")
+		storage, err = s3.NewClient(cfg.S3Endpoint, cfg.S3AccessKeyID, cfg.S3SecretAccessKey, cfg.S3Region, cfg.S3Bucket, cfg.S3UseSSL)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	logger.Info("Connecting to NATS")
 	var qt mq.SendTransporter
@@ -86,8 +94,6 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	shut.Up(cache)
 
 	logger.Info("Connecting to NATS for SFU occupancy updates")
-	// Subscribe to SFU occupancy updates and maintain bindings purely in API/cache
-	// Subject: voice.occ  Payload: {"channel":<id>,"delta":+1|-1}
 	if cfg.NatsConnString != "" {
 		if occNc, err := natsio.Connect(cfg.NatsConnString, natsio.Compression(true)); err == nil {
 			shut.UpFunc(func() { _ = occNc.Drain() })
@@ -120,7 +126,6 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		}
 	}
 
-	// Initialize message search service
 	logger.Info("Connecting to OpenSearch")
 	searchService, err := msgsearch.NewSearch(cfg.OSAddresses, cfg.OSInsecureSkipVerify, cfg.OSUsername, cfg.OSPassword)
 	if err != nil {
@@ -133,18 +138,13 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
-	// ID generator setup
 	idgen.New(0)
-
-	// HTTP Server
 
 	logger.Info("Registering HTTP server")
 	s := server.NewServer()
 	shut.Up(s)
 
 	s.WithCache(cache)
-
-	// HTTP Middlewares
 	if cfg.Swagger {
 		s.WithSwagger("api")
 	}
@@ -155,31 +155,23 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.WithMetrics("gochat-api")
 	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
 	s.AuthMiddleware(cfg.AuthSecret)
-	//s.RateLimitMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 	s.RateLimitPipedMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 	s.Use(helper.RequireTokenType("access", "api"))
-	// Expose BaseUrl to handlers for building absolute SFU URLs
 	s.Use(func(c *fiber.Ctx) error {
 		c.Locals("base_url", cfg.BaseUrl)
 		return c.Next()
 	})
 
-	// HTTP Router
 	s.Register(
 		"/api/v1",
 		user.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, logger),
 		message.New(database, pg, qt, imq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
-		guild.New(database, pg, qt, imq, cache, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, extractRegionIDs(cfg.VoiceRegions), logger),
+		guild.New(database, pg, qt, imq, cache, storage, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, extractRegionIDs(cfg.VoiceRegions), logger),
 		voice.New(convertRegions(cfg.VoiceRegions), logger),
 		search.New(database, pg, searchService, logger),
 	)
 
-	return &App{
-		server: s,
-		db:     database,
-		logger: logger,
-		addr:   cfg.ServerAddress,
-	}, nil
+	return &App{server: s, db: database, logger: logger, addr: cfg.ServerAddress}, nil
 }
 
 func extractRegionIDs(v []config.VoiceRegion) []string {
