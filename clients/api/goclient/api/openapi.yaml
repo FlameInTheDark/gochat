@@ -604,6 +604,41 @@ paths:
       tags:
       - Guild
       x-codegen-request-body-name: request
+  /guild/{guild_id}/bans:
+    get:
+      description: "Returns banned users with optional ban reasons. Allowed for guild\
+        \ owner, administrators, or members with PermMembershipBanMembers."
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.GuildBan'
+                type: array
+          description: Ok
+        "400":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Bad request
+        "406":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Permissions required
+      summary: Get guild bans
+      tags:
+      - Guild
   /guild/{guild_id}/category:
     post:
       parameters:
@@ -1647,6 +1682,147 @@ paths:
                 type: string
           description: Internal server error
       summary: Delete guild icon by ID
+      tags:
+      - Guild
+  /guild/{guild_id}/member/{user_id}/ban:
+    delete:
+      description: "Removes a guild ban. Allowed for guild owner, administrators,\
+        \ or members with PermMembershipBanMembers. Administrators can only be moderated\
+        \ by the guild owner."
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Bad request
+        "406":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Permissions required
+      summary: Unban guild member
+      tags:
+      - Guild
+    post:
+      description: "Bans a guild member with an optional reason. Allowed for guild\
+        \ owner, administrators, or members with PermMembershipBanMembers. Cannot\
+        \ target the guild owner. Members with administrator permission can only be\
+        \ moderated by the guild owner."
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/guild.BanMemberRequest'
+        description: Ban reason
+        required: false
+      responses:
+        "204":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Bad request
+        "404":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Member not found
+        "406":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Permissions required
+      summary: Ban guild member
+      tags:
+      - Guild
+      x-codegen-request-body-name: request
+  /guild/{guild_id}/member/{user_id}/kick:
+    post:
+      description: "Removes a guild member. Allowed for guild owner, administrators,\
+        \ or members with PermMembershipKickMembers. Cannot target the guild owner.\
+        \ Members with administrator permission can only be moderated by the guild\
+        \ owner."
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Bad request
+        "404":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Member not found
+        "406":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Permissions required
+      summary: Kick guild member
       tags:
       - Guild
   /guild/{guild_id}/member/{user_id}/roles:
@@ -4360,6 +4536,26 @@ components:
           description: Whether the guild is public
           type: boolean
       type: object
+    dto.GuildBan:
+      example:
+        reason: reason
+        user:
+          name: FancyUserName
+          avatar:
+            content_type: image/webp
+            size: 245678
+            width: 128
+            id: 2230469276416868352
+            url: https://cdn.example.com/avatars/2230/2231.webp
+            height: 128
+          id: 2230469276416868352
+          discriminator: uniquename
+      properties:
+        reason:
+          type: string
+        user:
+          $ref: '#/components/schemas/dto.User'
+      type: object
     dto.GuildEmoji:
       example:
         guild_id: "0"
@@ -4592,6 +4788,8 @@ components:
             $ref: '#/components/schemas/embed.Embed'
           type: array
         flags:
+          description: Bitmask. Includes suppress-embeds and banned-author markers
+            in API responses.
           type: integer
         id:
           description: Message ID
@@ -4844,6 +5042,11 @@ components:
         url:
           description: Provider URL.
           example: https://www.youtube.com
+          type: string
+      type: object
+    guild.BanMemberRequest:
+      properties:
+        reason:
           type: string
       type: object
     guild.ChannelOrder:

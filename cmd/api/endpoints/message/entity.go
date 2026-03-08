@@ -9,6 +9,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/banned"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/mention"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
@@ -83,6 +84,7 @@ type entity struct {
 	mention mention.Mention
 	fr      friend.Friend
 	emoji   emojirepo.Emoji
+	ban     banned.Banned
 }
 
 func (e *entity) Name() string {
@@ -120,5 +122,6 @@ func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ
 		mention:     mention.New(cql),
 		fr:          friend.New(pg.Conn()),
 		emoji:       emojirepo.New(pg.Conn()),
+		ban:         banned.New(cql),
 	}
 }

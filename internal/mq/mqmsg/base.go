@@ -54,6 +54,7 @@ const (
 	EventTypeGuildMemberRemoveRole
 	EventTypeGuildMemberJoinVoice
 	EventTypeGuildMemberLeaveVoice
+	EventTypeGuildMemberModeration
 )
 
 const (

@@ -13,7 +13,7 @@ type Message struct {
 	Content     string        `json:"content" example:"Hello world!"`
 	Attachments []Attachment  `json:"attachments,omitempty"`
 	Embeds      []embed.Embed `json:"embeds,omitempty"`
-	Flags       int           `json:"flags,omitempty"`
+	Flags       int           `json:"flags,omitempty"` // Bitmask. Includes suppress-embeds and banned-author markers in API responses.
 	Type        int           `json:"type" example:"0"`
 	UpdatedAt   *time.Time    `json:"updated_at,omitempty"` // Timestamp of the last message edit
 }

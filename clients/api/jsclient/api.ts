@@ -597,6 +597,25 @@ export interface DtoGuild {
 /**
  * 
  * @export
+ * @interface DtoGuildBan
+ */
+export interface DtoGuildBan {
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoGuildBan
+     */
+    'reason'?: string;
+    /**
+     * 
+     * @type {DtoUser}
+     * @memberof DtoGuildBan
+     */
+    'user'?: DtoUser;
+}
+/**
+ * 
+ * @export
  * @interface DtoGuildEmoji
  */
 export interface DtoGuildEmoji {
@@ -847,7 +866,7 @@ export interface DtoMessage {
      */
     'embeds'?: Array<EmbedEmbed>;
     /**
-     * 
+     * Bitmask. Includes suppress-embeds and banned-author markers in API responses.
      * @type {number}
      * @memberof DtoMessage
      */
@@ -1190,6 +1209,19 @@ export interface EmbedEmbedProvider {
      * @memberof EmbedEmbedProvider
      */
     'url'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface GuildBanMemberRequest
+ */
+export interface GuildBanMemberRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildBanMemberRequest
+     */
+    'reason'?: string;
 }
 /**
  * 
@@ -3377,6 +3409,40 @@ export class EmojiApi extends BaseAPI implements EmojiApiInterface {
 export const GuildApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
+         * Returns banned users with optional ban reasons. Allowed for guild owner, administrators, or members with PermMembershipBanMembers.
+         * @summary Get guild bans
+         * @param {number} guildId Guild ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdBansGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdBansGet', 'guildId', guildId)
+            const localVarPath = `/guild/{guild_id}/bans`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * 
          * @summary Delete channel category
          * @param {number} guildId Guild ID
@@ -4025,6 +4091,124 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
+         * Removes a guild ban. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Administrators can only be moderated by the guild owner.
+         * @summary Unban guild member
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdBanDelete: async (guildId: number, userId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdBanDelete', 'guildId', guildId)
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdBanDelete', 'userId', userId)
+            const localVarPath = `/guild/{guild_id}/member/{user_id}/ban`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Bans a guild member with an optional reason. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
+         * @summary Ban guild member
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {GuildBanMemberRequest} [request] Ban reason
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdBanPost: async (guildId: number, userId: number, request?: GuildBanMemberRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdBanPost', 'guildId', guildId)
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdBanPost', 'userId', userId)
+            const localVarPath = `/guild/{guild_id}/member/{user_id}/ban`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Removes a guild member. Allowed for guild owner, administrators, or members with PermMembershipKickMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
+         * @summary Kick guild member
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdKickPost: async (guildId: number, userId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdKickPost', 'guildId', guildId)
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdKickPost', 'userId', userId)
+            const localVarPath = `/guild/{guild_id}/member/{user_id}/kick`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * 
          * @summary Get guild members
          * @param {number} guildId Guild ID
@@ -4307,6 +4491,19 @@ export const GuildApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = GuildApiAxiosParamCreator(configuration)
     return {
         /**
+         * Returns banned users with optional ban reasons. Allowed for guild owner, administrators, or members with PermMembershipBanMembers.
+         * @summary Get guild bans
+         * @param {number} guildId Guild ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdBansGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoGuildBan>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdBansGet(guildId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdBansGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * 
          * @summary Delete channel category
          * @param {number} guildId Guild ID
@@ -4542,6 +4739,49 @@ export const GuildApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Removes a guild ban. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Administrators can only be moderated by the guild owner.
+         * @summary Unban guild member
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdMemberUserIdBanDelete(guildId: number, userId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdBanDelete(guildId, userId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdMemberUserIdBanDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Bans a guild member with an optional reason. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
+         * @summary Ban guild member
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {GuildBanMemberRequest} [request] Ban reason
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdMemberUserIdBanPost(guildId: number, userId: number, request?: GuildBanMemberRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdBanPost(guildId, userId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdMemberUserIdBanPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Removes a guild member. Allowed for guild owner, administrators, or members with PermMembershipKickMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
+         * @summary Kick guild member
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdMemberUserIdKickPost(guildId: number, userId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdKickPost(guildId, userId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdMemberUserIdKickPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * 
          * @summary Get guild members
          * @param {number} guildId Guild ID
@@ -4648,6 +4888,16 @@ export const GuildApiFp = function(configuration?: Configuration) {
 export const GuildApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = GuildApiFp(configuration)
     return {
+        /**
+         * Returns banned users with optional ban reasons. Allowed for guild owner, administrators, or members with PermMembershipBanMembers.
+         * @summary Get guild bans
+         * @param {GuildApiGuildGuildIdBansGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdBansGet(requestParameters: GuildApiGuildGuildIdBansGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoGuildBan>> {
+            return localVarFp.guildGuildIdBansGet(requestParameters.guildId, options).then((request) => request(axios, basePath));
+        },
         /**
          * 
          * @summary Delete channel category
@@ -4819,6 +5069,36 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.guildGuildIdIconsIconIdDelete(requestParameters.guildId, requestParameters.iconId, options).then((request) => request(axios, basePath));
         },
         /**
+         * Removes a guild ban. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Administrators can only be moderated by the guild owner.
+         * @summary Unban guild member
+         * @param {GuildApiGuildGuildIdMemberUserIdBanDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdBanDelete(requestParameters: GuildApiGuildGuildIdMemberUserIdBanDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdMemberUserIdBanDelete(requestParameters.guildId, requestParameters.userId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Bans a guild member with an optional reason. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
+         * @summary Ban guild member
+         * @param {GuildApiGuildGuildIdMemberUserIdBanPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdBanPost(requestParameters: GuildApiGuildGuildIdMemberUserIdBanPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdMemberUserIdBanPost(requestParameters.guildId, requestParameters.userId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Removes a guild member. Allowed for guild owner, administrators, or members with PermMembershipKickMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
+         * @summary Kick guild member
+         * @param {GuildApiGuildGuildIdMemberUserIdKickPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdKickPost(requestParameters: GuildApiGuildGuildIdMemberUserIdKickPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdMemberUserIdKickPost(requestParameters.guildId, requestParameters.userId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * 
          * @summary Get guild members
          * @param {GuildApiGuildGuildIdMembersGetRequest} requestParameters Request parameters.
@@ -4897,6 +5177,16 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
  * @interface GuildApi
  */
 export interface GuildApiInterface {
+    /**
+     * Returns banned users with optional ban reasons. Allowed for guild owner, administrators, or members with PermMembershipBanMembers.
+     * @summary Get guild bans
+     * @param {GuildApiGuildGuildIdBansGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdBansGet(requestParameters: GuildApiGuildGuildIdBansGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoGuildBan>>;
+
     /**
      * 
      * @summary Delete channel category
@@ -5068,6 +5358,36 @@ export interface GuildApiInterface {
     guildGuildIdIconsIconIdDelete(requestParameters: GuildApiGuildGuildIdIconsIconIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
+     * Removes a guild ban. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Administrators can only be moderated by the guild owner.
+     * @summary Unban guild member
+     * @param {GuildApiGuildGuildIdMemberUserIdBanDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdMemberUserIdBanDelete(requestParameters: GuildApiGuildGuildIdMemberUserIdBanDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * Bans a guild member with an optional reason. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
+     * @summary Ban guild member
+     * @param {GuildApiGuildGuildIdMemberUserIdBanPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdMemberUserIdBanPost(requestParameters: GuildApiGuildGuildIdMemberUserIdBanPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * Removes a guild member. Allowed for guild owner, administrators, or members with PermMembershipKickMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
+     * @summary Kick guild member
+     * @param {GuildApiGuildGuildIdMemberUserIdKickPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdMemberUserIdKickPost(requestParameters: GuildApiGuildGuildIdMemberUserIdKickPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
      * 
      * @summary Get guild members
      * @param {GuildApiGuildGuildIdMembersGetRequest} requestParameters Request parameters.
@@ -5137,6 +5457,20 @@ export interface GuildApiInterface {
      */
     guildPost(requestParameters: GuildApiGuildPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild>;
 
+}
+
+/**
+ * Request parameters for guildGuildIdBansGet operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdBansGetRequest
+ */
+export interface GuildApiGuildGuildIdBansGetRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdBansGet
+     */
+    readonly guildId: number
 }
 
 /**
@@ -5476,6 +5810,76 @@ export interface GuildApiGuildGuildIdIconsIconIdDeleteRequest {
 }
 
 /**
+ * Request parameters for guildGuildIdMemberUserIdBanDelete operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdMemberUserIdBanDeleteRequest
+ */
+export interface GuildApiGuildGuildIdMemberUserIdBanDeleteRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdMemberUserIdBanDelete
+     */
+    readonly guildId: number
+
+    /**
+     * User ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdMemberUserIdBanDelete
+     */
+    readonly userId: number
+}
+
+/**
+ * Request parameters for guildGuildIdMemberUserIdBanPost operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdMemberUserIdBanPostRequest
+ */
+export interface GuildApiGuildGuildIdMemberUserIdBanPostRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdMemberUserIdBanPost
+     */
+    readonly guildId: number
+
+    /**
+     * User ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdMemberUserIdBanPost
+     */
+    readonly userId: number
+
+    /**
+     * Ban reason
+     * @type {GuildBanMemberRequest}
+     * @memberof GuildApiGuildGuildIdMemberUserIdBanPost
+     */
+    readonly request?: GuildBanMemberRequest
+}
+
+/**
+ * Request parameters for guildGuildIdMemberUserIdKickPost operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdMemberUserIdKickPostRequest
+ */
+export interface GuildApiGuildGuildIdMemberUserIdKickPostRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdMemberUserIdKickPost
+     */
+    readonly guildId: number
+
+    /**
+     * User ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdMemberUserIdKickPost
+     */
+    readonly userId: number
+}
+
+/**
  * Request parameters for guildGuildIdMembersGet operation in GuildApi.
  * @export
  * @interface GuildApiGuildGuildIdMembersGetRequest
@@ -5622,6 +6026,18 @@ export interface GuildApiGuildPostRequest {
  * @extends {BaseAPI}
  */
 export class GuildApi extends BaseAPI implements GuildApiInterface {
+    /**
+     * Returns banned users with optional ban reasons. Allowed for guild owner, administrators, or members with PermMembershipBanMembers.
+     * @summary Get guild bans
+     * @param {GuildApiGuildGuildIdBansGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdBansGet(requestParameters: GuildApiGuildGuildIdBansGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdBansGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * 
      * @summary Delete channel category
@@ -5824,6 +6240,42 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      */
     public guildGuildIdIconsIconIdDelete(requestParameters: GuildApiGuildGuildIdIconsIconIdDeleteRequest, options?: RawAxiosRequestConfig) {
         return GuildApiFp(this.configuration).guildGuildIdIconsIconIdDelete(requestParameters.guildId, requestParameters.iconId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Removes a guild ban. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Administrators can only be moderated by the guild owner.
+     * @summary Unban guild member
+     * @param {GuildApiGuildGuildIdMemberUserIdBanDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdMemberUserIdBanDelete(requestParameters: GuildApiGuildGuildIdMemberUserIdBanDeleteRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdMemberUserIdBanDelete(requestParameters.guildId, requestParameters.userId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Bans a guild member with an optional reason. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
+     * @summary Ban guild member
+     * @param {GuildApiGuildGuildIdMemberUserIdBanPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdMemberUserIdBanPost(requestParameters: GuildApiGuildGuildIdMemberUserIdBanPostRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdMemberUserIdBanPost(requestParameters.guildId, requestParameters.userId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Removes a guild member. Allowed for guild owner, administrators, or members with PermMembershipKickMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
+     * @summary Kick guild member
+     * @param {GuildApiGuildGuildIdMemberUserIdKickPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdMemberUserIdKickPost(requestParameters: GuildApiGuildGuildIdMemberUserIdKickPostRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdMemberUserIdKickPost(requestParameters.guildId, requestParameters.userId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

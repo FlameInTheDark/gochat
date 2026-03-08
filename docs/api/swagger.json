@@ -768,6 +768,47 @@
                 }
             }
         },
+        "/guild/{guild_id}/bans": {
+            "get": {
+                "description": "Returns banned users with optional ban reasons. Allowed for guild owner, administrators, or members with PermMembershipBanMembers.",
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Get guild bans",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.GuildBan"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "406": {
+                        "description": "Permissions required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/guild/{guild_id}/category": {
             "post": {
                 "produces": [
@@ -2031,6 +2072,159 @@
                     },
                     "500": {
                         "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/guild/{guild_id}/member/{user_id}/ban": {
+            "post": {
+                "description": "Bans a guild member with an optional reason. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.",
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Ban guild member",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Ban reason",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/guild.BanMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Member not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "406": {
+                        "description": "Permissions required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Removes a guild ban. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Administrators can only be moderated by the guild owner.",
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Unban guild member",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "406": {
+                        "description": "Permissions required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/guild/{guild_id}/member/{user_id}/kick": {
+            "post": {
+                "description": "Removes a guild member. Allowed for guild owner, administrators, or members with PermMembershipKickMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.",
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Kick guild member",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Member not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "406": {
+                        "description": "Permissions required",
                         "schema": {
                             "type": "string"
                         }
@@ -5344,6 +5538,17 @@
                 }
             }
         },
+        "dto.GuildBan": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.User"
+                }
+            }
+        },
         "dto.GuildEmoji": {
             "type": "object",
             "properties": {
@@ -5515,6 +5720,7 @@
                     }
                 },
                 "flags": {
+                    "description": "Bitmask. Includes suppress-embeds and banned-author markers in API responses.",
                     "type": "integer"
                 },
                 "id": {
@@ -5800,6 +6006,14 @@
                     "description": "Provider URL.",
                     "type": "string",
                     "example": "https://www.youtube.com"
+                }
+            }
+        },
+        "guild.BanMemberRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
                 }
             }
         },

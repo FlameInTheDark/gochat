@@ -27,6 +27,7 @@ const (
 
 const (
 	MessageFlagSuppressEmbeds = 1 << 2
+	MessageFlagBannedAuthor   = 1 << 3
 )
 
 func NormalizeMessageFlags(flags *int) int {

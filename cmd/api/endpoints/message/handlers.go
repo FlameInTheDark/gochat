@@ -740,6 +740,11 @@ func (e *entity) fetchAndBuildMessages(c *fiber.Ctx, req *GetMessagesRequest, ch
 
 	// Build message DTOs with memory optimization
 	messages := e.buildMessageDTOsOptimized(rawMessages, messageData)
+	if guildId != nil {
+		if err := e.redactBannedMessages(c.UserContext(), *guildId, rawMessages, messages); err != nil {
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to apply banned message visibility")
+		}
+	}
 
 	return messages, nil
 }

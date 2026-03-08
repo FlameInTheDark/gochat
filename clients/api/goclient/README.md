@@ -86,6 +86,7 @@ Class | Method | HTTP request | Description
 *AuthAPI* | [**AuthRegistrationPost**](docs/AuthAPI.md#authregistrationpost) | **Post** /auth/registration | Registration
 *AuthAPI* | [**AuthResetPost**](docs/AuthAPI.md#authresetpost) | **Post** /auth/reset | Password Reset
 *EmojiAPI* | [**EmojiEmojiIdGet**](docs/EmojiAPI.md#emojiemojiidget) | **Get** /emoji/{emoji_id} | Redirect to public emoji asset
+*GuildAPI* | [**GuildGuildIdBansGet**](docs/GuildAPI.md#guildguildidbansget) | **Get** /guild/{guild_id}/bans | Get guild bans
 *GuildAPI* | [**GuildGuildIdCategoryCategoryIdDelete**](docs/GuildAPI.md#guildguildidcategorycategoryiddelete) | **Delete** /guild/{guild_id}/category/{category_id} | Delete channel category
 *GuildAPI* | [**GuildGuildIdCategoryPost**](docs/GuildAPI.md#guildguildidcategorypost) | **Post** /guild/{guild_id}/category | Create guild channel category
 *GuildAPI* | [**GuildGuildIdChannelChannelIdDelete**](docs/GuildAPI.md#guildguildidchannelchanneliddelete) | **Delete** /guild/{guild_id}/channel/{channel_id} | Delete channel
@@ -103,6 +104,9 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdIconPost**](docs/GuildAPI.md#guildguildidiconpost) | **Post** /guild/{guild_id}/icon | Create guild icon metadata
 *GuildAPI* | [**GuildGuildIdIconsGet**](docs/GuildAPI.md#guildguildidiconsget) | **Get** /guild/{guild_id}/icons | List guild icons
 *GuildAPI* | [**GuildGuildIdIconsIconIdDelete**](docs/GuildAPI.md#guildguildidiconsiconiddelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
+*GuildAPI* | [**GuildGuildIdMemberUserIdBanDelete**](docs/GuildAPI.md#guildguildidmemberuseridbandelete) | **Delete** /guild/{guild_id}/member/{user_id}/ban | Unban guild member
+*GuildAPI* | [**GuildGuildIdMemberUserIdBanPost**](docs/GuildAPI.md#guildguildidmemberuseridbanpost) | **Post** /guild/{guild_id}/member/{user_id}/ban | Ban guild member
+*GuildAPI* | [**GuildGuildIdMemberUserIdKickPost**](docs/GuildAPI.md#guildguildidmemberuseridkickpost) | **Post** /guild/{guild_id}/member/{user_id}/kick | Kick guild member
 *GuildAPI* | [**GuildGuildIdMembersGet**](docs/GuildAPI.md#guildguildidmembersget) | **Get** /guild/{guild_id}/members | Get guild members
 *GuildAPI* | [**GuildGuildIdPatch**](docs/GuildAPI.md#guildguildidpatch) | **Patch** /guild/{guild_id} | Update guild
 *GuildAPI* | [**GuildGuildIdSystemchPatch**](docs/GuildAPI.md#guildguildidsystemchpatch) | **Patch** /guild/{guild_id}/systemch | Set system messages channel
@@ -187,6 +191,7 @@ Class | Method | HTTP request | Description
  - [DtoEmojiRef](docs/DtoEmojiRef.md)
  - [DtoEmojiUpload](docs/DtoEmojiUpload.md)
  - [DtoGuild](docs/DtoGuild.md)
+ - [DtoGuildBan](docs/DtoGuildBan.md)
  - [DtoGuildEmoji](docs/DtoGuildEmoji.md)
  - [DtoGuildInvite](docs/DtoGuildInvite.md)
  - [DtoIcon](docs/DtoIcon.md)
@@ -202,6 +207,7 @@ Class | Method | HTTP request | Description
  - [EmbedEmbedFooter](docs/EmbedEmbedFooter.md)
  - [EmbedEmbedMedia](docs/EmbedEmbedMedia.md)
  - [EmbedEmbedProvider](docs/EmbedEmbedProvider.md)
+ - [GuildBanMemberRequest](docs/GuildBanMemberRequest.md)
  - [GuildChannelOrder](docs/GuildChannelOrder.md)
  - [GuildChannelRolePermission](docs/GuildChannelRolePermission.md)
  - [GuildChannelRolePermissionRequest](docs/GuildChannelRolePermissionRequest.md)

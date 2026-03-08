@@ -26,7 +26,8 @@ type DtoMessage struct {
 	ChannelId *int32       `json:"channel_id,omitempty"`
 	Content   *string      `json:"content,omitempty"`
 	Embeds    []EmbedEmbed `json:"embeds,omitempty"`
-	Flags     *int32       `json:"flags,omitempty"`
+	// Bitmask. Includes suppress-embeds and banned-author markers in API responses.
+	Flags *int32 `json:"flags,omitempty"`
 	// Message ID
 	Id   *int32 `json:"id,omitempty"`
 	Type *int32 `json:"type,omitempty"`

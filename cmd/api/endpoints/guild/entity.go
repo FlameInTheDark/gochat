@@ -9,6 +9,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/banned"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
@@ -64,6 +65,10 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/:guild_id<int>/voice/move", e.MoveMember)
 
 	router.Get("/:guild_id<int>/members", e.GetMembers)
+	router.Get("/:guild_id<int>/bans", e.GetBans)
+	router.Post("/:guild_id<int>/member/:user_id<int>/kick", e.KickMember)
+	router.Post("/:guild_id<int>/member/:user_id<int>/ban", e.BanMember)
+	router.Delete("/:guild_id<int>/member/:user_id<int>/ban", e.UnbanMember)
 
 	router.Get("/:guild_id<int>/roles", e.GetGuildRoles)
 	router.Post("/:guild_id<int>/roles", e.CreateGuildRole)
@@ -100,7 +105,7 @@ type entity struct {
 	gc    guildchannels.GuildChannels
 	msg   message.Message
 	at    attachment.Attachment
-	perm  rolecheck.RoleCheck
+	perm  permissionChecker
 	uperm channeluserperm.ChannelUserPerm
 	rperm channelroleperm.ChannelRolePerm
 	role  role.Role
@@ -108,6 +113,7 @@ type entity struct {
 	icon  icon.Icon
 	emoji emojirepo.Emoji
 	memb  member.Member
+	ban   banned.Banned
 	inv   invite.Invite
 	av    avatar.Avatar
 
@@ -152,6 +158,7 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.Ind
 		icon:               icon.New(dbcon),
 		emoji:              emojirepo.New(pg.Conn()),
 		memb:               member.New(pg.Conn()),
+		ban:                banned.New(dbcon),
 		inv:                invite.New(pg.Conn()),
 		av:                 avatar.New(dbcon),
 		storage:            storage,

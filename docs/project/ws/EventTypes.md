@@ -1,15 +1,15 @@
-[<- Documentation](../README.md) - [WebSocket Events](README.md)
+﻿[<- Documentation](../README.md) - [WebSocket Events](README.md)
 
 # Event Types
 
 When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies the event type. This page lists all event type values, their payloads, and which NATS topic delivers them.
 
 > [!NOTE]
-> All events on this page (100–406) are delivered over the **Gateway WebSocket** (`/subscribe`). Voice/WebRTC signaling events (500–515) are exchanged over the separate **SFU WebSocket** (`/signal`) — see [SFU Protocol](../voice/SFUProtocol.md). Only a few voice-related control events (509, 512, 513) pass through the Gateway WS as noted in the [RTC Events](#rtc-events-500515-gateway-ws-only) section.
+> All events on this page (100вЂ“406) are delivered over the **Gateway WebSocket** (`/subscribe`). Voice/WebRTC signaling events (500вЂ“515) are exchanged over the separate **SFU WebSocket** (`/signal`) вЂ” see [SFU Protocol](../voice/SFUProtocol.md). Only a few voice-related control events (509, 512, 513) pass through the Gateway WS as noted in the [RTC Events](#rtc-events-500515-gateway-ws-only) section.
 
 ---
 
-## Message Events (100–102)
+## Message Events (100вЂ“102)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -63,7 +63,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## Guild Events (103–105)
+## Guild Events (103вЂ“105)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -105,7 +105,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## Channel Events (106–109)
+## Channel Events (106вЂ“109)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -173,7 +173,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## Guild Role Events (110–112)
+## Guild Role Events (110вЂ“112)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -217,7 +217,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## Thread Events (113–115)
+## Thread Events (113вЂ“115)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -315,17 +315,18 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 ```
 
 ---
-## Guild Member Events (200–209)
+## Guild Member Events (200вЂ“209)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
 | 200 | Guild Member Added | `guild.{guildId}` | User joined guild |
 | 201 | Guild Member Update | `guild.{guildId}` | Member nickname/properties changed |
-| 202 | Guild Member Remove | `guild.{guildId}` | Member left/kicked from guild |
+| 202 | Guild Member Remove | `guild.{guildId}` | Member left or was removed from guild membership |
 | 203 | Guild Member Role Added | `guild.{guildId}` | Role assigned to member |
 | 204 | Guild Member Role Removed | `guild.{guildId}` | Role removed from member |
 | 205 | Guild Member Join Voice | `guild.{guildId}` | Member joined a voice channel |
 | 206 | Guild Member Leave Voice | `guild.{guildId}` | Member left a voice channel |
+| 207 | Guild Member Moderation | `guild.{guildId}` | Kick, ban, or unban action applied to a user |
 | 209 | Voice State Update | `guild.{guildId}` | User's mute/deafen status changed in voice channel |
 
 **Payload (t=200, Guild Member Added):**
@@ -411,6 +412,21 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 }
 ```
 
+**Payload (t=207, Guild Member Moderation):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "user_id": 2226021950625415200,
+  "actor_id": 2226021950625415300,
+  "action": "ban",
+  "reason": "Spam links"
+}
+```
+
+- `action` is one of `kick`, `ban`, or `unban`
+- `reason` is only present for ban actions when a moderator supplied one
+- Kick and ban are still accompanied by the regular `Guild Member Remove` event (`t=202`) because membership changed
+
 ---
 
 ## Voice Region Events (208)
@@ -457,7 +473,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## Channel Message Events (300–302)
+## Channel Message Events (300вЂ“302)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -495,7 +511,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## User Events (400–406)
+## User Events (400вЂ“406)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -626,18 +642,18 @@ Presence updates are dispatched with `op: 3` (not `op: 0`). They are delivered v
 
 ---
 
-## RTC Events (500–515, Gateway WS Only)
+## RTC Events (500вЂ“515, Gateway WS Only)
 
 > [!IMPORTANT]
-> The full RTC signaling protocol (Join, Offer, Answer, Candidate, Speaking, Mute, Deafen, Kick, Block — events 500–515) is handled over the **separate SFU WebSocket** connection (`/signal` on port 3300). See [SFU Protocol](../voice/SFUProtocol.md) for that protocol.
+> The full RTC signaling protocol (Join, Offer, Answer, Candidate, Speaking, Mute, Deafen, Kick, Block вЂ” events 500вЂ“515) is handled over the **separate SFU WebSocket** connection (`/signal` on port 3300). See [SFU Protocol](../voice/SFUProtocol.md) for that protocol.
 >
 > Only the following **3 voice control events** pass through the **Gateway WS** (`/subscribe`):
 
 | Type | Name | NATS Topic | Direction | Description |
 |------|------|------------|-----------|-------------|
-| 509 | RTC Binding Alive | — | Client → Gateway | Keep `voice:route:{channelId}` TTL alive in Redis |
-| 512 | RTC Moved | `user.{userId}` | Gateway → Client | Admin moved user to another channel; includes new SFU URL |
-| 513 | RTC Server Rebind | `guild.{guildId}` | Gateway → Client | SFU route changed (region migration); reconnect required |
+| 509 | RTC Binding Alive | вЂ” | Client в†’ Gateway | Keep `voice:route:{channelId}` TTL alive in Redis |
+| 512 | RTC Moved | `user.{userId}` | Gateway в†’ Client | Admin moved user to another channel; includes new SFU URL |
+| 513 | RTC Server Rebind | `guild.{guildId}` | Gateway в†’ Client | SFU route changed (region migration); reconnect required |
 
 **Payload (t=513, VoiceRebind):**
 ```json
@@ -660,4 +676,6 @@ Presence updates are dispatched with `op: 3` (not `op: 0`). They are delivered v
 
 **Client action:** Disconnect from current SFU, connect to the new `sfu_url`, and send Join with the new token.
 
-For the full SFU WebSocket protocol (events 500–515), see [SFU Protocol](../voice/SFUProtocol.md).
+For the full SFU WebSocket protocol (events 500вЂ“515), see [SFU Protocol](../voice/SFUProtocol.md).
+
+

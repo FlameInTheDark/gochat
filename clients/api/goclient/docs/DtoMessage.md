@@ -9,7 +9,7 @@ Name | Type | Description | Notes
 **ChannelId** | Pointer to **int32** | Channel id the message was sent to | [optional] 
 **Content** | Pointer to **string** |  | [optional] 
 **Embeds** | Pointer to [**[]EmbedEmbed**](EmbedEmbed.md) |  | [optional] 
-**Flags** | Pointer to **int32** |  | [optional] 
+**Flags** | Pointer to **int32** | Bitmask. Includes suppress-embeds and banned-author markers in API responses. | [optional] 
 **Id** | Pointer to **int32** | Message ID | [optional] 
 **Type** | Pointer to **int32** |  | [optional] 
 **UpdatedAt** | Pointer to **string** | Timestamp of the last message edit | [optional] 

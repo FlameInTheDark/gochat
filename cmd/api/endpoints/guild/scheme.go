@@ -12,48 +12,56 @@ import (
 )
 
 const (
-	ErrUnableToGetUserToken             = "unable to get user token"
-	ErrUnableToGetGuildMemberToken      = "unable to get guild member token"
-	ErrUnableToGetGuildMembers          = "unable to get guild members"
-	ErrUnableToGetUsersRoles            = "unable to get users roles"
-	ErrUnableToGetGuildMembersProfiles  = "unable to get guild members profiles"
-	ErrUnableToParseBody                = "unable to parse body"
-	ErrPermissionsRequired              = "permissions required"
-	ErrUnableToCreateAttachment         = "unable to create attachment"
-	ErrUnableToCreateUploadURL          = "unable to create upload url"
-	ErrIncorrectChannelID               = "incorrect channel ID"
-	ErrIncorrectGuildID                 = "incorrect guild ID"
-	ErrIncorrectMemberID                = "incorrect member ID"
-	ErrIncorrectInviteID                = "incorrect invite ID"
-	ErrIncorrectRoleID                  = "incorrect role ID"
-	ErrIncorrectIconID                  = "incorrect icon ID"
-	ErrFileIsTooBig                     = "file is too big"
-	ErrUnableToSendMessage              = "unable to send message"
-	ErrUnableToGetUser                  = "unable to get user"
-	ErrUnableToGetUsers                 = "unable to get users"
-	ErrUnableToGetUserDiscriminator     = "unable to get discriminator"
-	ErrUnableToGetDiscriminators        = "unable to get discriminators"
-	ErrUnableToGetAttachements          = "unable to get attachments"
-	ErrUnableToCreateGuild              = "unable to create guild"
-	ErrUnableToGetGuildMember           = "unable to get member"
-	ErrUnableToGetDiscriminator         = "unable to get discriminator"
-	ErrUnableToGetGuildByID             = "unable to get guild by id"
-	ErrUnableToUpdateGuild              = "unable to update guild"
-	ErrUnableToDeleteGuild              = "unable to delete guild"
-	ErrUnableToGetRoles                 = "unable to get roles"
-	ErrUnableToSetUserRole              = "unable to set user role"
-	ErrUnableToRemoveUserRole           = "unable to remove user role"
-	ErrUnableToCreateChannelGroup       = "unable to create channel group"
-	ErrUnableToGetChannel               = "unable to get channel"
-	ErrUnableToUpdateChannel            = "unable to update channel"
-	ErrNotAMember                       = "not a member"
-	ErrUnableToGetReadState             = "unable to get read state"
-	ErrUnableToSetReadState             = "unable to set read state"
-	ErrUnableToIssueVoiceToken          = "unable to issue voice token"
-	ErrNoSFUAvailableInRegion           = "no sfu available in region"
-	ErrNotAVoiceChannel                 = "not a voice channel"
-	ErrUnableToGetPermission            = "unable to get permissions"
-	ErrUnableToSetSystemMessagesChannel = "unable to set system messages channel"
+	ErrUnableToGetUserToken              = "unable to get user token"
+	ErrUnableToGetGuildMemberToken       = "unable to get guild member token"
+	ErrUnableToGetGuildMembers           = "unable to get guild members"
+	ErrUnableToGetUsersRoles             = "unable to get users roles"
+	ErrUnableToGetGuildMembersProfiles   = "unable to get guild members profiles"
+	ErrUnableToParseBody                 = "unable to parse body"
+	ErrPermissionsRequired               = "permissions required"
+	ErrUnableToCreateAttachment          = "unable to create attachment"
+	ErrUnableToCreateUploadURL           = "unable to create upload url"
+	ErrIncorrectChannelID                = "incorrect channel ID"
+	ErrIncorrectGuildID                  = "incorrect guild ID"
+	ErrIncorrectMemberID                 = "incorrect member ID"
+	ErrIncorrectInviteID                 = "incorrect invite ID"
+	ErrIncorrectRoleID                   = "incorrect role ID"
+	ErrIncorrectIconID                   = "incorrect icon ID"
+	ErrFileIsTooBig                      = "file is too big"
+	ErrUnableToSendMessage               = "unable to send message"
+	ErrUnableToGetUser                   = "unable to get user"
+	ErrUnableToGetUsers                  = "unable to get users"
+	ErrUnableToGetUserDiscriminator      = "unable to get discriminator"
+	ErrUnableToGetDiscriminators         = "unable to get discriminators"
+	ErrUnableToGetAttachements           = "unable to get attachments"
+	ErrUnableToCreateGuild               = "unable to create guild"
+	ErrUnableToGetGuildMember            = "unable to get member"
+	ErrUnableToGetDiscriminator          = "unable to get discriminator"
+	ErrUnableToGetGuildByID              = "unable to get guild by id"
+	ErrUnableToUpdateGuild               = "unable to update guild"
+	ErrUnableToDeleteGuild               = "unable to delete guild"
+	ErrUnableToGetRoles                  = "unable to get roles"
+	ErrUnableToSetUserRole               = "unable to set user role"
+	ErrUnableToRemoveUserRole            = "unable to remove user role"
+	ErrUnableToCreateChannelGroup        = "unable to create channel group"
+	ErrUnableToGetChannel                = "unable to get channel"
+	ErrUnableToUpdateChannel             = "unable to update channel"
+	ErrNotAMember                        = "not a member"
+	ErrUnableToGetReadState              = "unable to get read state"
+	ErrUnableToSetReadState              = "unable to set read state"
+	ErrUnableToIssueVoiceToken           = "unable to issue voice token"
+	ErrNoSFUAvailableInRegion            = "no sfu available in region"
+	ErrNotAVoiceChannel                  = "not a voice channel"
+	ErrUnableToGetPermission             = "unable to get permissions"
+	ErrUnableToSetSystemMessagesChannel  = "unable to set system messages channel"
+	ErrUnableToCheckGuildBan             = "unable to check guild ban"
+	ErrUnableToRemoveMember              = "unable to remove member"
+	ErrUnableToBanMember                 = "unable to ban member"
+	ErrUnableToUnbanMember               = "unable to unban member"
+	ErrUnableToGetGuildBans              = "unable to get guild bans"
+	ErrCannotModerateGuildOwner          = "cannot moderate guild owner"
+	ErrOnlyOwnerCanModerateAdministrator = "only guild owner can moderate administrators"
+	ErrUserIsBanned                      = "user is banned"
 
 	// Channel role permissions
 	ErrUnableToGetChannelRolePerms = "unable to get channel role permissions"
@@ -86,6 +94,7 @@ const (
 	ErrRoleNameTooLong          = "role name must be less than 100 characters"
 	ErrRoleColorInvalid         = "role color must be between 0 and 16777215"
 	ErrUnableToDeleteActiveIcon = "unable to delete active icon"
+	ErrBanReasonTooLong         = "ban reason must be 256 characters or fewer"
 )
 
 var (
@@ -386,6 +395,20 @@ func (r PatchGuildRoleRequest) Validate() error {
 		),
 		validation.Field(&r.Permissions,
 			validation.When(r.Permissions != nil, validation.Min(int64(0)).Error(ErrPermissionsInvalid)),
+		),
+	)
+}
+
+type BanMemberRequest struct {
+	Reason *string `json:"reason,omitempty"`
+}
+
+func (r BanMemberRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Reason,
+			validation.When(r.Reason != nil,
+				validation.RuneLength(0, 256).Error(ErrBanReasonTooLong),
+			),
 		),
 	)
 }

@@ -4,6 +4,7 @@ All URIs are relative to *http://localhost/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**GuildGuildIdBansGet**](GuildAPI.md#GuildGuildIdBansGet) | **Get** /guild/{guild_id}/bans | Get guild bans
 [**GuildGuildIdCategoryCategoryIdDelete**](GuildAPI.md#GuildGuildIdCategoryCategoryIdDelete) | **Delete** /guild/{guild_id}/category/{category_id} | Delete channel category
 [**GuildGuildIdCategoryPost**](GuildAPI.md#GuildGuildIdCategoryPost) | **Post** /guild/{guild_id}/category | Create guild channel category
 [**GuildGuildIdChannelChannelIdDelete**](GuildAPI.md#GuildGuildIdChannelChannelIdDelete) | **Delete** /guild/{guild_id}/channel/{channel_id} | Delete channel
@@ -21,6 +22,9 @@ Method | HTTP request | Description
 [**GuildGuildIdIconPost**](GuildAPI.md#GuildGuildIdIconPost) | **Post** /guild/{guild_id}/icon | Create guild icon metadata
 [**GuildGuildIdIconsGet**](GuildAPI.md#GuildGuildIdIconsGet) | **Get** /guild/{guild_id}/icons | List guild icons
 [**GuildGuildIdIconsIconIdDelete**](GuildAPI.md#GuildGuildIdIconsIconIdDelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
+[**GuildGuildIdMemberUserIdBanDelete**](GuildAPI.md#GuildGuildIdMemberUserIdBanDelete) | **Delete** /guild/{guild_id}/member/{user_id}/ban | Unban guild member
+[**GuildGuildIdMemberUserIdBanPost**](GuildAPI.md#GuildGuildIdMemberUserIdBanPost) | **Post** /guild/{guild_id}/member/{user_id}/ban | Ban guild member
+[**GuildGuildIdMemberUserIdKickPost**](GuildAPI.md#GuildGuildIdMemberUserIdKickPost) | **Post** /guild/{guild_id}/member/{user_id}/kick | Kick guild member
 [**GuildGuildIdMembersGet**](GuildAPI.md#GuildGuildIdMembersGet) | **Get** /guild/{guild_id}/members | Get guild members
 [**GuildGuildIdPatch**](GuildAPI.md#GuildGuildIdPatch) | **Patch** /guild/{guild_id} | Update guild
 [**GuildGuildIdSystemchPatch**](GuildAPI.md#GuildGuildIdSystemchPatch) | **Patch** /guild/{guild_id}/systemch | Set system messages channel
@@ -29,6 +33,76 @@ Method | HTTP request | Description
 [**GuildGuildIdVoiceMovePost**](GuildAPI.md#GuildGuildIdVoiceMovePost) | **Post** /guild/{guild_id}/voice/move | Move member to voice channel
 [**GuildPost**](GuildAPI.md#GuildPost) | **Post** /guild | Create guild
 
+
+
+## GuildGuildIdBansGet
+
+> []DtoGuildBan GuildGuildIdBansGet(ctx, guildId).Execute()
+
+Get guild bans
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdBansGet(context.Background(), guildId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdBansGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdBansGet`: []DtoGuildBan
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdBansGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdBansGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**[]DtoGuildBan**](DtoGuildBan.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
 ## GuildGuildIdCategoryCategoryIdDelete
@@ -1205,6 +1279,227 @@ Name | Type | Description  | Notes
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiGuildGuildIdIconsIconIdDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdMemberUserIdBanDelete
+
+> string GuildGuildIdMemberUserIdBanDelete(ctx, guildId, userId).Execute()
+
+Unban guild member
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdMemberUserIdBanDelete(context.Background(), guildId, userId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdMemberUserIdBanDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdMemberUserIdBanDelete`: string
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdMemberUserIdBanDelete`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**userId** | **int32** | User ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdMemberUserIdBanDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdMemberUserIdBanPost
+
+> string GuildGuildIdMemberUserIdBanPost(ctx, guildId, userId).Request(request).Execute()
+
+Ban guild member
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
+	request := *openapiclient.NewGuildBanMemberRequest() // GuildBanMemberRequest | Ban reason (optional)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdMemberUserIdBanPost(context.Background(), guildId, userId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdMemberUserIdBanPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdMemberUserIdBanPost`: string
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdMemberUserIdBanPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**userId** | **int32** | User ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdMemberUserIdBanPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+ **request** | [**GuildBanMemberRequest**](GuildBanMemberRequest.md) | Ban reason | 
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdMemberUserIdKickPost
+
+> string GuildGuildIdMemberUserIdKickPost(ctx, guildId, userId).Execute()
+
+Kick guild member
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdMemberUserIdKickPost(context.Background(), guildId, userId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdMemberUserIdKickPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdMemberUserIdKickPost`: string
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdMemberUserIdKickPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**userId** | **int32** | User ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdMemberUserIdKickPostRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes
