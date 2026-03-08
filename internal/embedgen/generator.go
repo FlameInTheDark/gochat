@@ -3,7 +3,10 @@ package embedgen
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -18,6 +21,7 @@ import (
 
 	"golang.org/x/net/html"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/embed"
 )
 
@@ -27,6 +31,8 @@ const (
 	defaultUserAgent                 = "GoChat-Embedder/1.0"
 	defaultYouTubeOEmbedURL          = "https://www.youtube.com/oembed"
 	defaultYouTubeEmbedBaseURL       = "https://www.youtube.com/embed"
+	defaultCacheTTL                  = 6 * time.Hour
+	defaultNegativeCacheTTL          = 30 * time.Minute
 	youTubeBrandColor                = 0xFF0000
 	twitterBrandColor                = 0x1DA1F2
 )
@@ -55,10 +61,16 @@ var (
 		netip.MustParsePrefix("ff00::/8"),
 		netip.MustParsePrefix("2001:db8::/32"),
 	}
+
+	errSkipEmbed = errors.New("skip embed generation")
 )
 
 type Config struct {
 	HTTPClient            *http.Client
+	Cache                 cache.Cache
+	CacheTTL              time.Duration
+	NegativeCacheTTL      time.Duration
+	ExcludedURLPatterns   []string
 	AllowPrivateHosts     bool
 	FetchTimeout          time.Duration
 	MaxBodyBytes          int64
@@ -69,6 +81,10 @@ type Config struct {
 
 type Generator struct {
 	client                *http.Client
+	cache                 cache.Cache
+	cacheTTL              time.Duration
+	negativeCacheTTL      time.Duration
+	excludedURLPatterns   []*regexp.Regexp
 	allowPrivateHosts     bool
 	maxBodyBytes          int64
 	userAgent             string
@@ -120,7 +136,12 @@ type oEmbedResponse struct {
 	HTML            string
 }
 
-func New(cfg Config) *Generator {
+type cachedEmbedResult struct {
+	Skip  bool         `json:"skip,omitempty"`
+	Embed *embed.Embed `json:"embed,omitempty"`
+}
+
+func New(cfg Config) (*Generator, error) {
 	fetchTimeout := cfg.FetchTimeout
 	if fetchTimeout <= 0 {
 		fetchTimeout = defaultFetchTimeout
@@ -129,6 +150,16 @@ func New(cfg Config) *Generator {
 	maxBodyBytes := cfg.MaxBodyBytes
 	if maxBodyBytes <= 0 {
 		maxBodyBytes = defaultMaxBodyBytes
+	}
+
+	cacheTTL := cfg.CacheTTL
+	if cacheTTL <= 0 {
+		cacheTTL = defaultCacheTTL
+	}
+
+	negativeCacheTTL := cfg.NegativeCacheTTL
+	if negativeCacheTTL <= 0 {
+		negativeCacheTTL = defaultNegativeCacheTTL
 	}
 
 	userAgent := strings.TrimSpace(cfg.UserAgent)
@@ -145,7 +176,24 @@ func New(cfg Config) *Generator {
 		youtubeEmbedBaseURL = defaultYouTubeEmbedBaseURL
 	}
 
+	excludedURLPatterns := make([]*regexp.Regexp, 0, len(cfg.ExcludedURLPatterns))
+	for _, pattern := range cfg.ExcludedURLPatterns {
+		pattern = strings.TrimSpace(pattern)
+		if pattern == "" {
+			continue
+		}
+		compiled, err := regexp.Compile(pattern)
+		if err != nil {
+			return nil, fmt.Errorf("invalid excluded url pattern %q: %w", pattern, err)
+		}
+		excludedURLPatterns = append(excludedURLPatterns, compiled)
+	}
+
 	g := &Generator{
+		cache:                 cfg.Cache,
+		cacheTTL:              cacheTTL,
+		negativeCacheTTL:      negativeCacheTTL,
+		excludedURLPatterns:   excludedURLPatterns,
 		allowPrivateHosts:     cfg.AllowPrivateHosts,
 		maxBodyBytes:          maxBodyBytes,
 		userAgent:             userAgent,
@@ -154,7 +202,7 @@ func New(cfg Config) *Generator {
 	}
 	if cfg.HTTPClient != nil {
 		g.client = cfg.HTTPClient
-		return g
+		return g, nil
 	}
 
 	transport := &http.Transport{
@@ -166,7 +214,7 @@ func New(cfg Config) *Generator {
 		Timeout:   fetchTimeout,
 		Transport: transport,
 	}
-	return g
+	return g, nil
 }
 
 func ExtractURLs(text string) []string {
@@ -214,6 +262,9 @@ func (g *Generator) Generate(ctx context.Context, text string, manualEmbeds []em
 
 		candidate, err := g.GenerateURL(ctx, rawURL)
 		if err != nil {
+			if errors.Is(err, errSkipEmbed) {
+				continue
+			}
 			if firstErr == nil {
 				firstErr = err
 			}
@@ -243,7 +294,15 @@ func (g *Generator) Generate(ctx context.Context, text string, manualEmbeds []em
 func (g *Generator) GenerateURL(ctx context.Context, rawURL string) (*embed.Embed, error) {
 	parsedURL, err := url.Parse(strings.TrimSpace(rawURL))
 	if err != nil || !isHTTPURL(parsedURL) {
-		return nil, fmt.Errorf("invalid embed URL %q", rawURL)
+		return nil, skipEmbedError("invalid embed URL %q", rawURL)
+	}
+	normalizedURL := parsedURL.String()
+	if g.shouldExcludeURL(rawURL, normalizedURL) {
+		return nil, skipEmbedError("excluded embed URL %s", normalizedURL)
+	}
+
+	if cached, cachedErr, ok := g.loadCachedResult(ctx, normalizedURL); ok {
+		return cached, cachedErr
 	}
 
 	pageURL := parsedURL
@@ -268,14 +327,24 @@ func (g *Generator) GenerateURL(ctx context.Context, rawURL string) (*embed.Embe
 
 		if isImageContentType(page.ContentType) {
 			embedURL := pageURL.String()
-			return &embed.Embed{
+			var width *int64
+			var height *int64
+			if parsedWidth, parsedHeight, decodeErr := decodeImageDimensions(page.Body); decodeErr == nil {
+				width = &parsedWidth
+				height = &parsedHeight
+			}
+			result := &embed.Embed{
 				Type: "image",
 				URL:  embedURL,
 				Image: &embed.EmbedMedia{
 					URL:         embedURL,
+					Width:       width,
+					Height:      height,
 					ContentType: page.ContentType,
 				},
-			}, nil
+			}
+			g.storeEmbedResult(ctx, normalizedURL, result)
+			return result, nil
 		}
 	}
 
@@ -283,6 +352,8 @@ func (g *Generator) GenerateURL(ctx context.Context, rawURL string) (*embed.Embe
 	if pageErr == nil && (page.ContentType == "" || isHTMLContentType(page.ContentType)) {
 		metadata, err = parseHTMLMetadata(pageURL, page.Body)
 		if err != nil && oembedURL == "" {
+			err = skipEmbedError("unable to parse metadata for %s", parsedURL.String())
+			g.storeSkippedResult(ctx, normalizedURL)
 			return nil, err
 		}
 		if oembedURL == "" {
@@ -294,8 +365,15 @@ func (g *Generator) GenerateURL(ctx context.Context, rawURL string) (*embed.Embe
 	if oembedURL != "" {
 		oembedData, err = g.fetchOEmbed(ctx, oembedURL)
 		if err != nil && pageErr != nil {
+			err = skipEmbedError("unable to fetch page or oEmbed data for %s", parsedURL.String())
+			g.storeSkippedResult(ctx, normalizedURL)
 			return nil, err
 		}
+	}
+	if pageErr != nil && oembedData == nil {
+		err = skipEmbedError("unable to open %s", parsedURL.String())
+		g.storeSkippedResult(ctx, normalizedURL)
+		return nil, err
 	}
 
 	youtubeVideoURL := ""
@@ -305,17 +383,16 @@ func (g *Generator) GenerateURL(ctx context.Context, rawURL string) (*embed.Embe
 
 	result := buildEmbed(parsedURL.String(), pageURL, metadata, oembedData, youtubeVideoURL)
 	if result == nil {
-		if pageErr != nil {
-			return nil, pageErr
-		}
-		if err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("no embed metadata found for %s", parsedURL.String())
-	}
-	if err := embed.ValidateEmbeds([]embed.Embed{*result}); err != nil {
+		err = skipEmbedError("insufficient embed metadata for %s", parsedURL.String())
+		g.storeSkippedResult(ctx, normalizedURL)
 		return nil, err
 	}
+	g.populateMissingEmbedMediaDimensions(ctx, result)
+	if err := embed.ValidateEmbeds([]embed.Embed{*result}); err != nil {
+		g.storeSkippedResult(ctx, normalizedURL)
+		return nil, skipEmbedError("invalid embed metadata for %s", parsedURL.String())
+	}
+	g.storeEmbedResult(ctx, normalizedURL, result)
 	return result, nil
 }
 
@@ -343,10 +420,10 @@ func buildEmbed(originalURL string, pageURL *url.URL, metadata pageMetadata, oem
 		valueOrEmpty(oembedData, func(v *oEmbedResponse) string { return v.ProviderName }),
 		metadata.SiteName,
 	)
-	providerURL := firstNonEmpty(
-		valueOrEmpty(oembedData, func(v *oEmbedResponse) string { return v.ProviderURL }),
-		siteRoot(pageURL),
-	)
+	providerURL := valueOrEmpty(oembedData, func(v *oEmbedResponse) string { return v.ProviderURL })
+	if providerURL == "" && providerName != "" {
+		providerURL = siteRoot(pageURL)
+	}
 	authorName := truncateText(firstNonEmpty(
 		valueOrEmpty(oembedData, func(v *oEmbedResponse) string { return v.AuthorName }),
 		metadata.AuthorName,
@@ -395,7 +472,7 @@ func buildEmbed(originalURL string, pageURL *url.URL, metadata pageMetadata, oem
 			URL:  providerURL,
 		}
 	}
-	if authorName != "" || authorURL != "" {
+	if authorName != "" {
 		result.Author = &embed.EmbedAuthor{
 			Name: authorName,
 			URL:  authorURL,
@@ -421,10 +498,87 @@ func buildEmbed(originalURL string, pageURL *url.URL, metadata pageMetadata, oem
 		}
 	}
 
-	if result.Title == "" && result.Description == "" && result.Provider == nil && result.Author == nil && result.Thumbnail == nil && result.Image == nil && result.Video == nil {
+	if !hasRenderableContent(result) {
 		return nil
 	}
 	return result
+}
+
+func hasRenderableContent(result *embed.Embed) bool {
+	if result == nil {
+		return false
+	}
+	if result.Description != "" {
+		return true
+	}
+	if result.Image != nil || result.Thumbnail != nil || result.Video != nil {
+		return true
+	}
+	if len(result.Fields) > 0 {
+		return true
+	}
+	return false
+}
+
+func skipEmbedError(format string, args ...any) error {
+	return fmt.Errorf("%w: %s", errSkipEmbed, fmt.Sprintf(format, args...))
+}
+
+func (g *Generator) shouldExcludeURL(rawURL, normalizedURL string) bool {
+	if len(g.excludedURLPatterns) == 0 {
+		return false
+	}
+	for _, pattern := range g.excludedURLPatterns {
+		if pattern == nil {
+			continue
+		}
+		if pattern.MatchString(rawURL) || pattern.MatchString(normalizedURL) {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *Generator) loadCachedResult(ctx context.Context, rawURL string) (*embed.Embed, error, bool) {
+	if g.cache == nil || rawURL == "" {
+		return nil, nil, false
+	}
+
+	var cached cachedEmbedResult
+	if err := g.cache.GetJSON(ctx, embedCacheKey(rawURL), &cached); err != nil {
+		return nil, nil, false
+	}
+	if cached.Skip {
+		return nil, skipEmbedError("cached skip for %s", rawURL), true
+	}
+	if cached.Embed == nil {
+		_ = g.cache.Delete(ctx, embedCacheKey(rawURL))
+		return nil, nil, false
+	}
+	if err := embed.ValidateEmbeds([]embed.Embed{*cached.Embed}); err != nil {
+		_ = g.cache.Delete(ctx, embedCacheKey(rawURL))
+		return nil, nil, false
+	}
+	return cached.Embed, nil, true
+}
+
+func (g *Generator) storeEmbedResult(ctx context.Context, rawURL string, result *embed.Embed) {
+	if g.cache == nil || rawURL == "" || result == nil || g.cacheTTL <= 0 {
+		return
+	}
+	_ = g.cache.SetTimedJSON(ctx, embedCacheKey(rawURL), cachedEmbedResult{Embed: result}, int64(g.cacheTTL/time.Second))
+}
+
+func (g *Generator) storeSkippedResult(ctx context.Context, rawURL string) {
+	if g.cache == nil || rawURL == "" || g.negativeCacheTTL <= 0 {
+		return
+	}
+	_ = g.cache.SetTimedJSON(ctx, embedCacheKey(rawURL), cachedEmbedResult{Skip: true}, int64(g.negativeCacheTTL/time.Second))
+}
+
+func embedCacheKey(rawURL string) string {
+	sum := sha256.Sum256([]byte(rawURL))
+	return "embedder:url:v1:" + hex.EncodeToString(sum[:])
 }
 
 func providerColor(providerName, providerURL string, pageURL *url.URL, embedURL string) *int {

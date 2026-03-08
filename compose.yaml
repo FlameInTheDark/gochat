@@ -169,6 +169,8 @@ services:
         condition: service_healthy
       nats:
         condition: service_started
+      keydb:
+        condition: service_started
 
   # ---------- Environment services ----------
   scylla:
