@@ -1,7 +1,8 @@
 package db
 
 import (
-	"fmt"
+	"log"
+	"time"
 
 	"github.com/gocql/gocql"
 )
@@ -17,13 +18,28 @@ func NewCQLCon(keyspace string, logger gocql.StdLogger, cluster ...string) (*CQL
 
 	c := gocql.NewCluster(cluster...)
 	c.Keyspace = keyspace
-	if logger == nil {
+	// Attach logger if provided (fix: check for non-nil)
+	if logger != nil {
 		c.Logger = logger
 	}
 
-	s, err := c.CreateSession()
-	if err != nil {
-		return nil, fmt.Errorf("Error creating CQL connection: %w", err)
+	// Attempt to create session with retries and 5s delay to avoid restart loops
+	var (
+		s   *gocql.Session
+		err error
+		n   int
+	)
+	for {
+		n++
+		s, err = c.CreateSession()
+		if err == nil {
+			break
+		}
+		log.Printf("[cql] connect attempt %d failed: %v; retrying in 5s", n, err)
+		if logger != nil {
+			logger.Printf("CQL connect attempt %d failed: %v", n, err)
+		}
+		time.Sleep(5 * time.Second)
 	}
 
 	return &CQLCon{s: s}, nil

@@ -4,11 +4,12 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	stringsstd "strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/savsgio/gotils/strings"
+	gotilsstrings "github.com/savsgio/gotils/strings"
 )
 
 type JWTUser struct {
@@ -29,14 +30,12 @@ func GetUserFromToken(token *jwt.Token) (*JWTUser, error) {
 		return nil, fmt.Errorf("could not get claims")
 	}
 
-	return &JWTUser{
-		Id: claims.UserID,
-	}, nil
+	return &JWTUser{Id: claims.UserID}, nil
 }
 
 type Claims struct {
 	UserID    int64  `json:"user_id"`
-	TokenType string `json:"typ"` // "access" or "refresh"
+	TokenType string `json:"typ"`
 	jwt.RegisteredClaims
 }
 
@@ -78,8 +77,16 @@ func IssueTokens(userID int64, secret string) (access, refresh string, err error
 	return
 }
 
+func isPublicEmojiRoute(path string) bool {
+	return stringsstd.HasPrefix(path, "/emoji/")
+}
+
 func RequireTokenType(expect string, audience ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		if isPublicEmojiRoute(c.Path()) {
+			return c.Next()
+		}
+
 		tok, _ := c.Locals("user").(*jwt.Token)
 		if tok == nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "unable to get token to check type")
@@ -94,7 +101,7 @@ func RequireTokenType(expect string, audience ...string) fiber.Handler {
 		}
 
 		for _, v := range audience {
-			if !strings.Include(cl.Audience, v) {
+			if !gotilsstrings.Include(cl.Audience, v) {
 				return fiber.NewError(fiber.StatusUnauthorized, "wrong audience")
 			}
 		}

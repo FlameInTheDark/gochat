@@ -85,6 +85,8 @@ Class | Method | HTTP request | Description
 *AuthAPI* | [**AuthRefreshGet**](docs/AuthAPI.md#authrefreshget) | **Get** /auth/refresh | Refresh authentication token
 *AuthAPI* | [**AuthRegistrationPost**](docs/AuthAPI.md#authregistrationpost) | **Post** /auth/registration | Registration
 *AuthAPI* | [**AuthResetPost**](docs/AuthAPI.md#authresetpost) | **Post** /auth/reset | Password Reset
+*EmojiAPI* | [**EmojiEmojiIdGet**](docs/EmojiAPI.md#emojiemojiidget) | **Get** /emoji/{emoji_id} | Redirect to public emoji asset
+*GuildAPI* | [**GuildGuildIdBansGet**](docs/GuildAPI.md#guildguildidbansget) | **Get** /guild/{guild_id}/bans | Get guild bans
 *GuildAPI* | [**GuildGuildIdCategoryCategoryIdDelete**](docs/GuildAPI.md#guildguildidcategorycategoryiddelete) | **Delete** /guild/{guild_id}/category/{category_id} | Delete channel category
 *GuildAPI* | [**GuildGuildIdCategoryPost**](docs/GuildAPI.md#guildguildidcategorypost) | **Post** /guild/{guild_id}/category | Create guild channel category
 *GuildAPI* | [**GuildGuildIdChannelChannelIdDelete**](docs/GuildAPI.md#guildguildidchannelchanneliddelete) | **Delete** /guild/{guild_id}/channel/{channel_id} | Delete channel
@@ -94,10 +96,17 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdChannelOrderPatch**](docs/GuildAPI.md#guildguildidchannelorderpatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 *GuildAPI* | [**GuildGuildIdChannelPost**](docs/GuildAPI.md#guildguildidchannelpost) | **Post** /guild/{guild_id}/channel | Create guild channel
 *GuildAPI* | [**GuildGuildIdDelete**](docs/GuildAPI.md#guildguildiddelete) | **Delete** /guild/{guild_id} | Delete guild
+*GuildAPI* | [**GuildGuildIdEmojisEmojiIdDelete**](docs/GuildAPI.md#guildguildidemojisemojiiddelete) | **Delete** /guild/{guild_id}/emojis/{emoji_id} | Delete guild emoji
+*GuildAPI* | [**GuildGuildIdEmojisEmojiIdPatch**](docs/GuildAPI.md#guildguildidemojisemojiidpatch) | **Patch** /guild/{guild_id}/emojis/{emoji_id} | Update guild emoji
+*GuildAPI* | [**GuildGuildIdEmojisGet**](docs/GuildAPI.md#guildguildidemojisget) | **Get** /guild/{guild_id}/emojis | List guild emojis
+*GuildAPI* | [**GuildGuildIdEmojisPost**](docs/GuildAPI.md#guildguildidemojispost) | **Post** /guild/{guild_id}/emojis | Create guild emoji metadata
 *GuildAPI* | [**GuildGuildIdGet**](docs/GuildAPI.md#guildguildidget) | **Get** /guild/{guild_id} | Get guild
 *GuildAPI* | [**GuildGuildIdIconPost**](docs/GuildAPI.md#guildguildidiconpost) | **Post** /guild/{guild_id}/icon | Create guild icon metadata
 *GuildAPI* | [**GuildGuildIdIconsGet**](docs/GuildAPI.md#guildguildidiconsget) | **Get** /guild/{guild_id}/icons | List guild icons
 *GuildAPI* | [**GuildGuildIdIconsIconIdDelete**](docs/GuildAPI.md#guildguildidiconsiconiddelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
+*GuildAPI* | [**GuildGuildIdMemberUserIdBanDelete**](docs/GuildAPI.md#guildguildidmemberuseridbandelete) | **Delete** /guild/{guild_id}/member/{user_id}/ban | Unban guild member
+*GuildAPI* | [**GuildGuildIdMemberUserIdBanPost**](docs/GuildAPI.md#guildguildidmemberuseridbanpost) | **Post** /guild/{guild_id}/member/{user_id}/ban | Ban guild member
+*GuildAPI* | [**GuildGuildIdMemberUserIdKickPost**](docs/GuildAPI.md#guildguildidmemberuseridkickpost) | **Post** /guild/{guild_id}/member/{user_id}/kick | Kick guild member
 *GuildAPI* | [**GuildGuildIdMembersGet**](docs/GuildAPI.md#guildguildidmembersget) | **Get** /guild/{guild_id}/members | Get guild members
 *GuildAPI* | [**GuildGuildIdPatch**](docs/GuildAPI.md#guildguildidpatch) | **Patch** /guild/{guild_id} | Update guild
 *GuildAPI* | [**GuildGuildIdSystemchPatch**](docs/GuildAPI.md#guildguildidsystemchpatch) | **Patch** /guild/{guild_id}/systemch | Set system messages channel
@@ -130,8 +139,10 @@ Class | Method | HTTP request | Description
 *MessageAPI* | [**MessageChannelChannelIdPost**](docs/MessageAPI.md#messagechannelchannelidpost) | **Post** /message/channel/{channel_id} | Send message
 *MessageAPI* | [**MessageChannelChannelIdTypingPost**](docs/MessageAPI.md#messagechannelchannelidtypingpost) | **Post** /message/channel/{channel_id}/typing | Send user typing event in the channel
 *SearchAPI* | [**SearchGuildIdMessagesPost**](docs/SearchAPI.md#searchguildidmessagespost) | **Post** /search/{guild_id}/messages | Search messages
+*SearchAPI* | [**SearchMessagesPost**](docs/SearchAPI.md#searchmessagespost) | **Post** /search/messages | Search messages in a channel
 *UploadAPI* | [**UploadAttachmentsChannelIdAttachmentIdPost**](docs/UploadAPI.md#uploadattachmentschannelidattachmentidpost) | **Post** /upload/attachments/{channel_id}/{attachment_id} | Upload attachment
 *UploadAPI* | [**UploadAvatarsUserIdAvatarIdPost**](docs/UploadAPI.md#uploadavatarsuseridavataridpost) | **Post** /upload/avatars/{user_id}/{avatar_id} | Upload user avatar
+*UploadAPI* | [**UploadEmojisGuildIdEmojiIdPost**](docs/UploadAPI.md#uploademojisguildidemojiidpost) | **Post** /upload/emojis/{guild_id}/{emoji_id} | Upload guild emoji image
 *UploadAPI* | [**UploadIconsGuildIdIconIdPost**](docs/UploadAPI.md#uploadiconsguildidiconidpost) | **Post** /upload/icons/{guild_id}/{icon_id} | Upload guild icon
 *UserAPI* | [**UserMeAvatarPost**](docs/UserAPI.md#usermeavatarpost) | **Post** /user/me/avatar | Create avatar metadata
 *UserAPI* | [**UserMeAvatarsAvatarIdDelete**](docs/UserAPI.md#usermeavatarsavatariddelete) | **Delete** /user/me/avatars/{avatar_id} | Delete my avatar by ID
@@ -177,7 +188,11 @@ Class | Method | HTTP request | Description
  - [DtoAvatarData](docs/DtoAvatarData.md)
  - [DtoAvatarUpload](docs/DtoAvatarUpload.md)
  - [DtoChannel](docs/DtoChannel.md)
+ - [DtoEmojiRef](docs/DtoEmojiRef.md)
+ - [DtoEmojiUpload](docs/DtoEmojiUpload.md)
  - [DtoGuild](docs/DtoGuild.md)
+ - [DtoGuildBan](docs/DtoGuildBan.md)
+ - [DtoGuildEmoji](docs/DtoGuildEmoji.md)
  - [DtoGuildInvite](docs/DtoGuildInvite.md)
  - [DtoIcon](docs/DtoIcon.md)
  - [DtoIconUpload](docs/DtoIconUpload.md)
@@ -186,9 +201,17 @@ Class | Method | HTTP request | Description
  - [DtoMessage](docs/DtoMessage.md)
  - [DtoRole](docs/DtoRole.md)
  - [DtoUser](docs/DtoUser.md)
+ - [EmbedEmbed](docs/EmbedEmbed.md)
+ - [EmbedEmbedAuthor](docs/EmbedEmbedAuthor.md)
+ - [EmbedEmbedField](docs/EmbedEmbedField.md)
+ - [EmbedEmbedFooter](docs/EmbedEmbedFooter.md)
+ - [EmbedEmbedMedia](docs/EmbedEmbedMedia.md)
+ - [EmbedEmbedProvider](docs/EmbedEmbedProvider.md)
+ - [GuildBanMemberRequest](docs/GuildBanMemberRequest.md)
  - [GuildChannelOrder](docs/GuildChannelOrder.md)
  - [GuildChannelRolePermission](docs/GuildChannelRolePermission.md)
  - [GuildChannelRolePermissionRequest](docs/GuildChannelRolePermissionRequest.md)
+ - [GuildCreateEmojiRequest](docs/GuildCreateEmojiRequest.md)
  - [GuildCreateGuildChannelCategoryRequest](docs/GuildCreateGuildChannelCategoryRequest.md)
  - [GuildCreateGuildChannelRequest](docs/GuildCreateGuildChannelRequest.md)
  - [GuildCreateGuildRequest](docs/GuildCreateGuildRequest.md)
@@ -204,13 +227,16 @@ Class | Method | HTTP request | Description
  - [GuildSetGuildSystemMessagesChannelRequest](docs/GuildSetGuildSystemMessagesChannelRequest.md)
  - [GuildSetVoiceRegionRequest](docs/GuildSetVoiceRegionRequest.md)
  - [GuildSetVoiceRegionResponse](docs/GuildSetVoiceRegionResponse.md)
+ - [GuildUpdateEmojiRequest](docs/GuildUpdateEmojiRequest.md)
  - [GuildUpdateGuildRequest](docs/GuildUpdateGuildRequest.md)
  - [MessageSendMessageRequest](docs/MessageSendMessageRequest.md)
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)
  - [MessageUploadAttachmentRequest](docs/MessageUploadAttachmentRequest.md)
  - [ModelChannelMention](docs/ModelChannelMention.md)
+ - [ModelChannelType](docs/ModelChannelType.md)
  - [ModelDevices](docs/ModelDevices.md)
  - [ModelMention](docs/ModelMention.md)
+ - [ModelNotificationsType](docs/ModelNotificationsType.md)
  - [ModelStatus](docs/ModelStatus.md)
  - [ModelUserDMChannels](docs/ModelUserDMChannels.md)
  - [ModelUserSettingsAppearance](docs/ModelUserSettingsAppearance.md)
@@ -241,18 +267,7 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Authorization
 
-
-Authentication schemes defined for the API:
-### bearerauth
-
-- **Type**: HTTP Bearer token authentication
-
-Example
-
-```go
-auth := context.WithValue(context.Background(), goclient.ContextAccessToken, "BEARER_TOKEN_STRING")
-r, err := client.Service.Operation(auth, args)
-```
+Endpoints do not require authorization.
 
 
 ## Documentation for Utility Methods

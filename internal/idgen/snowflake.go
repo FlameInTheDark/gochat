@@ -1,6 +1,8 @@
 package idgen
 
 import (
+	"time"
+
 	"github.com/godruoyi/go-snowflake"
 )
 
@@ -16,4 +18,9 @@ func Next() int64 {
 
 func GetBucket(id int64) int64 {
 	return (id >> 20) / bucket_size
+}
+
+func GetTime(id int64) time.Time {
+	sid := snowflake.ParseID(uint64(id))
+	return sid.GenerateTime()
 }

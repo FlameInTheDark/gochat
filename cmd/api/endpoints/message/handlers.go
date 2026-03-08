@@ -14,6 +14,8 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/FlameInTheDark/gochat/internal/embed"
+	"github.com/FlameInTheDark/gochat/internal/embedmq"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
@@ -50,10 +52,23 @@ func (e *entity) Send(c *fiber.Ctx) error {
 		return err
 	}
 
-	// Create and send message
-	message, err := e.createAndSendMessage(c, req, user, channel, guildId)
+	validatedAttachments, err := e.validateMessageAttachments(c.UserContext(), channel.Id, user.Id, []int64(req.Attachments))
 	if err != nil {
 		return err
+	}
+
+	req.Content, err = e.sanitizeEmojiContent(c.UserContext(), user.Id, req.Content)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendMessage)
+	}
+	// Create and send message
+	message, err := e.createAndSendMessage(c, req, user, channel, guildId, validatedAttachments)
+	if err != nil {
+		return err
+	}
+
+	if HasURL(message.Content) {
+		go e.enqueueMakeEmbed(guildId, message)
 	}
 
 	if err := e.rs.SetReadState(c.UserContext(), user.Id, channelId, message.Id); err != nil {
@@ -123,7 +138,7 @@ func (e *entity) validateSendPermissions(c *fiber.Ctx, channelId, userId int64) 
 }
 
 // createAndSendMessage creates the message and handles all related operations
-func (e *entity) createAndSendMessage(c *fiber.Ctx, req *SendMessageRequest, jwtUser *helper.JWTUser, channel *model.Channel, guildId *int64) (dto.Message, error) {
+func (e *entity) createAndSendMessage(c *fiber.Ctx, req *SendMessageRequest, jwtUser *helper.JWTUser, channel *model.Channel, guildId *int64, validatedAttachments []model.Attachment) (dto.Message, error) {
 	// Fetch user data concurrently
 	userData, err := e.fetchUserDataForMessage(c, jwtUser.Id)
 	if err != nil {
@@ -137,7 +152,7 @@ func (e *entity) createAndSendMessage(c *fiber.Ctx, req *SendMessageRequest, jwt
 	}
 
 	// Build response message
-	message, err := e.buildMessageResponse(c, messageId, channel, userData, req)
+	message, err := e.buildMessageResponse(c, messageId, channel, userData, req, validatedAttachments)
 	if err != nil {
 		// Cleanup on failure
 		_ = e.msg.DeleteMessage(c.UserContext(), messageId, channel.Id)
@@ -303,8 +318,17 @@ type messageUserData struct {
 
 // createMessageWithCleanup creates message and updates channel with proper error handling
 func (e *entity) createMessageWithCleanup(c *fiber.Ctx, messageId, channelId, userId int64, req *SendMessageRequest) error {
+	manualEmbedsJSON, err := embed.MarshalEmbeds(req.Embeds)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	autoEmbedsJSON, err := embed.MarshalEmbeds(nil)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
 	// Create the message
-	if err := e.msg.CreateMessage(c.UserContext(), messageId, channelId, userId, req.Content, req.Attachments); err != nil {
+	if err := e.msg.CreateMessage(c.UserContext(), messageId, channelId, userId, req.Content, []int64(req.Attachments), manualEmbedsJSON, autoEmbedsJSON); err != nil {
 		return helper.HttpDbError(err, ErrUnableToSendMessage)
 	}
 
@@ -317,31 +341,83 @@ func (e *entity) createMessageWithCleanup(c *fiber.Ctx, messageId, channelId, us
 
 	return nil
 }
+func (e *entity) validateMessageAttachments(ctx context.Context, channelId, userId int64, attachmentIds []int64) ([]model.Attachment, error) {
+	if len(attachmentIds) == 0 {
+		return nil, nil
+	}
+
+	requested := make(map[int64]struct{}, len(attachmentIds))
+	for _, attachmentId := range attachmentIds {
+		if _, exists := requested[attachmentId]; exists {
+			return nil, fiber.NewError(fiber.StatusBadRequest, ErrInvalidAttachments)
+		}
+		requested[attachmentId] = struct{}{}
+	}
+
+	attachments, err := e.at.SelectAttachmentsByChannel(ctx, channelId, attachmentIds)
+	if err != nil {
+		return nil, helper.HttpDbError(err, ErrUnableToGetAttachements)
+	}
+	if len(attachments) != len(requested) {
+		return nil, fiber.NewError(fiber.StatusBadRequest, ErrInvalidAttachments)
+	}
+
+	attachmentMap := make(map[int64]model.Attachment, len(attachments))
+	for _, attachment := range attachments {
+		if attachment.ChannelId != channelId || !attachment.Done || attachment.AuthorId == nil || *attachment.AuthorId != userId {
+			return nil, fiber.NewError(fiber.StatusBadRequest, ErrInvalidAttachments)
+		}
+		attachmentMap[attachment.Id] = attachment
+	}
+
+	result := make([]model.Attachment, 0, len(attachmentIds))
+	for _, attachmentId := range attachmentIds {
+		attachment, exists := attachmentMap[attachmentId]
+		if !exists {
+			return nil, fiber.NewError(fiber.StatusBadRequest, ErrInvalidAttachments)
+		}
+		result = append(result, attachment)
+	}
+
+	return result, nil
+}
+
+func (e *entity) buildAttachmentDTOs(attachmentIds []int64, attachments []model.Attachment) []dto.Attachment {
+	if len(attachmentIds) == 0 || len(attachments) == 0 {
+		return nil
+	}
+
+	attachmentMap := make(map[int64]model.Attachment, len(attachments))
+	for _, attachment := range attachments {
+		attachmentMap[attachment.Id] = attachment
+	}
+
+	result := make([]dto.Attachment, 0, len(attachmentIds))
+	for _, attachmentId := range attachmentIds {
+		attachment, exists := attachmentMap[attachmentId]
+		if !exists {
+			continue
+		}
+		var url string
+		if attachment.URL != nil {
+			url = *attachment.URL
+		}
+		result = append(result, dto.Attachment{
+			ContentType: attachment.ContentType,
+			Filename:    attachment.Name,
+			Height:      attachment.Height,
+			Width:       attachment.Width,
+			URL:         url,
+			PreviewURL:  attachment.PreviewURL,
+			Size:        attachment.FileSize,
+		})
+	}
+	return result
+}
 
 // buildMessageResponse constructs the message response DTO
-func (e *entity) buildMessageResponse(c *fiber.Ctx, messageId int64, channel *model.Channel, userData *messageUserData, req *SendMessageRequest) (dto.Message, error) {
-	var attachments []dto.Attachment
-	if len(req.Attachments) > 0 {
-		ats, err := e.at.SelectAttachmentByIDs(c.UserContext(), req.Attachments)
-		if err != nil {
-			return dto.Message{}, helper.HttpDbError(err, ErrUnableToGetAttachements)
-		}
-		for _, at := range ats {
-			var url string
-			if at.URL != nil {
-				url = *at.URL
-			}
-			attachments = append(attachments, dto.Attachment{
-				ContentType: at.ContentType,
-				Filename:    at.Name,
-				Height:      at.Height,
-				Width:       at.Width,
-				URL:         url,
-				PreviewURL:  at.PreviewURL,
-				Size:        at.FileSize,
-			})
-		}
-	}
+func (e *entity) buildMessageResponse(c *fiber.Ctx, messageId int64, channel *model.Channel, userData *messageUserData, req *SendMessageRequest, validatedAttachments []model.Attachment) (dto.Message, error) {
+	attachments := e.buildAttachmentDTOs([]int64(req.Attachments), validatedAttachments)
 
 	// Build author with avatar data if present
 	author := dto.User{
@@ -361,7 +437,50 @@ func (e *entity) buildMessageResponse(c *fiber.Ctx, messageId int64, channel *mo
 		Author:      author,
 		Content:     req.Content,
 		Attachments: attachments,
+		Embeds:      req.Embeds,
+		Flags:       0,
+		Type:        int(model.MessageTypeChat),
 	}, nil
+}
+
+func (e *entity) parseMessageEmbeds(messageId int64, raw *string) []embed.Embed {
+	embeds, err := embed.ParseEmbeds(raw)
+	if err != nil {
+		if e.log != nil {
+			e.log.Error("failed to decode message embeds",
+				"message_id", messageId,
+				"error", err.Error())
+		}
+		return nil
+	}
+
+	return embeds
+}
+
+func (e *entity) mergedMessageEmbeds(messageId int64, manualRaw, autoRaw *string, flags int) []embed.Embed {
+	embeds, err := embed.ParseMergedEmbeds(manualRaw, autoRaw, model.HasMessageFlag(flags, model.MessageFlagSuppressEmbeds))
+	if err != nil {
+		if e.log != nil {
+			e.log.Error("failed to decode message embeds",
+				"message_id", messageId,
+				"error", err.Error())
+		}
+		return nil
+	}
+
+	return embeds
+}
+
+func (e *entity) enqueueMakeEmbed(guildId *int64, message dto.Message) {
+	if e.emq == nil {
+		return
+	}
+	if err := e.emq.MakeEmbed(embedmq.MakeEmbedRequest{GuildId: guildId, Message: message}); err != nil && e.log != nil {
+		e.log.Error("failed to enqueue embed generation",
+			"message_id", message.Id,
+			"channel_id", message.ChannelId,
+			"error", err.Error())
+	}
 }
 
 // sendMessageEvents sends message and indexing events asynchronously
@@ -621,6 +740,11 @@ func (e *entity) fetchAndBuildMessages(c *fiber.Ctx, req *GetMessagesRequest, ch
 
 	// Build message DTOs with memory optimization
 	messages := e.buildMessageDTOsOptimized(rawMessages, messageData)
+	if guildId != nil {
+		if err := e.redactBannedMessages(c.UserContext(), *guildId, rawMessages, messages); err != nil {
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to apply banned message visibility")
+		}
+	}
 
 	return messages, nil
 }
@@ -703,8 +827,8 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 	// Fetch attachments
 	go func() {
 		attachmentIds := e.extractAttachmentIds(messages)
-		if len(attachmentIds) > 0 {
-			attachments, err := e.at.SelectAttachmentByIDs(c.UserContext(), attachmentIds)
+		if len(attachmentIds) > 0 && len(messages) > 0 {
+			attachments, err := e.at.SelectAttachmentsByChannel(c.UserContext(), messages[0].ChannelId, attachmentIds)
 			attachmentsCh <- attachmentsResult{attachments, err}
 		} else {
 			attachmentsCh <- attachmentsResult{nil, nil}
@@ -777,87 +901,6 @@ func (e *entity) extractAttachmentIds(messages []model.Message) []int64 {
 	return attachmentIds
 }
 
-// buildMessageDTOs constructs message DTOs from raw data
-func (e *entity) buildMessageDTOs(messages []model.Message, data *messageRelatedData) []dto.Message {
-	result := make([]dto.Message, len(messages))
-
-	for i, message := range messages {
-		// Build author
-		author := e.buildAuthor(message.UserId, data)
-
-		// Build attachments
-		attachments := e.buildAttachments(message.Attachments, data)
-
-		result[i] = dto.Message{
-			Id:          message.Id,
-			ChannelId:   message.ChannelId,
-			Author:      author,
-			Content:     message.Content,
-			Attachments: attachments,
-			UpdatedAt:   message.EditedAt,
-		}
-	}
-
-	return result
-}
-
-// buildAuthor constructs author DTO with member override if available
-func (e *entity) buildAuthor(userId int64, data *messageRelatedData) dto.User {
-	user := data.Users[userId]
-	member := data.Members[userId]
-
-	author := dto.User{
-		Id:   userId,
-		Name: user.Name,
-	}
-	if ad, ok := data.AvData[userId]; ok {
-		author.Avatar = ad
-	}
-
-	// Override with member data if available
-	if member != nil {
-		if member.Username != nil {
-			author.Name = *member.Username
-		}
-		// If member has guild-specific avatar, override avatar data
-		if member.Avatar != nil {
-			if ad, err := e.getAvatarDataCached(context.Background(), userId, *member.Avatar); err == nil && ad != nil {
-				author.Avatar = ad
-			}
-		}
-	}
-
-	return author
-}
-
-// buildAttachments constructs attachment DTOs
-func (e *entity) buildAttachments(attachmentIds []int64, data *messageRelatedData) []dto.Attachment {
-	if len(attachmentIds) == 0 {
-		return nil
-	}
-
-	attachments := make([]dto.Attachment, 0, len(attachmentIds))
-	for _, id := range attachmentIds {
-		if attachment, exists := data.Attachments[id]; exists {
-			var full string
-			if attachment.URL != nil {
-				full = *attachment.URL
-			}
-			attachments = append(attachments, dto.Attachment{
-				ContentType: attachment.ContentType,
-				Filename:    attachment.Name,
-				Height:      attachment.Height,
-				Width:       attachment.Width,
-				URL:         full,
-				PreviewURL:  attachment.PreviewURL,
-				Size:        attachment.FileSize,
-			})
-		}
-	}
-
-	return attachments
-}
-
 // Update
 //
 //	@Summary	Update message
@@ -885,6 +928,17 @@ func (e *entity) Update(c *fiber.Ctx) error {
 		return err
 	}
 
+	currentFlags := model.NormalizeMessageFlags(message.Flags)
+	suppressWasEnabled := model.HasMessageFlag(currentFlags, model.MessageFlagSuppressEmbeds)
+
+	if req.Content != nil {
+		sanitizedContent, err := e.sanitizeEmojiContent(c.UserContext(), user.Id, *req.Content)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUpdateMessage)
+		}
+		req.Content = &sanitizedContent
+	}
+
 	// Update message and build response
 	updatedMessage, err := e.updateMessageAndBuildResponse(c, req, message, user, guildId)
 	if err != nil {
@@ -893,6 +947,13 @@ func (e *entity) Update(c *fiber.Ctx) error {
 
 	// Send update event
 	go e.sendUpdateEvent(channelId, guildId, updatedMessage)
+
+	contentChanged := req.Content != nil && *req.Content != message.Content
+	suppressIsEnabled := model.HasMessageFlag(updatedMessage.Flags, model.MessageFlagSuppressEmbeds)
+	suppressLifted := suppressWasEnabled && !suppressIsEnabled
+	if !suppressIsEnabled && HasURL(updatedMessage.Content) && (contentChanged || suppressLifted) {
+		go e.enqueueMakeEmbed(guildId, updatedMessage)
+	}
 
 	return c.JSON(updatedMessage)
 }
@@ -957,9 +1018,58 @@ func (e *entity) validateMessageOwnership(c *fiber.Ctx, messageId, channelId, us
 
 // updateMessageAndBuildResponse updates the message and builds the response DTO
 func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageRequest, message *model.Message, jwtUser *helper.JWTUser, guildId *int64) (dto.Message, error) {
+	updatedContent := message.Content
+	if req.Content != nil {
+		updatedContent = *req.Content
+	}
+
+	updatedEmbeds, err := embed.ParseEmbeds(message.EmbedsJSON)
+	if err != nil {
+		return dto.Message{}, fiber.NewError(fiber.StatusInternalServerError, "failed to decode message embeds")
+	}
+	if req.Embeds != nil {
+		updatedEmbeds = append([]embed.Embed(nil), (*req.Embeds)...)
+	}
+
+	updatedAutoEmbeds, err := embed.ParseEmbeds(message.AutoEmbedsJSON)
+	if err != nil {
+		return dto.Message{}, fiber.NewError(fiber.StatusInternalServerError, "failed to decode generated message embeds")
+	}
+
+	updatedFlags := model.NormalizeMessageFlags(message.Flags)
+	if req.Flags != nil {
+		updatedFlags = *req.Flags
+	}
+
+	contentChanged := req.Content != nil && *req.Content != message.Content
+	if contentChanged || model.HasMessageFlag(updatedFlags, model.MessageFlagSuppressEmbeds) {
+		updatedAutoEmbeds = nil
+	}
+
+	if updatedContent == "" && len(message.Attachments) == 0 && len(updatedEmbeds) == 0 {
+		return dto.Message{}, fiber.NewError(fiber.StatusBadRequest, ErrMessagePayloadRequired)
+	}
+
+	embedsJSON, err := embed.MarshalEmbeds(updatedEmbeds)
+	if err != nil {
+		return dto.Message{}, fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	autoEmbedsJSON, err := embed.MarshalEmbeds(updatedAutoEmbeds)
+	if err != nil {
+		return dto.Message{}, fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
 	// Update the message
-	if err := e.msg.UpdateMessage(c.UserContext(), message.Id, message.ChannelId, req.Content); err != nil {
+	if err := e.msg.UpdateMessage(c.UserContext(), message.Id, message.ChannelId, updatedContent, embedsJSON, autoEmbedsJSON, updatedFlags); err != nil {
 		return dto.Message{}, fiber.NewError(fiber.StatusInternalServerError, "failed to update message")
+	}
+
+	var validatedAttachments []model.Attachment
+	if len(message.Attachments) > 0 {
+		validatedAttachments, err = e.at.SelectAttachmentsByChannel(c.UserContext(), message.ChannelId, message.Attachments)
+		if err != nil {
+			return dto.Message{}, helper.HttpDbError(err, ErrUnableToGetAttachements)
+		}
 	}
 
 	// Fetch user data for response
@@ -970,7 +1080,6 @@ func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageR
 
 	// Build response
 	updatedAt := time.Now()
-	// Build author with avatar override if any
 	author := dto.User{
 		Id:            userData.User.Id,
 		Name:          userData.DisplayName,
@@ -986,12 +1095,21 @@ func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageR
 		}
 	}
 
+	responseEmbeds := embed.MergeEmbeds(updatedEmbeds)
+	if !model.HasMessageFlag(updatedFlags, model.MessageFlagSuppressEmbeds) {
+		responseEmbeds = embed.MergeEmbeds(updatedEmbeds, updatedAutoEmbeds)
+	}
+
 	return dto.Message{
-		Id:        message.Id,
-		ChannelId: message.ChannelId,
-		Author:    author,
-		Content:   req.Content,
-		UpdatedAt: &updatedAt,
+		Id:          message.Id,
+		ChannelId:   message.ChannelId,
+		Author:      author,
+		Content:     updatedContent,
+		Attachments: e.buildAttachmentDTOs(message.Attachments, validatedAttachments),
+		Embeds:      responseEmbeds,
+		Flags:       updatedFlags,
+		Type:        message.Type,
+		UpdatedAt:   &updatedAt,
 	}, nil
 }
 
@@ -1319,8 +1437,8 @@ func (e *entity) validateUploadPermissions(c *fiber.Ctx, channelId, userId int64
 		return fiber.NewError(fiber.StatusNotFound, "channel not found")
 	}
 
-	// Check guild permissions
-	if channel.Type == model.ChannelTypeGuild {
+	switch channel.Type {
+	case model.ChannelTypeGuild:
 		guildChannel, err := e.gc.GetGuildByChannel(c.UserContext(), channelId)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusInternalServerError, "failed to get guild channel")
@@ -1335,7 +1453,7 @@ func (e *entity) validateUploadPermissions(c *fiber.Ctx, channelId, userId int64
 				return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
 			}
 		}
-	} else if channel.Type == model.ChannelTypeGroupDM {
+	case model.ChannelTypeGroupDM:
 		// Check if user is participant in group DM
 		if channel.ParentID != nil && *channel.ParentID != userId {
 			// TODO: Implement proper group DM participant check
@@ -1371,12 +1489,15 @@ func (e *entity) buildMessageDTOsOptimized(messages []model.Message, data *messa
 	result := make([]dto.Message, len(messages))
 
 	for i, message := range messages {
+		flags := model.NormalizeMessageFlags(message.Flags)
 		result[i] = dto.Message{
 			Id:          message.Id,
 			ChannelId:   message.ChannelId,
 			Author:      e.buildAuthorOptimized(message.UserId, data),
 			Content:     message.Content,
 			Attachments: e.buildAttachmentsOptimized(message.Attachments, data),
+			Embeds:      e.mergedMessageEmbeds(message.Id, message.EmbedsJSON, message.AutoEmbedsJSON, flags),
+			Flags:       flags,
 			UpdatedAt:   message.EditedAt,
 			Type:        message.Type,
 		}

@@ -18,6 +18,10 @@ type Search struct {
 	osc *opensearch.Client
 }
 
+func closeQuietly(c io.Closer) {
+	_ = c.Close()
+}
+
 // NewSearch creates a Search service.
 func NewSearch(addresses []string, tlsSkip bool, username, password string) (*Search, error) {
 	conf := opensearch.Config{
@@ -36,7 +40,7 @@ func NewSearch(addresses []string, tlsSkip bool, username, password string) (*Se
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if index exists: %w", err)
 	}
-	defer res.Body.Close()
+	defer closeQuietly(res.Body)
 
 	if res.StatusCode != 200 {
 		ctx := context.Background()
@@ -77,7 +81,7 @@ func (s *Search) IndexMessage(ctx context.Context, m Message) error {
 	if index.IsError() {
 		return fmt.Errorf("error indexing message: %s", index.String())
 	}
-	defer index.Body.Close()
+	defer closeQuietly(index.Body)
 	return nil
 }
 
@@ -108,7 +112,7 @@ func (s *Search) Search(ctx context.Context, req SearchRequest) (results *Result
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer closeQuietly(res.Body)
 	if res.IsError() {
 		if res.StatusCode == http.StatusNotFound {
 			return
@@ -147,11 +151,13 @@ func buildOSQuery(req SearchRequest) ([]byte, error) {
 		osSearchQuery{Term: map[string]any{"channel_id": req.ChannelId}},
 	)
 
-	// Required guild filter
-	osreq.Query.Bool.Filter = append(
-		osreq.Query.Bool.Filter,
-		osSearchQuery{Term: map[string]any{"guild_id": req.GuildId}},
-	)
+	// Guild filter is optional so DM/private channel documents without guild_id remain searchable.
+	if req.GuildId != nil {
+		osreq.Query.Bool.Filter = append(
+			osreq.Query.Bool.Filter,
+			osSearchQuery{Term: map[string]any{"guild_id": *req.GuildId}},
+		)
+	}
 
 	// Optional filters
 	if req.UserId != nil {
@@ -207,7 +213,7 @@ func (s *Search) DeleteMessage(ctx context.Context, m DeleteMessage) error {
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer closeQuietly(res.Body)
 
 	if res.IsError() {
 		if res.StatusCode == http.StatusNotFound {
@@ -240,7 +246,7 @@ func (s *Search) UpdateMessage(ctx context.Context, m Message) error {
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer closeQuietly(res.Body)
 
 	if res.StatusCode >= 300 {
 		if res.StatusCode == http.StatusNotFound {

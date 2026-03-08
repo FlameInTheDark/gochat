@@ -21,9 +21,9 @@ var _ MappedNullable = &SearchMessageSearchRequest{}
 // SearchMessageSearchRequest struct for SearchMessageSearchRequest
 type SearchMessageSearchRequest struct {
 	// Author ID to search by.
-	AuthorId *int32 `json:"author_id,omitempty"`
+	AuthorId *string `json:"author_id,omitempty"`
 	// Channel ID to search in. Required.
-	ChannelId *int32 `json:"channel_id,omitempty"`
+	ChannelId *string `json:"channel_id,omitempty"`
 	// Content contains a string to search for. Might be empty if need to search by other parameters.
 	Content *string `json:"content,omitempty"`
 	// List of specific features to search for.
@@ -40,8 +40,6 @@ type SearchMessageSearchRequest struct {
 // will change when the set of required properties is changed
 func NewSearchMessageSearchRequest() *SearchMessageSearchRequest {
 	this := SearchMessageSearchRequest{}
-	var page int32 = 0
-	this.Page = &page
 	return &this
 }
 
@@ -50,15 +48,13 @@ func NewSearchMessageSearchRequest() *SearchMessageSearchRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewSearchMessageSearchRequestWithDefaults() *SearchMessageSearchRequest {
 	this := SearchMessageSearchRequest{}
-	var page int32 = 0
-	this.Page = &page
 	return &this
 }
 
 // GetAuthorId returns the AuthorId field value if set, zero value otherwise.
-func (o *SearchMessageSearchRequest) GetAuthorId() int32 {
+func (o *SearchMessageSearchRequest) GetAuthorId() string {
 	if o == nil || IsNil(o.AuthorId) {
-		var ret int32
+		var ret string
 		return ret
 	}
 	return *o.AuthorId
@@ -66,7 +62,7 @@ func (o *SearchMessageSearchRequest) GetAuthorId() int32 {
 
 // GetAuthorIdOk returns a tuple with the AuthorId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *SearchMessageSearchRequest) GetAuthorIdOk() (*int32, bool) {
+func (o *SearchMessageSearchRequest) GetAuthorIdOk() (*string, bool) {
 	if o == nil || IsNil(o.AuthorId) {
 		return nil, false
 	}
@@ -82,15 +78,15 @@ func (o *SearchMessageSearchRequest) HasAuthorId() bool {
 	return false
 }
 
-// SetAuthorId gets a reference to the given int32 and assigns it to the AuthorId field.
-func (o *SearchMessageSearchRequest) SetAuthorId(v int32) {
+// SetAuthorId gets a reference to the given string and assigns it to the AuthorId field.
+func (o *SearchMessageSearchRequest) SetAuthorId(v string) {
 	o.AuthorId = &v
 }
 
 // GetChannelId returns the ChannelId field value if set, zero value otherwise.
-func (o *SearchMessageSearchRequest) GetChannelId() int32 {
+func (o *SearchMessageSearchRequest) GetChannelId() string {
 	if o == nil || IsNil(o.ChannelId) {
-		var ret int32
+		var ret string
 		return ret
 	}
 	return *o.ChannelId
@@ -98,7 +94,7 @@ func (o *SearchMessageSearchRequest) GetChannelId() int32 {
 
 // GetChannelIdOk returns a tuple with the ChannelId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *SearchMessageSearchRequest) GetChannelIdOk() (*int32, bool) {
+func (o *SearchMessageSearchRequest) GetChannelIdOk() (*string, bool) {
 	if o == nil || IsNil(o.ChannelId) {
 		return nil, false
 	}
@@ -114,8 +110,8 @@ func (o *SearchMessageSearchRequest) HasChannelId() bool {
 	return false
 }
 
-// SetChannelId gets a reference to the given int32 and assigns it to the ChannelId field.
-func (o *SearchMessageSearchRequest) SetChannelId(v int32) {
+// SetChannelId gets a reference to the given string and assigns it to the ChannelId field.
+func (o *SearchMessageSearchRequest) SetChannelId(v string) {
 	o.ChannelId = &v
 }
 

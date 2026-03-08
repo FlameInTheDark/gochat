@@ -47,12 +47,15 @@ func (e *Entity) GetGuildRoles(ctx context.Context, guildId int64) ([]model.Role
 	return roles, nil
 }
 
-func (e *Entity) GetRolesBulk(ctx context.Context, ids []int64) ([]model.Role, error) {
+func (e *Entity) GetRolesBulk(ctx context.Context, guildID int64, ids []int64) ([]model.Role, error) {
 	var roles []model.Role
 	q := squirrel.Select("*").
 		PlaceholderFormat(squirrel.Dollar).
 		From("roles").
-		Where(squirrel.Eq{"id": ids})
+		Where(squirrel.And{
+			squirrel.Eq{"guild_id": guildID},
+			squirrel.Eq{"id": ids},
+		})
 	raw, args, err := q.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create SQL query: %w", err)
@@ -61,7 +64,7 @@ func (e *Entity) GetRolesBulk(ctx context.Context, ids []int64) ([]model.Role, e
 	if errors.Is(err, sql.ErrNoRows) {
 		return roles, nil
 	} else if err != nil {
-		return roles, fmt.Errorf("unable to get roles for guild %d: %w", ids, err)
+		return roles, fmt.Errorf("unable to get roles for guild %d: %w", guildID, err)
 	}
 	return roles, nil
 }

@@ -21,7 +21,7 @@ var _ MappedNullable = &GuildChannelOrder{}
 // GuildChannelOrder struct for GuildChannelOrder
 type GuildChannelOrder struct {
 	// Channel ID.
-	Id *int32 `json:"id,omitempty"`
+	Id *string `json:"id,omitempty"`
 	// New channel position.
 	Position *int32 `json:"position,omitempty"`
 }
@@ -44,9 +44,9 @@ func NewGuildChannelOrderWithDefaults() *GuildChannelOrder {
 }
 
 // GetId returns the Id field value if set, zero value otherwise.
-func (o *GuildChannelOrder) GetId() int32 {
+func (o *GuildChannelOrder) GetId() string {
 	if o == nil || IsNil(o.Id) {
-		var ret int32
+		var ret string
 		return ret
 	}
 	return *o.Id
@@ -54,7 +54,7 @@ func (o *GuildChannelOrder) GetId() int32 {
 
 // GetIdOk returns a tuple with the Id field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *GuildChannelOrder) GetIdOk() (*int32, bool) {
+func (o *GuildChannelOrder) GetIdOk() (*string, bool) {
 	if o == nil || IsNil(o.Id) {
 		return nil, false
 	}
@@ -70,8 +70,8 @@ func (o *GuildChannelOrder) HasId() bool {
 	return false
 }
 
-// SetId gets a reference to the given int32 and assigns it to the Id field.
-func (o *GuildChannelOrder) SetId(v int32) {
+// SetId gets a reference to the given string and assigns it to the Id field.
+func (o *GuildChannelOrder) SetId(v string) {
 	o.Id = &v
 }
 

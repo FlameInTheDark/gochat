@@ -2,6 +2,7 @@ package mqmsg
 
 import (
 	"encoding/json"
+
 	"github.com/FlameInTheDark/gochat/internal/dto"
 )
 

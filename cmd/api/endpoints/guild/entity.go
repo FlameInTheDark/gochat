@@ -9,6 +9,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/banned"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
@@ -16,6 +17,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channeluserperm"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
+	emojirepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/emoji"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/invite"
@@ -26,6 +28,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mq"
+	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
 )
@@ -39,12 +42,15 @@ func (e *entity) Init(router fiber.Router) {
 	router.Delete("/:guild_id<int>", e.Delete)
 	router.Post("/:guild_id<int>", e.SetSystemMessagesChannel)
 
-	// Icons
 	router.Post("/:guild_id<int>/icon", e.CreateIcon)
 	router.Get("/:guild_id<int>/icons", e.ListIcons)
 	router.Delete("/:guild_id<int>/icons/:icon_id<int>", e.DeleteIcon)
 
-	// Channels
+	router.Post("/:guild_id<int>/emojis", e.CreateEmoji)
+	router.Get("/:guild_id<int>/emojis", e.ListEmojis)
+	router.Patch("/:guild_id<int>/emojis/:emoji_id<int>", e.UpdateEmoji)
+	router.Delete("/:guild_id<int>/emojis/:emoji_id<int>", e.DeleteEmoji)
+
 	router.Get("/:guild_id<int>/channel/:channel_id<int>", e.GetChannel)
 	router.Get("/:guild_id<int>/channel", e.GetChannels)
 	router.Post("/:guild_id<int>/channel", e.CreateChannel)
@@ -54,15 +60,16 @@ func (e *entity) Init(router fiber.Router) {
 	router.Delete("/:guild_id<int>/channel/:channel_id<int>", e.DeleteChannel)
 	router.Delete("/:guild_id<int>/category/:category_id<int>", e.DeleteCategory)
 
-	// Voice
 	router.Post("/:guild_id<int>/voice/:channel_id<int>/join", e.JoinVoice)
 	router.Patch("/:guild_id<int>/voice/:channel_id<int>/region", e.SetVoiceRegion)
 	router.Post("/:guild_id<int>/voice/move", e.MoveMember)
 
-	// Members
 	router.Get("/:guild_id<int>/members", e.GetMembers)
+	router.Get("/:guild_id<int>/bans", e.GetBans)
+	router.Post("/:guild_id<int>/member/:user_id<int>/kick", e.KickMember)
+	router.Post("/:guild_id<int>/member/:user_id<int>/ban", e.BanMember)
+	router.Delete("/:guild_id<int>/member/:user_id<int>/ban", e.UnbanMember)
 
-	// Roles
 	router.Get("/:guild_id<int>/roles", e.GetGuildRoles)
 	router.Post("/:guild_id<int>/roles", e.CreateGuildRole)
 	router.Patch("/:guild_id<int>/roles/:role_id<int>", e.PatchGuildRole)
@@ -76,7 +83,6 @@ func (e *entity) Init(router fiber.Router) {
 	router.Patch("/:guild_id<int>/channel/:channel_id<int>/roles/:role_id<int>", e.UpdateChannelRolePermission)
 	router.Delete("/:guild_id<int>/channel/:channel_id<int>/roles/:role_id<int>", e.RemoveChannelRolePermission)
 
-	// Invites
 	router.Get("/invites/receive/:invite_code", e.ReceiveInvite)
 	router.Post("/invites/accept/:invite_code", e.AcceptInvite)
 	router.Get("/invites/:guild_id<int>", e.ListInvites)
@@ -87,13 +93,11 @@ func (e *entity) Init(router fiber.Router) {
 type entity struct {
 	name string
 
-	// Services
 	log   *slog.Logger
 	mqt   mq.SendTransporter
 	imq   *indexmq.IndexMQ
 	cache cache.Cache
 
-	// DB entities
 	user  user.User
 	disc  discriminator.Discriminator
 	ch    channel.Channel
@@ -101,16 +105,19 @@ type entity struct {
 	gc    guildchannels.GuildChannels
 	msg   message.Message
 	at    attachment.Attachment
-	perm  rolecheck.RoleCheck
+	perm  permissionChecker
 	uperm channeluserperm.ChannelUserPerm
 	rperm channelroleperm.ChannelRolePerm
 	role  role.Role
 	ur    userrole.UserRole
 	icon  icon.Icon
+	emoji emojirepo.Emoji
 	memb  member.Member
+	ban   banned.Banned
 	inv   invite.Invite
 	av    avatar.Avatar
-	// Config
+
+	storage            *s3.Client
 	attachTTL          int64
 	authSecret         string
 	defaultVoiceRegion string
@@ -122,7 +129,7 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.IndexMQ, cache cache.Cache, attachTTLSeconds int64, authSecret string, defaultVoiceRegion string, disco discovery.Manager, allowedRegions []string, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.IndexMQ, cache cache.Cache, storage *s3.Client, attachTTLSeconds int64, authSecret string, defaultVoiceRegion string, disco discovery.Manager, allowedRegions []string, log *slog.Logger) server.Entity {
 	ar := make(map[string]struct{}, len(allowedRegions))
 	for _, r := range allowedRegions {
 		if r == "" {
@@ -149,9 +156,12 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.Ind
 		role:               role.New(pg.Conn()),
 		ur:                 userrole.New(pg.Conn()),
 		icon:               icon.New(dbcon),
+		emoji:              emojirepo.New(pg.Conn()),
 		memb:               member.New(pg.Conn()),
+		ban:                banned.New(dbcon),
 		inv:                invite.New(pg.Conn()),
 		av:                 avatar.New(dbcon),
+		storage:            storage,
 		attachTTL:          attachTTLSeconds,
 		authSecret:         authSecret,
 		defaultVoiceRegion: defaultVoiceRegion,

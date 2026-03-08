@@ -14,7 +14,7 @@ Method | HTTP request | Description
 
 ## WebhookAttachmentsFinalizePost
 
-> WebhookAttachmentsFinalizePost(ctx).XWebhookToken(xWebhookToken).AttachmentsFinalizeRequest(attachmentsFinalizeRequest).Execute()
+> WebhookAttachmentsFinalizePost(ctx).XWebhookToken(xWebhookToken).Request(request).Execute()
 
 Finalize attachment metadata
 
@@ -34,11 +34,11 @@ import (
 
 func main() {
 	xWebhookToken := "xWebhookToken_example" // string | JWT token
-	attachmentsFinalizeRequest := *openapiclient.NewAttachmentsFinalizeRequest() // AttachmentsFinalizeRequest | Finalize payload
+	request := *openapiclient.NewAttachmentsFinalizeRequest() // AttachmentsFinalizeRequest | Finalize payload
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.WebhookAPI.WebhookAttachmentsFinalizePost(context.Background()).XWebhookToken(xWebhookToken).AttachmentsFinalizeRequest(attachmentsFinalizeRequest).Execute()
+	r, err := apiClient.WebhookAPI.WebhookAttachmentsFinalizePost(context.Background()).XWebhookToken(xWebhookToken).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `WebhookAPI.WebhookAttachmentsFinalizePost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -58,7 +58,7 @@ Other parameters are passed through a pointer to a apiWebhookAttachmentsFinalize
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **xWebhookToken** | **string** | JWT token | 
- **attachmentsFinalizeRequest** | [**AttachmentsFinalizeRequest**](AttachmentsFinalizeRequest.md) | Finalize payload | 
+ **request** | [**AttachmentsFinalizeRequest**](AttachmentsFinalizeRequest.md) | Finalize payload | 
 
 ### Return type
 
@@ -80,7 +80,7 @@ No authorization required
 
 ## WebhookSfuChannelAlivePost
 
-> map[string]interface{} WebhookSfuChannelAlivePost(ctx).XWebhookToken(xWebhookToken).SfuChannelAlive(sfuChannelAlive).Execute()
+> WebhookSfuChannelAlivePost(ctx).XWebhookToken(xWebhookToken).Request(request).Execute()
 
 SFU update channel TTL
 
@@ -100,17 +100,15 @@ import (
 
 func main() {
 	xWebhookToken := "xWebhookToken_example" // string | JWT token
-	sfuChannelAlive := *openapiclient.NewSfuChannelAlive() // SfuChannelAlive | Channel liveness data
+	request := *openapiclient.NewSfuChannelAlive() // SfuChannelAlive | Channel liveness data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.WebhookAPI.WebhookSfuChannelAlivePost(context.Background()).XWebhookToken(xWebhookToken).SfuChannelAlive(sfuChannelAlive).Execute()
+	r, err := apiClient.WebhookAPI.WebhookSfuChannelAlivePost(context.Background()).XWebhookToken(xWebhookToken).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `WebhookAPI.WebhookSfuChannelAlivePost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `WebhookSfuChannelAlivePost`: map[string]interface{}
-	fmt.Fprintf(os.Stdout, "Response from `WebhookAPI.WebhookSfuChannelAlivePost`: %v\n", resp)
 }
 ```
 
@@ -126,11 +124,11 @@ Other parameters are passed through a pointer to a apiWebhookSfuChannelAlivePost
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **xWebhookToken** | **string** | JWT token | 
- **sfuChannelAlive** | [**SfuChannelAlive**](SfuChannelAlive.md) | Channel liveness data | 
+ **request** | [**SfuChannelAlive**](SfuChannelAlive.md) | Channel liveness data | 
 
 ### Return type
 
-**map[string]interface{}**
+ (empty response body)
 
 ### Authorization
 
@@ -148,7 +146,7 @@ No authorization required
 
 ## WebhookSfuHeartbeatPost
 
-> WebhookSfuHeartbeatPost(ctx).XWebhookToken(xWebhookToken).SfuHeartbeatRequest(sfuHeartbeatRequest).Execute()
+> WebhookSfuHeartbeatPost(ctx).XWebhookToken(xWebhookToken).Request(request).Execute()
 
 SFU heartbeat
 
@@ -168,11 +166,11 @@ import (
 
 func main() {
 	xWebhookToken := "xWebhookToken_example" // string | JWT token
-	sfuHeartbeatRequest := *openapiclient.NewSfuHeartbeatRequest() // SfuHeartbeatRequest | Heartbeat payload
+	request := *openapiclient.NewSfuHeartbeatRequest() // SfuHeartbeatRequest | Heartbeat payload
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.WebhookAPI.WebhookSfuHeartbeatPost(context.Background()).XWebhookToken(xWebhookToken).SfuHeartbeatRequest(sfuHeartbeatRequest).Execute()
+	r, err := apiClient.WebhookAPI.WebhookSfuHeartbeatPost(context.Background()).XWebhookToken(xWebhookToken).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `WebhookAPI.WebhookSfuHeartbeatPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -192,7 +190,7 @@ Other parameters are passed through a pointer to a apiWebhookSfuHeartbeatPostReq
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **xWebhookToken** | **string** | JWT token | 
- **sfuHeartbeatRequest** | [**SfuHeartbeatRequest**](SfuHeartbeatRequest.md) | Heartbeat payload | 
+ **request** | [**SfuHeartbeatRequest**](SfuHeartbeatRequest.md) | Heartbeat payload | 
 
 ### Return type
 
@@ -214,7 +212,7 @@ No authorization required
 
 ## WebhookSfuVoiceJoinPost
 
-> map[string]interface{} WebhookSfuVoiceJoinPost(ctx).XWebhookToken(xWebhookToken).SfuChannelUserJoin(sfuChannelUserJoin).Execute()
+> WebhookSfuVoiceJoinPost(ctx).XWebhookToken(xWebhookToken).Request(request).Execute()
 
 SFU voice join
 
@@ -234,17 +232,15 @@ import (
 
 func main() {
 	xWebhookToken := "xWebhookToken_example" // string | JWT token
-	sfuChannelUserJoin := *openapiclient.NewSfuChannelUserJoin() // SfuChannelUserJoin | Client join data
+	request := *openapiclient.NewSfuChannelUserJoin() // SfuChannelUserJoin | Client join data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.WebhookAPI.WebhookSfuVoiceJoinPost(context.Background()).XWebhookToken(xWebhookToken).SfuChannelUserJoin(sfuChannelUserJoin).Execute()
+	r, err := apiClient.WebhookAPI.WebhookSfuVoiceJoinPost(context.Background()).XWebhookToken(xWebhookToken).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `WebhookAPI.WebhookSfuVoiceJoinPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `WebhookSfuVoiceJoinPost`: map[string]interface{}
-	fmt.Fprintf(os.Stdout, "Response from `WebhookAPI.WebhookSfuVoiceJoinPost`: %v\n", resp)
 }
 ```
 
@@ -260,11 +256,11 @@ Other parameters are passed through a pointer to a apiWebhookSfuVoiceJoinPostReq
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **xWebhookToken** | **string** | JWT token | 
- **sfuChannelUserJoin** | [**SfuChannelUserJoin**](SfuChannelUserJoin.md) | Client join data | 
+ **request** | [**SfuChannelUserJoin**](SfuChannelUserJoin.md) | Client join data | 
 
 ### Return type
 
-**map[string]interface{}**
+ (empty response body)
 
 ### Authorization
 
@@ -282,7 +278,7 @@ No authorization required
 
 ## WebhookSfuVoiceLeavePost
 
-> map[string]interface{} WebhookSfuVoiceLeavePost(ctx).XWebhookToken(xWebhookToken).SfuChannelUserLeave(sfuChannelUserLeave).Execute()
+> WebhookSfuVoiceLeavePost(ctx).XWebhookToken(xWebhookToken).Request(request).Execute()
 
 SFU voice leave
 
@@ -302,17 +298,15 @@ import (
 
 func main() {
 	xWebhookToken := "xWebhookToken_example" // string | JWT token
-	sfuChannelUserLeave := *openapiclient.NewSfuChannelUserLeave() // SfuChannelUserLeave | Client join data
+	request := *openapiclient.NewSfuChannelUserLeave() // SfuChannelUserLeave | Client join data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.WebhookAPI.WebhookSfuVoiceLeavePost(context.Background()).XWebhookToken(xWebhookToken).SfuChannelUserLeave(sfuChannelUserLeave).Execute()
+	r, err := apiClient.WebhookAPI.WebhookSfuVoiceLeavePost(context.Background()).XWebhookToken(xWebhookToken).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `WebhookAPI.WebhookSfuVoiceLeavePost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `WebhookSfuVoiceLeavePost`: map[string]interface{}
-	fmt.Fprintf(os.Stdout, "Response from `WebhookAPI.WebhookSfuVoiceLeavePost`: %v\n", resp)
 }
 ```
 
@@ -328,11 +322,11 @@ Other parameters are passed through a pointer to a apiWebhookSfuVoiceLeavePostRe
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **xWebhookToken** | **string** | JWT token | 
- **sfuChannelUserLeave** | [**SfuChannelUserLeave**](SfuChannelUserLeave.md) | Client join data | 
+ **request** | [**SfuChannelUserLeave**](SfuChannelUserLeave.md) | Client join data | 
 
 ### Return type
 
-**map[string]interface{}**
+ (empty response body)
 
 ### Authorization
 

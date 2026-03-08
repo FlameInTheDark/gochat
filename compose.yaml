@@ -61,7 +61,7 @@ services:
       - ./attachments_config.yaml:/dist/config.yaml
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.attachments.rule=PathPrefix(`/api/v1/upload`)"
+      - "traefik.http.routers.attachments.rule=PathPrefix(`/api/v1/upload`) || PathPrefix(`/emoji`)"
       - "traefik.http.routers.attachments.priority=100"
       - "traefik.http.routers.attachments.service=attachments"
       - "traefik.http.services.attachments.loadbalancer.server.port=3200"
@@ -69,6 +69,10 @@ services:
     depends_on:
       scylla:
         condition: service_healthy
+      keydb:
+        condition: service_started
+      nats:
+        condition: service_started
       auth:
         condition: service_started
     networks:
@@ -153,8 +157,20 @@ services:
       opensearch:
         condition: service_started
 
-  # ---------- Environment services ----------
+  embedder:
+    image: gochat/embedder
+    build:
+      dockerfile: embedder.Dockerfile
+    restart: always
+    volumes:
+      - ./embedder_config.yaml:/dist/config.yaml
+    depends_on:
+      scylla:
+        condition: service_healthy
+      nats:
+        condition: service_started
 
+  # ---------- Environment services ----------
   scylla:
     image: scylladb/scylla:6.2
     volumes:
@@ -310,6 +326,11 @@ services:
       PGPASSWORD: "${POSTGRES_PASSWORD:-postgres}"
       POSTGRES_HOST_AUTH_METHOD: "${POSTGRES_HOST_AUTH_METHOD:-trust}"
       POSTGRES_DB: "gochat"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -d gochat -U ${POSTGRES_USER:-postgres} --quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       default:
         aliases:
@@ -323,6 +344,11 @@ services:
     depends_on: [ citus-manager ]
     environment: *AUTH
     command: "/wait-for-manager.sh"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U ${POSTGRES_USER:-postgres} --quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - healthcheck-volume:/healthcheck
     networks:
@@ -383,3 +409,5 @@ networks:
     name: gochat_traefik
   citus:
     name: gochat_citus
+
+

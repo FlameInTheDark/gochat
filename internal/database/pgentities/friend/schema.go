@@ -22,28 +22,18 @@ func (e *Entity) AddFriend(ctx context.Context, userID, friendID int64) error {
 			_ = tx.Commit()
 		}
 	}()
+
+	// Batch both symmetric rows into a single multi-row INSERT
 	qu := squirrel.Insert("friends").
 		PlaceholderFormat(squirrel.Dollar).
 		Columns("user_id", "friend_id").
-		Values(userID, friendID)
+		Values(userID, friendID).
+		Values(friendID, userID)
 	raw, args, err := qu.ToSql()
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
 	_, err = tx.ExecContext(ctx, raw, args...)
-	if err != nil {
-		return fmt.Errorf("unable to add friend: %w", err)
-	}
-
-	qf := squirrel.Insert("friends").
-		PlaceholderFormat(squirrel.Dollar).
-		Columns("user_id", "friend_id").
-		Values(friendID, userID)
-	rawf, argsf, err := qf.ToSql()
-	if err != nil {
-		return fmt.Errorf("unable to create SQL query: %w", err)
-	}
-	_, err = tx.ExecContext(ctx, rawf, argsf...)
 	if err != nil {
 		return fmt.Errorf("unable to add friend: %w", err)
 	}
@@ -57,44 +47,31 @@ func (e *Entity) AddFriend(ctx context.Context, userID, friendID int64) error {
 	}
 	_, err = tx.ExecContext(ctx, rawfrr, argsfrr...)
 	if err != nil {
-		return fmt.Errorf("unable to add friend: %w", err)
+		return fmt.Errorf("unable to delete friend request: %w", err)
 	}
 
 	return nil
 }
 
 func (e *Entity) RemoveFriend(ctx context.Context, userID, friendID int64) error {
-	tx, err := e.c.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		} else {
-			_ = tx.Commit()
-		}
-	}()
+	// Both symmetric rows can be deleted in a single statement
 	q := squirrel.Delete("friends").
 		PlaceholderFormat(squirrel.Dollar).
-		Where(squirrel.Eq{"user_id": userID, "friend_id": friendID})
+		Where(squirrel.Or{
+			squirrel.And{
+				squirrel.Eq{"user_id": userID},
+				squirrel.Eq{"friend_id": friendID},
+			},
+			squirrel.And{
+				squirrel.Eq{"user_id": friendID},
+				squirrel.Eq{"friend_id": userID},
+			},
+		})
 	raw, args, err := q.ToSql()
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = tx.ExecContext(ctx, raw, args...)
-	if err != nil {
-		return fmt.Errorf("unable to remove friend: %w", err)
-	}
-
-	qf := squirrel.Delete("friends").
-		PlaceholderFormat(squirrel.Dollar).
-		Where(squirrel.Eq{"user_id": friendID, "friend_id": userID})
-	rawf, argsf, err := qf.ToSql()
-	if err != nil {
-		return fmt.Errorf("unable to create SQL query: %w", err)
-	}
-	_, err = tx.ExecContext(ctx, rawf, argsf...)
+	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
 		return fmt.Errorf("unable to remove friend: %w", err)
 	}
@@ -194,7 +171,7 @@ func (e *Entity) IsFriend(ctx context.Context, userId, friendId int64) (bool, er
 	}
 
 	var areFriends bool
-	if err := e.c.QueryRowContext(ctx, fmt.Sprintf("EXISTS (%s) AS are_friends", sqlStr), args...).
+	if err := e.c.QueryRowContext(ctx, fmt.Sprintf("SELECT EXISTS (%s) AS are_friends", sqlStr), args...).
 		Scan(&areFriends); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return false, err
 	}

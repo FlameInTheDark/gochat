@@ -70,7 +70,7 @@ func (e *entity) GetMemberRoles(c *fiber.Ctx) error {
 		roleIds = append(roleIds, role.RoleId)
 	}
 
-	roles, err := e.role.GetRolesBulk(c.UserContext(), roleIds)
+	roles, err := e.role.GetRolesBulk(c.UserContext(), guildId, roleIds)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
@@ -402,7 +402,9 @@ func (e *entity) AddMemberRole(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetUserRole)
 	}
 
-	go e.mqt.SendGuildUpdate(guildId, &mqmsg.AddGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
+	go func() {
+		_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.AddGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
+	}()
 
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -471,7 +473,9 @@ func (e *entity) RemoveMemberRole(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToRemoveUserRole)
 	}
 
-	go e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
+	go func() {
+		_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
+	}()
 
 	return c.SendStatus(fiber.StatusOK)
 }

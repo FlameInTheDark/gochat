@@ -24,6 +24,8 @@ type MessageSendMessageRequest struct {
 	Attachments []int32 `json:"attachments,omitempty"`
 	// Message content
 	Content *string `json:"content,omitempty"`
+	// Manual embeds supplied by the client. These are stored separately from generated URL embeds.
+	Embeds []EmbedEmbed `json:"embeds,omitempty"`
 	// IDs of mentioned users
 	Mentions []int32 `json:"mentions,omitempty"`
 }
@@ -109,6 +111,38 @@ func (o *MessageSendMessageRequest) SetContent(v string) {
 	o.Content = &v
 }
 
+// GetEmbeds returns the Embeds field value if set, zero value otherwise.
+func (o *MessageSendMessageRequest) GetEmbeds() []EmbedEmbed {
+	if o == nil || IsNil(o.Embeds) {
+		var ret []EmbedEmbed
+		return ret
+	}
+	return o.Embeds
+}
+
+// GetEmbedsOk returns a tuple with the Embeds field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *MessageSendMessageRequest) GetEmbedsOk() ([]EmbedEmbed, bool) {
+	if o == nil || IsNil(o.Embeds) {
+		return nil, false
+	}
+	return o.Embeds, true
+}
+
+// HasEmbeds returns a boolean if a field has been set.
+func (o *MessageSendMessageRequest) HasEmbeds() bool {
+	if o != nil && !IsNil(o.Embeds) {
+		return true
+	}
+
+	return false
+}
+
+// SetEmbeds gets a reference to the given []EmbedEmbed and assigns it to the Embeds field.
+func (o *MessageSendMessageRequest) SetEmbeds(v []EmbedEmbed) {
+	o.Embeds = v
+}
+
 // GetMentions returns the Mentions field value if set, zero value otherwise.
 func (o *MessageSendMessageRequest) GetMentions() []int32 {
 	if o == nil || IsNil(o.Mentions) {
@@ -156,6 +190,9 @@ func (o MessageSendMessageRequest) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Content) {
 		toSerialize["content"] = o.Content
+	}
+	if !IsNil(o.Embeds) {
+		toSerialize["embeds"] = o.Embeds
 	}
 	if !IsNil(o.Mentions) {
 		toSerialize["mentions"] = o.Mentions

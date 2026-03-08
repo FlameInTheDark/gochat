@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/cache/kvcpiped"
@@ -19,19 +20,12 @@ func (s *Server) AuthMiddleware(secret string) {
 		SigningKey: jwtware.SigningKey{Key: []byte(secret)},
 		Claims:     &helper.Claims{},
 		Filter: func(c *fiber.Ctx) bool {
-			switch string(c.Request().RequestURI()) {
-			case "/docs/swagger":
-				return true
-			case "/api/v1/auth/login":
-				return true
-			case "/api/v1/auth/registration", "/api/v1/auth/confirmation":
-				return true
-			case "/api/v1/auth/recovery", "/api/v1/auth/reset":
-				return true
-			case "/healthz", "/metrics":
+			path := c.Path()
+			switch path {
+			case "/docs/swagger", "/api/v1/auth/login", "/api/v1/auth/registration", "/api/v1/auth/confirmation", "/api/v1/auth/recovery", "/api/v1/auth/reset", "/healthz", "/metrics":
 				return true
 			}
-			return false
+			return strings.HasPrefix(path, "/emoji/")
 		},
 	}))
 }
@@ -44,7 +38,6 @@ func (s *Server) RateLimitMiddleware(limit, exp int) {
 	s.app.Use(limiter.New(limiter.Config{
 		Max: limit,
 		Next: func(c *fiber.Ctx) bool {
-			// Skip rate limiting for public endpoints (handle both with and without /api/v1 prefix)
 			switch string(c.Request().RequestURI()) {
 			case "/api/v1/auth/login", "/auth/login":
 				return true
@@ -62,7 +55,6 @@ func (s *Server) RateLimitMiddleware(limit, exp int) {
 			return false
 		},
 		KeyGenerator: func(c *fiber.Ctx) string {
-			// Prefer user-scoped rate limiting when authenticated; otherwise, fall back to IP + path
 			if user, err := helper.GetUser(c); err == nil && user != nil {
 				return fmt.Sprintf("user:%d:rateLimit", user.Id)
 			}

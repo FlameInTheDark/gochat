@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.0.1
 info:
   contact:
     email: viktorfreedom@gmail.com
@@ -10,17 +10,15 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   title: GoChat API
   version: "1.0"
-externalDocs:
-  description: ""
-  url: ""
 servers:
-- url: localhost/api/v1
+- url: http://localhost/api/v1
+- url: https://localhost/api/v1
 paths:
   /auth/confirmation:
     post:
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/auth.ConfirmationRequest'
         description: Login data
@@ -59,11 +57,12 @@ paths:
       summary: Confirmation
       tags:
       - Auth
+      x-codegen-request-body-name: request
   /auth/login:
     post:
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/auth.LoginRequest'
         description: Login data
@@ -96,11 +95,12 @@ paths:
       summary: Authentication
       tags:
       - Auth
+      x-codegen-request-body-name: request
   /auth/recovery:
     post:
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/auth.PasswordRecoveryRequest'
         description: Email for password recovery
@@ -151,17 +151,16 @@ paths:
       summary: Password Recovery
       tags:
       - Auth
+      x-codegen-request-body-name: request
   /auth/refresh:
     get:
       parameters:
       - description: Refresh token instead of auth
-        explode: false
         in: header
         name: Authorization
         required: true
         schema:
           type: string
-        style: simple
       responses:
         "200":
           content:
@@ -194,7 +193,7 @@ paths:
     post:
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/auth.RegisterRequest'
         description: Login data
@@ -233,11 +232,12 @@ paths:
       summary: Registration
       tags:
       - Auth
+      x-codegen-request-body-name: request
   /auth/reset:
     post:
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/auth.PasswordResetRequest'
         description: Password reset data
@@ -270,11 +270,42 @@ paths:
       summary: Password Reset
       tags:
       - Auth
+      x-codegen-request-body-name: request
+  /emoji/{emoji_id}:
+    get:
+      parameters:
+      - description: Emoji filename ending in .webp
+        in: path
+        name: emoji_id
+        required: true
+        schema:
+          type: string
+      - description: Preferred rendered size
+        in: query
+        name: size
+        schema:
+          type: integer
+      responses:
+        "307":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Temporary Redirect
+        "404":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Not found
+      summary: Redirect to public emoji asset
+      tags:
+      - Emoji
   /guild:
     post:
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.CreateGuildRequest'
         description: Guild data
@@ -307,18 +338,16 @@ paths:
       summary: Create guild
       tags:
       - Guild
+      x-codegen-request-body-name: request
   /guild/invites/accept/{invite_code}:
     post:
       parameters:
       - description: Invite code
-        example: PWBJ124G
-        explode: false
         in: path
         name: invite_code
         required: true
         schema:
           type: string
-        style: simple
       responses:
         "200":
           content:
@@ -345,14 +374,11 @@ paths:
     get:
       parameters:
       - description: Invite code
-        example: PWBJ124G
-        explode: false
         in: path
         name: invite_code
         required: true
         schema:
           type: string
-        style: simple
       responses:
         "200":
           content:
@@ -373,14 +399,11 @@ paths:
     get:
       parameters:
       - description: Guild id
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -402,17 +425,14 @@ paths:
     post:
       parameters:
       - description: Guild id
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.CreateInviteRequest'
         description: Invite options
@@ -433,27 +453,22 @@ paths:
       summary: Create a new invite
       tags:
       - Guild Invites
+      x-codegen-request-body-name: request
   /guild/invites/{guild_id}/{invite_id}:
     delete:
       parameters:
       - description: Guild id
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Invite id
-        example: 2230469276416868352
-        explode: false
         in: path
         name: invite_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "204":
           content:
@@ -476,36 +491,33 @@ paths:
         \ removes all members, all guild icons, and all guild channels."
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Deleted
         "401":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Unauthorized
         "403":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Forbidden
         "500":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Internal server error
@@ -515,14 +527,11 @@ paths:
     get:
       parameters:
       - description: Guild id
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -554,17 +563,14 @@ paths:
     patch:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.UpdateGuildRequest'
         description: Update guild data
@@ -597,21 +603,54 @@ paths:
       summary: Update guild
       tags:
       - Guild
-  /guild/{guild_id}/category:
-    post:
+      x-codegen-request-body-name: request
+  /guild/{guild_id}/bans:
+    get:
+      description: "Returns banned users with optional ban reasons. Allowed for guild\
+        \ owner, administrators, or members with PermMembershipBanMembers."
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.GuildBan'
+                type: array
+          description: Ok
+        "400":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Bad request
+        "406":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Permissions required
+      summary: Get guild bans
+      tags:
+      - Guild
+  /guild/{guild_id}/category:
+    post:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.CreateGuildChannelCategoryRequest'
         description: Create category data
@@ -644,27 +683,22 @@ paths:
       summary: Create guild channel category
       tags:
       - Guild
+      x-codegen-request-body-name: request
   /guild/{guild_id}/category/{category_id}:
     delete:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Category ID (actually a channel with special type)
-        example: 2230469276416868352
-        explode: false
         in: path
         name: category_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -697,14 +731,11 @@ paths:
     get:
       parameters:
       - description: Guild id
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -738,17 +769,14 @@ paths:
     post:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.CreateGuildChannelRequest'
         description: Create channel data
@@ -781,21 +809,19 @@ paths:
       summary: Create guild channel
       tags:
       - Guild
+      x-codegen-request-body-name: request
   /guild/{guild_id}/channel/order:
     patch:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.PatchGuildChannelOrderRequest'
         description: Update channel order data
@@ -840,27 +866,22 @@ paths:
       summary: Change channels order
       tags:
       - Guild
+      x-codegen-request-body-name: request
   /guild/{guild_id}/channel/{channel_id}:
     delete:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Channel ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -892,23 +913,17 @@ paths:
     get:
       parameters:
       - description: Guild id
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Channel id
-        example: 2230469276416868352
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -940,26 +955,20 @@ paths:
     patch:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Channel ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.PatchGuildChannelRequest'
         description: Request body
@@ -1004,27 +1013,22 @@ paths:
       summary: Change channels data
       tags:
       - Guild
+      x-codegen-request-body-name: req
   /guild/{guild_id}/channel/{channel_id}/roles:
     get:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Channel ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -1065,32 +1069,23 @@ paths:
     delete:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Channel ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Role ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: role_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -1134,32 +1129,23 @@ paths:
     get:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Channel ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Role ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: role_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -1203,35 +1189,26 @@ paths:
     patch:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Channel ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Role ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: role_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.ChannelRolePermissionRequest'
         description: Permission mask
@@ -1276,38 +1253,30 @@ paths:
       summary: Update channel role permission
       tags:
       - Guild Roles
+      x-codegen-request-body-name: req
     put:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Channel ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Role ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: role_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.ChannelRolePermissionRequest'
         description: Permission mask
@@ -1352,19 +1321,242 @@ paths:
       summary: Set channel role permission (create or replace)
       tags:
       - Guild Roles
+      x-codegen-request-body-name: req
+  /guild/{guild_id}/emojis:
+    get:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.GuildEmoji'
+                type: array
+          description: Guild emojis
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: List guild emojis
+      tags:
+      - Guild
+    post:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/guild.CreateEmojiRequest'
+        description: Emoji metadata
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.EmojiUpload'
+          description: Emoji upload metadata
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Create guild emoji metadata
+      tags:
+      - Guild
+      x-codegen-request-body-name: request
+  /guild/{guild_id}/emojis/{emoji_id}:
+    delete:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Emoji ID
+        in: path
+        name: emoji_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Delete guild emoji
+      tags:
+      - Guild
+    patch:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Emoji ID
+        in: path
+        name: emoji_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/guild.UpdateEmojiRequest'
+        description: Emoji update data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.GuildEmoji'
+          description: Updated emoji
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Update guild emoji
+      tags:
+      - Guild
+      x-codegen-request-body-name: request
   /guild/{guild_id}/icon:
     post:
       description: Creates an icon placeholder and returns upload info. Only guild
         owner may create.
       parameters:
       - description: Guild ID
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
           application/json:
@@ -1406,19 +1598,18 @@ paths:
       summary: Create guild icon metadata
       tags:
       - Guild
+      x-codegen-request-body-name: request
   /guild/{guild_id}/icons:
     get:
       description: Returns a list of previously created icons for a guild. Only the
         guild owner may access this list.
       parameters:
       - description: Guild ID
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -1454,70 +1645,201 @@ paths:
       description: Deletes a guild icon. Only the guild owner may delete.
       parameters:
       - description: Guild ID
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Icon ID
-        explode: false
         in: path
         name: icon_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: OK
         "401":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Unauthorized
         "403":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Forbidden
         "500":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Internal server error
       summary: Delete guild icon by ID
       tags:
       - Guild
-  /guild/{guild_id}/member/{user_id}/roles:
-    get:
+  /guild/{guild_id}/member/{user_id}/ban:
+    delete:
+      description: "Removes a guild ban. Allowed for guild owner, administrators,\
+        \ or members with PermMembershipBanMembers. Administrators can only be moderated\
+        \ by the guild owner."
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: User ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: user_id
         required: true
         schema:
           type: integer
-        style: simple
+      responses:
+        "204":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Bad request
+        "406":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Permissions required
+      summary: Unban guild member
+      tags:
+      - Guild
+    post:
+      description: "Bans a guild member with an optional reason. Allowed for guild\
+        \ owner, administrators, or members with PermMembershipBanMembers. Cannot\
+        \ target the guild owner. Members with administrator permission can only be\
+        \ moderated by the guild owner."
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/guild.BanMemberRequest'
+        description: Ban reason
+        required: false
+      responses:
+        "204":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Bad request
+        "404":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Member not found
+        "406":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Permissions required
+      summary: Ban guild member
+      tags:
+      - Guild
+      x-codegen-request-body-name: request
+  /guild/{guild_id}/member/{user_id}/kick:
+    post:
+      description: "Removes a guild member. Allowed for guild owner, administrators,\
+        \ or members with PermMembershipKickMembers. Cannot target the guild owner.\
+        \ Members with administrator permission can only be moderated by the guild\
+        \ owner."
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Bad request
+        "404":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Member not found
+        "406":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Permissions required
+      summary: Kick guild member
+      tags:
+      - Guild
+  /guild/{guild_id}/member/{user_id}/roles:
+    get:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -1558,32 +1880,23 @@ paths:
     delete:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: User ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: user_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Role ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: role_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -1627,32 +1940,23 @@ paths:
     put:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: User ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: user_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Role ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: role_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -1697,14 +2001,11 @@ paths:
     get:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -1739,14 +2040,11 @@ paths:
     get:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -1780,17 +2078,14 @@ paths:
     post:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.CreateGuildRoleRequest'
         description: Role data
@@ -1829,27 +2124,22 @@ paths:
       summary: Create guild role
       tags:
       - Guild Roles
+      x-codegen-request-body-name: req
   /guild/{guild_id}/roles/{role_id}:
     delete:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Role ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: role_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -1893,26 +2183,20 @@ paths:
     patch:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Role ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: role_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.PatchGuildRoleRequest'
         description: Role changes
@@ -1957,21 +2241,19 @@ paths:
       summary: Update guild role
       tags:
       - Guild Roles
+      x-codegen-request-body-name: req
   /guild/{guild_id}/systemch:
     patch:
       parameters:
       - description: Guild ID
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.SetGuildSystemMessagesChannelRequest'
         description: Set system messages channel
@@ -2004,22 +2286,21 @@ paths:
       summary: Set system messages channel
       tags:
       - Guild
+      x-codegen-request-body-name: request
   /guild/{guild_id}/voice/move:
     post:
       description: Move a member to another voice channel and send them connection
         info (SFU URL + token). Requires administrator or PermVoiceMoveMembers.
       parameters:
       - description: Guild ID
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.MoveMemberRequest'
         description: Move request
@@ -2027,74 +2308,71 @@ paths:
       responses:
         "200":
           content:
-            application/json:
+            '*/*':
               schema:
                 $ref: '#/components/schemas/guild.MoveMemberResponse'
           description: OK
         "400":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Bad request
         "401":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Unauthorized
         "403":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Forbidden
       summary: Move member to voice channel
       tags:
       - Guild
+      x-codegen-request-body-name: request
   /guild/{guild_id}/voice/{channel_id}/join:
     post:
       description: Returns signaling path and a short-lived SFU token to connect to
         the SFU for this channel.
       parameters:
       - description: Guild ID
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Channel ID
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
-            application/json:
+            '*/*':
               schema:
                 $ref: '#/components/schemas/guild.JoinVoiceResponse'
           description: OK
         "401":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Unauthorized
         "403":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Forbidden
         "503":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: No SFU available in region
@@ -2107,24 +2385,20 @@ paths:
         region clears override.
       parameters:
       - description: Guild ID
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Channel ID
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/guild.SetVoiceRegionRequest'
         description: Region payload
@@ -2132,74 +2406,66 @@ paths:
       responses:
         "200":
           content:
-            application/json:
+            '*/*':
               schema:
                 $ref: '#/components/schemas/guild.SetVoiceRegionResponse'
           description: OK
         "400":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Bad request
         "401":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Unauthorized
         "403":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Forbidden
+        "422":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: No SFU instances in requested region
       summary: Set channel voice region
       tags:
       - Guild
+      x-codegen-request-body-name: request
   /message/channel/{channel_id}:
     get:
       parameters:
       - description: Channel id
-        example: 2230469276416868352
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Start point for messages
-        example: 2230469276416868352
-        explode: true
         in: query
         name: from
-        required: false
         schema:
           type: integer
-        style: form
       - description: Select direction
-        example: before
-        explode: true
         in: query
         name: direction
-        required: false
         schema:
           enum:
           - before
           - after
           - around
           type: string
-        style: form
       - description: Message count limit
-        example: 30
-        explode: true
         in: query
         name: limit
-        required: false
         schema:
           type: integer
-        style: form
       responses:
         "200":
           content:
@@ -2239,16 +2505,14 @@ paths:
     post:
       parameters:
       - description: Channel id
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/message.SendMessageRequest'
         description: Message data
@@ -2287,20 +2551,19 @@ paths:
       summary: Send message
       tags:
       - Message
+      x-codegen-request-body-name: request
   /message/channel/{channel_id}/attachment:
     post:
       parameters:
       - description: Channel id
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/message.UploadAttachmentRequest'
         description: Attachment data
@@ -2339,17 +2602,16 @@ paths:
       summary: Create attachment
       tags:
       - Message
+      x-codegen-request-body-name: request
   /message/channel/{channel_id}/typing:
     post:
       parameters:
       - description: Channel id
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -2376,21 +2638,17 @@ paths:
     delete:
       parameters:
       - description: Message id
-        explode: false
         in: path
         name: message_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Channel id
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -2428,24 +2686,20 @@ paths:
     patch:
       parameters:
       - description: Message id
-        explode: false
         in: path
         name: message_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Channel id
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/message.UpdateMessageRequest'
         description: Message data
@@ -2484,25 +2738,22 @@ paths:
       summary: Update message
       tags:
       - Message
+      x-codegen-request-body-name: request
   /message/channel/{channel_id}/{message_id}/ack:
     post:
       parameters:
       - description: Channel id
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Message id
-        explode: false
         in: path
         name: message_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -2525,21 +2776,64 @@ paths:
       summary: Set channel read state for current user
       tags:
       - Message
+  /search/messages:
+    post:
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/search.MessageSearchRequest'
+        description: Search request data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/search.MessageSearchResponse'
+                type: array
+          description: Messages
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Search messages in a channel
+      tags:
+      - Search
+      x-codegen-request-body-name: request
   /search/{guild_id}/messages:
     post:
       parameters:
       - description: Guild id
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/search.MessageSearchRequest'
         description: Search request data
@@ -2580,6 +2874,7 @@ paths:
       summary: Search messages
       tags:
       - Search
+      x-codegen-request-body-name: request
   /upload/attachments/{channel_id}/{attachment_id}:
     post:
       description: Uploads a file for an existing attachment. Stores the original
@@ -2587,21 +2882,17 @@ paths:
         metadata.
       parameters:
       - description: Channel ID
-        explode: false
         in: path
         name: channel_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Attachment ID
-        explode: false
         in: path
         name: attachment_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
           application/octet-stream:
@@ -2654,6 +2945,12 @@ paths:
               schema:
                 type: string
           description: File too large
+        "415":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unsupported media type
         "500":
           content:
             application/json:
@@ -2663,27 +2960,24 @@ paths:
       summary: Upload attachment
       tags:
       - Upload
+      x-codegen-request-body-name: file
   /upload/avatars/{user_id}/{avatar_id}:
     post:
       description: Uploads an avatar image. Resizes to max 128x128 and converts to
         WebP <= 250KB. Finalizes avatar metadata.
       parameters:
       - description: User ID
-        explode: false
         in: path
         name: user_id
         required: true
         schema:
           type: integer
-        style: simple
       - description: Avatar ID
-        explode: false
         in: path
         name: avatar_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
           application/octet-stream:
@@ -2751,27 +3045,24 @@ paths:
       summary: Upload user avatar
       tags:
       - Upload
-  /upload/icons/{guild_id}/{icon_id}:
+      x-codegen-request-body-name: file
+  /upload/emojis/{guild_id}/{emoji_id}:
     post:
-      description: Uploads a guild icon. Resizes to max 128x128 and converts to WebP
-        <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
+      description: Uploads and finalizes the binary payload for a previously created
+        guild emoji placeholder.
       parameters:
       - description: Guild ID
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
-      - description: Icon ID
-        explode: false
+      - description: Emoji ID
         in: path
-        name: icon_id
+        name: emoji_id
         required: true
         schema:
           type: integer
-        style: simple
       requestBody:
         content:
           application/octet-stream:
@@ -2779,7 +3070,7 @@ paths:
               items:
                 type: integer
               type: array
-        description: Binary image payload
+        description: Binary emoji image
         required: true
       responses:
         "201":
@@ -2788,6 +3079,12 @@ paths:
               schema:
                 type: string
           description: Created
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content (already uploaded)
         "400":
           content:
             application/json:
@@ -2806,6 +3103,109 @@ paths:
               schema:
                 type: string
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Emoji not found
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Conflict
+        "410":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Upload expired
+        "413":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: File too large
+        "415":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unsupported media type
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Upload guild emoji image
+      tags:
+      - Upload
+      x-codegen-request-body-name: file
+  /upload/icons/{guild_id}/{icon_id}:
+    post:
+      description: Uploads a guild icon. Resizes to max 128x128 and converts to WebP
+        <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Icon ID
+        in: path
+        name: icon_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              items:
+                type: integer
+              type: array
+        description: Binary image payload
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Created
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content (already uploaded)
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Icon not found
         "413":
           content:
             application/json:
@@ -2827,11 +3227,12 @@ paths:
       summary: Upload guild icon
       tags:
       - Upload
+      x-codegen-request-body-name: file
   /user/me:
     patch:
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/user.ModifyUserRequest'
         description: Modify user data
@@ -2864,6 +3265,7 @@ paths:
       summary: Get user
       tags:
       - User
+      x-codegen-request-body-name: request
   /user/me/avatar:
     post:
       description: Creates an avatar placeholder and returns upload info. Upload the
@@ -2885,6 +3287,7 @@ paths:
       summary: Create avatar metadata
       tags:
       - User
+      x-codegen-request-body-name: request
   /user/me/avatars:
     get:
       description: Returns a list of previously created avatars for the authenticated
@@ -2911,35 +3314,33 @@ paths:
     delete:
       parameters:
       - description: Avatar ID
-        explode: false
         in: path
         name: avatar_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: OK
         "400":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Bad request
         "401":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Unauthorized
         "500":
           content:
-            application/json:
+            '*/*':
               schema:
                 type: string
           description: Internal server error
@@ -2975,7 +3376,7 @@ paths:
     post:
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/user.CreateDMRequest'
         description: Recipient data
@@ -3008,11 +3409,12 @@ paths:
       summary: Create DM channel
       tags:
       - User
+      x-codegen-request-body-name: request
   /user/me/channels/group:
     post:
       requestBody:
         content:
-          application/json:
+          '*/*':
             schema:
               $ref: '#/components/schemas/user.CreateDMManyRequest'
         description: Group DM data
@@ -3051,6 +3453,7 @@ paths:
       summary: Create group DM channel
       tags:
       - User
+      x-codegen-request-body-name: request
   /user/me/friends:
     delete:
       requestBody:
@@ -3082,6 +3485,7 @@ paths:
       summary: Remove user from friends
       tags:
       - User
+      x-codegen-request-body-name: request
     get:
       responses:
         "200":
@@ -3137,6 +3541,7 @@ paths:
       summary: Send a friend request by discriminator
       tags:
       - User
+      x-codegen-request-body-name: request
   /user/me/friends/requests:
     delete:
       requestBody:
@@ -3168,6 +3573,7 @@ paths:
       summary: Decline a friend request
       tags:
       - User
+      x-codegen-request-body-name: request
     get:
       responses:
         "200":
@@ -3223,18 +3629,16 @@ paths:
       summary: Accept a friend request
       tags:
       - User
+      x-codegen-request-body-name: request
   /user/me/friends/{user_id}:
     get:
       parameters:
       - description: User id
-        example: 2230469276416868352
-        explode: false
         in: path
         name: user_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -3299,14 +3703,11 @@ paths:
     delete:
       parameters:
       - description: Guild id
-        example: "2230469276416868352"
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: string
-        style: simple
       responses:
         "200":
           content:
@@ -3345,14 +3746,11 @@ paths:
     get:
       parameters:
       - description: Guild id
-        example: 2230469276416868352
-        explode: false
         in: path
         name: guild_id
         required: true
         schema:
           type: integer
-        style: simple
       responses:
         "200":
           content:
@@ -3385,13 +3783,10 @@ paths:
     get:
       parameters:
       - description: Client known version
-        explode: true
         in: query
         name: version
-        required: false
         schema:
           type: integer
-        style: form
       responses:
         "200":
           content:
@@ -3450,17 +3845,16 @@ paths:
       summary: Update current user settings (replaces and bumps version)
       tags:
       - User
+      x-codegen-request-body-name: request
   /user/{user_id}:
     get:
       parameters:
       - description: User ID or 'me'
-        explode: false
         in: path
         name: user_id
         required: true
         schema:
           type: string
-        style: simple
       responses:
         "200":
           content:
@@ -3506,13 +3900,11 @@ paths:
       description: Persist completed attachment metadata after upload
       parameters:
       - description: JWT token
-        explode: false
         in: header
         name: X-Webhook-Token
         required: true
         schema:
           type: string
-        style: simple
       requestBody:
         content:
           application/json:
@@ -3522,6 +3914,7 @@ paths:
         required: true
       responses:
         "204":
+          content: {}
           description: No Content
         "400":
           content:
@@ -3550,18 +3943,17 @@ paths:
       summary: Finalize attachment metadata
       tags:
       - Webhook
+      x-codegen-request-body-name: request
   /webhook/sfu/channel/alive:
     post:
       description: Updates channel TTL to keep it alive in system cache for next connections
       parameters:
       - description: JWT token
-        explode: false
         in: header
         name: X-Webhook-Token
         required: true
         schema:
           type: string
-        style: simple
       requestBody:
         content:
           application/json:
@@ -3571,10 +3963,7 @@ paths:
         required: true
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                type: object
+          content: {}
           description: OK
         "400":
           content:
@@ -3609,18 +3998,17 @@ paths:
       summary: SFU update channel TTL
       tags:
       - Webhook
+      x-codegen-request-body-name: request
   /webhook/sfu/heartbeat:
     post:
       description: Register or refresh SFU instance for discovery
       parameters:
       - description: JWT token
-        explode: false
         in: header
         name: X-Webhook-Token
         required: true
         schema:
           type: string
-        style: simple
       requestBody:
         content:
           application/json:
@@ -3630,6 +4018,7 @@ paths:
         required: true
       responses:
         "204":
+          content: {}
           description: No Content
         "400":
           content:
@@ -3658,18 +4047,17 @@ paths:
       summary: SFU heartbeat
       tags:
       - Webhook
+      x-codegen-request-body-name: request
   /webhook/sfu/voice/join:
     post:
       description: Add client to voice channel participants list
       parameters:
       - description: JWT token
-        explode: false
         in: header
         name: X-Webhook-Token
         required: true
         schema:
           type: string
-        style: simple
       requestBody:
         content:
           application/json:
@@ -3679,10 +4067,7 @@ paths:
         required: true
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                type: object
+          content: {}
           description: OK
         "400":
           content:
@@ -3717,18 +4102,17 @@ paths:
       summary: SFU voice join
       tags:
       - Webhook
+      x-codegen-request-body-name: request
   /webhook/sfu/voice/leave:
     post:
       description: Remove client from voice channel participants list
       parameters:
       - description: JWT token
-        explode: false
         in: header
         name: X-Webhook-Token
         required: true
         schema:
           type: string
-        style: simple
       requestBody:
         content:
           application/json:
@@ -3738,10 +4122,7 @@ paths:
         required: true
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                type: object
+          content: {}
           description: OK
         "400":
           content:
@@ -3776,6 +4157,7 @@ paths:
       summary: SFU voice leave
       tags:
       - Webhook
+      x-codegen-request-body-name: request
 components:
   schemas:
     attachments.FinalizeRequest:
@@ -3800,6 +4182,7 @@ components:
           type: string
         width:
           type: integer
+      type: object
     auth.ConfirmationRequest:
       properties:
         discriminator:
@@ -3822,6 +4205,7 @@ components:
           description: Registration token
           example: just_a_randomly_generated_text
           type: string
+      type: object
     auth.LoginRequest:
       properties:
         email:
@@ -3832,6 +4216,7 @@ components:
           description: User password
           example: VerYstR0NgP@66WoR6
           type: string
+      type: object
     auth.LoginResponse:
       example:
         refresh_token: refresh_token
@@ -3843,12 +4228,14 @@ components:
         token:
           description: Authentication token
           type: string
+      type: object
     auth.PasswordRecoveryRequest:
       properties:
         email:
           description: User Email to receive recovery email
           example: user@example.com
           type: string
+      type: object
     auth.PasswordResetRequest:
       properties:
         id:
@@ -3863,6 +4250,7 @@ components:
           description: Reset token
           example: just_a_random_text_from_email
           type: string
+      type: object
     auth.RefreshTokenResponse:
       example:
         refresh_token: refresh_token
@@ -3874,12 +4262,14 @@ components:
         token:
           description: Authentication token
           type: string
+      type: object
     auth.RegisterRequest:
       properties:
         email:
           description: User Email
           example: user@example.com
           type: string
+      type: object
     dto.Attachment:
       example:
         filename: image.png
@@ -3918,6 +4308,7 @@ components:
           description: Image dimensions in pixels
           example: 800
           type: integer
+      type: object
     dto.AttachmentUpload:
       example:
         file_name: image.png
@@ -3936,6 +4327,7 @@ components:
           description: Attachment ID
           example: 2230469276416868352
           type: integer
+      type: object
     dto.Avatar:
       example:
         content_type: image/webp
@@ -3963,6 +4355,7 @@ components:
         width:
           example: 128
           type: integer
+      type: object
     dto.AvatarData:
       example:
         content_type: image/webp
@@ -3990,6 +4383,7 @@ components:
         width:
           example: 128
           type: integer
+      type: object
     dto.AvatarUpload:
       example:
         user_id: 2230469276416868352
@@ -4001,6 +4395,7 @@ components:
         user_id:
           example: 2230469276416868352
           type: integer
+      type: object
     dto.Channel:
       example:
         private: false
@@ -4010,6 +4405,7 @@ components:
         created_at: created_at
         type: 0
         last_message_id: 2230469276416868352
+        voice_region: us-east
         parent_id: 2230469276416868352
         permissions: 0
         guild_id: 2230469276416868352
@@ -4064,45 +4460,61 @@ components:
           items:
             type: integer
           type: array
-          uniqueItems: false
         topic:
           description: Channel topic.
           example: Just a channel topic
           type: string
         type:
+          allOf:
+          - $ref: '#/components/schemas/model.ChannelType'
           description: Channel type
           example: 0
-          type: integer
-          x-enum-comments:
-            ChannelTypeDM: DM channel. Can't be created in Guild
-            ChannelTypeGroupDM: Group DM channel. Can't be created in Guild'
-            ChannelTypeGuild: Default text channel in guild
-            ChannelTypeGuildCategory: Category channel in guild
-            ChannelTypeGuildVoice: Voice channel in guild
-            ChannelTypeThread: Thread channel
-          x-enum-varnames:
-          - ChannelTypeGuild
-          - ChannelTypeGuildVoice
-          - ChannelTypeGuildCategory
-          - ChannelTypeDM
-          - ChannelTypeGroupDM
-          - ChannelTypeThread
+          type: object
+        voice_region:
+          description: Voice channel region
+          example: us-east
+          type: string
+      type: object
+    dto.EmojiRef:
+      example:
+        name: name
+        id: "0"
+      properties:
+        id:
+          example: "0"
+          type: string
+        name:
+          type: string
+      type: object
+    dto.EmojiUpload:
+      example:
+        guild_id: "0"
+        name: name
+        id: "0"
+      properties:
+        guild_id:
+          example: "0"
+          type: string
+        id:
+          example: "0"
+          type: string
+        name:
+          type: string
+      type: object
     dto.Guild:
       example:
         owner: 2230469276416868352
         public: false
         permissions: 0
-        icon:
-          width: 128
-          filesize: 12345
-          id: 2230469276416868352
-          url: https://cdn.example.com/icons/2230/2231.webp
-          height: 128
+        icon: "{}"
         name: My Guild
         id: 2230469276416868352
       properties:
         icon:
-          $ref: '#/components/schemas/dto.Icon'
+          allOf:
+          - $ref: '#/components/schemas/dto.Icon'
+          description: Icon metadata
+          type: object
         id:
           description: Guild ID
           example: 2230469276416868352
@@ -4116,7 +4528,6 @@ components:
           example: 2230469276416868352
           type: integer
         permissions:
-          default: 7927905
           description: Default guild Permissions. Check the permissions documentation
             for more info.
           type: integer
@@ -4124,6 +4535,45 @@ components:
           default: false
           description: Whether the guild is public
           type: boolean
+      type: object
+    dto.GuildBan:
+      example:
+        reason: reason
+        user:
+          name: FancyUserName
+          avatar:
+            content_type: image/webp
+            size: 245678
+            width: 128
+            id: 2230469276416868352
+            url: https://cdn.example.com/avatars/2230/2231.webp
+            height: 128
+          id: 2230469276416868352
+          discriminator: uniquename
+      properties:
+        reason:
+          type: string
+        user:
+          $ref: '#/components/schemas/dto.User'
+      type: object
+    dto.GuildEmoji:
+      example:
+        guild_id: "0"
+        name: name
+        animated: true
+        id: "0"
+      properties:
+        animated:
+          type: boolean
+        guild_id:
+          example: "0"
+          type: string
+        id:
+          example: "0"
+          type: string
+        name:
+          type: string
+      type: object
     dto.GuildInvite:
       example:
         code: code
@@ -4145,8 +4595,8 @@ components:
           type: integer
         id:
           type: integer
+      type: object
     dto.Icon:
-      description: Icon metadata
       example:
         width: 128
         filesize: 12345
@@ -4169,6 +4619,7 @@ components:
         width:
           example: 128
           type: integer
+      type: object
     dto.IconUpload:
       example:
         guild_id: 2230469276416868352
@@ -4180,18 +4631,14 @@ components:
         id:
           example: 2230469276416868352
           type: integer
+      type: object
     dto.InvitePreview:
       example:
         guild:
           owner: 2230469276416868352
           public: false
           permissions: 0
-          icon:
-            width: 128
-            filesize: 12345
-            id: 2230469276416868352
-            url: https://cdn.example.com/icons/2230/2231.webp
-            height: 128
+          icon: "{}"
           name: My Guild
           id: 2230469276416868352
         code: code
@@ -4215,23 +4662,14 @@ components:
           type: integer
         members_count:
           type: integer
+      type: object
     dto.Member:
       example:
         join_at: join_at
         roles:
         - 2230469276416868352
         avatar: 2230469276416868352
-        user:
-          name: FancyUserName
-          avatar:
-            content_type: image/webp
-            size: 245678
-            width: 128
-            id: 2230469276416868352
-            url: https://cdn.example.com/avatars/2230/2231.webp
-            height: 128
-          id: 2230469276416868352
-          discriminator: uniquename
+        user: "{}"
         username: FancyUserName
       properties:
         avatar:
@@ -4248,13 +4686,16 @@ components:
           items:
             type: integer
           type: array
-          uniqueItems: false
         user:
-          $ref: '#/components/schemas/dto.User'
+          allOf:
+          - $ref: '#/components/schemas/dto.User'
+          description: Guild member data
+          type: object
         username:
           description: Username in this guild
           example: FancyUserName
           type: string
+      type: object
     dto.Message:
       example:
         attachments:
@@ -4284,16 +4725,55 @@ components:
             height: 128
           id: 2230469276416868352
           discriminator: uniquename
+        flags: 0
         id: 2230469276416868352
         type: 0
         channel_id: 2230469276416868352
+        embeds:
+        - image: "{}"
+          thumbnail: "{}"
+          color: 65280
+          footer: "{}"
+          author: "{}"
+          description: Embed support is live.
+          video: "{}"
+          title: GoChat 1.0
+          type: rich
+          url: https://example.com/release
+          provider: "{}"
+          fields:
+          - inline: true
+            name: Status
+            value: Stable
+          - inline: true
+            name: Status
+            value: Stable
+          timestamp: 2000-01-23T04:56:07.000+00:00
+        - image: "{}"
+          thumbnail: "{}"
+          color: 65280
+          footer: "{}"
+          author: "{}"
+          description: Embed support is live.
+          video: "{}"
+          title: GoChat 1.0
+          type: rich
+          url: https://example.com/release
+          provider: "{}"
+          fields:
+          - inline: true
+            name: Status
+            value: Stable
+          - inline: true
+            name: Status
+            value: Stable
+          timestamp: 2000-01-23T04:56:07.000+00:00
         content: Hello world!
       properties:
         attachments:
           items:
             $ref: '#/components/schemas/dto.Attachment'
           type: array
-          uniqueItems: false
         author:
           $ref: '#/components/schemas/dto.User'
         channel_id:
@@ -4303,6 +4783,14 @@ components:
         content:
           example: Hello world!
           type: string
+        embeds:
+          items:
+            $ref: '#/components/schemas/embed.Embed'
+          type: array
+        flags:
+          description: Bitmask. Includes suppress-embeds and banned-author markers
+            in API responses.
+          type: integer
         id:
           description: Message ID
           example: 2230469276416868352
@@ -4313,6 +4801,7 @@ components:
         updated_at:
           description: Timestamp of the last message edit
           type: string
+      type: object
     dto.Role:
       example:
         color: 0
@@ -4341,8 +4830,8 @@ components:
           description: Role permissions. Check the permissions documentation for more
             info.
           type: integer
+      type: object
     dto.User:
-      description: Guild member data
       example:
         name: FancyUserName
         avatar:
@@ -4366,16 +4855,211 @@ components:
         name:
           example: FancyUserName
           type: string
+      type: object
+    embed.Embed:
+      example:
+        image: "{}"
+        thumbnail: "{}"
+        color: 65280
+        footer: "{}"
+        author: "{}"
+        description: Embed support is live.
+        video: "{}"
+        title: GoChat 1.0
+        type: rich
+        url: https://example.com/release
+        provider: "{}"
+        fields:
+        - inline: true
+          name: Status
+          value: Stable
+        - inline: true
+          name: Status
+          value: Stable
+        timestamp: 2000-01-23T04:56:07.000+00:00
+      properties:
+        author:
+          allOf:
+          - $ref: '#/components/schemas/embed.EmbedAuthor'
+          description: Embed author metadata.
+          type: object
+        color:
+          description: Decimal RGB color value.
+          example: 65280
+          type: integer
+        description:
+          description: Main embed description.
+          example: Embed support is live.
+          type: string
+        fields:
+          description: Up to 25 structured fields.
+          items:
+            $ref: '#/components/schemas/embed.EmbedField'
+          type: array
+        footer:
+          allOf:
+          - $ref: '#/components/schemas/embed.EmbedFooter'
+          description: Optional footer block.
+          type: object
+        image:
+          allOf:
+          - $ref: '#/components/schemas/embed.EmbedMedia'
+          description: Full-size image block.
+          type: object
+        provider:
+          allOf:
+          - $ref: '#/components/schemas/embed.EmbedProvider'
+          description: Content provider metadata.
+          type: object
+        thumbnail:
+          allOf:
+          - $ref: '#/components/schemas/embed.EmbedMedia'
+          description: Thumbnail image block.
+          type: object
+        timestamp:
+          description: Optional ISO timestamp shown by the client.
+          format: date-time
+          type: string
+        title:
+          description: Embed title.
+          example: GoChat 1.0
+          type: string
+        type:
+          description: Embed type.
+          enum:
+          - rich
+          - image
+          - video
+          - gifv
+          - article
+          - link
+          example: rich
+          type: string
+        url:
+          description: Canonical URL opened when the embed title is clicked.
+          example: https://example.com/release
+          type: string
+        video:
+          allOf:
+          - $ref: '#/components/schemas/embed.EmbedMedia'
+          description: Embedded video metadata.
+          type: object
+      type: object
+    embed.EmbedAuthor:
+      properties:
+        icon_url:
+          description: Author icon URL.
+          example: https://example.com/author.png
+          type: string
+        name:
+          description: Author display name.
+          example: The PrimeTime
+          type: string
+        proxy_icon_url:
+          description: Optional proxied author icon URL.
+          example: https://cdn.example.com/author.png
+          type: string
+        url:
+          description: Author URL.
+          example: https://www.youtube.com/channel/UCUyeluBRhGPCW4rPe_UvBZQ
+          type: string
+      type: object
+    embed.EmbedField:
+      example:
+        inline: true
+        name: Status
+        value: Stable
+      properties:
+        inline:
+          description: Whether the field should be rendered inline.
+          example: true
+          type: boolean
+        name:
+          description: Field label.
+          example: Status
+          type: string
+        value:
+          description: Field value.
+          example: Stable
+          type: string
+      type: object
+    embed.EmbedFooter:
+      properties:
+        icon_url:
+          description: Footer icon URL.
+          example: https://example.com/icon.png
+          type: string
+        proxy_icon_url:
+          description: Optional proxied footer icon URL.
+          example: https://cdn.example.com/icon.png
+          type: string
+        text:
+          description: Footer text.
+          example: Documentation
+          type: string
+      type: object
+    embed.EmbedMedia:
+      properties:
+        content_type:
+          description: Media MIME type when known.
+          example: image/png
+          type: string
+        flags:
+          description: Media-specific flags from the source provider.
+          example: 0
+          type: integer
+        height:
+          description: Media height in pixels.
+          example: 720
+          type: integer
+        placeholder:
+          description: Encoded placeholder used by some generated embeds.
+          example: IPgNDIQbRUaQiJcwuYlwmyQ5Bg==
+          type: string
+        placeholder_version:
+          description: Placeholder format version.
+          example: 1
+          type: integer
+        proxy_url:
+          description: Optional proxied media URL.
+          example: https://cdn.example.com/preview.png
+          type: string
+        url:
+          description: Media URL.
+          example: https://example.com/preview.png
+          type: string
+        width:
+          description: Media width in pixels.
+          example: 1280
+          type: integer
+      type: object
+    embed.EmbedProvider:
+      properties:
+        name:
+          description: Provider name.
+          example: YouTube
+          type: string
+        url:
+          description: Provider URL.
+          example: https://www.youtube.com
+          type: string
+      type: object
+    guild.BanMemberRequest:
+      properties:
+        reason:
+          type: string
+      type: object
     guild.ChannelOrder:
       properties:
         id:
           description: Channel ID.
-          example: 2230469276416868352
-          type: integer
+          example: "2230469276416868352"
+          type: string
         position:
           description: New channel position.
           example: 4
           type: integer
+      type: object
     guild.ChannelRolePermission:
       example:
         deny: 0
@@ -4394,6 +5078,7 @@ components:
           description: Role ID
           example: 2230469276416868352
           type: integer
+      type: object
     guild.ChannelRolePermissionRequest:
       properties:
         accept:
@@ -4404,6 +5089,16 @@ components:
           description: Denied permission bits mask
           example: 0
           type: integer
+      type: object
+    guild.CreateEmojiRequest:
+      properties:
+        content_type:
+          type: string
+        file_size:
+          type: integer
+        name:
+          type: string
+      type: object
     guild.CreateGuildChannelCategoryRequest:
       properties:
         name:
@@ -4411,7 +5106,6 @@ components:
           example: category-name
           type: string
         position:
-          default: 0
           description: "Channel position in the list. Should be set as the last position\
             \ in the channel list, or it will be one of the first in the list."
           type: integer
@@ -4420,6 +5114,7 @@ components:
           description: Whether the category channel is private. Private channels can
             only be seen by users with roles assigned to this channel.
           type: boolean
+      type: object
     guild.CreateGuildChannelRequest:
       properties:
         name:
@@ -4432,7 +5127,6 @@ components:
           example: 2230469276416868352
           type: integer
         position:
-          default: 0
           description: "Channel position in the list. Should be set as the last position\
             \ in the channel list, or it will be one of the first in the list."
           type: integer
@@ -4442,23 +5136,12 @@ components:
             seen by users with roles assigned to this channel.
           type: boolean
         type:
+          allOf:
+          - $ref: '#/components/schemas/model.ChannelType'
           description: Channel type
           example: 0
-          type: integer
-          x-enum-comments:
-            ChannelTypeDM: DM channel. Can't be created in Guild
-            ChannelTypeGroupDM: Group DM channel. Can't be created in Guild'
-            ChannelTypeGuild: Default text channel in guild
-            ChannelTypeGuildCategory: Category channel in guild
-            ChannelTypeGuildVoice: Voice channel in guild
-            ChannelTypeThread: Thread channel
-          x-enum-varnames:
-          - ChannelTypeGuild
-          - ChannelTypeGuildVoice
-          - ChannelTypeGuildCategory
-          - ChannelTypeDM
-          - ChannelTypeGroupDM
-          - ChannelTypeThread
+          type: object
+      type: object
     guild.CreateGuildRequest:
       properties:
         icon_id:
@@ -4473,6 +5156,7 @@ components:
           default: false
           description: Whether the guild is public
           type: boolean
+      type: object
     guild.CreateGuildRoleRequest:
       properties:
         color:
@@ -4484,9 +5168,9 @@ components:
           example: New Role
           type: string
         permissions:
-          default: 0
           description: Permissions bitset
           type: integer
+      type: object
     guild.CreateIconRequest:
       properties:
         content_type:
@@ -4495,12 +5179,14 @@ components:
         file_size:
           example: 120000
           type: integer
+      type: object
     guild.CreateInviteRequest:
       properties:
         expires_in_sec:
           description: Expiration time in seconds. 0 means unlimited.
           example: 86400
           type: integer
+      type: object
     guild.JoinVoiceResponse:
       example:
         sfu_url: sfu_url
@@ -4510,6 +5196,7 @@ components:
           type: string
         sfu_url:
           type: string
+      type: object
     guild.MoveMemberRequest:
       properties:
         channel_id:
@@ -4518,6 +5205,7 @@ components:
           type: integer
         user_id:
           type: integer
+      type: object
     guild.MoveMemberResponse:
       example:
         from_sfu_token: from_sfu_token
@@ -4530,6 +5218,7 @@ components:
           type: string
         ok:
           type: boolean
+      type: object
     guild.PatchGuildChannelOrderRequest:
       properties:
         channels:
@@ -4537,18 +5226,13 @@ components:
           items:
             $ref: '#/components/schemas/guild.ChannelOrder'
           type: array
-          uniqueItems: false
+      type: object
     guild.PatchGuildChannelRequest:
       properties:
         name:
           description: Channel name.
           example: new-channel-name
           type: string
-        parent_id:
-          description: Parent channel ID. A Parent channel can only be a category
-            channel.
-          example: 2230469276416868352
-          type: integer
         private:
           default: false
           description: Whether the channel is private. Private channels can only be
@@ -4558,6 +5242,7 @@ components:
           description: Channel topic.
           example: Just a channel topic
           type: string
+      type: object
     guild.PatchGuildRoleRequest:
       properties:
         color:
@@ -4571,16 +5256,19 @@ components:
         permissions:
           description: Permissions bitset
           type: integer
+      type: object
     guild.SetGuildSystemMessagesChannelRequest:
       properties:
         channel_id:
           description: Channel ID
           example: 2230469276416868352
           type: integer
+      type: object
     guild.SetVoiceRegionRequest:
       properties:
         region:
           type: string
+      type: object
     guild.SetVoiceRegionResponse:
       example:
         guild_id: 6
@@ -4593,6 +5281,12 @@ components:
           type: integer
         region:
           type: string
+      type: object
+    guild.UpdateEmojiRequest:
+      properties:
+        name:
+          type: string
+      type: object
     guild.UpdateGuildRequest:
       properties:
         icon_id:
@@ -4604,13 +5298,13 @@ components:
           example: New guild name
           type: string
         permissions:
-          default: 7927905
           description: Permissions. Check the permissions documentation for more info.
           type: integer
         public:
           default: false
           description: Whether the guild is public
           type: boolean
+      type: object
     message.SendMessageRequest:
       properties:
         attachments:
@@ -4620,11 +5314,16 @@ components:
           items:
             type: integer
           type: array
-          uniqueItems: false
         content:
           description: Message content
           example: Hello world!
           type: string
+        embeds:
+          description: Manual embeds supplied by the client. These are stored separately
+            from generated URL embeds.
+          items:
+            $ref: '#/components/schemas/embed.Embed'
+          type: array
         mentions:
           description: IDs of mentioned users
           example:
@@ -4632,13 +5331,25 @@ components:
           items:
             type: integer
           type: array
-          uniqueItems: false
+      type: object
     message.UpdateMessageRequest:
       properties:
         content:
           description: Message content
           example: Hello world!
           type: string
+        embeds:
+          description: Full replacement for the manual embed array. Generated embeds
+            are managed by the embedder service.
+          items:
+            $ref: '#/components/schemas/embed.Embed'
+          type: array
+        flags:
+          description: Message flags bitmask. Use 4 to suppress URL embed generation
+            and clear generated embeds.
+          example: 4
+          type: integer
+      type: object
     message.UploadAttachmentRequest:
       properties:
         content_type:
@@ -4661,6 +5372,7 @@ components:
           description: Image width in pixels
           example: 800
           type: integer
+      type: object
     model.ChannelMention:
       example:
         roleId: 5
@@ -4682,9 +5394,15 @@ components:
           type: integer
         type:
           type: integer
+      type: object
     model.ChannelType:
-      description: Channel type
-      example: 0
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       type: integer
       x-enum-comments:
         ChannelTypeDM: DM channel. Can't be created in Guild
@@ -4710,6 +5428,7 @@ components:
         echo_cancellation: true
         video_device: video_device
         noise_suppression: true
+        denoiser_type: denoiser_type
         audio_input_device: audio_input_device
       properties:
         audio_input_device:
@@ -4724,12 +5443,15 @@ components:
           type: number
         auto_gain_control:
           type: boolean
+        denoiser_type:
+          type: string
         echo_cancellation:
           type: boolean
         noise_suppression:
           type: boolean
         video_device:
           type: string
+      type: object
     model.Mention:
       example:
         messageId: 2
@@ -4745,7 +5467,12 @@ components:
           type: integer
         userId:
           type: integer
+      type: object
     model.NotificationsType:
+      enum:
+      - 0
+      - 1
+      - 2
       type: integer
       x-enum-varnames:
       - NotificationsAll
@@ -4760,6 +5487,7 @@ components:
           type: string
         status:
           type: string
+      type: object
     model.UserDMChannels:
       example:
         hidden: true
@@ -4775,18 +5503,20 @@ components:
           type: integer
         user_id:
           type: integer
+      type: object
     model.UserSettingsAppearance:
       example:
-        chat_font_scale: 1
+        chat_font_scale: 1.2315135367772556
         color_scheme: color_scheme
-        chat_spacing: 1
+        chat_spacing: 1.0246457001441578
       properties:
         chat_font_scale:
-          type: integer
+          type: number
         chat_spacing:
-          type: integer
+          type: number
         color_scheme:
           type: string
+      type: object
     model.UserSettingsChannel:
       example:
         channel_id: 1
@@ -4799,6 +5529,7 @@ components:
           type: integer
         notifications:
           $ref: '#/components/schemas/model.UserSettingsNotifications'
+      type: object
     model.UserSettingsData:
       example:
         favorite_gifs:
@@ -4814,9 +5545,9 @@ components:
           hidden_after: 9
           channel_id: 5
         appearance:
-          chat_font_scale: 1
+          chat_font_scale: 1.2315135367772556
           color_scheme: color_scheme
-          chat_spacing: 1
+          chat_spacing: 1.0246457001441578
         channels:
         - channel_id: 1
           notifications:
@@ -4837,6 +5568,7 @@ components:
           echo_cancellation: true
           video_device: video_device
           noise_suppression: true
+          denoiser_type: denoiser_type
           audio_input_device: audio_input_device
         guilds:
         - selected_channel: 6
@@ -4894,31 +5626,26 @@ components:
           items:
             $ref: '#/components/schemas/model.UserSettingsChannel'
           type: array
-          uniqueItems: false
         devices:
           $ref: '#/components/schemas/model.Devices'
         dm_channels:
           items:
             $ref: '#/components/schemas/model.UserDMChannels'
           type: array
-          uniqueItems: false
         favorite_gifs:
           items:
             type: string
           type: array
-          uniqueItems: false
         forced_presence:
           type: string
         guild_folders:
           items:
             $ref: '#/components/schemas/model.UserSettingsGuildFolders'
           type: array
-          uniqueItems: false
         guilds:
           items:
             $ref: '#/components/schemas/model.UserSettingsGuilds'
           type: array
-          uniqueItems: false
         language:
           type: string
         status:
@@ -4929,7 +5656,7 @@ components:
           items:
             $ref: '#/components/schemas/model.UserSettingsUsers'
           type: array
-          uniqueItems: false
+      type: object
     model.UserSettingsGuildFolders:
       example:
         color: 6
@@ -4945,11 +5672,11 @@ components:
           items:
             type: integer
           type: array
-          uniqueItems: false
         name:
           type: string
         position:
           type: integer
+      type: object
     model.UserSettingsGuilds:
       example:
         selected_channel: 6
@@ -4968,6 +5695,7 @@ components:
           type: integer
         selected_channel:
           type: integer
+      type: object
     model.UserSettingsNotifications:
       example:
         muted_until: muted_until
@@ -4979,11 +5707,8 @@ components:
         muted_until:
           type: string
         notifications:
-          type: integer
-          x-enum-varnames:
-          - NotificationsAll
-          - NotificationsMentions
-          - NotificationsNone
+          $ref: '#/components/schemas/model.NotificationsType'
+      type: object
     model.UserSettingsUsers:
       example:
         user_id: 1
@@ -4996,6 +5721,7 @@ components:
           $ref: '#/components/schemas/model.UserSettingsNotifications'
         user_id:
           type: integer
+      type: object
     model.UserUISounds:
       example:
         notification: true
@@ -5011,16 +5737,17 @@ components:
           type: boolean
         voice_channel:
           type: boolean
+      type: object
     search.MessageSearchRequest:
       properties:
         author_id:
           description: Author ID to search by.
-          example: 2230469276416868352
-          type: integer
+          example: "2230469276416868352"
+          type: string
         channel_id:
           description: Channel ID to search in. Required.
-          example: 2230469276416868352
-          type: integer
+          example: "2230469276416868352"
+          type: string
         content:
           description: Content contains a string to search for. Might be empty if
             need to search by other parameters.
@@ -5036,7 +5763,6 @@ components:
             - file
             type: string
           type: array
-          uniqueItems: false
         mentions:
           description: Mentions contains a list of int64 user IDs.
           example:
@@ -5044,11 +5770,10 @@ components:
           items:
             type: integer
           type: array
-          uniqueItems: false
         page:
-          default: 0
           description: Page number to get. Starts from 0.
           type: integer
+      type: object
     search.MessageSearchResponse:
       example:
         pages: 0
@@ -5080,9 +5805,49 @@ components:
               height: 128
             id: 2230469276416868352
             discriminator: uniquename
+          flags: 0
           id: 2230469276416868352
           type: 0
           channel_id: 2230469276416868352
+          embeds:
+          - image: "{}"
+            thumbnail: "{}"
+            color: 65280
+            footer: "{}"
+            author: "{}"
+            description: Embed support is live.
+            video: "{}"
+            title: GoChat 1.0
+            type: rich
+            url: https://example.com/release
+            provider: "{}"
+            fields:
+            - inline: true
+              name: Status
+              value: Stable
+            - inline: true
+              name: Status
+              value: Stable
+            timestamp: 2000-01-23T04:56:07.000+00:00
+          - image: "{}"
+            thumbnail: "{}"
+            color: 65280
+            footer: "{}"
+            author: "{}"
+            description: Embed support is live.
+            video: "{}"
+            title: GoChat 1.0
+            type: rich
+            url: https://example.com/release
+            provider: "{}"
+            fields:
+            - inline: true
+              name: Status
+              value: Stable
+            - inline: true
+              name: Status
+              value: Stable
+            timestamp: 2000-01-23T04:56:07.000+00:00
           content: Hello world!
         - attachments:
           - filename: image.png
@@ -5111,9 +5876,49 @@ components:
               height: 128
             id: 2230469276416868352
             discriminator: uniquename
+          flags: 0
           id: 2230469276416868352
           type: 0
           channel_id: 2230469276416868352
+          embeds:
+          - image: "{}"
+            thumbnail: "{}"
+            color: 65280
+            footer: "{}"
+            author: "{}"
+            description: Embed support is live.
+            video: "{}"
+            title: GoChat 1.0
+            type: rich
+            url: https://example.com/release
+            provider: "{}"
+            fields:
+            - inline: true
+              name: Status
+              value: Stable
+            - inline: true
+              name: Status
+              value: Stable
+            timestamp: 2000-01-23T04:56:07.000+00:00
+          - image: "{}"
+            thumbnail: "{}"
+            color: 65280
+            footer: "{}"
+            author: "{}"
+            description: Embed support is live.
+            video: "{}"
+            title: GoChat 1.0
+            type: rich
+            url: https://example.com/release
+            provider: "{}"
+            fields:
+            - inline: true
+              name: Status
+              value: Stable
+            - inline: true
+              name: Status
+              value: Stable
+            timestamp: 2000-01-23T04:56:07.000+00:00
           content: Hello world!
       properties:
         messages:
@@ -5121,16 +5926,17 @@ components:
           items:
             $ref: '#/components/schemas/dto.Message'
           type: array
-          uniqueItems: false
         pages:
           description: Total number of pages with current search parameters
           type: integer
+      type: object
     sfu.ChannelAlive:
       properties:
         channel_id:
           type: integer
         guild_id:
           type: integer
+      type: object
     sfu.ChannelUserJoin:
       properties:
         channel_id:
@@ -5139,6 +5945,7 @@ components:
           type: integer
         user_id:
           type: integer
+      type: object
     sfu.ChannelUserLeave:
       properties:
         channel_id:
@@ -5147,6 +5954,7 @@ components:
           type: integer
         user_id:
           type: integer
+      type: object
     sfu.HeartbeatRequest:
       properties:
         id:
@@ -5157,6 +5965,7 @@ components:
           type: string
         url:
           type: string
+      type: object
     user.CreateAvatarRequest:
       properties:
         content_type:
@@ -5165,6 +5974,7 @@ components:
         file_size:
           example: 120000
           type: integer
+      type: object
     user.CreateDMManyRequest:
       properties:
         channel_id:
@@ -5173,19 +5983,23 @@ components:
           items:
             type: integer
           type: array
-          uniqueItems: false
+      type: object
     user.CreateDMRequest:
       properties:
         recipient_id:
           type: integer
+      type: object
     user.CreateFriendRequestRequest:
       properties:
         discriminator:
           type: string
+      type: object
     user.FriendRequestAction:
       properties:
         user_id:
-          type: integer
+          example: "0"
+          type: string
+      type: object
     user.ModifyUserRequest:
       properties:
         avatar:
@@ -5196,10 +6010,13 @@ components:
           description: User name.
           example: NewFancyName
           type: string
+      type: object
     user.UnfriendRequest:
       properties:
         user_id:
-          type: integer
+          example: "0"
+          type: string
+      type: object
     user.UserSettingsResponse:
       example:
         settings:
@@ -5216,9 +6033,9 @@ components:
             hidden_after: 9
             channel_id: 5
           appearance:
-            chat_font_scale: 1
+            chat_font_scale: 1.2315135367772556
             color_scheme: color_scheme
-            chat_spacing: 1
+            chat_spacing: 1.0246457001441578
           channels:
           - channel_id: 1
             notifications:
@@ -5239,6 +6056,7 @@ components:
             echo_cancellation: true
             video_device: video_device
             noise_suppression: true
+            denoiser_type: denoiser_type
             audio_input_device: audio_input_device
           guilds:
           - selected_channel: 6
@@ -5307,23 +6125,13 @@ components:
         - owner: 2230469276416868352
           public: false
           permissions: 0
-          icon:
-            width: 128
-            filesize: 12345
-            id: 2230469276416868352
-            url: https://cdn.example.com/icons/2230/2231.webp
-            height: 128
+          icon: "{}"
           name: My Guild
           id: 2230469276416868352
         - owner: 2230469276416868352
           public: false
           permissions: 0
-          icon:
-            width: 128
-            filesize: 12345
-            id: 2230469276416868352
-            url: https://cdn.example.com/icons/2230/2231.webp
-            height: 128
+          icon: "{}"
           name: My Guild
           id: 2230469276416868352
         mentions:
@@ -5336,6 +6144,12 @@ components:
             authorId: 9
             userId: 4
             channelId: 3
+        guild_emojis:
+          key:
+          - name: name
+            id: "0"
+          - name: name
+            id: "0"
         read_states:
           key: 7
         version: 2
@@ -5347,26 +6161,39 @@ components:
           additionalProperties:
             items:
               $ref: '#/components/schemas/model.ChannelMention'
+            type: array
+          type: object
+        guild_emojis:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/dto.EmojiRef'
+            type: array
+          type: object
         guilds:
           items:
             $ref: '#/components/schemas/dto.Guild'
           type: array
-          uniqueItems: false
         guilds_last_messages:
           additionalProperties:
             additionalProperties:
               type: integer
+            type: object
+          type: object
         mentions:
           additionalProperties:
             items:
               $ref: '#/components/schemas/model.Mention'
+            type: array
+          type: object
         read_states:
           additionalProperties:
             type: integer
+          type: object
         settings:
           $ref: '#/components/schemas/model.UserSettingsData'
         version:
           type: integer
+      type: object
     voice.Region:
       example:
         name: name
@@ -5376,6 +6203,7 @@ components:
           type: string
         name:
           type: string
+      type: object
     voice.VoiceRegionsResponse:
       example:
         regions:
@@ -5388,9 +6216,5 @@ components:
           items:
             $ref: '#/components/schemas/voice.Region'
           type: array
-          uniqueItems: false
-  securitySchemes:
-    bearerauth:
-      bearerFormat: JWT
-      scheme: bearer
-      type: http
+      type: object
+x-original-swagger-version: "2.0"

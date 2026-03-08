@@ -66,6 +66,10 @@ type Handler struct {
 	closer      func()
 	log         *slog.Logger
 	cache       *kvs.Cache
+
+	// lastPresenceTouch throttles TouchSessionTTL calls to avoid
+	// redundant Redis round-trips on every heartbeat.
+	lastPresenceTouch time.Time
 }
 
 func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v any) error, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger, nats *nats.Conn, pstore *presence.Store, cache *kvs.Cache) *Handler {
@@ -114,7 +118,9 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			// add grace to tolerate network jitter (10s)
 			h.hTimer.Reset(time.Millisecond * time.Duration(h.hbTimeout+10000))
 			// Refresh this session TTL: heartbeat_interval * 2
-			if h.user != nil && h.pstore != nil && h.sessionID != "" && h.presenceSet {
+			// Throttled: skip if we touched within the last 10s.
+			if h.user != nil && h.pstore != nil && h.sessionID != "" && h.presenceSet &&
+				time.Since(h.lastPresenceTouch) > 10*time.Second {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 				// TTL expects seconds
 				ttl := h.hbTimeout * 2 / 1000
@@ -123,6 +129,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 				}
 				_ = h.pstore.TouchSessionTTL(ctx, h.user.Id, h.sessionID, ttl)
 				cancel()
+				h.lastPresenceTouch = time.Now()
 			}
 			h.lastEventId = m.LastEventId
 		}
@@ -326,6 +333,26 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		}
 
 		sp := presence.SessionPresence{SessionID: h.sessionID, Status: m.Status, Platform: m.Platform, Since: now, UpdatedAt: now, ExpiresAt: now + ttl, CustomStatusText: m.CustomStatusText, VoiceChannelID: voicePtr}
+
+		// Handle voice state updates (mute/deafen)
+		if m.Mute != nil || m.Deafen != nil {
+			mute := false
+			deafen := false
+			if m.Mute != nil {
+				mute = *m.Mute
+			}
+			if m.Deafen != nil {
+				deafen = *m.Deafen
+			}
+			sp.Mute = mute
+			sp.Deafen = deafen
+
+			// Update voice state in store
+			if err := h.pstore.SetSessionVoiceState(ctx, h.user.Id, h.sessionID, mute, deafen, ttl); err != nil {
+				h.log.Warn("Error setting session voice state", "error", err)
+			}
+		}
+
 		if err := h.pstore.UpsertSession(ctx, h.user.Id, h.sessionID, sp, ttl); err != nil {
 			h.log.Warn("Error upserting session presence", "error", err)
 			return
@@ -404,7 +431,7 @@ func (h *Handler) publishPresence(agg presence.Presence) {
 	if h.nats == nil {
 		return
 	}
-	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{UserID: agg.UserID, Status: agg.Status, Since: agg.Since, CustomStatusText: agg.CustomStatusText, VoiceChannelID: agg.VoiceChannelID})
+	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{UserID: agg.UserID, Status: agg.Status, Since: agg.Since, CustomStatusText: agg.CustomStatusText, VoiceChannelID: agg.VoiceChannelID, Mute: agg.Mute, Deafen: agg.Deafen})
 	if err != nil {
 		return
 	}

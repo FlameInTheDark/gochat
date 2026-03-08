@@ -20,7 +20,7 @@ var _ MappedNullable = &UserFriendRequestAction{}
 
 // UserFriendRequestAction struct for UserFriendRequestAction
 type UserFriendRequestAction struct {
-	UserId *int32 `json:"user_id,omitempty"`
+	UserId *string `json:"user_id,omitempty"`
 }
 
 // NewUserFriendRequestAction instantiates a new UserFriendRequestAction object
@@ -41,9 +41,9 @@ func NewUserFriendRequestActionWithDefaults() *UserFriendRequestAction {
 }
 
 // GetUserId returns the UserId field value if set, zero value otherwise.
-func (o *UserFriendRequestAction) GetUserId() int32 {
+func (o *UserFriendRequestAction) GetUserId() string {
 	if o == nil || IsNil(o.UserId) {
-		var ret int32
+		var ret string
 		return ret
 	}
 	return *o.UserId
@@ -51,7 +51,7 @@ func (o *UserFriendRequestAction) GetUserId() int32 {
 
 // GetUserIdOk returns a tuple with the UserId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *UserFriendRequestAction) GetUserIdOk() (*int32, bool) {
+func (o *UserFriendRequestAction) GetUserIdOk() (*string, bool) {
 	if o == nil || IsNil(o.UserId) {
 		return nil, false
 	}
@@ -67,8 +67,8 @@ func (o *UserFriendRequestAction) HasUserId() bool {
 	return false
 }
 
-// SetUserId gets a reference to the given int32 and assigns it to the UserId field.
-func (o *UserFriendRequestAction) SetUserId(v int32) {
+// SetUserId gets a reference to the given string and assigns it to the UserId field.
+func (o *UserFriendRequestAction) SetUserId(v string) {
 	o.UserId = &v
 }
 

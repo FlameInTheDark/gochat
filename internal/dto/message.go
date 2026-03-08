@@ -1,15 +1,21 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"github.com/FlameInTheDark/gochat/internal/embed"
+)
 
 type Message struct {
-	Id          int64        `json:"id" example:"2230469276416868352"`         // Message ID
-	ChannelId   int64        `json:"channel_id" example:"2230469276416868352"` // Channel id the message was sent to
-	Author      User         `json:"author"`
-	Content     string       `json:"content" example:"Hello world!"`
-	Attachments []Attachment `json:"attachments,omitempty"`
-	Type        int          `json:"type" example:"0"`
-	UpdatedAt   *time.Time   `json:"updated_at,omitempty"` // Timestamp of the last message edit
+	Id          int64         `json:"id" example:"2230469276416868352"`         // Message ID
+	ChannelId   int64         `json:"channel_id" example:"2230469276416868352"` // Channel id the message was sent to
+	Author      User          `json:"author"`
+	Content     string        `json:"content" example:"Hello world!"`
+	Attachments []Attachment  `json:"attachments,omitempty"`
+	Embeds      []embed.Embed `json:"embeds,omitempty"`
+	Flags       int           `json:"flags,omitempty"` // Bitmask. Includes suppress-embeds and banned-author markers in API responses.
+	Type        int           `json:"type" example:"0"`
+	UpdatedAt   *time.Time    `json:"updated_at,omitempty"` // Timestamp of the last message edit
 }
 
 type Attachment struct {

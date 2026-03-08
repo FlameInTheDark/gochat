@@ -4,11 +4,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Icon** | Pointer to [**DtoIcon**](DtoIcon.md) |  | [optional] 
+**Icon** | Pointer to [**DtoIcon**](DtoIcon.md) | Icon metadata | [optional] 
 **Id** | Pointer to **int32** | Guild ID | [optional] 
 **Name** | Pointer to **string** | Guild Name | [optional] 
 **Owner** | Pointer to **int32** | Owner ID | [optional] 
-**Permissions** | Pointer to **int32** | Default guild Permissions. Check the permissions documentation for more info. | [optional] [default to 7927905]
+**Permissions** | Pointer to **int32** | Default guild Permissions. Check the permissions documentation for more info. | [optional] 
 **Public** | Pointer to **bool** | Whether the guild is public | [optional] [default to false]
 
 ## Methods

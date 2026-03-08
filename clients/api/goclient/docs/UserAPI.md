@@ -29,7 +29,7 @@ Method | HTTP request | Description
 
 ## UserMeAvatarPost
 
-> DtoAvatarUpload UserMeAvatarPost(ctx).UserCreateAvatarRequest(userCreateAvatarRequest).Execute()
+> DtoAvatarUpload UserMeAvatarPost(ctx).Request(request).Execute()
 
 Create avatar metadata
 
@@ -48,11 +48,11 @@ import (
 )
 
 func main() {
-	userCreateAvatarRequest := *openapiclient.NewUserCreateAvatarRequest() // UserCreateAvatarRequest | Avatar creation request
+	request := *openapiclient.NewUserCreateAvatarRequest() // UserCreateAvatarRequest | Avatar creation request
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UserAPI.UserMeAvatarPost(context.Background()).UserCreateAvatarRequest(userCreateAvatarRequest).Execute()
+	resp, r, err := apiClient.UserAPI.UserMeAvatarPost(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeAvatarPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -73,7 +73,7 @@ Other parameters are passed through a pointer to a apiUserMeAvatarPostRequest st
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **userCreateAvatarRequest** | [**UserCreateAvatarRequest**](UserCreateAvatarRequest.md) | Avatar creation request | 
+ **request** | [**UserCreateAvatarRequest**](UserCreateAvatarRequest.md) | Avatar creation request | 
 
 ### Return type
 
@@ -154,7 +154,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: */*
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -283,7 +283,7 @@ No authorization required
 
 ## UserMeChannelsGroupPost
 
-> DtoChannel UserMeChannelsGroupPost(ctx).UserCreateDMManyRequest(userCreateDMManyRequest).Execute()
+> DtoChannel UserMeChannelsGroupPost(ctx).Request(request).Execute()
 
 Create group DM channel
 
@@ -300,11 +300,11 @@ import (
 )
 
 func main() {
-	userCreateDMManyRequest := *openapiclient.NewUserCreateDMManyRequest() // UserCreateDMManyRequest | Group DM data
+	request := *openapiclient.NewUserCreateDMManyRequest() // UserCreateDMManyRequest | Group DM data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UserAPI.UserMeChannelsGroupPost(context.Background()).UserCreateDMManyRequest(userCreateDMManyRequest).Execute()
+	resp, r, err := apiClient.UserAPI.UserMeChannelsGroupPost(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeChannelsGroupPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -325,7 +325,7 @@ Other parameters are passed through a pointer to a apiUserMeChannelsGroupPostReq
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **userCreateDMManyRequest** | [**UserCreateDMManyRequest**](UserCreateDMManyRequest.md) | Group DM data | 
+ **request** | [**UserCreateDMManyRequest**](UserCreateDMManyRequest.md) | Group DM data | 
 
 ### Return type
 
@@ -337,7 +337,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -347,7 +347,7 @@ No authorization required
 
 ## UserMeChannelsPost
 
-> DtoChannel UserMeChannelsPost(ctx).UserCreateDMRequest(userCreateDMRequest).Execute()
+> DtoChannel UserMeChannelsPost(ctx).Request(request).Execute()
 
 Create DM channel
 
@@ -364,11 +364,11 @@ import (
 )
 
 func main() {
-	userCreateDMRequest := *openapiclient.NewUserCreateDMRequest() // UserCreateDMRequest | Recipient data
+	request := *openapiclient.NewUserCreateDMRequest() // UserCreateDMRequest | Recipient data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UserAPI.UserMeChannelsPost(context.Background()).UserCreateDMRequest(userCreateDMRequest).Execute()
+	resp, r, err := apiClient.UserAPI.UserMeChannelsPost(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeChannelsPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -389,7 +389,7 @@ Other parameters are passed through a pointer to a apiUserMeChannelsPostRequest 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **userCreateDMRequest** | [**UserCreateDMRequest**](UserCreateDMRequest.md) | Recipient data | 
+ **request** | [**UserCreateDMRequest**](UserCreateDMRequest.md) | Recipient data | 
 
 ### Return type
 
@@ -401,7 +401,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -411,7 +411,7 @@ No authorization required
 
 ## UserMeFriendsDelete
 
-> string UserMeFriendsDelete(ctx).UserUnfriendRequest(userUnfriendRequest).Execute()
+> string UserMeFriendsDelete(ctx).Request(request).Execute()
 
 Remove user from friends
 
@@ -428,11 +428,11 @@ import (
 )
 
 func main() {
-	userUnfriendRequest := *openapiclient.NewUserUnfriendRequest() // UserUnfriendRequest | Unfriend
+	request := *openapiclient.NewUserUnfriendRequest() // UserUnfriendRequest | Unfriend
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UserAPI.UserMeFriendsDelete(context.Background()).UserUnfriendRequest(userUnfriendRequest).Execute()
+	resp, r, err := apiClient.UserAPI.UserMeFriendsDelete(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeFriendsDelete``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -453,7 +453,7 @@ Other parameters are passed through a pointer to a apiUserMeFriendsDeleteRequest
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **userUnfriendRequest** | [**UserUnfriendRequest**](UserUnfriendRequest.md) | Unfriend | 
+ **request** | [**UserUnfriendRequest**](UserUnfriendRequest.md) | Unfriend | 
 
 ### Return type
 
@@ -534,7 +534,7 @@ No authorization required
 
 ## UserMeFriendsPost
 
-> string UserMeFriendsPost(ctx).UserCreateFriendRequestRequest(userCreateFriendRequestRequest).Execute()
+> string UserMeFriendsPost(ctx).Request(request).Execute()
 
 Send a friend request by discriminator
 
@@ -551,11 +551,11 @@ import (
 )
 
 func main() {
-	userCreateFriendRequestRequest := *openapiclient.NewUserCreateFriendRequestRequest() // UserCreateFriendRequestRequest | Friend request
+	request := *openapiclient.NewUserCreateFriendRequestRequest() // UserCreateFriendRequestRequest | Friend request
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UserAPI.UserMeFriendsPost(context.Background()).UserCreateFriendRequestRequest(userCreateFriendRequestRequest).Execute()
+	resp, r, err := apiClient.UserAPI.UserMeFriendsPost(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeFriendsPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -576,7 +576,7 @@ Other parameters are passed through a pointer to a apiUserMeFriendsPostRequest s
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **userCreateFriendRequestRequest** | [**UserCreateFriendRequestRequest**](UserCreateFriendRequestRequest.md) | Friend request | 
+ **request** | [**UserCreateFriendRequestRequest**](UserCreateFriendRequestRequest.md) | Friend request | 
 
 ### Return type
 
@@ -598,7 +598,7 @@ No authorization required
 
 ## UserMeFriendsRequestsDelete
 
-> string UserMeFriendsRequestsDelete(ctx).UserFriendRequestAction(userFriendRequestAction).Execute()
+> string UserMeFriendsRequestsDelete(ctx).Request(request).Execute()
 
 Decline a friend request
 
@@ -615,11 +615,11 @@ import (
 )
 
 func main() {
-	userFriendRequestAction := *openapiclient.NewUserFriendRequestAction() // UserFriendRequestAction | Decline
+	request := *openapiclient.NewUserFriendRequestAction() // UserFriendRequestAction | Decline
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UserAPI.UserMeFriendsRequestsDelete(context.Background()).UserFriendRequestAction(userFriendRequestAction).Execute()
+	resp, r, err := apiClient.UserAPI.UserMeFriendsRequestsDelete(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeFriendsRequestsDelete``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -640,7 +640,7 @@ Other parameters are passed through a pointer to a apiUserMeFriendsRequestsDelet
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **userFriendRequestAction** | [**UserFriendRequestAction**](UserFriendRequestAction.md) | Decline | 
+ **request** | [**UserFriendRequestAction**](UserFriendRequestAction.md) | Decline | 
 
 ### Return type
 
@@ -721,7 +721,7 @@ No authorization required
 
 ## UserMeFriendsRequestsPost
 
-> string UserMeFriendsRequestsPost(ctx).UserFriendRequestAction(userFriendRequestAction).Execute()
+> string UserMeFriendsRequestsPost(ctx).Request(request).Execute()
 
 Accept a friend request
 
@@ -738,11 +738,11 @@ import (
 )
 
 func main() {
-	userFriendRequestAction := *openapiclient.NewUserFriendRequestAction() // UserFriendRequestAction | Accept
+	request := *openapiclient.NewUserFriendRequestAction() // UserFriendRequestAction | Accept
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UserAPI.UserMeFriendsRequestsPost(context.Background()).UserFriendRequestAction(userFriendRequestAction).Execute()
+	resp, r, err := apiClient.UserAPI.UserMeFriendsRequestsPost(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeFriendsRequestsPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -763,7 +763,7 @@ Other parameters are passed through a pointer to a apiUserMeFriendsRequestsPostR
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **userFriendRequestAction** | [**UserFriendRequestAction**](UserFriendRequestAction.md) | Accept | 
+ **request** | [**UserFriendRequestAction**](UserFriendRequestAction.md) | Accept | 
 
 ### Return type
 
@@ -802,7 +802,7 @@ import (
 )
 
 func main() {
-	userId := int32(2230469276416868352) // int32 | User id
+	userId := int32(56) // int32 | User id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -929,7 +929,7 @@ import (
 )
 
 func main() {
-	guildId := "2230469276416868352" // string | Guild id
+	guildId := "guildId_example" // string | Guild id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -997,7 +997,7 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild id
+	guildId := int32(56) // int32 | Guild id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -1048,7 +1048,7 @@ No authorization required
 
 ## UserMePatch
 
-> string UserMePatch(ctx).UserModifyUserRequest(userModifyUserRequest).Execute()
+> string UserMePatch(ctx).Request(request).Execute()
 
 Get user
 
@@ -1065,11 +1065,11 @@ import (
 )
 
 func main() {
-	userModifyUserRequest := *openapiclient.NewUserModifyUserRequest() // UserModifyUserRequest | Modify user data
+	request := *openapiclient.NewUserModifyUserRequest() // UserModifyUserRequest | Modify user data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UserAPI.UserMePatch(context.Background()).UserModifyUserRequest(userModifyUserRequest).Execute()
+	resp, r, err := apiClient.UserAPI.UserMePatch(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMePatch``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -1090,7 +1090,7 @@ Other parameters are passed through a pointer to a apiUserMePatchRequest struct 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **userModifyUserRequest** | [**UserModifyUserRequest**](UserModifyUserRequest.md) | Modify user data | 
+ **request** | [**UserModifyUserRequest**](UserModifyUserRequest.md) | Modify user data | 
 
 ### Return type
 
@@ -1102,7 +1102,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -1176,7 +1176,7 @@ No authorization required
 
 ## UserMeSettingsPost
 
-> string UserMeSettingsPost(ctx).ModelUserSettingsData(modelUserSettingsData).Execute()
+> string UserMeSettingsPost(ctx).Request(request).Execute()
 
 Update current user settings (replaces and bumps version)
 
@@ -1193,11 +1193,11 @@ import (
 )
 
 func main() {
-	modelUserSettingsData := *openapiclient.NewModelUserSettingsData() // ModelUserSettingsData | User settings
+	request := *openapiclient.NewModelUserSettingsData() // ModelUserSettingsData | User settings
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UserAPI.UserMeSettingsPost(context.Background()).ModelUserSettingsData(modelUserSettingsData).Execute()
+	resp, r, err := apiClient.UserAPI.UserMeSettingsPost(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeSettingsPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -1218,7 +1218,7 @@ Other parameters are passed through a pointer to a apiUserMeSettingsPostRequest 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **modelUserSettingsData** | [**ModelUserSettingsData**](ModelUserSettingsData.md) | User settings | 
+ **request** | [**ModelUserSettingsData**](ModelUserSettingsData.md) | User settings | 
 
 ### Return type
 

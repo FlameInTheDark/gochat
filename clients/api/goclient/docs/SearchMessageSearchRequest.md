@@ -4,12 +4,12 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AuthorId** | Pointer to **int32** | Author ID to search by. | [optional] 
-**ChannelId** | Pointer to **int32** | Channel ID to search in. Required. | [optional] 
+**AuthorId** | Pointer to **string** | Author ID to search by. | [optional] 
+**ChannelId** | Pointer to **string** | Channel ID to search in. Required. | [optional] 
 **Content** | Pointer to **string** | Content contains a string to search for. Might be empty if need to search by other parameters. | [optional] 
 **Has** | Pointer to **[]string** | List of specific features to search for. | [optional] 
 **Mentions** | Pointer to **[]int32** | Mentions contains a list of int64 user IDs. | [optional] 
-**Page** | Pointer to **int32** | Page number to get. Starts from 0. | [optional] [default to 0]
+**Page** | Pointer to **int32** | Page number to get. Starts from 0. | [optional] 
 
 ## Methods
 
@@ -32,20 +32,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetAuthorId
 
-`func (o *SearchMessageSearchRequest) GetAuthorId() int32`
+`func (o *SearchMessageSearchRequest) GetAuthorId() string`
 
 GetAuthorId returns the AuthorId field if non-nil, zero value otherwise.
 
 ### GetAuthorIdOk
 
-`func (o *SearchMessageSearchRequest) GetAuthorIdOk() (*int32, bool)`
+`func (o *SearchMessageSearchRequest) GetAuthorIdOk() (*string, bool)`
 
 GetAuthorIdOk returns a tuple with the AuthorId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetAuthorId
 
-`func (o *SearchMessageSearchRequest) SetAuthorId(v int32)`
+`func (o *SearchMessageSearchRequest) SetAuthorId(v string)`
 
 SetAuthorId sets AuthorId field to given value.
 
@@ -57,20 +57,20 @@ HasAuthorId returns a boolean if a field has been set.
 
 ### GetChannelId
 
-`func (o *SearchMessageSearchRequest) GetChannelId() int32`
+`func (o *SearchMessageSearchRequest) GetChannelId() string`
 
 GetChannelId returns the ChannelId field if non-nil, zero value otherwise.
 
 ### GetChannelIdOk
 
-`func (o *SearchMessageSearchRequest) GetChannelIdOk() (*int32, bool)`
+`func (o *SearchMessageSearchRequest) GetChannelIdOk() (*string, bool)`
 
 GetChannelIdOk returns a tuple with the ChannelId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetChannelId
 
-`func (o *SearchMessageSearchRequest) SetChannelId(v int32)`
+`func (o *SearchMessageSearchRequest) SetChannelId(v string)`
 
 SetChannelId sets ChannelId field to given value.
 

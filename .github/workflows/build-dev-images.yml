@@ -32,6 +32,10 @@ jobs:
             dockerfile: indexer.Dockerfile
             image: gochat-indexer
             cache_scope: indexer-dev
+          - service: embedder
+            dockerfile: embedder.Dockerfile
+            image: gochat-embedder
+            cache_scope: embedder-dev
           - service: attachments
             dockerfile: attachments.Dockerfile
             image: gochat-attachments

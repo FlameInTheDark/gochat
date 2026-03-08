@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
 type UserSettings struct {
-	UserId   int64           `db:"user_id"`
+	UserId   int64           `db:"user_id,string"`
 	Settings json.RawMessage `db:"settings"`
-	Version  int64           `db:"version"`
+	Version  int64           `db:"version,string"`
 }
 
 type UserSettingsData struct {
@@ -43,6 +44,7 @@ type Devices struct {
 	AudioOutputDevice   string  `json:"audio_output_device"`
 	VideoDevice         string  `json:"video_device"`
 	NoiseSuppression    bool    `json:"noise_suppression"`
+	DenoiserType        string  `json:"denoiser_type"`
 	EchoCancellation    bool    `json:"echo_cancellation"`
 	AudioInputLevel     float64 `json:"audio_input_level"`
 	AudioOutputLevel    float64 `json:"audio_output_level"`
@@ -52,8 +54,8 @@ type Devices struct {
 
 func (d Devices) Validate() error {
 	return validation.ValidateStruct(&d,
-		validation.Field(&d.AudioInputLevel, validation.Min(0.0), validation.Max(100.0)),
-		validation.Field(&d.AudioOutputLevel, validation.Min(0.0), validation.Max(150.0)),
+		validation.Field(&d.AudioInputLevel, validation.Min(0.0), validation.Max(200.0)),
+		validation.Field(&d.AudioOutputLevel, validation.Min(0.0), validation.Max(200.0)),
 	)
 }
 
@@ -77,9 +79,9 @@ type UserDMChannels struct {
 }
 
 type UserSettingsGuilds struct {
-	GuildId         int64                     `json:"guild_id"`
+	GuildId         helper.StringInt64        `json:"guild_id"`
 	Position        int64                     `json:"position"`
-	SelectedChannel int64                     `json:"selected_channel"`
+	SelectedChannel helper.StringInt64        `json:"selected_channel"`
 	Notifications   UserSettingsNotifications `json:"notifications"`
 }
 
@@ -112,9 +114,9 @@ func (n UserSettingsNotifications) Validate() error {
 }
 
 type UserSettingsAppearance struct {
-	ColorScheme   string `json:"color_scheme"`
-	ChatSpacing   int64  `json:"chat_spacing"`
-	ChatFontScale int64  `json:"chat_font_scale"`
+	ColorScheme   string  `json:"color_scheme"`
+	ChatSpacing   float32 `json:"chat_spacing"`
+	ChatFontScale float32 `json:"chat_font_scale"`
 }
 
 type UserUISounds struct {
@@ -125,10 +127,10 @@ type UserUISounds struct {
 }
 
 type UserSettingsGuildFolders struct {
-	Name     string  `json:"name"`
-	Color    int64   `json:"color"`
-	Position int64   `json:"position"`
-	Guilds   []int64 `json:"guilds"`
+	Name     string                  `json:"name"`
+	Color    int64                   `json:"color"`
+	Position int64                   `json:"position"`
+	Guilds   helper.StringInt64Array `json:"guilds"`
 }
 
 type UserSettingsChannel struct {

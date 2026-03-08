@@ -9,6 +9,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/banned"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/mention"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
@@ -19,6 +20,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channeluserperm"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
+	emojirepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/emoji"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/friend"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
@@ -28,6 +30,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
+	"github.com/FlameInTheDark/gochat/internal/embedmq"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/server"
@@ -45,18 +48,21 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/channel/:channel_id<int>/typing", e.Typing)
 }
 
+type embedQueue interface {
+	MakeEmbed(msg embedmq.MakeEmbedRequest) error
+}
+
 type entity struct {
 	name        string
 	uploadLimit int64
 	attachTTL   int64
-	// Services
-	log *slog.Logger
-	mqt mq.SendTransporter
-	imq *indexmq.IndexMQ
+	log         *slog.Logger
+	mqt         mq.SendTransporter
+	imq         *indexmq.IndexMQ
+	emq         embedQueue
 
 	cache cache.Cache
 
-	// DB entities
 	user    user.User
 	m       member.Member
 	disc    discriminator.Discriminator
@@ -77,14 +83,15 @@ type entity struct {
 	av      avatar.Avatar
 	mention mention.Mention
 	fr      friend.Friend
+	emoji   emojirepo.Emoji
+	ban     banned.Banned
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ, uploadLimit int64, attachTTLSeconds int64, cache cache.Cache, log *slog.Logger) server.Entity {
-
+func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ, emq embedQueue, uploadLimit int64, attachTTLSeconds int64, cache cache.Cache, log *slog.Logger) server.Entity {
 	return &entity{
 		name:        entityName,
 		uploadLimit: uploadLimit,
@@ -92,6 +99,7 @@ func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ
 		log:         log,
 		mqt:         t,
 		imq:         imq,
+		emq:         emq,
 		av:          avatar.New(cql),
 		cache:       cache,
 		user:        user.New(pg.Conn()),
@@ -113,5 +121,7 @@ func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ
 		gclm:        guildchannelmessages.New(cql),
 		mention:     mention.New(cql),
 		fr:          friend.New(pg.Conn()),
+		emoji:       emojirepo.New(pg.Conn()),
+		ban:         banned.New(cql),
 	}
 }

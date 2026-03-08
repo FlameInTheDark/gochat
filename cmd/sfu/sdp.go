@@ -20,6 +20,17 @@ func limitAudioBitrateInSDP(sdpIn string, maxBps uint64) string {
 		return sdpIn
 	}
 
+	// Clamp maxaveragebitrate to allowed range per RFC7587 (6000..510000) once,
+	// before the loop. Use a separate variable so the bandwidth lines (b=AS,
+	// b=TIAS) still reflect the original maxBps value.
+	opusBitrate := maxBps
+	if opusBitrate < 6000 {
+		opusBitrate = 6000
+	} else if opusBitrate > 510000 {
+		opusBitrate = 510000
+	}
+	opusBitrateStr := strconv.FormatUint(opusBitrate, 10)
+
 	// Iterate all media descriptions and apply to audio
 	for _, md := range desc.MediaDescriptions {
 		if md == nil || !strings.EqualFold(md.MediaName.Media, "audio") {
@@ -28,6 +39,9 @@ func limitAudioBitrateInSDP(sdpIn string, maxBps uint64) string {
 
 		// Update/insert bandwidth lines (TIAS = bits per second, AS = kilobits per second)
 		kbps := maxBps / 1000
+		if kbps == 0 {
+			kbps = 1
+		}
 		var hasTIAS, hasAS bool
 		for i := range md.Bandwidth {
 			switch strings.ToUpper(md.Bandwidth[i].Type) {
@@ -62,14 +76,6 @@ func limitAudioBitrateInSDP(sdpIn string, maxBps uint64) string {
 			continue
 		}
 
-		// Clamp to allowed range per RFC7587 (6000..510000)
-		if maxBps < 6000 {
-			maxBps = 6000
-		} else if maxBps > 510000 {
-			maxBps = 510000
-		}
-		maxStr := strconv.FormatUint(maxBps, 10)
-
 		// Update or add fmtp for opus payload
 		updated := false
 		for i := range md.Attributes {
@@ -78,21 +84,20 @@ func limitAudioBitrateInSDP(sdpIn string, maxBps uint64) string {
 				continue
 			}
 			// a.Value like: "111 minptime=10;useinbandfec=1"
-			if !strings.HasPrefix(strings.TrimSpace(a.Value), opusPT+" ") && !strings.EqualFold(strings.TrimSpace(a.Value), opusPT) {
+			trimmed := strings.TrimSpace(a.Value)
+			if !strings.HasPrefix(trimmed, opusPT+" ") && trimmed != opusPT {
 				continue
 			}
 
 			// split into "<pt>" and params
-			rest := strings.TrimSpace(strings.TrimPrefix(a.Value, opusPT))
-			rest = strings.TrimSpace(rest)
-			params := rest
-			if params == "" {
-				a.Value = opusPT + " maxaveragebitrate=" + maxStr
+			rest := strings.TrimSpace(strings.TrimPrefix(trimmed, opusPT))
+			if rest == "" {
+				a.Value = opusPT + " maxaveragebitrate=" + opusBitrateStr
 				updated = true
 				break
 			}
 			// modify/append maxaveragebitrate
-			kvs := strings.Split(params, ";")
+			kvs := strings.Split(rest, ";")
 			found := false
 			for j := range kvs {
 				kv := strings.TrimSpace(kvs[j])
@@ -100,13 +105,13 @@ func limitAudioBitrateInSDP(sdpIn string, maxBps uint64) string {
 					continue
 				}
 				if strings.HasPrefix(strings.ToLower(kv), "maxaveragebitrate=") {
-					kvs[j] = "maxaveragebitrate=" + maxStr
+					kvs[j] = "maxaveragebitrate=" + opusBitrateStr
 					found = true
 					break
 				}
 			}
 			if !found {
-				kvs = append(kvs, "maxaveragebitrate="+maxStr)
+				kvs = append(kvs, "maxaveragebitrate="+opusBitrateStr)
 			}
 			// rebuild
 			a.Value = opusPT + " " + strings.Join(kvs, ";")
@@ -115,7 +120,7 @@ func limitAudioBitrateInSDP(sdpIn string, maxBps uint64) string {
 		}
 		if !updated {
 			// No existing fmtp for opus, add one
-			md.Attributes = append(md.Attributes, sdp.NewAttribute("fmtp", opusPT+" maxaveragebitrate="+maxStr))
+			md.Attributes = append(md.Attributes, sdp.NewAttribute("fmtp", opusPT+" maxaveragebitrate="+opusBitrateStr))
 		}
 	}
 

@@ -2,83 +2,68 @@ package subscriber
 
 import (
 	"fmt"
-	"log"
-	"strings"
 	"sync"
 
-	"github.com/nats-io/nats.go"
+	"github.com/FlameInTheDark/gochat/cmd/ws/hub"
 )
 
+// Subscriber manages topic subscriptions for a single WebSocket connection
+// by delegating to a shared Hub. The Hub ensures that each unique NATS topic
+// has at most one NATS subscription per server instance, fanning messages out
+// to all local connections in-memory.
 type Subscriber struct {
-	emit func([]byte) error
-	nc   *nats.Conn
-	subs map[string]*nats.Subscription
-	mx   sync.Mutex
+	hub    *hub.Hub
+	conn   hub.Conn
+	topics map[string]string // key → NATS topic (for unsubscribe tracking)
+	mx     sync.Mutex
 }
 
-// New creates a subscriber that forwards incoming NATS messages to the provided
-// emitter function (typically a websocket writer pump).
-func New(emit func([]byte) error, natsCon *nats.Conn) *Subscriber {
+// New creates a subscriber backed by the shared hub for the given connection.
+func New(h *hub.Hub, conn hub.Conn) *Subscriber {
 	return &Subscriber{
-		emit: emit,
-		nc:   natsCon,
-		subs: make(map[string]*nats.Subscription),
+		hub:    h,
+		conn:   conn,
+		topics: make(map[string]string),
 	}
 }
 
+// Subscribe registers this connection for the given NATS topic under a logical
+// key. If a previous subscription existed for the same key, it is replaced.
 func (s *Subscriber) Subscribe(key, topic string) error {
 	s.mx.Lock()
 	defer s.mx.Unlock()
-	if _, ok := s.subs[key]; ok {
-		err := s.subs[key].Unsubscribe()
-		if err != nil {
-			log.Println("Unsubscribe from old error:", err)
+
+	// Unsubscribe old topic for this key if it differs.
+	if old, ok := s.topics[key]; ok {
+		if old == topic {
+			return nil // already subscribed to the exact same topic
 		}
+		s.hub.Unregister(s.conn, old)
 	}
-	delete(s.subs, key)
-	sub, err := s.nc.Subscribe(topic, func(msg *nats.Msg) {
-		if err := s.emit(msg.Data); err != nil {
-			// Writer can legitimately be closed during shutdown; reduce noise
-			if !strings.Contains(strings.ToLower(err.Error()), "ws writer closed") {
-				log.Println("Emit message error:", err)
-			}
-		}
-	})
-	if err != nil {
-		return err
+
+	if err := s.hub.Register(s.conn, topic); err != nil {
+		return fmt.Errorf("subscribe to '%s' error: %w", topic, err)
 	}
-	s.subs[key] = sub
+	s.topics[key] = topic
 	return nil
 }
 
-// WriteLock returns a pointer to the write mutex used to serialize
-// all writes to the websocket connection. This allows other components
-// (like the ws handler) to coordinate writes with subscriber callbacks.
-// no WriteLock: writes are serialized by the emitter/writer pump
-
+// Unsubscribe removes the subscription for the given key.
 func (s *Subscriber) Unsubscribe(key string) error {
 	s.mx.Lock()
 	defer s.mx.Unlock()
-	if _, ok := s.subs[key]; ok {
-		err := s.subs[key].Unsubscribe()
-		if err != nil {
-			return fmt.Errorf("Unsubscribe from '%s' error: %s\n", key, err)
-		}
-		delete(s.subs, key)
+	if topic, ok := s.topics[key]; ok {
+		s.hub.Unregister(s.conn, topic)
+		delete(s.topics, key)
 	}
 	return nil
 }
 
+// Close removes this connection from all topics.
 func (s *Subscriber) Close() error {
 	s.mx.Lock()
 	defer s.mx.Unlock()
-	var cerr error
-	for i, _ := range s.subs {
-		err := s.subs[i].Unsubscribe()
-		if err != nil {
-			cerr = err
-		}
-		delete(s.subs, i)
-	}
-	return cerr
+	s.hub.UnregisterAll(s.conn)
+	s.topics = make(map[string]string)
+	return nil
 }

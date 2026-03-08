@@ -23,14 +23,14 @@ import (
 type AuthAPIService service
 
 type ApiAuthConfirmationPostRequest struct {
-	ctx                     context.Context
-	ApiService              *AuthAPIService
-	authConfirmationRequest *AuthConfirmationRequest
+	ctx        context.Context
+	ApiService *AuthAPIService
+	request    *AuthConfirmationRequest
 }
 
 // Login data
-func (r ApiAuthConfirmationPostRequest) AuthConfirmationRequest(authConfirmationRequest AuthConfirmationRequest) ApiAuthConfirmationPostRequest {
-	r.authConfirmationRequest = &authConfirmationRequest
+func (r ApiAuthConfirmationPostRequest) Request(request AuthConfirmationRequest) ApiAuthConfirmationPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -72,12 +72,12 @@ func (a *AuthAPIService) AuthConfirmationPostExecute(r ApiAuthConfirmationPostRe
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.authConfirmationRequest == nil {
-		return localVarReturnValue, nil, reportError("authConfirmationRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -94,7 +94,7 @@ func (a *AuthAPIService) AuthConfirmationPostExecute(r ApiAuthConfirmationPostRe
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.authConfirmationRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -176,14 +176,14 @@ func (a *AuthAPIService) AuthConfirmationPostExecute(r ApiAuthConfirmationPostRe
 }
 
 type ApiAuthLoginPostRequest struct {
-	ctx              context.Context
-	ApiService       *AuthAPIService
-	authLoginRequest *AuthLoginRequest
+	ctx        context.Context
+	ApiService *AuthAPIService
+	request    *AuthLoginRequest
 }
 
 // Login data
-func (r ApiAuthLoginPostRequest) AuthLoginRequest(authLoginRequest AuthLoginRequest) ApiAuthLoginPostRequest {
-	r.authLoginRequest = &authLoginRequest
+func (r ApiAuthLoginPostRequest) Request(request AuthLoginRequest) ApiAuthLoginPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -225,12 +225,12 @@ func (a *AuthAPIService) AuthLoginPostExecute(r ApiAuthLoginPostRequest) (*AuthL
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.authLoginRequest == nil {
-		return localVarReturnValue, nil, reportError("authLoginRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -247,7 +247,7 @@ func (a *AuthAPIService) AuthLoginPostExecute(r ApiAuthLoginPostRequest) (*AuthL
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.authLoginRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -318,14 +318,14 @@ func (a *AuthAPIService) AuthLoginPostExecute(r ApiAuthLoginPostRequest) (*AuthL
 }
 
 type ApiAuthRecoveryPostRequest struct {
-	ctx                         context.Context
-	ApiService                  *AuthAPIService
-	authPasswordRecoveryRequest *AuthPasswordRecoveryRequest
+	ctx        context.Context
+	ApiService *AuthAPIService
+	request    *AuthPasswordRecoveryRequest
 }
 
 // Email for password recovery
-func (r ApiAuthRecoveryPostRequest) AuthPasswordRecoveryRequest(authPasswordRecoveryRequest AuthPasswordRecoveryRequest) ApiAuthRecoveryPostRequest {
-	r.authPasswordRecoveryRequest = &authPasswordRecoveryRequest
+func (r ApiAuthRecoveryPostRequest) Request(request AuthPasswordRecoveryRequest) ApiAuthRecoveryPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -367,12 +367,12 @@ func (a *AuthAPIService) AuthRecoveryPostExecute(r ApiAuthRecoveryPostRequest) (
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.authPasswordRecoveryRequest == nil {
-		return localVarReturnValue, nil, reportError("authPasswordRecoveryRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -389,7 +389,7 @@ func (a *AuthAPIService) AuthRecoveryPostExecute(r ApiAuthRecoveryPostRequest) (
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.authPasswordRecoveryRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -563,7 +563,7 @@ func (a *AuthAPIService) AuthRefreshGetExecute(r ApiAuthRefreshGetRequest) (*Aut
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	parameterAddToHeaderOrQuery(localVarHeaderParams, "Authorization", r.authorization, "simple", "")
+	parameterAddToHeaderOrQuery(localVarHeaderParams, "Authorization", r.authorization, "", "")
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -634,14 +634,14 @@ func (a *AuthAPIService) AuthRefreshGetExecute(r ApiAuthRefreshGetRequest) (*Aut
 }
 
 type ApiAuthRegistrationPostRequest struct {
-	ctx                 context.Context
-	ApiService          *AuthAPIService
-	authRegisterRequest *AuthRegisterRequest
+	ctx        context.Context
+	ApiService *AuthAPIService
+	request    *AuthRegisterRequest
 }
 
 // Login data
-func (r ApiAuthRegistrationPostRequest) AuthRegisterRequest(authRegisterRequest AuthRegisterRequest) ApiAuthRegistrationPostRequest {
-	r.authRegisterRequest = &authRegisterRequest
+func (r ApiAuthRegistrationPostRequest) Request(request AuthRegisterRequest) ApiAuthRegistrationPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -683,12 +683,12 @@ func (a *AuthAPIService) AuthRegistrationPostExecute(r ApiAuthRegistrationPostRe
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.authRegisterRequest == nil {
-		return localVarReturnValue, nil, reportError("authRegisterRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -705,7 +705,7 @@ func (a *AuthAPIService) AuthRegistrationPostExecute(r ApiAuthRegistrationPostRe
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.authRegisterRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -787,14 +787,14 @@ func (a *AuthAPIService) AuthRegistrationPostExecute(r ApiAuthRegistrationPostRe
 }
 
 type ApiAuthResetPostRequest struct {
-	ctx                      context.Context
-	ApiService               *AuthAPIService
-	authPasswordResetRequest *AuthPasswordResetRequest
+	ctx        context.Context
+	ApiService *AuthAPIService
+	request    *AuthPasswordResetRequest
 }
 
 // Password reset data
-func (r ApiAuthResetPostRequest) AuthPasswordResetRequest(authPasswordResetRequest AuthPasswordResetRequest) ApiAuthResetPostRequest {
-	r.authPasswordResetRequest = &authPasswordResetRequest
+func (r ApiAuthResetPostRequest) Request(request AuthPasswordResetRequest) ApiAuthResetPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -836,12 +836,12 @@ func (a *AuthAPIService) AuthResetPostExecute(r ApiAuthResetPostRequest) (string
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.authPasswordResetRequest == nil {
-		return localVarReturnValue, nil, reportError("authPasswordResetRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -858,7 +858,7 @@ func (a *AuthAPIService) AuthResetPostExecute(r ApiAuthResetPostRequest) (string
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.authPasswordResetRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

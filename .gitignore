@@ -27,6 +27,10 @@ go.work.sum
 .idea
 .data
 .cursor
+.claude
+.bruno
+
+.gocache
 
 my-values.yaml
 
@@ -40,3 +44,4 @@ ws_config.yaml
 attachments_config.yaml
 sfu_config.yaml
 webhook_config.yaml
+embedder_config.yaml

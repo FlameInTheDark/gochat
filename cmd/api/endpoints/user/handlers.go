@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -421,7 +422,9 @@ func (e *entity) LeaveGuild(c *fiber.Ctx) error {
 		return helper.HttpDbError(err, ErrUnableToRemoveMember)
 	}
 
-	go e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMember{GuildId: guildId, UserId: user.Id})
+	go func() {
+		_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMember{GuildId: guildId, UserId: user.Id})
+	}()
 
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -806,6 +809,11 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUserGuilds)
 	}
 
+	guildEmojis, err := e.getGuildEmojiSettingsMap(c.UserContext(), gids)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetEmojis)
+	}
+
 	gclm, err := e.gclm.GetChannelsMessagesForGuilds(c.UserContext(), gids)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuilds)
@@ -897,7 +905,7 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	close(tasks)
 	wg.Wait()
 
-	settings, err := modelToSettings(&s, e.guildModelToGuildMany(c, guilds), rs, gclm)
+	settings, err := modelToSettings(&s, e.guildModelToGuildMany(c, guilds), guildEmojis, rs, gclm)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUnmarshalUserSettings)
 	}
@@ -919,9 +927,9 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 //	@Router		/user/me/settings [post]
 func (e *entity) SetUserSettings(c *fiber.Ctx) error {
 	var req model.UserSettingsData
-	if err := c.BodyParser(&req); err != nil {
+	if err := json.Unmarshal(c.Body(), &req); err != nil {
 		slog.Error("failed to parse request body", slog.String("error", err.Error()))
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
+		return fiber.NewError(fiber.StatusBadRequest, "parse error: "+err.Error())
 	}
 	if err := req.Validate(); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())

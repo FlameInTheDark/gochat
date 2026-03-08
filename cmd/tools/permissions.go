@@ -128,6 +128,8 @@ func allPerms() []permDef {
 		{"PermVoiceDeafenMembers", perm.PermVoiceDeafenMembers},
 		{"PermVoiceMoveMembers", perm.PermVoiceMoveMembers},
 		{"PermAdministrator", perm.PermAdministrator},
+		{"PermCreateExpressions", perm.PermCreateExpressions},
+		{"PermManageExpressions", perm.PermManageExpressions},
 	}
 }
 

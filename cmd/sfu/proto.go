@@ -11,7 +11,7 @@ type rtcJoinEnvelope struct {
 	OP int `json:"op"`
 	T  int `json:"t"`
 	D  struct {
-		Channel int64  `json:"channel"`
+		Channel int64  `json:"channel,string"`
 		Token   string `json:"token"`
 	} `json:"d"`
 }
@@ -86,4 +86,49 @@ type ChannelAliveNotify struct {
 type speakingEvent struct {
 	UserId   int64 `json:"user_id"`
 	Speaking int   `json:"speaking"`
+}
+
+// muteEvent is broadcast when a user is server-muted or unmuted.
+type muteEvent struct {
+	UserId int64 `json:"user_id"`
+	Muted  bool  `json:"muted"`
+}
+
+// deafenEvent is broadcast when a user is server-deafened or undeafened.
+type deafenEvent struct {
+	UserId   int64 `json:"user_id"`
+	Deafened bool  `json:"deafened"`
+}
+
+// kickEvent is sent to a user being kicked from the channel.
+type kickEvent struct {
+	UserId int64 `json:"user_id"`
+}
+
+// blockEvent payload for block/unblock requests.
+type blockEvent struct {
+	UserId int64 `json:"user_id"`
+	Block  bool  `json:"block"`
+}
+
+// CloseChannelRequest is the body for the admin /admin/channel/close endpoint.
+type CloseChannelRequest struct {
+	ChannelID int64 `json:"channel_id"`
+}
+
+// muteUserData payload for local/server mute of another user.
+type muteUserData struct {
+	User  int64 `json:"user"`
+	Muted bool  `json:"muted"`
+}
+
+// deafenUserData payload for server deafen of a user.
+type deafenUserData struct {
+	User     int64 `json:"user"`
+	Deafened bool  `json:"deafened"`
+}
+
+// kickUserData payload for kicking a user.
+type kickUserData struct {
+	User int64 `json:"user"`
 }

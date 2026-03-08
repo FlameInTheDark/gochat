@@ -17,6 +17,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
+	emojirepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/emoji"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/friend"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
@@ -40,21 +41,18 @@ func (e *entity) Init(router fiber.Router) {
 	router.Get("/me/channels", e.GetMyDMChannels)
 	router.Post("/me/channels", e.CreateDM)
 
-	// Avatar
 	router.Post("/me/avatar", e.CreateAvatar)
 	router.Get("/me/avatars", e.ListAvatars)
 	router.Delete("/me/avatars/:avatar_id<int>", e.DeleteAvatar)
 
-	// Friends
-	router.Get("/me/friends", e.GetFriends)                        // Get a friends list
-	router.Get("/me/friends/:user_id<int>", e.GetOrCreateFriendDM) // Get DM channel or create it if not exist
-	router.Post("/me/friends", e.CreateFriendRequest)              // Send friend request (search by discriminator string and send request if user did not block us)
-	router.Delete("/me/friends", e.Unfriend)                       // Unfriend users
-	router.Get("/me/friends/requests", e.GetFriendRequests)        // Get a list of friend requests
-	router.Post("/me/friends/requests", e.AcceptFriendRequest)     // Accept a friend request
-	router.Delete("/me/friends/requests", e.DeclineFriendRequest)  // Decline a friend request by deleting it
+	router.Get("/me/friends", e.GetFriends)
+	router.Get("/me/friends/:user_id<int>", e.GetOrCreateFriendDM)
+	router.Post("/me/friends", e.CreateFriendRequest)
+	router.Delete("/me/friends", e.Unfriend)
+	router.Get("/me/friends/requests", e.GetFriendRequests)
+	router.Post("/me/friends/requests", e.AcceptFriendRequest)
+	router.Delete("/me/friends/requests", e.DeclineFriendRequest)
 
-	// User settings
 	router.Get("/me/settings", e.GetUserSettings)
 	router.Post("/me/settings", e.SetUserSettings)
 }
@@ -62,12 +60,10 @@ func (e *entity) Init(router fiber.Router) {
 type entity struct {
 	name string
 
-	// Services
 	log   *slog.Logger
 	mqt   mq.SendTransporter
 	cache cache.Cache
 
-	// DB entities
 	user    user.User
 	member  member.Member
 	guild   guild.Guild
@@ -85,9 +81,8 @@ type entity struct {
 	icon    icon.Icon
 	mention mention.Mention
 	gc      guildchannels.GuildChannels
+	emoji   emojirepo.Emoji
 
-	// Config
-	s3Base    string
 	attachTTL int64
 }
 
@@ -119,5 +114,6 @@ func New(cql *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, cache cache.Cache,
 		icon:      icon.New(cql),
 		mention:   mention.New(cql),
 		gc:        guildchannels.New(pg.Conn()),
+		emoji:     emojirepo.New(pg.Conn()),
 	}
 }

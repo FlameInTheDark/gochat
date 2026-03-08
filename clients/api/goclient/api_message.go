@@ -24,15 +24,15 @@ import (
 type MessageAPIService service
 
 type ApiMessageChannelChannelIdAttachmentPostRequest struct {
-	ctx                            context.Context
-	ApiService                     *MessageAPIService
-	channelId                      int32
-	messageUploadAttachmentRequest *MessageUploadAttachmentRequest
+	ctx        context.Context
+	ApiService *MessageAPIService
+	channelId  int32
+	request    *MessageUploadAttachmentRequest
 }
 
 // Attachment data
-func (r ApiMessageChannelChannelIdAttachmentPostRequest) MessageUploadAttachmentRequest(messageUploadAttachmentRequest MessageUploadAttachmentRequest) ApiMessageChannelChannelIdAttachmentPostRequest {
-	r.messageUploadAttachmentRequest = &messageUploadAttachmentRequest
+func (r ApiMessageChannelChannelIdAttachmentPostRequest) Request(request MessageUploadAttachmentRequest) ApiMessageChannelChannelIdAttachmentPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -77,12 +77,12 @@ func (a *MessageAPIService) MessageChannelChannelIdAttachmentPostExecute(r ApiMe
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.messageUploadAttachmentRequest == nil {
-		return localVarReturnValue, nil, reportError("messageUploadAttachmentRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -99,7 +99,7 @@ func (a *MessageAPIService) MessageChannelChannelIdAttachmentPostExecute(r ApiMe
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.messageUploadAttachmentRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -250,13 +250,13 @@ func (a *MessageAPIService) MessageChannelChannelIdGetExecute(r ApiMessageChanne
 	localVarFormParams := url.Values{}
 
 	if r.from != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "from", r.from, "form", "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "from", r.from, "", "")
 	}
 	if r.direction != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "direction", r.direction, "form", "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "direction", r.direction, "", "")
 	}
 	if r.limit != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -632,16 +632,16 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdDeleteExecute(r ApiM
 }
 
 type ApiMessageChannelChannelIdMessageIdPatchRequest struct {
-	ctx                         context.Context
-	ApiService                  *MessageAPIService
-	messageId                   int32
-	channelId                   int32
-	messageUpdateMessageRequest *MessageUpdateMessageRequest
+	ctx        context.Context
+	ApiService *MessageAPIService
+	messageId  int32
+	channelId  int32
+	request    *MessageUpdateMessageRequest
 }
 
 // Message data
-func (r ApiMessageChannelChannelIdMessageIdPatchRequest) MessageUpdateMessageRequest(messageUpdateMessageRequest MessageUpdateMessageRequest) ApiMessageChannelChannelIdMessageIdPatchRequest {
-	r.messageUpdateMessageRequest = &messageUpdateMessageRequest
+func (r ApiMessageChannelChannelIdMessageIdPatchRequest) Request(request MessageUpdateMessageRequest) ApiMessageChannelChannelIdMessageIdPatchRequest {
+	r.request = &request
 	return r
 }
 
@@ -689,12 +689,12 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatchExecute(r ApiMe
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.messageUpdateMessageRequest == nil {
-		return localVarReturnValue, nil, reportError("messageUpdateMessageRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -711,7 +711,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatchExecute(r ApiMe
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.messageUpdateMessageRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -793,15 +793,15 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatchExecute(r ApiMe
 }
 
 type ApiMessageChannelChannelIdPostRequest struct {
-	ctx                       context.Context
-	ApiService                *MessageAPIService
-	channelId                 int32
-	messageSendMessageRequest *MessageSendMessageRequest
+	ctx        context.Context
+	ApiService *MessageAPIService
+	channelId  int32
+	request    *MessageSendMessageRequest
 }
 
 // Message data
-func (r ApiMessageChannelChannelIdPostRequest) MessageSendMessageRequest(messageSendMessageRequest MessageSendMessageRequest) ApiMessageChannelChannelIdPostRequest {
-	r.messageSendMessageRequest = &messageSendMessageRequest
+func (r ApiMessageChannelChannelIdPostRequest) Request(request MessageSendMessageRequest) ApiMessageChannelChannelIdPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -846,12 +846,12 @@ func (a *MessageAPIService) MessageChannelChannelIdPostExecute(r ApiMessageChann
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.messageSendMessageRequest == nil {
-		return localVarReturnValue, nil, reportError("messageSendMessageRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -868,7 +868,7 @@ func (a *MessageAPIService) MessageChannelChannelIdPostExecute(r ApiMessageChann
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.messageSendMessageRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

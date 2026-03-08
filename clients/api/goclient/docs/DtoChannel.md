@@ -16,7 +16,8 @@ Name | Type | Description | Notes
 **Private** | Pointer to **bool** | Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel. | [optional] [default to false]
 **Roles** | Pointer to **[]int32** | Roles IDs | [optional] 
 **Topic** | Pointer to **string** | Channel topic. | [optional] 
-**Type** | Pointer to **int32** | Channel type | [optional] 
+**Type** | Pointer to [**ModelChannelType**](ModelChannelType.md) | Channel type | [optional] 
+**VoiceRegion** | Pointer to **string** | Voice channel region | [optional] 
 
 ## Methods
 
@@ -339,20 +340,20 @@ HasTopic returns a boolean if a field has been set.
 
 ### GetType
 
-`func (o *DtoChannel) GetType() int32`
+`func (o *DtoChannel) GetType() ModelChannelType`
 
 GetType returns the Type field if non-nil, zero value otherwise.
 
 ### GetTypeOk
 
-`func (o *DtoChannel) GetTypeOk() (*int32, bool)`
+`func (o *DtoChannel) GetTypeOk() (*ModelChannelType, bool)`
 
 GetTypeOk returns a tuple with the Type field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetType
 
-`func (o *DtoChannel) SetType(v int32)`
+`func (o *DtoChannel) SetType(v ModelChannelType)`
 
 SetType sets Type field to given value.
 
@@ -361,6 +362,31 @@ SetType sets Type field to given value.
 `func (o *DtoChannel) HasType() bool`
 
 HasType returns a boolean if a field has been set.
+
+### GetVoiceRegion
+
+`func (o *DtoChannel) GetVoiceRegion() string`
+
+GetVoiceRegion returns the VoiceRegion field if non-nil, zero value otherwise.
+
+### GetVoiceRegionOk
+
+`func (o *DtoChannel) GetVoiceRegionOk() (*string, bool)`
+
+GetVoiceRegionOk returns a tuple with the VoiceRegion field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetVoiceRegion
+
+`func (o *DtoChannel) SetVoiceRegion(v string)`
+
+SetVoiceRegion sets VoiceRegion field to given value.
+
+### HasVoiceRegion
+
+`func (o *DtoChannel) HasVoiceRegion() bool`
+
+HasVoiceRegion returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

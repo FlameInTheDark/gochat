@@ -501,17 +501,17 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdGetExecute
 }
 
 type ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest struct {
-	ctx                               context.Context
-	ApiService                        *GuildRolesAPIService
-	guildId                           int32
-	channelId                         int32
-	roleId                            int32
-	guildChannelRolePermissionRequest *GuildChannelRolePermissionRequest
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	channelId  int32
+	roleId     int32
+	req        *GuildChannelRolePermissionRequest
 }
 
 // Permission mask
-func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest) GuildChannelRolePermissionRequest(guildChannelRolePermissionRequest GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
-	r.guildChannelRolePermissionRequest = &guildChannelRolePermissionRequest
+func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest) Req(req GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
+	r.req = &req
 	return r
 }
 
@@ -562,12 +562,12 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatchExecu
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildChannelRolePermissionRequest == nil {
-		return localVarReturnValue, nil, reportError("guildChannelRolePermissionRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -584,7 +584,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatchExecu
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildChannelRolePermissionRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -677,17 +677,17 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatchExecu
 }
 
 type ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest struct {
-	ctx                               context.Context
-	ApiService                        *GuildRolesAPIService
-	guildId                           int32
-	channelId                         int32
-	roleId                            int32
-	guildChannelRolePermissionRequest *GuildChannelRolePermissionRequest
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	channelId  int32
+	roleId     int32
+	req        *GuildChannelRolePermissionRequest
 }
 
 // Permission mask
-func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest) GuildChannelRolePermissionRequest(guildChannelRolePermissionRequest GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
-	r.guildChannelRolePermissionRequest = &guildChannelRolePermissionRequest
+func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest) Req(req GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
+	r.req = &req
 	return r
 }
 
@@ -738,12 +738,12 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPutExecute
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildChannelRolePermissionRequest == nil {
-		return localVarReturnValue, nil, reportError("guildChannelRolePermissionRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -760,7 +760,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPutExecute
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildChannelRolePermissionRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1464,15 +1464,15 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesGetExecute(r ApiGuildGuildIdRole
 }
 
 type ApiGuildGuildIdRolesPostRequest struct {
-	ctx                         context.Context
-	ApiService                  *GuildRolesAPIService
-	guildId                     int32
-	guildCreateGuildRoleRequest *GuildCreateGuildRoleRequest
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	req        *GuildCreateGuildRoleRequest
 }
 
 // Role data
-func (r ApiGuildGuildIdRolesPostRequest) GuildCreateGuildRoleRequest(guildCreateGuildRoleRequest GuildCreateGuildRoleRequest) ApiGuildGuildIdRolesPostRequest {
-	r.guildCreateGuildRoleRequest = &guildCreateGuildRoleRequest
+func (r ApiGuildGuildIdRolesPostRequest) Req(req GuildCreateGuildRoleRequest) ApiGuildGuildIdRolesPostRequest {
+	r.req = &req
 	return r
 }
 
@@ -1517,12 +1517,12 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesPostExecute(r ApiGuildGuildIdRol
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildCreateGuildRoleRequest == nil {
-		return localVarReturnValue, nil, reportError("guildCreateGuildRoleRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1539,7 +1539,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesPostExecute(r ApiGuildGuildIdRol
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildCreateGuildRoleRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1781,16 +1781,16 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdDeleteExecute(r ApiGuildGu
 }
 
 type ApiGuildGuildIdRolesRoleIdPatchRequest struct {
-	ctx                        context.Context
-	ApiService                 *GuildRolesAPIService
-	guildId                    int32
-	roleId                     int32
-	guildPatchGuildRoleRequest *GuildPatchGuildRoleRequest
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	roleId     int32
+	req        *GuildPatchGuildRoleRequest
 }
 
 // Role changes
-func (r ApiGuildGuildIdRolesRoleIdPatchRequest) GuildPatchGuildRoleRequest(guildPatchGuildRoleRequest GuildPatchGuildRoleRequest) ApiGuildGuildIdRolesRoleIdPatchRequest {
-	r.guildPatchGuildRoleRequest = &guildPatchGuildRoleRequest
+func (r ApiGuildGuildIdRolesRoleIdPatchRequest) Req(req GuildPatchGuildRoleRequest) ApiGuildGuildIdRolesRoleIdPatchRequest {
+	r.req = &req
 	return r
 }
 
@@ -1838,12 +1838,12 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatchExecute(r ApiGuildGui
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildPatchGuildRoleRequest == nil {
-		return localVarReturnValue, nil, reportError("guildPatchGuildRoleRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1860,7 +1860,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatchExecute(r ApiGuildGui
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildPatchGuildRoleRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

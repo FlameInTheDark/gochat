@@ -22,8 +22,6 @@ var _ MappedNullable = &GuildPatchGuildChannelRequest{}
 type GuildPatchGuildChannelRequest struct {
 	// Channel name.
 	Name *string `json:"name,omitempty"`
-	// Parent channel ID. A Parent channel can only be a category channel.
-	ParentId *int32 `json:"parent_id,omitempty"`
 	// Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
 	Private *bool `json:"private,omitempty"`
 	// Channel topic.
@@ -81,38 +79,6 @@ func (o *GuildPatchGuildChannelRequest) HasName() bool {
 // SetName gets a reference to the given string and assigns it to the Name field.
 func (o *GuildPatchGuildChannelRequest) SetName(v string) {
 	o.Name = &v
-}
-
-// GetParentId returns the ParentId field value if set, zero value otherwise.
-func (o *GuildPatchGuildChannelRequest) GetParentId() int32 {
-	if o == nil || IsNil(o.ParentId) {
-		var ret int32
-		return ret
-	}
-	return *o.ParentId
-}
-
-// GetParentIdOk returns a tuple with the ParentId field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *GuildPatchGuildChannelRequest) GetParentIdOk() (*int32, bool) {
-	if o == nil || IsNil(o.ParentId) {
-		return nil, false
-	}
-	return o.ParentId, true
-}
-
-// HasParentId returns a boolean if a field has been set.
-func (o *GuildPatchGuildChannelRequest) HasParentId() bool {
-	if o != nil && !IsNil(o.ParentId) {
-		return true
-	}
-
-	return false
-}
-
-// SetParentId gets a reference to the given int32 and assigns it to the ParentId field.
-func (o *GuildPatchGuildChannelRequest) SetParentId(v int32) {
-	o.ParentId = &v
 }
 
 // GetPrivate returns the Private field value if set, zero value otherwise.
@@ -191,9 +157,6 @@ func (o GuildPatchGuildChannelRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
-	}
-	if !IsNil(o.ParentId) {
-		toSerialize["parent_id"] = o.ParentId
 	}
 	if !IsNil(o.Private) {
 		toSerialize["private"] = o.Private
