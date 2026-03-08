@@ -12,6 +12,7 @@ import (
 	nq "github.com/nats-io/nats.go"
 
 	"github.com/FlameInTheDark/gochat/cmd/embedder/config"
+	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	messageentity "github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -26,12 +27,13 @@ import (
 const embedQueueGroup = "embedder"
 
 type App struct {
-	log  *slog.Logger
-	db   *db.CQLCon
-	msg  messageentity.Message
-	gen  *embedgen.Generator
-	conn *nq.Conn
-	mqt  *mqnats.NatsQueue
+	log   *slog.Logger
+	db    *db.CQLCon
+	msg   messageentity.Message
+	gen   *embedgen.Generator
+	cache *kvs.Cache
+	conn  *nq.Conn
+	mqt   *mqnats.NatsQueue
 
 	subs []*nq.Subscription
 }
@@ -63,21 +65,42 @@ func NewApp(logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
-	generator := embedgen.New(embedgen.Config{
+	logger.Info("Connecting to KeyDB")
+	embedCache, err := kvs.New(cfg.KeyDB)
+	if err != nil {
+		_ = transport.Close()
+		conn.Close()
+		_ = database.Close()
+		return nil, err
+	}
+
+	generator, err := embedgen.New(embedgen.Config{
+		Cache:                 embedCache,
+		CacheTTL:              cfg.CacheTTL,
+		NegativeCacheTTL:      cfg.NegativeCacheTTL,
+		ExcludedURLPatterns:   cfg.ExcludedURLPatterns,
 		AllowPrivateHosts:     cfg.AllowPrivateHosts,
 		FetchTimeout:          cfg.FetchTimeout,
 		MaxBodyBytes:          cfg.MaxBodyBytes,
 		YouTubeOEmbedEndpoint: cfg.YouTubeOEmbedEndpoint,
 		YouTubeEmbedBaseURL:   cfg.YouTubeEmbedBaseURL,
 	})
+	if err != nil {
+		_ = embedCache.Close()
+		_ = transport.Close()
+		conn.Close()
+		_ = database.Close()
+		return nil, err
+	}
 
 	return &App{
-		log:  logger,
-		db:   database,
-		msg:  messageentity.New(database),
-		gen:  generator,
-		conn: conn,
-		mqt:  transport,
+		log:   logger,
+		db:    database,
+		msg:   messageentity.New(database),
+		gen:   generator,
+		cache: embedCache,
+		conn:  conn,
+		mqt:   transport,
 	}, nil
 }
 
@@ -188,6 +211,9 @@ func (a *App) Close() error {
 	}
 	if a.mqt != nil {
 		_ = a.mqt.Close()
+	}
+	if a.cache != nil {
+		_ = a.cache.Close()
 	}
 	if a.db != nil {
 		_ = a.db.Close()

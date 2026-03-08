@@ -5,6 +5,12 @@ cluster_keyspace: "gochat"
 # NATS
 nats_conn_string: "nats://nats:4222"
 
+# Redis
+keydb: "keydb:6379"
+cache_ttl: "6h"
+negative_cache_ttl: "30m"
+excluded_url_patterns: []
+
 # Fetching
 fetch_timeout: "10s"
 max_body_bytes: 2097152
