@@ -26,8 +26,8 @@ type GuildAPIService service
 type ApiGuildGuildIdCategoryCategoryIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
-	categoryId int64
+	guildId    int32
+	categoryId int32
 }
 
 func (r ApiGuildGuildIdCategoryCategoryIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -42,7 +42,7 @@ GuildGuildIdCategoryCategoryIdDelete Delete channel category
 	@param categoryId Category ID (actually a channel with special type)
 	@return ApiGuildGuildIdCategoryCategoryIdDeleteRequest
 */
-func (a *GuildAPIService) GuildGuildIdCategoryCategoryIdDelete(ctx context.Context, guildId int64, categoryId int64) ApiGuildGuildIdCategoryCategoryIdDeleteRequest {
+func (a *GuildAPIService) GuildGuildIdCategoryCategoryIdDelete(ctx context.Context, guildId int32, categoryId int32) ApiGuildGuildIdCategoryCategoryIdDeleteRequest {
 	return ApiGuildGuildIdCategoryCategoryIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -164,7 +164,7 @@ func (a *GuildAPIService) GuildGuildIdCategoryCategoryIdDeleteExecute(r ApiGuild
 type ApiGuildGuildIdCategoryPostRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 	request    *GuildCreateGuildChannelCategoryRequest
 }
 
@@ -185,7 +185,7 @@ GuildGuildIdCategoryPost Create guild channel category
 	@param guildId Guild ID
 	@return ApiGuildGuildIdCategoryPostRequest
 */
-func (a *GuildAPIService) GuildGuildIdCategoryPost(ctx context.Context, guildId int64) ApiGuildGuildIdCategoryPostRequest {
+func (a *GuildAPIService) GuildGuildIdCategoryPost(ctx context.Context, guildId int32) ApiGuildGuildIdCategoryPostRequest {
 	return ApiGuildGuildIdCategoryPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -310,8 +310,8 @@ func (a *GuildAPIService) GuildGuildIdCategoryPostExecute(r ApiGuildGuildIdCateg
 type ApiGuildGuildIdChannelChannelIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
-	channelId  int64
+	guildId    int32
+	channelId  int32
 }
 
 func (r ApiGuildGuildIdChannelChannelIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -326,7 +326,7 @@ GuildGuildIdChannelChannelIdDelete Delete channel
 	@param channelId Channel ID
 	@return ApiGuildGuildIdChannelChannelIdDeleteRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelChannelIdDelete(ctx context.Context, guildId int64, channelId int64) ApiGuildGuildIdChannelChannelIdDeleteRequest {
+func (a *GuildAPIService) GuildGuildIdChannelChannelIdDelete(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdChannelChannelIdDeleteRequest {
 	return ApiGuildGuildIdChannelChannelIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -448,8 +448,8 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdDeleteExecute(r ApiGuildGu
 type ApiGuildGuildIdChannelChannelIdGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
-	channelId  int64
+	guildId    int32
+	channelId  int32
 }
 
 func (r ApiGuildGuildIdChannelChannelIdGetRequest) Execute() (*DtoChannel, *http.Response, error) {
@@ -464,7 +464,7 @@ GuildGuildIdChannelChannelIdGet Get guild channel
 	@param channelId Channel id
 	@return ApiGuildGuildIdChannelChannelIdGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelChannelIdGet(ctx context.Context, guildId int64, channelId int64) ApiGuildGuildIdChannelChannelIdGetRequest {
+func (a *GuildAPIService) GuildGuildIdChannelChannelIdGet(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdChannelChannelIdGetRequest {
 	return ApiGuildGuildIdChannelChannelIdGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -586,8 +586,8 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdGetExecute(r ApiGuildGuild
 type ApiGuildGuildIdChannelChannelIdPatchRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
-	channelId  int64
+	guildId    int32
+	channelId  int32
 	req        *GuildPatchGuildChannelRequest
 }
 
@@ -609,7 +609,7 @@ GuildGuildIdChannelChannelIdPatch Change channels data
 	@param channelId Channel ID
 	@return ApiGuildGuildIdChannelChannelIdPatchRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatch(ctx context.Context, guildId int64, channelId int64) ApiGuildGuildIdChannelChannelIdPatchRequest {
+func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatch(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdChannelChannelIdPatchRequest {
 	return ApiGuildGuildIdChannelChannelIdPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -758,7 +758,7 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatchExecute(r ApiGuildGui
 type ApiGuildGuildIdChannelGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 }
 
 func (r ApiGuildGuildIdChannelGetRequest) Execute() ([]DtoChannel, *http.Response, error) {
@@ -772,7 +772,7 @@ GuildGuildIdChannelGet Get guild channels
 	@param guildId Guild id
 	@return ApiGuildGuildIdChannelGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelGet(ctx context.Context, guildId int64) ApiGuildGuildIdChannelGetRequest {
+func (a *GuildAPIService) GuildGuildIdChannelGet(ctx context.Context, guildId int32) ApiGuildGuildIdChannelGetRequest {
 	return ApiGuildGuildIdChannelGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -892,7 +892,7 @@ func (a *GuildAPIService) GuildGuildIdChannelGetExecute(r ApiGuildGuildIdChannel
 type ApiGuildGuildIdChannelOrderPatchRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 	request    *GuildPatchGuildChannelOrderRequest
 }
 
@@ -913,7 +913,7 @@ GuildGuildIdChannelOrderPatch Change channels order
 	@param guildId Guild ID
 	@return ApiGuildGuildIdChannelOrderPatchRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelOrderPatch(ctx context.Context, guildId int64) ApiGuildGuildIdChannelOrderPatchRequest {
+func (a *GuildAPIService) GuildGuildIdChannelOrderPatch(ctx context.Context, guildId int32) ApiGuildGuildIdChannelOrderPatchRequest {
 	return ApiGuildGuildIdChannelOrderPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1060,7 +1060,7 @@ func (a *GuildAPIService) GuildGuildIdChannelOrderPatchExecute(r ApiGuildGuildId
 type ApiGuildGuildIdChannelPostRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 	request    *GuildCreateGuildChannelRequest
 }
 
@@ -1081,7 +1081,7 @@ GuildGuildIdChannelPost Create guild channel
 	@param guildId Guild ID
 	@return ApiGuildGuildIdChannelPostRequest
 */
-func (a *GuildAPIService) GuildGuildIdChannelPost(ctx context.Context, guildId int64) ApiGuildGuildIdChannelPostRequest {
+func (a *GuildAPIService) GuildGuildIdChannelPost(ctx context.Context, guildId int32) ApiGuildGuildIdChannelPostRequest {
 	return ApiGuildGuildIdChannelPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1206,7 +1206,7 @@ func (a *GuildAPIService) GuildGuildIdChannelPostExecute(r ApiGuildGuildIdChanne
 type ApiGuildGuildIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 }
 
 func (r ApiGuildGuildIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -1222,7 +1222,7 @@ Deletes a guild. Only the guild owner can delete a guild. This removes all membe
 	@param guildId Guild ID
 	@return ApiGuildGuildIdDeleteRequest
 */
-func (a *GuildAPIService) GuildGuildIdDelete(ctx context.Context, guildId int64) ApiGuildGuildIdDeleteRequest {
+func (a *GuildAPIService) GuildGuildIdDelete(ctx context.Context, guildId int32) ApiGuildGuildIdDeleteRequest {
 	return ApiGuildGuildIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1342,8 +1342,8 @@ func (a *GuildAPIService) GuildGuildIdDeleteExecute(r ApiGuildGuildIdDeleteReque
 type ApiGuildGuildIdEmojisEmojiIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
-	emojiId    int64
+	guildId    int32
+	emojiId    int32
 }
 
 func (r ApiGuildGuildIdEmojisEmojiIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -1358,7 +1358,7 @@ GuildGuildIdEmojisEmojiIdDelete Delete guild emoji
 	@param emojiId Emoji ID
 	@return ApiGuildGuildIdEmojisEmojiIdDeleteRequest
 */
-func (a *GuildAPIService) GuildGuildIdEmojisEmojiIdDelete(ctx context.Context, guildId int64, emojiId int64) ApiGuildGuildIdEmojisEmojiIdDeleteRequest {
+func (a *GuildAPIService) GuildGuildIdEmojisEmojiIdDelete(ctx context.Context, guildId int32, emojiId int32) ApiGuildGuildIdEmojisEmojiIdDeleteRequest {
 	return ApiGuildGuildIdEmojisEmojiIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1502,8 +1502,8 @@ func (a *GuildAPIService) GuildGuildIdEmojisEmojiIdDeleteExecute(r ApiGuildGuild
 type ApiGuildGuildIdEmojisEmojiIdPatchRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
-	emojiId    int64
+	guildId    int32
+	emojiId    int32
 	request    *GuildUpdateEmojiRequest
 }
 
@@ -1525,7 +1525,7 @@ GuildGuildIdEmojisEmojiIdPatch Update guild emoji
 	@param emojiId Emoji ID
 	@return ApiGuildGuildIdEmojisEmojiIdPatchRequest
 */
-func (a *GuildAPIService) GuildGuildIdEmojisEmojiIdPatch(ctx context.Context, guildId int64, emojiId int64) ApiGuildGuildIdEmojisEmojiIdPatchRequest {
+func (a *GuildAPIService) GuildGuildIdEmojisEmojiIdPatch(ctx context.Context, guildId int32, emojiId int32) ApiGuildGuildIdEmojisEmojiIdPatchRequest {
 	return ApiGuildGuildIdEmojisEmojiIdPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1685,7 +1685,7 @@ func (a *GuildAPIService) GuildGuildIdEmojisEmojiIdPatchExecute(r ApiGuildGuildI
 type ApiGuildGuildIdEmojisGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 }
 
 func (r ApiGuildGuildIdEmojisGetRequest) Execute() ([]DtoGuildEmoji, *http.Response, error) {
@@ -1699,7 +1699,7 @@ GuildGuildIdEmojisGet List guild emojis
 	@param guildId Guild ID
 	@return ApiGuildGuildIdEmojisGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdEmojisGet(ctx context.Context, guildId int64) ApiGuildGuildIdEmojisGetRequest {
+func (a *GuildAPIService) GuildGuildIdEmojisGet(ctx context.Context, guildId int32) ApiGuildGuildIdEmojisGetRequest {
 	return ApiGuildGuildIdEmojisGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1830,7 +1830,7 @@ func (a *GuildAPIService) GuildGuildIdEmojisGetExecute(r ApiGuildGuildIdEmojisGe
 type ApiGuildGuildIdEmojisPostRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 	request    *GuildCreateEmojiRequest
 }
 
@@ -1851,7 +1851,7 @@ GuildGuildIdEmojisPost Create guild emoji metadata
 	@param guildId Guild ID
 	@return ApiGuildGuildIdEmojisPostRequest
 */
-func (a *GuildAPIService) GuildGuildIdEmojisPost(ctx context.Context, guildId int64) ApiGuildGuildIdEmojisPostRequest {
+func (a *GuildAPIService) GuildGuildIdEmojisPost(ctx context.Context, guildId int32) ApiGuildGuildIdEmojisPostRequest {
 	return ApiGuildGuildIdEmojisPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1998,7 +1998,7 @@ func (a *GuildAPIService) GuildGuildIdEmojisPostExecute(r ApiGuildGuildIdEmojisP
 type ApiGuildGuildIdGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 }
 
 func (r ApiGuildGuildIdGetRequest) Execute() (*DtoGuild, *http.Response, error) {
@@ -2012,7 +2012,7 @@ GuildGuildIdGet Get guild
 	@param guildId Guild id
 	@return ApiGuildGuildIdGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdGet(ctx context.Context, guildId int64) ApiGuildGuildIdGetRequest {
+func (a *GuildAPIService) GuildGuildIdGet(ctx context.Context, guildId int32) ApiGuildGuildIdGetRequest {
 	return ApiGuildGuildIdGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2132,7 +2132,7 @@ func (a *GuildAPIService) GuildGuildIdGetExecute(r ApiGuildGuildIdGetRequest) (*
 type ApiGuildGuildIdIconPostRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 	request    *GuildCreateIconRequest
 }
 
@@ -2155,7 +2155,7 @@ Creates an icon placeholder and returns upload info. Only guild owner may create
 	@param guildId Guild ID
 	@return ApiGuildGuildIdIconPostRequest
 */
-func (a *GuildAPIService) GuildGuildIdIconPost(ctx context.Context, guildId int64) ApiGuildGuildIdIconPostRequest {
+func (a *GuildAPIService) GuildGuildIdIconPost(ctx context.Context, guildId int32) ApiGuildGuildIdIconPostRequest {
 	return ApiGuildGuildIdIconPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2291,7 +2291,7 @@ func (a *GuildAPIService) GuildGuildIdIconPostExecute(r ApiGuildGuildIdIconPostR
 type ApiGuildGuildIdIconsGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 }
 
 func (r ApiGuildGuildIdIconsGetRequest) Execute() ([]DtoIcon, *http.Response, error) {
@@ -2307,7 +2307,7 @@ Returns a list of previously created icons for a guild. Only the guild owner may
 	@param guildId Guild ID
 	@return ApiGuildGuildIdIconsGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdIconsGet(ctx context.Context, guildId int64) ApiGuildGuildIdIconsGetRequest {
+func (a *GuildAPIService) GuildGuildIdIconsGet(ctx context.Context, guildId int32) ApiGuildGuildIdIconsGetRequest {
 	return ApiGuildGuildIdIconsGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2427,8 +2427,8 @@ func (a *GuildAPIService) GuildGuildIdIconsGetExecute(r ApiGuildGuildIdIconsGetR
 type ApiGuildGuildIdIconsIconIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
-	iconId     int64
+	guildId    int32
+	iconId     int32
 }
 
 func (r ApiGuildGuildIdIconsIconIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -2445,7 +2445,7 @@ Deletes a guild icon. Only the guild owner may delete.
 	@param iconId Icon ID
 	@return ApiGuildGuildIdIconsIconIdDeleteRequest
 */
-func (a *GuildAPIService) GuildGuildIdIconsIconIdDelete(ctx context.Context, guildId int64, iconId int64) ApiGuildGuildIdIconsIconIdDeleteRequest {
+func (a *GuildAPIService) GuildGuildIdIconsIconIdDelete(ctx context.Context, guildId int32, iconId int32) ApiGuildGuildIdIconsIconIdDeleteRequest {
 	return ApiGuildGuildIdIconsIconIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2567,7 +2567,7 @@ func (a *GuildAPIService) GuildGuildIdIconsIconIdDeleteExecute(r ApiGuildGuildId
 type ApiGuildGuildIdMembersGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 }
 
 func (r ApiGuildGuildIdMembersGetRequest) Execute() ([]DtoMember, *http.Response, error) {
@@ -2581,7 +2581,7 @@ GuildGuildIdMembersGet Get guild members
 	@param guildId Guild ID
 	@return ApiGuildGuildIdMembersGetRequest
 */
-func (a *GuildAPIService) GuildGuildIdMembersGet(ctx context.Context, guildId int64) ApiGuildGuildIdMembersGetRequest {
+func (a *GuildAPIService) GuildGuildIdMembersGet(ctx context.Context, guildId int32) ApiGuildGuildIdMembersGetRequest {
 	return ApiGuildGuildIdMembersGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2701,7 +2701,7 @@ func (a *GuildAPIService) GuildGuildIdMembersGetExecute(r ApiGuildGuildIdMembers
 type ApiGuildGuildIdPatchRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 	request    *GuildUpdateGuildRequest
 }
 
@@ -2722,7 +2722,7 @@ GuildGuildIdPatch Update guild
 	@param guildId Guild ID
 	@return ApiGuildGuildIdPatchRequest
 */
-func (a *GuildAPIService) GuildGuildIdPatch(ctx context.Context, guildId int64) ApiGuildGuildIdPatchRequest {
+func (a *GuildAPIService) GuildGuildIdPatch(ctx context.Context, guildId int32) ApiGuildGuildIdPatchRequest {
 	return ApiGuildGuildIdPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2847,7 +2847,7 @@ func (a *GuildAPIService) GuildGuildIdPatchExecute(r ApiGuildGuildIdPatchRequest
 type ApiGuildGuildIdSystemchPatchRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 	request    *GuildSetGuildSystemMessagesChannelRequest
 }
 
@@ -2868,7 +2868,7 @@ GuildGuildIdSystemchPatch Set system messages channel
 	@param guildId Guild ID
 	@return ApiGuildGuildIdSystemchPatchRequest
 */
-func (a *GuildAPIService) GuildGuildIdSystemchPatch(ctx context.Context, guildId int64) ApiGuildGuildIdSystemchPatchRequest {
+func (a *GuildAPIService) GuildGuildIdSystemchPatch(ctx context.Context, guildId int32) ApiGuildGuildIdSystemchPatchRequest {
 	return ApiGuildGuildIdSystemchPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2993,8 +2993,8 @@ func (a *GuildAPIService) GuildGuildIdSystemchPatchExecute(r ApiGuildGuildIdSyst
 type ApiGuildGuildIdVoiceChannelIdJoinPostRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
-	channelId  int64
+	guildId    int32
+	channelId  int32
 }
 
 func (r ApiGuildGuildIdVoiceChannelIdJoinPostRequest) Execute() (*GuildJoinVoiceResponse, *http.Response, error) {
@@ -3011,7 +3011,7 @@ Returns signaling path and a short-lived SFU token to connect to the SFU for thi
 	@param channelId Channel ID
 	@return ApiGuildGuildIdVoiceChannelIdJoinPostRequest
 */
-func (a *GuildAPIService) GuildGuildIdVoiceChannelIdJoinPost(ctx context.Context, guildId int64, channelId int64) ApiGuildGuildIdVoiceChannelIdJoinPostRequest {
+func (a *GuildAPIService) GuildGuildIdVoiceChannelIdJoinPost(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdVoiceChannelIdJoinPostRequest {
 	return ApiGuildGuildIdVoiceChannelIdJoinPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -3133,8 +3133,8 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdJoinPostExecute(r ApiGuildGu
 type ApiGuildGuildIdVoiceChannelIdRegionPatchRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
-	channelId  int64
+	guildId    int32
+	channelId  int32
 	request    *GuildSetVoiceRegionRequest
 }
 
@@ -3158,7 +3158,7 @@ Sets or clears preferred SFU region for a voice channel. Empty region clears ove
 	@param channelId Channel ID
 	@return ApiGuildGuildIdVoiceChannelIdRegionPatchRequest
 */
-func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatch(ctx context.Context, guildId int64, channelId int64) ApiGuildGuildIdVoiceChannelIdRegionPatchRequest {
+func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatch(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdVoiceChannelIdRegionPatchRequest {
 	return ApiGuildGuildIdVoiceChannelIdRegionPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -3296,7 +3296,7 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatchExecute(r ApiGuil
 type ApiGuildGuildIdVoiceMovePostRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
-	guildId    int64
+	guildId    int32
 	request    *GuildMoveMemberRequest
 }
 
@@ -3319,7 +3319,7 @@ Move a member to another voice channel and send them connection info (SFU URL + 
 	@param guildId Guild ID
 	@return ApiGuildGuildIdVoiceMovePostRequest
 */
-func (a *GuildAPIService) GuildGuildIdVoiceMovePost(ctx context.Context, guildId int64) ApiGuildGuildIdVoiceMovePostRequest {
+func (a *GuildAPIService) GuildGuildIdVoiceMovePost(ctx context.Context, guildId int32) ApiGuildGuildIdVoiceMovePostRequest {
 	return ApiGuildGuildIdVoiceMovePostRequest{
 		ApiService: a,
 		ctx:        ctx,

@@ -19,6 +19,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/embedmq"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
@@ -85,6 +86,14 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	shut.Up(imq)
+
+	logger.Info("Connecting to Embedder NATS")
+	emq, err := embedmq.New(cfg.NatsConnString)
+	if err != nil {
+		return nil, err
+	}
+	shut.Up(emq)
 
 	logger.Info("Connecting to KeyDB")
 	cache, err := kvs.New(cfg.KeyDB)
@@ -165,7 +174,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.Register(
 		"/api/v1",
 		user.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, logger),
-		message.New(database, pg, qt, imq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
+		message.New(database, pg, qt, imq, emq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
 		guild.New(database, pg, qt, imq, cache, storage, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, extractRegionIDs(cfg.VoiceRegions), logger),
 		voice.New(convertRegions(cfg.VoiceRegions), logger),
 		search.New(database, pg, searchService, logger),

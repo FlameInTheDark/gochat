@@ -7,9 +7,9 @@ Name | Type | Description | Notes
 **ChannelMentions** | Pointer to [**map[string][]ModelChannelMention**](array.md) |  | [optional] 
 **GuildEmojis** | Pointer to [**map[string][]DtoEmojiRef**](array.md) |  | [optional] 
 **Guilds** | Pointer to [**[]DtoGuild**](DtoGuild.md) |  | [optional] 
-**GuildsLastMessages** | Pointer to **map[string]map[string]int64** |  | [optional] 
+**GuildsLastMessages** | Pointer to **map[string]map[string]int32** |  | [optional] 
 **Mentions** | Pointer to [**map[string][]ModelMention**](array.md) |  | [optional] 
-**ReadStates** | Pointer to **map[string]int64** |  | [optional] 
+**ReadStates** | Pointer to **map[string]int32** |  | [optional] 
 **Settings** | Pointer to [**ModelUserSettingsData**](ModelUserSettingsData.md) |  | [optional] 
 **Version** | Pointer to **int32** |  | [optional] 
 
@@ -109,20 +109,20 @@ HasGuilds returns a boolean if a field has been set.
 
 ### GetGuildsLastMessages
 
-`func (o *UserUserSettingsResponse) GetGuildsLastMessages() map[string]map[string]int64`
+`func (o *UserUserSettingsResponse) GetGuildsLastMessages() map[string]map[string]int32`
 
 GetGuildsLastMessages returns the GuildsLastMessages field if non-nil, zero value otherwise.
 
 ### GetGuildsLastMessagesOk
 
-`func (o *UserUserSettingsResponse) GetGuildsLastMessagesOk() (*map[string]map[string]int64, bool)`
+`func (o *UserUserSettingsResponse) GetGuildsLastMessagesOk() (*map[string]map[string]int32, bool)`
 
 GetGuildsLastMessagesOk returns a tuple with the GuildsLastMessages field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetGuildsLastMessages
 
-`func (o *UserUserSettingsResponse) SetGuildsLastMessages(v map[string]map[string]int64)`
+`func (o *UserUserSettingsResponse) SetGuildsLastMessages(v map[string]map[string]int32)`
 
 SetGuildsLastMessages sets GuildsLastMessages field to given value.
 
@@ -159,20 +159,20 @@ HasMentions returns a boolean if a field has been set.
 
 ### GetReadStates
 
-`func (o *UserUserSettingsResponse) GetReadStates() map[string]int64`
+`func (o *UserUserSettingsResponse) GetReadStates() map[string]int32`
 
 GetReadStates returns the ReadStates field if non-nil, zero value otherwise.
 
 ### GetReadStatesOk
 
-`func (o *UserUserSettingsResponse) GetReadStatesOk() (*map[string]int64, bool)`
+`func (o *UserUserSettingsResponse) GetReadStatesOk() (*map[string]int32, bool)`
 
 GetReadStatesOk returns a tuple with the ReadStates field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetReadStates
 
-`func (o *UserUserSettingsResponse) SetReadStates(v map[string]int64)`
+`func (o *UserUserSettingsResponse) SetReadStates(v map[string]int32)`
 
 SetReadStates sets ReadStates field to given value.
 

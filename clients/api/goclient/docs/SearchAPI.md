@@ -28,7 +28,7 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild id
+	guildId := int32(56) // int32 | Guild id
 	request := *openapiclient.NewSearchMessageSearchRequest() // SearchMessageSearchRequest | Search request data
 
 	configuration := openapiclient.NewConfiguration()
@@ -49,7 +49,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild id | 
+**guildId** | **int32** | Guild id | 
 
 ### Other Parameters
 

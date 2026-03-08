@@ -20,10 +20,10 @@ var _ MappedNullable = &ModelMention{}
 
 // ModelMention struct for ModelMention
 type ModelMention struct {
-	AuthorId  *int64 `json:"authorId,omitempty"`
-	ChannelId *int64 `json:"channelId,omitempty"`
-	MessageId *int64 `json:"messageId,omitempty"`
-	UserId    *int64 `json:"userId,omitempty"`
+	AuthorId  *int32 `json:"authorId,omitempty"`
+	ChannelId *int32 `json:"channelId,omitempty"`
+	MessageId *int32 `json:"messageId,omitempty"`
+	UserId    *int32 `json:"userId,omitempty"`
 }
 
 // NewModelMention instantiates a new ModelMention object
@@ -44,9 +44,9 @@ func NewModelMentionWithDefaults() *ModelMention {
 }
 
 // GetAuthorId returns the AuthorId field value if set, zero value otherwise.
-func (o *ModelMention) GetAuthorId() int64 {
+func (o *ModelMention) GetAuthorId() int32 {
 	if o == nil || IsNil(o.AuthorId) {
-		var ret int64
+		var ret int32
 		return ret
 	}
 	return *o.AuthorId
@@ -54,7 +54,7 @@ func (o *ModelMention) GetAuthorId() int64 {
 
 // GetAuthorIdOk returns a tuple with the AuthorId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ModelMention) GetAuthorIdOk() (*int64, bool) {
+func (o *ModelMention) GetAuthorIdOk() (*int32, bool) {
 	if o == nil || IsNil(o.AuthorId) {
 		return nil, false
 	}
@@ -70,15 +70,15 @@ func (o *ModelMention) HasAuthorId() bool {
 	return false
 }
 
-// SetAuthorId gets a reference to the given int64 and assigns it to the AuthorId field.
-func (o *ModelMention) SetAuthorId(v int64) {
+// SetAuthorId gets a reference to the given int32 and assigns it to the AuthorId field.
+func (o *ModelMention) SetAuthorId(v int32) {
 	o.AuthorId = &v
 }
 
 // GetChannelId returns the ChannelId field value if set, zero value otherwise.
-func (o *ModelMention) GetChannelId() int64 {
+func (o *ModelMention) GetChannelId() int32 {
 	if o == nil || IsNil(o.ChannelId) {
-		var ret int64
+		var ret int32
 		return ret
 	}
 	return *o.ChannelId
@@ -86,7 +86,7 @@ func (o *ModelMention) GetChannelId() int64 {
 
 // GetChannelIdOk returns a tuple with the ChannelId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ModelMention) GetChannelIdOk() (*int64, bool) {
+func (o *ModelMention) GetChannelIdOk() (*int32, bool) {
 	if o == nil || IsNil(o.ChannelId) {
 		return nil, false
 	}
@@ -102,15 +102,15 @@ func (o *ModelMention) HasChannelId() bool {
 	return false
 }
 
-// SetChannelId gets a reference to the given int64 and assigns it to the ChannelId field.
-func (o *ModelMention) SetChannelId(v int64) {
+// SetChannelId gets a reference to the given int32 and assigns it to the ChannelId field.
+func (o *ModelMention) SetChannelId(v int32) {
 	o.ChannelId = &v
 }
 
 // GetMessageId returns the MessageId field value if set, zero value otherwise.
-func (o *ModelMention) GetMessageId() int64 {
+func (o *ModelMention) GetMessageId() int32 {
 	if o == nil || IsNil(o.MessageId) {
-		var ret int64
+		var ret int32
 		return ret
 	}
 	return *o.MessageId
@@ -118,7 +118,7 @@ func (o *ModelMention) GetMessageId() int64 {
 
 // GetMessageIdOk returns a tuple with the MessageId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ModelMention) GetMessageIdOk() (*int64, bool) {
+func (o *ModelMention) GetMessageIdOk() (*int32, bool) {
 	if o == nil || IsNil(o.MessageId) {
 		return nil, false
 	}
@@ -134,15 +134,15 @@ func (o *ModelMention) HasMessageId() bool {
 	return false
 }
 
-// SetMessageId gets a reference to the given int64 and assigns it to the MessageId field.
-func (o *ModelMention) SetMessageId(v int64) {
+// SetMessageId gets a reference to the given int32 and assigns it to the MessageId field.
+func (o *ModelMention) SetMessageId(v int32) {
 	o.MessageId = &v
 }
 
 // GetUserId returns the UserId field value if set, zero value otherwise.
-func (o *ModelMention) GetUserId() int64 {
+func (o *ModelMention) GetUserId() int32 {
 	if o == nil || IsNil(o.UserId) {
-		var ret int64
+		var ret int32
 		return ret
 	}
 	return *o.UserId
@@ -150,7 +150,7 @@ func (o *ModelMention) GetUserId() int64 {
 
 // GetUserIdOk returns a tuple with the UserId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ModelMention) GetUserIdOk() (*int64, bool) {
+func (o *ModelMention) GetUserIdOk() (*int32, bool) {
 	if o == nil || IsNil(o.UserId) {
 		return nil, false
 	}
@@ -166,8 +166,8 @@ func (o *ModelMention) HasUserId() bool {
 	return false
 }
 
-// SetUserId gets a reference to the given int64 and assigns it to the UserId field.
-func (o *ModelMention) SetUserId(v int64) {
+// SetUserId gets a reference to the given int32 and assigns it to the UserId field.
+func (o *ModelMention) SetUserId(v int32) {
 	o.UserId = &v
 }
 

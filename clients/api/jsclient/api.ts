@@ -841,6 +841,18 @@ export interface DtoMessage {
      */
     'content'?: string;
     /**
+     * 
+     * @type {Array<EmbedEmbed>}
+     * @memberof DtoMessage
+     */
+    'embeds'?: Array<EmbedEmbed>;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoMessage
+     */
+    'flags'?: number;
+    /**
      * Message ID
      * @type {number}
      * @memberof DtoMessage
@@ -926,6 +938,258 @@ export interface DtoUser {
      * @memberof DtoUser
      */
     'name'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface EmbedEmbed
+ */
+export interface EmbedEmbed {
+    /**
+     * Embed author metadata.
+     * @type {EmbedEmbedAuthor}
+     * @memberof EmbedEmbed
+     */
+    'author'?: EmbedEmbedAuthor;
+    /**
+     * Decimal RGB color value.
+     * @type {number}
+     * @memberof EmbedEmbed
+     */
+    'color'?: number;
+    /**
+     * Main embed description.
+     * @type {string}
+     * @memberof EmbedEmbed
+     */
+    'description'?: string;
+    /**
+     * Up to 25 structured fields.
+     * @type {Array<EmbedEmbedField>}
+     * @memberof EmbedEmbed
+     */
+    'fields'?: Array<EmbedEmbedField>;
+    /**
+     * Optional footer block.
+     * @type {EmbedEmbedFooter}
+     * @memberof EmbedEmbed
+     */
+    'footer'?: EmbedEmbedFooter;
+    /**
+     * Full-size image block.
+     * @type {EmbedEmbedMedia}
+     * @memberof EmbedEmbed
+     */
+    'image'?: EmbedEmbedMedia;
+    /**
+     * Content provider metadata.
+     * @type {EmbedEmbedProvider}
+     * @memberof EmbedEmbed
+     */
+    'provider'?: EmbedEmbedProvider;
+    /**
+     * Thumbnail image block.
+     * @type {EmbedEmbedMedia}
+     * @memberof EmbedEmbed
+     */
+    'thumbnail'?: EmbedEmbedMedia;
+    /**
+     * Optional ISO timestamp shown by the client.
+     * @type {string}
+     * @memberof EmbedEmbed
+     */
+    'timestamp'?: string;
+    /**
+     * Embed title.
+     * @type {string}
+     * @memberof EmbedEmbed
+     */
+    'title'?: string;
+    /**
+     * Embed type.
+     * @type {string}
+     * @memberof EmbedEmbed
+     */
+    'type'?: EmbedEmbedTypeEnum;
+    /**
+     * Canonical URL opened when the embed title is clicked.
+     * @type {string}
+     * @memberof EmbedEmbed
+     */
+    'url'?: string;
+    /**
+     * Embedded video metadata.
+     * @type {EmbedEmbedMedia}
+     * @memberof EmbedEmbed
+     */
+    'video'?: EmbedEmbedMedia;
+}
+
+export const EmbedEmbedTypeEnum = {
+    Rich: 'rich',
+    Image: 'image',
+    Video: 'video',
+    Gifv: 'gifv',
+    Article: 'article',
+    Link: 'link'
+} as const;
+
+export type EmbedEmbedTypeEnum = typeof EmbedEmbedTypeEnum[keyof typeof EmbedEmbedTypeEnum];
+
+/**
+ * 
+ * @export
+ * @interface EmbedEmbedAuthor
+ */
+export interface EmbedEmbedAuthor {
+    /**
+     * Author icon URL.
+     * @type {string}
+     * @memberof EmbedEmbedAuthor
+     */
+    'icon_url'?: string;
+    /**
+     * Author display name.
+     * @type {string}
+     * @memberof EmbedEmbedAuthor
+     */
+    'name'?: string;
+    /**
+     * Optional proxied author icon URL.
+     * @type {string}
+     * @memberof EmbedEmbedAuthor
+     */
+    'proxy_icon_url'?: string;
+    /**
+     * Author URL.
+     * @type {string}
+     * @memberof EmbedEmbedAuthor
+     */
+    'url'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface EmbedEmbedField
+ */
+export interface EmbedEmbedField {
+    /**
+     * Whether the field should be rendered inline.
+     * @type {boolean}
+     * @memberof EmbedEmbedField
+     */
+    'inline'?: boolean;
+    /**
+     * Field label.
+     * @type {string}
+     * @memberof EmbedEmbedField
+     */
+    'name'?: string;
+    /**
+     * Field value.
+     * @type {string}
+     * @memberof EmbedEmbedField
+     */
+    'value'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface EmbedEmbedFooter
+ */
+export interface EmbedEmbedFooter {
+    /**
+     * Footer icon URL.
+     * @type {string}
+     * @memberof EmbedEmbedFooter
+     */
+    'icon_url'?: string;
+    /**
+     * Optional proxied footer icon URL.
+     * @type {string}
+     * @memberof EmbedEmbedFooter
+     */
+    'proxy_icon_url'?: string;
+    /**
+     * Footer text.
+     * @type {string}
+     * @memberof EmbedEmbedFooter
+     */
+    'text'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface EmbedEmbedMedia
+ */
+export interface EmbedEmbedMedia {
+    /**
+     * Media MIME type when known.
+     * @type {string}
+     * @memberof EmbedEmbedMedia
+     */
+    'content_type'?: string;
+    /**
+     * Media-specific flags from the source provider.
+     * @type {number}
+     * @memberof EmbedEmbedMedia
+     */
+    'flags'?: number;
+    /**
+     * Media height in pixels.
+     * @type {number}
+     * @memberof EmbedEmbedMedia
+     */
+    'height'?: number;
+    /**
+     * Encoded placeholder used by some generated embeds.
+     * @type {string}
+     * @memberof EmbedEmbedMedia
+     */
+    'placeholder'?: string;
+    /**
+     * Placeholder format version.
+     * @type {number}
+     * @memberof EmbedEmbedMedia
+     */
+    'placeholder_version'?: number;
+    /**
+     * Optional proxied media URL.
+     * @type {string}
+     * @memberof EmbedEmbedMedia
+     */
+    'proxy_url'?: string;
+    /**
+     * Media URL.
+     * @type {string}
+     * @memberof EmbedEmbedMedia
+     */
+    'url'?: string;
+    /**
+     * Media width in pixels.
+     * @type {number}
+     * @memberof EmbedEmbedMedia
+     */
+    'width'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface EmbedEmbedProvider
+ */
+export interface EmbedEmbedProvider {
+    /**
+     * Provider name.
+     * @type {string}
+     * @memberof EmbedEmbedProvider
+     */
+    'name'?: string;
+    /**
+     * Provider URL.
+     * @type {string}
+     * @memberof EmbedEmbedProvider
+     */
+    'url'?: string;
 }
 /**
  * 
@@ -1407,6 +1671,12 @@ export interface MessageSendMessageRequest {
      */
     'content'?: string;
     /**
+     * Manual embeds supplied by the client. These are stored separately from generated URL embeds.
+     * @type {Array<EmbedEmbed>}
+     * @memberof MessageSendMessageRequest
+     */
+    'embeds'?: Array<EmbedEmbed>;
+    /**
      * IDs of mentioned users
      * @type {Array<number>}
      * @memberof MessageSendMessageRequest
@@ -1425,6 +1695,18 @@ export interface MessageUpdateMessageRequest {
      * @memberof MessageUpdateMessageRequest
      */
     'content'?: string;
+    /**
+     * Full replacement for the manual embed array. Generated embeds are managed by the embedder service.
+     * @type {Array<EmbedEmbed>}
+     * @memberof MessageUpdateMessageRequest
+     */
+    'embeds'?: Array<EmbedEmbed>;
+    /**
+     * Message flags bitmask. Use 4 to suppress URL embed generation and clear generated embeds.
+     * @type {number}
+     * @memberof MessageUpdateMessageRequest
+     */
+    'flags'?: number;
 }
 /**
  * 
@@ -1471,34 +1753,34 @@ export interface MessageUploadAttachmentRequest {
 export interface ModelChannelMention {
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ModelChannelMention
      */
-    'authorId'?: string;
+    'authorId'?: number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ModelChannelMention
      */
-    'channelId'?: string;
+    'channelId'?: number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ModelChannelMention
      */
-    'guildId'?: string;
+    'guildId'?: number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ModelChannelMention
      */
-    'messageId'?: string;
+    'messageId'?: number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ModelChannelMention
      */
-    'roleId'?: string;
+    'roleId'?: number;
     /**
      * 
      * @type {number}
@@ -1513,29 +1795,11 @@ export interface ModelChannelMention {
  */
 
 export const ModelChannelType = {
-    /**
-    * Default text channel in guild
-    */
     ChannelTypeGuild: 0,
-    /**
-    * Voice channel in guild
-    */
     ChannelTypeGuildVoice: 1,
-    /**
-    * Category channel in guild
-    */
     ChannelTypeGuildCategory: 2,
-    /**
-    * DM channel. Can&#39;t be created in Guild
-    */
     ChannelTypeDM: 3,
-    /**
-    * Group DM channel. Can&#39;t be created in Guild&#39;
-    */
     ChannelTypeGroupDM: 4,
-    /**
-    * Thread channel
-    */
     ChannelTypeThread: 5
 } as const;
 
@@ -1586,6 +1850,12 @@ export interface ModelDevices {
     'auto_gain_control'?: boolean;
     /**
      * 
+     * @type {string}
+     * @memberof ModelDevices
+     */
+    'denoiser_type'?: string;
+    /**
+     * 
      * @type {boolean}
      * @memberof ModelDevices
      */
@@ -1611,28 +1881,28 @@ export interface ModelDevices {
 export interface ModelMention {
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ModelMention
      */
-    'authorId'?: string;
+    'authorId'?: number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ModelMention
      */
-    'channelId'?: string;
+    'channelId'?: number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ModelMention
      */
-    'messageId'?: string;
+    'messageId'?: number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ModelMention
      */
-    'userId'?: string;
+    'userId'?: number;
 }
 /**
  * 
@@ -2268,10 +2538,10 @@ export interface UserUserSettingsResponse {
     'guilds'?: Array<DtoGuild>;
     /**
      * 
-     * @type {{ [key: string]: { [key: string]: string; }; }}
+     * @type {{ [key: string]: { [key: string]: number; }; }}
      * @memberof UserUserSettingsResponse
      */
-    'guilds_last_messages'?: { [key: string]: { [key: string]: string; }; };
+    'guilds_last_messages'?: { [key: string]: { [key: string]: number; }; };
     /**
      * 
      * @type {{ [key: string]: Array<ModelMention>; }}
@@ -2280,10 +2550,10 @@ export interface UserUserSettingsResponse {
     'mentions'?: { [key: string]: Array<ModelMention>; };
     /**
      * 
-     * @type {{ [key: string]: string; }}
+     * @type {{ [key: string]: number; }}
      * @memberof UserUserSettingsResponse
      */
-    'read_states'?: { [key: string]: string; };
+    'read_states'?: { [key: string]: number; };
     /**
      * 
      * @type {ModelUserSettingsData}
@@ -2948,6 +3218,159 @@ export class AuthApi extends BaseAPI implements AuthApiInterface {
 
 
 /**
+ * EmojiApi - axios parameter creator
+ * @export
+ */
+export const EmojiApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Redirect to public emoji asset
+         * @param {string} emojiId Emoji filename ending in .webp
+         * @param {number} [size] Preferred rendered size
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        emojiEmojiIdGet: async (emojiId: string, size?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'emojiId' is not null or undefined
+            assertParamExists('emojiEmojiIdGet', 'emojiId', emojiId)
+            const localVarPath = `/emoji/{emoji_id}`
+                .replace(`{${"emoji_id"}}`, encodeURIComponent(String(emojiId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * EmojiApi - functional programming interface
+ * @export
+ */
+export const EmojiApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = EmojiApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Redirect to public emoji asset
+         * @param {string} emojiId Emoji filename ending in .webp
+         * @param {number} [size] Preferred rendered size
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async emojiEmojiIdGet(emojiId: string, size?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.emojiEmojiIdGet(emojiId, size, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['EmojiApi.emojiEmojiIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * EmojiApi - factory interface
+ * @export
+ */
+export const EmojiApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = EmojiApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Redirect to public emoji asset
+         * @param {EmojiApiEmojiEmojiIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        emojiEmojiIdGet(requestParameters: EmojiApiEmojiEmojiIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.emojiEmojiIdGet(requestParameters.emojiId, requestParameters.size, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * EmojiApi - interface
+ * @export
+ * @interface EmojiApi
+ */
+export interface EmojiApiInterface {
+    /**
+     * 
+     * @summary Redirect to public emoji asset
+     * @param {EmojiApiEmojiEmojiIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof EmojiApiInterface
+     */
+    emojiEmojiIdGet(requestParameters: EmojiApiEmojiEmojiIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+}
+
+/**
+ * Request parameters for emojiEmojiIdGet operation in EmojiApi.
+ * @export
+ * @interface EmojiApiEmojiEmojiIdGetRequest
+ */
+export interface EmojiApiEmojiEmojiIdGetRequest {
+    /**
+     * Emoji filename ending in .webp
+     * @type {string}
+     * @memberof EmojiApiEmojiEmojiIdGet
+     */
+    readonly emojiId: string
+
+    /**
+     * Preferred rendered size
+     * @type {number}
+     * @memberof EmojiApiEmojiEmojiIdGet
+     */
+    readonly size?: number
+}
+
+/**
+ * EmojiApi - object-oriented interface
+ * @export
+ * @class EmojiApi
+ * @extends {BaseAPI}
+ */
+export class EmojiApi extends BaseAPI implements EmojiApiInterface {
+    /**
+     * 
+     * @summary Redirect to public emoji asset
+     * @param {EmojiApiEmojiEmojiIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof EmojiApi
+     */
+    public emojiEmojiIdGet(requestParameters: EmojiApiEmojiEmojiIdGetRequest, options?: RawAxiosRequestConfig) {
+        return EmojiApiFp(this.configuration).emojiEmojiIdGet(requestParameters.emojiId, requestParameters.size, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
  * GuildApi - axios parameter creator
  * @export
  */
@@ -2956,12 +3379,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Delete channel category
-         * @param {string} guildId Guild ID
-         * @param {string} categoryId Category ID (actually a channel with special type)
+         * @param {number} guildId Guild ID
+         * @param {number} categoryId Category ID (actually a channel with special type)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdCategoryCategoryIdDelete: async (guildId: string, categoryId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdCategoryCategoryIdDelete: async (guildId: number, categoryId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdCategoryCategoryIdDelete', 'guildId', guildId)
             // verify required parameter 'categoryId' is not null or undefined
@@ -2994,12 +3417,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Create guild channel category
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildCreateGuildChannelCategoryRequest} request Create category data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdCategoryPost: async (guildId: string, request: GuildCreateGuildChannelCategoryRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdCategoryPost: async (guildId: number, request: GuildCreateGuildChannelCategoryRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdCategoryPost', 'guildId', guildId)
             // verify required parameter 'request' is not null or undefined
@@ -3034,12 +3457,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Delete channel
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdDelete: async (guildId: string, channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdDelete: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdDelete', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -3072,12 +3495,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get guild channel
-         * @param {string} guildId Guild id
-         * @param {string} channelId Channel id
+         * @param {number} guildId Guild id
+         * @param {number} channelId Channel id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdGet: async (guildId: string, channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdGet: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdGet', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -3110,13 +3533,13 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Change channels data
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
          * @param {GuildPatchGuildChannelRequest} req Request body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdPatch: async (guildId: string, channelId: string, req: GuildPatchGuildChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdPatch: async (guildId: number, channelId: number, req: GuildPatchGuildChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdPatch', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -3154,11 +3577,11 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get guild channels
-         * @param {string} guildId Guild id
+         * @param {number} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelGet', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}/channel`
@@ -3188,12 +3611,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Change channels order
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildPatchGuildChannelOrderRequest} request Update channel order data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelOrderPatch: async (guildId: string, request: GuildPatchGuildChannelOrderRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelOrderPatch: async (guildId: number, request: GuildPatchGuildChannelOrderRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelOrderPatch', 'guildId', guildId)
             // verify required parameter 'request' is not null or undefined
@@ -3228,12 +3651,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Create guild channel
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildCreateGuildChannelRequest} request Create channel data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelPost: async (guildId: string, request: GuildCreateGuildChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelPost: async (guildId: number, request: GuildCreateGuildChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelPost', 'guildId', guildId)
             // verify required parameter 'request' is not null or undefined
@@ -3268,11 +3691,11 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Deletes a guild. Only the guild owner can delete a guild. This removes all members, all guild icons, and all guild channels.
          * @summary Delete guild
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdDelete: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdDelete: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdDelete', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}`
@@ -3302,12 +3725,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Delete guild emoji
-         * @param {string} guildId Guild ID
-         * @param {string} emojiId Emoji ID
+         * @param {number} guildId Guild ID
+         * @param {number} emojiId Emoji ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdEmojisEmojiIdDelete: async (guildId: string, emojiId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdEmojisEmojiIdDelete: async (guildId: number, emojiId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdEmojisEmojiIdDelete', 'guildId', guildId)
             // verify required parameter 'emojiId' is not null or undefined
@@ -3340,13 +3763,13 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Update guild emoji
-         * @param {string} guildId Guild ID
-         * @param {string} emojiId Emoji ID
+         * @param {number} guildId Guild ID
+         * @param {number} emojiId Emoji ID
          * @param {GuildUpdateEmojiRequest} request Emoji update data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdEmojisEmojiIdPatch: async (guildId: string, emojiId: string, request: GuildUpdateEmojiRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdEmojisEmojiIdPatch: async (guildId: number, emojiId: number, request: GuildUpdateEmojiRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdEmojisEmojiIdPatch', 'guildId', guildId)
             // verify required parameter 'emojiId' is not null or undefined
@@ -3384,11 +3807,11 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary List guild emojis
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdEmojisGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdEmojisGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdEmojisGet', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}/emojis`
@@ -3418,12 +3841,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Create guild emoji metadata
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildCreateEmojiRequest} request Emoji metadata
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdEmojisPost: async (guildId: string, request: GuildCreateEmojiRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdEmojisPost: async (guildId: number, request: GuildCreateEmojiRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdEmojisPost', 'guildId', guildId)
             // verify required parameter 'request' is not null or undefined
@@ -3458,11 +3881,11 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get guild
-         * @param {string} guildId Guild id
+         * @param {number} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdGet', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}`
@@ -3492,12 +3915,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Creates an icon placeholder and returns upload info. Only guild owner may create.
          * @summary Create guild icon metadata
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildCreateIconRequest} request Icon creation request
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdIconPost: async (guildId: string, request: GuildCreateIconRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdIconPost: async (guildId: number, request: GuildCreateIconRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdIconPost', 'guildId', guildId)
             // verify required parameter 'request' is not null or undefined
@@ -3532,11 +3955,11 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Returns a list of previously created icons for a guild. Only the guild owner may access this list.
          * @summary List guild icons
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdIconsGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdIconsGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdIconsGet', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}/icons`
@@ -3566,12 +3989,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Deletes a guild icon. Only the guild owner may delete.
          * @summary Delete guild icon by ID
-         * @param {string} guildId Guild ID
-         * @param {string} iconId Icon ID
+         * @param {number} guildId Guild ID
+         * @param {number} iconId Icon ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdIconsIconIdDelete: async (guildId: string, iconId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdIconsIconIdDelete: async (guildId: number, iconId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdIconsIconIdDelete', 'guildId', guildId)
             // verify required parameter 'iconId' is not null or undefined
@@ -3604,11 +4027,11 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get guild members
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdMembersGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdMembersGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdMembersGet', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}/members`
@@ -3638,12 +4061,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Update guild
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildUpdateGuildRequest} request Update guild data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdPatch: async (guildId: string, request: GuildUpdateGuildRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdPatch: async (guildId: number, request: GuildUpdateGuildRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdPatch', 'guildId', guildId)
             // verify required parameter 'request' is not null or undefined
@@ -3678,12 +4101,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Set system messages channel
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildSetGuildSystemMessagesChannelRequest} request Set system messages channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdSystemchPatch: async (guildId: string, request: GuildSetGuildSystemMessagesChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdSystemchPatch: async (guildId: number, request: GuildSetGuildSystemMessagesChannelRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdSystemchPatch', 'guildId', guildId)
             // verify required parameter 'request' is not null or undefined
@@ -3718,12 +4141,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Returns signaling path and a short-lived SFU token to connect to the SFU for this channel.
          * @summary Join voice channel (get SFU signaling info)
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdVoiceChannelIdJoinPost: async (guildId: string, channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdVoiceChannelIdJoinPost: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdVoiceChannelIdJoinPost', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -3756,13 +4179,13 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Sets or clears preferred SFU region for a voice channel. Empty region clears override.
          * @summary Set channel voice region
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
          * @param {GuildSetVoiceRegionRequest} request Region payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdVoiceChannelIdRegionPatch: async (guildId: string, channelId: string, request: GuildSetVoiceRegionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdVoiceChannelIdRegionPatch: async (guildId: number, channelId: number, request: GuildSetVoiceRegionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdVoiceChannelIdRegionPatch', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -3800,12 +4223,12 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Move a member to another voice channel and send them connection info (SFU URL + token). Requires administrator or PermVoiceMoveMembers.
          * @summary Move member to voice channel
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildMoveMemberRequest} request Move request
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdVoiceMovePost: async (guildId: string, request: GuildMoveMemberRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdVoiceMovePost: async (guildId: number, request: GuildMoveMemberRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdVoiceMovePost', 'guildId', guildId)
             // verify required parameter 'request' is not null or undefined
@@ -3886,12 +4309,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete channel category
-         * @param {string} guildId Guild ID
-         * @param {string} categoryId Category ID (actually a channel with special type)
+         * @param {number} guildId Guild ID
+         * @param {number} categoryId Category ID (actually a channel with special type)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdCategoryCategoryIdDelete(guildId: string, categoryId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdCategoryCategoryIdDelete(guildId: number, categoryId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdCategoryCategoryIdDelete(guildId, categoryId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdCategoryCategoryIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -3900,12 +4323,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create guild channel category
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildCreateGuildChannelCategoryRequest} request Create category data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdCategoryPost(guildId: string, request: GuildCreateGuildChannelCategoryRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdCategoryPost(guildId: number, request: GuildCreateGuildChannelCategoryRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdCategoryPost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdCategoryPost']?.[localVarOperationServerIndex]?.url;
@@ -3914,12 +4337,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete channel
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdDelete(guildId: string, channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdChannelChannelIdDelete(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdDelete(guildId, channelId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelChannelIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -3928,12 +4351,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get guild channel
-         * @param {string} guildId Guild id
-         * @param {string} channelId Channel id
+         * @param {number} guildId Guild id
+         * @param {number} channelId Channel id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdGet(guildId: string, channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
+        async guildGuildIdChannelChannelIdGet(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdGet(guildId, channelId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelChannelIdGet']?.[localVarOperationServerIndex]?.url;
@@ -3942,13 +4365,13 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Change channels data
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
          * @param {GuildPatchGuildChannelRequest} req Request body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdPatch(guildId: string, channelId: string, req: GuildPatchGuildChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
+        async guildGuildIdChannelChannelIdPatch(guildId: number, channelId: number, req: GuildPatchGuildChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdPatch(guildId, channelId, req, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelChannelIdPatch']?.[localVarOperationServerIndex]?.url;
@@ -3957,11 +4380,11 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get guild channels
-         * @param {string} guildId Guild id
+         * @param {number} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoChannel>>> {
+        async guildGuildIdChannelGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoChannel>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelGet']?.[localVarOperationServerIndex]?.url;
@@ -3970,12 +4393,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Change channels order
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildPatchGuildChannelOrderRequest} request Update channel order data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelOrderPatch(guildId: string, request: GuildPatchGuildChannelOrderRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdChannelOrderPatch(guildId: number, request: GuildPatchGuildChannelOrderRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelOrderPatch(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelOrderPatch']?.[localVarOperationServerIndex]?.url;
@@ -3984,12 +4407,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create guild channel
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildCreateGuildChannelRequest} request Create channel data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelPost(guildId: string, request: GuildCreateGuildChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdChannelPost(guildId: number, request: GuildCreateGuildChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelPost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelPost']?.[localVarOperationServerIndex]?.url;
@@ -3998,11 +4421,11 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Deletes a guild. Only the guild owner can delete a guild. This removes all members, all guild icons, and all guild channels.
          * @summary Delete guild
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdDelete(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdDelete(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdDelete(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -4011,12 +4434,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete guild emoji
-         * @param {string} guildId Guild ID
-         * @param {string} emojiId Emoji ID
+         * @param {number} guildId Guild ID
+         * @param {number} emojiId Emoji ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdEmojisEmojiIdDelete(guildId: string, emojiId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdEmojisEmojiIdDelete(guildId: number, emojiId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdEmojisEmojiIdDelete(guildId, emojiId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdEmojisEmojiIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -4025,13 +4448,13 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Update guild emoji
-         * @param {string} guildId Guild ID
-         * @param {string} emojiId Emoji ID
+         * @param {number} guildId Guild ID
+         * @param {number} emojiId Emoji ID
          * @param {GuildUpdateEmojiRequest} request Emoji update data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdEmojisEmojiIdPatch(guildId: string, emojiId: string, request: GuildUpdateEmojiRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuildEmoji>> {
+        async guildGuildIdEmojisEmojiIdPatch(guildId: number, emojiId: number, request: GuildUpdateEmojiRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuildEmoji>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdEmojisEmojiIdPatch(guildId, emojiId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdEmojisEmojiIdPatch']?.[localVarOperationServerIndex]?.url;
@@ -4040,11 +4463,11 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary List guild emojis
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdEmojisGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoGuildEmoji>>> {
+        async guildGuildIdEmojisGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoGuildEmoji>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdEmojisGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdEmojisGet']?.[localVarOperationServerIndex]?.url;
@@ -4053,12 +4476,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create guild emoji metadata
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildCreateEmojiRequest} request Emoji metadata
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdEmojisPost(guildId: string, request: GuildCreateEmojiRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoEmojiUpload>> {
+        async guildGuildIdEmojisPost(guildId: number, request: GuildCreateEmojiRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoEmojiUpload>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdEmojisPost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdEmojisPost']?.[localVarOperationServerIndex]?.url;
@@ -4067,11 +4490,11 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get guild
-         * @param {string} guildId Guild id
+         * @param {number} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
+        async guildGuildIdGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdGet']?.[localVarOperationServerIndex]?.url;
@@ -4080,12 +4503,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Creates an icon placeholder and returns upload info. Only guild owner may create.
          * @summary Create guild icon metadata
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildCreateIconRequest} request Icon creation request
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdIconPost(guildId: string, request: GuildCreateIconRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoIconUpload>> {
+        async guildGuildIdIconPost(guildId: number, request: GuildCreateIconRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoIconUpload>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdIconPost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdIconPost']?.[localVarOperationServerIndex]?.url;
@@ -4094,11 +4517,11 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Returns a list of previously created icons for a guild. Only the guild owner may access this list.
          * @summary List guild icons
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdIconsGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoIcon>>> {
+        async guildGuildIdIconsGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoIcon>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdIconsGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdIconsGet']?.[localVarOperationServerIndex]?.url;
@@ -4107,12 +4530,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Deletes a guild icon. Only the guild owner may delete.
          * @summary Delete guild icon by ID
-         * @param {string} guildId Guild ID
-         * @param {string} iconId Icon ID
+         * @param {number} guildId Guild ID
+         * @param {number} iconId Icon ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdIconsIconIdDelete(guildId: string, iconId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdIconsIconIdDelete(guildId: number, iconId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdIconsIconIdDelete(guildId, iconId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdIconsIconIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -4121,11 +4544,11 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get guild members
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdMembersGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoMember>>> {
+        async guildGuildIdMembersGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoMember>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMembersGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdMembersGet']?.[localVarOperationServerIndex]?.url;
@@ -4134,12 +4557,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Update guild
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildUpdateGuildRequest} request Update guild data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdPatch(guildId: string, request: GuildUpdateGuildRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
+        async guildGuildIdPatch(guildId: number, request: GuildUpdateGuildRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdPatch(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdPatch']?.[localVarOperationServerIndex]?.url;
@@ -4148,12 +4571,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Set system messages channel
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildSetGuildSystemMessagesChannelRequest} request Set system messages channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdSystemchPatch(guildId: string, request: GuildSetGuildSystemMessagesChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
+        async guildGuildIdSystemchPatch(guildId: number, request: GuildSetGuildSystemMessagesChannelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdSystemchPatch(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdSystemchPatch']?.[localVarOperationServerIndex]?.url;
@@ -4162,12 +4585,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Returns signaling path and a short-lived SFU token to connect to the SFU for this channel.
          * @summary Join voice channel (get SFU signaling info)
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdVoiceChannelIdJoinPost(guildId: string, channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildJoinVoiceResponse>> {
+        async guildGuildIdVoiceChannelIdJoinPost(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildJoinVoiceResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdVoiceChannelIdJoinPost(guildId, channelId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdVoiceChannelIdJoinPost']?.[localVarOperationServerIndex]?.url;
@@ -4176,13 +4599,13 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Sets or clears preferred SFU region for a voice channel. Empty region clears override.
          * @summary Set channel voice region
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
          * @param {GuildSetVoiceRegionRequest} request Region payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdVoiceChannelIdRegionPatch(guildId: string, channelId: string, request: GuildSetVoiceRegionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildSetVoiceRegionResponse>> {
+        async guildGuildIdVoiceChannelIdRegionPatch(guildId: number, channelId: number, request: GuildSetVoiceRegionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildSetVoiceRegionResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdVoiceChannelIdRegionPatch(guildId, channelId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdVoiceChannelIdRegionPatch']?.[localVarOperationServerIndex]?.url;
@@ -4191,12 +4614,12 @@ export const GuildApiFp = function(configuration?: Configuration) {
         /**
          * Move a member to another voice channel and send them connection info (SFU URL + token). Requires administrator or PermVoiceMoveMembers.
          * @summary Move member to voice channel
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildMoveMemberRequest} request Move request
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdVoiceMovePost(guildId: string, request: GuildMoveMemberRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildMoveMemberResponse>> {
+        async guildGuildIdVoiceMovePost(guildId: number, request: GuildMoveMemberRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildMoveMemberResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdVoiceMovePost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdVoiceMovePost']?.[localVarOperationServerIndex]?.url;
@@ -4724,17 +5147,17 @@ export interface GuildApiInterface {
 export interface GuildApiGuildGuildIdCategoryCategoryIdDeleteRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdCategoryCategoryIdDelete
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Category ID (actually a channel with special type)
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdCategoryCategoryIdDelete
      */
-    readonly categoryId: string
+    readonly categoryId: number
 }
 
 /**
@@ -4745,10 +5168,10 @@ export interface GuildApiGuildGuildIdCategoryCategoryIdDeleteRequest {
 export interface GuildApiGuildGuildIdCategoryPostRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdCategoryPost
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Create category data
@@ -4766,17 +5189,17 @@ export interface GuildApiGuildGuildIdCategoryPostRequest {
 export interface GuildApiGuildGuildIdChannelChannelIdDeleteRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdChannelChannelIdDelete
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Channel ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdChannelChannelIdDelete
      */
-    readonly channelId: string
+    readonly channelId: number
 }
 
 /**
@@ -4787,17 +5210,17 @@ export interface GuildApiGuildGuildIdChannelChannelIdDeleteRequest {
 export interface GuildApiGuildGuildIdChannelChannelIdGetRequest {
     /**
      * Guild id
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdChannelChannelIdGet
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Channel id
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdChannelChannelIdGet
      */
-    readonly channelId: string
+    readonly channelId: number
 }
 
 /**
@@ -4808,17 +5231,17 @@ export interface GuildApiGuildGuildIdChannelChannelIdGetRequest {
 export interface GuildApiGuildGuildIdChannelChannelIdPatchRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdChannelChannelIdPatch
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Channel ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdChannelChannelIdPatch
      */
-    readonly channelId: string
+    readonly channelId: number
 
     /**
      * Request body
@@ -4836,10 +5259,10 @@ export interface GuildApiGuildGuildIdChannelChannelIdPatchRequest {
 export interface GuildApiGuildGuildIdChannelGetRequest {
     /**
      * Guild id
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdChannelGet
      */
-    readonly guildId: string
+    readonly guildId: number
 }
 
 /**
@@ -4850,10 +5273,10 @@ export interface GuildApiGuildGuildIdChannelGetRequest {
 export interface GuildApiGuildGuildIdChannelOrderPatchRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdChannelOrderPatch
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Update channel order data
@@ -4871,10 +5294,10 @@ export interface GuildApiGuildGuildIdChannelOrderPatchRequest {
 export interface GuildApiGuildGuildIdChannelPostRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdChannelPost
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Create channel data
@@ -4892,10 +5315,10 @@ export interface GuildApiGuildGuildIdChannelPostRequest {
 export interface GuildApiGuildGuildIdDeleteRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdDelete
      */
-    readonly guildId: string
+    readonly guildId: number
 }
 
 /**
@@ -4906,17 +5329,17 @@ export interface GuildApiGuildGuildIdDeleteRequest {
 export interface GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdEmojisEmojiIdDelete
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Emoji ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdEmojisEmojiIdDelete
      */
-    readonly emojiId: string
+    readonly emojiId: number
 }
 
 /**
@@ -4927,17 +5350,17 @@ export interface GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest {
 export interface GuildApiGuildGuildIdEmojisEmojiIdPatchRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdEmojisEmojiIdPatch
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Emoji ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdEmojisEmojiIdPatch
      */
-    readonly emojiId: string
+    readonly emojiId: number
 
     /**
      * Emoji update data
@@ -4955,10 +5378,10 @@ export interface GuildApiGuildGuildIdEmojisEmojiIdPatchRequest {
 export interface GuildApiGuildGuildIdEmojisGetRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdEmojisGet
      */
-    readonly guildId: string
+    readonly guildId: number
 }
 
 /**
@@ -4969,10 +5392,10 @@ export interface GuildApiGuildGuildIdEmojisGetRequest {
 export interface GuildApiGuildGuildIdEmojisPostRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdEmojisPost
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Emoji metadata
@@ -4990,10 +5413,10 @@ export interface GuildApiGuildGuildIdEmojisPostRequest {
 export interface GuildApiGuildGuildIdGetRequest {
     /**
      * Guild id
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdGet
      */
-    readonly guildId: string
+    readonly guildId: number
 }
 
 /**
@@ -5004,10 +5427,10 @@ export interface GuildApiGuildGuildIdGetRequest {
 export interface GuildApiGuildGuildIdIconPostRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdIconPost
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Icon creation request
@@ -5025,10 +5448,10 @@ export interface GuildApiGuildGuildIdIconPostRequest {
 export interface GuildApiGuildGuildIdIconsGetRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdIconsGet
      */
-    readonly guildId: string
+    readonly guildId: number
 }
 
 /**
@@ -5039,17 +5462,17 @@ export interface GuildApiGuildGuildIdIconsGetRequest {
 export interface GuildApiGuildGuildIdIconsIconIdDeleteRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdIconsIconIdDelete
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Icon ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdIconsIconIdDelete
      */
-    readonly iconId: string
+    readonly iconId: number
 }
 
 /**
@@ -5060,10 +5483,10 @@ export interface GuildApiGuildGuildIdIconsIconIdDeleteRequest {
 export interface GuildApiGuildGuildIdMembersGetRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdMembersGet
      */
-    readonly guildId: string
+    readonly guildId: number
 }
 
 /**
@@ -5074,10 +5497,10 @@ export interface GuildApiGuildGuildIdMembersGetRequest {
 export interface GuildApiGuildGuildIdPatchRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdPatch
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Update guild data
@@ -5095,10 +5518,10 @@ export interface GuildApiGuildGuildIdPatchRequest {
 export interface GuildApiGuildGuildIdSystemchPatchRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdSystemchPatch
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Set system messages channel
@@ -5116,17 +5539,17 @@ export interface GuildApiGuildGuildIdSystemchPatchRequest {
 export interface GuildApiGuildGuildIdVoiceChannelIdJoinPostRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdVoiceChannelIdJoinPost
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Channel ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdVoiceChannelIdJoinPost
      */
-    readonly channelId: string
+    readonly channelId: number
 }
 
 /**
@@ -5137,17 +5560,17 @@ export interface GuildApiGuildGuildIdVoiceChannelIdJoinPostRequest {
 export interface GuildApiGuildGuildIdVoiceChannelIdRegionPatchRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdVoiceChannelIdRegionPatch
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Channel ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdVoiceChannelIdRegionPatch
      */
-    readonly channelId: string
+    readonly channelId: number
 
     /**
      * Region payload
@@ -5165,10 +5588,10 @@ export interface GuildApiGuildGuildIdVoiceChannelIdRegionPatchRequest {
 export interface GuildApiGuildGuildIdVoiceMovePostRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildApiGuildGuildIdVoiceMovePost
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Move request
@@ -5533,11 +5956,11 @@ export const GuildInvitesApiAxiosParamCreator = function (configuration?: Config
         /**
          * 
          * @summary List active invites for guild
-         * @param {string} guildId Guild id
+         * @param {number} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildInvitesGuildIdGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildInvitesGuildIdGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildInvitesGuildIdGet', 'guildId', guildId)
             const localVarPath = `/guild/invites/{guild_id}`
@@ -5567,12 +5990,12 @@ export const GuildInvitesApiAxiosParamCreator = function (configuration?: Config
         /**
          * 
          * @summary Delete an invite by id
-         * @param {string} guildId Guild id
-         * @param {string} inviteId Invite id
+         * @param {number} guildId Guild id
+         * @param {number} inviteId Invite id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildInvitesGuildIdInviteIdDelete: async (guildId: string, inviteId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildInvitesGuildIdInviteIdDelete: async (guildId: number, inviteId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildInvitesGuildIdInviteIdDelete', 'guildId', guildId)
             // verify required parameter 'inviteId' is not null or undefined
@@ -5605,12 +6028,12 @@ export const GuildInvitesApiAxiosParamCreator = function (configuration?: Config
         /**
          * 
          * @summary Create a new invite
-         * @param {string} guildId Guild id
+         * @param {number} guildId Guild id
          * @param {GuildCreateInviteRequest} request Invite options
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildInvitesGuildIdPost: async (guildId: string, request: GuildCreateInviteRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildInvitesGuildIdPost: async (guildId: number, request: GuildCreateInviteRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildInvitesGuildIdPost', 'guildId', guildId)
             // verify required parameter 'request' is not null or undefined
@@ -5702,11 +6125,11 @@ export const GuildInvitesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary List active invites for guild
-         * @param {string} guildId Guild id
+         * @param {number} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildInvitesGuildIdGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoGuildInvite>>> {
+        async guildInvitesGuildIdGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoGuildInvite>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildInvitesGuildIdGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildInvitesApi.guildInvitesGuildIdGet']?.[localVarOperationServerIndex]?.url;
@@ -5715,12 +6138,12 @@ export const GuildInvitesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete an invite by id
-         * @param {string} guildId Guild id
-         * @param {string} inviteId Invite id
+         * @param {number} guildId Guild id
+         * @param {number} inviteId Invite id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildInvitesGuildIdInviteIdDelete(guildId: string, inviteId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildInvitesGuildIdInviteIdDelete(guildId: number, inviteId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildInvitesGuildIdInviteIdDelete(guildId, inviteId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildInvitesApi.guildInvitesGuildIdInviteIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -5729,12 +6152,12 @@ export const GuildInvitesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create a new invite
-         * @param {string} guildId Guild id
+         * @param {number} guildId Guild id
          * @param {GuildCreateInviteRequest} request Invite options
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildInvitesGuildIdPost(guildId: string, request: GuildCreateInviteRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuildInvite>> {
+        async guildInvitesGuildIdPost(guildId: number, request: GuildCreateInviteRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuildInvite>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildInvitesGuildIdPost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildInvitesApi.guildInvitesGuildIdPost']?.[localVarOperationServerIndex]?.url;
@@ -5896,10 +6319,10 @@ export interface GuildInvitesApiGuildInvitesAcceptInviteCodePostRequest {
 export interface GuildInvitesApiGuildInvitesGuildIdGetRequest {
     /**
      * Guild id
-     * @type {string}
+     * @type {number}
      * @memberof GuildInvitesApiGuildInvitesGuildIdGet
      */
-    readonly guildId: string
+    readonly guildId: number
 }
 
 /**
@@ -5910,17 +6333,17 @@ export interface GuildInvitesApiGuildInvitesGuildIdGetRequest {
 export interface GuildInvitesApiGuildInvitesGuildIdInviteIdDeleteRequest {
     /**
      * Guild id
-     * @type {string}
+     * @type {number}
      * @memberof GuildInvitesApiGuildInvitesGuildIdInviteIdDelete
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Invite id
-     * @type {string}
+     * @type {number}
      * @memberof GuildInvitesApiGuildInvitesGuildIdInviteIdDelete
      */
-    readonly inviteId: string
+    readonly inviteId: number
 }
 
 /**
@@ -5931,10 +6354,10 @@ export interface GuildInvitesApiGuildInvitesGuildIdInviteIdDeleteRequest {
 export interface GuildInvitesApiGuildInvitesGuildIdPostRequest {
     /**
      * Guild id
-     * @type {string}
+     * @type {number}
      * @memberof GuildInvitesApiGuildInvitesGuildIdPost
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Invite options
@@ -6037,12 +6460,12 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary List channel role permissions
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdRolesGet: async (guildId: string, channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdRolesGet: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesGet', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -6075,13 +6498,13 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Remove channel role permission
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdRolesRoleIdDelete: async (guildId: string, channelId: string, roleId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdRolesRoleIdDelete: async (guildId: number, channelId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdDelete', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -6117,13 +6540,13 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Get channel role permission
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdRolesRoleIdGet: async (guildId: string, channelId: string, roleId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdRolesRoleIdGet: async (guildId: number, channelId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdGet', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -6159,14 +6582,14 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Update channel role permission
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
          * @param {GuildChannelRolePermissionRequest} req Permission mask
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdRolesRoleIdPatch: async (guildId: string, channelId: string, roleId: string, req: GuildChannelRolePermissionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdRolesRoleIdPatch: async (guildId: number, channelId: number, roleId: number, req: GuildChannelRolePermissionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPatch', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -6207,14 +6630,14 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Set channel role permission (create or replace)
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
          * @param {GuildChannelRolePermissionRequest} req Permission mask
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdChannelChannelIdRolesRoleIdPut: async (guildId: string, channelId: string, roleId: string, req: GuildChannelRolePermissionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdChannelChannelIdRolesRoleIdPut: async (guildId: number, channelId: number, roleId: number, req: GuildChannelRolePermissionRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdChannelChannelIdRolesRoleIdPut', 'guildId', guildId)
             // verify required parameter 'channelId' is not null or undefined
@@ -6255,12 +6678,12 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Get member roles
-         * @param {string} guildId Guild ID
-         * @param {string} userId User ID
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdMemberUserIdRolesGet: async (guildId: string, userId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdMemberUserIdRolesGet: async (guildId: number, userId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdMemberUserIdRolesGet', 'guildId', guildId)
             // verify required parameter 'userId' is not null or undefined
@@ -6293,13 +6716,13 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Remove role from member
-         * @param {string} guildId Guild ID
-         * @param {string} userId User ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {number} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdMemberUserIdRolesRoleIdDelete: async (guildId: string, userId: string, roleId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdMemberUserIdRolesRoleIdDelete: async (guildId: number, userId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdMemberUserIdRolesRoleIdDelete', 'guildId', guildId)
             // verify required parameter 'userId' is not null or undefined
@@ -6335,13 +6758,13 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Assign role to member
-         * @param {string} guildId Guild ID
-         * @param {string} userId User ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {number} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdMemberUserIdRolesRoleIdPut: async (guildId: string, userId: string, roleId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdMemberUserIdRolesRoleIdPut: async (guildId: number, userId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdMemberUserIdRolesRoleIdPut', 'guildId', guildId)
             // verify required parameter 'userId' is not null or undefined
@@ -6377,11 +6800,11 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Get guild roles
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdRolesGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdRolesGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdRolesGet', 'guildId', guildId)
             const localVarPath = `/guild/{guild_id}/roles`
@@ -6411,12 +6834,12 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Create guild role
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildCreateGuildRoleRequest} req Role data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdRolesPost: async (guildId: string, req: GuildCreateGuildRoleRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdRolesPost: async (guildId: number, req: GuildCreateGuildRoleRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdRolesPost', 'guildId', guildId)
             // verify required parameter 'req' is not null or undefined
@@ -6451,12 +6874,12 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Delete guild role
-         * @param {string} guildId Guild ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdRolesRoleIdDelete: async (guildId: string, roleId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdRolesRoleIdDelete: async (guildId: number, roleId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdRolesRoleIdDelete', 'guildId', guildId)
             // verify required parameter 'roleId' is not null or undefined
@@ -6489,13 +6912,13 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Update guild role
-         * @param {string} guildId Guild ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} roleId Role ID
          * @param {GuildPatchGuildRoleRequest} req Role changes
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        guildGuildIdRolesRoleIdPatch: async (guildId: string, roleId: string, req: GuildPatchGuildRoleRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        guildGuildIdRolesRoleIdPatch: async (guildId: number, roleId: number, req: GuildPatchGuildRoleRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('guildGuildIdRolesRoleIdPatch', 'guildId', guildId)
             // verify required parameter 'roleId' is not null or undefined
@@ -6543,12 +6966,12 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary List channel role permissions
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdRolesGet(guildId: string, channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<GuildChannelRolePermission>>> {
+        async guildGuildIdChannelChannelIdRolesGet(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<GuildChannelRolePermission>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesGet(guildId, channelId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesGet']?.[localVarOperationServerIndex]?.url;
@@ -6557,13 +6980,13 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Remove channel role permission
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdRolesRoleIdDelete(guildId: string, channelId: string, roleId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdChannelChannelIdRolesRoleIdDelete(guildId: number, channelId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdDelete(guildId, channelId, roleId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesRoleIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -6572,13 +6995,13 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get channel role permission
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdRolesRoleIdGet(guildId: string, channelId: string, roleId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildChannelRolePermission>> {
+        async guildGuildIdChannelChannelIdRolesRoleIdGet(guildId: number, channelId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildChannelRolePermission>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdGet(guildId, channelId, roleId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesRoleIdGet']?.[localVarOperationServerIndex]?.url;
@@ -6587,14 +7010,14 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Update channel role permission
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
          * @param {GuildChannelRolePermissionRequest} req Permission mask
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdRolesRoleIdPatch(guildId: string, channelId: string, roleId: string, req: GuildChannelRolePermissionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdChannelChannelIdRolesRoleIdPatch(guildId: number, channelId: number, roleId: number, req: GuildChannelRolePermissionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdPatch(guildId, channelId, roleId, req, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesRoleIdPatch']?.[localVarOperationServerIndex]?.url;
@@ -6603,14 +7026,14 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Set channel role permission (create or replace)
-         * @param {string} guildId Guild ID
-         * @param {string} channelId Channel ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} roleId Role ID
          * @param {GuildChannelRolePermissionRequest} req Permission mask
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdChannelChannelIdRolesRoleIdPut(guildId: string, channelId: string, roleId: string, req: GuildChannelRolePermissionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdChannelChannelIdRolesRoleIdPut(guildId: number, channelId: number, roleId: number, req: GuildChannelRolePermissionRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdRolesRoleIdPut(guildId, channelId, roleId, req, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdChannelChannelIdRolesRoleIdPut']?.[localVarOperationServerIndex]?.url;
@@ -6619,12 +7042,12 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get member roles
-         * @param {string} guildId Guild ID
-         * @param {string} userId User ID
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdMemberUserIdRolesGet(guildId: string, userId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoRole>>> {
+        async guildGuildIdMemberUserIdRolesGet(guildId: number, userId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoRole>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdRolesGet(guildId, userId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdMemberUserIdRolesGet']?.[localVarOperationServerIndex]?.url;
@@ -6633,13 +7056,13 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Remove role from member
-         * @param {string} guildId Guild ID
-         * @param {string} userId User ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {number} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdMemberUserIdRolesRoleIdDelete(guildId: string, userId: string, roleId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdMemberUserIdRolesRoleIdDelete(guildId: number, userId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdRolesRoleIdDelete(guildId, userId, roleId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdMemberUserIdRolesRoleIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -6648,13 +7071,13 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Assign role to member
-         * @param {string} guildId Guild ID
-         * @param {string} userId User ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} userId User ID
+         * @param {number} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdMemberUserIdRolesRoleIdPut(guildId: string, userId: string, roleId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdMemberUserIdRolesRoleIdPut(guildId: number, userId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdRolesRoleIdPut(guildId, userId, roleId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdMemberUserIdRolesRoleIdPut']?.[localVarOperationServerIndex]?.url;
@@ -6663,11 +7086,11 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get guild roles
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdRolesGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoRole>>> {
+        async guildGuildIdRolesGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoRole>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesGet']?.[localVarOperationServerIndex]?.url;
@@ -6676,12 +7099,12 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create guild role
-         * @param {string} guildId Guild ID
+         * @param {number} guildId Guild ID
          * @param {GuildCreateGuildRoleRequest} req Role data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdRolesPost(guildId: string, req: GuildCreateGuildRoleRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoRole>> {
+        async guildGuildIdRolesPost(guildId: number, req: GuildCreateGuildRoleRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoRole>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesPost(guildId, req, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesPost']?.[localVarOperationServerIndex]?.url;
@@ -6690,12 +7113,12 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete guild role
-         * @param {string} guildId Guild ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} roleId Role ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdRolesRoleIdDelete(guildId: string, roleId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async guildGuildIdRolesRoleIdDelete(guildId: number, roleId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesRoleIdDelete(guildId, roleId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesRoleIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -6704,13 +7127,13 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Update guild role
-         * @param {string} guildId Guild ID
-         * @param {string} roleId Role ID
+         * @param {number} guildId Guild ID
+         * @param {number} roleId Role ID
          * @param {GuildPatchGuildRoleRequest} req Role changes
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async guildGuildIdRolesRoleIdPatch(guildId: string, roleId: string, req: GuildPatchGuildRoleRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoRole>> {
+        async guildGuildIdRolesRoleIdPatch(guildId: number, roleId: number, req: GuildPatchGuildRoleRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoRole>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesRoleIdPatch(guildId, roleId, req, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesRoleIdPatch']?.[localVarOperationServerIndex]?.url;
@@ -6985,17 +7408,17 @@ export interface GuildRolesApiInterface {
 export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesGetRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesGet
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Channel ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesGet
      */
-    readonly channelId: string
+    readonly channelId: number
 }
 
 /**
@@ -7006,24 +7429,24 @@ export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesGetRequest {
 export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDelete
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Channel ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDelete
      */
-    readonly channelId: string
+    readonly channelId: number
 
     /**
      * Role ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDelete
      */
-    readonly roleId: string
+    readonly roleId: number
 }
 
 /**
@@ -7034,24 +7457,24 @@ export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdDeleteReque
 export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGet
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Channel ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGet
      */
-    readonly channelId: string
+    readonly channelId: number
 
     /**
      * Role ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGet
      */
-    readonly roleId: string
+    readonly roleId: number
 }
 
 /**
@@ -7062,24 +7485,24 @@ export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdGetRequest 
 export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatch
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Channel ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatch
      */
-    readonly channelId: string
+    readonly channelId: number
 
     /**
      * Role ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatch
      */
-    readonly roleId: string
+    readonly roleId: number
 
     /**
      * Permission mask
@@ -7097,24 +7520,24 @@ export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPatchReques
 export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPut
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Channel ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPut
      */
-    readonly channelId: string
+    readonly channelId: number
 
     /**
      * Role ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPut
      */
-    readonly roleId: string
+    readonly roleId: number
 
     /**
      * Permission mask
@@ -7132,17 +7555,17 @@ export interface GuildRolesApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest 
 export interface GuildRolesApiGuildGuildIdMemberUserIdRolesGetRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesGet
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * User ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesGet
      */
-    readonly userId: string
+    readonly userId: number
 }
 
 /**
@@ -7153,24 +7576,24 @@ export interface GuildRolesApiGuildGuildIdMemberUserIdRolesGetRequest {
 export interface GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDelete
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * User ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDelete
      */
-    readonly userId: string
+    readonly userId: number
 
     /**
      * Role ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDelete
      */
-    readonly roleId: string
+    readonly roleId: number
 }
 
 /**
@@ -7181,24 +7604,24 @@ export interface GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdDeleteRequest {
 export interface GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPut
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * User ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPut
      */
-    readonly userId: string
+    readonly userId: number
 
     /**
      * Role ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPut
      */
-    readonly roleId: string
+    readonly roleId: number
 }
 
 /**
@@ -7209,10 +7632,10 @@ export interface GuildRolesApiGuildGuildIdMemberUserIdRolesRoleIdPutRequest {
 export interface GuildRolesApiGuildGuildIdRolesGetRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdRolesGet
      */
-    readonly guildId: string
+    readonly guildId: number
 }
 
 /**
@@ -7223,10 +7646,10 @@ export interface GuildRolesApiGuildGuildIdRolesGetRequest {
 export interface GuildRolesApiGuildGuildIdRolesPostRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdRolesPost
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Role data
@@ -7244,17 +7667,17 @@ export interface GuildRolesApiGuildGuildIdRolesPostRequest {
 export interface GuildRolesApiGuildGuildIdRolesRoleIdDeleteRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdRolesRoleIdDelete
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Role ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdRolesRoleIdDelete
      */
-    readonly roleId: string
+    readonly roleId: number
 }
 
 /**
@@ -7265,17 +7688,17 @@ export interface GuildRolesApiGuildGuildIdRolesRoleIdDeleteRequest {
 export interface GuildRolesApiGuildGuildIdRolesRoleIdPatchRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdRolesRoleIdPatch
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Role ID
-     * @type {string}
+     * @type {number}
      * @memberof GuildRolesApiGuildGuildIdRolesRoleIdPatch
      */
-    readonly roleId: string
+    readonly roleId: number
 
     /**
      * Role changes
@@ -7448,12 +7871,12 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Create attachment
-         * @param {string} channelId Channel id
+         * @param {number} channelId Channel id
          * @param {MessageUploadAttachmentRequest} request Attachment data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdAttachmentPost: async (channelId: string, request: MessageUploadAttachmentRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdAttachmentPost: async (channelId: number, request: MessageUploadAttachmentRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('messageChannelChannelIdAttachmentPost', 'channelId', channelId)
             // verify required parameter 'request' is not null or undefined
@@ -7488,14 +7911,14 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get messages
-         * @param {string} channelId Channel id
-         * @param {string} [from] Start point for messages
+         * @param {number} channelId Channel id
+         * @param {number} [from] Start point for messages
          * @param {MessageChannelChannelIdGetDirectionEnum} [direction] Select direction
          * @param {number} [limit] Message count limit
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdGet: async (channelId: string, from?: string, direction?: MessageChannelChannelIdGetDirectionEnum, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdGet: async (channelId: number, from?: number, direction?: MessageChannelChannelIdGetDirectionEnum, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('messageChannelChannelIdGet', 'channelId', channelId)
             const localVarPath = `/message/channel/{channel_id}`
@@ -7537,12 +7960,12 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Set channel read state for current user
-         * @param {string} channelId Channel id
-         * @param {string} messageId Message id
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdMessageIdAckPost: async (channelId: string, messageId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdMessageIdAckPost: async (channelId: number, messageId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('messageChannelChannelIdMessageIdAckPost', 'channelId', channelId)
             // verify required parameter 'messageId' is not null or undefined
@@ -7575,12 +7998,12 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Delete message
-         * @param {string} messageId Message id
-         * @param {string} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {number} channelId Channel id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdMessageIdDelete: async (messageId: string, channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdMessageIdDelete: async (messageId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'messageId' is not null or undefined
             assertParamExists('messageChannelChannelIdMessageIdDelete', 'messageId', messageId)
             // verify required parameter 'channelId' is not null or undefined
@@ -7613,13 +8036,13 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Update message
-         * @param {string} messageId Message id
-         * @param {string} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {number} channelId Channel id
          * @param {MessageUpdateMessageRequest} request Message data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdMessageIdPatch: async (messageId: string, channelId: string, request: MessageUpdateMessageRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdMessageIdPatch: async (messageId: number, channelId: number, request: MessageUpdateMessageRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'messageId' is not null or undefined
             assertParamExists('messageChannelChannelIdMessageIdPatch', 'messageId', messageId)
             // verify required parameter 'channelId' is not null or undefined
@@ -7657,12 +8080,12 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Send message
-         * @param {string} channelId Channel id
+         * @param {number} channelId Channel id
          * @param {MessageSendMessageRequest} request Message data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdPost: async (channelId: string, request: MessageSendMessageRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdPost: async (channelId: number, request: MessageSendMessageRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('messageChannelChannelIdPost', 'channelId', channelId)
             // verify required parameter 'request' is not null or undefined
@@ -7697,11 +8120,11 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Send user typing event in the channel
-         * @param {string} channelId Channel id
+         * @param {number} channelId Channel id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        messageChannelChannelIdTypingPost: async (channelId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        messageChannelChannelIdTypingPost: async (channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('messageChannelChannelIdTypingPost', 'channelId', channelId)
             const localVarPath = `/message/channel/{channel_id}/typing`
@@ -7741,12 +8164,12 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create attachment
-         * @param {string} channelId Channel id
+         * @param {number} channelId Channel id
          * @param {MessageUploadAttachmentRequest} request Attachment data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdAttachmentPost(channelId: string, request: MessageUploadAttachmentRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoAttachmentUpload>> {
+        async messageChannelChannelIdAttachmentPost(channelId: number, request: MessageUploadAttachmentRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoAttachmentUpload>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdAttachmentPost(channelId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdAttachmentPost']?.[localVarOperationServerIndex]?.url;
@@ -7755,14 +8178,14 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get messages
-         * @param {string} channelId Channel id
-         * @param {string} [from] Start point for messages
+         * @param {number} channelId Channel id
+         * @param {number} [from] Start point for messages
          * @param {MessageChannelChannelIdGetDirectionEnum} [direction] Select direction
          * @param {number} [limit] Message count limit
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdGet(channelId: string, from?: string, direction?: MessageChannelChannelIdGetDirectionEnum, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoMessage>>> {
+        async messageChannelChannelIdGet(channelId: number, from?: number, direction?: MessageChannelChannelIdGetDirectionEnum, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoMessage>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdGet(channelId, from, direction, limit, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdGet']?.[localVarOperationServerIndex]?.url;
@@ -7771,12 +8194,12 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Set channel read state for current user
-         * @param {string} channelId Channel id
-         * @param {string} messageId Message id
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdMessageIdAckPost(channelId: string, messageId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async messageChannelChannelIdMessageIdAckPost(channelId: number, messageId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdMessageIdAckPost(channelId, messageId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdMessageIdAckPost']?.[localVarOperationServerIndex]?.url;
@@ -7785,12 +8208,12 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete message
-         * @param {string} messageId Message id
-         * @param {string} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {number} channelId Channel id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdMessageIdDelete(messageId: string, channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async messageChannelChannelIdMessageIdDelete(messageId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdMessageIdDelete(messageId, channelId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdMessageIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -7799,13 +8222,13 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Update message
-         * @param {string} messageId Message id
-         * @param {string} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {number} channelId Channel id
          * @param {MessageUpdateMessageRequest} request Message data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdMessageIdPatch(messageId: string, channelId: string, request: MessageUpdateMessageRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessage>> {
+        async messageChannelChannelIdMessageIdPatch(messageId: number, channelId: number, request: MessageUpdateMessageRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessage>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdMessageIdPatch(messageId, channelId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdMessageIdPatch']?.[localVarOperationServerIndex]?.url;
@@ -7814,12 +8237,12 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Send message
-         * @param {string} channelId Channel id
+         * @param {number} channelId Channel id
          * @param {MessageSendMessageRequest} request Message data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdPost(channelId: string, request: MessageSendMessageRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessage>> {
+        async messageChannelChannelIdPost(channelId: number, request: MessageSendMessageRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessage>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdPost(channelId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdPost']?.[localVarOperationServerIndex]?.url;
@@ -7828,11 +8251,11 @@ export const MessageApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Send user typing event in the channel
-         * @param {string} channelId Channel id
+         * @param {number} channelId Channel id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async messageChannelChannelIdTypingPost(channelId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async messageChannelChannelIdTypingPost(channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdTypingPost(channelId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdTypingPost']?.[localVarOperationServerIndex]?.url;
@@ -8007,10 +8430,10 @@ export interface MessageApiInterface {
 export interface MessageApiMessageChannelChannelIdAttachmentPostRequest {
     /**
      * Channel id
-     * @type {string}
+     * @type {number}
      * @memberof MessageApiMessageChannelChannelIdAttachmentPost
      */
-    readonly channelId: string
+    readonly channelId: number
 
     /**
      * Attachment data
@@ -8028,17 +8451,17 @@ export interface MessageApiMessageChannelChannelIdAttachmentPostRequest {
 export interface MessageApiMessageChannelChannelIdGetRequest {
     /**
      * Channel id
-     * @type {string}
+     * @type {number}
      * @memberof MessageApiMessageChannelChannelIdGet
      */
-    readonly channelId: string
+    readonly channelId: number
 
     /**
      * Start point for messages
-     * @type {string}
+     * @type {number}
      * @memberof MessageApiMessageChannelChannelIdGet
      */
-    readonly from?: string
+    readonly from?: number
 
     /**
      * Select direction
@@ -8063,17 +8486,17 @@ export interface MessageApiMessageChannelChannelIdGetRequest {
 export interface MessageApiMessageChannelChannelIdMessageIdAckPostRequest {
     /**
      * Channel id
-     * @type {string}
+     * @type {number}
      * @memberof MessageApiMessageChannelChannelIdMessageIdAckPost
      */
-    readonly channelId: string
+    readonly channelId: number
 
     /**
      * Message id
-     * @type {string}
+     * @type {number}
      * @memberof MessageApiMessageChannelChannelIdMessageIdAckPost
      */
-    readonly messageId: string
+    readonly messageId: number
 }
 
 /**
@@ -8084,17 +8507,17 @@ export interface MessageApiMessageChannelChannelIdMessageIdAckPostRequest {
 export interface MessageApiMessageChannelChannelIdMessageIdDeleteRequest {
     /**
      * Message id
-     * @type {string}
+     * @type {number}
      * @memberof MessageApiMessageChannelChannelIdMessageIdDelete
      */
-    readonly messageId: string
+    readonly messageId: number
 
     /**
      * Channel id
-     * @type {string}
+     * @type {number}
      * @memberof MessageApiMessageChannelChannelIdMessageIdDelete
      */
-    readonly channelId: string
+    readonly channelId: number
 }
 
 /**
@@ -8105,17 +8528,17 @@ export interface MessageApiMessageChannelChannelIdMessageIdDeleteRequest {
 export interface MessageApiMessageChannelChannelIdMessageIdPatchRequest {
     /**
      * Message id
-     * @type {string}
+     * @type {number}
      * @memberof MessageApiMessageChannelChannelIdMessageIdPatch
      */
-    readonly messageId: string
+    readonly messageId: number
 
     /**
      * Channel id
-     * @type {string}
+     * @type {number}
      * @memberof MessageApiMessageChannelChannelIdMessageIdPatch
      */
-    readonly channelId: string
+    readonly channelId: number
 
     /**
      * Message data
@@ -8133,10 +8556,10 @@ export interface MessageApiMessageChannelChannelIdMessageIdPatchRequest {
 export interface MessageApiMessageChannelChannelIdPostRequest {
     /**
      * Channel id
-     * @type {string}
+     * @type {number}
      * @memberof MessageApiMessageChannelChannelIdPost
      */
-    readonly channelId: string
+    readonly channelId: number
 
     /**
      * Message data
@@ -8154,10 +8577,10 @@ export interface MessageApiMessageChannelChannelIdPostRequest {
 export interface MessageApiMessageChannelChannelIdTypingPostRequest {
     /**
      * Channel id
-     * @type {string}
+     * @type {number}
      * @memberof MessageApiMessageChannelChannelIdTypingPost
      */
-    readonly channelId: string
+    readonly channelId: number
 }
 
 /**
@@ -8272,12 +8695,12 @@ export const SearchApiAxiosParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Search messages
-         * @param {string} guildId Guild id
+         * @param {number} guildId Guild id
          * @param {SearchMessageSearchRequest} request Search request data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchGuildIdMessagesPost: async (guildId: string, request: SearchMessageSearchRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        searchGuildIdMessagesPost: async (guildId: number, request: SearchMessageSearchRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('searchGuildIdMessagesPost', 'guildId', guildId)
             // verify required parameter 'request' is not null or undefined
@@ -8358,12 +8781,12 @@ export const SearchApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Search messages
-         * @param {string} guildId Guild id
+         * @param {number} guildId Guild id
          * @param {SearchMessageSearchRequest} request Search request data
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async searchGuildIdMessagesPost(guildId: string, request: SearchMessageSearchRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<SearchMessageSearchResponse>>> {
+        async searchGuildIdMessagesPost(guildId: number, request: SearchMessageSearchRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<SearchMessageSearchResponse>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.searchGuildIdMessagesPost(guildId, request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['SearchApi.searchGuildIdMessagesPost']?.[localVarOperationServerIndex]?.url;
@@ -8451,10 +8874,10 @@ export interface SearchApiInterface {
 export interface SearchApiSearchGuildIdMessagesPostRequest {
     /**
      * Guild id
-     * @type {string}
+     * @type {number}
      * @memberof SearchApiSearchGuildIdMessagesPost
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Search request data
@@ -8521,13 +8944,13 @@ export const UploadApiAxiosParamCreator = function (configuration?: Configuratio
         /**
          * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
          * @summary Upload attachment
-         * @param {string} channelId Channel ID
-         * @param {string} attachmentId Attachment ID
+         * @param {number} channelId Channel ID
+         * @param {number} attachmentId Attachment ID
          * @param {Array<number>} file Binary file to upload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        uploadAttachmentsChannelIdAttachmentIdPost: async (channelId: string, attachmentId: string, file: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        uploadAttachmentsChannelIdAttachmentIdPost: async (channelId: number, attachmentId: number, file: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'channelId' is not null or undefined
             assertParamExists('uploadAttachmentsChannelIdAttachmentIdPost', 'channelId', channelId)
             // verify required parameter 'attachmentId' is not null or undefined
@@ -8565,13 +8988,13 @@ export const UploadApiAxiosParamCreator = function (configuration?: Configuratio
         /**
          * Uploads an avatar image. Resizes to max 128x128 and converts to WebP <= 250KB. Finalizes avatar metadata.
          * @summary Upload user avatar
-         * @param {string} userId User ID
-         * @param {string} avatarId Avatar ID
+         * @param {number} userId User ID
+         * @param {number} avatarId Avatar ID
          * @param {Array<number>} file Binary image payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        uploadAvatarsUserIdAvatarIdPost: async (userId: string, avatarId: string, file: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        uploadAvatarsUserIdAvatarIdPost: async (userId: number, avatarId: number, file: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'userId' is not null or undefined
             assertParamExists('uploadAvatarsUserIdAvatarIdPost', 'userId', userId)
             // verify required parameter 'avatarId' is not null or undefined
@@ -8607,15 +9030,59 @@ export const UploadApiAxiosParamCreator = function (configuration?: Configuratio
             };
         },
         /**
+         * Uploads and finalizes the binary payload for a previously created guild emoji placeholder.
+         * @summary Upload guild emoji image
+         * @param {number} guildId Guild ID
+         * @param {number} emojiId Emoji ID
+         * @param {Array<number>} file Binary emoji image
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        uploadEmojisGuildIdEmojiIdPost: async (guildId: number, emojiId: number, file: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('uploadEmojisGuildIdEmojiIdPost', 'guildId', guildId)
+            // verify required parameter 'emojiId' is not null or undefined
+            assertParamExists('uploadEmojisGuildIdEmojiIdPost', 'emojiId', emojiId)
+            // verify required parameter 'file' is not null or undefined
+            assertParamExists('uploadEmojisGuildIdEmojiIdPost', 'file', file)
+            const localVarPath = `/upload/emojis/{guild_id}/{emoji_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"emoji_id"}}`, encodeURIComponent(String(emojiId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/octet-stream';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(file, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
          * @summary Upload guild icon
-         * @param {string} guildId Guild ID
-         * @param {string} iconId Icon ID
+         * @param {number} guildId Guild ID
+         * @param {number} iconId Icon ID
          * @param {Array<number>} file Binary image payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        uploadIconsGuildIdIconIdPost: async (guildId: string, iconId: string, file: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        uploadIconsGuildIdIconIdPost: async (guildId: number, iconId: number, file: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('uploadIconsGuildIdIconIdPost', 'guildId', guildId)
             // verify required parameter 'iconId' is not null or undefined
@@ -8663,13 +9130,13 @@ export const UploadApiFp = function(configuration?: Configuration) {
         /**
          * Uploads a file for an existing attachment. Stores the original as-is and generates a WebP preview for images/videos. Finalizes the attachment metadata.
          * @summary Upload attachment
-         * @param {string} channelId Channel ID
-         * @param {string} attachmentId Attachment ID
+         * @param {number} channelId Channel ID
+         * @param {number} attachmentId Attachment ID
          * @param {Array<number>} file Binary file to upload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async uploadAttachmentsChannelIdAttachmentIdPost(channelId: string, attachmentId: string, file: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async uploadAttachmentsChannelIdAttachmentIdPost(channelId: number, attachmentId: number, file: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.uploadAttachmentsChannelIdAttachmentIdPost(channelId, attachmentId, file, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UploadApi.uploadAttachmentsChannelIdAttachmentIdPost']?.[localVarOperationServerIndex]?.url;
@@ -8678,28 +9145,43 @@ export const UploadApiFp = function(configuration?: Configuration) {
         /**
          * Uploads an avatar image. Resizes to max 128x128 and converts to WebP <= 250KB. Finalizes avatar metadata.
          * @summary Upload user avatar
-         * @param {string} userId User ID
-         * @param {string} avatarId Avatar ID
+         * @param {number} userId User ID
+         * @param {number} avatarId Avatar ID
          * @param {Array<number>} file Binary image payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async uploadAvatarsUserIdAvatarIdPost(userId: string, avatarId: string, file: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async uploadAvatarsUserIdAvatarIdPost(userId: number, avatarId: number, file: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.uploadAvatarsUserIdAvatarIdPost(userId, avatarId, file, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UploadApi.uploadAvatarsUserIdAvatarIdPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Uploads and finalizes the binary payload for a previously created guild emoji placeholder.
+         * @summary Upload guild emoji image
+         * @param {number} guildId Guild ID
+         * @param {number} emojiId Emoji ID
+         * @param {Array<number>} file Binary emoji image
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async uploadEmojisGuildIdEmojiIdPost(guildId: number, emojiId: number, file: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.uploadEmojisGuildIdEmojiIdPost(guildId, emojiId, file, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UploadApi.uploadEmojisGuildIdEmojiIdPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
          * @summary Upload guild icon
-         * @param {string} guildId Guild ID
-         * @param {string} iconId Icon ID
+         * @param {number} guildId Guild ID
+         * @param {number} iconId Icon ID
          * @param {Array<number>} file Binary image payload
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async uploadIconsGuildIdIconIdPost(guildId: string, iconId: string, file: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async uploadIconsGuildIdIconIdPost(guildId: number, iconId: number, file: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.uploadIconsGuildIdIconIdPost(guildId, iconId, file, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UploadApi.uploadIconsGuildIdIconIdPost']?.[localVarOperationServerIndex]?.url;
@@ -8734,6 +9216,16 @@ export const UploadApiFactory = function (configuration?: Configuration, basePat
          */
         uploadAvatarsUserIdAvatarIdPost(requestParameters: UploadApiUploadAvatarsUserIdAvatarIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
             return localVarFp.uploadAvatarsUserIdAvatarIdPost(requestParameters.userId, requestParameters.avatarId, requestParameters.file, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Uploads and finalizes the binary payload for a previously created guild emoji placeholder.
+         * @summary Upload guild emoji image
+         * @param {UploadApiUploadEmojisGuildIdEmojiIdPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        uploadEmojisGuildIdEmojiIdPost(requestParameters: UploadApiUploadEmojisGuildIdEmojiIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.uploadEmojisGuildIdEmojiIdPost(requestParameters.guildId, requestParameters.emojiId, requestParameters.file, options).then((request) => request(axios, basePath));
         },
         /**
          * Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
@@ -8775,6 +9267,16 @@ export interface UploadApiInterface {
     uploadAvatarsUserIdAvatarIdPost(requestParameters: UploadApiUploadAvatarsUserIdAvatarIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
+     * Uploads and finalizes the binary payload for a previously created guild emoji placeholder.
+     * @summary Upload guild emoji image
+     * @param {UploadApiUploadEmojisGuildIdEmojiIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UploadApiInterface
+     */
+    uploadEmojisGuildIdEmojiIdPost(requestParameters: UploadApiUploadEmojisGuildIdEmojiIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
      * Uploads a guild icon. Resizes to max 128x128 and converts to WebP <= 250KB. Only guild owner can upload. Sets guild icon and emits update.
      * @summary Upload guild icon
      * @param {UploadApiUploadIconsGuildIdIconIdPostRequest} requestParameters Request parameters.
@@ -8794,17 +9296,17 @@ export interface UploadApiInterface {
 export interface UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest {
     /**
      * Channel ID
-     * @type {string}
+     * @type {number}
      * @memberof UploadApiUploadAttachmentsChannelIdAttachmentIdPost
      */
-    readonly channelId: string
+    readonly channelId: number
 
     /**
      * Attachment ID
-     * @type {string}
+     * @type {number}
      * @memberof UploadApiUploadAttachmentsChannelIdAttachmentIdPost
      */
-    readonly attachmentId: string
+    readonly attachmentId: number
 
     /**
      * Binary file to upload
@@ -8822,22 +9324,50 @@ export interface UploadApiUploadAttachmentsChannelIdAttachmentIdPostRequest {
 export interface UploadApiUploadAvatarsUserIdAvatarIdPostRequest {
     /**
      * User ID
-     * @type {string}
+     * @type {number}
      * @memberof UploadApiUploadAvatarsUserIdAvatarIdPost
      */
-    readonly userId: string
+    readonly userId: number
 
     /**
      * Avatar ID
-     * @type {string}
+     * @type {number}
      * @memberof UploadApiUploadAvatarsUserIdAvatarIdPost
      */
-    readonly avatarId: string
+    readonly avatarId: number
 
     /**
      * Binary image payload
      * @type {Array<number>}
      * @memberof UploadApiUploadAvatarsUserIdAvatarIdPost
+     */
+    readonly file: Array<number>
+}
+
+/**
+ * Request parameters for uploadEmojisGuildIdEmojiIdPost operation in UploadApi.
+ * @export
+ * @interface UploadApiUploadEmojisGuildIdEmojiIdPostRequest
+ */
+export interface UploadApiUploadEmojisGuildIdEmojiIdPostRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof UploadApiUploadEmojisGuildIdEmojiIdPost
+     */
+    readonly guildId: number
+
+    /**
+     * Emoji ID
+     * @type {number}
+     * @memberof UploadApiUploadEmojisGuildIdEmojiIdPost
+     */
+    readonly emojiId: number
+
+    /**
+     * Binary emoji image
+     * @type {Array<number>}
+     * @memberof UploadApiUploadEmojisGuildIdEmojiIdPost
      */
     readonly file: Array<number>
 }
@@ -8850,17 +9380,17 @@ export interface UploadApiUploadAvatarsUserIdAvatarIdPostRequest {
 export interface UploadApiUploadIconsGuildIdIconIdPostRequest {
     /**
      * Guild ID
-     * @type {string}
+     * @type {number}
      * @memberof UploadApiUploadIconsGuildIdIconIdPost
      */
-    readonly guildId: string
+    readonly guildId: number
 
     /**
      * Icon ID
-     * @type {string}
+     * @type {number}
      * @memberof UploadApiUploadIconsGuildIdIconIdPost
      */
-    readonly iconId: string
+    readonly iconId: number
 
     /**
      * Binary image payload
@@ -8899,6 +9429,18 @@ export class UploadApi extends BaseAPI implements UploadApiInterface {
      */
     public uploadAvatarsUserIdAvatarIdPost(requestParameters: UploadApiUploadAvatarsUserIdAvatarIdPostRequest, options?: RawAxiosRequestConfig) {
         return UploadApiFp(this.configuration).uploadAvatarsUserIdAvatarIdPost(requestParameters.userId, requestParameters.avatarId, requestParameters.file, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Uploads and finalizes the binary payload for a previously created guild emoji placeholder.
+     * @summary Upload guild emoji image
+     * @param {UploadApiUploadEmojisGuildIdEmojiIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UploadApi
+     */
+    public uploadEmojisGuildIdEmojiIdPost(requestParameters: UploadApiUploadEmojisGuildIdEmojiIdPostRequest, options?: RawAxiosRequestConfig) {
+        return UploadApiFp(this.configuration).uploadEmojisGuildIdEmojiIdPost(requestParameters.guildId, requestParameters.emojiId, requestParameters.file, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -8961,11 +9503,11 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Delete my avatar by ID
-         * @param {string} avatarId Avatar ID
+         * @param {number} avatarId Avatar ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeAvatarsAvatarIdDelete: async (avatarId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        userMeAvatarsAvatarIdDelete: async (avatarId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'avatarId' is not null or undefined
             assertParamExists('userMeAvatarsAvatarIdDelete', 'avatarId', avatarId)
             const localVarPath = `/user/me/avatars/{avatar_id}`
@@ -9331,11 +9873,11 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Get or create DM with a user
-         * @param {string} userId User id
+         * @param {number} userId User id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeFriendsUserIdGet: async (userId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        userMeFriendsUserIdGet: async (userId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'userId' is not null or undefined
             assertParamExists('userMeFriendsUserIdGet', 'userId', userId)
             const localVarPath = `/user/me/friends/{user_id}`
@@ -9429,11 +9971,11 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Get user guild member
-         * @param {string} guildId Guild id
+         * @param {number} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeGuildsGuildIdMemberGet: async (guildId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        userMeGuildsGuildIdMemberGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'guildId' is not null or undefined
             assertParamExists('userMeGuildsGuildIdMemberGet', 'guildId', guildId)
             const localVarPath = `/user/me/guilds/{guild_id}/member`
@@ -9627,11 +10169,11 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete my avatar by ID
-         * @param {string} avatarId Avatar ID
+         * @param {number} avatarId Avatar ID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeAvatarsAvatarIdDelete(avatarId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+        async userMeAvatarsAvatarIdDelete(avatarId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.userMeAvatarsAvatarIdDelete(avatarId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeAvatarsAvatarIdDelete']?.[localVarOperationServerIndex]?.url;
@@ -9766,11 +10308,11 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get or create DM with a user
-         * @param {string} userId User id
+         * @param {number} userId User id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeFriendsUserIdGet(userId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
+        async userMeFriendsUserIdGet(userId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.userMeFriendsUserIdGet(userId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeFriendsUserIdGet']?.[localVarOperationServerIndex]?.url;
@@ -9804,11 +10346,11 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get user guild member
-         * @param {string} guildId Guild id
+         * @param {number} guildId Guild id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeGuildsGuildIdMemberGet(guildId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMember>> {
+        async userMeGuildsGuildIdMemberGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMember>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.userMeGuildsGuildIdMemberGet(guildId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeGuildsGuildIdMemberGet']?.[localVarOperationServerIndex]?.url;
@@ -10299,10 +10841,10 @@ export interface UserApiUserMeAvatarPostRequest {
 export interface UserApiUserMeAvatarsAvatarIdDeleteRequest {
     /**
      * Avatar ID
-     * @type {string}
+     * @type {number}
      * @memberof UserApiUserMeAvatarsAvatarIdDelete
      */
-    readonly avatarId: string
+    readonly avatarId: number
 }
 
 /**
@@ -10397,10 +10939,10 @@ export interface UserApiUserMeFriendsRequestsPostRequest {
 export interface UserApiUserMeFriendsUserIdGetRequest {
     /**
      * User id
-     * @type {string}
+     * @type {number}
      * @memberof UserApiUserMeFriendsUserIdGet
      */
-    readonly userId: string
+    readonly userId: number
 }
 
 /**
@@ -10425,10 +10967,10 @@ export interface UserApiUserMeGuildsGuildIdDeleteRequest {
 export interface UserApiUserMeGuildsGuildIdMemberGetRequest {
     /**
      * Guild id
-     * @type {string}
+     * @type {number}
      * @memberof UserApiUserMeGuildsGuildIdMemberGet
      */
-    readonly guildId: string
+    readonly guildId: number
 }
 
 /**

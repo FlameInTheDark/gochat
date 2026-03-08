@@ -29,6 +29,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
+	"github.com/FlameInTheDark/gochat/internal/embedmq"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/server"
@@ -46,6 +47,10 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/channel/:channel_id<int>/typing", e.Typing)
 }
 
+type embedQueue interface {
+	MakeEmbed(msg embedmq.MakeEmbedRequest) error
+}
+
 type entity struct {
 	name        string
 	uploadLimit int64
@@ -53,6 +58,7 @@ type entity struct {
 	log         *slog.Logger
 	mqt         mq.SendTransporter
 	imq         *indexmq.IndexMQ
+	emq         embedQueue
 
 	cache cache.Cache
 
@@ -83,7 +89,7 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ, uploadLimit int64, attachTTLSeconds int64, cache cache.Cache, log *slog.Logger) server.Entity {
+func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ, emq embedQueue, uploadLimit int64, attachTTLSeconds int64, cache cache.Cache, log *slog.Logger) server.Entity {
 	return &entity{
 		name:        entityName,
 		uploadLimit: uploadLimit,
@@ -91,6 +97,7 @@ func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ
 		log:         log,
 		mqt:         t,
 		imq:         imq,
+		emq:         emq,
 		av:          avatar.New(cql),
 		cache:       cache,
 		user:        user.New(pg.Conn()),

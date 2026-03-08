@@ -8,6 +8,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/FlameInTheDark/gochat/internal/embed"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/helper"
@@ -245,6 +246,15 @@ func (e *entity) executeSearch(c *fiber.Ctx, req *MessageSearchRequest, guildID 
 			}
 		}
 
+		flags := model.NormalizeMessageFlags(m.Flags)
+		embeds, err := embed.ParseMergedEmbeds(m.EmbedsJSON, m.AutoEmbedsJSON, model.HasMessageFlag(flags, model.MessageFlagSuppressEmbeds))
+		if err != nil {
+			if e.log != nil {
+				e.log.Error("failed to decode message embeds", "message_id", m.Id, "error", err.Error())
+			}
+			embeds = nil
+		}
+
 		if u, ok := userMap[m.UserId]; ok {
 			resp.Messages = append(resp.Messages, dto.Message{
 				Id:        m.Id,
@@ -256,6 +266,9 @@ func (e *entity) executeSearch(c *fiber.Ctx, req *MessageSearchRequest, guildID 
 				},
 				Content:     m.Content,
 				Attachments: dtoAts,
+				Embeds:      embeds,
+				Flags:       flags,
+				Type:        m.Type,
 				UpdatedAt:   m.EditedAt,
 			})
 			continue
@@ -267,6 +280,9 @@ func (e *entity) executeSearch(c *fiber.Ctx, req *MessageSearchRequest, guildID 
 			Author:      dto.User{},
 			Content:     m.Content,
 			Attachments: dtoAts,
+			Embeds:      embeds,
+			Flags:       flags,
+			Type:        m.Type,
 			UpdatedAt:   m.EditedAt,
 		})
 	}

@@ -11,24 +11,25 @@ import (
 )
 
 const (
-	createMessage         = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, attachments, type) VALUES (?, ?, ?, ?, ?, ?, 0)`
-	createSystemMessage   = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, type) VALUES (?, ?, ?, ?, ?, ?)`
-	updateMessage         = `UPDATE gochat.messages SET content = ?, edited_at = toTimestamp(now()) WHERE channel_id = ? AND id = ? AND bucket = ?`
+	createMessage         = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, attachments, embeds, auto_embeds, flags, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
+	createSystemMessage   = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, flags, type) VALUES (?, ?, ?, ?, ?, 0, ?)`
+	updateMessage         = `UPDATE gochat.messages SET content = ?, embeds = ?, auto_embeds = ?, flags = ?, edited_at = toTimestamp(now()) WHERE channel_id = ? AND id = ? AND bucket = ?`
+	updateGeneratedEmbeds = `UPDATE gochat.messages SET auto_embeds = ? WHERE channel_id = ? AND id = ? AND bucket = ?`
 	deleteMessage         = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id = ?`
 	deleteChannelMessages = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket IN ?`
-	getMessage            = `SELECT id, channel_id, user_id, content, attachments, edited_at, type FROM gochat.messages WHERE id = ? AND channel_id = ? AND bucket = ?`
-	getMessagesBefore     = `SELECT id, channel_id, user_id, content, attachments, edited_at, type FROM gochat.messages WHERE channel_id = ? AND id <= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
-	getMessagesAfter      = `SELECT id, channel_id, user_id, content, attachments, edited_at, type FROM gochat.messages WHERE channel_id = ? AND id >= ? AND bucket = ? ORDER BY id LIMIT ?`
-	getMessagesList       = `SELECT id, channel_id, user_id, content, attachments, edited_at, type FROM gochat.messages WHERE id IN ?`
-	getMessagesByIds      = `SELECT id, channel_id, user_id, content, attachments, edited_at, type FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id IN ?;
+	getMessage            = `SELECT id, channel_id, user_id, content, attachments, embeds, auto_embeds, flags, edited_at, type FROM gochat.messages WHERE id = ? AND channel_id = ? AND bucket = ?`
+	getMessagesBefore     = `SELECT id, channel_id, user_id, content, attachments, embeds, auto_embeds, flags, edited_at, type FROM gochat.messages WHERE channel_id = ? AND id <= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
+	getMessagesAfter      = `SELECT id, channel_id, user_id, content, attachments, embeds, auto_embeds, flags, edited_at, type FROM gochat.messages WHERE channel_id = ? AND id >= ? AND bucket = ? ORDER BY id LIMIT ?`
+	getMessagesList       = `SELECT id, channel_id, user_id, content, attachments, embeds, auto_embeds, flags, edited_at, type FROM gochat.messages WHERE id IN ?`
+	getMessagesByIds      = `SELECT id, channel_id, user_id, content, attachments, embeds, auto_embeds, flags, edited_at, type FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id IN ?;
 `
 )
 
-func (e *Entity) CreateMessage(ctx context.Context, id, channelId, userId int64, content string, attachments []int64) error {
+func (e *Entity) CreateMessage(ctx context.Context, id, channelID, userID int64, content string, attachments []int64, embedsJSON, autoEmbedsJSON string) error {
 	err := e.c.Session().
 		Query(createMessage).
 		WithContext(ctx).
-		Bind(channelId, idgen.GetBucket(id), id, userId, content, attachments).
+		Bind(channelID, idgen.GetBucket(id), id, userID, content, attachments, embedsJSON, autoEmbedsJSON, 0).
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to create message: %w", err)
@@ -36,11 +37,11 @@ func (e *Entity) CreateMessage(ctx context.Context, id, channelId, userId int64,
 	return nil
 }
 
-func (e *Entity) CreateSystemMessage(ctx context.Context, id, channelId, userId int64, content string, msgType model.MessageType) error {
+func (e *Entity) CreateSystemMessage(ctx context.Context, id, channelID, userID int64, content string, msgType model.MessageType) error {
 	err := e.c.Session().
 		Query(createSystemMessage).
 		WithContext(ctx).
-		Bind(channelId, idgen.GetBucket(id), id, userId, content, int(msgType)).
+		Bind(channelID, idgen.GetBucket(id), id, userID, content, int(msgType)).
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to create message: %w", err)
@@ -48,11 +49,11 @@ func (e *Entity) CreateSystemMessage(ctx context.Context, id, channelId, userId 
 	return nil
 }
 
-func (e *Entity) UpdateMessage(ctx context.Context, id, channel_id int64, content string) error {
+func (e *Entity) UpdateMessage(ctx context.Context, id, channelID int64, content, embedsJSON, autoEmbedsJSON string, flags int) error {
 	err := e.c.Session().
 		Query(updateMessage).
 		WithContext(ctx).
-		Bind(content, channel_id, id, idgen.GetBucket(id)).
+		Bind(content, embedsJSON, autoEmbedsJSON, flags, channelID, id, idgen.GetBucket(id)).
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to update message: %w", err)
@@ -60,11 +61,23 @@ func (e *Entity) UpdateMessage(ctx context.Context, id, channel_id int64, conten
 	return nil
 }
 
-func (e *Entity) DeleteMessage(ctx context.Context, id, channelId int64) error {
+func (e *Entity) UpdateGeneratedEmbeds(ctx context.Context, id, channelID int64, autoEmbedsJSON string) error {
+	err := e.c.Session().
+		Query(updateGeneratedEmbeds).
+		WithContext(ctx).
+		Bind(autoEmbedsJSON, channelID, id, idgen.GetBucket(id)).
+		Exec()
+	if err != nil {
+		return fmt.Errorf("unable to update generated embeds: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) DeleteMessage(ctx context.Context, id, channelID int64) error {
 	err := e.c.Session().
 		Query(deleteMessage).
 		WithContext(ctx).
-		Bind(channelId, idgen.GetBucket(id), id).
+		Bind(channelID, idgen.GetBucket(id), id).
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to delete message: %w", err)
@@ -72,8 +85,8 @@ func (e *Entity) DeleteMessage(ctx context.Context, id, channelId int64) error {
 	return nil
 }
 
-func (e *Entity) DeleteChannelMessages(ctx context.Context, channel_id, lastId int64) error {
-	var first, last = idgen.GetBucket(channel_id), idgen.GetBucket(lastId)
+func (e *Entity) DeleteChannelMessages(ctx context.Context, channelID, lastID int64) error {
+	first, last := idgen.GetBucket(channelID), idgen.GetBucket(lastID)
 	length := last - first + 1
 	buckets := make([]int64, length)
 	for i := int64(0); i < length; i++ {
@@ -82,7 +95,7 @@ func (e *Entity) DeleteChannelMessages(ctx context.Context, channel_id, lastId i
 	err := e.c.Session().
 		Query(deleteChannelMessages).
 		WithContext(ctx).
-		Bind(channel_id, buckets).
+		Bind(channelID, buckets).
 		Exec()
 	if err != nil && !errors.Is(err, gocql.ErrNotFound) {
 		return fmt.Errorf("unable to delete messages: %w", err)
@@ -90,140 +103,134 @@ func (e *Entity) DeleteChannelMessages(ctx context.Context, channel_id, lastId i
 	return nil
 }
 
-func (e *Entity) GetMessage(ctx context.Context, id, channelId int64) (model.Message, error) {
+func (e *Entity) GetMessage(ctx context.Context, id, channelID int64) (model.Message, error) {
 	var m model.Message
 	err := e.c.Session().
 		Query(getMessage).
 		WithContext(ctx).
-		Bind(id, channelId, idgen.GetBucket(id)).
-		Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt, &m.Type)
+		Bind(id, channelID, idgen.GetBucket(id)).
+		Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type)
 	if err != nil {
 		return m, fmt.Errorf("unable to get message: %w", err)
 	}
 	return m, nil
 }
 
-func (e *Entity) GetMessagesBefore(ctx context.Context, channelId, msgId int64, limit int) ([]model.Message, []int64, error) {
+func (e *Entity) GetMessagesBefore(ctx context.Context, channelID, msgID int64, limit int) ([]model.Message, []int64, error) {
 	var msgs []model.Message
-	var users = make(map[int64]bool)
-	if msgId <= channelId {
+	users := make(map[int64]bool)
+	if msgID <= channelID {
 		return msgs, nil, nil
 	}
-	lastBucket := idgen.GetBucket(msgId)
-	endBucket := idgen.GetBucket(channelId)
+	lastBucket := idgen.GetBucket(msgID)
+	endBucket := idgen.GetBucket(channelID)
 	for {
 		iter := e.c.Session().
 			Query(getMessagesBefore).
 			WithContext(ctx).
-			Bind(channelId, msgId, lastBucket, limit-len(msgs)).
+			Bind(channelID, msgID, lastBucket, limit-len(msgs)).
 			Iter()
 		var m model.Message
-		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt, &m.Type) {
-			msgs = append(msgs, m)
+		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type) {
+			msgs = append(msgs, cloneMessageRow(m))
 			users[m.UserId] = true
 		}
-		err := iter.Close()
-		if err != nil {
+		if err := iter.Close(); err != nil {
 			return nil, nil, fmt.Errorf("unable to get messages before: %w", err)
 		}
 		if len(msgs) == limit || lastBucket <= endBucket {
 			break
-		} else {
-			lastBucket = lastBucket - 1
 		}
+		lastBucket--
 	}
-	var uids []int64
+	var userIDs []int64
 	for id := range users {
-		uids = append(uids, id)
+		userIDs = append(userIDs, id)
 	}
-	return msgs, uids, nil
+	return msgs, userIDs, nil
 }
 
-func (e *Entity) GetMessagesAfter(ctx context.Context, channelId, msgId, lastChannelMessage int64, limit int) ([]model.Message, []int64, error) {
+func (e *Entity) GetMessagesAfter(ctx context.Context, channelID, msgID, lastChannelMessage int64, limit int) ([]model.Message, []int64, error) {
 	var msgs []model.Message
-	var users = make(map[int64]bool)
-	if msgId <= channelId {
+	users := make(map[int64]bool)
+	if msgID <= channelID {
 		return msgs, nil, nil
 	}
-	lastBucket := idgen.GetBucket(msgId)
+	lastBucket := idgen.GetBucket(msgID)
 	endBucket := idgen.GetBucket(lastChannelMessage)
 	for {
 		iter := e.c.Session().
 			Query(getMessagesAfter).
 			WithContext(ctx).
-			Bind(channelId, msgId, lastBucket, limit-len(msgs)).
+			Bind(channelID, msgID, lastBucket, limit-len(msgs)).
 			Iter()
 		var m model.Message
-		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt, &m.Type) {
-			msgs = append(msgs, m)
+		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type) {
+			msgs = append(msgs, cloneMessageRow(m))
 			users[m.UserId] = true
 		}
-		err := iter.Close()
-		if err != nil {
+		if err := iter.Close(); err != nil {
 			return nil, nil, fmt.Errorf("unable to get messages before: %w", err)
 		}
 		if len(msgs) == limit || lastBucket >= endBucket {
 			break
-		} else {
-			lastBucket = lastBucket + 1
 		}
+		lastBucket++
 	}
-	var uids []int64
+	var userIDs []int64
 	for id := range users {
-		uids = append(uids, id)
+		userIDs = append(userIDs, id)
 	}
-	return msgs, uids, nil
+	return msgs, userIDs, nil
 }
 
-func (e *Entity) GetMessagesAround(ctx context.Context, channelId, msgId, lastChannelMessage int64, limit int) ([]model.Message, []int64, error) {
-	beforemsgs, beforeuids, err := e.GetMessagesBefore(ctx, channelId, msgId, limit/2)
+func (e *Entity) GetMessagesAround(ctx context.Context, channelID, msgID, lastChannelMessage int64, limit int) ([]model.Message, []int64, error) {
+	beforeMsgs, beforeUserIDs, err := e.GetMessagesBefore(ctx, channelID, msgID, limit/2)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	aftermsgs, afteruids, err := e.GetMessagesAfter(ctx, channelId, msgId, lastChannelMessage, limit/2)
+	afterMsgs, afterUserIDs, err := e.GetMessagesAfter(ctx, channelID, msgID, lastChannelMessage, limit/2)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	var msgs []model.Message
-
-	if len(aftermsgs) > 1 {
-		msgs = append(beforemsgs, aftermsgs[1:]...)
+	if len(afterMsgs) > 1 {
+		msgs = append(beforeMsgs, afterMsgs[1:]...)
 	} else {
-		msgs = beforemsgs
+		msgs = beforeMsgs
 	}
 
-	return msgs, append(beforeuids, afteruids...), nil
+	return msgs, append(beforeUserIDs, afterUserIDs...), nil
 }
 
-func (e *Entity) GetMessagesList(ctx context.Context, msgIds []int64) ([]model.Message, error) {
+func (e *Entity) GetMessagesList(ctx context.Context, msgIDs []int64) ([]model.Message, error) {
 	var msgs []model.Message
 	iter := e.c.Session().
 		Query(getMessagesList).
 		WithContext(ctx).
-		Bind(msgIds).
+		Bind(msgIDs).
 		Iter()
 	var m model.Message
-	for iter.Scan(&m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt, &m.Type) {
-		msgs = append(msgs, m)
+	for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type) {
+		msgs = append(msgs, cloneMessageRow(m))
 	}
-	err := iter.Close()
-	if err != nil {
+	if err := iter.Close(); err != nil {
 		return nil, fmt.Errorf("unable to get messages list: %w", err)
 	}
 	return msgs, nil
 }
 
-func (e *Entity) GetChannelMessagesByIDs(ctx context.Context, channelId int64, ids []int64) ([]model.Message, error) {
+func (e *Entity) GetChannelMessagesByIDs(ctx context.Context, channelID int64, ids []int64) ([]model.Message, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
 
 	byBucket := make(map[int][]int64)
 	for _, id := range ids {
-		b := int(idgen.GetBucket(id))
-		byBucket[b] = append(byBucket[b], id)
+		bucket := int(idgen.GetBucket(id))
+		byBucket[bucket] = append(byBucket[bucket], id)
 	}
 
 	const maxIN = 100
@@ -244,18 +251,13 @@ func (e *Entity) GetChannelMessagesByIDs(ctx context.Context, channelId int64, i
 	for bucket, idList := range byBucket {
 		for _, part := range chunk(idList, maxIN) {
 			iter := e.c.Session().
-				Query(getMessagesByIds, channelId, bucket, part).
+				Query(getMessagesByIds, channelID, bucket, part).
 				WithContext(ctx).
 				Iter()
 
 			var m model.Message
-			for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EditedAt, &m.Type) {
-				// copy slice to avoid reuse issues
-				mm := m
-				if mm.Attachments != nil {
-					mm.Attachments = append([]int64(nil), mm.Attachments...)
-				}
-				results = append(results, mm)
+			for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type) {
+				results = append(results, cloneMessageRow(m))
 			}
 			if err := iter.Close(); err != nil {
 				return nil, fmt.Errorf("unable to get messages list: %w", err)
@@ -264,15 +266,35 @@ func (e *Entity) GetChannelMessagesByIDs(ctx context.Context, channelId int64, i
 	}
 
 	byID := make(map[int64]model.Message, len(results))
-	for _, m := range results {
-		byID[m.Id] = m
+	for _, message := range results {
+		byID[message.Id] = message
 	}
 
 	out := make([]model.Message, 0, len(ids))
 	for _, id := range ids {
-		if m, ok := byID[id]; ok {
-			out = append(out, m)
+		if message, ok := byID[id]; ok {
+			out = append(out, message)
 		}
 	}
 	return out, nil
+}
+
+func cloneMessageRow(m model.Message) model.Message {
+	mm := m
+	if mm.Attachments != nil {
+		mm.Attachments = append([]int64(nil), mm.Attachments...)
+	}
+	if mm.EmbedsJSON != nil {
+		embedsJSON := *mm.EmbedsJSON
+		mm.EmbedsJSON = &embedsJSON
+	}
+	if mm.AutoEmbedsJSON != nil {
+		autoEmbedsJSON := *mm.AutoEmbedsJSON
+		mm.AutoEmbedsJSON = &autoEmbedsJSON
+	}
+	if mm.Flags != nil {
+		flags := *mm.Flags
+		mm.Flags = &flags
+	}
+	return mm
 }

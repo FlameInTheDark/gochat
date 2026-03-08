@@ -157,8 +157,20 @@ services:
       opensearch:
         condition: service_started
 
-  # ---------- Environment services ----------
+  embedder:
+    image: gochat/embedder
+    build:
+      dockerfile: embedder.Dockerfile
+    restart: always
+    volumes:
+      - ./embedder_config.yaml:/dist/config.yaml
+    depends_on:
+      scylla:
+        condition: service_healthy
+      nats:
+        condition: service_started
 
+  # ---------- Environment services ----------
   scylla:
     image: scylladb/scylla:6.2
     volumes:
@@ -397,4 +409,5 @@ networks:
     name: gochat_traefik
   citus:
     name: gochat_citus
+
 

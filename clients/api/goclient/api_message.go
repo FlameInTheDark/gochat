@@ -26,7 +26,7 @@ type MessageAPIService service
 type ApiMessageChannelChannelIdAttachmentPostRequest struct {
 	ctx        context.Context
 	ApiService *MessageAPIService
-	channelId  int64
+	channelId  int32
 	request    *MessageUploadAttachmentRequest
 }
 
@@ -47,7 +47,7 @@ MessageChannelChannelIdAttachmentPost Create attachment
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdAttachmentPostRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdAttachmentPost(ctx context.Context, channelId int64) ApiMessageChannelChannelIdAttachmentPostRequest {
+func (a *MessageAPIService) MessageChannelChannelIdAttachmentPost(ctx context.Context, channelId int32) ApiMessageChannelChannelIdAttachmentPostRequest {
 	return ApiMessageChannelChannelIdAttachmentPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -183,14 +183,14 @@ func (a *MessageAPIService) MessageChannelChannelIdAttachmentPostExecute(r ApiMe
 type ApiMessageChannelChannelIdGetRequest struct {
 	ctx        context.Context
 	ApiService *MessageAPIService
-	channelId  int64
-	from       *int64
+	channelId  int32
+	from       *int32
 	direction  *string
 	limit      *int32
 }
 
 // Start point for messages
-func (r ApiMessageChannelChannelIdGetRequest) From(from int64) ApiMessageChannelChannelIdGetRequest {
+func (r ApiMessageChannelChannelIdGetRequest) From(from int32) ApiMessageChannelChannelIdGetRequest {
 	r.from = &from
 	return r
 }
@@ -218,7 +218,7 @@ MessageChannelChannelIdGet Get messages
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdGetRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdGet(ctx context.Context, channelId int64) ApiMessageChannelChannelIdGetRequest {
+func (a *MessageAPIService) MessageChannelChannelIdGet(ctx context.Context, channelId int32) ApiMessageChannelChannelIdGetRequest {
 	return ApiMessageChannelChannelIdGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -358,8 +358,8 @@ func (a *MessageAPIService) MessageChannelChannelIdGetExecute(r ApiMessageChanne
 type ApiMessageChannelChannelIdMessageIdAckPostRequest struct {
 	ctx        context.Context
 	ApiService *MessageAPIService
-	channelId  int64
-	messageId  int64
+	channelId  int32
+	messageId  int32
 }
 
 func (r ApiMessageChannelChannelIdMessageIdAckPostRequest) Execute() (string, *http.Response, error) {
@@ -374,7 +374,7 @@ MessageChannelChannelIdMessageIdAckPost Set channel read state for current user
 	@param messageId Message id
 	@return ApiMessageChannelChannelIdMessageIdAckPostRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPost(ctx context.Context, channelId int64, messageId int64) ApiMessageChannelChannelIdMessageIdAckPostRequest {
+func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPost(ctx context.Context, channelId int32, messageId int32) ApiMessageChannelChannelIdMessageIdAckPostRequest {
 	return ApiMessageChannelChannelIdMessageIdAckPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -485,8 +485,8 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPostExecute(r Api
 type ApiMessageChannelChannelIdMessageIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *MessageAPIService
-	messageId  int64
-	channelId  int64
+	messageId  int32
+	channelId  int32
 }
 
 func (r ApiMessageChannelChannelIdMessageIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -501,7 +501,7 @@ MessageChannelChannelIdMessageIdDelete Delete message
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdMessageIdDeleteRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdMessageIdDelete(ctx context.Context, messageId int64, channelId int64) ApiMessageChannelChannelIdMessageIdDeleteRequest {
+func (a *MessageAPIService) MessageChannelChannelIdMessageIdDelete(ctx context.Context, messageId int32, channelId int32) ApiMessageChannelChannelIdMessageIdDeleteRequest {
 	return ApiMessageChannelChannelIdMessageIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -634,8 +634,8 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdDeleteExecute(r ApiM
 type ApiMessageChannelChannelIdMessageIdPatchRequest struct {
 	ctx        context.Context
 	ApiService *MessageAPIService
-	messageId  int64
-	channelId  int64
+	messageId  int32
+	channelId  int32
 	request    *MessageUpdateMessageRequest
 }
 
@@ -657,7 +657,7 @@ MessageChannelChannelIdMessageIdPatch Update message
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdMessageIdPatchRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatch(ctx context.Context, messageId int64, channelId int64) ApiMessageChannelChannelIdMessageIdPatchRequest {
+func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatch(ctx context.Context, messageId int32, channelId int32) ApiMessageChannelChannelIdMessageIdPatchRequest {
 	return ApiMessageChannelChannelIdMessageIdPatchRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -795,7 +795,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatchExecute(r ApiMe
 type ApiMessageChannelChannelIdPostRequest struct {
 	ctx        context.Context
 	ApiService *MessageAPIService
-	channelId  int64
+	channelId  int32
 	request    *MessageSendMessageRequest
 }
 
@@ -816,7 +816,7 @@ MessageChannelChannelIdPost Send message
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdPostRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdPost(ctx context.Context, channelId int64) ApiMessageChannelChannelIdPostRequest {
+func (a *MessageAPIService) MessageChannelChannelIdPost(ctx context.Context, channelId int32) ApiMessageChannelChannelIdPostRequest {
 	return ApiMessageChannelChannelIdPostRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -952,7 +952,7 @@ func (a *MessageAPIService) MessageChannelChannelIdPostExecute(r ApiMessageChann
 type ApiMessageChannelChannelIdTypingPostRequest struct {
 	ctx        context.Context
 	ApiService *MessageAPIService
-	channelId  int64
+	channelId  int32
 }
 
 func (r ApiMessageChannelChannelIdTypingPostRequest) Execute() (string, *http.Response, error) {
@@ -966,7 +966,7 @@ MessageChannelChannelIdTypingPost Send user typing event in the channel
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdTypingPostRequest
 */
-func (a *MessageAPIService) MessageChannelChannelIdTypingPost(ctx context.Context, channelId int64) ApiMessageChannelChannelIdTypingPostRequest {
+func (a *MessageAPIService) MessageChannelChannelIdTypingPost(ctx context.Context, channelId int32) ApiMessageChannelChannelIdTypingPostRequest {
 	return ApiMessageChannelChannelIdTypingPostRequest{
 		ApiService: a,
 		ctx:        ctx,

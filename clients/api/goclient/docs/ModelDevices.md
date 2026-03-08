@@ -10,6 +10,7 @@ Name | Type | Description | Notes
 **AudioOutputDevice** | Pointer to **string** |  | [optional] 
 **AudioOutputLevel** | Pointer to **float32** |  | [optional] 
 **AutoGainControl** | Pointer to **bool** |  | [optional] 
+**DenoiserType** | Pointer to **string** |  | [optional] 
 **EchoCancellation** | Pointer to **bool** |  | [optional] 
 **NoiseSuppression** | Pointer to **bool** |  | [optional] 
 **VideoDevice** | Pointer to **string** |  | [optional] 
@@ -182,6 +183,31 @@ SetAutoGainControl sets AutoGainControl field to given value.
 `func (o *ModelDevices) HasAutoGainControl() bool`
 
 HasAutoGainControl returns a boolean if a field has been set.
+
+### GetDenoiserType
+
+`func (o *ModelDevices) GetDenoiserType() string`
+
+GetDenoiserType returns the DenoiserType field if non-nil, zero value otherwise.
+
+### GetDenoiserTypeOk
+
+`func (o *ModelDevices) GetDenoiserTypeOk() (*string, bool)`
+
+GetDenoiserTypeOk returns a tuple with the DenoiserType field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDenoiserType
+
+`func (o *ModelDevices) SetDenoiserType(v string)`
+
+SetDenoiserType sets DenoiserType field to given value.
+
+### HasDenoiserType
+
+`func (o *ModelDevices) HasDenoiserType() bool`
+
+HasDenoiserType returns a boolean if a field has been set.
 
 ### GetEchoCancellation
 

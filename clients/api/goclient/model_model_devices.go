@@ -26,6 +26,7 @@ type ModelDevices struct {
 	AudioOutputDevice   *string  `json:"audio_output_device,omitempty"`
 	AudioOutputLevel    *float32 `json:"audio_output_level,omitempty"`
 	AutoGainControl     *bool    `json:"auto_gain_control,omitempty"`
+	DenoiserType        *string  `json:"denoiser_type,omitempty"`
 	EchoCancellation    *bool    `json:"echo_cancellation,omitempty"`
 	NoiseSuppression    *bool    `json:"noise_suppression,omitempty"`
 	VideoDevice         *string  `json:"video_device,omitempty"`
@@ -240,6 +241,38 @@ func (o *ModelDevices) SetAutoGainControl(v bool) {
 	o.AutoGainControl = &v
 }
 
+// GetDenoiserType returns the DenoiserType field value if set, zero value otherwise.
+func (o *ModelDevices) GetDenoiserType() string {
+	if o == nil || IsNil(o.DenoiserType) {
+		var ret string
+		return ret
+	}
+	return *o.DenoiserType
+}
+
+// GetDenoiserTypeOk returns a tuple with the DenoiserType field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelDevices) GetDenoiserTypeOk() (*string, bool) {
+	if o == nil || IsNil(o.DenoiserType) {
+		return nil, false
+	}
+	return o.DenoiserType, true
+}
+
+// HasDenoiserType returns a boolean if a field has been set.
+func (o *ModelDevices) HasDenoiserType() bool {
+	if o != nil && !IsNil(o.DenoiserType) {
+		return true
+	}
+
+	return false
+}
+
+// SetDenoiserType gets a reference to the given string and assigns it to the DenoiserType field.
+func (o *ModelDevices) SetDenoiserType(v string) {
+	o.DenoiserType = &v
+}
+
 // GetEchoCancellation returns the EchoCancellation field value if set, zero value otherwise.
 func (o *ModelDevices) GetEchoCancellation() bool {
 	if o == nil || IsNil(o.EchoCancellation) {
@@ -363,6 +396,9 @@ func (o ModelDevices) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.AutoGainControl) {
 		toSerialize["auto_gain_control"] = o.AutoGainControl
+	}
+	if !IsNil(o.DenoiserType) {
+		toSerialize["denoiser_type"] = o.DenoiserType
 	}
 	if !IsNil(o.EchoCancellation) {
 		toSerialize["echo_cancellation"] = o.EchoCancellation

@@ -33,7 +33,7 @@ import (
 )
 
 func main() {
-	channelId := int64(789) // int64 | Channel id
+	channelId := int32(56) // int32 | Channel id
 	request := *openapiclient.NewMessageUploadAttachmentRequest() // MessageUploadAttachmentRequest | Attachment data
 
 	configuration := openapiclient.NewConfiguration()
@@ -54,7 +54,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**channelId** | **int64** | Channel id | 
+**channelId** | **int32** | Channel id | 
 
 ### Other Parameters
 
@@ -103,8 +103,8 @@ import (
 )
 
 func main() {
-	channelId := int64(789) // int64 | Channel id
-	from := int64(789) // int64 | Start point for messages (optional)
+	channelId := int32(56) // int32 | Channel id
+	from := int32(56) // int32 | Start point for messages (optional)
 	direction := "direction_example" // string | Select direction (optional)
 	limit := int32(56) // int32 | Message count limit (optional)
 
@@ -126,7 +126,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**channelId** | **int64** | Channel id | 
+**channelId** | **int32** | Channel id | 
 
 ### Other Parameters
 
@@ -136,7 +136,7 @@ Other parameters are passed through a pointer to a apiMessageChannelChannelIdGet
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **from** | **int64** | Start point for messages | 
+ **from** | **int32** | Start point for messages | 
  **direction** | **string** | Select direction | 
  **limit** | **int32** | Message count limit | 
 
@@ -177,8 +177,8 @@ import (
 )
 
 func main() {
-	channelId := int64(789) // int64 | Channel id
-	messageId := int64(789) // int64 | Message id
+	channelId := int32(56) // int32 | Channel id
+	messageId := int32(56) // int32 | Message id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -198,8 +198,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**channelId** | **int64** | Channel id | 
-**messageId** | **int64** | Message id | 
+**channelId** | **int32** | Channel id | 
+**messageId** | **int32** | Message id | 
 
 ### Other Parameters
 
@@ -248,8 +248,8 @@ import (
 )
 
 func main() {
-	messageId := int64(789) // int64 | Message id
-	channelId := int64(789) // int64 | Channel id
+	messageId := int32(56) // int32 | Message id
+	channelId := int32(56) // int32 | Channel id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -269,8 +269,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**messageId** | **int64** | Message id | 
-**channelId** | **int64** | Channel id | 
+**messageId** | **int32** | Message id | 
+**channelId** | **int32** | Channel id | 
 
 ### Other Parameters
 
@@ -319,8 +319,8 @@ import (
 )
 
 func main() {
-	messageId := int64(789) // int64 | Message id
-	channelId := int64(789) // int64 | Channel id
+	messageId := int32(56) // int32 | Message id
+	channelId := int32(56) // int32 | Channel id
 	request := *openapiclient.NewMessageUpdateMessageRequest() // MessageUpdateMessageRequest | Message data
 
 	configuration := openapiclient.NewConfiguration()
@@ -341,8 +341,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**messageId** | **int64** | Message id | 
-**channelId** | **int64** | Channel id | 
+**messageId** | **int32** | Message id | 
+**channelId** | **int32** | Channel id | 
 
 ### Other Parameters
 
@@ -392,7 +392,7 @@ import (
 )
 
 func main() {
-	channelId := int64(789) // int64 | Channel id
+	channelId := int32(56) // int32 | Channel id
 	request := *openapiclient.NewMessageSendMessageRequest() // MessageSendMessageRequest | Message data
 
 	configuration := openapiclient.NewConfiguration()
@@ -413,7 +413,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**channelId** | **int64** | Channel id | 
+**channelId** | **int32** | Channel id | 
 
 ### Other Parameters
 
@@ -462,7 +462,7 @@ import (
 )
 
 func main() {
-	channelId := int64(789) // int64 | Channel id
+	channelId := int32(56) // int32 | Channel id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -482,7 +482,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**channelId** | **int64** | Channel id | 
+**channelId** | **int32** | Channel id | 
 
 ### Other Parameters
 

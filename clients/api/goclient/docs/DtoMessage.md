@@ -8,6 +8,8 @@ Name | Type | Description | Notes
 **Author** | Pointer to [**DtoUser**](DtoUser.md) |  | [optional] 
 **ChannelId** | Pointer to **int32** | Channel id the message was sent to | [optional] 
 **Content** | Pointer to **string** |  | [optional] 
+**Embeds** | Pointer to [**[]EmbedEmbed**](EmbedEmbed.md) |  | [optional] 
+**Flags** | Pointer to **int32** |  | [optional] 
 **Id** | Pointer to **int32** | Message ID | [optional] 
 **Type** | Pointer to **int32** |  | [optional] 
 **UpdatedAt** | Pointer to **string** | Timestamp of the last message edit | [optional] 
@@ -130,6 +132,56 @@ SetContent sets Content field to given value.
 `func (o *DtoMessage) HasContent() bool`
 
 HasContent returns a boolean if a field has been set.
+
+### GetEmbeds
+
+`func (o *DtoMessage) GetEmbeds() []EmbedEmbed`
+
+GetEmbeds returns the Embeds field if non-nil, zero value otherwise.
+
+### GetEmbedsOk
+
+`func (o *DtoMessage) GetEmbedsOk() (*[]EmbedEmbed, bool)`
+
+GetEmbedsOk returns a tuple with the Embeds field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetEmbeds
+
+`func (o *DtoMessage) SetEmbeds(v []EmbedEmbed)`
+
+SetEmbeds sets Embeds field to given value.
+
+### HasEmbeds
+
+`func (o *DtoMessage) HasEmbeds() bool`
+
+HasEmbeds returns a boolean if a field has been set.
+
+### GetFlags
+
+`func (o *DtoMessage) GetFlags() int32`
+
+GetFlags returns the Flags field if non-nil, zero value otherwise.
+
+### GetFlagsOk
+
+`func (o *DtoMessage) GetFlagsOk() (*int32, bool)`
+
+GetFlagsOk returns a tuple with the Flags field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetFlags
+
+`func (o *DtoMessage) SetFlags(v int32)`
+
+SetFlags sets Flags field to given value.
+
+### HasFlags
+
+`func (o *DtoMessage) HasFlags() bool`
+
+HasFlags returns a boolean if a field has been set.
 
 ### GetId
 

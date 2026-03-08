@@ -271,6 +271,36 @@ paths:
       tags:
       - Auth
       x-codegen-request-body-name: request
+  /emoji/{emoji_id}:
+    get:
+      parameters:
+      - description: Emoji filename ending in .webp
+        in: path
+        name: emoji_id
+        required: true
+        schema:
+          type: string
+      - description: Preferred rendered size
+        in: query
+        name: size
+        schema:
+          type: integer
+      responses:
+        "307":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Temporary Redirect
+        "404":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Not found
+      summary: Redirect to public emoji asset
+      tags:
+      - Emoji
   /guild:
     post:
       requestBody:
@@ -373,7 +403,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -400,7 +429,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -434,14 +462,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Invite id
         in: path
         name: invite_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "204":
@@ -469,7 +495,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -506,7 +531,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -543,7 +567,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -589,7 +612,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -635,14 +657,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Category ID (actually a channel with special type)
         in: path
         name: category_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -680,7 +700,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -719,7 +738,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -765,7 +783,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -823,14 +840,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Channel ID
         in: path
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -867,14 +882,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Channel id
         in: path
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -911,14 +924,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Channel ID
         in: path
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -976,14 +987,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Channel ID
         in: path
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -1029,21 +1038,18 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Channel ID
         in: path
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Role ID
         in: path
         name: role_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -1092,21 +1098,18 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Channel ID
         in: path
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Role ID
         in: path
         name: role_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -1155,21 +1158,18 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Channel ID
         in: path
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Role ID
         in: path
         name: role_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -1226,21 +1226,18 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Channel ID
         in: path
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Role ID
         in: path
         name: role_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -1298,7 +1295,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -1343,7 +1339,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -1401,14 +1396,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Emoji ID
         in: path
         name: emoji_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -1457,14 +1450,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Emoji ID
         in: path
         name: emoji_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -1530,7 +1521,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -1584,7 +1574,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -1625,14 +1614,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Icon ID
         in: path
         name: icon_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -1670,14 +1657,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: User ID
         in: path
         name: user_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -1723,21 +1708,18 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: User ID
         in: path
         name: user_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Role ID
         in: path
         name: role_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -1786,21 +1768,18 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: User ID
         in: path
         name: user_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Role ID
         in: path
         name: role_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -1850,7 +1829,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -1890,7 +1868,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -1929,7 +1906,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -1981,14 +1957,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Role ID
         in: path
         name: role_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -2037,14 +2011,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Role ID
         in: path
         name: role_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -2102,7 +2074,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -2150,7 +2121,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -2198,14 +2168,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Channel ID
         in: path
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -2245,14 +2213,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Channel ID
         in: path
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -2304,13 +2270,11 @@ paths:
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Start point for messages
         in: query
         name: from
         schema:
-          format: int64
           type: integer
       - description: Select direction
         in: query
@@ -2369,7 +2333,6 @@ paths:
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -2421,7 +2384,6 @@ paths:
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -2473,7 +2435,6 @@ paths:
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -2505,14 +2466,12 @@ paths:
         name: message_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Channel id
         in: path
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -2555,14 +2514,12 @@ paths:
         name: message_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Channel id
         in: path
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -2614,14 +2571,12 @@ paths:
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Message id
         in: path
         name: message_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -2699,7 +2654,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -2756,14 +2710,12 @@ paths:
         name: channel_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Attachment ID
         in: path
         name: attachment_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -2843,14 +2795,12 @@ paths:
         name: user_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Avatar ID
         in: path
         name: avatar_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -2920,6 +2870,103 @@ paths:
       tags:
       - Upload
       x-codegen-request-body-name: file
+  /upload/emojis/{guild_id}/{emoji_id}:
+    post:
+      description: Uploads and finalizes the binary payload for a previously created
+        guild emoji placeholder.
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Emoji ID
+        in: path
+        name: emoji_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              items:
+                type: integer
+              type: array
+        description: Binary emoji image
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Created
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content (already uploaded)
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Emoji not found
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Conflict
+        "410":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Upload expired
+        "413":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: File too large
+        "415":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unsupported media type
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Upload guild emoji image
+      tags:
+      - Upload
+      x-codegen-request-body-name: file
   /upload/icons/{guild_id}/{icon_id}:
     post:
       description: Uploads a guild icon. Resizes to max 128x128 and converts to WebP
@@ -2930,14 +2977,12 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       - description: Icon ID
         in: path
         name: icon_id
         required: true
         schema:
-          format: int64
           type: integer
       requestBody:
         content:
@@ -3097,7 +3142,6 @@ paths:
         name: avatar_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -3418,7 +3462,6 @@ paths:
         name: user_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -3531,7 +3574,6 @@ paths:
         name: guild_id
         required: true
         schema:
-          format: int64
           type: integer
       responses:
         "200":
@@ -4487,9 +4529,49 @@ components:
             height: 128
           id: 2230469276416868352
           discriminator: uniquename
+        flags: 0
         id: 2230469276416868352
         type: 0
         channel_id: 2230469276416868352
+        embeds:
+        - image: "{}"
+          thumbnail: "{}"
+          color: 65280
+          footer: "{}"
+          author: "{}"
+          description: Embed support is live.
+          video: "{}"
+          title: GoChat 1.0
+          type: rich
+          url: https://example.com/release
+          provider: "{}"
+          fields:
+          - inline: true
+            name: Status
+            value: Stable
+          - inline: true
+            name: Status
+            value: Stable
+          timestamp: 2000-01-23T04:56:07.000+00:00
+        - image: "{}"
+          thumbnail: "{}"
+          color: 65280
+          footer: "{}"
+          author: "{}"
+          description: Embed support is live.
+          video: "{}"
+          title: GoChat 1.0
+          type: rich
+          url: https://example.com/release
+          provider: "{}"
+          fields:
+          - inline: true
+            name: Status
+            value: Stable
+          - inline: true
+            name: Status
+            value: Stable
+          timestamp: 2000-01-23T04:56:07.000+00:00
         content: Hello world!
       properties:
         attachments:
@@ -4505,6 +4587,12 @@ components:
         content:
           example: Hello world!
           type: string
+        embeds:
+          items:
+            $ref: '#/components/schemas/embed.Embed'
+          type: array
+        flags:
+          type: integer
         id:
           description: Message ID
           example: 2230469276416868352
@@ -4568,6 +4656,194 @@ components:
           type: integer
         name:
           example: FancyUserName
+          type: string
+      type: object
+    embed.Embed:
+      example:
+        image: "{}"
+        thumbnail: "{}"
+        color: 65280
+        footer: "{}"
+        author: "{}"
+        description: Embed support is live.
+        video: "{}"
+        title: GoChat 1.0
+        type: rich
+        url: https://example.com/release
+        provider: "{}"
+        fields:
+        - inline: true
+          name: Status
+          value: Stable
+        - inline: true
+          name: Status
+          value: Stable
+        timestamp: 2000-01-23T04:56:07.000+00:00
+      properties:
+        author:
+          allOf:
+          - $ref: '#/components/schemas/embed.EmbedAuthor'
+          description: Embed author metadata.
+          type: object
+        color:
+          description: Decimal RGB color value.
+          example: 65280
+          type: integer
+        description:
+          description: Main embed description.
+          example: Embed support is live.
+          type: string
+        fields:
+          description: Up to 25 structured fields.
+          items:
+            $ref: '#/components/schemas/embed.EmbedField'
+          type: array
+        footer:
+          allOf:
+          - $ref: '#/components/schemas/embed.EmbedFooter'
+          description: Optional footer block.
+          type: object
+        image:
+          allOf:
+          - $ref: '#/components/schemas/embed.EmbedMedia'
+          description: Full-size image block.
+          type: object
+        provider:
+          allOf:
+          - $ref: '#/components/schemas/embed.EmbedProvider'
+          description: Content provider metadata.
+          type: object
+        thumbnail:
+          allOf:
+          - $ref: '#/components/schemas/embed.EmbedMedia'
+          description: Thumbnail image block.
+          type: object
+        timestamp:
+          description: Optional ISO timestamp shown by the client.
+          format: date-time
+          type: string
+        title:
+          description: Embed title.
+          example: GoChat 1.0
+          type: string
+        type:
+          description: Embed type.
+          enum:
+          - rich
+          - image
+          - video
+          - gifv
+          - article
+          - link
+          example: rich
+          type: string
+        url:
+          description: Canonical URL opened when the embed title is clicked.
+          example: https://example.com/release
+          type: string
+        video:
+          allOf:
+          - $ref: '#/components/schemas/embed.EmbedMedia'
+          description: Embedded video metadata.
+          type: object
+      type: object
+    embed.EmbedAuthor:
+      properties:
+        icon_url:
+          description: Author icon URL.
+          example: https://example.com/author.png
+          type: string
+        name:
+          description: Author display name.
+          example: The PrimeTime
+          type: string
+        proxy_icon_url:
+          description: Optional proxied author icon URL.
+          example: https://cdn.example.com/author.png
+          type: string
+        url:
+          description: Author URL.
+          example: https://www.youtube.com/channel/UCUyeluBRhGPCW4rPe_UvBZQ
+          type: string
+      type: object
+    embed.EmbedField:
+      example:
+        inline: true
+        name: Status
+        value: Stable
+      properties:
+        inline:
+          description: Whether the field should be rendered inline.
+          example: true
+          type: boolean
+        name:
+          description: Field label.
+          example: Status
+          type: string
+        value:
+          description: Field value.
+          example: Stable
+          type: string
+      type: object
+    embed.EmbedFooter:
+      properties:
+        icon_url:
+          description: Footer icon URL.
+          example: https://example.com/icon.png
+          type: string
+        proxy_icon_url:
+          description: Optional proxied footer icon URL.
+          example: https://cdn.example.com/icon.png
+          type: string
+        text:
+          description: Footer text.
+          example: Documentation
+          type: string
+      type: object
+    embed.EmbedMedia:
+      properties:
+        content_type:
+          description: Media MIME type when known.
+          example: image/png
+          type: string
+        flags:
+          description: Media-specific flags from the source provider.
+          example: 0
+          type: integer
+        height:
+          description: Media height in pixels.
+          example: 720
+          type: integer
+        placeholder:
+          description: Encoded placeholder used by some generated embeds.
+          example: IPgNDIQbRUaQiJcwuYlwmyQ5Bg==
+          type: string
+        placeholder_version:
+          description: Placeholder format version.
+          example: 1
+          type: integer
+        proxy_url:
+          description: Optional proxied media URL.
+          example: https://cdn.example.com/preview.png
+          type: string
+        url:
+          description: Media URL.
+          example: https://example.com/preview.png
+          type: string
+        width:
+          description: Media width in pixels.
+          example: 1280
+          type: integer
+      type: object
+    embed.EmbedProvider:
+      properties:
+        name:
+          description: Provider name.
+          example: YouTube
+          type: string
+        url:
+          description: Provider URL.
+          example: https://www.youtube.com
           type: string
       type: object
     guild.ChannelOrder:
@@ -4839,6 +5115,12 @@ components:
           description: Message content
           example: Hello world!
           type: string
+        embeds:
+          description: Manual embeds supplied by the client. These are stored separately
+            from generated URL embeds.
+          items:
+            $ref: '#/components/schemas/embed.Embed'
+          type: array
         mentions:
           description: IDs of mentioned users
           example:
@@ -4853,6 +5135,17 @@ components:
           description: Message content
           example: Hello world!
           type: string
+        embeds:
+          description: Full replacement for the manual embed array. Generated embeds
+            are managed by the embedder service.
+          items:
+            $ref: '#/components/schemas/embed.Embed'
+          type: array
+        flags:
+          description: Message flags bitmask. Use 4 to suppress URL embed generation
+            and clear generated embeds.
+          example: 4
+          type: integer
       type: object
     message.UploadAttachmentRequest:
       properties:
@@ -4887,19 +5180,14 @@ components:
         channelId: 6
       properties:
         authorId:
-          format: int64
           type: integer
         channelId:
-          format: int64
           type: integer
         guildId:
-          format: int64
           type: integer
         messageId:
-          format: int64
           type: integer
         roleId:
-          format: int64
           type: integer
         type:
           type: integer
@@ -4920,13 +5208,6 @@ components:
         ChannelTypeGuildCategory: Category channel in guild
         ChannelTypeGuildVoice: Voice channel in guild
         ChannelTypeThread: Thread channel
-      x-enum-descriptions:
-      - Default text channel in guild
-      - Voice channel in guild
-      - Category channel in guild
-      - DM channel. Can't be created in Guild
-      - Group DM channel. Can't be created in Guild'
-      - Thread channel
       x-enum-varnames:
       - ChannelTypeGuild
       - ChannelTypeGuildVoice
@@ -4944,6 +5225,7 @@ components:
         echo_cancellation: true
         video_device: video_device
         noise_suppression: true
+        denoiser_type: denoiser_type
         audio_input_device: audio_input_device
       properties:
         audio_input_device:
@@ -4958,6 +5240,8 @@ components:
           type: number
         auto_gain_control:
           type: boolean
+        denoiser_type:
+          type: string
         echo_cancellation:
           type: boolean
         noise_suppression:
@@ -4973,16 +5257,12 @@ components:
         channelId: 3
       properties:
         authorId:
-          format: int64
           type: integer
         channelId:
-          format: int64
           type: integer
         messageId:
-          format: int64
           type: integer
         userId:
-          format: int64
           type: integer
       type: object
     model.NotificationsType:
@@ -5085,6 +5365,7 @@ components:
           echo_cancellation: true
           video_device: video_device
           noise_suppression: true
+          denoiser_type: denoiser_type
           audio_input_device: audio_input_device
         guilds:
         - selected_channel: 6
@@ -5321,9 +5602,49 @@ components:
               height: 128
             id: 2230469276416868352
             discriminator: uniquename
+          flags: 0
           id: 2230469276416868352
           type: 0
           channel_id: 2230469276416868352
+          embeds:
+          - image: "{}"
+            thumbnail: "{}"
+            color: 65280
+            footer: "{}"
+            author: "{}"
+            description: Embed support is live.
+            video: "{}"
+            title: GoChat 1.0
+            type: rich
+            url: https://example.com/release
+            provider: "{}"
+            fields:
+            - inline: true
+              name: Status
+              value: Stable
+            - inline: true
+              name: Status
+              value: Stable
+            timestamp: 2000-01-23T04:56:07.000+00:00
+          - image: "{}"
+            thumbnail: "{}"
+            color: 65280
+            footer: "{}"
+            author: "{}"
+            description: Embed support is live.
+            video: "{}"
+            title: GoChat 1.0
+            type: rich
+            url: https://example.com/release
+            provider: "{}"
+            fields:
+            - inline: true
+              name: Status
+              value: Stable
+            - inline: true
+              name: Status
+              value: Stable
+            timestamp: 2000-01-23T04:56:07.000+00:00
           content: Hello world!
         - attachments:
           - filename: image.png
@@ -5352,9 +5673,49 @@ components:
               height: 128
             id: 2230469276416868352
             discriminator: uniquename
+          flags: 0
           id: 2230469276416868352
           type: 0
           channel_id: 2230469276416868352
+          embeds:
+          - image: "{}"
+            thumbnail: "{}"
+            color: 65280
+            footer: "{}"
+            author: "{}"
+            description: Embed support is live.
+            video: "{}"
+            title: GoChat 1.0
+            type: rich
+            url: https://example.com/release
+            provider: "{}"
+            fields:
+            - inline: true
+              name: Status
+              value: Stable
+            - inline: true
+              name: Status
+              value: Stable
+            timestamp: 2000-01-23T04:56:07.000+00:00
+          - image: "{}"
+            thumbnail: "{}"
+            color: 65280
+            footer: "{}"
+            author: "{}"
+            description: Embed support is live.
+            video: "{}"
+            title: GoChat 1.0
+            type: rich
+            url: https://example.com/release
+            provider: "{}"
+            fields:
+            - inline: true
+              name: Status
+              value: Stable
+            - inline: true
+              name: Status
+              value: Stable
+            timestamp: 2000-01-23T04:56:07.000+00:00
           content: Hello world!
       properties:
         messages:
@@ -5492,6 +5853,7 @@ components:
             echo_cancellation: true
             video_device: video_device
             noise_suppression: true
+            denoiser_type: denoiser_type
             audio_input_device: audio_input_device
           guilds:
           - selected_channel: 6
@@ -5611,7 +5973,6 @@ components:
         guilds_last_messages:
           additionalProperties:
             additionalProperties:
-              format: int64
               type: integer
             type: object
           type: object
@@ -5623,7 +5984,6 @@ components:
           type: object
         read_states:
           additionalProperties:
-            format: int64
             type: integer
           type: object
         settings:

@@ -44,6 +44,7 @@ type Devices struct {
 	AudioOutputDevice   string  `json:"audio_output_device"`
 	VideoDevice         string  `json:"video_device"`
 	NoiseSuppression    bool    `json:"noise_suppression"`
+	DenoiserType        string  `json:"denoiser_type"`
 	EchoCancellation    bool    `json:"echo_cancellation"`
 	AudioInputLevel     float64 `json:"audio_input_level"`
 	AudioOutputLevel    float64 `json:"audio_output_level"`

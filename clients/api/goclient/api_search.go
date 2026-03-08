@@ -26,7 +26,7 @@ type SearchAPIService service
 type ApiSearchGuildIdMessagesPostRequest struct {
 	ctx        context.Context
 	ApiService *SearchAPIService
-	guildId    int64
+	guildId    int32
 	request    *SearchMessageSearchRequest
 }
 
@@ -47,7 +47,7 @@ SearchGuildIdMessagesPost Search messages
 	@param guildId Guild id
 	@return ApiSearchGuildIdMessagesPostRequest
 */
-func (a *SearchAPIService) SearchGuildIdMessagesPost(ctx context.Context, guildId int64) ApiSearchGuildIdMessagesPostRequest {
+func (a *SearchAPIService) SearchGuildIdMessagesPost(ctx context.Context, guildId int32) ApiSearchGuildIdMessagesPostRequest {
 	return ApiSearchGuildIdMessagesPostRequest{
 		ApiService: a,
 		ctx:        ctx,

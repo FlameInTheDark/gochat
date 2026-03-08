@@ -112,7 +112,7 @@ import (
 )
 
 func main() {
-	avatarId := int64(789) // int64 | Avatar ID
+	avatarId := int32(56) // int32 | Avatar ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -132,7 +132,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**avatarId** | **int64** | Avatar ID | 
+**avatarId** | **int32** | Avatar ID | 
 
 ### Other Parameters
 
@@ -802,7 +802,7 @@ import (
 )
 
 func main() {
-	userId := int64(789) // int64 | User id
+	userId := int32(56) // int32 | User id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -822,7 +822,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**userId** | **int64** | User id | 
+**userId** | **int32** | User id | 
 
 ### Other Parameters
 
@@ -997,7 +997,7 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild id
+	guildId := int32(56) // int32 | Guild id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -1017,7 +1017,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild id | 
+**guildId** | **int32** | Guild id | 
 
 ### Other Parameters
 

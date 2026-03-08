@@ -23,9 +23,9 @@ type UserUserSettingsResponse struct {
 	ChannelMentions    *map[string][]ModelChannelMention `json:"channel_mentions,omitempty"`
 	GuildEmojis        *map[string][]DtoEmojiRef         `json:"guild_emojis,omitempty"`
 	Guilds             []DtoGuild                        `json:"guilds,omitempty"`
-	GuildsLastMessages *map[string]map[string]int64      `json:"guilds_last_messages,omitempty"`
+	GuildsLastMessages *map[string]map[string]int32      `json:"guilds_last_messages,omitempty"`
 	Mentions           *map[string][]ModelMention        `json:"mentions,omitempty"`
-	ReadStates         *map[string]int64                 `json:"read_states,omitempty"`
+	ReadStates         *map[string]int32                 `json:"read_states,omitempty"`
 	Settings           *ModelUserSettingsData            `json:"settings,omitempty"`
 	Version            *int32                            `json:"version,omitempty"`
 }
@@ -144,9 +144,9 @@ func (o *UserUserSettingsResponse) SetGuilds(v []DtoGuild) {
 }
 
 // GetGuildsLastMessages returns the GuildsLastMessages field value if set, zero value otherwise.
-func (o *UserUserSettingsResponse) GetGuildsLastMessages() map[string]map[string]int64 {
+func (o *UserUserSettingsResponse) GetGuildsLastMessages() map[string]map[string]int32 {
 	if o == nil || IsNil(o.GuildsLastMessages) {
-		var ret map[string]map[string]int64
+		var ret map[string]map[string]int32
 		return ret
 	}
 	return *o.GuildsLastMessages
@@ -154,7 +154,7 @@ func (o *UserUserSettingsResponse) GetGuildsLastMessages() map[string]map[string
 
 // GetGuildsLastMessagesOk returns a tuple with the GuildsLastMessages field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *UserUserSettingsResponse) GetGuildsLastMessagesOk() (*map[string]map[string]int64, bool) {
+func (o *UserUserSettingsResponse) GetGuildsLastMessagesOk() (*map[string]map[string]int32, bool) {
 	if o == nil || IsNil(o.GuildsLastMessages) {
 		return nil, false
 	}
@@ -170,8 +170,8 @@ func (o *UserUserSettingsResponse) HasGuildsLastMessages() bool {
 	return false
 }
 
-// SetGuildsLastMessages gets a reference to the given map[string]map[string]int64 and assigns it to the GuildsLastMessages field.
-func (o *UserUserSettingsResponse) SetGuildsLastMessages(v map[string]map[string]int64) {
+// SetGuildsLastMessages gets a reference to the given map[string]map[string]int32 and assigns it to the GuildsLastMessages field.
+func (o *UserUserSettingsResponse) SetGuildsLastMessages(v map[string]map[string]int32) {
 	o.GuildsLastMessages = &v
 }
 
@@ -208,9 +208,9 @@ func (o *UserUserSettingsResponse) SetMentions(v map[string][]ModelMention) {
 }
 
 // GetReadStates returns the ReadStates field value if set, zero value otherwise.
-func (o *UserUserSettingsResponse) GetReadStates() map[string]int64 {
+func (o *UserUserSettingsResponse) GetReadStates() map[string]int32 {
 	if o == nil || IsNil(o.ReadStates) {
-		var ret map[string]int64
+		var ret map[string]int32
 		return ret
 	}
 	return *o.ReadStates
@@ -218,7 +218,7 @@ func (o *UserUserSettingsResponse) GetReadStates() map[string]int64 {
 
 // GetReadStatesOk returns a tuple with the ReadStates field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *UserUserSettingsResponse) GetReadStatesOk() (*map[string]int64, bool) {
+func (o *UserUserSettingsResponse) GetReadStatesOk() (*map[string]int32, bool) {
 	if o == nil || IsNil(o.ReadStates) {
 		return nil, false
 	}
@@ -234,8 +234,8 @@ func (o *UserUserSettingsResponse) HasReadStates() bool {
 	return false
 }
 
-// SetReadStates gets a reference to the given map[string]int64 and assigns it to the ReadStates field.
-func (o *UserUserSettingsResponse) SetReadStates(v map[string]int64) {
+// SetReadStates gets a reference to the given map[string]int32 and assigns it to the ReadStates field.
+func (o *UserUserSettingsResponse) SetReadStates(v map[string]int32) {
 	o.ReadStates = &v
 }
 

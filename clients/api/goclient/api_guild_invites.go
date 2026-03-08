@@ -149,7 +149,7 @@ func (a *GuildInvitesAPIService) GuildInvitesAcceptInviteCodePostExecute(r ApiGu
 type ApiGuildInvitesGuildIdGetRequest struct {
 	ctx        context.Context
 	ApiService *GuildInvitesAPIService
-	guildId    int64
+	guildId    int32
 }
 
 func (r ApiGuildInvitesGuildIdGetRequest) Execute() ([]DtoGuildInvite, *http.Response, error) {
@@ -163,7 +163,7 @@ GuildInvitesGuildIdGet List active invites for guild
 	@param guildId Guild id
 	@return ApiGuildInvitesGuildIdGetRequest
 */
-func (a *GuildInvitesAPIService) GuildInvitesGuildIdGet(ctx context.Context, guildId int64) ApiGuildInvitesGuildIdGetRequest {
+func (a *GuildInvitesAPIService) GuildInvitesGuildIdGet(ctx context.Context, guildId int32) ApiGuildInvitesGuildIdGetRequest {
 	return ApiGuildInvitesGuildIdGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -261,8 +261,8 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdGetExecute(r ApiGuildInvites
 type ApiGuildInvitesGuildIdInviteIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *GuildInvitesAPIService
-	guildId    int64
-	inviteId   int64
+	guildId    int32
+	inviteId   int32
 }
 
 func (r ApiGuildInvitesGuildIdInviteIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -277,7 +277,7 @@ GuildInvitesGuildIdInviteIdDelete Delete an invite by id
 	@param inviteId Invite id
 	@return ApiGuildInvitesGuildIdInviteIdDeleteRequest
 */
-func (a *GuildInvitesAPIService) GuildInvitesGuildIdInviteIdDelete(ctx context.Context, guildId int64, inviteId int64) ApiGuildInvitesGuildIdInviteIdDeleteRequest {
+func (a *GuildInvitesAPIService) GuildInvitesGuildIdInviteIdDelete(ctx context.Context, guildId int32, inviteId int32) ApiGuildInvitesGuildIdInviteIdDeleteRequest {
 	return ApiGuildInvitesGuildIdInviteIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -377,7 +377,7 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdInviteIdDeleteExecute(r ApiG
 type ApiGuildInvitesGuildIdPostRequest struct {
 	ctx        context.Context
 	ApiService *GuildInvitesAPIService
-	guildId    int64
+	guildId    int32
 	request    *GuildCreateInviteRequest
 }
 
@@ -398,7 +398,7 @@ GuildInvitesGuildIdPost Create a new invite
 	@param guildId Guild id
 	@return ApiGuildInvitesGuildIdPostRequest
 */
-func (a *GuildInvitesAPIService) GuildInvitesGuildIdPost(ctx context.Context, guildId int64) ApiGuildInvitesGuildIdPostRequest {
+func (a *GuildInvitesAPIService) GuildInvitesGuildIdPost(ctx context.Context, guildId int32) ApiGuildInvitesGuildIdPostRequest {
 	return ApiGuildInvitesGuildIdPostRequest{
 		ApiService: a,
 		ctx:        ctx,

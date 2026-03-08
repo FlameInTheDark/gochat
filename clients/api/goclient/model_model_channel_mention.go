@@ -20,11 +20,11 @@ var _ MappedNullable = &ModelChannelMention{}
 
 // ModelChannelMention struct for ModelChannelMention
 type ModelChannelMention struct {
-	AuthorId  *int64 `json:"authorId,omitempty"`
-	ChannelId *int64 `json:"channelId,omitempty"`
-	GuildId   *int64 `json:"guildId,omitempty"`
-	MessageId *int64 `json:"messageId,omitempty"`
-	RoleId    *int64 `json:"roleId,omitempty"`
+	AuthorId  *int32 `json:"authorId,omitempty"`
+	ChannelId *int32 `json:"channelId,omitempty"`
+	GuildId   *int32 `json:"guildId,omitempty"`
+	MessageId *int32 `json:"messageId,omitempty"`
+	RoleId    *int32 `json:"roleId,omitempty"`
 	Type      *int32 `json:"type,omitempty"`
 }
 
@@ -46,9 +46,9 @@ func NewModelChannelMentionWithDefaults() *ModelChannelMention {
 }
 
 // GetAuthorId returns the AuthorId field value if set, zero value otherwise.
-func (o *ModelChannelMention) GetAuthorId() int64 {
+func (o *ModelChannelMention) GetAuthorId() int32 {
 	if o == nil || IsNil(o.AuthorId) {
-		var ret int64
+		var ret int32
 		return ret
 	}
 	return *o.AuthorId
@@ -56,7 +56,7 @@ func (o *ModelChannelMention) GetAuthorId() int64 {
 
 // GetAuthorIdOk returns a tuple with the AuthorId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ModelChannelMention) GetAuthorIdOk() (*int64, bool) {
+func (o *ModelChannelMention) GetAuthorIdOk() (*int32, bool) {
 	if o == nil || IsNil(o.AuthorId) {
 		return nil, false
 	}
@@ -72,15 +72,15 @@ func (o *ModelChannelMention) HasAuthorId() bool {
 	return false
 }
 
-// SetAuthorId gets a reference to the given int64 and assigns it to the AuthorId field.
-func (o *ModelChannelMention) SetAuthorId(v int64) {
+// SetAuthorId gets a reference to the given int32 and assigns it to the AuthorId field.
+func (o *ModelChannelMention) SetAuthorId(v int32) {
 	o.AuthorId = &v
 }
 
 // GetChannelId returns the ChannelId field value if set, zero value otherwise.
-func (o *ModelChannelMention) GetChannelId() int64 {
+func (o *ModelChannelMention) GetChannelId() int32 {
 	if o == nil || IsNil(o.ChannelId) {
-		var ret int64
+		var ret int32
 		return ret
 	}
 	return *o.ChannelId
@@ -88,7 +88,7 @@ func (o *ModelChannelMention) GetChannelId() int64 {
 
 // GetChannelIdOk returns a tuple with the ChannelId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ModelChannelMention) GetChannelIdOk() (*int64, bool) {
+func (o *ModelChannelMention) GetChannelIdOk() (*int32, bool) {
 	if o == nil || IsNil(o.ChannelId) {
 		return nil, false
 	}
@@ -104,15 +104,15 @@ func (o *ModelChannelMention) HasChannelId() bool {
 	return false
 }
 
-// SetChannelId gets a reference to the given int64 and assigns it to the ChannelId field.
-func (o *ModelChannelMention) SetChannelId(v int64) {
+// SetChannelId gets a reference to the given int32 and assigns it to the ChannelId field.
+func (o *ModelChannelMention) SetChannelId(v int32) {
 	o.ChannelId = &v
 }
 
 // GetGuildId returns the GuildId field value if set, zero value otherwise.
-func (o *ModelChannelMention) GetGuildId() int64 {
+func (o *ModelChannelMention) GetGuildId() int32 {
 	if o == nil || IsNil(o.GuildId) {
-		var ret int64
+		var ret int32
 		return ret
 	}
 	return *o.GuildId
@@ -120,7 +120,7 @@ func (o *ModelChannelMention) GetGuildId() int64 {
 
 // GetGuildIdOk returns a tuple with the GuildId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ModelChannelMention) GetGuildIdOk() (*int64, bool) {
+func (o *ModelChannelMention) GetGuildIdOk() (*int32, bool) {
 	if o == nil || IsNil(o.GuildId) {
 		return nil, false
 	}
@@ -136,15 +136,15 @@ func (o *ModelChannelMention) HasGuildId() bool {
 	return false
 }
 
-// SetGuildId gets a reference to the given int64 and assigns it to the GuildId field.
-func (o *ModelChannelMention) SetGuildId(v int64) {
+// SetGuildId gets a reference to the given int32 and assigns it to the GuildId field.
+func (o *ModelChannelMention) SetGuildId(v int32) {
 	o.GuildId = &v
 }
 
 // GetMessageId returns the MessageId field value if set, zero value otherwise.
-func (o *ModelChannelMention) GetMessageId() int64 {
+func (o *ModelChannelMention) GetMessageId() int32 {
 	if o == nil || IsNil(o.MessageId) {
-		var ret int64
+		var ret int32
 		return ret
 	}
 	return *o.MessageId
@@ -152,7 +152,7 @@ func (o *ModelChannelMention) GetMessageId() int64 {
 
 // GetMessageIdOk returns a tuple with the MessageId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ModelChannelMention) GetMessageIdOk() (*int64, bool) {
+func (o *ModelChannelMention) GetMessageIdOk() (*int32, bool) {
 	if o == nil || IsNil(o.MessageId) {
 		return nil, false
 	}
@@ -168,15 +168,15 @@ func (o *ModelChannelMention) HasMessageId() bool {
 	return false
 }
 
-// SetMessageId gets a reference to the given int64 and assigns it to the MessageId field.
-func (o *ModelChannelMention) SetMessageId(v int64) {
+// SetMessageId gets a reference to the given int32 and assigns it to the MessageId field.
+func (o *ModelChannelMention) SetMessageId(v int32) {
 	o.MessageId = &v
 }
 
 // GetRoleId returns the RoleId field value if set, zero value otherwise.
-func (o *ModelChannelMention) GetRoleId() int64 {
+func (o *ModelChannelMention) GetRoleId() int32 {
 	if o == nil || IsNil(o.RoleId) {
-		var ret int64
+		var ret int32
 		return ret
 	}
 	return *o.RoleId
@@ -184,7 +184,7 @@ func (o *ModelChannelMention) GetRoleId() int64 {
 
 // GetRoleIdOk returns a tuple with the RoleId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ModelChannelMention) GetRoleIdOk() (*int64, bool) {
+func (o *ModelChannelMention) GetRoleIdOk() (*int32, bool) {
 	if o == nil || IsNil(o.RoleId) {
 		return nil, false
 	}
@@ -200,8 +200,8 @@ func (o *ModelChannelMention) HasRoleId() bool {
 	return false
 }
 
-// SetRoleId gets a reference to the given int64 and assigns it to the RoleId field.
-func (o *ModelChannelMention) SetRoleId(v int64) {
+// SetRoleId gets a reference to the given int32 and assigns it to the RoleId field.
+func (o *ModelChannelMention) SetRoleId(v int32) {
 	o.RoleId = &v
 }
 

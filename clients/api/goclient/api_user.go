@@ -138,7 +138,7 @@ func (a *UserAPIService) UserMeAvatarPostExecute(r ApiUserMeAvatarPostRequest) (
 type ApiUserMeAvatarsAvatarIdDeleteRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
-	avatarId   int64
+	avatarId   int32
 }
 
 func (r ApiUserMeAvatarsAvatarIdDeleteRequest) Execute() (string, *http.Response, error) {
@@ -152,7 +152,7 @@ UserMeAvatarsAvatarIdDelete Delete my avatar by ID
 	@param avatarId Avatar ID
 	@return ApiUserMeAvatarsAvatarIdDeleteRequest
 */
-func (a *UserAPIService) UserMeAvatarsAvatarIdDelete(ctx context.Context, avatarId int64) ApiUserMeAvatarsAvatarIdDeleteRequest {
+func (a *UserAPIService) UserMeAvatarsAvatarIdDelete(ctx context.Context, avatarId int32) ApiUserMeAvatarsAvatarIdDeleteRequest {
 	return ApiUserMeAvatarsAvatarIdDeleteRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1558,7 +1558,7 @@ func (a *UserAPIService) UserMeFriendsRequestsPostExecute(r ApiUserMeFriendsRequ
 type ApiUserMeFriendsUserIdGetRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
-	userId     int64
+	userId     int32
 }
 
 func (r ApiUserMeFriendsUserIdGetRequest) Execute() (*DtoChannel, *http.Response, error) {
@@ -1572,7 +1572,7 @@ UserMeFriendsUserIdGet Get or create DM with a user
 	@param userId User id
 	@return ApiUserMeFriendsUserIdGetRequest
 */
-func (a *UserAPIService) UserMeFriendsUserIdGet(ctx context.Context, userId int64) ApiUserMeFriendsUserIdGetRequest {
+func (a *UserAPIService) UserMeFriendsUserIdGet(ctx context.Context, userId int32) ApiUserMeFriendsUserIdGetRequest {
 	return ApiUserMeFriendsUserIdGetRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1967,7 +1967,7 @@ func (a *UserAPIService) UserMeGuildsGuildIdDeleteExecute(r ApiUserMeGuildsGuild
 type ApiUserMeGuildsGuildIdMemberGetRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
-	guildId    int64
+	guildId    int32
 }
 
 func (r ApiUserMeGuildsGuildIdMemberGetRequest) Execute() (*DtoMember, *http.Response, error) {
@@ -1981,7 +1981,7 @@ UserMeGuildsGuildIdMemberGet Get user guild member
 	@param guildId Guild id
 	@return ApiUserMeGuildsGuildIdMemberGetRequest
 */
-func (a *UserAPIService) UserMeGuildsGuildIdMemberGet(ctx context.Context, guildId int64) ApiUserMeGuildsGuildIdMemberGetRequest {
+func (a *UserAPIService) UserMeGuildsGuildIdMemberGet(ctx context.Context, guildId int32) ApiUserMeGuildsGuildIdMemberGetRequest {
 	return ApiUserMeGuildsGuildIdMemberGetRequest{
 		ApiService: a,
 		ctx:        ctx,

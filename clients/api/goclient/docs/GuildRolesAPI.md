@@ -38,8 +38,8 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild ID
-	channelId := int64(789) // int64 | Channel ID
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -59,8 +59,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild ID | 
-**channelId** | **int64** | Channel ID | 
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Channel ID | 
 
 ### Other Parameters
 
@@ -109,9 +109,9 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild ID
-	channelId := int64(789) // int64 | Channel ID
-	roleId := int64(789) // int64 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	roleId := int32(56) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -131,9 +131,9 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild ID | 
-**channelId** | **int64** | Channel ID | 
-**roleId** | **int64** | Role ID | 
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Channel ID | 
+**roleId** | **int32** | Role ID | 
 
 ### Other Parameters
 
@@ -183,9 +183,9 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild ID
-	channelId := int64(789) // int64 | Channel ID
-	roleId := int64(789) // int64 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	roleId := int32(56) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -205,9 +205,9 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild ID | 
-**channelId** | **int64** | Channel ID | 
-**roleId** | **int64** | Role ID | 
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Channel ID | 
+**roleId** | **int32** | Role ID | 
 
 ### Other Parameters
 
@@ -257,9 +257,9 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild ID
-	channelId := int64(789) // int64 | Channel ID
-	roleId := int64(789) // int64 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	roleId := int32(56) // int32 | Role ID
 	req := *openapiclient.NewGuildChannelRolePermissionRequest() // GuildChannelRolePermissionRequest | Permission mask
 
 	configuration := openapiclient.NewConfiguration()
@@ -280,9 +280,9 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild ID | 
-**channelId** | **int64** | Channel ID | 
-**roleId** | **int64** | Role ID | 
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Channel ID | 
+**roleId** | **int32** | Role ID | 
 
 ### Other Parameters
 
@@ -333,9 +333,9 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild ID
-	channelId := int64(789) // int64 | Channel ID
-	roleId := int64(789) // int64 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	roleId := int32(56) // int32 | Role ID
 	req := *openapiclient.NewGuildChannelRolePermissionRequest() // GuildChannelRolePermissionRequest | Permission mask
 
 	configuration := openapiclient.NewConfiguration()
@@ -356,9 +356,9 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild ID | 
-**channelId** | **int64** | Channel ID | 
-**roleId** | **int64** | Role ID | 
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Channel ID | 
+**roleId** | **int32** | Role ID | 
 
 ### Other Parameters
 
@@ -409,8 +409,8 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild ID
-	userId := int64(789) // int64 | User ID
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -430,8 +430,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild ID | 
-**userId** | **int64** | User ID | 
+**guildId** | **int32** | Guild ID | 
+**userId** | **int32** | User ID | 
 
 ### Other Parameters
 
@@ -480,9 +480,9 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild ID
-	userId := int64(789) // int64 | User ID
-	roleId := int64(789) // int64 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
+	roleId := int32(56) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -502,9 +502,9 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild ID | 
-**userId** | **int64** | User ID | 
-**roleId** | **int64** | Role ID | 
+**guildId** | **int32** | Guild ID | 
+**userId** | **int32** | User ID | 
+**roleId** | **int32** | Role ID | 
 
 ### Other Parameters
 
@@ -554,9 +554,9 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild ID
-	userId := int64(789) // int64 | User ID
-	roleId := int64(789) // int64 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
+	roleId := int32(56) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -576,9 +576,9 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild ID | 
-**userId** | **int64** | User ID | 
-**roleId** | **int64** | Role ID | 
+**guildId** | **int32** | Guild ID | 
+**userId** | **int32** | User ID | 
+**roleId** | **int32** | Role ID | 
 
 ### Other Parameters
 
@@ -628,7 +628,7 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild ID
+	guildId := int32(56) // int32 | Guild ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -648,7 +648,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild ID | 
+**guildId** | **int32** | Guild ID | 
 
 ### Other Parameters
 
@@ -696,7 +696,7 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild ID
+	guildId := int32(56) // int32 | Guild ID
 	req := *openapiclient.NewGuildCreateGuildRoleRequest() // GuildCreateGuildRoleRequest | Role data
 
 	configuration := openapiclient.NewConfiguration()
@@ -717,7 +717,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild ID | 
+**guildId** | **int32** | Guild ID | 
 
 ### Other Parameters
 
@@ -766,8 +766,8 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild ID
-	roleId := int64(789) // int64 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	roleId := int32(56) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -787,8 +787,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild ID | 
-**roleId** | **int64** | Role ID | 
+**guildId** | **int32** | Guild ID | 
+**roleId** | **int32** | Role ID | 
 
 ### Other Parameters
 
@@ -837,8 +837,8 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild ID
-	roleId := int64(789) // int64 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	roleId := int32(56) // int32 | Role ID
 	req := *openapiclient.NewGuildPatchGuildRoleRequest() // GuildPatchGuildRoleRequest | Role changes
 
 	configuration := openapiclient.NewConfiguration()
@@ -859,8 +859,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild ID | 
-**roleId** | **int64** | Role ID | 
+**guildId** | **int32** | Guild ID | 
+**roleId** | **int32** | Role ID | 
 
 ### Other Parameters
 

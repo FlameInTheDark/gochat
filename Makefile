@@ -22,6 +22,9 @@ run:
 run_ws:
 	go run ./cmd/ws
 
+run_embedder:
+	go run ./cmd/embedder
+
 citus_up:
 	docker compose -p gochat up --scale citus-worker=3 -d
 
@@ -77,10 +80,10 @@ go_client:
 
 setup: tools up migrate
 
-.PHONY: setup
+.PHONY: setup run run_ws run_embedder rebuild_all rebuild_api rebuild_auth rebuild_ws rebuild_indexer rebuild_attachments rebuild_sfu rebuild_webhook rebuild_embedder
 
 # Dev tools
-rebuild_all: rebuild_api rebuild_auth rebuild_indexer rebuild_ws
+rebuild_all: rebuild_api rebuild_auth rebuild_indexer rebuild_embedder rebuild_ws
 
 rebuild_api:
 	docker compose down api
@@ -109,3 +112,7 @@ rebuild_sfu:
 rebuild_webhook:
 	docker compose down webhook
 	docker compose up -d --no-deps --build webhook
+
+rebuild_embedder:
+	docker compose down embedder
+	docker compose up -d --no-deps --build embedder

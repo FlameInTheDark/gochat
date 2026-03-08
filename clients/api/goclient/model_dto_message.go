@@ -23,8 +23,10 @@ type DtoMessage struct {
 	Attachments []DtoAttachment `json:"attachments,omitempty"`
 	Author      *DtoUser        `json:"author,omitempty"`
 	// Channel id the message was sent to
-	ChannelId *int32  `json:"channel_id,omitempty"`
-	Content   *string `json:"content,omitempty"`
+	ChannelId *int32       `json:"channel_id,omitempty"`
+	Content   *string      `json:"content,omitempty"`
+	Embeds    []EmbedEmbed `json:"embeds,omitempty"`
+	Flags     *int32       `json:"flags,omitempty"`
 	// Message ID
 	Id   *int32 `json:"id,omitempty"`
 	Type *int32 `json:"type,omitempty"`
@@ -177,6 +179,70 @@ func (o *DtoMessage) SetContent(v string) {
 	o.Content = &v
 }
 
+// GetEmbeds returns the Embeds field value if set, zero value otherwise.
+func (o *DtoMessage) GetEmbeds() []EmbedEmbed {
+	if o == nil || IsNil(o.Embeds) {
+		var ret []EmbedEmbed
+		return ret
+	}
+	return o.Embeds
+}
+
+// GetEmbedsOk returns a tuple with the Embeds field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoMessage) GetEmbedsOk() ([]EmbedEmbed, bool) {
+	if o == nil || IsNil(o.Embeds) {
+		return nil, false
+	}
+	return o.Embeds, true
+}
+
+// HasEmbeds returns a boolean if a field has been set.
+func (o *DtoMessage) HasEmbeds() bool {
+	if o != nil && !IsNil(o.Embeds) {
+		return true
+	}
+
+	return false
+}
+
+// SetEmbeds gets a reference to the given []EmbedEmbed and assigns it to the Embeds field.
+func (o *DtoMessage) SetEmbeds(v []EmbedEmbed) {
+	o.Embeds = v
+}
+
+// GetFlags returns the Flags field value if set, zero value otherwise.
+func (o *DtoMessage) GetFlags() int32 {
+	if o == nil || IsNil(o.Flags) {
+		var ret int32
+		return ret
+	}
+	return *o.Flags
+}
+
+// GetFlagsOk returns a tuple with the Flags field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoMessage) GetFlagsOk() (*int32, bool) {
+	if o == nil || IsNil(o.Flags) {
+		return nil, false
+	}
+	return o.Flags, true
+}
+
+// HasFlags returns a boolean if a field has been set.
+func (o *DtoMessage) HasFlags() bool {
+	if o != nil && !IsNil(o.Flags) {
+		return true
+	}
+
+	return false
+}
+
+// SetFlags gets a reference to the given int32 and assigns it to the Flags field.
+func (o *DtoMessage) SetFlags(v int32) {
+	o.Flags = &v
+}
+
 // GetId returns the Id field value if set, zero value otherwise.
 func (o *DtoMessage) GetId() int32 {
 	if o == nil || IsNil(o.Id) {
@@ -294,6 +360,12 @@ func (o DtoMessage) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Content) {
 		toSerialize["content"] = o.Content
+	}
+	if !IsNil(o.Embeds) {
+		toSerialize["embeds"] = o.Embeds
+	}
+	if !IsNil(o.Flags) {
+		toSerialize["flags"] = o.Flags
 	}
 	if !IsNil(o.Id) {
 		toSerialize["id"] = o.Id

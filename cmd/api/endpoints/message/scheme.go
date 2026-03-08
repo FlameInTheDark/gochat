@@ -1,6 +1,9 @@
 package message
 
 import (
+	"errors"
+
+	"github.com/FlameInTheDark/gochat/internal/embed"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -28,7 +31,8 @@ const (
 	ErrInvalidAttachments           = "invalid attachments"
 
 	// Validation error messages
-	ErrMessageContentRequired = "message content is required"
+	ErrMessagePayloadRequired = "message content, attachments, or embeds are required"
+	ErrMessageUpdateRequired  = "message content, embeds, or flags update is required"
 	ErrMessageContentTooLong  = "message content must be less than 2000 characters"
 	ErrAttachmentIdInvalid    = "attachment ID must be positive"
 	ErrMentionIdInvalid       = "mention ID must be positive"
@@ -40,18 +44,20 @@ const (
 	ErrLimitInvalid           = "limit must be between 1 and 100"
 	ErrFromIdInvalid          = "from ID must be positive"
 	ErrDirectionInvalid       = "direction must be 'before' or 'after'"
+	ErrFlagsInvalid           = "flags must be non-negative"
 )
 
 type SendMessageRequest struct {
 	Content     string                  `json:"content" example:"Hello world!"`            // Message content
 	Attachments helper.StringInt64Array `json:"attachments" example:"2230469276416868352"` // IDs of attached files
 	Mentions    helper.StringInt64Array `json:"mentions" example:"2230469276416868352"`    // IDs of mentioned users
+	Embeds      []embed.Embed           `json:"embeds,omitempty"`                          // Manual embeds supplied by the client. These are stored separately from generated URL embeds.
 }
 
 func (r SendMessageRequest) Validate() error {
-	return validation.ValidateStruct(&r,
+	if err := validation.ValidateStruct(&r,
 		validation.Field(&r.Content,
-			validation.When(len(r.Attachments) == 0, validation.Required.Error(ErrMessageContentRequired)),
+			validation.When(len(r.Attachments) == 0 && len(r.Embeds) == 0, validation.Required.Error(ErrMessagePayloadRequired)),
 			validation.RuneLength(0, 2000).Error(ErrMessageContentTooLong),
 		),
 		validation.Field(&r.Attachments,
@@ -60,20 +66,47 @@ func (r SendMessageRequest) Validate() error {
 		validation.Field(&r.Mentions,
 			validation.Each(validation.Min(int64(1)).Error(ErrMentionIdInvalid)),
 		),
-	)
+	); err != nil {
+		return err
+	}
+
+	return embed.ValidateEmbeds(r.Embeds)
 }
 
 type UpdateMessageRequest struct {
-	Content string `json:"content" example:"Hello world!"` // Message content
+	Content *string        `json:"content,omitempty" example:"Hello world!"` // Message content
+	Embeds  *[]embed.Embed `json:"embeds,omitempty"`                         // Full replacement for the manual embed array. Generated embeds are managed by the embedder service.
+	Flags   *int           `json:"flags,omitempty" example:"4"`              // Message flags bitmask. Use 4 to suppress URL embed generation and clear generated embeds.
 }
 
 func (r UpdateMessageRequest) Validate() error {
-	return validation.ValidateStruct(&r,
-		validation.Field(&r.Content,
-			validation.Required.Error(ErrMessageContentRequired),
-			validation.RuneLength(1, 2000).Error(ErrMessageContentTooLong),
-		),
-	)
+	if r.Content == nil && r.Embeds == nil && r.Flags == nil {
+		return errors.New(ErrMessageUpdateRequired)
+	}
+
+	if r.Content != nil {
+		if err := validation.Validate(*r.Content,
+			validation.RuneLength(0, 2000).Error(ErrMessageContentTooLong),
+		); err != nil {
+			return err
+		}
+	}
+
+	if r.Embeds != nil {
+		if err := embed.ValidateEmbeds(*r.Embeds); err != nil {
+			return err
+		}
+	}
+
+	if r.Flags != nil {
+		if err := validation.Validate(*r.Flags,
+			validation.Min(0).Error(ErrFlagsInvalid),
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type UploadAttachmentRequest struct {

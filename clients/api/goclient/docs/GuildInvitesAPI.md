@@ -99,7 +99,7 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild id
+	guildId := int32(56) // int32 | Guild id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -119,7 +119,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild id | 
+**guildId** | **int32** | Guild id | 
 
 ### Other Parameters
 
@@ -167,8 +167,8 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild id
-	inviteId := int64(789) // int64 | Invite id
+	guildId := int32(56) // int32 | Guild id
+	inviteId := int32(56) // int32 | Invite id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -188,8 +188,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild id | 
-**inviteId** | **int64** | Invite id | 
+**guildId** | **int32** | Guild id | 
+**inviteId** | **int32** | Invite id | 
 
 ### Other Parameters
 
@@ -238,7 +238,7 @@ import (
 )
 
 func main() {
-	guildId := int64(789) // int64 | Guild id
+	guildId := int32(56) // int32 | Guild id
 	request := *openapiclient.NewGuildCreateInviteRequest() // GuildCreateInviteRequest | Invite options
 
 	configuration := openapiclient.NewConfiguration()
@@ -259,7 +259,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**guildId** | **int64** | Guild id | 
+**guildId** | **int32** | Guild id | 
 
 ### Other Parameters
 

@@ -337,6 +337,46 @@
                 }
             }
         },
+        "/emoji/{emoji_id}": {
+            "get": {
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Emoji"
+                ],
+                "summary": "Redirect to public emoji asset",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Emoji filename ending in .webp",
+                        "name": "emoji_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Preferred rendered size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "307": {
+                        "description": "Temporary Redirect",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/guild": {
             "post": {
                 "produces": [
@@ -473,7 +513,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild id",
                         "name": "guild_id",
@@ -510,7 +549,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild id",
                         "name": "guild_id",
@@ -555,7 +593,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild id",
                         "name": "guild_id",
@@ -564,7 +601,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Invite id",
                         "name": "invite_id",
@@ -600,7 +636,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild id",
                         "name": "guild_id",
@@ -644,7 +679,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -699,7 +733,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -756,7 +789,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -804,7 +836,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -813,7 +844,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Category ID (actually a channel with special type)",
                         "name": "category_id",
@@ -861,7 +891,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild id",
                         "name": "guild_id",
@@ -919,7 +948,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -967,7 +995,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -1036,7 +1063,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild id",
                         "name": "guild_id",
@@ -1045,7 +1071,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Channel id",
                         "name": "channel_id",
@@ -1091,7 +1116,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -1100,7 +1124,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Channel ID",
                         "name": "channel_id",
@@ -1146,7 +1169,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -1155,7 +1177,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Channel ID",
                         "name": "channel_id",
@@ -1224,7 +1245,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -1233,7 +1253,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Channel ID",
                         "name": "channel_id",
@@ -1290,7 +1309,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -1299,7 +1317,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Channel ID",
                         "name": "channel_id",
@@ -1308,7 +1325,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Role ID",
                         "name": "role_id",
@@ -1366,7 +1382,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -1375,7 +1390,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Channel ID",
                         "name": "channel_id",
@@ -1384,7 +1398,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Role ID",
                         "name": "role_id",
@@ -1451,7 +1464,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -1460,7 +1472,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Channel ID",
                         "name": "channel_id",
@@ -1469,7 +1480,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Role ID",
                         "name": "role_id",
@@ -1527,7 +1537,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -1536,7 +1545,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Channel ID",
                         "name": "channel_id",
@@ -1545,7 +1553,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Role ID",
                         "name": "role_id",
@@ -1614,7 +1621,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -1668,7 +1674,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -1736,7 +1741,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -1744,7 +1748,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Emoji ID",
                         "name": "emoji_id",
                         "in": "path",
@@ -1801,7 +1804,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -1809,7 +1811,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Emoji ID",
                         "name": "emoji_id",
                         "in": "path",
@@ -1887,7 +1888,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -1950,7 +1950,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -1998,7 +1997,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -2006,7 +2004,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Icon ID",
                         "name": "icon_id",
                         "in": "path",
@@ -2053,7 +2050,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -2062,7 +2058,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "User ID",
                         "name": "user_id",
@@ -2119,7 +2114,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -2128,7 +2122,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "User ID",
                         "name": "user_id",
@@ -2137,7 +2130,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Role ID",
                         "name": "role_id",
@@ -2195,7 +2187,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -2204,7 +2195,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "User ID",
                         "name": "user_id",
@@ -2213,7 +2203,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Role ID",
                         "name": "role_id",
@@ -2273,7 +2262,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -2324,7 +2312,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -2373,7 +2360,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -2436,7 +2422,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -2445,7 +2430,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Role ID",
                         "name": "role_id",
@@ -2503,7 +2487,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -2512,7 +2495,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Role ID",
                         "name": "role_id",
@@ -2590,7 +2572,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild ID",
                         "name": "guild_id",
@@ -2636,7 +2617,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -2690,7 +2670,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -2698,7 +2677,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Channel ID",
                         "name": "channel_id",
                         "in": "path",
@@ -2743,7 +2721,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -2751,7 +2728,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Channel ID",
                         "name": "channel_id",
                         "in": "path",
@@ -2813,7 +2789,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Channel id",
                         "name": "channel_id",
@@ -2822,7 +2797,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Start point for messages",
                         "name": "from",
@@ -2895,7 +2869,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Channel id",
                         "name": "channel_id",
                         "in": "path",
@@ -2957,7 +2930,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Channel id",
                         "name": "channel_id",
                         "in": "path",
@@ -3019,7 +2991,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Channel id",
                         "name": "channel_id",
                         "in": "path",
@@ -3060,7 +3031,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Message id",
                         "name": "message_id",
                         "in": "path",
@@ -3068,7 +3038,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Channel id",
                         "name": "channel_id",
                         "in": "path",
@@ -3119,7 +3088,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Message id",
                         "name": "message_id",
                         "in": "path",
@@ -3127,7 +3095,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Channel id",
                         "name": "channel_id",
                         "in": "path",
@@ -3189,7 +3156,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Channel id",
                         "name": "channel_id",
                         "in": "path",
@@ -3197,7 +3163,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Message id",
                         "name": "message_id",
                         "in": "path",
@@ -3295,7 +3260,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild id",
                         "name": "guild_id",
@@ -3365,7 +3329,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Channel ID",
                         "name": "channel_id",
                         "in": "path",
@@ -3373,7 +3336,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Attachment ID",
                         "name": "attachment_id",
                         "in": "path",
@@ -3466,7 +3428,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -3474,7 +3435,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Avatar ID",
                         "name": "avatar_id",
                         "in": "path",
@@ -3551,6 +3511,117 @@
                 }
             }
         },
+        "/upload/emojis/{guild_id}/{emoji_id}": {
+            "post": {
+                "description": "Uploads and finalizes the binary payload for a previously created guild emoji placeholder.",
+                "consumes": [
+                    "application/octet-stream"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Upload"
+                ],
+                "summary": "Upload guild emoji image",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Emoji ID",
+                        "name": "emoji_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Binary emoji image",
+                        "name": "file",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "204": {
+                        "description": "No Content (already uploaded)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Emoji not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "410": {
+                        "description": "Upload expired",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "413": {
+                        "description": "File too large",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "415": {
+                        "description": "Unsupported media type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/upload/icons/{guild_id}/{icon_id}": {
             "post": {
                 "description": "Uploads a guild icon. Resizes to max 128x128 and converts to WebP \u003c= 250KB. Only guild owner can upload. Sets guild icon and emits update.",
@@ -3567,7 +3638,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Guild ID",
                         "name": "guild_id",
                         "in": "path",
@@ -3575,7 +3645,6 @@
                     },
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Icon ID",
                         "name": "icon_id",
                         "in": "path",
@@ -3772,7 +3841,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Avatar ID",
                         "name": "avatar_id",
                         "in": "path",
@@ -4193,7 +4261,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "User id",
                         "name": "user_id",
@@ -4334,7 +4401,6 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "format": "int64",
                         "example": 2230469276416868352,
                         "description": "Guild id",
                         "name": "guild_id",
@@ -5442,6 +5508,15 @@
                     "type": "string",
                     "example": "Hello world!"
                 },
+                "embeds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/embed.Embed"
+                    }
+                },
+                "flags": {
+                    "type": "integer"
+                },
                 "id": {
                     "description": "Message ID",
                     "type": "integer",
@@ -5502,6 +5577,229 @@
                 "name": {
                     "type": "string",
                     "example": "FancyUserName"
+                }
+            }
+        },
+        "embed.Embed": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "description": "Embed author metadata.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/embed.EmbedAuthor"
+                        }
+                    ]
+                },
+                "color": {
+                    "description": "Decimal RGB color value.",
+                    "type": "integer",
+                    "example": 65280
+                },
+                "description": {
+                    "description": "Main embed description.",
+                    "type": "string",
+                    "example": "Embed support is live."
+                },
+                "fields": {
+                    "description": "Up to 25 structured fields.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/embed.EmbedField"
+                    }
+                },
+                "footer": {
+                    "description": "Optional footer block.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/embed.EmbedFooter"
+                        }
+                    ]
+                },
+                "image": {
+                    "description": "Full-size image block.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/embed.EmbedMedia"
+                        }
+                    ]
+                },
+                "provider": {
+                    "description": "Content provider metadata.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/embed.EmbedProvider"
+                        }
+                    ]
+                },
+                "thumbnail": {
+                    "description": "Thumbnail image block.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/embed.EmbedMedia"
+                        }
+                    ]
+                },
+                "timestamp": {
+                    "description": "Optional ISO timestamp shown by the client.",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "title": {
+                    "description": "Embed title.",
+                    "type": "string",
+                    "example": "GoChat 1.0"
+                },
+                "type": {
+                    "description": "Embed type.",
+                    "type": "string",
+                    "enum": [
+                        "rich",
+                        "image",
+                        "video",
+                        "gifv",
+                        "article",
+                        "link"
+                    ],
+                    "example": "rich"
+                },
+                "url": {
+                    "description": "Canonical URL opened when the embed title is clicked.",
+                    "type": "string",
+                    "example": "https://example.com/release"
+                },
+                "video": {
+                    "description": "Embedded video metadata.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/embed.EmbedMedia"
+                        }
+                    ]
+                }
+            }
+        },
+        "embed.EmbedAuthor": {
+            "type": "object",
+            "properties": {
+                "icon_url": {
+                    "description": "Author icon URL.",
+                    "type": "string",
+                    "example": "https://example.com/author.png"
+                },
+                "name": {
+                    "description": "Author display name.",
+                    "type": "string",
+                    "example": "The PrimeTime"
+                },
+                "proxy_icon_url": {
+                    "description": "Optional proxied author icon URL.",
+                    "type": "string",
+                    "example": "https://cdn.example.com/author.png"
+                },
+                "url": {
+                    "description": "Author URL.",
+                    "type": "string",
+                    "example": "https://www.youtube.com/channel/UCUyeluBRhGPCW4rPe_UvBZQ"
+                }
+            }
+        },
+        "embed.EmbedField": {
+            "type": "object",
+            "properties": {
+                "inline": {
+                    "description": "Whether the field should be rendered inline.",
+                    "type": "boolean",
+                    "example": true
+                },
+                "name": {
+                    "description": "Field label.",
+                    "type": "string",
+                    "example": "Status"
+                },
+                "value": {
+                    "description": "Field value.",
+                    "type": "string",
+                    "example": "Stable"
+                }
+            }
+        },
+        "embed.EmbedFooter": {
+            "type": "object",
+            "properties": {
+                "icon_url": {
+                    "description": "Footer icon URL.",
+                    "type": "string",
+                    "example": "https://example.com/icon.png"
+                },
+                "proxy_icon_url": {
+                    "description": "Optional proxied footer icon URL.",
+                    "type": "string",
+                    "example": "https://cdn.example.com/icon.png"
+                },
+                "text": {
+                    "description": "Footer text.",
+                    "type": "string",
+                    "example": "Documentation"
+                }
+            }
+        },
+        "embed.EmbedMedia": {
+            "type": "object",
+            "properties": {
+                "content_type": {
+                    "description": "Media MIME type when known.",
+                    "type": "string",
+                    "example": "image/png"
+                },
+                "flags": {
+                    "description": "Media-specific flags from the source provider.",
+                    "type": "integer",
+                    "example": 0
+                },
+                "height": {
+                    "description": "Media height in pixels.",
+                    "type": "integer",
+                    "example": 720
+                },
+                "placeholder": {
+                    "description": "Encoded placeholder used by some generated embeds.",
+                    "type": "string",
+                    "example": "IPgNDIQbRUaQiJcwuYlwmyQ5Bg=="
+                },
+                "placeholder_version": {
+                    "description": "Placeholder format version.",
+                    "type": "integer",
+                    "example": 1
+                },
+                "proxy_url": {
+                    "description": "Optional proxied media URL.",
+                    "type": "string",
+                    "example": "https://cdn.example.com/preview.png"
+                },
+                "url": {
+                    "description": "Media URL.",
+                    "type": "string",
+                    "example": "https://example.com/preview.png"
+                },
+                "width": {
+                    "description": "Media width in pixels.",
+                    "type": "integer",
+                    "example": 1280
+                }
+            }
+        },
+        "embed.EmbedProvider": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "Provider name.",
+                    "type": "string",
+                    "example": "YouTube"
+                },
+                "url": {
+                    "description": "Provider URL.",
+                    "type": "string",
+                    "example": "https://www.youtube.com"
                 }
             }
         },
@@ -5859,6 +6157,13 @@
                     "type": "string",
                     "example": "Hello world!"
                 },
+                "embeds": {
+                    "description": "Manual embeds supplied by the client. These are stored separately from generated URL embeds.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/embed.Embed"
+                    }
+                },
                 "mentions": {
                     "description": "IDs of mentioned users",
                     "type": "array",
@@ -5878,6 +6183,18 @@
                     "description": "Message content",
                     "type": "string",
                     "example": "Hello world!"
+                },
+                "embeds": {
+                    "description": "Full replacement for the manual embed array. Generated embeds are managed by the embedder service.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/embed.Embed"
+                    }
+                },
+                "flags": {
+                    "description": "Message flags bitmask. Use 4 to suppress URL embed generation and clear generated embeds.",
+                    "type": "integer",
+                    "example": 4
                 }
             }
         },
@@ -5915,24 +6232,19 @@
             "type": "object",
             "properties": {
                 "authorId": {
-                    "type": "integer",
-                    "format": "int64"
+                    "type": "integer"
                 },
                 "channelId": {
-                    "type": "integer",
-                    "format": "int64"
+                    "type": "integer"
                 },
                 "guildId": {
-                    "type": "integer",
-                    "format": "int64"
+                    "type": "integer"
                 },
                 "messageId": {
-                    "type": "integer",
-                    "format": "int64"
+                    "type": "integer"
                 },
                 "roleId": {
-                    "type": "integer",
-                    "format": "int64"
+                    "type": "integer"
                 },
                 "type": {
                     "type": "integer"
@@ -5957,14 +6269,6 @@
                 "ChannelTypeGuildVoice": "Voice channel in guild",
                 "ChannelTypeThread": "Thread channel"
             },
-            "x-enum-descriptions": [
-                "Default text channel in guild",
-                "Voice channel in guild",
-                "Category channel in guild",
-                "DM channel. Can't be created in Guild",
-                "Group DM channel. Can't be created in Guild'",
-                "Thread channel"
-            ],
             "x-enum-varnames": [
                 "ChannelTypeGuild",
                 "ChannelTypeGuildVoice",
@@ -5995,6 +6299,9 @@
                 "auto_gain_control": {
                     "type": "boolean"
                 },
+                "denoiser_type": {
+                    "type": "string"
+                },
                 "echo_cancellation": {
                     "type": "boolean"
                 },
@@ -6010,20 +6317,16 @@
             "type": "object",
             "properties": {
                 "authorId": {
-                    "type": "integer",
-                    "format": "int64"
+                    "type": "integer"
                 },
                 "channelId": {
-                    "type": "integer",
-                    "format": "int64"
+                    "type": "integer"
                 },
                 "messageId": {
-                    "type": "integer",
-                    "format": "int64"
+                    "type": "integer"
                 },
                 "userId": {
-                    "type": "integer",
-                    "format": "int64"
+                    "type": "integer"
                 }
             }
         },
@@ -6459,8 +6762,7 @@
                     "additionalProperties": {
                         "type": "object",
                         "additionalProperties": {
-                            "type": "integer",
-                            "format": "int64"
+                            "type": "integer"
                         }
                     }
                 },
@@ -6476,8 +6778,7 @@
                 "read_states": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "integer",
-                        "format": "int64"
+                        "type": "integer"
                     }
                 },
                 "settings": {

@@ -85,6 +85,7 @@ Class | Method | HTTP request | Description
 *AuthAPI* | [**AuthRefreshGet**](docs/AuthAPI.md#authrefreshget) | **Get** /auth/refresh | Refresh authentication token
 *AuthAPI* | [**AuthRegistrationPost**](docs/AuthAPI.md#authregistrationpost) | **Post** /auth/registration | Registration
 *AuthAPI* | [**AuthResetPost**](docs/AuthAPI.md#authresetpost) | **Post** /auth/reset | Password Reset
+*EmojiAPI* | [**EmojiEmojiIdGet**](docs/EmojiAPI.md#emojiemojiidget) | **Get** /emoji/{emoji_id} | Redirect to public emoji asset
 *GuildAPI* | [**GuildGuildIdCategoryCategoryIdDelete**](docs/GuildAPI.md#guildguildidcategorycategoryiddelete) | **Delete** /guild/{guild_id}/category/{category_id} | Delete channel category
 *GuildAPI* | [**GuildGuildIdCategoryPost**](docs/GuildAPI.md#guildguildidcategorypost) | **Post** /guild/{guild_id}/category | Create guild channel category
 *GuildAPI* | [**GuildGuildIdChannelChannelIdDelete**](docs/GuildAPI.md#guildguildidchannelchanneliddelete) | **Delete** /guild/{guild_id}/channel/{channel_id} | Delete channel
@@ -137,6 +138,7 @@ Class | Method | HTTP request | Description
 *SearchAPI* | [**SearchMessagesPost**](docs/SearchAPI.md#searchmessagespost) | **Post** /search/messages | Search messages in a channel
 *UploadAPI* | [**UploadAttachmentsChannelIdAttachmentIdPost**](docs/UploadAPI.md#uploadattachmentschannelidattachmentidpost) | **Post** /upload/attachments/{channel_id}/{attachment_id} | Upload attachment
 *UploadAPI* | [**UploadAvatarsUserIdAvatarIdPost**](docs/UploadAPI.md#uploadavatarsuseridavataridpost) | **Post** /upload/avatars/{user_id}/{avatar_id} | Upload user avatar
+*UploadAPI* | [**UploadEmojisGuildIdEmojiIdPost**](docs/UploadAPI.md#uploademojisguildidemojiidpost) | **Post** /upload/emojis/{guild_id}/{emoji_id} | Upload guild emoji image
 *UploadAPI* | [**UploadIconsGuildIdIconIdPost**](docs/UploadAPI.md#uploadiconsguildidiconidpost) | **Post** /upload/icons/{guild_id}/{icon_id} | Upload guild icon
 *UserAPI* | [**UserMeAvatarPost**](docs/UserAPI.md#usermeavatarpost) | **Post** /user/me/avatar | Create avatar metadata
 *UserAPI* | [**UserMeAvatarsAvatarIdDelete**](docs/UserAPI.md#usermeavatarsavatariddelete) | **Delete** /user/me/avatars/{avatar_id} | Delete my avatar by ID
@@ -194,6 +196,12 @@ Class | Method | HTTP request | Description
  - [DtoMessage](docs/DtoMessage.md)
  - [DtoRole](docs/DtoRole.md)
  - [DtoUser](docs/DtoUser.md)
+ - [EmbedEmbed](docs/EmbedEmbed.md)
+ - [EmbedEmbedAuthor](docs/EmbedEmbedAuthor.md)
+ - [EmbedEmbedField](docs/EmbedEmbedField.md)
+ - [EmbedEmbedFooter](docs/EmbedEmbedFooter.md)
+ - [EmbedEmbedMedia](docs/EmbedEmbedMedia.md)
+ - [EmbedEmbedProvider](docs/EmbedEmbedProvider.md)
  - [GuildChannelOrder](docs/GuildChannelOrder.md)
  - [GuildChannelRolePermission](docs/GuildChannelRolePermission.md)
  - [GuildChannelRolePermissionRequest](docs/GuildChannelRolePermissionRequest.md)

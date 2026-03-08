@@ -4,11 +4,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AuthorId** | Pointer to **int64** |  | [optional] 
-**ChannelId** | Pointer to **int64** |  | [optional] 
-**GuildId** | Pointer to **int64** |  | [optional] 
-**MessageId** | Pointer to **int64** |  | [optional] 
-**RoleId** | Pointer to **int64** |  | [optional] 
+**AuthorId** | Pointer to **int32** |  | [optional] 
+**ChannelId** | Pointer to **int32** |  | [optional] 
+**GuildId** | Pointer to **int32** |  | [optional] 
+**MessageId** | Pointer to **int32** |  | [optional] 
+**RoleId** | Pointer to **int32** |  | [optional] 
 **Type** | Pointer to **int32** |  | [optional] 
 
 ## Methods
@@ -32,20 +32,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetAuthorId
 
-`func (o *ModelChannelMention) GetAuthorId() int64`
+`func (o *ModelChannelMention) GetAuthorId() int32`
 
 GetAuthorId returns the AuthorId field if non-nil, zero value otherwise.
 
 ### GetAuthorIdOk
 
-`func (o *ModelChannelMention) GetAuthorIdOk() (*int64, bool)`
+`func (o *ModelChannelMention) GetAuthorIdOk() (*int32, bool)`
 
 GetAuthorIdOk returns a tuple with the AuthorId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetAuthorId
 
-`func (o *ModelChannelMention) SetAuthorId(v int64)`
+`func (o *ModelChannelMention) SetAuthorId(v int32)`
 
 SetAuthorId sets AuthorId field to given value.
 
@@ -57,20 +57,20 @@ HasAuthorId returns a boolean if a field has been set.
 
 ### GetChannelId
 
-`func (o *ModelChannelMention) GetChannelId() int64`
+`func (o *ModelChannelMention) GetChannelId() int32`
 
 GetChannelId returns the ChannelId field if non-nil, zero value otherwise.
 
 ### GetChannelIdOk
 
-`func (o *ModelChannelMention) GetChannelIdOk() (*int64, bool)`
+`func (o *ModelChannelMention) GetChannelIdOk() (*int32, bool)`
 
 GetChannelIdOk returns a tuple with the ChannelId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetChannelId
 
-`func (o *ModelChannelMention) SetChannelId(v int64)`
+`func (o *ModelChannelMention) SetChannelId(v int32)`
 
 SetChannelId sets ChannelId field to given value.
 
@@ -82,20 +82,20 @@ HasChannelId returns a boolean if a field has been set.
 
 ### GetGuildId
 
-`func (o *ModelChannelMention) GetGuildId() int64`
+`func (o *ModelChannelMention) GetGuildId() int32`
 
 GetGuildId returns the GuildId field if non-nil, zero value otherwise.
 
 ### GetGuildIdOk
 
-`func (o *ModelChannelMention) GetGuildIdOk() (*int64, bool)`
+`func (o *ModelChannelMention) GetGuildIdOk() (*int32, bool)`
 
 GetGuildIdOk returns a tuple with the GuildId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetGuildId
 
-`func (o *ModelChannelMention) SetGuildId(v int64)`
+`func (o *ModelChannelMention) SetGuildId(v int32)`
 
 SetGuildId sets GuildId field to given value.
 
@@ -107,20 +107,20 @@ HasGuildId returns a boolean if a field has been set.
 
 ### GetMessageId
 
-`func (o *ModelChannelMention) GetMessageId() int64`
+`func (o *ModelChannelMention) GetMessageId() int32`
 
 GetMessageId returns the MessageId field if non-nil, zero value otherwise.
 
 ### GetMessageIdOk
 
-`func (o *ModelChannelMention) GetMessageIdOk() (*int64, bool)`
+`func (o *ModelChannelMention) GetMessageIdOk() (*int32, bool)`
 
 GetMessageIdOk returns a tuple with the MessageId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetMessageId
 
-`func (o *ModelChannelMention) SetMessageId(v int64)`
+`func (o *ModelChannelMention) SetMessageId(v int32)`
 
 SetMessageId sets MessageId field to given value.
 
@@ -132,20 +132,20 @@ HasMessageId returns a boolean if a field has been set.
 
 ### GetRoleId
 
-`func (o *ModelChannelMention) GetRoleId() int64`
+`func (o *ModelChannelMention) GetRoleId() int32`
 
 GetRoleId returns the RoleId field if non-nil, zero value otherwise.
 
 ### GetRoleIdOk
 
-`func (o *ModelChannelMention) GetRoleIdOk() (*int64, bool)`
+`func (o *ModelChannelMention) GetRoleIdOk() (*int32, bool)`
 
 GetRoleIdOk returns a tuple with the RoleId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetRoleId
 
-`func (o *ModelChannelMention) SetRoleId(v int64)`
+`func (o *ModelChannelMention) SetRoleId(v int32)`
 
 SetRoleId sets RoleId field to given value.
 
