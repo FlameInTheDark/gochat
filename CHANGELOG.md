@@ -1,3 +1,27 @@
+# [1.7.0](https://github.com/FlameInTheDark/gochat/compare/v1.6.0...v1.7.0) (2026-03-09)
+
+
+### Bug Fixes
+
+* SFU service crash fix on user join voice channel. Increased limit for user audio input and output parameters in settings ([6aa89c6](https://github.com/FlameInTheDark/gochat/commit/6aa89c68212840005aee344a3063126c5a94160d))
+
+
+### Features
+
+* added embedder to github actions ([815f683](https://github.com/FlameInTheDark/gochat/commit/815f68318ef2438b95c009186deae806e0f0d7a7))
+* added moderation features kick/ban/unban ([a01a522](https://github.com/FlameInTheDark/gochat/commit/a01a5226f674bf28cb5ab1fc51778118bf1c46a8))
+* attachment service refactoring ([46b933d](https://github.com/FlameInTheDark/gochat/commit/46b933d8e9f43206f7efbb5613dee727f83ec521))
+* custom server emojis ([57abacb](https://github.com/FlameInTheDark/gochat/commit/57abacb1b667678f38bf08072d252762bd414bcf))
+* DM channel message search ([83a3f3a](https://github.com/FlameInTheDark/gochat/commit/83a3f3a9b4d268fd04ad631a393b5a8a673cdb91))
+* improved embedder service parsing for twitter/x ([924db96](https://github.com/FlameInTheDark/gochat/commit/924db9668f6f7f5c7a2c6237f2c14d2858f211dd))
+* improved embedder with cache, better thumbnails and exclusion regex patterns configuration ([a357854](https://github.com/FlameInTheDark/gochat/commit/a35785441584eb992780c5d161daf0095de4f520))
+* message embed and url embed generator ([0d2d186](https://github.com/FlameInTheDark/gochat/commit/0d2d1866a434e85427fef6bce82aa5c1a442d745))
+* minor improvements and documentation ([776de89](https://github.com/FlameInTheDark/gochat/commit/776de89d45ef23f0b1c06112de402ccedb000d9f))
+* optimizations and bugfixes ([cda620c](https://github.com/FlameInTheDark/gochat/commit/cda620c2cd24d0f24c5c9c4406c4f4423b5f389e))
+* optimizations and bugfixes, documentation ([03a7cdf](https://github.com/FlameInTheDark/gochat/commit/03a7cdfcd85c376fac9ce3fc606ff45d89ddf05c))
+* role ordering ([0d64393](https://github.com/FlameInTheDark/gochat/commit/0d643932f202459ee21203d36c4efae926b5e9d9))
+* server custom emojis ([76298da](https://github.com/FlameInTheDark/gochat/commit/76298daae4468cd0ddeba0c0e9c7aac6f1a3dc26))
+
 # [1.6.0](https://github.com/FlameInTheDark/gochat/compare/v1.5.0...v1.6.0) (2025-10-29)
 
 
