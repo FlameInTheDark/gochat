@@ -31,6 +31,9 @@ const (
 	defaultUserAgent                 = "GoChat-Embedder/1.0"
 	defaultYouTubeOEmbedURL          = "https://www.youtube.com/oembed"
 	defaultYouTubeEmbedBaseURL       = "https://www.youtube.com/embed"
+	defaultFixTweetAPIBaseURL        = "https://api.fxtwitter.com"
+	defaultTwitterOEmbedURL          = "https://publish.twitter.com/oembed"
+	defaultTwitterBaseURL            = "https://twitter.com"
 	defaultCacheTTL                  = 6 * time.Hour
 	defaultNegativeCacheTTL          = 30 * time.Minute
 	youTubeBrandColor                = 0xFF0000
@@ -38,8 +41,10 @@ const (
 )
 
 var (
-	embedURLRegex   = regexp.MustCompile(`(?i)\bhttps?://[^\s]+`)
-	blockedPrefixes = []netip.Prefix{
+	embedURLRegex     = regexp.MustCompile(`(?i)\bhttps?://[^\s]+`)
+	twitterHosts      = []string{"twitter.com", "x.com", "vxtwitter.com", "fxtwitter.com", "fixvx.com", "fixupx.com"}
+	twitterProxyHosts = []string{"vxtwitter.com", "fxtwitter.com", "fixvx.com", "fixupx.com"}
+	blockedPrefixes   = []netip.Prefix{
 		netip.MustParsePrefix("0.0.0.0/8"),
 		netip.MustParsePrefix("10.0.0.0/8"),
 		netip.MustParsePrefix("100.64.0.0/10"),
@@ -134,6 +139,79 @@ type oEmbedResponse struct {
 	Height          *int64
 	URL             string
 	HTML            string
+}
+
+type twitterStatusReference struct {
+	Username         string
+	StatusID         string
+	CanonicalHost    string
+	CanonicalURL     string
+	AuthorURL        string
+	AlternateService bool
+}
+
+type twitterStatusService struct {
+	APIBaseURL        string
+	FooterText        string
+	FooterIconURL     string
+	VideoFooterIcon   string
+	VideoProxyBaseURL string
+}
+
+type twitterAPIStatusResponse struct {
+	Code    int               `json:"code"`
+	Message string            `json:"message"`
+	Tweet   *twitterAPIStatus `json:"tweet"`
+}
+
+type twitterAPIStatus struct {
+	URL              string              `json:"url"`
+	ID               string              `json:"id"`
+	Text             string              `json:"text"`
+	Color            string              `json:"color"`
+	TwitterCard      string              `json:"twitter_card"`
+	CreatedAt        string              `json:"created_at"`
+	CreatedTimestamp *int64              `json:"created_timestamp"`
+	Source           string              `json:"source"`
+	Author           *twitterAPIAuthor   `json:"author"`
+	Media            *twitterAPIMediaSet `json:"media"`
+}
+
+type twitterAPIAuthor struct {
+	Name        string `json:"name"`
+	ScreenName  string `json:"screen_name"`
+	AvatarURL   string `json:"avatar_url"`
+	AvatarColor string `json:"avatar_color"`
+}
+
+type twitterAPIMediaSet struct {
+	External *twitterAPIExternalMedia `json:"external"`
+	Photos   []twitterAPIPhoto        `json:"photos"`
+	Videos   []twitterAPIVideo        `json:"videos"`
+}
+
+type twitterAPIExternalMedia struct {
+	Type     string `json:"type"`
+	URL      string `json:"url"`
+	Height   *int64 `json:"height"`
+	Width    *int64 `json:"width"`
+	Duration *int64 `json:"duration"`
+}
+
+type twitterAPIPhoto struct {
+	Type   string `json:"type"`
+	URL    string `json:"url"`
+	Height *int64 `json:"height"`
+	Width  *int64 `json:"width"`
+}
+
+type twitterAPIVideo struct {
+	Type         string `json:"type"`
+	URL          string `json:"url"`
+	ThumbnailURL string `json:"thumbnail_url"`
+	Height       *int64 `json:"height"`
+	Width        *int64 `json:"width"`
+	Format       string `json:"format"`
 }
 
 type cachedEmbedResult struct {
@@ -296,6 +374,7 @@ func (g *Generator) GenerateURL(ctx context.Context, rawURL string) (*embed.Embe
 	if err != nil || !isHTTPURL(parsedURL) {
 		return nil, skipEmbedError("invalid embed URL %q", rawURL)
 	}
+	twitterRef, hasTwitterRef := extractTwitterStatusReference(parsedURL)
 	normalizedURL := parsedURL.String()
 	if g.shouldExcludeURL(rawURL, normalizedURL) {
 		return nil, skipEmbedError("excluded embed URL %s", normalizedURL)
@@ -304,52 +383,72 @@ func (g *Generator) GenerateURL(ctx context.Context, rawURL string) (*embed.Embe
 	if cached, cachedErr, ok := g.loadCachedResult(ctx, normalizedURL); ok {
 		return cached, cachedErr
 	}
-
-	pageURL := parsedURL
-	youtubeID, hasYouTubeID := extractYouTubeID(parsedURL)
-	oembedURL := ""
-	if hasYouTubeID {
-		oembedURL = g.buildYouTubeOEmbedURL(parsedURL.String())
-	}
-
-	page, pageErr := g.fetch(ctx, parsedURL.String())
-	if pageErr == nil {
-		pageURL = page.FinalURL
-		if page.FinalURL != nil {
-			if id, ok := extractYouTubeID(page.FinalURL); ok {
-				youtubeID = id
-				hasYouTubeID = true
-				if oembedURL == "" {
-					oembedURL = g.buildYouTubeOEmbedURL(page.FinalURL.String())
-				}
-			}
-		}
-
-		if isImageContentType(page.ContentType) {
-			embedURL := pageURL.String()
-			var width *int64
-			var height *int64
-			if parsedWidth, parsedHeight, decodeErr := decodeImageDimensions(page.Body); decodeErr == nil {
-				width = &parsedWidth
-				height = &parsedHeight
-			}
-			result := &embed.Embed{
-				Type: "image",
-				URL:  embedURL,
-				Image: &embed.EmbedMedia{
-					URL:         embedURL,
-					Width:       width,
-					Height:      height,
-					ContentType: page.ContentType,
-				},
+	if hasTwitterRef {
+		if result, err := g.generateTwitterStatusEmbed(ctx, parsedURL.String(), twitterRef); err == nil && result != nil {
+			g.populateMissingEmbedMediaDimensions(ctx, result)
+			if err := embed.ValidateEmbeds([]embed.Embed{*result}); err != nil {
+				g.storeSkippedResult(ctx, normalizedURL)
+				return nil, skipEmbedError("invalid embed metadata for %s", parsedURL.String())
 			}
 			g.storeEmbedResult(ctx, normalizedURL, result)
 			return result, nil
 		}
 	}
 
+	pageURL := parsedURL
+	youtubeID, hasYouTubeID := extractYouTubeID(parsedURL)
+	oembedURL := ""
+	if hasYouTubeID {
+		oembedURL = g.buildYouTubeOEmbedURL(parsedURL.String())
+	} else if hasTwitterRef {
+		oembedURL = buildTwitterOEmbedURL(firstNonEmpty(twitterRef.CanonicalURL, normalizedURL))
+		if canonicalParsed, parseErr := url.Parse(firstNonEmpty(twitterRef.CanonicalURL, normalizedURL)); parseErr == nil && canonicalParsed != nil {
+			pageURL = canonicalParsed
+		}
+	}
+
+	var page fetchedPage
+	var pageErr error
+	if !hasTwitterRef {
+		page, pageErr = g.fetch(ctx, parsedURL.String())
+		if pageErr == nil {
+			pageURL = page.FinalURL
+			if page.FinalURL != nil {
+				if id, ok := extractYouTubeID(page.FinalURL); ok {
+					youtubeID = id
+					hasYouTubeID = true
+					if oembedURL == "" {
+						oembedURL = g.buildYouTubeOEmbedURL(page.FinalURL.String())
+					}
+				}
+			}
+
+			if isImageContentType(page.ContentType) {
+				embedURL := pageURL.String()
+				var width *int64
+				var height *int64
+				if parsedWidth, parsedHeight, decodeErr := decodeImageDimensions(page.Body); decodeErr == nil {
+					width = &parsedWidth
+					height = &parsedHeight
+				}
+				result := &embed.Embed{
+					Type: "image",
+					URL:  embedURL,
+					Image: &embed.EmbedMedia{
+						URL:         embedURL,
+						Width:       width,
+						Height:      height,
+						ContentType: page.ContentType,
+					},
+				}
+				g.storeEmbedResult(ctx, normalizedURL, result)
+				return result, nil
+			}
+		}
+	}
+
 	var metadata pageMetadata
-	if pageErr == nil && (page.ContentType == "" || isHTMLContentType(page.ContentType)) {
+	if !hasTwitterRef && pageErr == nil && (page.ContentType == "" || isHTMLContentType(page.ContentType)) {
 		metadata, err = parseHTMLMetadata(pageURL, page.Body)
 		if err != nil && oembedURL == "" {
 			err = skipEmbedError("unable to parse metadata for %s", parsedURL.String())
@@ -396,12 +495,47 @@ func (g *Generator) GenerateURL(ctx context.Context, rawURL string) (*embed.Embe
 	return result, nil
 }
 
+func (g *Generator) generateTwitterStatusEmbed(ctx context.Context, originalURL string, reference twitterStatusReference) (*embed.Embed, error) {
+	service := twitterStatusServiceForHost(hostFromRawURL(originalURL))
+	if service.APIBaseURL == "" {
+		return nil, nil
+	}
+
+	endpoint := buildTwitterStatusAPIURL(service.APIBaseURL, reference.Username, reference.StatusID)
+	if endpoint == "" {
+		return nil, nil
+	}
+
+	status, err := g.fetchTwitterStatus(ctx, endpoint)
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(status.Text) == "" {
+		oembedURL := buildTwitterOEmbedURL(firstNonEmpty(status.URL, reference.CanonicalURL))
+		if oembedURL != "" {
+			if oembedData, oembedErr := g.fetchOEmbed(ctx, oembedURL); oembedErr == nil && oembedData != nil {
+				status.Text = firstNonEmpty(status.Text, oembedData.Description, descriptionFromOEmbedHTML(oembedData.HTML))
+			}
+		}
+	}
+	return buildTwitterStatusEmbed(originalURL, reference, service, status), nil
+}
+
 func buildEmbed(originalURL string, pageURL *url.URL, metadata pageMetadata, oembedData *oEmbedResponse, youtubeVideoURL string) *embed.Embed {
 	embedURL := originalURL
 	if metadata.CanonicalURL != "" {
 		embedURL = metadata.CanonicalURL
+	} else if valueOrEmpty(oembedData, func(v *oEmbedResponse) string { return v.URL }) != "" {
+		embedURL = valueOrEmpty(oembedData, func(v *oEmbedResponse) string { return v.URL })
 	} else if pageURL != nil {
 		embedURL = pageURL.String()
+	}
+
+	originalParsed, _ := url.Parse(strings.TrimSpace(originalURL))
+	embedParsed, _ := url.Parse(strings.TrimSpace(embedURL))
+	twitterRef, hasTwitterRef := firstTwitterStatusReference(embedParsed, pageURL, originalParsed)
+	if hasTwitterRef && twitterRef.AlternateService && urlHasKnownHost(embedURL, twitterProxyHosts...) {
+		embedURL = twitterRef.CanonicalURL
 	}
 
 	title := truncateText(firstNonEmpty(
@@ -412,6 +546,7 @@ func buildEmbed(originalURL string, pageURL *url.URL, metadata pageMetadata, oem
 	), embed.MaxTitleCharacters)
 	description := truncateText(firstNonEmpty(
 		valueOrEmpty(oembedData, func(v *oEmbedResponse) string { return v.Description }),
+		valueOrEmpty(oembedData, func(v *oEmbedResponse) string { return descriptionFromOEmbedHTML(v.HTML) }),
 		metadata.OGDescription,
 		metadata.TwitterDescription,
 		metadata.Description,
@@ -429,6 +564,24 @@ func buildEmbed(originalURL string, pageURL *url.URL, metadata pageMetadata, oem
 		metadata.AuthorName,
 	), embed.MaxAuthorNameCharacters)
 	authorURL := valueOrEmpty(oembedData, func(v *oEmbedResponse) string { return v.AuthorURL })
+	if hasTwitterRef {
+		twitterHost := twitterRef.CanonicalHost
+		if host := hostFromRawURL(authorURL); host != "" {
+			twitterHost = host
+		} else if host := hostFromRawURL(embedURL); host != "" {
+			twitterHost = host
+		}
+		providerName = "Twitter"
+		if providerURL == "" || urlHasKnownHost(providerURL, twitterProxyHosts...) {
+			providerURL = twitterBaseURL(twitterHost)
+		}
+		if authorName == "" && twitterRef.Username != "" {
+			authorName = "@" + twitterRef.Username
+		}
+		if authorURL == "" {
+			authorURL = buildTwitterAuthorURL(twitterHost, twitterRef.Username)
+		}
+	}
 	imageURL := firstNonEmpty(
 		valueOrEmpty(oembedData, func(v *oEmbedResponse) string { return v.ThumbnailURL }),
 		metadata.ImageURL,
@@ -578,7 +731,7 @@ func (g *Generator) storeSkippedResult(ctx context.Context, rawURL string) {
 
 func embedCacheKey(rawURL string) string {
 	sum := sha256.Sum256([]byte(rawURL))
-	return "embedder:url:v1:" + hex.EncodeToString(sum[:])
+	return "embedder:url:v3:" + hex.EncodeToString(sum[:])
 }
 
 func providerColor(providerName, providerURL string, pageURL *url.URL, embedURL string) *int {
@@ -769,6 +922,10 @@ func applyMetaTag(metadata *pageMetadata, baseURL *url.URL, attrs map[string]str
 		if metadata.OGType == "" {
 			metadata.OGType = content
 		}
+	case "og:url", "twitter:url":
+		if metadata.CanonicalURL == "" {
+			metadata.CanonicalURL = resolveURL(baseURL, content)
+		}
 	case "og:image", "og:image:url", "og:image:secure_url", "twitter:image", "twitter:image:src":
 		if metadata.ImageURL == "" {
 			metadata.ImageURL = resolveURL(baseURL, content)
@@ -800,6 +957,10 @@ func applyMetaTag(metadata *pageMetadata, baseURL *url.URL, attrs map[string]str
 	case "twitter:description":
 		if metadata.TwitterDescription == "" {
 			metadata.TwitterDescription = content
+		}
+	case "twitter:creator":
+		if metadata.AuthorName == "" {
+			metadata.AuthorName = content
 		}
 	case "twitter:card":
 		if metadata.TwitterCard == "" {
@@ -920,6 +1081,234 @@ func (g *Generator) fetchOEmbed(ctx context.Context, rawURL string) (*oEmbedResp
 	return response, nil
 }
 
+func (g *Generator) fetchTwitterStatus(ctx context.Context, rawURL string) (*twitterAPIStatus, error) {
+	page, err := g.fetch(ctx, rawURL)
+	if err != nil {
+		return nil, err
+	}
+
+	var response twitterAPIStatusResponse
+	if err := json.Unmarshal(page.Body, &response); err != nil {
+		return nil, fmt.Errorf("unable to decode twitter status payload: %w", err)
+	}
+	if response.Code != 0 && response.Code != http.StatusOK {
+		return nil, fmt.Errorf("unexpected twitter status response code %d", response.Code)
+	}
+	if response.Tweet == nil {
+		return nil, fmt.Errorf("twitter status payload did not include tweet data")
+	}
+	return response.Tweet, nil
+}
+
+func buildTwitterStatusEmbed(originalURL string, reference twitterStatusReference, service twitterStatusService, status *twitterAPIStatus) *embed.Embed {
+	if status == nil {
+		return nil
+	}
+
+	embedURL := firstNonEmpty(originalURL, status.URL, reference.CanonicalURL)
+	description := truncateText(firstNonEmpty(status.Text), embed.MaxDescriptionCharacters)
+	authorName := formatTwitterAuthorName(status.Author)
+	authorURL := firstNonEmpty(status.URL, reference.CanonicalURL)
+	authorIconURL := ""
+	if status.Author != nil {
+		authorIconURL = firstNonEmpty(status.Author.AvatarURL)
+	}
+
+	var timestamp *time.Time
+	if status.CreatedTimestamp != nil {
+		createdAt := time.Unix(*status.CreatedTimestamp, 0).UTC()
+		timestamp = &createdAt
+	} else if parsed := parseTwitterTimestamp(status.CreatedAt); parsed != nil {
+		timestamp = parsed
+	}
+
+	var image *embed.EmbedMedia
+	var thumbnail *embed.EmbedMedia
+	var video *embed.EmbedMedia
+	if status.Media != nil {
+		if len(status.Media.Videos) > 0 {
+			videoData := status.Media.Videos[0]
+			videoURL := firstNonEmpty(videoData.URL)
+			if proxiedURL := proxyTwitterVideoURL(service.VideoProxyBaseURL, videoURL); proxiedURL != "" {
+				videoURL = proxiedURL
+			}
+			video = &embed.EmbedMedia{
+				URL:         videoURL,
+				Width:       firstNonNil(videoData.Width),
+				Height:      firstNonNil(videoData.Height),
+				ContentType: firstNonEmpty(videoData.Format),
+			}
+			if thumbURL := firstNonEmpty(videoData.ThumbnailURL); thumbURL != "" {
+				thumbnail = &embed.EmbedMedia{
+					URL:    thumbURL,
+					Width:  firstNonNil(videoData.Width),
+					Height: firstNonNil(videoData.Height),
+				}
+			}
+		} else if len(status.Media.Photos) > 0 {
+			photo := status.Media.Photos[0]
+			image = &embed.EmbedMedia{
+				URL:    firstNonEmpty(photo.URL),
+				Width:  firstNonNil(photo.Width),
+				Height: firstNonNil(photo.Height),
+			}
+		} else if status.Media.External != nil {
+			external := status.Media.External
+			video = &embed.EmbedMedia{
+				URL:    firstNonEmpty(external.URL),
+				Width:  firstNonNil(external.Width),
+				Height: firstNonNil(external.Height),
+			}
+		}
+	}
+
+	result := &embed.Embed{
+		Type:        "rich",
+		URL:         embedURL,
+		Description: description,
+		Timestamp:   timestamp,
+		Color:       intPtr(twitterBrandColor),
+	}
+	if authorName != "" || authorURL != "" || authorIconURL != "" {
+		result.Author = &embed.EmbedAuthor{
+			Name:    authorName,
+			URL:     authorURL,
+			IconURL: authorIconURL,
+		}
+	}
+	if service.FooterText != "" || service.FooterIconURL != "" {
+		footerIconURL := service.FooterIconURL
+		if video != nil && video.URL != "" && service.VideoFooterIcon != "" {
+			footerIconURL = service.VideoFooterIcon
+		}
+		result.Footer = &embed.EmbedFooter{
+			Text:    service.FooterText,
+			IconURL: footerIconURL,
+		}
+	}
+	if image != nil && image.URL != "" {
+		result.Image = image
+	}
+	if thumbnail != nil && thumbnail.URL != "" {
+		result.Thumbnail = thumbnail
+	}
+	if video != nil && video.URL != "" {
+		result.Video = video
+	}
+	if !hasRenderableContent(result) {
+		return nil
+	}
+	return result
+}
+
+func buildTwitterStatusAPIURL(baseURL, username, statusID string) string {
+	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	statusID = strings.TrimSpace(statusID)
+	if baseURL == "" || statusID == "" {
+		return ""
+	}
+	pathParts := []string{"i", "status", statusID}
+	if username != "" {
+		pathParts = []string{username, "status", statusID}
+	}
+	return baseURL + "/" + strings.Join(pathParts, "/")
+}
+
+func twitterStatusServiceForHost(host string) twitterStatusService {
+	switch {
+	case hostMatches(host, "vxtwitter.com", "fixvx.com"):
+		return twitterStatusService{
+			APIBaseURL:        defaultFixTweetAPIBaseURL,
+			FooterText:        "vxTwitter / fixvx",
+			FooterIconURL:     "https://vxtwitter.com/favicon.ico",
+			VideoFooterIcon:   "https://vxtwitter.com/video.png",
+			VideoProxyBaseURL: "https://vxtwitter.com",
+		}
+	case hostMatches(host, "fxtwitter.com", "fixupx.com", "twittpr.com"):
+		return twitterStatusService{
+			APIBaseURL:    defaultFixTweetAPIBaseURL,
+			FooterText:    "FixTweet / fxtwitter",
+			FooterIconURL: "https://fxtwitter.com/favicon.ico",
+		}
+	default:
+		return twitterStatusService{
+			APIBaseURL: defaultFixTweetAPIBaseURL,
+		}
+	}
+}
+
+func formatTwitterAuthorName(author *twitterAPIAuthor) string {
+	if author == nil {
+		return ""
+	}
+	name := strings.TrimSpace(author.Name)
+	screenName := strings.Trim(strings.TrimSpace(author.ScreenName), "@")
+	switch {
+	case name != "" && screenName != "":
+		return truncateText(fmt.Sprintf("%s (@%s)", name, screenName), embed.MaxAuthorNameCharacters)
+	case name != "":
+		return truncateText(name, embed.MaxAuthorNameCharacters)
+	case screenName != "":
+		return truncateText("@"+screenName, embed.MaxAuthorNameCharacters)
+	default:
+		return ""
+	}
+}
+
+func parseTwitterTimestamp(raw string) *time.Time {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil
+	}
+	layouts := []string{
+		time.RFC3339,
+		"Mon Jan 02 15:04:05 -0700 2006",
+	}
+	for _, layout := range layouts {
+		if parsed, err := time.Parse(layout, raw); err == nil {
+			value := parsed.UTC()
+			return &value
+		}
+	}
+	return nil
+}
+
+func buildTwitterOEmbedURL(rawURL string) string {
+	query := url.Values{}
+	query.Set("url", rawURL)
+	query.Set("omit_script", "true")
+	return fmt.Sprintf("%s?%s", strings.TrimRight(defaultTwitterOEmbedURL, "?"), query.Encode())
+}
+
+func proxyTwitterVideoURL(baseURL, rawURL string) string {
+	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	rawURL = strings.TrimSpace(rawURL)
+	if baseURL == "" || rawURL == "" {
+		return ""
+	}
+
+	parsed, err := url.Parse(rawURL)
+	if err != nil || !hostMatches(parsed.Hostname(), "video.twimg.com") {
+		return ""
+	}
+
+	path := strings.Trim(parsed.EscapedPath(), "/")
+	if path == "" {
+		return ""
+	}
+
+	if lastSlash := strings.LastIndex(path, "/"); lastSlash >= 0 {
+		filename := path[lastSlash+1:]
+		if extension := strings.LastIndex(filename, "."); extension > 0 {
+			path = path[:lastSlash+1] + filename[:extension]
+		}
+	} else if extension := strings.LastIndex(path, "."); extension > 0 {
+		path = path[:extension]
+	}
+
+	return baseURL + "/tvid/" + path
+}
+
 func (g *Generator) buildYouTubeOEmbedURL(rawURL string) string {
 	query := url.Values{}
 	query.Set("url", rawURL)
@@ -929,6 +1318,45 @@ func (g *Generator) buildYouTubeOEmbedURL(rawURL string) string {
 
 func (g *Generator) buildYouTubeVideoURL(videoID string) string {
 	return fmt.Sprintf("%s/%s", g.youtubeEmbedBaseURL, videoID)
+}
+
+func descriptionFromOEmbedHTML(rawHTML string) string {
+	rawHTML = strings.TrimSpace(rawHTML)
+	if rawHTML == "" {
+		return ""
+	}
+
+	root, err := html.Parse(strings.NewReader("<html><body>" + rawHTML + "</body></html>"))
+	if err != nil {
+		return ""
+	}
+
+	if paragraph := findNodeByTag(root, "p"); paragraph != nil {
+		if text := normalizeInlineText(textContent(paragraph)); text != "" {
+			return text
+		}
+	}
+
+	return normalizeInlineText(textContent(root))
+}
+
+func findNodeByTag(node *html.Node, tag string) *html.Node {
+	if node == nil {
+		return nil
+	}
+	if node.Type == html.ElementNode && strings.EqualFold(node.Data, tag) {
+		return node
+	}
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if found := findNodeByTag(child, tag); found != nil {
+			return found
+		}
+	}
+	return nil
+}
+
+func normalizeInlineText(value string) string {
+	return strings.Join(strings.Fields(strings.TrimSpace(value)), " ")
 }
 
 func (g *Generator) dialContext(ctx context.Context, network, address string) (net.Conn, error) {
@@ -1011,6 +1439,148 @@ func extractYouTubeID(rawURL *url.URL) (string, bool) {
 		return sanitizeYouTubeID(strings.Trim(strings.TrimSpace(rawURL.EscapedPath()), "/"))
 	}
 	return "", false
+}
+
+func firstTwitterStatusReference(urls ...*url.URL) (twitterStatusReference, bool) {
+	for _, candidate := range urls {
+		if reference, ok := extractTwitterStatusReference(candidate); ok {
+			return reference, true
+		}
+	}
+	return twitterStatusReference{}, false
+}
+
+func extractTwitterStatusReference(rawURL *url.URL) (twitterStatusReference, bool) {
+	if rawURL == nil || !hostMatches(rawURL.Hostname(), twitterHosts...) {
+		return twitterStatusReference{}, false
+	}
+
+	segments := splitPathSegments(rawURL.EscapedPath())
+	if len(segments) < 2 {
+		return twitterStatusReference{}, false
+	}
+
+	var username string
+	var statusID string
+
+	switch {
+	case len(segments) >= 4 && strings.EqualFold(segments[0], "i") && strings.EqualFold(segments[1], "web") && strings.EqualFold(segments[2], "status"):
+		statusID, _ = sanitizeTwitterStatusID(segments[3])
+	case len(segments) >= 3 && strings.EqualFold(segments[0], "i") && strings.EqualFold(segments[1], "status"):
+		statusID, _ = sanitizeTwitterStatusID(segments[2])
+	case len(segments) >= 3 && strings.EqualFold(segments[1], "status"):
+		username, _ = sanitizeTwitterScreenName(segments[0])
+		statusID, _ = sanitizeTwitterStatusID(segments[2])
+	default:
+		return twitterStatusReference{}, false
+	}
+
+	if statusID == "" {
+		return twitterStatusReference{}, false
+	}
+
+	canonicalHost := canonicalTwitterHost(rawURL.Hostname())
+	return twitterStatusReference{
+		Username:         username,
+		StatusID:         statusID,
+		CanonicalHost:    canonicalHost,
+		CanonicalURL:     buildTwitterStatusURL(canonicalHost, username, statusID),
+		AuthorURL:        buildTwitterAuthorURL(canonicalHost, username),
+		AlternateService: hostMatches(rawURL.Hostname(), twitterProxyHosts...),
+	}, true
+}
+
+func sanitizeTwitterScreenName(raw string) (string, bool) {
+	raw = strings.Trim(strings.TrimSpace(raw), "@")
+	if raw == "" {
+		return "", false
+	}
+	for _, char := range raw {
+		switch {
+		case char == '_':
+		case char >= '0' && char <= '9':
+		case char >= 'A' && char <= 'Z':
+		case char >= 'a' && char <= 'z':
+		default:
+			return "", false
+		}
+	}
+	return raw, true
+}
+
+func sanitizeTwitterStatusID(raw string) (string, bool) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", false
+	}
+	if idx := strings.IndexAny(raw, "?/#&"); idx >= 0 {
+		raw = raw[:idx]
+	}
+	for _, char := range raw {
+		if char < '0' || char > '9' {
+			return "", false
+		}
+	}
+	return raw, true
+}
+
+func canonicalTwitterHost(rawHost string) string {
+	switch {
+	case hostMatches(rawHost, "x.com"):
+		return "x.com"
+	default:
+		return "twitter.com"
+	}
+}
+
+func buildTwitterStatusURL(host, username, statusID string) string {
+	if host == "" || statusID == "" {
+		return ""
+	}
+	pathParts := []string{"i", "status", statusID}
+	if username != "" {
+		pathParts = []string{username, "status", statusID}
+	}
+	return (&url.URL{Scheme: "https", Host: host, Path: "/" + strings.Join(pathParts, "/")}).String()
+}
+
+func buildTwitterAuthorURL(host, username string) string {
+	if host == "" || username == "" {
+		return ""
+	}
+	return (&url.URL{Scheme: "https", Host: host, Path: "/" + username}).String()
+}
+
+func twitterBaseURL(host string) string {
+	if host == "" {
+		return defaultTwitterBaseURL
+	}
+	return (&url.URL{Scheme: "https", Host: host}).String()
+}
+
+func hostFromRawURL(rawURL string) string {
+	parsed, err := url.Parse(strings.TrimSpace(rawURL))
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(parsed.Hostname())
+}
+
+func splitPathSegments(rawPath string) []string {
+	rawPath = strings.TrimSpace(rawPath)
+	if rawPath == "" {
+		return nil
+	}
+	segments := strings.Split(strings.Trim(rawPath, "/"), "/")
+	result := make([]string, 0, len(segments))
+	for _, segment := range segments {
+		segment = strings.TrimSpace(segment)
+		if segment == "" {
+			continue
+		}
+		result = append(result, segment)
+	}
+	return result
 }
 
 func sanitizeYouTubeID(raw string) (string, bool) {

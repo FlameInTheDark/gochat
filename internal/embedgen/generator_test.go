@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -222,6 +223,300 @@ func TestGenerateTwitterEmbedUsesBrandColor(t *testing.T) {
 	}
 	if generated.Color == nil || *generated.Color != 0x1DA1F2 {
 		t.Fatalf("unexpected twitter color: %#v", generated.Color)
+	}
+}
+
+func TestDescriptionFromOEmbedHTML(t *testing.T) {
+	description := descriptionFromOEmbedHTML(`<blockquote class="twitter-tweet"><p>Tweet body <a href="https://t.co/test">https://t.co/test</a></p></blockquote>`)
+	if description != "Tweet body https://t.co/test" {
+		t.Fatalf("unexpected description: %q", description)
+	}
+}
+
+func TestProxyTwitterVideoURL(t *testing.T) {
+	proxied := proxyTwitterVideoURL(
+		"https://vxtwitter.com",
+		"https://video.twimg.com/ext_tw_video/2029212410624552960/pu/vid/avc1/720x1280/waHcL92w7O7whM7F.mp4?tag=12",
+	)
+	if proxied != "https://vxtwitter.com/tvid/ext_tw_video/2029212410624552960/pu/vid/avc1/720x1280/waHcL92w7O7whM7F" {
+		t.Fatalf("unexpected proxied url: %q", proxied)
+	}
+}
+
+func TestGenerateVXTwitterEmbedUsesServiceAPI(t *testing.T) {
+	generator := mustNewGenerator(t, Config{
+		HTTPClient: &http.Client{
+			Transport: roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+				switch r.URL.Host {
+				case "api.fxtwitter.com":
+					if r.URL.Path != "/example/status/1234567890" {
+						t.Fatalf("unexpected api path: %s", r.URL.Path)
+					}
+					body := `{
+						"code": 200,
+						"tweet": {
+							"url": "https://x.com/example/status/1234567890",
+							"id": "1234567890",
+							"text": "Proxy tweet text",
+							"created_timestamp": 1700000000,
+							"author": {
+								"name": "Example Display",
+								"screen_name": "example",
+								"avatar_url": "https://pbs.twimg.com/profile_images/example_normal.jpg"
+							},
+							"media": {
+								"videos": [{
+									"type": "video",
+									"url": "https://video.twimg.com/ext_tw_video/1234567890/pu/vid/avc1/720x1280/video.mp4",
+									"thumbnail_url": "https://pbs.twimg.com/ext_tw_video_thumb/1234567890/pu/img/thumb.jpg",
+									"width": 720,
+									"height": 1280,
+									"format": "video/mp4"
+								}]
+							}
+						}
+					}`
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Header:     http.Header{"Content-Type": []string{"application/json; charset=utf-8"}},
+						Body:       io.NopCloser(bytes.NewBufferString(body)),
+						Request:    r,
+					}, nil
+				case "pbs.twimg.com":
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Header:     http.Header{"Content-Type": []string{"image/jpeg"}},
+						Body:       io.NopCloser(bytes.NewReader(pngPayload(675, 1200))),
+						Request:    r,
+					}, nil
+				default:
+					t.Fatalf("unexpected host: %s", r.URL.Host)
+				}
+				return nil, nil
+			}),
+		},
+	})
+
+	generated, err := generator.GenerateURL(context.Background(), "https://vxtwitter.com/example/status/1234567890?s=20")
+	if err != nil {
+		t.Fatalf("GenerateURL returned error: %v", err)
+	}
+	if generated == nil {
+		t.Fatal("expected embed")
+	}
+	if generated.URL != "https://vxtwitter.com/example/status/1234567890?s=20" {
+		t.Fatalf("unexpected normalized url: %q", generated.URL)
+	}
+	if generated.Type != "rich" {
+		t.Fatalf("unexpected embed type: %q", generated.Type)
+	}
+	if generated.Author == nil || generated.Author.Name != "Example Display (@example)" || generated.Author.URL != "https://x.com/example/status/1234567890" {
+		t.Fatalf("unexpected author: %#v", generated.Author)
+	}
+	if generated.Author.IconURL != "https://pbs.twimg.com/profile_images/example_normal.jpg" {
+		t.Fatalf("unexpected author icon: %#v", generated.Author)
+	}
+	if generated.Description != "Proxy tweet text" {
+		t.Fatalf("unexpected description: %q", generated.Description)
+	}
+	if generated.Timestamp == nil || generated.Timestamp.Unix() != 1700000000 {
+		t.Fatalf("unexpected timestamp: %#v", generated.Timestamp)
+	}
+	if generated.Footer == nil || generated.Footer.Text != "vxTwitter / fixvx" {
+		t.Fatalf("unexpected footer: %#v", generated.Footer)
+	}
+	if generated.Footer.IconURL != "https://vxtwitter.com/video.png" {
+		t.Fatalf("unexpected footer icon: %#v", generated.Footer)
+	}
+	if generated.Thumbnail == nil || generated.Thumbnail.URL != "https://pbs.twimg.com/ext_tw_video_thumb/1234567890/pu/img/thumb.jpg" {
+		t.Fatalf("unexpected thumbnail: %#v", generated.Thumbnail)
+	}
+	if generated.Thumbnail.Width == nil || *generated.Thumbnail.Width != 720 || generated.Thumbnail.Height == nil || *generated.Thumbnail.Height != 1280 {
+		t.Fatalf("unexpected thumbnail dimensions: %#v", generated.Thumbnail)
+	}
+	if generated.Video == nil || generated.Video.URL != "https://vxtwitter.com/tvid/ext_tw_video/1234567890/pu/vid/avc1/720x1280/video" {
+		t.Fatalf("unexpected video: %#v", generated.Video)
+	}
+	if generated.Video.ContentType != "video/mp4" {
+		t.Fatalf("unexpected video content type: %#v", generated.Video)
+	}
+	if generated.Color == nil || *generated.Color != 0x1DA1F2 {
+		t.Fatalf("unexpected twitter color: %#v", generated.Color)
+	}
+}
+
+func TestGenerateFXTwitterEmbedUsesServiceAPI(t *testing.T) {
+	generator := mustNewGenerator(t, Config{
+		HTTPClient: &http.Client{
+			Transport: roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+				if r.URL.Host != "api.fxtwitter.com" {
+					t.Fatalf("unexpected host: %s", r.URL.Host)
+				}
+				if r.URL.Path != "/example/status/9988776655" {
+					t.Fatalf("unexpected api path: %s", r.URL.Path)
+				}
+
+				body := `{
+					"code": 200,
+					"tweet": {
+						"url": "https://twitter.com/example/status/9988776655",
+						"id": "9988776655",
+						"text": "Second proxy tweet",
+						"author": {
+							"name": "Example Two",
+							"screen_name": "example",
+							"avatar_url": "https://pbs.twimg.com/profile_images/example_two_normal.jpg"
+						},
+						"media": {
+							"photos": [{
+								"type": "photo",
+								"url": "https://pbs.twimg.com/media/example.jpg",
+								"width": 1200,
+								"height": 675
+							}]
+						}
+					}
+				}`
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header:     http.Header{"Content-Type": []string{"application/json; charset=utf-8"}},
+					Body:       io.NopCloser(bytes.NewBufferString(body)),
+					Request:    r,
+				}, nil
+			}),
+		},
+	})
+
+	generated, err := generator.GenerateURL(context.Background(), "https://fxtwitter.com/example/status/9988776655")
+	if err != nil {
+		t.Fatalf("GenerateURL returned error: %v", err)
+	}
+	if generated == nil {
+		t.Fatal("expected embed")
+	}
+	if generated.URL != "https://fxtwitter.com/example/status/9988776655" {
+		t.Fatalf("unexpected canonical url: %q", generated.URL)
+	}
+	if generated.Author == nil || generated.Author.Name != "Example Two (@example)" || generated.Author.URL != "https://twitter.com/example/status/9988776655" {
+		t.Fatalf("unexpected author: %#v", generated.Author)
+	}
+	if generated.Description != "Second proxy tweet" {
+		t.Fatalf("unexpected description: %q", generated.Description)
+	}
+	if generated.Footer == nil || generated.Footer.Text != "FixTweet / fxtwitter" {
+		t.Fatalf("unexpected footer: %#v", generated.Footer)
+	}
+	if generated.Image == nil || generated.Image.URL != "https://pbs.twimg.com/media/example.jpg" {
+		t.Fatalf("unexpected image: %#v", generated.Image)
+	}
+}
+
+func TestGenerateXStatusURLUsesTwitterStatusAPI(t *testing.T) {
+	generator := mustNewGenerator(t, Config{
+		HTTPClient: &http.Client{
+			Transport: roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+				if r.URL.Host != "api.fxtwitter.com" {
+					t.Fatalf("unexpected host: %s", r.URL.Host)
+				}
+				if r.URL.Path != "/example/status/1122334455" {
+					t.Fatalf("unexpected api path: %s", r.URL.Path)
+				}
+				body := `{
+					"code": 200,
+					"tweet": {
+						"url": "https://twitter.com/example/status/1122334455",
+						"id": "1122334455",
+						"text": "Tweet from x.com",
+						"author": {
+							"name": "Example Three",
+							"screen_name": "example"
+						}
+					}
+				}`
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header:     http.Header{"Content-Type": []string{"application/json; charset=utf-8"}},
+					Body:       io.NopCloser(bytes.NewBufferString(body)),
+					Request:    r,
+				}, nil
+			}),
+		},
+	})
+
+	generated, err := generator.GenerateURL(context.Background(), "https://x.com/example/status/1122334455")
+	if err != nil {
+		t.Fatalf("GenerateURL returned error: %v", err)
+	}
+	if generated == nil {
+		t.Fatal("expected embed")
+	}
+	if generated.URL != "https://x.com/example/status/1122334455" {
+		t.Fatalf("unexpected canonical url: %q", generated.URL)
+	}
+	if generated.Author == nil || generated.Author.Name != "Example Three (@example)" || generated.Author.URL != "https://twitter.com/example/status/1122334455" {
+		t.Fatalf("unexpected author: %#v", generated.Author)
+	}
+	if generated.Description != "Tweet from x.com" {
+		t.Fatalf("unexpected description: %q", generated.Description)
+	}
+	if generated.Footer != nil {
+		t.Fatalf("expected no service footer for x.com, got %#v", generated.Footer)
+	}
+}
+
+func TestGenerateTwitterStatusEmbedFallsBackToOEmbedDescription(t *testing.T) {
+	generator := mustNewGenerator(t, Config{
+		HTTPClient: &http.Client{
+			Transport: roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+				switch r.URL.Host {
+				case "api.fxtwitter.com":
+					body := `{
+						"code": 200,
+						"tweet": {
+							"url": "https://twitter.com/example/status/5566778899",
+							"id": "5566778899",
+							"text": "",
+							"author": {
+								"name": "Example Four",
+								"screen_name": "example"
+							}
+						}
+					}`
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Header:     http.Header{"Content-Type": []string{"application/json; charset=utf-8"}},
+						Body:       io.NopCloser(bytes.NewBufferString(body)),
+						Request:    r,
+					}, nil
+				case "publish.twitter.com":
+					body := `{
+						"type": "rich",
+						"url": "https://twitter.com/example/status/5566778899",
+						"html": "<blockquote class=\"twitter-tweet\"><p>Fallback tweet text</p></blockquote>"
+					}`
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Header:     http.Header{"Content-Type": []string{"application/json; charset=utf-8"}},
+						Body:       io.NopCloser(bytes.NewBufferString(body)),
+						Request:    r,
+					}, nil
+				default:
+					t.Fatalf("unexpected host: %s", r.URL.Host)
+				}
+				return nil, nil
+			}),
+		},
+	})
+
+	generated, err := generator.GenerateURL(context.Background(), "https://x.com/example/status/5566778899")
+	if err != nil {
+		t.Fatalf("GenerateURL returned error: %v", err)
+	}
+	if generated == nil {
+		t.Fatal("expected embed")
+	}
+	if generated.Description != "Fallback tweet text" {
+		t.Fatalf("unexpected description: %q", generated.Description)
 	}
 }
 

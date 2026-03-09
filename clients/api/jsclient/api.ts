@@ -2596,6 +2596,12 @@ export interface UserUserSettingsResponse {
     'channel_mentions'?: { [key: string]: Array<ModelChannelMention>; };
     /**
      * 
+     * @type {Array<string>}
+     * @memberof UserUserSettingsResponse
+     */
+    'content_hosts'?: Array<string>;
+    /**
+     * 
      * @type {{ [key: string]: Array<DtoEmojiRef>; }}
      * @memberof UserUserSettingsResponse
      */

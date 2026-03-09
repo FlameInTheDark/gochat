@@ -7050,6 +7050,12 @@
                         }
                     }
                 },
+                "content_hosts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "guild_emojis": {
                     "type": "object",
                     "additionalProperties": {

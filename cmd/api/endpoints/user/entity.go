@@ -83,37 +83,39 @@ type entity struct {
 	gc      guildchannels.GuildChannels
 	emoji   emojirepo.Emoji
 
-	attachTTL int64
+	attachTTL    int64
+	contentHosts []string
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(cql *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, cache cache.Cache, attachTTLSeconds int64, log *slog.Logger) server.Entity {
+func New(cql *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, cache cache.Cache, attachTTLSeconds int64, contentHosts []string, log *slog.Logger) server.Entity {
 	return &entity{
-		name:      entityName,
-		log:       log,
-		mqt:       mqt,
-		cache:     cache,
-		attachTTL: attachTTLSeconds,
-		user:      user.New(pg.Conn()),
-		member:    member.New(pg.Conn()),
-		guild:     guild.New(pg.Conn()),
-		urole:     userrole.New(pg.Conn()),
-		ch:        channel.New(pg.Conn()),
-		dm:        dmchannel.New(pg.Conn()),
-		gdm:       groupdmchannel.New(pg.Conn()),
-		disc:      discriminator.New(pg.Conn()),
-		fr:        friend.New(pg.Conn()),
-		uset:      usersettings.New(pg.Conn()),
-		rs:        readstates.New(cql),
-		gclm:      guildchannelmessages.New(cql),
-		dmlm:      dmchannelmessages.New(cql),
-		av:        avatar.New(cql),
-		icon:      icon.New(cql),
-		mention:   mention.New(cql),
-		gc:        guildchannels.New(pg.Conn()),
-		emoji:     emojirepo.New(pg.Conn()),
+		name:         entityName,
+		log:          log,
+		mqt:          mqt,
+		cache:        cache,
+		attachTTL:    attachTTLSeconds,
+		contentHosts: append([]string(nil), contentHosts...),
+		user:         user.New(pg.Conn()),
+		member:       member.New(pg.Conn()),
+		guild:        guild.New(pg.Conn()),
+		urole:        userrole.New(pg.Conn()),
+		ch:           channel.New(pg.Conn()),
+		dm:           dmchannel.New(pg.Conn()),
+		gdm:          groupdmchannel.New(pg.Conn()),
+		disc:         discriminator.New(pg.Conn()),
+		fr:           friend.New(pg.Conn()),
+		uset:         usersettings.New(pg.Conn()),
+		rs:           readstates.New(cql),
+		gclm:         guildchannelmessages.New(cql),
+		dmlm:         dmchannelmessages.New(cql),
+		av:           avatar.New(cql),
+		icon:         icon.New(cql),
+		mention:      mention.New(cql),
+		gc:           guildchannels.New(pg.Conn()),
+		emoji:        emojirepo.New(pg.Conn()),
 	}
 }

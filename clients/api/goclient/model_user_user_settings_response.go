@@ -21,6 +21,7 @@ var _ MappedNullable = &UserUserSettingsResponse{}
 // UserUserSettingsResponse struct for UserUserSettingsResponse
 type UserUserSettingsResponse struct {
 	ChannelMentions    *map[string][]ModelChannelMention `json:"channel_mentions,omitempty"`
+	ContentHosts       []string                          `json:"content_hosts,omitempty"`
 	GuildEmojis        *map[string][]DtoEmojiRef         `json:"guild_emojis,omitempty"`
 	Guilds             []DtoGuild                        `json:"guilds,omitempty"`
 	GuildsLastMessages *map[string]map[string]int32      `json:"guilds_last_messages,omitempty"`
@@ -77,6 +78,38 @@ func (o *UserUserSettingsResponse) HasChannelMentions() bool {
 // SetChannelMentions gets a reference to the given map[string][]ModelChannelMention and assigns it to the ChannelMentions field.
 func (o *UserUserSettingsResponse) SetChannelMentions(v map[string][]ModelChannelMention) {
 	o.ChannelMentions = &v
+}
+
+// GetContentHosts returns the ContentHosts field value if set, zero value otherwise.
+func (o *UserUserSettingsResponse) GetContentHosts() []string {
+	if o == nil || IsNil(o.ContentHosts) {
+		var ret []string
+		return ret
+	}
+	return o.ContentHosts
+}
+
+// GetContentHostsOk returns a tuple with the ContentHosts field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserUserSettingsResponse) GetContentHostsOk() ([]string, bool) {
+	if o == nil || IsNil(o.ContentHosts) {
+		return nil, false
+	}
+	return o.ContentHosts, true
+}
+
+// HasContentHosts returns a boolean if a field has been set.
+func (o *UserUserSettingsResponse) HasContentHosts() bool {
+	if o != nil && !IsNil(o.ContentHosts) {
+		return true
+	}
+
+	return false
+}
+
+// SetContentHosts gets a reference to the given []string and assigns it to the ContentHosts field.
+func (o *UserUserSettingsResponse) SetContentHosts(v []string) {
+	o.ContentHosts = v
 }
 
 // GetGuildEmojis returns the GuildEmojis field value if set, zero value otherwise.
@@ -315,6 +348,9 @@ func (o UserUserSettingsResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.ChannelMentions) {
 		toSerialize["channel_mentions"] = o.ChannelMentions
+	}
+	if !IsNil(o.ContentHosts) {
+		toSerialize["content_hosts"] = o.ContentHosts
 	}
 	if !IsNil(o.GuildEmojis) {
 		toSerialize["guild_emojis"] = o.GuildEmojis

@@ -909,6 +909,7 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUnmarshalUserSettings)
 	}
+	settings.ContentHosts = append([]string(nil), e.contentHosts...)
 	settings.Mentions = mentions
 	settings.ChannelMentions = channelMentions
 	return c.JSON(settings)

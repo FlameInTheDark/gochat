@@ -113,6 +113,7 @@ func (r CreateDMManyRequest) Validate() error {
 type UserSettingsResponse struct {
 	Version            int64                            `json:"version"`
 	Settings           *model.UserSettingsData          `json:"settings"`
+	ContentHosts       []string                         `json:"content_hosts"`
 	ReadStates         map[int64]int64                  `json:"read_states"`
 	GuildsLastMessages map[int64]map[int64]int64        `json:"guilds_last_messages"`
 	Guilds             []dto.Guild                      `json:"guilds"`
@@ -131,6 +132,7 @@ func modelToSettings(m *model.UserSettings, guilds []dto.Guild, guildEmojis map[
 	return UserSettingsResponse{
 		Version:            m.Version,
 		Settings:           &settings,
+		ContentHosts:       nil,
 		ReadStates:         rs,
 		GuildsLastMessages: glms,
 		Guilds:             guilds,

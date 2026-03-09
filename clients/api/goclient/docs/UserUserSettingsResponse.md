@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **ChannelMentions** | Pointer to [**map[string][]ModelChannelMention**](array.md) |  | [optional] 
+**ContentHosts** | Pointer to **[]string** |  | [optional] 
 **GuildEmojis** | Pointer to [**map[string][]DtoEmojiRef**](array.md) |  | [optional] 
 **Guilds** | Pointer to [**[]DtoGuild**](DtoGuild.md) |  | [optional] 
 **GuildsLastMessages** | Pointer to **map[string]map[string]int32** |  | [optional] 
@@ -56,6 +57,31 @@ SetChannelMentions sets ChannelMentions field to given value.
 `func (o *UserUserSettingsResponse) HasChannelMentions() bool`
 
 HasChannelMentions returns a boolean if a field has been set.
+
+### GetContentHosts
+
+`func (o *UserUserSettingsResponse) GetContentHosts() []string`
+
+GetContentHosts returns the ContentHosts field if non-nil, zero value otherwise.
+
+### GetContentHostsOk
+
+`func (o *UserUserSettingsResponse) GetContentHostsOk() (*[]string, bool)`
+
+GetContentHostsOk returns a tuple with the ContentHosts field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetContentHosts
+
+`func (o *UserUserSettingsResponse) SetContentHosts(v []string)`
+
+SetContentHosts sets ContentHosts field to given value.
+
+### HasContentHosts
+
+`func (o *UserUserSettingsResponse) HasContentHosts() bool`
+
+HasContentHosts returns a boolean if a field has been set.
 
 ### GetGuildEmojis
 

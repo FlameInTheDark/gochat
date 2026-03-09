@@ -16,6 +16,7 @@ type Config struct {
 	RateLimitRequests          int           `yaml:"rate_limit_requests" env:"RATE_LIMIT_REQUESTS" env-default:"20"`
 	AppName                    string        `yaml:"app_name" env:"APP_NAME" env-default:"GoChat"`
 	BaseUrl                    string        `yaml:"base_url" env:"BASE_URL" env-default:"http://example.com" validation:"http_url"`
+	ContentHosts               []string      `yaml:"content_hosts" env:"CONTENT_HOSTS" env-separator:","`
 	Cluster                    []string      `yaml:"cluster" env:"CLUSTER" env-default:""`
 	ClusterKeyspace            string        `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
 	AuthSecret                 string        `yaml:"auth_secret" env:"AUTH_SECRET" env-default:"change_me_before_use_it_in_production"`

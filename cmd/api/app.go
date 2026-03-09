@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -171,9 +173,14 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return c.Next()
 	})
 
+	contentHosts, err := buildContentHosts(cfg.ContentHosts)
+	if err != nil {
+		return nil, err
+	}
+
 	s.Register(
 		"/api/v1",
-		user.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, logger),
+		user.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, contentHosts, logger),
 		message.New(database, pg, qt, imq, emq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
 		guild.New(database, pg, qt, imq, cache, storage, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, extractRegionIDs(cfg.VoiceRegions), logger),
 		voice.New(convertRegions(cfg.VoiceRegions), logger),
@@ -194,6 +201,52 @@ func extractRegionIDs(v []config.VoiceRegion) []string {
 		}
 	}
 	return out
+}
+
+func buildContentHosts(rawHosts []string) ([]string, error) {
+	seen := make(map[string]struct{}, len(rawHosts))
+	hosts := make([]string, 0, len(rawHosts))
+
+	add := func(raw string) error {
+		normalized, err := normalizeContentHost(raw)
+		if err != nil {
+			return err
+		}
+		if normalized == "" {
+			return nil
+		}
+		if _, ok := seen[normalized]; ok {
+			return nil
+		}
+		seen[normalized] = struct{}{}
+		hosts = append(hosts, normalized)
+		return nil
+	}
+
+	for _, raw := range rawHosts {
+		if err := add(raw); err != nil {
+			return nil, fmt.Errorf("normalize content host %q: %w", raw, err)
+		}
+	}
+
+	return hosts, nil
+}
+
+func normalizeContentHost(raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", nil
+	}
+
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", err
+	}
+	if u.Scheme == "" || u.Host == "" {
+		return "", fmt.Errorf("content host must include scheme and host")
+	}
+
+	return u.Scheme + "://" + u.Host, nil
 }
 
 func convertRegions(v []config.VoiceRegion) []voice.Region {
