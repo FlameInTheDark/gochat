@@ -6,7 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Muted** | Pointer to **bool** |  | [optional] 
 **MutedUntil** | Pointer to **string** |  | [optional] 
-**Notifications** | Pointer to **int32** |  | [optional] 
+**Notifications** | Pointer to [**ModelNotificationsType**](ModelNotificationsType.md) |  | [optional] 
 
 ## Methods
 
@@ -79,20 +79,20 @@ HasMutedUntil returns a boolean if a field has been set.
 
 ### GetNotifications
 
-`func (o *ModelUserSettingsNotifications) GetNotifications() int32`
+`func (o *ModelUserSettingsNotifications) GetNotifications() ModelNotificationsType`
 
 GetNotifications returns the Notifications field if non-nil, zero value otherwise.
 
 ### GetNotificationsOk
 
-`func (o *ModelUserSettingsNotifications) GetNotificationsOk() (*int32, bool)`
+`func (o *ModelUserSettingsNotifications) GetNotificationsOk() (*ModelNotificationsType, bool)`
 
 GetNotificationsOk returns a tuple with the Notifications field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetNotifications
 
-`func (o *ModelUserSettingsNotifications) SetNotifications(v int32)`
+`func (o *ModelUserSettingsNotifications) SetNotifications(v ModelNotificationsType)`
 
 SetNotifications sets Notifications field to given value.
 

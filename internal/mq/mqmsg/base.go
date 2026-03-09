@@ -41,6 +41,9 @@ const (
 	EventTypeThreadCreate
 	EventTypeThreadUpdate
 	EventTypeThreadDelete
+	EventTypeGuildEmojiCreate
+	EventTypeGuildEmojiUpdate
+	EventTypeGuildEmojiDelete
 )
 
 const (
@@ -51,6 +54,19 @@ const (
 	EventTypeGuildMemberRemoveRole
 	EventTypeGuildMemberJoinVoice
 	EventTypeGuildMemberLeaveVoice
+	EventTypeGuildMemberModeration
+)
+
+const (
+	// EventTypeVoiceStateUpdate is sent when a user updates their mute/deafen status in a voice channel.
+	// This allows other users to see who is muted or deafened.
+	EventTypeVoiceStateUpdate EventType = 209
+)
+
+const (
+	// EventTypeGuildVoiceRegionChanging is sent to guild members before a voice region
+	// migration begins, giving clients time to prepare for the upcoming reconnect.
+	EventTypeGuildVoiceRegionChanging EventType = 208
 )
 
 const (

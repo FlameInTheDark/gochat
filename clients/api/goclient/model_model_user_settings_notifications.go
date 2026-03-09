@@ -20,9 +20,9 @@ var _ MappedNullable = &ModelUserSettingsNotifications{}
 
 // ModelUserSettingsNotifications struct for ModelUserSettingsNotifications
 type ModelUserSettingsNotifications struct {
-	Muted         *bool   `json:"muted,omitempty"`
-	MutedUntil    *string `json:"muted_until,omitempty"`
-	Notifications *int32  `json:"notifications,omitempty"`
+	Muted         *bool                   `json:"muted,omitempty"`
+	MutedUntil    *string                 `json:"muted_until,omitempty"`
+	Notifications *ModelNotificationsType `json:"notifications,omitempty"`
 }
 
 // NewModelUserSettingsNotifications instantiates a new ModelUserSettingsNotifications object
@@ -107,9 +107,9 @@ func (o *ModelUserSettingsNotifications) SetMutedUntil(v string) {
 }
 
 // GetNotifications returns the Notifications field value if set, zero value otherwise.
-func (o *ModelUserSettingsNotifications) GetNotifications() int32 {
+func (o *ModelUserSettingsNotifications) GetNotifications() ModelNotificationsType {
 	if o == nil || IsNil(o.Notifications) {
-		var ret int32
+		var ret ModelNotificationsType
 		return ret
 	}
 	return *o.Notifications
@@ -117,7 +117,7 @@ func (o *ModelUserSettingsNotifications) GetNotifications() int32 {
 
 // GetNotificationsOk returns a tuple with the Notifications field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ModelUserSettingsNotifications) GetNotificationsOk() (*int32, bool) {
+func (o *ModelUserSettingsNotifications) GetNotificationsOk() (*ModelNotificationsType, bool) {
 	if o == nil || IsNil(o.Notifications) {
 		return nil, false
 	}
@@ -133,8 +133,8 @@ func (o *ModelUserSettingsNotifications) HasNotifications() bool {
 	return false
 }
 
-// SetNotifications gets a reference to the given int32 and assigns it to the Notifications field.
-func (o *ModelUserSettingsNotifications) SetNotifications(v int32) {
+// SetNotifications gets a reference to the given ModelNotificationsType and assigns it to the Notifications field.
+func (o *ModelUserSettingsNotifications) SetNotifications(v ModelNotificationsType) {
 	o.Notifications = &v
 }
 

@@ -13,6 +13,7 @@ Method | HTTP request | Description
 [**GuildGuildIdMemberUserIdRolesRoleIdDelete**](GuildRolesAPI.md#GuildGuildIdMemberUserIdRolesRoleIdDelete) | **Delete** /guild/{guild_id}/member/{user_id}/roles/{role_id} | Remove role from member
 [**GuildGuildIdMemberUserIdRolesRoleIdPut**](GuildRolesAPI.md#GuildGuildIdMemberUserIdRolesRoleIdPut) | **Put** /guild/{guild_id}/member/{user_id}/roles/{role_id} | Assign role to member
 [**GuildGuildIdRolesGet**](GuildRolesAPI.md#GuildGuildIdRolesGet) | **Get** /guild/{guild_id}/roles | Get guild roles
+[**GuildGuildIdRolesOrderPatch**](GuildRolesAPI.md#GuildGuildIdRolesOrderPatch) | **Patch** /guild/{guild_id}/roles/order | Change roles order
 [**GuildGuildIdRolesPost**](GuildRolesAPI.md#GuildGuildIdRolesPost) | **Post** /guild/{guild_id}/roles | Create guild role
 [**GuildGuildIdRolesRoleIdDelete**](GuildRolesAPI.md#GuildGuildIdRolesRoleIdDelete) | **Delete** /guild/{guild_id}/roles/{role_id} | Delete guild role
 [**GuildGuildIdRolesRoleIdPatch**](GuildRolesAPI.md#GuildGuildIdRolesRoleIdPatch) | **Patch** /guild/{guild_id}/roles/{role_id} | Update guild role
@@ -38,8 +39,8 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	channelId := int32(2230469276416868352) // int32 | Channel ID
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -109,9 +110,9 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	channelId := int32(2230469276416868352) // int32 | Channel ID
-	roleId := int32(2230469276416868352) // int32 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	roleId := int32(56) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -183,9 +184,9 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	channelId := int32(2230469276416868352) // int32 | Channel ID
-	roleId := int32(2230469276416868352) // int32 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	roleId := int32(56) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -240,7 +241,7 @@ No authorization required
 
 ## GuildGuildIdChannelChannelIdRolesRoleIdPatch
 
-> string GuildGuildIdChannelChannelIdRolesRoleIdPatch(ctx, guildId, channelId, roleId).GuildChannelRolePermissionRequest(guildChannelRolePermissionRequest).Execute()
+> string GuildGuildIdChannelChannelIdRolesRoleIdPatch(ctx, guildId, channelId, roleId).Req(req).Execute()
 
 Update channel role permission
 
@@ -257,14 +258,14 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	channelId := int32(2230469276416868352) // int32 | Channel ID
-	roleId := int32(2230469276416868352) // int32 | Role ID
-	guildChannelRolePermissionRequest := *openapiclient.NewGuildChannelRolePermissionRequest() // GuildChannelRolePermissionRequest | Permission mask
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	roleId := int32(56) // int32 | Role ID
+	req := *openapiclient.NewGuildChannelRolePermissionRequest() // GuildChannelRolePermissionRequest | Permission mask
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildRolesAPI.GuildGuildIdChannelChannelIdRolesRoleIdPatch(context.Background(), guildId, channelId, roleId).GuildChannelRolePermissionRequest(guildChannelRolePermissionRequest).Execute()
+	resp, r, err := apiClient.GuildRolesAPI.GuildGuildIdChannelChannelIdRolesRoleIdPatch(context.Background(), guildId, channelId, roleId).Req(req).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildRolesAPI.GuildGuildIdChannelChannelIdRolesRoleIdPatch``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -294,7 +295,7 @@ Name | Type | Description  | Notes
 
 
 
- **guildChannelRolePermissionRequest** | [**GuildChannelRolePermissionRequest**](GuildChannelRolePermissionRequest.md) | Permission mask | 
+ **req** | [**GuildChannelRolePermissionRequest**](GuildChannelRolePermissionRequest.md) | Permission mask | 
 
 ### Return type
 
@@ -306,7 +307,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -316,7 +317,7 @@ No authorization required
 
 ## GuildGuildIdChannelChannelIdRolesRoleIdPut
 
-> string GuildGuildIdChannelChannelIdRolesRoleIdPut(ctx, guildId, channelId, roleId).GuildChannelRolePermissionRequest(guildChannelRolePermissionRequest).Execute()
+> string GuildGuildIdChannelChannelIdRolesRoleIdPut(ctx, guildId, channelId, roleId).Req(req).Execute()
 
 Set channel role permission (create or replace)
 
@@ -333,14 +334,14 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	channelId := int32(2230469276416868352) // int32 | Channel ID
-	roleId := int32(2230469276416868352) // int32 | Role ID
-	guildChannelRolePermissionRequest := *openapiclient.NewGuildChannelRolePermissionRequest() // GuildChannelRolePermissionRequest | Permission mask
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	roleId := int32(56) // int32 | Role ID
+	req := *openapiclient.NewGuildChannelRolePermissionRequest() // GuildChannelRolePermissionRequest | Permission mask
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildRolesAPI.GuildGuildIdChannelChannelIdRolesRoleIdPut(context.Background(), guildId, channelId, roleId).GuildChannelRolePermissionRequest(guildChannelRolePermissionRequest).Execute()
+	resp, r, err := apiClient.GuildRolesAPI.GuildGuildIdChannelChannelIdRolesRoleIdPut(context.Background(), guildId, channelId, roleId).Req(req).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildRolesAPI.GuildGuildIdChannelChannelIdRolesRoleIdPut``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -370,7 +371,7 @@ Name | Type | Description  | Notes
 
 
 
- **guildChannelRolePermissionRequest** | [**GuildChannelRolePermissionRequest**](GuildChannelRolePermissionRequest.md) | Permission mask | 
+ **req** | [**GuildChannelRolePermissionRequest**](GuildChannelRolePermissionRequest.md) | Permission mask | 
 
 ### Return type
 
@@ -382,7 +383,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -409,8 +410,8 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	userId := int32(2230469276416868352) // int32 | User ID
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -480,9 +481,9 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	userId := int32(2230469276416868352) // int32 | User ID
-	roleId := int32(2230469276416868352) // int32 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
+	roleId := int32(56) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -554,9 +555,9 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	userId := int32(2230469276416868352) // int32 | User ID
-	roleId := int32(2230469276416868352) // int32 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
+	roleId := int32(56) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -628,7 +629,7 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
+	guildId := int32(56) // int32 | Guild ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -677,9 +678,79 @@ No authorization required
 [[Back to README]](../README.md)
 
 
+## GuildGuildIdRolesOrderPatch
+
+> string GuildGuildIdRolesOrderPatch(ctx, guildId).Request(request).Execute()
+
+Change roles order
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	request := *openapiclient.NewGuildPatchGuildRoleOrderRequest() // GuildPatchGuildRoleOrderRequest | Update role order data
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildRolesAPI.GuildGuildIdRolesOrderPatch(context.Background(), guildId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildRolesAPI.GuildGuildIdRolesOrderPatch``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdRolesOrderPatch`: string
+	fmt.Fprintf(os.Stdout, "Response from `GuildRolesAPI.GuildGuildIdRolesOrderPatch`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdRolesOrderPatchRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **request** | [**GuildPatchGuildRoleOrderRequest**](GuildPatchGuildRoleOrderRequest.md) | Update role order data | 
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
 ## GuildGuildIdRolesPost
 
-> DtoRole GuildGuildIdRolesPost(ctx, guildId).GuildCreateGuildRoleRequest(guildCreateGuildRoleRequest).Execute()
+> DtoRole GuildGuildIdRolesPost(ctx, guildId).Req(req).Execute()
 
 Create guild role
 
@@ -696,12 +767,12 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	guildCreateGuildRoleRequest := *openapiclient.NewGuildCreateGuildRoleRequest() // GuildCreateGuildRoleRequest | Role data
+	guildId := int32(56) // int32 | Guild ID
+	req := *openapiclient.NewGuildCreateGuildRoleRequest() // GuildCreateGuildRoleRequest | Role data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildRolesAPI.GuildGuildIdRolesPost(context.Background(), guildId).GuildCreateGuildRoleRequest(guildCreateGuildRoleRequest).Execute()
+	resp, r, err := apiClient.GuildRolesAPI.GuildGuildIdRolesPost(context.Background(), guildId).Req(req).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildRolesAPI.GuildGuildIdRolesPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -727,7 +798,7 @@ Other parameters are passed through a pointer to a apiGuildGuildIdRolesPostReque
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **guildCreateGuildRoleRequest** | [**GuildCreateGuildRoleRequest**](GuildCreateGuildRoleRequest.md) | Role data | 
+ **req** | [**GuildCreateGuildRoleRequest**](GuildCreateGuildRoleRequest.md) | Role data | 
 
 ### Return type
 
@@ -739,7 +810,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -766,8 +837,8 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	roleId := int32(2230469276416868352) // int32 | Role ID
+	guildId := int32(56) // int32 | Guild ID
+	roleId := int32(56) // int32 | Role ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -820,7 +891,7 @@ No authorization required
 
 ## GuildGuildIdRolesRoleIdPatch
 
-> DtoRole GuildGuildIdRolesRoleIdPatch(ctx, guildId, roleId).GuildPatchGuildRoleRequest(guildPatchGuildRoleRequest).Execute()
+> DtoRole GuildGuildIdRolesRoleIdPatch(ctx, guildId, roleId).Req(req).Execute()
 
 Update guild role
 
@@ -837,13 +908,13 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	roleId := int32(2230469276416868352) // int32 | Role ID
-	guildPatchGuildRoleRequest := *openapiclient.NewGuildPatchGuildRoleRequest() // GuildPatchGuildRoleRequest | Role changes
+	guildId := int32(56) // int32 | Guild ID
+	roleId := int32(56) // int32 | Role ID
+	req := *openapiclient.NewGuildPatchGuildRoleRequest() // GuildPatchGuildRoleRequest | Role changes
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildRolesAPI.GuildGuildIdRolesRoleIdPatch(context.Background(), guildId, roleId).GuildPatchGuildRoleRequest(guildPatchGuildRoleRequest).Execute()
+	resp, r, err := apiClient.GuildRolesAPI.GuildGuildIdRolesRoleIdPatch(context.Background(), guildId, roleId).Req(req).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildRolesAPI.GuildGuildIdRolesRoleIdPatch``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -871,7 +942,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
 
- **guildPatchGuildRoleRequest** | [**GuildPatchGuildRoleRequest**](GuildPatchGuildRoleRequest.md) | Role changes | 
+ **req** | [**GuildPatchGuildRoleRequest**](GuildPatchGuildRoleRequest.md) | Role changes | 
 
 ### Return type
 
@@ -883,7 +954,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

@@ -34,8 +34,6 @@ type GuildCreateGuildChannelCategoryRequest struct {
 // will change when the set of required properties is changed
 func NewGuildCreateGuildChannelCategoryRequest() *GuildCreateGuildChannelCategoryRequest {
 	this := GuildCreateGuildChannelCategoryRequest{}
-	var position int32 = 0
-	this.Position = &position
 	var private bool = false
 	this.Private = &private
 	return &this
@@ -46,8 +44,6 @@ func NewGuildCreateGuildChannelCategoryRequest() *GuildCreateGuildChannelCategor
 // but it doesn't guarantee that properties required by API are set
 func NewGuildCreateGuildChannelCategoryRequestWithDefaults() *GuildCreateGuildChannelCategoryRequest {
 	this := GuildCreateGuildChannelCategoryRequest{}
-	var position int32 = 0
-	this.Position = &position
 	var private bool = false
 	this.Private = &private
 	return &this

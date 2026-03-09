@@ -30,6 +30,8 @@ const (
 	PermVoiceDeafenMembers
 	PermVoiceMoveMembers
 	PermAdministrator
+	PermCreateExpressions
+	PermManageExpressions
 )
 
 var DefaultPermissions = CreatePermissions(

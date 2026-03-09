@@ -23,44 +23,61 @@ func NewDB(logger *slog.Logger) *DB {
 }
 
 func (db *DB) Connect(dsn string, maxRetries int) error {
-	var err error
-	var dbc *sql.DB
-
-	for i := 0; i < maxRetries; i++ {
-		dbc, err = sql.Open("postgres", dsn)
-		if err == nil {
-			break
-		}
-		db.logger.Warn("DB connect attempt failed", slog.Int("attempt", i+1), slog.String("error", err.Error()))
-		time.Sleep(2 * time.Second)
-	}
+	// Create base driver handle (does not actually establish a network connection).
+	base, err := sql.Open("postgres", dsn)
 	if err != nil {
-		return fmt.Errorf("failed to connect to DB after %d attempts: %w", maxRetries, err)
+		return fmt.Errorf("failed to open postgres driver: %w", err)
 	}
 
+	// Wrap with query logger
 	customLogger := &SlogLogger{logger: db.logger}
-
-	dbc = sqldblogger.OpenDriver(
+	wrapped := sqldblogger.OpenDriver(
 		dsn,
-		dbc.Driver(),
+		base.Driver(),
 		customLogger,
 		sqldblogger.WithExecerLevel(sqldblogger.LevelDebug),
 		sqldblogger.WithQueryerLevel(sqldblogger.LevelDebug),
 		sqldblogger.WithPreparerLevel(sqldblogger.LevelDebug),
 	)
+	// base handle is no longer needed after wrapping
+	_ = base.Close()
 
-	db.conn = sqlx.NewDb(dbc, "postgres")
+	db.conn = sqlx.NewDb(wrapped, "postgres")
 	if db.conn == nil {
-		return errors.New("failed to connect to DB")
+		return errors.New("failed to initialize DB handle")
 	}
 
-	// Connection pool settings
-	db.conn.SetMaxOpenConns(25)           // max open connections
-	db.conn.SetMaxIdleConns(5)            // max idle connections
-	db.conn.SetConnMaxLifetime(time.Hour) // recycle after 1 hour
+	// Connection pool settings – tuned for Citus fan-out queries
+	db.conn.SetMaxOpenConns(50)
+	db.conn.SetMaxIdleConns(25)
+	db.conn.SetConnMaxLifetime(30 * time.Minute)
+	db.conn.SetConnMaxIdleTime(5 * time.Minute)
+
+	// Ensure the database is reachable. Retry with a 5s delay to avoid
+	// container restarts when DB is not yet ready. If maxRetries <= 0,
+	// retry indefinitely until success.
+	attempt := 0
+	for {
+		attempt++
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		err = db.conn.PingContext(ctx)
+		cancel()
+		if err == nil {
+			break
+		}
+
+		db.logger.Warn(
+			"Postgres ping failed; retrying",
+			slog.Int("attempt", attempt),
+			slog.String("error", err.Error()),
+		)
+		if maxRetries > 0 && attempt >= maxRetries {
+			return fmt.Errorf("failed to connect to DB after %d attempts: %w", attempt, err)
+		}
+		time.Sleep(5 * time.Second)
+	}
 
 	db.logger.Info("Postgres DB connected")
-
 	return nil
 }
 

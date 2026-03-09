@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Name** | Pointer to **string** | Category channel name | [optional] 
-**Position** | Pointer to **int32** | Channel position in the list. Should be set as the last position in the channel list, or it will be one of the first in the list. | [optional] [default to 0]
+**Position** | Pointer to **int32** | Channel position in the list. Should be set as the last position in the channel list, or it will be one of the first in the list. | [optional] 
 **Private** | Pointer to **bool** | Whether the category channel is private. Private channels can only be seen by users with roles assigned to this channel. | [optional] [default to false]
 
 ## Methods

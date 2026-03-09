@@ -18,6 +18,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/cmd/ws/auth"
 	"github.com/FlameInTheDark/gochat/cmd/ws/config"
+	"github.com/FlameInTheDark/gochat/cmd/ws/hub"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
@@ -27,6 +28,7 @@ import (
 type App struct {
 	jwt      *auth.Auth
 	natsConn *nats.Conn
+	hub      *hub.Hub
 	app      *fiber.App
 	cdb      *db.CQLCon
 	pg       *pgdb.DB
@@ -100,9 +102,12 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 		return fiber.ErrUpgradeRequired
 	})
 
+	wsHub := hub.New(natsCon)
+
 	a := &App{
 		jwt:      jwtauth,
 		natsConn: natsCon,
+		hub:      wsHub,
 		app:      app,
 		cdb:      dbcon,
 		pg:       pg,

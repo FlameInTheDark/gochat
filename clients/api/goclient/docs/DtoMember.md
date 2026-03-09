@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 **Avatar** | Pointer to **int32** | Avatar ID | [optional] 
 **JoinAt** | Pointer to **string** | Join date | [optional] 
 **Roles** | Pointer to **[]int32** | List of assigned role IDs | [optional] 
-**User** | Pointer to [**DtoUser**](DtoUser.md) |  | [optional] 
+**User** | Pointer to [**DtoUser**](DtoUser.md) | Guild member data | [optional] 
 **Username** | Pointer to **string** | Username in this guild | [optional] 
 
 ## Methods

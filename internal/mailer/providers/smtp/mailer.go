@@ -85,7 +85,7 @@ func (m *SmtpMailer) Send(ctx context.Context, notify mailer.MailNotification) e
 			&tls.Config{ServerName: m.host},
 		)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to connect to SMTP: %w", err)
 		}
 	} else {
 		// Plain TCP first; we'll upgrade via STARTTLS if the server supports it
@@ -99,13 +99,13 @@ func (m *SmtpMailer) Send(ctx context.Context, notify mailer.MailNotification) e
 			return err
 		}
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	c, err := smtppkg.NewClient(conn, m.host)
 	if err != nil {
 		return err
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	// If we connected without implicit TLS, try STARTTLS when available
 	if !m.useTls {
@@ -121,20 +121,20 @@ func (m *SmtpMailer) Send(ctx context.Context, notify mailer.MailNotification) e
 		if ok, _ := c.Extension("AUTH"); ok {
 			auth := smtppkg.PlainAuth("", m.username, m.password, m.host)
 			if err := c.Auth(auth); err != nil {
-				return err
+				return fmt.Errorf("unable to login to SMTP: %w", err)
 			}
 		}
 	}
 
 	if err := c.Mail(notify.From.Email); err != nil {
-		return err
+		return fmt.Errorf("unable to issue MAIL command: %w", err)
 	}
 	if err := c.Rcpt(notify.To.Email); err != nil {
-		return err
+		return fmt.Errorf("unable to issue RCPT command: %w", err)
 	}
 	wc, err := c.Data()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to issue DATA command: %w", err)
 	}
 	if _, err := wc.Write(msg.Bytes()); err != nil {
 		_ = wc.Close()

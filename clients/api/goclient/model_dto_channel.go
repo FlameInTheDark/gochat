@@ -45,7 +45,9 @@ type DtoChannel struct {
 	// Channel topic.
 	Topic *string `json:"topic,omitempty"`
 	// Channel type
-	Type *int32 `json:"type,omitempty"`
+	Type *ModelChannelType `json:"type,omitempty"`
+	// Voice channel region
+	VoiceRegion *string `json:"voice_region,omitempty"`
 }
 
 // NewDtoChannel instantiates a new DtoChannel object
@@ -454,9 +456,9 @@ func (o *DtoChannel) SetTopic(v string) {
 }
 
 // GetType returns the Type field value if set, zero value otherwise.
-func (o *DtoChannel) GetType() int32 {
+func (o *DtoChannel) GetType() ModelChannelType {
 	if o == nil || IsNil(o.Type) {
-		var ret int32
+		var ret ModelChannelType
 		return ret
 	}
 	return *o.Type
@@ -464,7 +466,7 @@ func (o *DtoChannel) GetType() int32 {
 
 // GetTypeOk returns a tuple with the Type field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *DtoChannel) GetTypeOk() (*int32, bool) {
+func (o *DtoChannel) GetTypeOk() (*ModelChannelType, bool) {
 	if o == nil || IsNil(o.Type) {
 		return nil, false
 	}
@@ -480,9 +482,41 @@ func (o *DtoChannel) HasType() bool {
 	return false
 }
 
-// SetType gets a reference to the given int32 and assigns it to the Type field.
-func (o *DtoChannel) SetType(v int32) {
+// SetType gets a reference to the given ModelChannelType and assigns it to the Type field.
+func (o *DtoChannel) SetType(v ModelChannelType) {
 	o.Type = &v
+}
+
+// GetVoiceRegion returns the VoiceRegion field value if set, zero value otherwise.
+func (o *DtoChannel) GetVoiceRegion() string {
+	if o == nil || IsNil(o.VoiceRegion) {
+		var ret string
+		return ret
+	}
+	return *o.VoiceRegion
+}
+
+// GetVoiceRegionOk returns a tuple with the VoiceRegion field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoChannel) GetVoiceRegionOk() (*string, bool) {
+	if o == nil || IsNil(o.VoiceRegion) {
+		return nil, false
+	}
+	return o.VoiceRegion, true
+}
+
+// HasVoiceRegion returns a boolean if a field has been set.
+func (o *DtoChannel) HasVoiceRegion() bool {
+	if o != nil && !IsNil(o.VoiceRegion) {
+		return true
+	}
+
+	return false
+}
+
+// SetVoiceRegion gets a reference to the given string and assigns it to the VoiceRegion field.
+func (o *DtoChannel) SetVoiceRegion(v string) {
+	o.VoiceRegion = &v
 }
 
 func (o DtoChannel) MarshalJSON() ([]byte, error) {
@@ -533,6 +567,9 @@ func (o DtoChannel) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Type) {
 		toSerialize["type"] = o.Type
+	}
+	if !IsNil(o.VoiceRegion) {
+		toSerialize["voice_region"] = o.VoiceRegion
 	}
 	return toSerialize, nil
 }

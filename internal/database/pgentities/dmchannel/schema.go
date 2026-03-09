@@ -37,67 +37,40 @@ func (e *Entity) CreateDmChannel(ctx context.Context, userId, participantId, cha
 	if err != nil {
 		return fmt.Errorf("unable to start transaction: %w", err)
 	}
-	qUser := squirrel.Insert("dm_channels").
+
+	// Batch both symmetric rows into a single multi-row INSERT
+	q := squirrel.Insert("dm_channels").
 		PlaceholderFormat(squirrel.Dollar).
 		Columns("user_id", "participant_id", "channel_id").
 		Values(userId, participantId, channelId).
-		Suffix("ON CONFLICT (channel_id, user_id) DO NOTHING")
-	rawUser, argsUser, err := qUser.ToSql()
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("unable to create SQL query: %w", err)
-	}
-	_, err = tx.ExecContext(ctx, rawUser, argsUser...)
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("unable to create SQL query: %w", err)
-	}
-
-	qPart := squirrel.Insert("dm_channels").
-		PlaceholderFormat(squirrel.Dollar).
-		Columns("user_id", "participant_id", "channel_id").
 		Values(participantId, userId, channelId).
 		Suffix("ON CONFLICT (channel_id, user_id) DO NOTHING")
-	rawPart, argsPart, err := qPart.ToSql()
+	raw, args, err := q.ToSql()
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = tx.ExecContext(ctx, rawPart, argsPart...)
+	_, err = tx.ExecContext(ctx, raw, args...)
 	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("unable to create SQL query: %w", err)
+		_ = tx.Rollback()
+		return fmt.Errorf("unable to create dm channel: %w", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return fmt.Errorf("unable to create dm channel: %w", err)
+		return fmt.Errorf("unable to commit dm channel: %w", err)
 	}
 	return nil
 }
 
 func (e *Entity) IsDmChannelParticipant(ctx context.Context, channelId, userId int64) (bool, error) {
-	var count int64
-	q := squirrel.Select("count(*)").
-		PlaceholderFormat(squirrel.Dollar).
-		From("dm_channels").
-		Where(
-			squirrel.And{
-				squirrel.Eq{"channel_id": channelId},
-				squirrel.Eq{"user_id": userId},
-			},
-		)
-	raw, args, err := q.ToSql()
+	var exists bool
+	raw := "SELECT EXISTS(SELECT 1 FROM dm_channels WHERE channel_id = $1 AND user_id = $2)"
+	err := e.c.GetContext(ctx, &exists, raw, channelId, userId)
 	if err != nil {
-		return false, fmt.Errorf("unable to create SQL query: %w", err)
-	}
-	err = e.c.GetContext(ctx, &count, raw, args...)
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	} else if err != nil {
 		return false, fmt.Errorf("check dm participant error: %w", err)
 	}
-	return count > 0, nil
+	return exists, nil
 }
 
 func (e *Entity) GetUserDmChannels(ctx context.Context, userId int64) ([]model.DMChannel, error) {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -112,25 +113,30 @@ func (r CreateDMManyRequest) Validate() error {
 type UserSettingsResponse struct {
 	Version            int64                            `json:"version"`
 	Settings           *model.UserSettingsData          `json:"settings"`
+	ContentHosts       []string                         `json:"content_hosts"`
 	ReadStates         map[int64]int64                  `json:"read_states"`
 	GuildsLastMessages map[int64]map[int64]int64        `json:"guilds_last_messages"`
 	Guilds             []dto.Guild                      `json:"guilds"`
+	GuildEmojis        map[int64][]dto.EmojiRef         `json:"guild_emojis"`
 	Mentions           map[int64][]model.Mention        `json:"mentions,omitempty"`
 	ChannelMentions    map[int64][]model.ChannelMention `json:"channel_mentions,omitempty"`
 }
 
-func modelToSettings(m *model.UserSettings, guilds []dto.Guild, rs map[int64]int64, glms map[int64]map[int64]int64) (UserSettingsResponse, error) {
+func modelToSettings(m *model.UserSettings, guilds []dto.Guild, guildEmojis map[int64][]dto.EmojiRef, rs map[int64]int64, glms map[int64]map[int64]int64) (UserSettingsResponse, error) {
 	var settings model.UserSettingsData
-	err := json.Unmarshal(m.Settings, &settings)
-	if err != nil {
-		return UserSettingsResponse{ReadStates: rs}, err
+	if len(m.Settings) > 0 {
+		if err := json.Unmarshal(m.Settings, &settings); err != nil {
+			return UserSettingsResponse{ReadStates: rs}, err
+		}
 	}
 	return UserSettingsResponse{
 		Version:            m.Version,
 		Settings:           &settings,
+		ContentHosts:       nil,
 		ReadStates:         rs,
 		GuildsLastMessages: glms,
 		Guilds:             guilds,
+		GuildEmojis:        guildEmojis,
 	}, nil
 }
 
@@ -209,7 +215,7 @@ func (r CreateFriendRequestRequest) Validate() error {
 }
 
 type UnfriendRequest struct {
-	UserId int64 `json:"user_id"`
+	UserId int64 `json:"user_id,string"`
 }
 
 func (r UnfriendRequest) Validate() error {
@@ -222,7 +228,7 @@ func (r UnfriendRequest) Validate() error {
 }
 
 type FriendRequestAction struct {
-	UserId int64 `json:"user_id"`
+	UserId int64 `json:"user_id,string"`
 }
 
 func (r FriendRequestAction) Validate() error {
@@ -253,7 +259,7 @@ func usersWithDiscriminators(users []model.User, discs []model.Discriminator) []
 
 // DM channels last messages request
 type DMChannelsLastRequest struct {
-	ChannelIds []int64 `json:"channel_ids"`
+	ChannelIds []helper.StringInt64Array `json:"channel_ids"`
 }
 
 func (r DMChannelsLastRequest) Validate() error {

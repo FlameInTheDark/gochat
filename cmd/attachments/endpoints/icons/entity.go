@@ -12,31 +12,28 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
+	"github.com/FlameInTheDark/gochat/internal/upload"
 )
 
 const entityName = "icons"
 
 type entity struct {
-	name          string
-	log           *slog.Logger
-	storage       *s3.Client
-	s3ExternalURL string
-	ic            icon.Icon
-	gld           pgguild.Guild
-	mqt           mq.SendTransporter
+	name     string
+	log      *slog.Logger
+	gld      pgguild.Guild
+	mqt      mq.SendTransporter
+	uploader *upload.IconService
 }
 
 func (e *entity) Name() string { return e.name }
 
 func New(cql *db.CQLCon, pg *pgdb.DB, storage *s3.Client, externalURL string, mqt mq.SendTransporter, log *slog.Logger) server.Entity {
 	return &entity{
-		name:          entityName,
-		log:           log,
-		storage:       storage,
-		s3ExternalURL: externalURL,
-		ic:            icon.New(cql),
-		gld:           pgguild.New(pg.Conn()),
-		mqt:           mqt,
+		name:     entityName,
+		log:      log,
+		gld:      pgguild.New(pg.Conn()),
+		mqt:      mqt,
+		uploader: upload.NewIconService(icon.New(cql), storage, externalURL, upload.NewFFmpegProcessor(), iconMaxDim, iconMaxSizeBytes),
 	}
 }
 

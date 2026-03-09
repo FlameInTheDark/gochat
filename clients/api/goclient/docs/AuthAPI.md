@@ -15,7 +15,7 @@ Method | HTTP request | Description
 
 ## AuthConfirmationPost
 
-> string AuthConfirmationPost(ctx).AuthConfirmationRequest(authConfirmationRequest).Execute()
+> string AuthConfirmationPost(ctx).Request(request).Execute()
 
 Confirmation
 
@@ -32,11 +32,11 @@ import (
 )
 
 func main() {
-	authConfirmationRequest := *openapiclient.NewAuthConfirmationRequest() // AuthConfirmationRequest | Login data
+	request := *openapiclient.NewAuthConfirmationRequest() // AuthConfirmationRequest | Login data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.AuthAPI.AuthConfirmationPost(context.Background()).AuthConfirmationRequest(authConfirmationRequest).Execute()
+	resp, r, err := apiClient.AuthAPI.AuthConfirmationPost(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AuthAPI.AuthConfirmationPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -57,7 +57,7 @@ Other parameters are passed through a pointer to a apiAuthConfirmationPostReques
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **authConfirmationRequest** | [**AuthConfirmationRequest**](AuthConfirmationRequest.md) | Login data | 
+ **request** | [**AuthConfirmationRequest**](AuthConfirmationRequest.md) | Login data | 
 
 ### Return type
 
@@ -69,7 +69,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -79,7 +79,7 @@ No authorization required
 
 ## AuthLoginPost
 
-> AuthLoginResponse AuthLoginPost(ctx).AuthLoginRequest(authLoginRequest).Execute()
+> AuthLoginResponse AuthLoginPost(ctx).Request(request).Execute()
 
 Authentication
 
@@ -96,11 +96,11 @@ import (
 )
 
 func main() {
-	authLoginRequest := *openapiclient.NewAuthLoginRequest() // AuthLoginRequest | Login data
+	request := *openapiclient.NewAuthLoginRequest() // AuthLoginRequest | Login data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.AuthAPI.AuthLoginPost(context.Background()).AuthLoginRequest(authLoginRequest).Execute()
+	resp, r, err := apiClient.AuthAPI.AuthLoginPost(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AuthAPI.AuthLoginPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -121,7 +121,7 @@ Other parameters are passed through a pointer to a apiAuthLoginPostRequest struc
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **authLoginRequest** | [**AuthLoginRequest**](AuthLoginRequest.md) | Login data | 
+ **request** | [**AuthLoginRequest**](AuthLoginRequest.md) | Login data | 
 
 ### Return type
 
@@ -133,7 +133,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -143,7 +143,7 @@ No authorization required
 
 ## AuthRecoveryPost
 
-> string AuthRecoveryPost(ctx).AuthPasswordRecoveryRequest(authPasswordRecoveryRequest).Execute()
+> string AuthRecoveryPost(ctx).Request(request).Execute()
 
 Password Recovery
 
@@ -160,11 +160,11 @@ import (
 )
 
 func main() {
-	authPasswordRecoveryRequest := *openapiclient.NewAuthPasswordRecoveryRequest() // AuthPasswordRecoveryRequest | Email for password recovery
+	request := *openapiclient.NewAuthPasswordRecoveryRequest() // AuthPasswordRecoveryRequest | Email for password recovery
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.AuthAPI.AuthRecoveryPost(context.Background()).AuthPasswordRecoveryRequest(authPasswordRecoveryRequest).Execute()
+	resp, r, err := apiClient.AuthAPI.AuthRecoveryPost(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AuthAPI.AuthRecoveryPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -185,7 +185,7 @@ Other parameters are passed through a pointer to a apiAuthRecoveryPostRequest st
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **authPasswordRecoveryRequest** | [**AuthPasswordRecoveryRequest**](AuthPasswordRecoveryRequest.md) | Email for password recovery | 
+ **request** | [**AuthPasswordRecoveryRequest**](AuthPasswordRecoveryRequest.md) | Email for password recovery | 
 
 ### Return type
 
@@ -197,7 +197,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -271,7 +271,7 @@ No authorization required
 
 ## AuthRegistrationPost
 
-> string AuthRegistrationPost(ctx).AuthRegisterRequest(authRegisterRequest).Execute()
+> string AuthRegistrationPost(ctx).Request(request).Execute()
 
 Registration
 
@@ -288,11 +288,11 @@ import (
 )
 
 func main() {
-	authRegisterRequest := *openapiclient.NewAuthRegisterRequest() // AuthRegisterRequest | Login data
+	request := *openapiclient.NewAuthRegisterRequest() // AuthRegisterRequest | Login data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.AuthAPI.AuthRegistrationPost(context.Background()).AuthRegisterRequest(authRegisterRequest).Execute()
+	resp, r, err := apiClient.AuthAPI.AuthRegistrationPost(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AuthAPI.AuthRegistrationPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -313,7 +313,7 @@ Other parameters are passed through a pointer to a apiAuthRegistrationPostReques
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **authRegisterRequest** | [**AuthRegisterRequest**](AuthRegisterRequest.md) | Login data | 
+ **request** | [**AuthRegisterRequest**](AuthRegisterRequest.md) | Login data | 
 
 ### Return type
 
@@ -325,7 +325,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -335,7 +335,7 @@ No authorization required
 
 ## AuthResetPost
 
-> string AuthResetPost(ctx).AuthPasswordResetRequest(authPasswordResetRequest).Execute()
+> string AuthResetPost(ctx).Request(request).Execute()
 
 Password Reset
 
@@ -352,11 +352,11 @@ import (
 )
 
 func main() {
-	authPasswordResetRequest := *openapiclient.NewAuthPasswordResetRequest() // AuthPasswordResetRequest | Password reset data
+	request := *openapiclient.NewAuthPasswordResetRequest() // AuthPasswordResetRequest | Password reset data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.AuthAPI.AuthResetPost(context.Background()).AuthPasswordResetRequest(authPasswordResetRequest).Execute()
+	resp, r, err := apiClient.AuthAPI.AuthResetPost(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `AuthAPI.AuthResetPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -377,7 +377,7 @@ Other parameters are passed through a pointer to a apiAuthResetPostRequest struc
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **authPasswordResetRequest** | [**AuthPasswordResetRequest**](AuthPasswordResetRequest.md) | Password reset data | 
+ **request** | [**AuthPasswordResetRequest**](AuthPasswordResetRequest.md) | Password reset data | 
 
 ### Return type
 
@@ -389,7 +389,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

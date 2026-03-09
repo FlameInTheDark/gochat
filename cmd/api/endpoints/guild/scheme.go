@@ -12,50 +12,56 @@ import (
 )
 
 const (
-	ErrUnableToGetUserToken             = "unable to get user token"
-	ErrUnableToGetGuildMemberToken      = "unable to get guild member token"
-	ErrUnableToGetGuildMembers          = "unable to get guild members"
-	ErrUnableToGetUsersRoles            = "unable to get users roles"
-	ErrUnableToGetGuildMembersProfiles  = "unable to get guild members profiles"
-	ErrUnableToParseBody                = "unable to parse body"
-	ErrPermissionsRequired              = "permissions required"
-	ErrUnableToCreateAttachment         = "unable to create attachment"
-	ErrUnableToCreateUploadURL          = "unable to create upload url"
-	ErrIncorrectChannelID               = "incorrect channel ID"
-	ErrIncorrectGuildID                 = "incorrect guild ID"
-	ErrIncorrectMemberID                = "incorrect member ID"
-	ErrIncorrectInviteID                = "incorrect invite ID"
-	ErrIncorrectRoleID                  = "incorrect role ID"
-	ErrIncorrectIconID                  = "incorrect icon ID"
-	ErrFileIsTooBig                     = "file is too big"
-	ErrUnableToSendMessage              = "unable to send message"
-	ErrUnableToGetUser                  = "unable to get user"
-	ErrUnableToGetUsers                 = "unable to get users"
-	ErrUnableToGetUserDiscriminator     = "unable to get discriminator"
-	ErrUnableToGetDiscriminators        = "unable to get discriminators"
-	ErrUnableToGetAttachements          = "unable to get attachments"
-	ErrUnableToCreateGuild              = "unable to create guild"
-	ErrUnableToGetGuildMember           = "unable to get member"
-	ErrUnableToGetDiscriminator         = "unable to get discriminator"
-	ErrUnableToGetGuildByID             = "unable to get guild by id"
-	ErrUnableToUpdateGuild              = "unable to update guild"
-	ErrUnableToDeleteGuild              = "unable to delete guild"
-	ErrUnableToGetRoles                 = "unable to get roles"
-	ErrUnableToSetUserRole              = "unable to set user role"
-	ErrUnableToRemoveUserRole           = "unable to remove user role"
-	ErrUnableToCreateChannelGroup       = "unable to create channel group"
-	ErrUnableToGetChannel               = "unable to get channel"
-	ErrUnableToUpdateChannel            = "unable to update channel"
-	ErrUnableToSetParentAsSelf          = "unable to set parent as self"
-	ErrUnableToSetParentForCategory     = "unable to set parent for category"
-	ErrNotAMember                       = "not a member"
-	ErrUnableToGetReadState             = "unable to get read state"
-	ErrUnableToSetReadState             = "unable to set read state"
-	ErrUnableToIssueVoiceToken          = "unable to issue voice token"
-	ErrNoSFUAvailableInRegion           = "no sfu available in region"
-	ErrNotAVoiceChannel                 = "not a voice channel"
-	ErrUnableToGetPermission            = "unable to get permissions"
-	ErrUnableToSetSystemMessagesChannel = "unable to set system messages channel"
+	ErrUnableToGetUserToken              = "unable to get user token"
+	ErrUnableToGetGuildMemberToken       = "unable to get guild member token"
+	ErrUnableToGetGuildMembers           = "unable to get guild members"
+	ErrUnableToGetUsersRoles             = "unable to get users roles"
+	ErrUnableToGetGuildMembersProfiles   = "unable to get guild members profiles"
+	ErrUnableToParseBody                 = "unable to parse body"
+	ErrPermissionsRequired               = "permissions required"
+	ErrUnableToCreateAttachment          = "unable to create attachment"
+	ErrUnableToCreateUploadURL           = "unable to create upload url"
+	ErrIncorrectChannelID                = "incorrect channel ID"
+	ErrIncorrectGuildID                  = "incorrect guild ID"
+	ErrIncorrectMemberID                 = "incorrect member ID"
+	ErrIncorrectInviteID                 = "incorrect invite ID"
+	ErrIncorrectRoleID                   = "incorrect role ID"
+	ErrIncorrectIconID                   = "incorrect icon ID"
+	ErrFileIsTooBig                      = "file is too big"
+	ErrUnableToSendMessage               = "unable to send message"
+	ErrUnableToGetUser                   = "unable to get user"
+	ErrUnableToGetUsers                  = "unable to get users"
+	ErrUnableToGetUserDiscriminator      = "unable to get discriminator"
+	ErrUnableToGetDiscriminators         = "unable to get discriminators"
+	ErrUnableToGetAttachements           = "unable to get attachments"
+	ErrUnableToCreateGuild               = "unable to create guild"
+	ErrUnableToGetGuildMember            = "unable to get member"
+	ErrUnableToGetDiscriminator          = "unable to get discriminator"
+	ErrUnableToGetGuildByID              = "unable to get guild by id"
+	ErrUnableToUpdateGuild               = "unable to update guild"
+	ErrUnableToDeleteGuild               = "unable to delete guild"
+	ErrUnableToGetRoles                  = "unable to get roles"
+	ErrUnableToSetUserRole               = "unable to set user role"
+	ErrUnableToRemoveUserRole            = "unable to remove user role"
+	ErrUnableToCreateChannelGroup        = "unable to create channel group"
+	ErrUnableToGetChannel                = "unable to get channel"
+	ErrUnableToUpdateChannel             = "unable to update channel"
+	ErrNotAMember                        = "not a member"
+	ErrUnableToGetReadState              = "unable to get read state"
+	ErrUnableToSetReadState              = "unable to set read state"
+	ErrUnableToIssueVoiceToken           = "unable to issue voice token"
+	ErrNoSFUAvailableInRegion            = "no sfu available in region"
+	ErrNotAVoiceChannel                  = "not a voice channel"
+	ErrUnableToGetPermission             = "unable to get permissions"
+	ErrUnableToSetSystemMessagesChannel  = "unable to set system messages channel"
+	ErrUnableToCheckGuildBan             = "unable to check guild ban"
+	ErrUnableToRemoveMember              = "unable to remove member"
+	ErrUnableToBanMember                 = "unable to ban member"
+	ErrUnableToUnbanMember               = "unable to unban member"
+	ErrUnableToGetGuildBans              = "unable to get guild bans"
+	ErrCannotModerateGuildOwner          = "cannot moderate guild owner"
+	ErrOnlyOwnerCanModerateAdministrator = "only guild owner can moderate administrators"
+	ErrUserIsBanned                      = "user is banned"
 
 	// Channel role permissions
 	ErrUnableToGetChannelRolePerms = "unable to get channel role permissions"
@@ -88,6 +94,7 @@ const (
 	ErrRoleNameTooLong          = "role name must be less than 100 characters"
 	ErrRoleColorInvalid         = "role color must be between 0 and 16777215"
 	ErrUnableToDeleteActiveIcon = "unable to delete active icon"
+	ErrBanReasonTooLong         = "ban reason must be 256 characters or fewer"
 )
 
 var (
@@ -189,8 +196,8 @@ func (r CreateGuildChannelRequest) Validate() error {
 }
 
 type ChannelOrder struct {
-	Id       int64 `json:"id" example:"2230469276416868352"` // Channel ID.
-	Position int   `json:"position" example:"4"`             // New channel position.
+	Id       int64 `json:"id,string" example:"2230469276416868352"` // Channel ID.
+	Position int   `json:"position" example:"4"`                    // New channel position.
 }
 
 type PatchGuildChannelOrderRequest struct {
@@ -222,10 +229,9 @@ func (r PatchGuildChannelOrderRequest) Validate() error {
 }
 
 type PatchGuildChannelRequest struct {
-	Name     *string `json:"name,omitempty" example:"new-channel-name"`         // Channel name.
-	ParentId *int64  `json:"parent_id,omitempty" example:"2230469276416868352"` // Parent channel ID. A Parent channel can only be a category channel.
-	Private  *bool   `json:"private,omitempty" default:"false"`                 // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
-	Topic    *string `json:"topic,omitempty" example:"Just a channel topic"`    // Channel topic.
+	Name    *string `json:"name,omitempty" example:"new-channel-name"`      // Channel name.
+	Private *bool   `json:"private,omitempty" default:"false"`              // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
+	Topic   *string `json:"topic,omitempty" example:"Just a channel topic"` // Channel topic.
 }
 
 func (r PatchGuildChannelRequest) Validate() error {
@@ -236,9 +242,6 @@ func (r PatchGuildChannelRequest) Validate() error {
 				validation.RuneLength(0, 100).Error(ErrChannelNameTooLong),
 				validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
 			),
-		),
-		validation.Field(&r.ParentId, validation.When(r.ParentId != nil,
-			validation.Min(int64(1)).Error(ErrParentIdInvalid)),
 		),
 	)
 }
@@ -280,20 +283,6 @@ type guildContext struct {
 	Member *model.Member
 }
 
-type channelPermissionContext struct {
-	User    *helper.JWTUser
-	Guild   *model.Guild
-	Channel *model.Channel
-	Roles   map[int64]*model.Role
-}
-
-type memberRole struct {
-	Id          int64  `json:"id"`
-	Name        string `json:"name"`
-	Color       int    `json:"color"`
-	Permissions int64  `json:"permissions"`
-}
-
 // DTO conversion functions
 func channelModelToDTO(c *model.Channel, guildId *int64, position int, roles []int64) dto.Channel {
 	return dto.Channel{
@@ -308,6 +297,7 @@ func channelModelToDTO(c *model.Channel, guildId *int64, position int, roles []i
 		CreatedAt:     c.CreatedAt,
 		Private:       c.Private,
 		Roles:         roles,
+		VoiceRegion:   c.VoiceRegion,
 		LastMessageId: c.LastMessage,
 	}
 }
@@ -330,6 +320,7 @@ func roleModelToDTO(r model.Role) dto.Role {
 		Name:        r.Name,
 		Color:       r.Color,
 		Permissions: r.Permissions,
+		Position:    r.Position,
 	}
 }
 
@@ -405,6 +396,53 @@ func (r PatchGuildRoleRequest) Validate() error {
 		),
 		validation.Field(&r.Permissions,
 			validation.When(r.Permissions != nil, validation.Min(int64(0)).Error(ErrPermissionsInvalid)),
+		),
+	)
+}
+
+type RoleOrder struct {
+	Id       int64 `json:"id,string" example:"2230469276416868352"` // Role ID.
+	Position int   `json:"position" example:"4"`                    // New role position.
+}
+
+type PatchGuildRoleOrderRequest struct {
+	Roles []RoleOrder `json:"roles"` // List of roles to change order.
+}
+
+func (r RoleOrder) Validate() error {
+	return validation.ValidateStruct(
+		&r,
+		validation.Field(&r.Id, validation.Required),
+	)
+}
+
+func (r PatchGuildRoleOrderRequest) Validate() error {
+	return validation.ValidateStruct(
+		&r,
+		validation.Field(
+			&r.Roles,
+			validation.Required,
+			validation.Each(validation.By(func(v interface{}) error {
+				ro, ok := v.(RoleOrder)
+				if !ok {
+					return validation.NewError("validation", "invalid role element")
+				}
+				return ro.Validate()
+			})),
+		),
+	)
+}
+
+type BanMemberRequest struct {
+	Reason *string `json:"reason,omitempty"`
+}
+
+func (r BanMemberRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Reason,
+			validation.When(r.Reason != nil,
+				validation.RuneLength(0, 256).Error(ErrBanReasonTooLong),
+			),
 		),
 	)
 }
@@ -486,6 +524,7 @@ type MoveMemberResponse struct {
 // voiceRouteBinding is the cached binding of a channel to a specific SFU instance
 // stored under key `voice:route:{channel}`.
 type voiceRouteBinding struct {
-	ID  string `json:"id"`
-	URL string `json:"url"`
+	ID     string `json:"id"`
+	URL    string `json:"url"`
+	Region string `json:"region,omitempty"`
 }

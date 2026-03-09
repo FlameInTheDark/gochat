@@ -6,7 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Color** | Pointer to **int32** | RGB int value | [optional] 
 **Name** | Pointer to **string** | Role name | [optional] 
-**Permissions** | Pointer to **int32** | Permissions bitset | [optional] [default to 0]
+**Permissions** | Pointer to **int32** | Permissions bitset | [optional] 
 
 ## Methods
 

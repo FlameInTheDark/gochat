@@ -40,6 +40,39 @@ func containsString(xs []string, v string) bool {
 	return false
 }
 
+// adminClaims defines the admin JWT contents used for API → SFU control calls.
+type adminClaims struct {
+	helper.Claims
+	ChannelID int64 `json:"channel_id"`
+}
+
+// validateAdminToken parses and validates an admin JWT (typ=admin, aud=sfu).
+// Returns the channel ID the token is scoped to.
+func (a *App) validateAdminToken(token string) (int64, error) {
+	var claims adminClaims
+	tok := stripBearerPrefix(token)
+	_, err := jwt.ParseWithClaims(
+		tok,
+		&claims,
+		func(t *jwt.Token) (any, error) {
+			if t.Method != jwt.SigningMethodHS256 {
+				return nil, fmt.Errorf("unexpected alg: %s", t.Method.Alg())
+			}
+			return []byte(a.cfg.AuthSecret), nil
+		},
+		jwt.WithIssuer("gochat"),
+		jwt.WithLeeway(2*time.Second),
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+	)
+	if err != nil {
+		return 0, err
+	}
+	if claims.TokenType != "admin" || !containsString(claims.Audience, "sfu") {
+		return 0, fmt.Errorf("aud/typ mismatch")
+	}
+	return claims.ChannelID, nil
+}
+
 // validateJoinToken parses and validates the SFU join token.
 // Returns (userID, channelID, perms, error).
 func (a *App) validateJoinToken(token string) (int64, int64, *int64, int64, bool, error) {

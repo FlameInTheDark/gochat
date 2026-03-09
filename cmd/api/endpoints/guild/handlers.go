@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sort"
 	"strconv"
 	"time"
 
@@ -78,6 +79,9 @@ func (e *entity) validateGuildAccess(c *fiber.Ctx, guildId int64) (*guildContext
 
 	member, err := e.memb.GetMember(c.UserContext(), user.Id, guildId)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fiber.NewError(fiber.StatusForbidden, ErrNotAMember)
+		}
 		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
 	}
 
@@ -105,7 +109,7 @@ func (e *entity) getUserRoles(c *fiber.Ctx, guildId, userId int64) (map[int64]*m
 		roleIds = append(roleIds, ur.RoleId)
 	}
 
-	roles, err := e.role.GetRolesBulk(c.UserContext(), roleIds)
+	roles, err := e.role.GetRolesBulk(c.UserContext(), guildId, roleIds)
 	if err != nil {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -220,6 +224,27 @@ func (e *entity) GetChannels(c *fiber.Ctx) error {
 	return e.fetchAndFilterChannels(c, guildCtx)
 }
 
+// deriveChannelParents assigns ParentId to guild/voice channels based on positional order.
+// After sorting by Position, each guild or voice channel inherits the id of the last
+// category above it. Channels before any category have a nil parent.
+// Thread channels keep their existing ParentId unchanged.
+func deriveChannelParents(channels []dto.Channel) {
+	sort.Slice(channels, func(i, j int) bool {
+		return channels[i].Position < channels[j].Position
+	})
+	var currentCategoryId *int64
+	for i := range channels {
+		switch channels[i].Type {
+		case model.ChannelTypeGuildCategory:
+			id := channels[i].Id
+			currentCategoryId = &id
+			channels[i].ParentId = nil
+		case model.ChannelTypeGuild, model.ChannelTypeGuildVoice:
+			channels[i].ParentId = currentCategoryId
+		}
+	}
+}
+
 // fetchAndFilterChannels retrieves guild channels and filters based on permissions
 func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) error {
 	var cachedChannels []dto.Channel
@@ -255,6 +280,8 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) er
 		}
 		channelsData[i] = channelModelToDTO(&ch, &guildCtx.Guild.Id, guildChannels[i].Position, croles[i].Roles)
 	}
+
+	deriveChannelParents(channelsData)
 
 	go func() {
 		if err := e.cache.SetTimedJSON(
@@ -497,12 +524,24 @@ func (e *entity) Delete(c *fiber.Ctx) error {
 		}
 	}
 
-	// 3) Remove all members
+	// 3) Remove all guild emojis
+	emojis, err := e.emoji.DeleteGuildEmojis(c.UserContext(), guildId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToDeleteEmoji)
+	}
+	for _, emoji := range emojis {
+		if err := e.removeEmojiObjects(c.UserContext(), emoji.Id); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToDeleteEmoji)
+		}
+		_ = e.invalidateEmojiCache(c.UserContext(), guildId, emoji.Id)
+	}
+
+	// 4) Remove all members
 	if err := e.memb.RemoveMembersByGuild(c.UserContext(), guildId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMembers)
 	}
 
-	// 4) Delete the guild itself
+	// 5) Delete the guild itself
 	if err := e.g.DeleteGuild(c.UserContext(), guildId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToDeleteGuild)
 	}
@@ -724,14 +763,20 @@ func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId 
 
 	channelId := idgen.Next()
 
+	// Only threads use an explicit parent; category membership is derived from position
+	var effectiveParentId *int64
+	if channelType == model.ChannelTypeThread {
+		effectiveParentId = parentId
+	}
+
 	// Add channel to guild
-	if err := e.gc.AddChannel(c.UserContext(), guild.Id, channelId, name, channelType, parentId, isPrivate, position); err != nil {
+	if err := e.gc.AddChannel(c.UserContext(), guild.Id, channelId, name, channelType, effectiveParentId, isPrivate, position); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
 	}
 
 	// Send create channel event and clean cached data
 	go func() {
-		if err := e.sendCreateChannelEvent(guildId, guild.Id, channelId, name, channelType, parentId); err != nil {
+		if err := e.sendCreateChannelEvent(guildId, guild.Id, channelId, name, channelType, effectiveParentId); err != nil {
 			slog.Error("unable to send create channel event", slog.String("error", err.Error()))
 		}
 		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
@@ -897,7 +942,7 @@ func (e *entity) DeleteCategory(c *fiber.Ctx) error {
 
 // deleteCategoryWithPermissionCheck validates permissions and deletes a category
 func (e *entity) deleteCategoryWithPermissionCheck(c *fiber.Ctx, guildId, categoryId, userId int64) error {
-	channel, _, guild, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, categoryId, userId, permissions.PermServerManageChannels)
+	channel, _, _, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, categoryId, userId, permissions.PermServerManageChannels)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -906,12 +951,7 @@ func (e *entity) deleteCategoryWithPermissionCheck(c *fiber.Ctx, guildId, catego
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
 	}
 
-	// Handle child channels - move them out of the category
-	if err := e.handleCategoryChildChannels(c, guild.Id, categoryId); err != nil {
-		return err
-	}
-
-	// Delete the category
+	// Delete the category (child channels implicitly lose parent via position derivation)
 	if err := e.gc.RemoveChannel(c.UserContext(), guildId, channel.Id); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -927,45 +967,6 @@ func (e *entity) deleteCategoryWithPermissionCheck(c *fiber.Ctx, guildId, catego
 	}()
 
 	return c.SendStatus(fiber.StatusOK)
-}
-
-// handleCategoryChildChannels moves child channels out of a category before deletion
-func (e *entity) handleCategoryChildChannels(c *fiber.Ctx, guildId, categoryId int64) error {
-	guildChannels, err := e.gc.GetGuildChannels(c.UserContext(), guildId)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-
-	var channelIds []int64
-	for _, gch := range guildChannels {
-		channelIds = append(channelIds, gch.ChannelId)
-	}
-
-	channels, err := e.ch.GetChannelsBulk(c.UserContext(), channelIds)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-
-	var childChannelIds []int64
-	for _, ch := range channels {
-		if ch.ParentID != nil && *ch.ParentID == categoryId {
-			childChannelIds = append(childChannelIds, ch.Id)
-		}
-	}
-
-	if len(childChannelIds) > 0 {
-		// Remove parent from child channels
-		if err := e.ch.SetChannelParentBulk(c.UserContext(), childChannelIds, nil); err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-
-		// Reset positions for child channels
-		if err := e.gc.ResetGuildChannelPositionBulk(c.UserContext(), childChannelIds, guildId); err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-	}
-
-	return nil
 }
 
 // sendDeleteChannelEvent sends channel deletion message to message queue
@@ -1123,25 +1124,12 @@ func (e *entity) PatchChannel(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
 	}
 
-	if req.ParentId != nil && *req.ParentId == channelId {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToSetParentAsSelf)
-	}
-
 	guildChannel, err := e.gc.GetGuildChannel(c.UserContext(), guildId, channelId)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
 	}
 
-	ch, err := e.ch.GetChannel(c.UserContext(), guildChannel.ChannelId)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
-	}
-
-	if req.ParentId != nil && ch.Type == model.ChannelTypeGuildCategory {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToSetParentForCategory)
-	}
-
-	upd, err := e.ch.UpdateChannel(c.UserContext(), guildChannel.ChannelId, req.ParentId, req.Private, req.Name, req.Topic)
+	upd, err := e.ch.UpdateChannel(c.UserContext(), guildChannel.ChannelId, nil, req.Private, req.Name, req.Topic)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotModified, ErrUnableToUpdateChannel)
 	}

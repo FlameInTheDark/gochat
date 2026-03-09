@@ -9,12 +9,7 @@ const (
 	ErrUnableToReadBody           = "unable to read request body"
 	ErrFileIsTooBig               = "file is too big"
 	ErrUnsupportedContentType     = "unsupported content type"
-	ErrUnableToProcessImage       = "unable to process image"
-	ErrUnableToProcessVideo       = "unable to process video"
+	ErrUnableToProcessMedia       = "unable to process media"
 	ErrUnableToUploadToStorage    = "unable to upload to storage"
 	ErrUnableToFinalizeAttachment = "unable to finalize attachment"
-)
-
-const (
-	previewMaxSize = 350
 )

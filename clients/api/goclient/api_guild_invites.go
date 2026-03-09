@@ -375,15 +375,15 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdInviteIdDeleteExecute(r ApiG
 }
 
 type ApiGuildInvitesGuildIdPostRequest struct {
-	ctx                      context.Context
-	ApiService               *GuildInvitesAPIService
-	guildId                  int32
-	guildCreateInviteRequest *GuildCreateInviteRequest
+	ctx        context.Context
+	ApiService *GuildInvitesAPIService
+	guildId    int32
+	request    *GuildCreateInviteRequest
 }
 
 // Invite options
-func (r ApiGuildInvitesGuildIdPostRequest) GuildCreateInviteRequest(guildCreateInviteRequest GuildCreateInviteRequest) ApiGuildInvitesGuildIdPostRequest {
-	r.guildCreateInviteRequest = &guildCreateInviteRequest
+func (r ApiGuildInvitesGuildIdPostRequest) Request(request GuildCreateInviteRequest) ApiGuildInvitesGuildIdPostRequest {
+	r.request = &request
 	return r
 }
 
@@ -428,12 +428,12 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdPostExecute(r ApiGuildInvite
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildCreateInviteRequest == nil {
-		return localVarReturnValue, nil, reportError("guildCreateInviteRequest is required and must be specified")
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -450,7 +450,7 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdPostExecute(r ApiGuildInvite
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildCreateInviteRequest
+	localVarPostBody = r.request
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

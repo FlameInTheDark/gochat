@@ -3,6 +3,9 @@ package kvs
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"net"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -13,15 +16,39 @@ type Cache struct {
 }
 
 func New(addr string) (*Cache, error) {
-	if addr == "" {
-		addr = "localhost:6379"
-	}
+	addr = normalizeAddr(addr)
 
 	client := redis.NewClient(&redis.Options{
 		Addr: addr,
 	})
 
 	return &Cache{c: client}, client.Ping(context.Background()).Err()
+}
+
+func normalizeAddr(addr string) string {
+	addr = strings.TrimSpace(addr)
+	if addr == "" {
+		return "localhost:6379"
+	}
+	if strings.Contains(addr, "://") {
+		return addr
+	}
+	if _, _, err := net.SplitHostPort(addr); err == nil {
+		return addr
+	}
+	if strings.HasPrefix(addr, "[") && strings.HasSuffix(addr, "]") {
+		return net.JoinHostPort(strings.TrimSuffix(strings.TrimPrefix(addr, "["), "]"), "6379")
+	}
+	if strings.Count(addr, ":") >= 2 || !strings.Contains(addr, ":") {
+		return net.JoinHostPort(addr, "6379")
+	}
+
+	var addrErr *net.AddrError
+	if _, _, err := net.SplitHostPort(addr); errors.As(err, &addrErr) && strings.Contains(addrErr.Err, "missing port in address") {
+		return net.JoinHostPort(addr, "6379")
+	}
+
+	return addr
 }
 
 func (c *Cache) Client() *redis.Client {
@@ -108,6 +135,21 @@ func (c *Cache) SetTimedJSON(ctx context.Context, key string, val interface{}, t
 	}
 	res := c.c.Set(ctx, key, string(msg), time.Duration(ttl)*time.Second)
 	return res.Err()
+}
+
+func (c *Cache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64) (bool, error) {
+	msg, err := json.Marshal(val)
+	if err != nil {
+		return false, err
+	}
+	res := c.c.SetArgs(ctx, key, string(msg), redis.SetArgs{
+		TTL:  time.Duration(ttl) * time.Second,
+		Mode: "NX",
+	})
+	if err := res.Err(); err != nil && err != redis.Nil {
+		return false, err
+	}
+	return res.Val() == "OK", nil
 }
 
 // GetJSON unmarshal json into v

@@ -25,8 +25,9 @@ type DtoMember struct {
 	// Join date
 	JoinAt *string `json:"join_at,omitempty"`
 	// List of assigned role IDs
-	Roles []int32  `json:"roles,omitempty"`
-	User  *DtoUser `json:"user,omitempty"`
+	Roles []int32 `json:"roles,omitempty"`
+	// Guild member data
+	User *DtoUser `json:"user,omitempty"`
 	// Username in this guild
 	Username *string `json:"username,omitempty"`
 }

@@ -6,6 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Attachments** | Pointer to **[]int32** | IDs of attached files | [optional] 
 **Content** | Pointer to **string** | Message content | [optional] 
+**Embeds** | Pointer to [**[]EmbedEmbed**](EmbedEmbed.md) | Manual embeds supplied by the client. These are stored separately from generated URL embeds. | [optional] 
 **Mentions** | Pointer to **[]int32** | IDs of mentioned users | [optional] 
 
 ## Methods
@@ -76,6 +77,31 @@ SetContent sets Content field to given value.
 `func (o *MessageSendMessageRequest) HasContent() bool`
 
 HasContent returns a boolean if a field has been set.
+
+### GetEmbeds
+
+`func (o *MessageSendMessageRequest) GetEmbeds() []EmbedEmbed`
+
+GetEmbeds returns the Embeds field if non-nil, zero value otherwise.
+
+### GetEmbedsOk
+
+`func (o *MessageSendMessageRequest) GetEmbedsOk() (*[]EmbedEmbed, bool)`
+
+GetEmbedsOk returns a tuple with the Embeds field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetEmbeds
+
+`func (o *MessageSendMessageRequest) SetEmbeds(v []EmbedEmbed)`
+
+SetEmbeds sets Embeds field to given value.
+
+### HasEmbeds
+
+`func (o *MessageSendMessageRequest) HasEmbeds() bool`
+
+HasEmbeds returns a boolean if a field has been set.
 
 ### GetMentions
 

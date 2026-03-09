@@ -64,3 +64,13 @@ This project is composed of several services located under the `cmd/` directory.
   - Subscribes to NATS topics for message index, update, and delete events.
   - Writes to OpenSearch for full‑text search.
 - Dependencies: NATS, OpenSearch.
+
+
+## Embedder (`cmd/embedder`)
+- Purpose: Asynchronous URL unfurling worker for message embeds.
+- Key features:
+  - Subscribes to `embed.make` events from the API.
+  - Builds generated embeds from YouTube, oEmbed, Open Graph, and Twitter Card metadata.
+  - Stores generated embeds separately from manual embeds and emits a normal `MessageUpdate` event after regeneration.
+  - Blocks private or loopback fetch targets by default to reduce SSRF risk.
+- Dependencies: NATS, Scylla/Cassandra, outbound HTTP(S).

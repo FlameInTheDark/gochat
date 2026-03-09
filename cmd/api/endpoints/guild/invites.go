@@ -116,17 +116,23 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	u, err := e.user.GetUserById(c.UserContext(), user.Id)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUser)
-	}
-
 	inv, err := e.inv.FetchInvite(c.UserContext(), code)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, ErrInviteNotFound)
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetInvites)
+	}
+
+	if banned, err := e.isGuildUserBanned(c.UserContext(), inv.GuildId, user.Id); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCheckGuildBan)
+	} else if banned {
+		return fiber.NewError(fiber.StatusForbidden, ErrUserIsBanned)
+	}
+
+	u, err := e.user.GetUserById(c.UserContext(), user.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUser)
 	}
 
 	// If already a member, just return guild

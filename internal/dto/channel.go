@@ -19,6 +19,7 @@ type Channel struct {
 	Private       bool              `json:"private" default:"false"`                                // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
 	Roles         []int64           `json:"roles,omitempty" example:"2230469276416868352"`          // Roles IDs
 	LastMessageId int64             `json:"last_message_id" example:"2230469276416868352"`          // ID of the last message in the channel
+	VoiceRegion   *string           `json:"voice_region,omitempty" example:"us-east"`               // Voice channel region
 	CreatedAt     time.Time         `json:"created_at"`                                             // Timestamp of channel creation
 }
 

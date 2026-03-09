@@ -16,7 +16,7 @@ Method | HTTP request | Description
 
 ## MessageChannelChannelIdAttachmentPost
 
-> DtoAttachmentUpload MessageChannelChannelIdAttachmentPost(ctx, channelId).MessageUploadAttachmentRequest(messageUploadAttachmentRequest).Execute()
+> DtoAttachmentUpload MessageChannelChannelIdAttachmentPost(ctx, channelId).Request(request).Execute()
 
 Create attachment
 
@@ -34,11 +34,11 @@ import (
 
 func main() {
 	channelId := int32(56) // int32 | Channel id
-	messageUploadAttachmentRequest := *openapiclient.NewMessageUploadAttachmentRequest() // MessageUploadAttachmentRequest | Attachment data
+	request := *openapiclient.NewMessageUploadAttachmentRequest() // MessageUploadAttachmentRequest | Attachment data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.MessageAPI.MessageChannelChannelIdAttachmentPost(context.Background(), channelId).MessageUploadAttachmentRequest(messageUploadAttachmentRequest).Execute()
+	resp, r, err := apiClient.MessageAPI.MessageChannelChannelIdAttachmentPost(context.Background(), channelId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `MessageAPI.MessageChannelChannelIdAttachmentPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -64,7 +64,7 @@ Other parameters are passed through a pointer to a apiMessageChannelChannelIdAtt
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **messageUploadAttachmentRequest** | [**MessageUploadAttachmentRequest**](MessageUploadAttachmentRequest.md) | Attachment data | 
+ **request** | [**MessageUploadAttachmentRequest**](MessageUploadAttachmentRequest.md) | Attachment data | 
 
 ### Return type
 
@@ -76,7 +76,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -103,10 +103,10 @@ import (
 )
 
 func main() {
-	channelId := int32(2230469276416868352) // int32 | Channel id
-	from := int32(2230469276416868352) // int32 | Start point for messages (optional)
-	direction := "before" // string | Select direction (optional)
-	limit := int32(30) // int32 | Message count limit (optional)
+	channelId := int32(56) // int32 | Channel id
+	from := int32(56) // int32 | Start point for messages (optional)
+	direction := "direction_example" // string | Select direction (optional)
+	limit := int32(56) // int32 | Message count limit (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -302,7 +302,7 @@ No authorization required
 
 ## MessageChannelChannelIdMessageIdPatch
 
-> DtoMessage MessageChannelChannelIdMessageIdPatch(ctx, messageId, channelId).MessageUpdateMessageRequest(messageUpdateMessageRequest).Execute()
+> DtoMessage MessageChannelChannelIdMessageIdPatch(ctx, messageId, channelId).Request(request).Execute()
 
 Update message
 
@@ -321,11 +321,11 @@ import (
 func main() {
 	messageId := int32(56) // int32 | Message id
 	channelId := int32(56) // int32 | Channel id
-	messageUpdateMessageRequest := *openapiclient.NewMessageUpdateMessageRequest() // MessageUpdateMessageRequest | Message data
+	request := *openapiclient.NewMessageUpdateMessageRequest() // MessageUpdateMessageRequest | Message data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.MessageAPI.MessageChannelChannelIdMessageIdPatch(context.Background(), messageId, channelId).MessageUpdateMessageRequest(messageUpdateMessageRequest).Execute()
+	resp, r, err := apiClient.MessageAPI.MessageChannelChannelIdMessageIdPatch(context.Background(), messageId, channelId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `MessageAPI.MessageChannelChannelIdMessageIdPatch``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -353,7 +353,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
 
- **messageUpdateMessageRequest** | [**MessageUpdateMessageRequest**](MessageUpdateMessageRequest.md) | Message data | 
+ **request** | [**MessageUpdateMessageRequest**](MessageUpdateMessageRequest.md) | Message data | 
 
 ### Return type
 
@@ -365,7 +365,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -375,7 +375,7 @@ No authorization required
 
 ## MessageChannelChannelIdPost
 
-> DtoMessage MessageChannelChannelIdPost(ctx, channelId).MessageSendMessageRequest(messageSendMessageRequest).Execute()
+> DtoMessage MessageChannelChannelIdPost(ctx, channelId).Request(request).Execute()
 
 Send message
 
@@ -393,11 +393,11 @@ import (
 
 func main() {
 	channelId := int32(56) // int32 | Channel id
-	messageSendMessageRequest := *openapiclient.NewMessageSendMessageRequest() // MessageSendMessageRequest | Message data
+	request := *openapiclient.NewMessageSendMessageRequest() // MessageSendMessageRequest | Message data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.MessageAPI.MessageChannelChannelIdPost(context.Background(), channelId).MessageSendMessageRequest(messageSendMessageRequest).Execute()
+	resp, r, err := apiClient.MessageAPI.MessageChannelChannelIdPost(context.Background(), channelId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `MessageAPI.MessageChannelChannelIdPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -423,7 +423,7 @@ Other parameters are passed through a pointer to a apiMessageChannelChannelIdPos
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **messageSendMessageRequest** | [**MessageSendMessageRequest**](MessageSendMessageRequest.md) | Message data | 
+ **request** | [**MessageSendMessageRequest**](MessageSendMessageRequest.md) | Message data | 
 
 ### Return type
 
@@ -435,7 +435,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	sqldblogger "github.com/simukti/sqldb-logger"
 )
 
@@ -23,9 +24,14 @@ func (l *SlogLogger) Log(ctx context.Context, level sqldblogger.Level, msg strin
 	default:
 		slogLevel = slog.LevelInfo
 	}
-	attrs := make([]slog.Attr, 0, len(data))
+	// Convert driver-provided data to slog attrs
+	attrs := make([]slog.Attr, 0, len(data)+2)
 	for k, v := range data {
 		attrs = append(attrs, slog.Any(k, v))
+	}
+	// Enrich with context attributes (e.g., request_id)
+	if extra := helper.AttrsFromContext(ctx); len(extra) > 0 {
+		attrs = append(attrs, extra...)
 	}
 	l.logger.LogAttrs(ctx, slogLevel, msg, attrs...)
 }

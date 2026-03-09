@@ -4,6 +4,7 @@ All URIs are relative to *http://localhost/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**GuildGuildIdBansGet**](GuildAPI.md#GuildGuildIdBansGet) | **Get** /guild/{guild_id}/bans | Get guild bans
 [**GuildGuildIdCategoryCategoryIdDelete**](GuildAPI.md#GuildGuildIdCategoryCategoryIdDelete) | **Delete** /guild/{guild_id}/category/{category_id} | Delete channel category
 [**GuildGuildIdCategoryPost**](GuildAPI.md#GuildGuildIdCategoryPost) | **Post** /guild/{guild_id}/category | Create guild channel category
 [**GuildGuildIdChannelChannelIdDelete**](GuildAPI.md#GuildGuildIdChannelChannelIdDelete) | **Delete** /guild/{guild_id}/channel/{channel_id} | Delete channel
@@ -13,10 +14,17 @@ Method | HTTP request | Description
 [**GuildGuildIdChannelOrderPatch**](GuildAPI.md#GuildGuildIdChannelOrderPatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 [**GuildGuildIdChannelPost**](GuildAPI.md#GuildGuildIdChannelPost) | **Post** /guild/{guild_id}/channel | Create guild channel
 [**GuildGuildIdDelete**](GuildAPI.md#GuildGuildIdDelete) | **Delete** /guild/{guild_id} | Delete guild
+[**GuildGuildIdEmojisEmojiIdDelete**](GuildAPI.md#GuildGuildIdEmojisEmojiIdDelete) | **Delete** /guild/{guild_id}/emojis/{emoji_id} | Delete guild emoji
+[**GuildGuildIdEmojisEmojiIdPatch**](GuildAPI.md#GuildGuildIdEmojisEmojiIdPatch) | **Patch** /guild/{guild_id}/emojis/{emoji_id} | Update guild emoji
+[**GuildGuildIdEmojisGet**](GuildAPI.md#GuildGuildIdEmojisGet) | **Get** /guild/{guild_id}/emojis | List guild emojis
+[**GuildGuildIdEmojisPost**](GuildAPI.md#GuildGuildIdEmojisPost) | **Post** /guild/{guild_id}/emojis | Create guild emoji metadata
 [**GuildGuildIdGet**](GuildAPI.md#GuildGuildIdGet) | **Get** /guild/{guild_id} | Get guild
 [**GuildGuildIdIconPost**](GuildAPI.md#GuildGuildIdIconPost) | **Post** /guild/{guild_id}/icon | Create guild icon metadata
 [**GuildGuildIdIconsGet**](GuildAPI.md#GuildGuildIdIconsGet) | **Get** /guild/{guild_id}/icons | List guild icons
 [**GuildGuildIdIconsIconIdDelete**](GuildAPI.md#GuildGuildIdIconsIconIdDelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
+[**GuildGuildIdMemberUserIdBanDelete**](GuildAPI.md#GuildGuildIdMemberUserIdBanDelete) | **Delete** /guild/{guild_id}/member/{user_id}/ban | Unban guild member
+[**GuildGuildIdMemberUserIdBanPost**](GuildAPI.md#GuildGuildIdMemberUserIdBanPost) | **Post** /guild/{guild_id}/member/{user_id}/ban | Ban guild member
+[**GuildGuildIdMemberUserIdKickPost**](GuildAPI.md#GuildGuildIdMemberUserIdKickPost) | **Post** /guild/{guild_id}/member/{user_id}/kick | Kick guild member
 [**GuildGuildIdMembersGet**](GuildAPI.md#GuildGuildIdMembersGet) | **Get** /guild/{guild_id}/members | Get guild members
 [**GuildGuildIdPatch**](GuildAPI.md#GuildGuildIdPatch) | **Patch** /guild/{guild_id} | Update guild
 [**GuildGuildIdSystemchPatch**](GuildAPI.md#GuildGuildIdSystemchPatch) | **Patch** /guild/{guild_id}/systemch | Set system messages channel
@@ -25,6 +33,76 @@ Method | HTTP request | Description
 [**GuildGuildIdVoiceMovePost**](GuildAPI.md#GuildGuildIdVoiceMovePost) | **Post** /guild/{guild_id}/voice/move | Move member to voice channel
 [**GuildPost**](GuildAPI.md#GuildPost) | **Post** /guild | Create guild
 
+
+
+## GuildGuildIdBansGet
+
+> []DtoGuildBan GuildGuildIdBansGet(ctx, guildId).Execute()
+
+Get guild bans
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdBansGet(context.Background(), guildId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdBansGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdBansGet`: []DtoGuildBan
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdBansGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdBansGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**[]DtoGuildBan**](DtoGuildBan.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
 ## GuildGuildIdCategoryCategoryIdDelete
@@ -46,8 +124,8 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	categoryId := int32(2230469276416868352) // int32 | Category ID (actually a channel with special type)
+	guildId := int32(56) // int32 | Guild ID
+	categoryId := int32(56) // int32 | Category ID (actually a channel with special type)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -100,7 +178,7 @@ No authorization required
 
 ## GuildGuildIdCategoryPost
 
-> string GuildGuildIdCategoryPost(ctx, guildId).GuildCreateGuildChannelCategoryRequest(guildCreateGuildChannelCategoryRequest).Execute()
+> string GuildGuildIdCategoryPost(ctx, guildId).Request(request).Execute()
 
 Create guild channel category
 
@@ -117,12 +195,12 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	guildCreateGuildChannelCategoryRequest := *openapiclient.NewGuildCreateGuildChannelCategoryRequest() // GuildCreateGuildChannelCategoryRequest | Create category data
+	guildId := int32(56) // int32 | Guild ID
+	request := *openapiclient.NewGuildCreateGuildChannelCategoryRequest() // GuildCreateGuildChannelCategoryRequest | Create category data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildAPI.GuildGuildIdCategoryPost(context.Background(), guildId).GuildCreateGuildChannelCategoryRequest(guildCreateGuildChannelCategoryRequest).Execute()
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdCategoryPost(context.Background(), guildId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdCategoryPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -148,7 +226,7 @@ Other parameters are passed through a pointer to a apiGuildGuildIdCategoryPostRe
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **guildCreateGuildChannelCategoryRequest** | [**GuildCreateGuildChannelCategoryRequest**](GuildCreateGuildChannelCategoryRequest.md) | Create category data | 
+ **request** | [**GuildCreateGuildChannelCategoryRequest**](GuildCreateGuildChannelCategoryRequest.md) | Create category data | 
 
 ### Return type
 
@@ -160,7 +238,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -187,8 +265,8 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	channelId := int32(2230469276416868352) // int32 | Channel ID
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -258,8 +336,8 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild id
-	channelId := int32(2230469276416868352) // int32 | Channel id
+	guildId := int32(56) // int32 | Guild id
+	channelId := int32(56) // int32 | Channel id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -312,7 +390,7 @@ No authorization required
 
 ## GuildGuildIdChannelChannelIdPatch
 
-> DtoChannel GuildGuildIdChannelChannelIdPatch(ctx, guildId, channelId).GuildPatchGuildChannelRequest(guildPatchGuildChannelRequest).Execute()
+> DtoChannel GuildGuildIdChannelChannelIdPatch(ctx, guildId, channelId).Req(req).Execute()
 
 Change channels data
 
@@ -329,13 +407,13 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	channelId := int32(2230469276416868352) // int32 | Channel ID
-	guildPatchGuildChannelRequest := *openapiclient.NewGuildPatchGuildChannelRequest() // GuildPatchGuildChannelRequest | Request body
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	req := *openapiclient.NewGuildPatchGuildChannelRequest() // GuildPatchGuildChannelRequest | Request body
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildAPI.GuildGuildIdChannelChannelIdPatch(context.Background(), guildId, channelId).GuildPatchGuildChannelRequest(guildPatchGuildChannelRequest).Execute()
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdChannelChannelIdPatch(context.Background(), guildId, channelId).Req(req).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdChannelChannelIdPatch``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -363,7 +441,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
 
- **guildPatchGuildChannelRequest** | [**GuildPatchGuildChannelRequest**](GuildPatchGuildChannelRequest.md) | Request body | 
+ **req** | [**GuildPatchGuildChannelRequest**](GuildPatchGuildChannelRequest.md) | Request body | 
 
 ### Return type
 
@@ -375,7 +453,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -402,7 +480,7 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild id
+	guildId := int32(56) // int32 | Guild id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -453,7 +531,7 @@ No authorization required
 
 ## GuildGuildIdChannelOrderPatch
 
-> string GuildGuildIdChannelOrderPatch(ctx, guildId).GuildPatchGuildChannelOrderRequest(guildPatchGuildChannelOrderRequest).Execute()
+> string GuildGuildIdChannelOrderPatch(ctx, guildId).Request(request).Execute()
 
 Change channels order
 
@@ -470,12 +548,12 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	guildPatchGuildChannelOrderRequest := *openapiclient.NewGuildPatchGuildChannelOrderRequest() // GuildPatchGuildChannelOrderRequest | Update channel order data
+	guildId := int32(56) // int32 | Guild ID
+	request := *openapiclient.NewGuildPatchGuildChannelOrderRequest() // GuildPatchGuildChannelOrderRequest | Update channel order data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildAPI.GuildGuildIdChannelOrderPatch(context.Background(), guildId).GuildPatchGuildChannelOrderRequest(guildPatchGuildChannelOrderRequest).Execute()
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdChannelOrderPatch(context.Background(), guildId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdChannelOrderPatch``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -501,7 +579,7 @@ Other parameters are passed through a pointer to a apiGuildGuildIdChannelOrderPa
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **guildPatchGuildChannelOrderRequest** | [**GuildPatchGuildChannelOrderRequest**](GuildPatchGuildChannelOrderRequest.md) | Update channel order data | 
+ **request** | [**GuildPatchGuildChannelOrderRequest**](GuildPatchGuildChannelOrderRequest.md) | Update channel order data | 
 
 ### Return type
 
@@ -513,7 +591,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -523,7 +601,7 @@ No authorization required
 
 ## GuildGuildIdChannelPost
 
-> string GuildGuildIdChannelPost(ctx, guildId).GuildCreateGuildChannelRequest(guildCreateGuildChannelRequest).Execute()
+> string GuildGuildIdChannelPost(ctx, guildId).Request(request).Execute()
 
 Create guild channel
 
@@ -540,12 +618,12 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	guildCreateGuildChannelRequest := *openapiclient.NewGuildCreateGuildChannelRequest() // GuildCreateGuildChannelRequest | Create channel data
+	guildId := int32(56) // int32 | Guild ID
+	request := *openapiclient.NewGuildCreateGuildChannelRequest() // GuildCreateGuildChannelRequest | Create channel data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildAPI.GuildGuildIdChannelPost(context.Background(), guildId).GuildCreateGuildChannelRequest(guildCreateGuildChannelRequest).Execute()
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdChannelPost(context.Background(), guildId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdChannelPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -571,7 +649,7 @@ Other parameters are passed through a pointer to a apiGuildGuildIdChannelPostReq
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **guildCreateGuildChannelRequest** | [**GuildCreateGuildChannelRequest**](GuildCreateGuildChannelRequest.md) | Create channel data | 
+ **request** | [**GuildCreateGuildChannelRequest**](GuildCreateGuildChannelRequest.md) | Create channel data | 
 
 ### Return type
 
@@ -583,7 +661,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -612,7 +690,7 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
+	guildId := int32(56) // int32 | Guild ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -654,6 +732,288 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdEmojisEmojiIdDelete
+
+> string GuildGuildIdEmojisEmojiIdDelete(ctx, guildId, emojiId).Execute()
+
+Delete guild emoji
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	emojiId := int32(56) // int32 | Emoji ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdEmojisEmojiIdDelete(context.Background(), guildId, emojiId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdEmojisEmojiIdDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdEmojisEmojiIdDelete`: string
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdEmojisEmojiIdDelete`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**emojiId** | **int32** | Emoji ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdEmojisEmojiIdDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdEmojisEmojiIdPatch
+
+> DtoGuildEmoji GuildGuildIdEmojisEmojiIdPatch(ctx, guildId, emojiId).Request(request).Execute()
+
+Update guild emoji
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	emojiId := int32(56) // int32 | Emoji ID
+	request := *openapiclient.NewGuildUpdateEmojiRequest() // GuildUpdateEmojiRequest | Emoji update data
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdEmojisEmojiIdPatch(context.Background(), guildId, emojiId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdEmojisEmojiIdPatch``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdEmojisEmojiIdPatch`: DtoGuildEmoji
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdEmojisEmojiIdPatch`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**emojiId** | **int32** | Emoji ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdEmojisEmojiIdPatchRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+ **request** | [**GuildUpdateEmojiRequest**](GuildUpdateEmojiRequest.md) | Emoji update data | 
+
+### Return type
+
+[**DtoGuildEmoji**](DtoGuildEmoji.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdEmojisGet
+
+> []DtoGuildEmoji GuildGuildIdEmojisGet(ctx, guildId).Execute()
+
+List guild emojis
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdEmojisGet(context.Background(), guildId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdEmojisGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdEmojisGet`: []DtoGuildEmoji
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdEmojisGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdEmojisGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**[]DtoGuildEmoji**](DtoGuildEmoji.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdEmojisPost
+
+> DtoEmojiUpload GuildGuildIdEmojisPost(ctx, guildId).Request(request).Execute()
+
+Create guild emoji metadata
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	request := *openapiclient.NewGuildCreateEmojiRequest() // GuildCreateEmojiRequest | Emoji metadata
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdEmojisPost(context.Background(), guildId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdEmojisPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdEmojisPost`: DtoEmojiUpload
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdEmojisPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdEmojisPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **request** | [**GuildCreateEmojiRequest**](GuildCreateEmojiRequest.md) | Emoji metadata | 
+
+### Return type
+
+[**DtoEmojiUpload**](DtoEmojiUpload.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -680,7 +1040,7 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild id
+	guildId := int32(56) // int32 | Guild id
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -731,7 +1091,7 @@ No authorization required
 
 ## GuildGuildIdIconPost
 
-> DtoIconUpload GuildGuildIdIconPost(ctx, guildId).GuildCreateIconRequest(guildCreateIconRequest).Execute()
+> DtoIconUpload GuildGuildIdIconPost(ctx, guildId).Request(request).Execute()
 
 Create guild icon metadata
 
@@ -751,11 +1111,11 @@ import (
 
 func main() {
 	guildId := int32(56) // int32 | Guild ID
-	guildCreateIconRequest := *openapiclient.NewGuildCreateIconRequest() // GuildCreateIconRequest | Icon creation request
+	request := *openapiclient.NewGuildCreateIconRequest() // GuildCreateIconRequest | Icon creation request
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildAPI.GuildGuildIdIconPost(context.Background(), guildId).GuildCreateIconRequest(guildCreateIconRequest).Execute()
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdIconPost(context.Background(), guildId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdIconPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -781,7 +1141,7 @@ Other parameters are passed through a pointer to a apiGuildGuildIdIconPostReques
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **guildCreateIconRequest** | [**GuildCreateIconRequest**](GuildCreateIconRequest.md) | Icon creation request | 
+ **request** | [**GuildCreateIconRequest**](GuildCreateIconRequest.md) | Icon creation request | 
 
 ### Return type
 
@@ -937,7 +1297,228 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdMemberUserIdBanDelete
+
+> string GuildGuildIdMemberUserIdBanDelete(ctx, guildId, userId).Execute()
+
+Unban guild member
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdMemberUserIdBanDelete(context.Background(), guildId, userId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdMemberUserIdBanDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdMemberUserIdBanDelete`: string
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdMemberUserIdBanDelete`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**userId** | **int32** | User ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdMemberUserIdBanDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdMemberUserIdBanPost
+
+> string GuildGuildIdMemberUserIdBanPost(ctx, guildId, userId).Request(request).Execute()
+
+Ban guild member
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
+	request := *openapiclient.NewGuildBanMemberRequest() // GuildBanMemberRequest | Ban reason (optional)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdMemberUserIdBanPost(context.Background(), guildId, userId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdMemberUserIdBanPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdMemberUserIdBanPost`: string
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdMemberUserIdBanPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**userId** | **int32** | User ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdMemberUserIdBanPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+ **request** | [**GuildBanMemberRequest**](GuildBanMemberRequest.md) | Ban reason | 
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdMemberUserIdKickPost
+
+> string GuildGuildIdMemberUserIdKickPost(ctx, guildId, userId).Execute()
+
+Kick guild member
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	userId := int32(56) // int32 | User ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdMemberUserIdKickPost(context.Background(), guildId, userId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdMemberUserIdKickPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdMemberUserIdKickPost`: string
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdMemberUserIdKickPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**userId** | **int32** | User ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdMemberUserIdKickPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -963,7 +1544,7 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
+	guildId := int32(56) // int32 | Guild ID
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -1014,7 +1595,7 @@ No authorization required
 
 ## GuildGuildIdPatch
 
-> DtoGuild GuildGuildIdPatch(ctx, guildId).GuildUpdateGuildRequest(guildUpdateGuildRequest).Execute()
+> DtoGuild GuildGuildIdPatch(ctx, guildId).Request(request).Execute()
 
 Update guild
 
@@ -1031,12 +1612,12 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	guildUpdateGuildRequest := *openapiclient.NewGuildUpdateGuildRequest() // GuildUpdateGuildRequest | Update guild data
+	guildId := int32(56) // int32 | Guild ID
+	request := *openapiclient.NewGuildUpdateGuildRequest() // GuildUpdateGuildRequest | Update guild data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildAPI.GuildGuildIdPatch(context.Background(), guildId).GuildUpdateGuildRequest(guildUpdateGuildRequest).Execute()
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdPatch(context.Background(), guildId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdPatch``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -1062,7 +1643,7 @@ Other parameters are passed through a pointer to a apiGuildGuildIdPatchRequest s
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **guildUpdateGuildRequest** | [**GuildUpdateGuildRequest**](GuildUpdateGuildRequest.md) | Update guild data | 
+ **request** | [**GuildUpdateGuildRequest**](GuildUpdateGuildRequest.md) | Update guild data | 
 
 ### Return type
 
@@ -1074,7 +1655,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -1084,7 +1665,7 @@ No authorization required
 
 ## GuildGuildIdSystemchPatch
 
-> DtoGuild GuildGuildIdSystemchPatch(ctx, guildId).GuildSetGuildSystemMessagesChannelRequest(guildSetGuildSystemMessagesChannelRequest).Execute()
+> DtoGuild GuildGuildIdSystemchPatch(ctx, guildId).Request(request).Execute()
 
 Set system messages channel
 
@@ -1101,12 +1682,12 @@ import (
 )
 
 func main() {
-	guildId := int32(2230469276416868352) // int32 | Guild ID
-	guildSetGuildSystemMessagesChannelRequest := *openapiclient.NewGuildSetGuildSystemMessagesChannelRequest() // GuildSetGuildSystemMessagesChannelRequest | Set system messages channel
+	guildId := int32(56) // int32 | Guild ID
+	request := *openapiclient.NewGuildSetGuildSystemMessagesChannelRequest() // GuildSetGuildSystemMessagesChannelRequest | Set system messages channel
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildAPI.GuildGuildIdSystemchPatch(context.Background(), guildId).GuildSetGuildSystemMessagesChannelRequest(guildSetGuildSystemMessagesChannelRequest).Execute()
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdSystemchPatch(context.Background(), guildId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdSystemchPatch``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -1132,7 +1713,7 @@ Other parameters are passed through a pointer to a apiGuildGuildIdSystemchPatchR
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **guildSetGuildSystemMessagesChannelRequest** | [**GuildSetGuildSystemMessagesChannelRequest**](GuildSetGuildSystemMessagesChannelRequest.md) | Set system messages channel | 
+ **request** | [**GuildSetGuildSystemMessagesChannelRequest**](GuildSetGuildSystemMessagesChannelRequest.md) | Set system messages channel | 
 
 ### Return type
 
@@ -1144,7 +1725,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -1218,7 +1799,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: */*
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -1227,7 +1808,7 @@ No authorization required
 
 ## GuildGuildIdVoiceChannelIdRegionPatch
 
-> GuildSetVoiceRegionResponse GuildGuildIdVoiceChannelIdRegionPatch(ctx, guildId, channelId).GuildSetVoiceRegionRequest(guildSetVoiceRegionRequest).Execute()
+> GuildSetVoiceRegionResponse GuildGuildIdVoiceChannelIdRegionPatch(ctx, guildId, channelId).Request(request).Execute()
 
 Set channel voice region
 
@@ -1248,11 +1829,11 @@ import (
 func main() {
 	guildId := int32(56) // int32 | Guild ID
 	channelId := int32(56) // int32 | Channel ID
-	guildSetVoiceRegionRequest := *openapiclient.NewGuildSetVoiceRegionRequest() // GuildSetVoiceRegionRequest | Region payload
+	request := *openapiclient.NewGuildSetVoiceRegionRequest() // GuildSetVoiceRegionRequest | Region payload
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildAPI.GuildGuildIdVoiceChannelIdRegionPatch(context.Background(), guildId, channelId).GuildSetVoiceRegionRequest(guildSetVoiceRegionRequest).Execute()
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdVoiceChannelIdRegionPatch(context.Background(), guildId, channelId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdVoiceChannelIdRegionPatch``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -1280,7 +1861,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
 
- **guildSetVoiceRegionRequest** | [**GuildSetVoiceRegionRequest**](GuildSetVoiceRegionRequest.md) | Region payload | 
+ **request** | [**GuildSetVoiceRegionRequest**](GuildSetVoiceRegionRequest.md) | Region payload | 
 
 ### Return type
 
@@ -1292,8 +1873,8 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
-- **Accept**: application/json
+- **Content-Type**: Not defined
+- **Accept**: */*
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -1302,7 +1883,7 @@ No authorization required
 
 ## GuildGuildIdVoiceMovePost
 
-> GuildMoveMemberResponse GuildGuildIdVoiceMovePost(ctx, guildId).GuildMoveMemberRequest(guildMoveMemberRequest).Execute()
+> GuildMoveMemberResponse GuildGuildIdVoiceMovePost(ctx, guildId).Request(request).Execute()
 
 Move member to voice channel
 
@@ -1322,11 +1903,11 @@ import (
 
 func main() {
 	guildId := int32(56) // int32 | Guild ID
-	guildMoveMemberRequest := *openapiclient.NewGuildMoveMemberRequest() // GuildMoveMemberRequest | Move request
+	request := *openapiclient.NewGuildMoveMemberRequest() // GuildMoveMemberRequest | Move request
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildAPI.GuildGuildIdVoiceMovePost(context.Background(), guildId).GuildMoveMemberRequest(guildMoveMemberRequest).Execute()
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdVoiceMovePost(context.Background(), guildId).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdVoiceMovePost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -1352,7 +1933,7 @@ Other parameters are passed through a pointer to a apiGuildGuildIdVoiceMovePostR
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **guildMoveMemberRequest** | [**GuildMoveMemberRequest**](GuildMoveMemberRequest.md) | Move request | 
+ **request** | [**GuildMoveMemberRequest**](GuildMoveMemberRequest.md) | Move request | 
 
 ### Return type
 
@@ -1364,8 +1945,8 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
-- **Accept**: application/json
+- **Content-Type**: Not defined
+- **Accept**: */*
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
@@ -1374,7 +1955,7 @@ No authorization required
 
 ## GuildPost
 
-> DtoGuild GuildPost(ctx).GuildCreateGuildRequest(guildCreateGuildRequest).Execute()
+> DtoGuild GuildPost(ctx).Request(request).Execute()
 
 Create guild
 
@@ -1391,11 +1972,11 @@ import (
 )
 
 func main() {
-	guildCreateGuildRequest := *openapiclient.NewGuildCreateGuildRequest() // GuildCreateGuildRequest | Guild data
+	request := *openapiclient.NewGuildCreateGuildRequest() // GuildCreateGuildRequest | Guild data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.GuildAPI.GuildPost(context.Background()).GuildCreateGuildRequest(guildCreateGuildRequest).Execute()
+	resp, r, err := apiClient.GuildAPI.GuildPost(context.Background()).Request(request).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -1416,7 +1997,7 @@ Other parameters are passed through a pointer to a apiGuildPostRequest struct vi
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **guildCreateGuildRequest** | [**GuildCreateGuildRequest**](GuildCreateGuildRequest.md) | Guild data | 
+ **request** | [**GuildCreateGuildRequest**](GuildCreateGuildRequest.md) | Guild data | 
 
 ### Return type
 
@@ -1428,7 +2009,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

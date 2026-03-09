@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
@@ -70,7 +71,7 @@ func (e *entity) GetMemberRoles(c *fiber.Ctx) error {
 		roleIds = append(roleIds, role.RoleId)
 	}
 
-	roles, err := e.role.GetRolesBulk(c.UserContext(), roleIds)
+	roles, err := e.role.GetRolesBulk(c.UserContext(), guildId, roleIds)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
@@ -108,7 +109,7 @@ func (e *entity) GetGuildRoles(c *fiber.Ctx) error {
 	}
 
 	var cachedRoles []dto.Role
-	if err := e.cache.GetJSON(c.UserContext(), fmt.Sprintf("guild:%d:roles", guildId), cachedRoles); err == nil {
+	if err := e.cache.GetJSON(c.UserContext(), fmt.Sprintf("guild:%d:roles", guildId), &cachedRoles); err == nil {
 		return c.JSON(cachedRoles)
 	}
 
@@ -174,7 +175,11 @@ func (e *entity) CreateGuildRole(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
 
-	created := dto.Role{Id: roleId, GuildId: guildId, Name: req.Name, Color: req.Color, Permissions: req.Permissions}
+	createdRole, err := e.role.GetRoleByID(c.UserContext(), roleId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
+	}
+	created := roleModelToDTO(createdRole)
 	go func() {
 		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.CreateGuildRole{Role: created}); err != nil {
 			slog.Error("unable to send guild update after role creation", slog.String("error", err.Error()))
@@ -273,6 +278,97 @@ func (e *entity) PatchGuildRole(c *fiber.Ctx) error {
 	}()
 
 	return c.JSON(role)
+}
+
+// PatchRoleOrder
+//
+//	@Summary	Change roles order
+//	@Produce	json
+//	@Tags		Guild Roles
+//	@Param		guild_id	path		int64						true	"Guild ID"	example(2230469276416868352)
+//	@Param		request		body		PatchGuildRoleOrderRequest	true	"Update role order data"
+//	@Success	200			{string}	string						"Ok"
+//	@failure	400			{string}	string						"Incorrect request body"
+//	@failure	401			{string}	string						"Unauthorized"
+//	@failure	406			{string}	string						"Permissions required"
+//	@failure	500			{string}	string						"Something bad happened"
+//	@Router		/guild/{guild_id}/roles/order [patch]
+func (e *entity) PatchRoleOrder(c *fiber.Ctx) error {
+	guildId, err := e.parseGuildID(c)
+	if err != nil {
+		return err
+	}
+
+	var req PatchGuildRoleOrderRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+
+	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageRoles)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	if !hasPermission {
+		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+	}
+
+	roles, err := e.role.GetGuildRoles(c.UserContext(), guildId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
+	}
+	allowed := make(map[int64]struct{}, len(roles))
+	for _, role := range roles {
+		allowed[role.Id] = struct{}{}
+	}
+
+	updates := make([]model.RoleUpdatePosition, 0, len(req.Roles))
+	roleIDs := make([]int64, 0, len(req.Roles))
+	for _, role := range req.Roles {
+		if _, ok := allowed[role.Id]; !ok {
+			continue
+		}
+		updates = append(updates, model.RoleUpdatePosition{
+			GuildId:  guildId,
+			RoleId:   role.Id,
+			Position: role.Position,
+		})
+		roleIDs = append(roleIDs, role.Id)
+	}
+
+	if len(updates) == 0 {
+		return c.SendStatus(fiber.StatusOK)
+	}
+
+	if err := e.role.SetRolePosition(c.UserContext(), updates); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
+	}
+
+	updatedRoles, err := e.role.GetRolesBulk(c.UserContext(), guildId, roleIDs)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
+	}
+	updated := roleModelToDTOMany(updatedRoles)
+
+	go func() {
+		for _, role := range updated {
+			if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateGuildRole{GuildId: guildId, Role: role}); err != nil {
+				slog.Error("unable to send guild event after role reorder", slog.String("error", err.Error()))
+			}
+		}
+		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:roles", guildId)); err != nil {
+			slog.Error("unable to delete guild roles cache", slog.String("error", err.Error()))
+		}
+	}()
+
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // DeleteGuildRole
@@ -402,7 +498,9 @@ func (e *entity) AddMemberRole(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetUserRole)
 	}
 
-	go e.mqt.SendGuildUpdate(guildId, &mqmsg.AddGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
+	go func() {
+		_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.AddGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
+	}()
 
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -471,7 +569,9 @@ func (e *entity) RemoveMemberRole(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToRemoveUserRole)
 	}
 
-	go e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
+	go func() {
+		_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
+	}()
 
 	return c.SendStatus(fiber.StatusOK)
 }

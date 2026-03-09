@@ -1,6 +1,7 @@
 package search
 
 import (
+	"context"
 	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
@@ -8,6 +9,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
+	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
@@ -20,12 +22,18 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/msgsearch"
+	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/server"
 )
 
 const entityName = "search"
 
+type permissionChecker interface {
+	ChannelPerm(ctx context.Context, guildID, channelID, userID int64, perm ...permissions.RolePermission) (*model.Channel, *model.GuildChannel, *model.Guild, bool, error)
+}
+
 func (e *entity) Init(router fiber.Router) {
+	router.Post("/messages", e.SearchChannel)
 	router.Post("/:guild_id<int>/messages", e.Search)
 }
 
@@ -35,7 +43,7 @@ type entity struct {
 	// Services
 	log    *slog.Logger
 	search *msgsearch.Search
-	perm   rolecheck.RoleCheck
+	perm   permissionChecker
 
 	// DB entities
 	user  user.User

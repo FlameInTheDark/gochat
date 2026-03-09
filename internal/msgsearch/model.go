@@ -32,7 +32,7 @@ type SearchMessageResponse struct {
 }
 
 type SearchRequest struct {
-	GuildId   int64    `json:"guild_id"`
+	GuildId   *int64   `json:"guild_id"`
 	ChannelId int64    `json:"channel_id"`
 	UserId    *int64   `json:"user_id"`
 	Content   *string  `json:"content"`

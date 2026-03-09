@@ -14,10 +14,6 @@ type Config struct {
 	Cluster           []string `yaml:"cluster" env:"CLUSTER" env-default:""`
 	ClusterKeyspace   string   `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
 	HearthBeatTimeout int64    `yaml:"hearth_beat_timeout" env:"HEARTH_BEAT_TIME" env-default:"35000"`
-	RabbitMQHost      string   `yaml:"rabbitmq_host" env:"RABBITMQ_HOST" env-default:"rabbitmq"`
-	RabbitMQPort      int      `yaml:"rabbitmq_port" env:"RABBITMQ_PORT" env-default:"5672"`
-	RabbitMQUsername  string   `yaml:"rabbitmq_username" env:"RABBITMQ_USERNAME" env-default:"guest"`
-	RabbitMQPassword  string   `yaml:"rabbitmq_password" env:"RABBITMQ_PASSWORD" env-default:"guest"`
 	NatsConnString    string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 	PGDSN             string   `yaml:"pg_dsn" env:"PG_DSN"`
 	PGRetries         int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`

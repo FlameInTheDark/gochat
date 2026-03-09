@@ -5,12 +5,9 @@ import (
 	"os"
 
 	"github.com/FlameInTheDark/gochat/internal/shutter"
-	"github.com/nats-io/nats.go"
 )
 
 //var rabbitConn *amqp.Connection
-
-var natsConn *nats.Conn
 
 type Message struct {
 	ID          int64        `json:"id"`

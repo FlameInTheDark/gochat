@@ -22,6 +22,9 @@ run:
 run_ws:
 	go run ./cmd/ws
 
+run_embedder:
+	go run ./cmd/embedder
+
 citus_up:
 	docker compose -p gochat up --scale citus-worker=3 -d
 
@@ -56,7 +59,6 @@ add_migration_cassandra:
 swag:
 	swag fmt
 	swag init -g doc.go \
-	  	--v3.1 \
 		--o ./docs/api \
 		--ot json \
 		--parseDependency \
@@ -67,18 +69,21 @@ client: js_client go_client
 
 js_client:
 	docker run --rm -v "./:/local/" mirror.gcr.io/openapitools/openapi-generator-cli:v7.12.0 \
-			generate -i /local/docs/api/swagger.json -g typescript-axios -o /local/clients/api/jsclient --additional-properties=useSingleRequestParameter=true,withInterfaces=false,supportsES6=true
+			generate -i /local/docs/api/swagger.json -g typescript-axios -o /local/clients/api/jsclient \
+			--additional-properties=useSingleRequestParameter=true,withInterfaces=false,supportsES6=true \
+			--type-mappings=integer+int64=string \
+			--skip-validate-spec
 
 go_client:
 	docker run --rm -v "./:/local/" mirror.gcr.io/openapitools/openapi-generator-cli:v7.12.0 \
-			generate -i /local/docs/api/swagger.json -g go -o /local/clients/api/goclient --additional-properties=useSingleRequestParameter=true --package-name goclient --git-user-id FlameInTheDark --git-repo-id gochat/clients/api/goclient
+			generate -i /local/docs/api/swagger.json -g go -o /local/clients/api/goclient --additional-properties=useSingleRequestParameter=true --package-name goclient --git-user-id FlameInTheDark --git-repo-id  gochat/clients/api/goclient --skip-validate-spec
 
 setup: tools up migrate
 
-.PHONY: setup
+.PHONY: setup run run_ws run_embedder rebuild_all rebuild_api rebuild_auth rebuild_ws rebuild_indexer rebuild_attachments rebuild_sfu rebuild_webhook rebuild_embedder
 
 # Dev tools
-rebuild_all: rebuild_api rebuild_auth rebuild_indexer rebuild_ws
+rebuild_all: rebuild_api rebuild_auth rebuild_indexer rebuild_embedder rebuild_ws
 
 rebuild_api:
 	docker compose down api
@@ -107,3 +112,7 @@ rebuild_sfu:
 rebuild_webhook:
 	docker compose down webhook
 	docker compose up -d --no-deps --build webhook
+
+rebuild_embedder:
+	docker compose down embedder
+	docker compose up -d --no-deps --build embedder

@@ -4,6 +4,7 @@
 Here goes the project documentation.
 
 - [Channels](channels/README.md)
+- [Message Embeds](channels/Embeds.md)
 - [Guilds](guilds/README.md)
 
 
@@ -12,6 +13,7 @@ Here goes the project documentation.
 - [Voice](voice/README.md)
 
 - [Services Overview](Services.md)
+- [Presence System](Presence.md)
 - [Tools CLI](Tools.md)
 
 

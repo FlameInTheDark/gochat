@@ -23,8 +23,7 @@ type Queue struct {
 }
 
 type Channel struct {
-	c       *amqp.Channel
-	msgExch ExchangeChannel
+	c *amqp.Channel
 }
 
 func (c *Channel) Close() error {

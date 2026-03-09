@@ -20,13 +20,15 @@ var _ MappedNullable = &UserUserSettingsResponse{}
 
 // UserUserSettingsResponse struct for UserUserSettingsResponse
 type UserUserSettingsResponse struct {
-	ChannelMentions    map[string][]ModelChannelMention `json:"channel_mentions,omitempty"`
-	Guilds             []DtoGuild                       `json:"guilds,omitempty"`
-	GuildsLastMessages map[string]map[string]int32      `json:"guilds_last_messages,omitempty"`
-	Mentions           map[string][]ModelMention        `json:"mentions,omitempty"`
-	ReadStates         map[string]int32                 `json:"read_states,omitempty"`
-	Settings           *ModelUserSettingsData           `json:"settings,omitempty"`
-	Version            *int32                           `json:"version,omitempty"`
+	ChannelMentions    *map[string][]ModelChannelMention `json:"channel_mentions,omitempty"`
+	ContentHosts       []string                          `json:"content_hosts,omitempty"`
+	GuildEmojis        *map[string][]DtoEmojiRef         `json:"guild_emojis,omitempty"`
+	Guilds             []DtoGuild                        `json:"guilds,omitempty"`
+	GuildsLastMessages *map[string]map[string]int32      `json:"guilds_last_messages,omitempty"`
+	Mentions           *map[string][]ModelMention        `json:"mentions,omitempty"`
+	ReadStates         *map[string]int32                 `json:"read_states,omitempty"`
+	Settings           *ModelUserSettingsData            `json:"settings,omitempty"`
+	Version            *int32                            `json:"version,omitempty"`
 }
 
 // NewUserUserSettingsResponse instantiates a new UserUserSettingsResponse object
@@ -52,14 +54,14 @@ func (o *UserUserSettingsResponse) GetChannelMentions() map[string][]ModelChanne
 		var ret map[string][]ModelChannelMention
 		return ret
 	}
-	return o.ChannelMentions
+	return *o.ChannelMentions
 }
 
 // GetChannelMentionsOk returns a tuple with the ChannelMentions field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *UserUserSettingsResponse) GetChannelMentionsOk() (map[string][]ModelChannelMention, bool) {
+func (o *UserUserSettingsResponse) GetChannelMentionsOk() (*map[string][]ModelChannelMention, bool) {
 	if o == nil || IsNil(o.ChannelMentions) {
-		return map[string][]ModelChannelMention{}, false
+		return nil, false
 	}
 	return o.ChannelMentions, true
 }
@@ -75,7 +77,71 @@ func (o *UserUserSettingsResponse) HasChannelMentions() bool {
 
 // SetChannelMentions gets a reference to the given map[string][]ModelChannelMention and assigns it to the ChannelMentions field.
 func (o *UserUserSettingsResponse) SetChannelMentions(v map[string][]ModelChannelMention) {
-	o.ChannelMentions = v
+	o.ChannelMentions = &v
+}
+
+// GetContentHosts returns the ContentHosts field value if set, zero value otherwise.
+func (o *UserUserSettingsResponse) GetContentHosts() []string {
+	if o == nil || IsNil(o.ContentHosts) {
+		var ret []string
+		return ret
+	}
+	return o.ContentHosts
+}
+
+// GetContentHostsOk returns a tuple with the ContentHosts field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserUserSettingsResponse) GetContentHostsOk() ([]string, bool) {
+	if o == nil || IsNil(o.ContentHosts) {
+		return nil, false
+	}
+	return o.ContentHosts, true
+}
+
+// HasContentHosts returns a boolean if a field has been set.
+func (o *UserUserSettingsResponse) HasContentHosts() bool {
+	if o != nil && !IsNil(o.ContentHosts) {
+		return true
+	}
+
+	return false
+}
+
+// SetContentHosts gets a reference to the given []string and assigns it to the ContentHosts field.
+func (o *UserUserSettingsResponse) SetContentHosts(v []string) {
+	o.ContentHosts = v
+}
+
+// GetGuildEmojis returns the GuildEmojis field value if set, zero value otherwise.
+func (o *UserUserSettingsResponse) GetGuildEmojis() map[string][]DtoEmojiRef {
+	if o == nil || IsNil(o.GuildEmojis) {
+		var ret map[string][]DtoEmojiRef
+		return ret
+	}
+	return *o.GuildEmojis
+}
+
+// GetGuildEmojisOk returns a tuple with the GuildEmojis field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserUserSettingsResponse) GetGuildEmojisOk() (*map[string][]DtoEmojiRef, bool) {
+	if o == nil || IsNil(o.GuildEmojis) {
+		return nil, false
+	}
+	return o.GuildEmojis, true
+}
+
+// HasGuildEmojis returns a boolean if a field has been set.
+func (o *UserUserSettingsResponse) HasGuildEmojis() bool {
+	if o != nil && !IsNil(o.GuildEmojis) {
+		return true
+	}
+
+	return false
+}
+
+// SetGuildEmojis gets a reference to the given map[string][]DtoEmojiRef and assigns it to the GuildEmojis field.
+func (o *UserUserSettingsResponse) SetGuildEmojis(v map[string][]DtoEmojiRef) {
+	o.GuildEmojis = &v
 }
 
 // GetGuilds returns the Guilds field value if set, zero value otherwise.
@@ -116,14 +182,14 @@ func (o *UserUserSettingsResponse) GetGuildsLastMessages() map[string]map[string
 		var ret map[string]map[string]int32
 		return ret
 	}
-	return o.GuildsLastMessages
+	return *o.GuildsLastMessages
 }
 
 // GetGuildsLastMessagesOk returns a tuple with the GuildsLastMessages field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *UserUserSettingsResponse) GetGuildsLastMessagesOk() (map[string]map[string]int32, bool) {
+func (o *UserUserSettingsResponse) GetGuildsLastMessagesOk() (*map[string]map[string]int32, bool) {
 	if o == nil || IsNil(o.GuildsLastMessages) {
-		return map[string]map[string]int32{}, false
+		return nil, false
 	}
 	return o.GuildsLastMessages, true
 }
@@ -139,7 +205,7 @@ func (o *UserUserSettingsResponse) HasGuildsLastMessages() bool {
 
 // SetGuildsLastMessages gets a reference to the given map[string]map[string]int32 and assigns it to the GuildsLastMessages field.
 func (o *UserUserSettingsResponse) SetGuildsLastMessages(v map[string]map[string]int32) {
-	o.GuildsLastMessages = v
+	o.GuildsLastMessages = &v
 }
 
 // GetMentions returns the Mentions field value if set, zero value otherwise.
@@ -148,14 +214,14 @@ func (o *UserUserSettingsResponse) GetMentions() map[string][]ModelMention {
 		var ret map[string][]ModelMention
 		return ret
 	}
-	return o.Mentions
+	return *o.Mentions
 }
 
 // GetMentionsOk returns a tuple with the Mentions field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *UserUserSettingsResponse) GetMentionsOk() (map[string][]ModelMention, bool) {
+func (o *UserUserSettingsResponse) GetMentionsOk() (*map[string][]ModelMention, bool) {
 	if o == nil || IsNil(o.Mentions) {
-		return map[string][]ModelMention{}, false
+		return nil, false
 	}
 	return o.Mentions, true
 }
@@ -171,7 +237,7 @@ func (o *UserUserSettingsResponse) HasMentions() bool {
 
 // SetMentions gets a reference to the given map[string][]ModelMention and assigns it to the Mentions field.
 func (o *UserUserSettingsResponse) SetMentions(v map[string][]ModelMention) {
-	o.Mentions = v
+	o.Mentions = &v
 }
 
 // GetReadStates returns the ReadStates field value if set, zero value otherwise.
@@ -180,14 +246,14 @@ func (o *UserUserSettingsResponse) GetReadStates() map[string]int32 {
 		var ret map[string]int32
 		return ret
 	}
-	return o.ReadStates
+	return *o.ReadStates
 }
 
 // GetReadStatesOk returns a tuple with the ReadStates field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *UserUserSettingsResponse) GetReadStatesOk() (map[string]int32, bool) {
+func (o *UserUserSettingsResponse) GetReadStatesOk() (*map[string]int32, bool) {
 	if o == nil || IsNil(o.ReadStates) {
-		return map[string]int32{}, false
+		return nil, false
 	}
 	return o.ReadStates, true
 }
@@ -203,7 +269,7 @@ func (o *UserUserSettingsResponse) HasReadStates() bool {
 
 // SetReadStates gets a reference to the given map[string]int32 and assigns it to the ReadStates field.
 func (o *UserUserSettingsResponse) SetReadStates(v map[string]int32) {
-	o.ReadStates = v
+	o.ReadStates = &v
 }
 
 // GetSettings returns the Settings field value if set, zero value otherwise.
@@ -282,6 +348,12 @@ func (o UserUserSettingsResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.ChannelMentions) {
 		toSerialize["channel_mentions"] = o.ChannelMentions
+	}
+	if !IsNil(o.ContentHosts) {
+		toSerialize["content_hosts"] = o.ContentHosts
+	}
+	if !IsNil(o.GuildEmojis) {
+		toSerialize["guild_emojis"] = o.GuildEmojis
 	}
 	if !IsNil(o.Guilds) {
 		toSerialize["guilds"] = o.Guilds

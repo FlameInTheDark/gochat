@@ -8,11 +8,12 @@ import (
 )
 
 type Message interface {
-	CreateMessage(ctx context.Context, id, channel_id, user_id int64, content string, attachments []int64) error
+	CreateMessage(ctx context.Context, id, channelID, userID int64, content string, attachments []int64, embedsJSON, autoEmbedsJSON string) error
 	CreateSystemMessage(ctx context.Context, id, channelId, userId int64, content string, msgType model.MessageType) error
-	UpdateMessage(ctx context.Context, id, channel_id int64, content string) error
+	UpdateMessage(ctx context.Context, id, channelID int64, content, embedsJSON, autoEmbedsJSON string, flags int) error
+	UpdateGeneratedEmbeds(ctx context.Context, id, channelID int64, autoEmbedsJSON string) error
 	DeleteMessage(ctx context.Context, id, channelId int64) error
-	DeleteChannelMessages(ctx context.Context, channel_id, lastId int64) error
+	DeleteChannelMessages(ctx context.Context, channelID, lastId int64) error
 	GetMessage(ctx context.Context, id, channelId int64) (model.Message, error)
 	GetMessagesBefore(ctx context.Context, channelId, msgId int64, limit int) ([]model.Message, []int64, error)
 	GetMessagesAfter(ctx context.Context, channelId, msgId, lastChannelMessage int64, limit int) ([]model.Message, []int64, error)

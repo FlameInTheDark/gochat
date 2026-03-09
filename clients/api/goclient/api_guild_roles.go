@@ -501,17 +501,17 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdGetExecute
 }
 
 type ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest struct {
-	ctx                               context.Context
-	ApiService                        *GuildRolesAPIService
-	guildId                           int32
-	channelId                         int32
-	roleId                            int32
-	guildChannelRolePermissionRequest *GuildChannelRolePermissionRequest
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	channelId  int32
+	roleId     int32
+	req        *GuildChannelRolePermissionRequest
 }
 
 // Permission mask
-func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest) GuildChannelRolePermissionRequest(guildChannelRolePermissionRequest GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
-	r.guildChannelRolePermissionRequest = &guildChannelRolePermissionRequest
+func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest) Req(req GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPatchRequest {
+	r.req = &req
 	return r
 }
 
@@ -562,12 +562,12 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatchExecu
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildChannelRolePermissionRequest == nil {
-		return localVarReturnValue, nil, reportError("guildChannelRolePermissionRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -584,7 +584,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatchExecu
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildChannelRolePermissionRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -677,17 +677,17 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPatchExecu
 }
 
 type ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest struct {
-	ctx                               context.Context
-	ApiService                        *GuildRolesAPIService
-	guildId                           int32
-	channelId                         int32
-	roleId                            int32
-	guildChannelRolePermissionRequest *GuildChannelRolePermissionRequest
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	channelId  int32
+	roleId     int32
+	req        *GuildChannelRolePermissionRequest
 }
 
 // Permission mask
-func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest) GuildChannelRolePermissionRequest(guildChannelRolePermissionRequest GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
-	r.guildChannelRolePermissionRequest = &guildChannelRolePermissionRequest
+func (r ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest) Req(req GuildChannelRolePermissionRequest) ApiGuildGuildIdChannelChannelIdRolesRoleIdPutRequest {
+	r.req = &req
 	return r
 }
 
@@ -738,12 +738,12 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPutExecute
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildChannelRolePermissionRequest == nil {
-		return localVarReturnValue, nil, reportError("guildChannelRolePermissionRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -760,7 +760,7 @@ func (a *GuildRolesAPIService) GuildGuildIdChannelChannelIdRolesRoleIdPutExecute
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildChannelRolePermissionRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1463,16 +1463,173 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesGetExecute(r ApiGuildGuildIdRole
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiGuildGuildIdRolesOrderPatchRequest struct {
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	request    *GuildPatchGuildRoleOrderRequest
+}
+
+// Update role order data
+func (r ApiGuildGuildIdRolesOrderPatchRequest) Request(request GuildPatchGuildRoleOrderRequest) ApiGuildGuildIdRolesOrderPatchRequest {
+	r.request = &request
+	return r
+}
+
+func (r ApiGuildGuildIdRolesOrderPatchRequest) Execute() (string, *http.Response, error) {
+	return r.ApiService.GuildGuildIdRolesOrderPatchExecute(r)
+}
+
+/*
+GuildGuildIdRolesOrderPatch Change roles order
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param guildId Guild ID
+	@return ApiGuildGuildIdRolesOrderPatchRequest
+*/
+func (a *GuildRolesAPIService) GuildGuildIdRolesOrderPatch(ctx context.Context, guildId int32) ApiGuildGuildIdRolesOrderPatchRequest {
+	return ApiGuildGuildIdRolesOrderPatchRequest{
+		ApiService: a,
+		ctx:        ctx,
+		guildId:    guildId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return string
+func (a *GuildRolesAPIService) GuildGuildIdRolesOrderPatchExecute(r ApiGuildGuildIdRolesOrderPatchRequest) (string, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue string
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildRolesAPIService.GuildGuildIdRolesOrderPatch")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/guild/{guild_id}/roles/order"
+	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.request
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 406 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiGuildGuildIdRolesPostRequest struct {
-	ctx                         context.Context
-	ApiService                  *GuildRolesAPIService
-	guildId                     int32
-	guildCreateGuildRoleRequest *GuildCreateGuildRoleRequest
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	req        *GuildCreateGuildRoleRequest
 }
 
 // Role data
-func (r ApiGuildGuildIdRolesPostRequest) GuildCreateGuildRoleRequest(guildCreateGuildRoleRequest GuildCreateGuildRoleRequest) ApiGuildGuildIdRolesPostRequest {
-	r.guildCreateGuildRoleRequest = &guildCreateGuildRoleRequest
+func (r ApiGuildGuildIdRolesPostRequest) Req(req GuildCreateGuildRoleRequest) ApiGuildGuildIdRolesPostRequest {
+	r.req = &req
 	return r
 }
 
@@ -1517,12 +1674,12 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesPostExecute(r ApiGuildGuildIdRol
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildCreateGuildRoleRequest == nil {
-		return localVarReturnValue, nil, reportError("guildCreateGuildRoleRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1539,7 +1696,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesPostExecute(r ApiGuildGuildIdRol
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildCreateGuildRoleRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1781,16 +1938,16 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdDeleteExecute(r ApiGuildGu
 }
 
 type ApiGuildGuildIdRolesRoleIdPatchRequest struct {
-	ctx                        context.Context
-	ApiService                 *GuildRolesAPIService
-	guildId                    int32
-	roleId                     int32
-	guildPatchGuildRoleRequest *GuildPatchGuildRoleRequest
+	ctx        context.Context
+	ApiService *GuildRolesAPIService
+	guildId    int32
+	roleId     int32
+	req        *GuildPatchGuildRoleRequest
 }
 
 // Role changes
-func (r ApiGuildGuildIdRolesRoleIdPatchRequest) GuildPatchGuildRoleRequest(guildPatchGuildRoleRequest GuildPatchGuildRoleRequest) ApiGuildGuildIdRolesRoleIdPatchRequest {
-	r.guildPatchGuildRoleRequest = &guildPatchGuildRoleRequest
+func (r ApiGuildGuildIdRolesRoleIdPatchRequest) Req(req GuildPatchGuildRoleRequest) ApiGuildGuildIdRolesRoleIdPatchRequest {
+	r.req = &req
 	return r
 }
 
@@ -1838,12 +1995,12 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatchExecute(r ApiGuildGui
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.guildPatchGuildRoleRequest == nil {
-		return localVarReturnValue, nil, reportError("guildPatchGuildRoleRequest is required and must be specified")
+	if r.req == nil {
+		return localVarReturnValue, nil, reportError("req is required and must be specified")
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -1860,7 +2017,7 @@ func (a *GuildRolesAPIService) GuildGuildIdRolesRoleIdPatchExecute(r ApiGuildGui
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.guildPatchGuildRoleRequest
+	localVarPostBody = r.req
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

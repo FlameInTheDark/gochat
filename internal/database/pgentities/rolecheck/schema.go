@@ -101,7 +101,7 @@ func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int
 		}
 
 		// Get role information
-		roles, err := e.role.GetRolesBulk(ctx, roleIDs)
+		roles, err := e.role.GetRolesBulk(ctx, guildID, roleIDs)
 		if err != nil {
 			return nil, nil, nil, false, err
 		}
@@ -221,7 +221,7 @@ func (e *Entity) GetChannelPermissions(ctx context.Context, guildID, channelID, 
 	if err != nil {
 		return 0, err
 	}
-	roles, err := e.role.GetRolesBulk(ctx, roleIDs)
+	roles, err := e.role.GetRolesBulk(ctx, guildID, roleIDs)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return 0, err
 	}
@@ -281,7 +281,7 @@ func (e *Entity) GuildPerm(ctx context.Context, guildID, userID int64, perm ...p
 	}
 
 	// Get role information
-	roles, err := e.role.GetRolesBulk(ctx, roleIDs)
+	roles, err := e.role.GetRolesBulk(ctx, guildID, roleIDs)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, false, err
 	}

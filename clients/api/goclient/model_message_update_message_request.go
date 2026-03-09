@@ -22,6 +22,10 @@ var _ MappedNullable = &MessageUpdateMessageRequest{}
 type MessageUpdateMessageRequest struct {
 	// Message content
 	Content *string `json:"content,omitempty"`
+	// Full replacement for the manual embed array. Generated embeds are managed by the embedder service.
+	Embeds []EmbedEmbed `json:"embeds,omitempty"`
+	// Message flags bitmask. Use 4 to suppress URL embed generation and clear generated embeds.
+	Flags *int32 `json:"flags,omitempty"`
 }
 
 // NewMessageUpdateMessageRequest instantiates a new MessageUpdateMessageRequest object
@@ -73,6 +77,70 @@ func (o *MessageUpdateMessageRequest) SetContent(v string) {
 	o.Content = &v
 }
 
+// GetEmbeds returns the Embeds field value if set, zero value otherwise.
+func (o *MessageUpdateMessageRequest) GetEmbeds() []EmbedEmbed {
+	if o == nil || IsNil(o.Embeds) {
+		var ret []EmbedEmbed
+		return ret
+	}
+	return o.Embeds
+}
+
+// GetEmbedsOk returns a tuple with the Embeds field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *MessageUpdateMessageRequest) GetEmbedsOk() ([]EmbedEmbed, bool) {
+	if o == nil || IsNil(o.Embeds) {
+		return nil, false
+	}
+	return o.Embeds, true
+}
+
+// HasEmbeds returns a boolean if a field has been set.
+func (o *MessageUpdateMessageRequest) HasEmbeds() bool {
+	if o != nil && !IsNil(o.Embeds) {
+		return true
+	}
+
+	return false
+}
+
+// SetEmbeds gets a reference to the given []EmbedEmbed and assigns it to the Embeds field.
+func (o *MessageUpdateMessageRequest) SetEmbeds(v []EmbedEmbed) {
+	o.Embeds = v
+}
+
+// GetFlags returns the Flags field value if set, zero value otherwise.
+func (o *MessageUpdateMessageRequest) GetFlags() int32 {
+	if o == nil || IsNil(o.Flags) {
+		var ret int32
+		return ret
+	}
+	return *o.Flags
+}
+
+// GetFlagsOk returns a tuple with the Flags field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *MessageUpdateMessageRequest) GetFlagsOk() (*int32, bool) {
+	if o == nil || IsNil(o.Flags) {
+		return nil, false
+	}
+	return o.Flags, true
+}
+
+// HasFlags returns a boolean if a field has been set.
+func (o *MessageUpdateMessageRequest) HasFlags() bool {
+	if o != nil && !IsNil(o.Flags) {
+		return true
+	}
+
+	return false
+}
+
+// SetFlags gets a reference to the given int32 and assigns it to the Flags field.
+func (o *MessageUpdateMessageRequest) SetFlags(v int32) {
+	o.Flags = &v
+}
+
 func (o MessageUpdateMessageRequest) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -85,6 +153,12 @@ func (o MessageUpdateMessageRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.Content) {
 		toSerialize["content"] = o.Content
+	}
+	if !IsNil(o.Embeds) {
+		toSerialize["embeds"] = o.Embeds
+	}
+	if !IsNil(o.Flags) {
+		toSerialize["flags"] = o.Flags
 	}
 	return toSerialize, nil
 }

@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
-
 	"time"
 
 	"github.com/FlameInTheDark/gochat/cmd/api/config"
@@ -16,16 +17,18 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/message"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/search"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/user"
-	voice "github.com/FlameInTheDark/gochat/cmd/api/endpoints/voice"
+	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/voice"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/embedmq"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/nats"
 	"github.com/FlameInTheDark/gochat/internal/msgsearch"
+	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
@@ -47,13 +50,14 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
-	// Database connection
+	logger.Info("Connecting to ScyllaDB")
 	database, err := db.NewCQLCon(cfg.ClusterKeyspace, db.NewDBLogger(logger), cfg.Cluster...)
 	if err != nil {
 		return nil, err
 	}
 	shut.Up(database)
 
+	logger.Info("Connecting to PostgreSQL")
 	pg := pgdb.NewDB(logger)
 	err = pg.Connect(cfg.PGDSN, cfg.PGRetries)
 	if err != nil {
@@ -61,6 +65,16 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 	shut.Up(pg)
 
+	var storage *s3.Client
+	if cfg.S3Endpoint != "" {
+		logger.Info("Connecting to S3")
+		storage, err = s3.NewClient(cfg.S3Endpoint, cfg.S3AccessKeyID, cfg.S3SecretAccessKey, cfg.S3Region, cfg.S3Bucket, cfg.S3UseSSL)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	logger.Info("Connecting to NATS")
 	var qt mq.SendTransporter
 	nt, err := nats.New(cfg.NatsConnString)
 	if err != nil {
@@ -69,19 +83,28 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	shut.Up(nt)
 	qt = nt
 
+	logger.Info("Connecting to Indexer NATS")
 	imq, err := indexmq.NewIndexMQ(cfg.IndexerNatsConnString)
 	if err != nil {
 		return nil, err
 	}
+	shut.Up(imq)
 
+	logger.Info("Connecting to Embedder NATS")
+	emq, err := embedmq.New(cfg.NatsConnString)
+	if err != nil {
+		return nil, err
+	}
+	shut.Up(emq)
+
+	logger.Info("Connecting to KeyDB")
 	cache, err := kvs.New(cfg.KeyDB)
 	if err != nil {
 		return nil, err
 	}
 	shut.Up(cache)
 
-	// Subscribe to SFU occupancy updates and maintain bindings purely in API/cache
-	// Subject: voice.occ  Payload: {"channel":<id>,"delta":+1|-1}
+	logger.Info("Connecting to NATS for SFU occupancy updates")
 	if cfg.NatsConnString != "" {
 		if occNc, err := natsio.Connect(cfg.NatsConnString, natsio.Compression(true)); err == nil {
 			shut.UpFunc(func() { _ = occNc.Drain() })
@@ -114,27 +137,25 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		}
 	}
 
-	// Initialize message search service
+	logger.Info("Connecting to OpenSearch")
 	searchService, err := msgsearch.NewSearch(cfg.OSAddresses, cfg.OSInsecureSkipVerify, cfg.OSUsername, cfg.OSPassword)
 	if err != nil {
 		return nil, err
 	}
 
+	logger.Info("Connecting to Etcd")
 	disco, err := discovery.NewManager(cfg.EtcdEndpoints, cfg.EtcdPrefix, cfg.EtcdUsername, cfg.EtcdPassword)
 	if err != nil {
 		return nil, err
 	}
 
-	// ID generator setup
 	idgen.New(0)
 
-	// HTTP Server
+	logger.Info("Registering HTTP server")
 	s := server.NewServer()
 	shut.Up(s)
 
 	s.WithCache(cache)
-
-	// HTTP Middlewares
 	if cfg.Swagger {
 		s.WithSwagger("api")
 	}
@@ -145,31 +166,28 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.WithMetrics("gochat-api")
 	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
 	s.AuthMiddleware(cfg.AuthSecret)
-	//s.RateLimitMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 	s.RateLimitPipedMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 	s.Use(helper.RequireTokenType("access", "api"))
-	// Expose BaseUrl to handlers for building absolute SFU URLs
 	s.Use(func(c *fiber.Ctx) error {
 		c.Locals("base_url", cfg.BaseUrl)
 		return c.Next()
 	})
 
-	// HTTP Router
+	contentHosts, err := buildContentHosts(cfg.ContentHosts)
+	if err != nil {
+		return nil, err
+	}
+
 	s.Register(
 		"/api/v1",
-		user.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, logger),
-		message.New(database, pg, qt, imq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
-		guild.New(database, pg, qt, imq, cache, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, extractRegionIDs(cfg.VoiceRegions), logger),
+		user.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, contentHosts, logger),
+		message.New(database, pg, qt, imq, emq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
+		guild.New(database, pg, qt, imq, cache, storage, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, extractRegionIDs(cfg.VoiceRegions), logger),
 		voice.New(convertRegions(cfg.VoiceRegions), logger),
 		search.New(database, pg, searchService, logger),
 	)
 
-	return &App{
-		server: s,
-		db:     database,
-		logger: logger,
-		addr:   cfg.ServerAddress,
-	}, nil
+	return &App{server: s, db: database, logger: logger, addr: cfg.ServerAddress}, nil
 }
 
 func extractRegionIDs(v []config.VoiceRegion) []string {
@@ -183,6 +201,52 @@ func extractRegionIDs(v []config.VoiceRegion) []string {
 		}
 	}
 	return out
+}
+
+func buildContentHosts(rawHosts []string) ([]string, error) {
+	seen := make(map[string]struct{}, len(rawHosts))
+	hosts := make([]string, 0, len(rawHosts))
+
+	add := func(raw string) error {
+		normalized, err := normalizeContentHost(raw)
+		if err != nil {
+			return err
+		}
+		if normalized == "" {
+			return nil
+		}
+		if _, ok := seen[normalized]; ok {
+			return nil
+		}
+		seen[normalized] = struct{}{}
+		hosts = append(hosts, normalized)
+		return nil
+	}
+
+	for _, raw := range rawHosts {
+		if err := add(raw); err != nil {
+			return nil, fmt.Errorf("normalize content host %q: %w", raw, err)
+		}
+	}
+
+	return hosts, nil
+}
+
+func normalizeContentHost(raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", nil
+	}
+
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", err
+	}
+	if u.Scheme == "" || u.Host == "" {
+		return "", fmt.Errorf("content host must include scheme and host")
+	}
+
+	return u.Scheme + "://" + u.Host, nil
 }
 
 func convertRegions(v []config.VoiceRegion) []voice.Region {

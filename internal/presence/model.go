@@ -6,6 +6,8 @@ type Presence struct {
 	Since            int64  `json:"since"`
 	CustomStatusText string `json:"custom_status_text,omitempty"`
 	VoiceChannelID   *int64 `json:"voice_channel_id,omitempty"`
+	Mute             bool   `json:"mute,omitempty"`
+	Deafen           bool   `json:"deafen,omitempty"`
 }
 
 // SessionPresence represents a single device/session presence record.
@@ -19,6 +21,8 @@ type SessionPresence struct {
 	ExpiresAt        int64  `json:"expires_at"`
 	CustomStatusText string `json:"custom_status_text,omitempty"`
 	VoiceChannelID   *int64 `json:"voice_channel_id,omitempty"`
+	Mute             bool   `json:"mute,omitempty"`
+	Deafen           bool   `json:"deafen,omitempty"`
 }
 
 const (
