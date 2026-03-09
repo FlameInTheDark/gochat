@@ -926,6 +926,12 @@ export interface DtoRole {
      * @memberof DtoRole
      */
     'permissions'?: number;
+    /**
+     * Role position. Lower values are shown first in guild role lists.
+     * @type {number}
+     * @memberof DtoRole
+     */
+    'position'?: number;
 }
 /**
  * 
@@ -1567,6 +1573,19 @@ export interface GuildPatchGuildChannelRequest {
 /**
  * 
  * @export
+ * @interface GuildPatchGuildRoleOrderRequest
+ */
+export interface GuildPatchGuildRoleOrderRequest {
+    /**
+     * List of roles to change order.
+     * @type {Array<GuildRoleOrder>}
+     * @memberof GuildPatchGuildRoleOrderRequest
+     */
+    'roles'?: Array<GuildRoleOrder>;
+}
+/**
+ * 
+ * @export
  * @interface GuildPatchGuildRoleRequest
  */
 export interface GuildPatchGuildRoleRequest {
@@ -1588,6 +1607,25 @@ export interface GuildPatchGuildRoleRequest {
      * @memberof GuildPatchGuildRoleRequest
      */
     'permissions'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface GuildRoleOrder
+ */
+export interface GuildRoleOrder {
+    /**
+     * Role ID.
+     * @type {string}
+     * @memberof GuildRoleOrder
+     */
+    'id'?: string;
+    /**
+     * New role position.
+     * @type {number}
+     * @memberof GuildRoleOrder
+     */
+    'position'?: number;
 }
 /**
  * 
@@ -7285,6 +7323,46 @@ export const GuildRolesApiAxiosParamCreator = function (configuration?: Configur
         },
         /**
          * 
+         * @summary Change roles order
+         * @param {number} guildId Guild ID
+         * @param {GuildPatchGuildRoleOrderRequest} request Update role order data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdRolesOrderPatch: async (guildId: number, request: GuildPatchGuildRoleOrderRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdRolesOrderPatch', 'guildId', guildId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdRolesOrderPatch', 'request', request)
+            const localVarPath = `/guild/{guild_id}/roles/order`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create guild role
          * @param {number} guildId Guild ID
          * @param {GuildCreateGuildRoleRequest} req Role data
@@ -7550,6 +7628,20 @@ export const GuildRolesApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Change roles order
+         * @param {number} guildId Guild ID
+         * @param {GuildPatchGuildRoleOrderRequest} request Update role order data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdRolesOrderPatch(guildId: number, request: GuildPatchGuildRoleOrderRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdRolesOrderPatch(guildId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildRolesApi.guildGuildIdRolesOrderPatch']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Create guild role
          * @param {number} guildId Guild ID
          * @param {GuildCreateGuildRoleRequest} req Role data
@@ -7693,6 +7785,16 @@ export const GuildRolesApiFactory = function (configuration?: Configuration, bas
         },
         /**
          * 
+         * @summary Change roles order
+         * @param {GuildRolesApiGuildGuildIdRolesOrderPatchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdRolesOrderPatch(requestParameters: GuildRolesApiGuildGuildIdRolesOrderPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdRolesOrderPatch(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Create guild role
          * @param {GuildRolesApiGuildGuildIdRolesPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -7819,6 +7921,16 @@ export interface GuildRolesApiInterface {
      * @memberof GuildRolesApiInterface
      */
     guildGuildIdRolesGet(requestParameters: GuildRolesApiGuildGuildIdRolesGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoRole>>;
+
+    /**
+     * 
+     * @summary Change roles order
+     * @param {GuildRolesApiGuildGuildIdRolesOrderPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApiInterface
+     */
+    guildGuildIdRolesOrderPatch(requestParameters: GuildRolesApiGuildGuildIdRolesOrderPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
      * 
@@ -8091,6 +8203,27 @@ export interface GuildRolesApiGuildGuildIdRolesGetRequest {
 }
 
 /**
+ * Request parameters for guildGuildIdRolesOrderPatch operation in GuildRolesApi.
+ * @export
+ * @interface GuildRolesApiGuildGuildIdRolesOrderPatchRequest
+ */
+export interface GuildRolesApiGuildGuildIdRolesOrderPatchRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildRolesApiGuildGuildIdRolesOrderPatch
+     */
+    readonly guildId: number
+
+    /**
+     * Update role order data
+     * @type {GuildPatchGuildRoleOrderRequest}
+     * @memberof GuildRolesApiGuildGuildIdRolesOrderPatch
+     */
+    readonly request: GuildPatchGuildRoleOrderRequest
+}
+
+/**
  * Request parameters for guildGuildIdRolesPost operation in GuildRolesApi.
  * @export
  * @interface GuildRolesApiGuildGuildIdRolesPostRequest
@@ -8273,6 +8406,18 @@ export class GuildRolesApi extends BaseAPI implements GuildRolesApiInterface {
      */
     public guildGuildIdRolesGet(requestParameters: GuildRolesApiGuildGuildIdRolesGetRequest, options?: RawAxiosRequestConfig) {
         return GuildRolesApiFp(this.configuration).guildGuildIdRolesGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Change roles order
+     * @param {GuildRolesApiGuildGuildIdRolesOrderPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildRolesApi
+     */
+    public guildGuildIdRolesOrderPatch(requestParameters: GuildRolesApiGuildGuildIdRolesOrderPatchRequest, options?: RawAxiosRequestConfig) {
+        return GuildRolesApiFp(this.configuration).guildGuildIdRolesOrderPatch(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

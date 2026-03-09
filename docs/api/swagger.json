@@ -2604,6 +2604,68 @@
                 }
             }
         },
+        "/guild/{guild_id}/roles/order": {
+            "patch": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild Roles"
+                ],
+                "summary": "Change roles order",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 2230469276416868352,
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update role order data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/guild.PatchGuildRoleOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "406": {
+                        "description": "Permissions required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/guild/{guild_id}/roles/{role_id}": {
             "delete": {
                 "produces": [
@@ -5763,6 +5825,11 @@
                 "permissions": {
                     "description": "Role permissions. Check the permissions documentation for more info.",
                     "type": "integer"
+                },
+                "position": {
+                    "description": "Role position. Lower values are shown first in guild role lists.",
+                    "type": "integer",
+                    "example": 0
                 }
             }
         },
@@ -6269,6 +6336,18 @@
                 }
             }
         },
+        "guild.PatchGuildRoleOrderRequest": {
+            "type": "object",
+            "properties": {
+                "roles": {
+                    "description": "List of roles to change order.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/guild.RoleOrder"
+                    }
+                }
+            }
+        },
         "guild.PatchGuildRoleRequest": {
             "type": "object",
             "properties": {
@@ -6285,6 +6364,21 @@
                 "permissions": {
                     "description": "Permissions bitset",
                     "type": "integer"
+                }
+            }
+        },
+        "guild.RoleOrder": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "Role ID.",
+                    "type": "string",
+                    "example": "2230469276416868352"
+                },
+                "position": {
+                    "description": "New role position.",
+                    "type": "integer",
+                    "example": 4
                 }
             }
         },

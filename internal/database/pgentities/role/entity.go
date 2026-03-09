@@ -16,6 +16,7 @@ type Role interface {
 	SetRoleColor(ctx context.Context, id int64, color int) error
 	SetRoleName(ctx context.Context, id int64, name string) error
 	SetRolePermissions(ctx context.Context, id int64, permissions int64) error
+	SetRolePosition(ctx context.Context, updates []model.RoleUpdatePosition) error
 }
 
 type Entity struct {

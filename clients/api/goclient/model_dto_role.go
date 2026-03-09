@@ -30,6 +30,8 @@ type DtoRole struct {
 	Name *string `json:"name,omitempty"`
 	// Role permissions. Check the permissions documentation for more info.
 	Permissions *int32 `json:"permissions,omitempty"`
+	// Role position. Lower values are shown first in guild role lists.
+	Position *int32 `json:"position,omitempty"`
 }
 
 // NewDtoRole instantiates a new DtoRole object
@@ -209,6 +211,38 @@ func (o *DtoRole) SetPermissions(v int32) {
 	o.Permissions = &v
 }
 
+// GetPosition returns the Position field value if set, zero value otherwise.
+func (o *DtoRole) GetPosition() int32 {
+	if o == nil || IsNil(o.Position) {
+		var ret int32
+		return ret
+	}
+	return *o.Position
+}
+
+// GetPositionOk returns a tuple with the Position field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoRole) GetPositionOk() (*int32, bool) {
+	if o == nil || IsNil(o.Position) {
+		return nil, false
+	}
+	return o.Position, true
+}
+
+// HasPosition returns a boolean if a field has been set.
+func (o *DtoRole) HasPosition() bool {
+	if o != nil && !IsNil(o.Position) {
+		return true
+	}
+
+	return false
+}
+
+// SetPosition gets a reference to the given int32 and assigns it to the Position field.
+func (o *DtoRole) SetPosition(v int32) {
+	o.Position = &v
+}
+
 func (o DtoRole) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -233,6 +267,9 @@ func (o DtoRole) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Permissions) {
 		toSerialize["permissions"] = o.Permissions
+	}
+	if !IsNil(o.Position) {
+		toSerialize["position"] = o.Position
 	}
 	return toSerialize, nil
 }

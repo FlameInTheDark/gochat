@@ -128,6 +128,7 @@ Class | Method | HTTP request | Description
 *GuildRolesAPI* | [**GuildGuildIdMemberUserIdRolesRoleIdDelete**](docs/GuildRolesAPI.md#guildguildidmemberuseridrolesroleiddelete) | **Delete** /guild/{guild_id}/member/{user_id}/roles/{role_id} | Remove role from member
 *GuildRolesAPI* | [**GuildGuildIdMemberUserIdRolesRoleIdPut**](docs/GuildRolesAPI.md#guildguildidmemberuseridrolesroleidput) | **Put** /guild/{guild_id}/member/{user_id}/roles/{role_id} | Assign role to member
 *GuildRolesAPI* | [**GuildGuildIdRolesGet**](docs/GuildRolesAPI.md#guildguildidrolesget) | **Get** /guild/{guild_id}/roles | Get guild roles
+*GuildRolesAPI* | [**GuildGuildIdRolesOrderPatch**](docs/GuildRolesAPI.md#guildguildidrolesorderpatch) | **Patch** /guild/{guild_id}/roles/order | Change roles order
 *GuildRolesAPI* | [**GuildGuildIdRolesPost**](docs/GuildRolesAPI.md#guildguildidrolespost) | **Post** /guild/{guild_id}/roles | Create guild role
 *GuildRolesAPI* | [**GuildGuildIdRolesRoleIdDelete**](docs/GuildRolesAPI.md#guildguildidrolesroleiddelete) | **Delete** /guild/{guild_id}/roles/{role_id} | Delete guild role
 *GuildRolesAPI* | [**GuildGuildIdRolesRoleIdPatch**](docs/GuildRolesAPI.md#guildguildidrolesroleidpatch) | **Patch** /guild/{guild_id}/roles/{role_id} | Update guild role
@@ -223,7 +224,9 @@ Class | Method | HTTP request | Description
  - [GuildMoveMemberResponse](docs/GuildMoveMemberResponse.md)
  - [GuildPatchGuildChannelOrderRequest](docs/GuildPatchGuildChannelOrderRequest.md)
  - [GuildPatchGuildChannelRequest](docs/GuildPatchGuildChannelRequest.md)
+ - [GuildPatchGuildRoleOrderRequest](docs/GuildPatchGuildRoleOrderRequest.md)
  - [GuildPatchGuildRoleRequest](docs/GuildPatchGuildRoleRequest.md)
+ - [GuildRoleOrder](docs/GuildRoleOrder.md)
  - [GuildSetGuildSystemMessagesChannelRequest](docs/GuildSetGuildSystemMessagesChannelRequest.md)
  - [GuildSetVoiceRegionRequest](docs/GuildSetVoiceRegionRequest.md)
  - [GuildSetVoiceRegionResponse](docs/GuildSetVoiceRegionResponse.md)

@@ -13,6 +13,7 @@ Method | HTTP request | Description
 [**GuildGuildIdMemberUserIdRolesRoleIdDelete**](GuildRolesAPI.md#GuildGuildIdMemberUserIdRolesRoleIdDelete) | **Delete** /guild/{guild_id}/member/{user_id}/roles/{role_id} | Remove role from member
 [**GuildGuildIdMemberUserIdRolesRoleIdPut**](GuildRolesAPI.md#GuildGuildIdMemberUserIdRolesRoleIdPut) | **Put** /guild/{guild_id}/member/{user_id}/roles/{role_id} | Assign role to member
 [**GuildGuildIdRolesGet**](GuildRolesAPI.md#GuildGuildIdRolesGet) | **Get** /guild/{guild_id}/roles | Get guild roles
+[**GuildGuildIdRolesOrderPatch**](GuildRolesAPI.md#GuildGuildIdRolesOrderPatch) | **Patch** /guild/{guild_id}/roles/order | Change roles order
 [**GuildGuildIdRolesPost**](GuildRolesAPI.md#GuildGuildIdRolesPost) | **Post** /guild/{guild_id}/roles | Create guild role
 [**GuildGuildIdRolesRoleIdDelete**](GuildRolesAPI.md#GuildGuildIdRolesRoleIdDelete) | **Delete** /guild/{guild_id}/roles/{role_id} | Delete guild role
 [**GuildGuildIdRolesRoleIdPatch**](GuildRolesAPI.md#GuildGuildIdRolesRoleIdPatch) | **Patch** /guild/{guild_id}/roles/{role_id} | Update guild role
@@ -662,6 +663,76 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**[]DtoRole**](DtoRole.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdRolesOrderPatch
+
+> string GuildGuildIdRolesOrderPatch(ctx, guildId).Request(request).Execute()
+
+Change roles order
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	request := *openapiclient.NewGuildPatchGuildRoleOrderRequest() // GuildPatchGuildRoleOrderRequest | Update role order data
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildRolesAPI.GuildGuildIdRolesOrderPatch(context.Background(), guildId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildRolesAPI.GuildGuildIdRolesOrderPatch``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdRolesOrderPatch`: string
+	fmt.Fprintf(os.Stdout, "Response from `GuildRolesAPI.GuildGuildIdRolesOrderPatch`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdRolesOrderPatchRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **request** | [**GuildPatchGuildRoleOrderRequest**](GuildPatchGuildRoleOrderRequest.md) | Update role order data | 
+
+### Return type
+
+**string**
 
 ### Authorization
 

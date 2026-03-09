@@ -2125,6 +2125,57 @@ paths:
       tags:
       - Guild Roles
       x-codegen-request-body-name: req
+  /guild/{guild_id}/roles/order:
+    patch:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/guild.PatchGuildRoleOrderRequest'
+        description: Update role order data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "406":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Permissions required
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Change roles order
+      tags:
+      - Guild Roles
+      x-codegen-request-body-name: request
   /guild/{guild_id}/roles/{role_id}:
     delete:
       parameters:
@@ -4809,6 +4860,7 @@ components:
         guild_id: 2230469276416868352
         name: role-name
         id: 2230469276416868352
+        position: 0
       properties:
         color:
           description: Role color. Will change username color. Represent RGB color
@@ -4829,6 +4881,10 @@ components:
         permissions:
           description: Role permissions. Check the permissions documentation for more
             info.
+          type: integer
+        position:
+          description: Role position. Lower values are shown first in guild role lists.
+          example: 0
           type: integer
       type: object
     dto.User:
@@ -5243,6 +5299,14 @@ components:
           example: Just a channel topic
           type: string
       type: object
+    guild.PatchGuildRoleOrderRequest:
+      properties:
+        roles:
+          description: List of roles to change order.
+          items:
+            $ref: '#/components/schemas/guild.RoleOrder'
+          type: array
+      type: object
     guild.PatchGuildRoleRequest:
       properties:
         color:
@@ -5255,6 +5319,17 @@ components:
           type: string
         permissions:
           description: Permissions bitset
+          type: integer
+      type: object
+    guild.RoleOrder:
+      properties:
+        id:
+          description: Role ID.
+          example: "2230469276416868352"
+          type: string
+        position:
+          description: New role position.
+          example: 4
           type: integer
       type: object
     guild.SetGuildSystemMessagesChannelRequest:

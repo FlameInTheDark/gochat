@@ -320,6 +320,7 @@ func roleModelToDTO(r model.Role) dto.Role {
 		Name:        r.Name,
 		Color:       r.Color,
 		Permissions: r.Permissions,
+		Position:    r.Position,
 	}
 }
 
@@ -395,6 +396,39 @@ func (r PatchGuildRoleRequest) Validate() error {
 		),
 		validation.Field(&r.Permissions,
 			validation.When(r.Permissions != nil, validation.Min(int64(0)).Error(ErrPermissionsInvalid)),
+		),
+	)
+}
+
+type RoleOrder struct {
+	Id       int64 `json:"id,string" example:"2230469276416868352"` // Role ID.
+	Position int   `json:"position" example:"4"`                    // New role position.
+}
+
+type PatchGuildRoleOrderRequest struct {
+	Roles []RoleOrder `json:"roles"` // List of roles to change order.
+}
+
+func (r RoleOrder) Validate() error {
+	return validation.ValidateStruct(
+		&r,
+		validation.Field(&r.Id, validation.Required),
+	)
+}
+
+func (r PatchGuildRoleOrderRequest) Validate() error {
+	return validation.ValidateStruct(
+		&r,
+		validation.Field(
+			&r.Roles,
+			validation.Required,
+			validation.Each(validation.By(func(v interface{}) error {
+				ro, ok := v.(RoleOrder)
+				if !ok {
+					return validation.NewError("validation", "invalid role element")
+				}
+				return ro.Validate()
+			})),
 		),
 	)
 }

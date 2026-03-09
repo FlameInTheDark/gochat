@@ -72,6 +72,7 @@ func (e *entity) Init(router fiber.Router) {
 
 	router.Get("/:guild_id<int>/roles", e.GetGuildRoles)
 	router.Post("/:guild_id<int>/roles", e.CreateGuildRole)
+	router.Patch("/:guild_id<int>/roles/order", e.PatchRoleOrder)
 	router.Patch("/:guild_id<int>/roles/:role_id<int>", e.PatchGuildRole)
 	router.Delete("/:guild_id<int>/roles/:role_id<int>", e.DeleteGuildRole)
 	router.Get("/:guild_id<int>/member/:user_id<int>/roles", e.GetMemberRoles)
