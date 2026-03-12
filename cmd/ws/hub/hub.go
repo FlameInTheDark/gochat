@@ -15,7 +15,7 @@ type Conn interface {
 	// Send delivers raw message bytes to the connection.
 	// Implementations must be non-blocking: if the outbound buffer is full
 	// the message should be dropped (and the connection optionally evicted).
-	Send(data []byte)
+	Send(topic string, data []byte)
 }
 
 // topicEntry tracks a shared NATS subscription and all local connections
@@ -70,7 +70,7 @@ func (h *Hub) Register(conn Conn, topic string) error {
 		te.mu.RLock()
 		defer te.mu.RUnlock()
 		for c := range te.conns {
-			c.Send(msg.Data) // non-blocking by contract
+			c.Send(topic, msg.Data) // non-blocking by contract
 		}
 	})
 	if err != nil {

@@ -1650,6 +1650,180 @@
                 }
             }
         },
+        "/guild/{guild_id}/channel/{channel_id}/thread-member/me": {
+            "put": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Join thread",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Thread channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thread membership",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ThreadMember"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Leave thread",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Thread channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Left",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/guild/{guild_id}/channel/{channel_id}/threads": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Get channel threads",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 2230469276416868352,
+                        "description": "Guild id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "example": 2230469276416868352,
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of threads",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.Channel"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/guild/{guild_id}/emojis": {
             "get": {
                 "produces": [
@@ -3035,6 +3209,7 @@
         },
         "/message/channel/{channel_id}": {
             "get": {
+                "description": "Response order depends on `direction`.\n`before`: newest to oldest, including the `from` message when it exists. If `from` is omitted, the server starts from the channel's current `last_message_id`.\n`after`: oldest to newest, including the `from` message.\n`around`: the `from` message first, then older messages in descending order, then newer messages in ascending order.",
                 "produces": [
                     "application/json"
                 ],
@@ -3054,7 +3229,7 @@
                     {
                         "type": "integer",
                         "example": 2230469276416868352,
-                        "description": "Start point for messages",
+                        "description": "Start point for messages. Included in the response when it exists.",
                         "name": "from",
                         "in": "query"
                     },
@@ -3066,7 +3241,7 @@
                         ],
                         "type": "string",
                         "example": "before",
-                        "description": "Select direction",
+                        "description": "Select direction and response order: before=newest-\u003eoldest, after=oldest-\u003enewest, around=from first then older desc then newer asc.",
                         "name": "direction",
                         "in": "query"
                     },
@@ -3080,7 +3255,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Messages",
+                        "description": "Messages returned in the order implied by `direction`.",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -3434,6 +3609,80 @@
                     },
                     "400": {
                         "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/message/channel/{channel_id}/{message_id}/thread": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Message"
+                ],
+                "summary": "Create thread from message",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Parent channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Source message id",
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thread data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/message.CreateThreadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Thread channel",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Channel"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "type": "string"
                         }
@@ -5455,9 +5704,18 @@
         "dto.Channel": {
             "type": "object",
             "properties": {
+                "closed": {
+                    "description": "Whether the thread is closed for new messages.",
+                    "type": "boolean"
+                },
                 "created_at": {
                     "description": "Timestamp of channel creation",
                     "type": "string"
+                },
+                "creator_id": {
+                    "description": "For threads: user who created the thread",
+                    "type": "integer",
+                    "example": 2230469276416868352
                 },
                 "guild_id": {
                     "description": "Guild ID channel was created in",
@@ -5473,6 +5731,29 @@
                     "description": "ID of the last message in the channel",
                     "type": "integer",
                     "example": 2230469276416868352
+                },
+                "member": {
+                    "description": "For threads: current user's membership state when returned via HTTP.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.ThreadMember"
+                        }
+                    ]
+                },
+                "member_ids": {
+                    "description": "For threads: IDs of users who have joined the thread.",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        2230469276416868352
+                    ]
+                },
+                "message_count": {
+                    "description": "For threads: approximate stored message count.",
+                    "type": "integer",
+                    "example": 42
                 },
                 "name": {
                     "description": "Channel name, without spaces",
@@ -5790,6 +6071,39 @@
                     "type": "integer",
                     "example": 2230469276416868352
                 },
+                "nonce": {
+                    "description": "Ephemeral client correlation token echoed only to the author.",
+                    "type": "string",
+                    "example": "draft-1"
+                },
+                "position": {
+                    "description": "Monotonic channel-local message position used for navigation.",
+                    "type": "integer",
+                    "example": 512
+                },
+                "reference": {
+                    "description": "Referenced source message id.",
+                    "type": "integer",
+                    "example": 2230469276416868352
+                },
+                "reference_channel_id": {
+                    "description": "Channel id of the referenced source message.",
+                    "type": "integer",
+                    "example": 2230469276416868352
+                },
+                "thread": {
+                    "description": "Thread metadata when the message is linked to a thread.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.Channel"
+                        }
+                    ]
+                },
+                "thread_id": {
+                    "description": "Thread linked from this message.",
+                    "type": "integer",
+                    "example": 2230469276416868352
+                },
                 "type": {
                     "type": "integer",
                     "example": 0
@@ -5830,6 +6144,21 @@
                     "description": "Role position. Lower values are shown first in guild role lists.",
                     "type": "integer",
                     "example": 0
+                }
+            }
+        },
+        "dto.ThreadMember": {
+            "type": "object",
+            "properties": {
+                "flags": {
+                    "type": "integer"
+                },
+                "join_timestamp": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 2230469276416868352
                 }
             }
         },
@@ -6319,6 +6648,11 @@
         "guild.PatchGuildChannelRequest": {
             "type": "object",
             "properties": {
+                "closed": {
+                    "description": "Whether the thread is closed for new messages.",
+                    "type": "boolean",
+                    "default": false
+                },
                 "name": {
                     "description": "Channel name.",
                     "type": "string",
@@ -6447,6 +6781,53 @@
                 }
             }
         },
+        "message.CreateThreadRequest": {
+            "type": "object",
+            "properties": {
+                "attachments": {
+                    "description": "IDs of attached files uploaded to the parent channel before thread creation.",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        2230469276416868352
+                    ]
+                },
+                "content": {
+                    "description": "First thread message content.",
+                    "type": "string",
+                    "example": "Hello from thread!"
+                },
+                "embeds": {
+                    "description": "Manual embeds for the first thread message.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/embed.Embed"
+                    }
+                },
+                "mentions": {
+                    "description": "IDs of mentioned users.",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        2230469276416868352
+                    ]
+                },
+                "name": {
+                    "description": "Optional explicit thread name.",
+                    "type": "string",
+                    "example": "Thread title"
+                },
+                "nonce": {
+                    "description": "Optional client correlation token for the starter message event.",
+                    "type": "string",
+                    "example": "draft-1"
+                }
+            }
+        },
         "message.SendMessageRequest": {
             "type": "object",
             "properties": {
@@ -6472,6 +6853,10 @@
                         "$ref": "#/definitions/embed.Embed"
                     }
                 },
+                "enforce_nonce": {
+                    "description": "When true, deduplicates sends with the same nonce in the same channel for a short window.",
+                    "type": "boolean"
+                },
                 "mentions": {
                     "description": "IDs of mentioned users",
                     "type": "array",
@@ -6481,6 +6866,16 @@
                     "example": [
                         2230469276416868352
                     ]
+                },
+                "nonce": {
+                    "description": "Optional client correlation token echoed back to the author.",
+                    "type": "string",
+                    "example": "draft-1"
+                },
+                "reference": {
+                    "description": "Referenced message ID in the same channel. When set, the new message is stored as type 1 (Reply).",
+                    "type": "integer",
+                    "example": 2230469276416868352
                 }
             }
         },
@@ -7080,6 +7475,19 @@
                         }
                     }
                 },
+                "joined_threads": {
+                    "description": "Joined thread IDs grouped as guild_id -\u003e parent_channel_id -\u003e sorted thread ids.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
                 "mentions": {
                     "type": "object",
                     "additionalProperties": {
@@ -7097,6 +7505,12 @@
                 },
                 "settings": {
                     "$ref": "#/definitions/model.UserSettingsData"
+                },
+                "threads_last_messages": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
                 },
                 "version": {
                     "type": "integer"

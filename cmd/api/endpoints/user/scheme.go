@@ -3,6 +3,7 @@ package user
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -111,15 +112,17 @@ func (r CreateDMManyRequest) Validate() error {
 }
 
 type UserSettingsResponse struct {
-	Version            int64                            `json:"version"`
-	Settings           *model.UserSettingsData          `json:"settings"`
-	ContentHosts       []string                         `json:"content_hosts"`
-	ReadStates         map[int64]int64                  `json:"read_states"`
-	GuildsLastMessages map[int64]map[int64]int64        `json:"guilds_last_messages"`
-	Guilds             []dto.Guild                      `json:"guilds"`
-	GuildEmojis        map[int64][]dto.EmojiRef         `json:"guild_emojis"`
-	Mentions           map[int64][]model.Mention        `json:"mentions,omitempty"`
-	ChannelMentions    map[int64][]model.ChannelMention `json:"channel_mentions,omitempty"`
+	Version             int64                            `json:"version"`
+	Settings            *model.UserSettingsData          `json:"settings"`
+	ContentHosts        []string                         `json:"content_hosts"`
+	ReadStates          map[int64]int64                  `json:"read_states"`
+	GuildsLastMessages  map[int64]map[int64]int64        `json:"guilds_last_messages"`
+	ThreadsLastMessages map[int64]int64                  `json:"threads_last_messages"`
+	JoinedThreads       map[int64]map[int64][]int64      `json:"joined_threads"` // Joined thread IDs grouped as guild_id -> parent_channel_id -> sorted thread ids.
+	Guilds              []dto.Guild                      `json:"guilds"`
+	GuildEmojis         map[int64][]dto.EmojiRef         `json:"guild_emojis"`
+	Mentions            map[int64][]model.Mention        `json:"mentions,omitempty"`
+	ChannelMentions     map[int64][]model.ChannelMention `json:"channel_mentions,omitempty"`
 }
 
 func modelToSettings(m *model.UserSettings, guilds []dto.Guild, guildEmojis map[int64][]dto.EmojiRef, rs map[int64]int64, glms map[int64]map[int64]int64) (UserSettingsResponse, error) {
@@ -130,14 +133,114 @@ func modelToSettings(m *model.UserSettings, guilds []dto.Guild, guildEmojis map[
 		}
 	}
 	return UserSettingsResponse{
-		Version:            m.Version,
-		Settings:           &settings,
-		ContentHosts:       nil,
-		ReadStates:         rs,
-		GuildsLastMessages: glms,
-		Guilds:             guilds,
-		GuildEmojis:        guildEmojis,
+		Version:             m.Version,
+		Settings:            &settings,
+		ContentHosts:        nil,
+		ReadStates:          rs,
+		GuildsLastMessages:  glms,
+		ThreadsLastMessages: map[int64]int64{},
+		JoinedThreads:       map[int64]map[int64][]int64{},
+		Guilds:              guilds,
+		GuildEmojis:         guildEmojis,
 	}, nil
+}
+
+func filterGuildLastMessages(glms map[int64]map[int64]int64, channels []model.Channel) map[int64]map[int64]int64 {
+	if len(glms) == 0 || len(channels) == 0 {
+		return map[int64]map[int64]int64{}
+	}
+
+	allowedChannels := make(map[int64]struct{}, len(channels))
+	for _, channel := range channels {
+		if channel.Type == model.ChannelTypeThread {
+			continue
+		}
+		allowedChannels[channel.Id] = struct{}{}
+	}
+
+	filtered := make(map[int64]map[int64]int64, len(glms))
+	for guildID, channelMessages := range glms {
+		for channelID, lastMessageID := range channelMessages {
+			if _, ok := allowedChannels[channelID]; !ok {
+				continue
+			}
+			if filtered[guildID] == nil {
+				filtered[guildID] = make(map[int64]int64)
+			}
+			filtered[guildID][channelID] = lastMessageID
+		}
+	}
+
+	return filtered
+}
+
+func filterThreadLastMessages(joined map[int64]struct{}, channels []model.Channel, glms map[int64]map[int64]int64) map[int64]int64 {
+	if len(joined) == 0 || len(channels) == 0 || len(glms) == 0 {
+		return map[int64]int64{}
+	}
+
+	liveThreads := make(map[int64]struct{}, len(joined))
+	for _, channel := range channels {
+		if channel.Type != model.ChannelTypeThread {
+			continue
+		}
+		if _, ok := joined[channel.Id]; ok {
+			liveThreads[channel.Id] = struct{}{}
+		}
+	}
+
+	out := make(map[int64]int64, len(liveThreads))
+	for _, channelMessages := range glms {
+		for channelID, lastMessageID := range channelMessages {
+			if _, ok := liveThreads[channelID]; !ok {
+				continue
+			}
+			out[channelID] = lastMessageID
+		}
+	}
+	return out
+}
+
+func buildJoinedThreads(joined map[int64]struct{}, channels []model.Channel, guildChannels []model.GuildChannel) map[int64]map[int64][]int64 {
+	if len(joined) == 0 || len(channels) == 0 || len(guildChannels) == 0 {
+		return map[int64]map[int64][]int64{}
+	}
+
+	guildByChannel := make(map[int64]int64, len(guildChannels))
+	for _, guildChannel := range guildChannels {
+		guildByChannel[guildChannel.ChannelId] = guildChannel.GuildId
+	}
+
+	out := make(map[int64]map[int64][]int64)
+	for _, channel := range channels {
+		if channel.Type != model.ChannelTypeThread || channel.ParentID == nil {
+			continue
+		}
+		if _, ok := joined[channel.Id]; !ok {
+			continue
+		}
+		guildID, ok := guildByChannel[channel.Id]
+		if !ok {
+			continue
+		}
+		if out[guildID] == nil {
+			out[guildID] = make(map[int64][]int64)
+		}
+		parentID := *channel.ParentID
+		out[guildID][parentID] = append(out[guildID][parentID], channel.Id)
+	}
+
+	for guildID, channelsMap := range out {
+		for parentID, threads := range channelsMap {
+			sort.Slice(threads, func(i, j int) bool {
+				return threads[i] < threads[j]
+			})
+			channelsMap[parentID] = threads
+		}
+		out[guildID] = channelsMap
+	}
+
+	return out
 }
 
 func modelToUser(m model.User) dto.User {

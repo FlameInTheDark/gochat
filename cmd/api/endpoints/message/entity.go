@@ -28,6 +28,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/role"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/threadmember"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/embedmq"
@@ -40,6 +41,7 @@ const entityName = "message"
 
 func (e *entity) Init(router fiber.Router) {
 	router.Post("/channel/:channel_id<int>", e.Send)
+	router.Post("/channel/:channel_id<int>/:message_id<int>/thread", e.CreateThread)
 	router.Post("/channel/:channel_id<int>/attachment", e.Attachment)
 	router.Patch("/channel/:channel_id<int>/:message_id<int>", e.Update)
 	router.Delete("/channel/:channel_id<int>/:message_id<int>", e.Delete)
@@ -78,6 +80,7 @@ type entity struct {
 	rperm   channelroleperm.ChannelRolePerm
 	role    role.Role
 	ur      userrole.UserRole
+	tm      threadmember.ThreadMember
 	rs      readstates.ReadStates
 	gclm    guildchannelmessages.GuildChannelMessages
 	av      avatar.Avatar
@@ -117,6 +120,7 @@ func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ
 		rperm:       channelroleperm.New(pg.Conn()),
 		role:        role.New(pg.Conn()),
 		ur:          userrole.New(pg.Conn()),
+		tm:          threadmember.New(pg.Conn()),
 		rs:          readstates.New(cql),
 		gclm:        guildchannelmessages.New(cql),
 		mention:     mention.New(cql),

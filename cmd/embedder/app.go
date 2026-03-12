@@ -188,6 +188,7 @@ func (a *App) persistAndPublish(ctx context.Context, request embedmq.MakeEmbedRe
 		ChannelId:   currentMessage.ChannelId,
 		Author:      author,
 		Content:     currentMessage.Content,
+		Position:    optionalInt64(currentMessage.Position),
 		Attachments: request.Message.Attachments,
 		Embeds:      embed.MergeEmbeds(manualEmbeds, generatedEmbeds),
 		Flags:       flags,
@@ -219,4 +220,12 @@ func (a *App) Close() error {
 		_ = a.db.Close()
 	}
 	return nil
+}
+
+func optionalInt64(value int64) *int64 {
+	if value == 0 {
+		return nil
+	}
+	v := value
+	return &v
 }

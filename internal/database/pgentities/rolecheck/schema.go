@@ -64,8 +64,14 @@ func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int
 		if channel.ParentID == nil {
 			return nil, nil, nil, false, fmt.Errorf("thread channel has no parent")
 		}
-		// Recursively check permissions on the parent channel
-		return e.ChannelPerm(ctx, guildID, *channel.ParentID, userID, perm...)
+		parentChannel, gc, guild, ok, err := e.ChannelPerm(ctx, guildID, *channel.ParentID, userID, perm...)
+		if err != nil || !ok {
+			return nil, gc, guild, ok, err
+		}
+		if parentChannel == nil {
+			return nil, gc, guild, ok, nil
+		}
+		return &channel, gc, guild, true, nil
 
 	default:
 		// For guild channels, check specific permissions

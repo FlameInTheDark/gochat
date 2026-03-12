@@ -421,11 +421,23 @@ export interface DtoAvatarUpload {
  */
 export interface DtoChannel {
     /**
+     * Whether the thread is closed for new messages.
+     * @type {boolean}
+     * @memberof DtoChannel
+     */
+    'closed'?: boolean;
+    /**
      * Timestamp of channel creation
      * @type {string}
      * @memberof DtoChannel
      */
     'created_at'?: string;
+    /**
+     * For threads: user who created the thread
+     * @type {number}
+     * @memberof DtoChannel
+     */
+    'creator_id'?: number;
     /**
      * Guild ID channel was created in
      * @type {number}
@@ -444,6 +456,24 @@ export interface DtoChannel {
      * @memberof DtoChannel
      */
     'last_message_id'?: number;
+    /**
+     * For threads: current user\'s membership state when returned via HTTP.
+     * @type {DtoThreadMember}
+     * @memberof DtoChannel
+     */
+    'member'?: DtoThreadMember;
+    /**
+     * For threads: IDs of users who have joined the thread.
+     * @type {Array<number>}
+     * @memberof DtoChannel
+     */
+    'member_ids'?: Array<number>;
+    /**
+     * For threads: approximate stored message count.
+     * @type {number}
+     * @memberof DtoChannel
+     */
+    'message_count'?: number;
     /**
      * Channel name, without spaces
      * @type {string}
@@ -878,6 +908,42 @@ export interface DtoMessage {
      */
     'id'?: number;
     /**
+     * Ephemeral client correlation token echoed only to the author.
+     * @type {string}
+     * @memberof DtoMessage
+     */
+    'nonce'?: string;
+    /**
+     * Monotonic channel-local message position used for navigation.
+     * @type {number}
+     * @memberof DtoMessage
+     */
+    'position'?: number;
+    /**
+     * Referenced source message id.
+     * @type {number}
+     * @memberof DtoMessage
+     */
+    'reference'?: number;
+    /**
+     * Channel id of the referenced source message.
+     * @type {number}
+     * @memberof DtoMessage
+     */
+    'reference_channel_id'?: number;
+    /**
+     * Thread metadata when the message is linked to a thread.
+     * @type {DtoChannel}
+     * @memberof DtoMessage
+     */
+    'thread'?: DtoChannel;
+    /**
+     * Thread linked from this message.
+     * @type {number}
+     * @memberof DtoMessage
+     */
+    'thread_id'?: number;
+    /**
      * 
      * @type {number}
      * @memberof DtoMessage
@@ -932,6 +998,31 @@ export interface DtoRole {
      * @memberof DtoRole
      */
     'position'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DtoThreadMember
+ */
+export interface DtoThreadMember {
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoThreadMember
+     */
+    'flags'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoThreadMember
+     */
+    'join_timestamp'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoThreadMember
+     */
+    'user_id'?: number;
 }
 /**
  * 
@@ -1552,6 +1643,12 @@ export interface GuildPatchGuildChannelOrderRequest {
  */
 export interface GuildPatchGuildChannelRequest {
     /**
+     * Whether the thread is closed for new messages.
+     * @type {boolean}
+     * @memberof GuildPatchGuildChannelRequest
+     */
+    'closed'?: boolean;
+    /**
      * Channel name.
      * @type {string}
      * @memberof GuildPatchGuildChannelRequest
@@ -1725,6 +1822,49 @@ export interface GuildUpdateGuildRequest {
 /**
  * 
  * @export
+ * @interface MessageCreateThreadRequest
+ */
+export interface MessageCreateThreadRequest {
+    /**
+     * IDs of attached files uploaded to the parent channel before thread creation.
+     * @type {Array<number>}
+     * @memberof MessageCreateThreadRequest
+     */
+    'attachments'?: Array<number>;
+    /**
+     * First thread message content.
+     * @type {string}
+     * @memberof MessageCreateThreadRequest
+     */
+    'content'?: string;
+    /**
+     * Manual embeds for the first thread message.
+     * @type {Array<EmbedEmbed>}
+     * @memberof MessageCreateThreadRequest
+     */
+    'embeds'?: Array<EmbedEmbed>;
+    /**
+     * IDs of mentioned users.
+     * @type {Array<number>}
+     * @memberof MessageCreateThreadRequest
+     */
+    'mentions'?: Array<number>;
+    /**
+     * Optional explicit thread name.
+     * @type {string}
+     * @memberof MessageCreateThreadRequest
+     */
+    'name'?: string;
+    /**
+     * Optional client correlation token for the starter message event.
+     * @type {string}
+     * @memberof MessageCreateThreadRequest
+     */
+    'nonce'?: string;
+}
+/**
+ * 
+ * @export
  * @interface MessageSendMessageRequest
  */
 export interface MessageSendMessageRequest {
@@ -1747,11 +1887,29 @@ export interface MessageSendMessageRequest {
      */
     'embeds'?: Array<EmbedEmbed>;
     /**
+     * When true, deduplicates sends with the same nonce in the same channel for a short window.
+     * @type {boolean}
+     * @memberof MessageSendMessageRequest
+     */
+    'enforce_nonce'?: boolean;
+    /**
      * IDs of mentioned users
      * @type {Array<number>}
      * @memberof MessageSendMessageRequest
      */
     'mentions'?: Array<number>;
+    /**
+     * Optional client correlation token echoed back to the author.
+     * @type {string}
+     * @memberof MessageSendMessageRequest
+     */
+    'nonce'?: string;
+    /**
+     * Referenced message ID in the same channel. When set, the new message is stored as type 1 (Reply).
+     * @type {number}
+     * @memberof MessageSendMessageRequest
+     */
+    'reference'?: number;
 }
 /**
  * 
@@ -2619,6 +2777,12 @@ export interface UserUserSettingsResponse {
      */
     'guilds_last_messages'?: { [key: string]: { [key: string]: number; }; };
     /**
+     * Joined thread IDs grouped as guild_id -> parent_channel_id -> sorted thread ids.
+     * @type {{ [key: string]: { [key: string]: Array<number>; }; }}
+     * @memberof UserUserSettingsResponse
+     */
+    'joined_threads'?: { [key: string]: { [key: string]: Array<number>; }; };
+    /**
      * 
      * @type {{ [key: string]: Array<ModelMention>; }}
      * @memberof UserUserSettingsResponse
@@ -2636,6 +2800,12 @@ export interface UserUserSettingsResponse {
      * @memberof UserUserSettingsResponse
      */
     'settings'?: ModelUserSettingsData;
+    /**
+     * 
+     * @type {{ [key: string]: number; }}
+     * @memberof UserUserSettingsResponse
+     */
+    'threads_last_messages'?: { [key: string]: number; };
     /**
      * 
      * @type {number}
@@ -3686,6 +3856,120 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Leave thread
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Thread channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdThreadMemberMeDelete: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdThreadMemberMeDelete', 'guildId', guildId)
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdThreadMemberMeDelete', 'channelId', channelId)
+            const localVarPath = `/guild/{guild_id}/channel/{channel_id}/thread-member/me`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Join thread
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Thread channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdThreadMemberMePut: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdThreadMemberMePut', 'guildId', guildId)
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdThreadMemberMePut', 'channelId', channelId)
+            const localVarPath = `/guild/{guild_id}/channel/{channel_id}/thread-member/me`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get channel threads
+         * @param {number} guildId Guild id
+         * @param {number} channelId Channel id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdThreadsGet: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdThreadsGet', 'guildId', guildId)
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('guildGuildIdChannelChannelIdThreadsGet', 'channelId', channelId)
+            const localVarPath = `/guild/{guild_id}/channel/{channel_id}/threads`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get guild channels
          * @param {number} guildId Guild id
          * @param {*} [options] Override http request option.
@@ -4620,6 +4904,48 @@ export const GuildApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Leave thread
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Thread channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdChannelChannelIdThreadMemberMeDelete(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdThreadMemberMeDelete(guildId, channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelChannelIdThreadMemberMeDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Join thread
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Thread channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdChannelChannelIdThreadMemberMePut(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoThreadMember>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdThreadMemberMePut(guildId, channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelChannelIdThreadMemberMePut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get channel threads
+         * @param {number} guildId Guild id
+         * @param {number} channelId Channel id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdChannelChannelIdThreadsGet(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoChannel>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdChannelChannelIdThreadsGet(guildId, channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdChannelChannelIdThreadsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Get guild channels
          * @param {number} guildId Guild id
          * @param {*} [options] Override http request option.
@@ -4994,6 +5320,36 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
         },
         /**
          * 
+         * @summary Leave thread
+         * @param {GuildApiGuildGuildIdChannelChannelIdThreadMemberMeDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdThreadMemberMeDelete(requestParameters: GuildApiGuildGuildIdChannelChannelIdThreadMemberMeDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.guildGuildIdChannelChannelIdThreadMemberMeDelete(requestParameters.guildId, requestParameters.channelId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Join thread
+         * @param {GuildApiGuildGuildIdChannelChannelIdThreadMemberMePutRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdThreadMemberMePut(requestParameters: GuildApiGuildGuildIdChannelChannelIdThreadMemberMePutRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoThreadMember> {
+            return localVarFp.guildGuildIdChannelChannelIdThreadMemberMePut(requestParameters.guildId, requestParameters.channelId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get channel threads
+         * @param {GuildApiGuildGuildIdChannelChannelIdThreadsGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdChannelChannelIdThreadsGet(requestParameters: GuildApiGuildGuildIdChannelChannelIdThreadsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoChannel>> {
+            return localVarFp.guildGuildIdChannelChannelIdThreadsGet(requestParameters.guildId, requestParameters.channelId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Get guild channels
          * @param {GuildApiGuildGuildIdChannelGetRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -5280,6 +5636,36 @@ export interface GuildApiInterface {
      * @memberof GuildApiInterface
      */
     guildGuildIdChannelChannelIdPatch(requestParameters: GuildApiGuildGuildIdChannelChannelIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoChannel>;
+
+    /**
+     * 
+     * @summary Leave thread
+     * @param {GuildApiGuildGuildIdChannelChannelIdThreadMemberMeDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdChannelChannelIdThreadMemberMeDelete(requestParameters: GuildApiGuildGuildIdChannelChannelIdThreadMemberMeDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Join thread
+     * @param {GuildApiGuildGuildIdChannelChannelIdThreadMemberMePutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdChannelChannelIdThreadMemberMePut(requestParameters: GuildApiGuildGuildIdChannelChannelIdThreadMemberMePutRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoThreadMember>;
+
+    /**
+     * 
+     * @summary Get channel threads
+     * @param {GuildApiGuildGuildIdChannelChannelIdThreadsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdChannelChannelIdThreadsGet(requestParameters: GuildApiGuildGuildIdChannelChannelIdThreadsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoChannel>>;
 
     /**
      * 
@@ -5627,6 +6013,69 @@ export interface GuildApiGuildGuildIdChannelChannelIdPatchRequest {
      * @memberof GuildApiGuildGuildIdChannelChannelIdPatch
      */
     readonly req: GuildPatchGuildChannelRequest
+}
+
+/**
+ * Request parameters for guildGuildIdChannelChannelIdThreadMemberMeDelete operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdChannelChannelIdThreadMemberMeDeleteRequest
+ */
+export interface GuildApiGuildGuildIdChannelChannelIdThreadMemberMeDeleteRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdChannelChannelIdThreadMemberMeDelete
+     */
+    readonly guildId: number
+
+    /**
+     * Thread channel ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdChannelChannelIdThreadMemberMeDelete
+     */
+    readonly channelId: number
+}
+
+/**
+ * Request parameters for guildGuildIdChannelChannelIdThreadMemberMePut operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdChannelChannelIdThreadMemberMePutRequest
+ */
+export interface GuildApiGuildGuildIdChannelChannelIdThreadMemberMePutRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdChannelChannelIdThreadMemberMePut
+     */
+    readonly guildId: number
+
+    /**
+     * Thread channel ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdChannelChannelIdThreadMemberMePut
+     */
+    readonly channelId: number
+}
+
+/**
+ * Request parameters for guildGuildIdChannelChannelIdThreadsGet operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdChannelChannelIdThreadsGetRequest
+ */
+export interface GuildApiGuildGuildIdChannelChannelIdThreadsGetRequest {
+    /**
+     * Guild id
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdChannelChannelIdThreadsGet
+     */
+    readonly guildId: number
+
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdChannelChannelIdThreadsGet
+     */
+    readonly channelId: number
 }
 
 /**
@@ -6140,6 +6589,42 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      */
     public guildGuildIdChannelChannelIdPatch(requestParameters: GuildApiGuildGuildIdChannelChannelIdPatchRequest, options?: RawAxiosRequestConfig) {
         return GuildApiFp(this.configuration).guildGuildIdChannelChannelIdPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.req, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Leave thread
+     * @param {GuildApiGuildGuildIdChannelChannelIdThreadMemberMeDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdChannelChannelIdThreadMemberMeDelete(requestParameters: GuildApiGuildGuildIdChannelChannelIdThreadMemberMeDeleteRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdChannelChannelIdThreadMemberMeDelete(requestParameters.guildId, requestParameters.channelId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Join thread
+     * @param {GuildApiGuildGuildIdChannelChannelIdThreadMemberMePutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdChannelChannelIdThreadMemberMePut(requestParameters: GuildApiGuildGuildIdChannelChannelIdThreadMemberMePutRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdChannelChannelIdThreadMemberMePut(requestParameters.guildId, requestParameters.channelId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get channel threads
+     * @param {GuildApiGuildGuildIdChannelChannelIdThreadsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdChannelChannelIdThreadsGet(requestParameters: GuildApiGuildGuildIdChannelChannelIdThreadsGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdChannelChannelIdThreadsGet(requestParameters.guildId, requestParameters.channelId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -8682,6 +9167,50 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Create thread from message
+         * @param {number} channelId Parent channel id
+         * @param {number} messageId Source message id
+         * @param {MessageCreateThreadRequest} request Thread data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdMessageIdThreadPost: async (channelId: number, messageId: number, request: MessageCreateThreadRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdThreadPost', 'channelId', channelId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdThreadPost', 'messageId', messageId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdThreadPost', 'request', request)
+            const localVarPath = `/message/channel/{channel_id}/{message_id}/thread`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"message_id"}}`, encodeURIComponent(String(messageId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Send message
          * @param {number} channelId Channel id
          * @param {MessageSendMessageRequest} request Message data
@@ -8839,6 +9368,21 @@ export const MessageApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Create thread from message
+         * @param {number} channelId Parent channel id
+         * @param {number} messageId Source message id
+         * @param {MessageCreateThreadRequest} request Thread data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async messageChannelChannelIdMessageIdThreadPost(channelId: number, messageId: number, request: MessageCreateThreadRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdMessageIdThreadPost(channelId, messageId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdMessageIdThreadPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Send message
          * @param {number} channelId Channel id
          * @param {MessageSendMessageRequest} request Message data
@@ -8926,6 +9470,16 @@ export const MessageApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
+         * @summary Create thread from message
+         * @param {MessageApiMessageChannelChannelIdMessageIdThreadPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdMessageIdThreadPost(requestParameters: MessageApiMessageChannelChannelIdMessageIdThreadPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoChannel> {
+            return localVarFp.messageChannelChannelIdMessageIdThreadPost(requestParameters.channelId, requestParameters.messageId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Send message
          * @param {MessageApiMessageChannelChannelIdPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -9002,6 +9556,16 @@ export interface MessageApiInterface {
      * @memberof MessageApiInterface
      */
     messageChannelChannelIdMessageIdPatch(requestParameters: MessageApiMessageChannelChannelIdMessageIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessage>;
+
+    /**
+     * 
+     * @summary Create thread from message
+     * @param {MessageApiMessageChannelChannelIdMessageIdThreadPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApiInterface
+     */
+    messageChannelChannelIdMessageIdThreadPost(requestParameters: MessageApiMessageChannelChannelIdMessageIdThreadPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoChannel>;
 
     /**
      * 
@@ -9152,6 +9716,34 @@ export interface MessageApiMessageChannelChannelIdMessageIdPatchRequest {
 }
 
 /**
+ * Request parameters for messageChannelChannelIdMessageIdThreadPost operation in MessageApi.
+ * @export
+ * @interface MessageApiMessageChannelChannelIdMessageIdThreadPostRequest
+ */
+export interface MessageApiMessageChannelChannelIdMessageIdThreadPostRequest {
+    /**
+     * Parent channel id
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdThreadPost
+     */
+    readonly channelId: number
+
+    /**
+     * Source message id
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdThreadPost
+     */
+    readonly messageId: number
+
+    /**
+     * Thread data
+     * @type {MessageCreateThreadRequest}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdThreadPost
+     */
+    readonly request: MessageCreateThreadRequest
+}
+
+/**
  * Request parameters for messageChannelChannelIdPost operation in MessageApi.
  * @export
  * @interface MessageApiMessageChannelChannelIdPostRequest
@@ -9251,6 +9843,18 @@ export class MessageApi extends BaseAPI implements MessageApiInterface {
      */
     public messageChannelChannelIdMessageIdPatch(requestParameters: MessageApiMessageChannelChannelIdMessageIdPatchRequest, options?: RawAxiosRequestConfig) {
         return MessageApiFp(this.configuration).messageChannelChannelIdMessageIdPatch(requestParameters.messageId, requestParameters.channelId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Create thread from message
+     * @param {MessageApiMessageChannelChannelIdMessageIdThreadPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApi
+     */
+    public messageChannelChannelIdMessageIdThreadPost(requestParameters: MessageApiMessageChannelChannelIdMessageIdThreadPostRequest, options?: RawAxiosRequestConfig) {
+        return MessageApiFp(this.configuration).messageChannelChannelIdMessageIdThreadPost(requestParameters.channelId, requestParameters.messageId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

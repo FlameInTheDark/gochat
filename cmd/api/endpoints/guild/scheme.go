@@ -84,6 +84,8 @@ const (
 	ErrChannelNameTooShort = "channel name must be at least 2 characters"
 	ErrChannelNameTooLong  = "channel name must be less than 100 characters"
 	ErrChannelNameInvalid  = "channel name can only contain letters, numbers, hyphens, and underscores"
+	ErrThreadNameTooLong   = "thread name must be 256 characters or fewer"
+	ErrThreadNameRequired  = "thread name is required"
 	ErrChannelTypeInvalid  = "invalid channel type"
 	ErrIconIdInvalid       = "icon ID must be positive"
 	ErrParentIdInvalid     = "parent ID must be positive"
@@ -100,6 +102,27 @@ const (
 var (
 	channelNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 )
+
+const (
+	maxGuildChannelNameLength = 100
+	maxThreadNameLength       = 256
+)
+
+func validateGuildChannelName(name string) error {
+	return validation.Validate(name,
+		validation.Required.Error(ErrChannelNameRequired),
+		validation.RuneLength(2, 0).Error(ErrChannelNameTooShort),
+		validation.RuneLength(0, maxGuildChannelNameLength).Error(ErrChannelNameTooLong),
+		validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
+	)
+}
+
+func validateThreadChannelName(name string) error {
+	return validation.Validate(name,
+		validation.Required.Error(ErrThreadNameRequired),
+		validation.RuneLength(1, maxThreadNameLength).Error(ErrThreadNameTooLong),
+	)
+}
 
 type CreateGuildRequest struct {
 	Name   string `json:"name" example:"My unique guild"`        // Guild name
@@ -156,12 +179,13 @@ type CreateGuildChannelCategoryRequest struct {
 
 func (r CreateGuildChannelCategoryRequest) Validate() error {
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.Name,
-			validation.Required.Error(ErrChannelNameRequired),
-			validation.RuneLength(2, 0).Error(ErrChannelNameTooShort),
-			validation.RuneLength(0, 100).Error(ErrChannelNameTooLong),
-			validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
-		),
+		validation.Field(&r.Name, validation.By(func(value interface{}) error {
+			name, _ := value.(*string)
+			if name == nil {
+				return validateGuildChannelName("")
+			}
+			return validateGuildChannelName(*name)
+		})),
 	)
 }
 
@@ -175,18 +199,18 @@ type CreateGuildChannelRequest struct {
 
 func (r CreateGuildChannelRequest) Validate() error {
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.Name,
-			validation.Required.Error(ErrChannelNameRequired),
-			validation.RuneLength(2, 0).Error(ErrChannelNameTooShort),
-			validation.RuneLength(0, 100).Error(ErrChannelNameTooLong),
-			validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
-		),
+		validation.Field(&r.Name, validation.By(func(value interface{}) error {
+			name, _ := value.(*string)
+			if name == nil {
+				return validateGuildChannelName("")
+			}
+			return validateGuildChannelName(*name)
+		})),
 		validation.Field(&r.Type,
 			validation.In(
 				model.ChannelTypeGuild,
 				model.ChannelTypeGuildVoice,
 				model.ChannelTypeGuildCategory,
-				model.ChannelTypeThread,
 			).Error(ErrChannelTypeInvalid),
 		),
 		validation.Field(&r.ParentId,
@@ -232,15 +256,14 @@ type PatchGuildChannelRequest struct {
 	Name    *string `json:"name,omitempty" example:"new-channel-name"`      // Channel name.
 	Private *bool   `json:"private,omitempty" default:"false"`              // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
 	Topic   *string `json:"topic,omitempty" example:"Just a channel topic"` // Channel topic.
+	Closed  *bool   `json:"closed,omitempty" default:"false"`               // Whether the thread is closed for new messages.
 }
 
 func (r PatchGuildChannelRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.Name,
 			validation.When(r.Name != nil,
-				validation.RuneLength(2, 0).Error(ErrChannelNameTooShort),
-				validation.RuneLength(0, 100).Error(ErrChannelNameTooLong),
-				validation.Match(channelNameRegex).Error(ErrChannelNameInvalid),
+				validation.RuneLength(1, maxThreadNameLength).Error(ErrThreadNameTooLong),
 			),
 		),
 	)
@@ -283,12 +306,27 @@ type guildContext struct {
 	Member *model.Member
 }
 
+func optionalThreadMessageCount(channel *model.Channel) *int64 {
+	if channel == nil || channel.Type != model.ChannelTypeThread {
+		return nil
+	}
+	count := channel.MessageCount
+	return &count
+}
+
 // DTO conversion functions
 func channelModelToDTO(c *model.Channel, guildId *int64, position int, roles []int64) dto.Channel {
+	return channelModelToDTOWithThreadMember(c, guildId, position, roles, nil, nil)
+}
+
+func channelModelToDTOWithThreadMember(c *model.Channel, guildId *int64, position int, roles []int64, member *dto.ThreadMember, memberIDs []int64) dto.Channel {
 	return dto.Channel{
 		Id:            c.Id,
 		Type:          c.Type,
 		GuildId:       guildId,
+		CreatorId:     c.CreatorID,
+		Member:        member,
+		MemberIds:     memberIDs,
 		Name:          c.Name,
 		ParentId:      c.ParentID,
 		Position:      position,
@@ -296,9 +334,11 @@ func channelModelToDTO(c *model.Channel, guildId *int64, position int, roles []i
 		Permissions:   c.Permissions,
 		CreatedAt:     c.CreatedAt,
 		Private:       c.Private,
+		Closed:        c.Closed,
 		Roles:         roles,
 		VoiceRegion:   c.VoiceRegion,
 		LastMessageId: c.LastMessage,
+		MessageCount:  optionalThreadMessageCount(c),
 	}
 }
 

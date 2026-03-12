@@ -3,16 +3,20 @@ package model
 import "time"
 
 type Channel struct {
-	Id          int64       `db:"id"`
-	Name        string      `db:"name"`
-	Type        ChannelType `db:"type"`
-	ParentID    *int64      `db:"parent_id"`
-	Permissions *int64      `db:"permissions"`
-	Topic       *string     `db:"topic"`
-	VoiceRegion *string     `db:"voice_region"`
-	Private     bool        `db:"private"`
-	LastMessage int64       `db:"last_message"`
-	CreatedAt   time.Time   `db:"created_at"`
+	Id              int64       `db:"id"`
+	Name            string      `db:"name"`
+	Type            ChannelType `db:"type"`
+	ParentID        *int64      `db:"parent_id"`
+	CreatorID       *int64      `db:"creator_id"`
+	Permissions     *int64      `db:"permissions"`
+	Topic           *string     `db:"topic"`
+	VoiceRegion     *string     `db:"voice_region"`
+	Private         bool        `db:"private"`
+	Closed          bool        `db:"closed"`
+	LastMessage     int64       `db:"last_message"`
+	MessageCount    int64       `db:"message_count"`
+	MessagePosition int64       `db:"message_position"`
+	CreatedAt       time.Time   `db:"created_at"`
 }
 
 type ChannelType int

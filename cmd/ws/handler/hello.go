@@ -77,6 +77,9 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 		Id:   ur.user.Id,
 		Name: ur.user.Name,
 	}
+	if h.onAuthenticated != nil {
+		h.onAuthenticated(token.UserID)
+	}
 
 	// Establish or reuse session ID (UUID v4 style). Presence will be set only after client PresenceUpdate.
 	if m.HeartbeatSessionID != "" {

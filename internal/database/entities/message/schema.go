@@ -11,25 +11,36 @@ import (
 )
 
 const (
-	createMessage         = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, attachments, embeds, auto_embeds, flags, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
-	createSystemMessage   = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, flags, type) VALUES (?, ?, ?, ?, ?, 0, ?)`
-	updateMessage         = `UPDATE gochat.messages SET content = ?, embeds = ?, auto_embeds = ?, flags = ?, edited_at = toTimestamp(now()) WHERE channel_id = ? AND id = ? AND bucket = ?`
-	updateGeneratedEmbeds = `UPDATE gochat.messages SET auto_embeds = ? WHERE channel_id = ? AND id = ? AND bucket = ?`
-	deleteMessage         = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id = ?`
-	deleteChannelMessages = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket IN ?`
-	getMessage            = `SELECT id, channel_id, user_id, content, attachments, embeds, auto_embeds, flags, edited_at, type FROM gochat.messages WHERE id = ? AND channel_id = ? AND bucket = ?`
-	getMessagesBefore     = `SELECT id, channel_id, user_id, content, attachments, embeds, auto_embeds, flags, edited_at, type FROM gochat.messages WHERE channel_id = ? AND id <= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
-	getMessagesAfter      = `SELECT id, channel_id, user_id, content, attachments, embeds, auto_embeds, flags, edited_at, type FROM gochat.messages WHERE channel_id = ? AND id >= ? AND bucket = ? ORDER BY id LIMIT ?`
-	getMessagesList       = `SELECT id, channel_id, user_id, content, attachments, embeds, auto_embeds, flags, edited_at, type FROM gochat.messages WHERE id IN ?`
-	getMessagesByIds      = `SELECT id, channel_id, user_id, content, attachments, embeds, auto_embeds, flags, edited_at, type FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id IN ?;
+	createMessage                 = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, position, attachments, embeds, auto_embeds, flags, type, reference_channel, reference, thread) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	createSystemMessage           = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, position, flags, type) VALUES (?, ?, ?, ?, ?, ?, 0, ?)`
+	claimThread                   = `INSERT INTO gochat.message_threads (channel_id, message_id, thread_id) VALUES (?, ?, ?) IF NOT EXISTS`
+	createThreadCreatedMessageRef = `INSERT INTO gochat.thread_created_messages (thread_id, channel_id, message_id) VALUES (?, ?, ?)`
+	deleteThreadCreatedMessageRef = `DELETE FROM gochat.thread_created_messages WHERE thread_id = ?`
+	getThreadCreatedMessageRef    = `SELECT channel_id, message_id FROM gochat.thread_created_messages WHERE thread_id = ?`
+	releaseThreadClaim            = `DELETE FROM gochat.message_threads WHERE channel_id = ? AND message_id = ?`
+	setThread                     = `UPDATE gochat.messages SET thread = ? WHERE channel_id = ? AND id = ? AND bucket = ?`
+	updateMessageContent          = `UPDATE gochat.messages SET content = ? WHERE channel_id = ? AND id = ? AND bucket = ?`
+	updateMessage                 = `UPDATE gochat.messages SET content = ?, embeds = ?, auto_embeds = ?, flags = ?, edited_at = toTimestamp(now()) WHERE channel_id = ? AND id = ? AND bucket = ?`
+	updateGeneratedEmbeds         = `UPDATE gochat.messages SET auto_embeds = ? WHERE channel_id = ? AND id = ? AND bucket = ?`
+	deleteMessage                 = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id = ?`
+	deleteChannelMessages         = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket IN ?`
+	getMessage                    = `SELECT id, channel_id, user_id, content, position, attachments, embeds, auto_embeds, flags, edited_at, type, reference_channel, reference, thread FROM gochat.messages WHERE id = ? AND channel_id = ? AND bucket = ?`
+	getMessagesBefore             = `SELECT id, channel_id, user_id, content, position, attachments, embeds, auto_embeds, flags, edited_at, type, reference_channel, reference, thread FROM gochat.messages WHERE channel_id = ? AND id <= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
+	getMessagesAfter              = `SELECT id, channel_id, user_id, content, position, attachments, embeds, auto_embeds, flags, edited_at, type, reference_channel, reference, thread FROM gochat.messages WHERE channel_id = ? AND id >= ? AND bucket = ? ORDER BY id LIMIT ?`
+	getMessagesList               = `SELECT id, channel_id, user_id, content, position, attachments, embeds, auto_embeds, flags, edited_at, type, reference_channel, reference, thread FROM gochat.messages WHERE id IN ?`
+	getMessagesByIds              = `SELECT id, channel_id, user_id, content, position, attachments, embeds, auto_embeds, flags, edited_at, type, reference_channel, reference, thread FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id IN ?;
 `
 )
 
-func (e *Entity) CreateMessage(ctx context.Context, id, channelID, userID int64, content string, attachments []int64, embedsJSON, autoEmbedsJSON string) error {
+func (e *Entity) CreateMessage(ctx context.Context, id, channelID, userID int64, content string, attachments []int64, embedsJSON, autoEmbedsJSON string, position int64) error {
+	return e.CreateMessageWithMeta(ctx, id, channelID, userID, content, attachments, embedsJSON, autoEmbedsJSON, 0, model.MessageTypeChat, 0, 0, 0, position)
+}
+
+func (e *Entity) CreateMessageWithMeta(ctx context.Context, id, channelID, userID int64, content string, attachments []int64, embedsJSON, autoEmbedsJSON string, flags int, msgType model.MessageType, referenceChannel, reference, thread, position int64) error {
 	err := e.c.Session().
 		Query(createMessage).
 		WithContext(ctx).
-		Bind(channelID, idgen.GetBucket(id), id, userID, content, attachments, embedsJSON, autoEmbedsJSON, 0).
+		Bind(channelID, idgen.GetBucket(id), id, userID, content, position, attachments, embedsJSON, autoEmbedsJSON, flags, int(msgType), referenceChannel, reference, thread).
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to create message: %w", err)
@@ -37,14 +48,119 @@ func (e *Entity) CreateMessage(ctx context.Context, id, channelID, userID int64,
 	return nil
 }
 
-func (e *Entity) CreateSystemMessage(ctx context.Context, id, channelID, userID int64, content string, msgType model.MessageType) error {
+func (e *Entity) CreateSystemMessage(ctx context.Context, id, channelID, userID int64, content string, msgType model.MessageType, position int64) error {
 	err := e.c.Session().
 		Query(createSystemMessage).
 		WithContext(ctx).
-		Bind(channelID, idgen.GetBucket(id), id, userID, content, int(msgType)).
+		Bind(channelID, idgen.GetBucket(id), id, userID, content, position, int(msgType)).
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to create message: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) CreateThreadCreatedMessageRef(ctx context.Context, threadID, channelID, messageID int64) error {
+	err := e.c.Session().
+		Query(createThreadCreatedMessageRef).
+		WithContext(ctx).
+		Bind(threadID, channelID, messageID).
+		Exec()
+	if err != nil {
+		return fmt.Errorf("unable to create thread-created message ref: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) ClaimThread(ctx context.Context, channelID, messageID, threadID int64) (bool, int64, error) {
+	result := make(map[string]interface{})
+	applied, err := e.c.Session().
+		Query(claimThread).
+		WithContext(ctx).
+		Bind(channelID, messageID, threadID).
+		MapScanCAS(result)
+	if err != nil {
+		return false, 0, fmt.Errorf("unable to claim message thread: %w", err)
+	}
+	if applied {
+		return true, threadID, nil
+	}
+
+	var currentThread int64
+	switch value := result["thread_id"].(type) {
+	case nil:
+		currentThread = 0
+	case int64:
+		currentThread = value
+	case int:
+		currentThread = int64(value)
+	case int32:
+		currentThread = int64(value)
+	default:
+		return false, 0, fmt.Errorf("unexpected thread CAS value type %T", value)
+	}
+
+	return false, currentThread, nil
+}
+
+func (e *Entity) DeleteThreadCreatedMessageRef(ctx context.Context, threadID int64) error {
+	err := e.c.Session().
+		Query(deleteThreadCreatedMessageRef).
+		WithContext(ctx).
+		Bind(threadID).
+		Exec()
+	if err != nil {
+		return fmt.Errorf("unable to delete thread-created message ref: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) ReleaseThreadClaim(ctx context.Context, channelID, messageID int64) error {
+	err := e.c.Session().
+		Query(releaseThreadClaim).
+		WithContext(ctx).
+		Bind(channelID, messageID).
+		Exec()
+	if err != nil {
+		return fmt.Errorf("unable to release message thread claim: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) GetThreadCreatedMessageRef(ctx context.Context, threadID int64) (int64, int64, error) {
+	var channelID int64
+	var messageID int64
+	err := e.c.Session().
+		Query(getThreadCreatedMessageRef).
+		WithContext(ctx).
+		Bind(threadID).
+		Scan(&channelID, &messageID)
+	if err != nil {
+		return 0, 0, fmt.Errorf("unable to get thread-created message ref: %w", err)
+	}
+	return channelID, messageID, nil
+}
+
+func (e *Entity) SetThread(ctx context.Context, id, channelID, threadID int64) error {
+	err := e.c.Session().
+		Query(setThread).
+		WithContext(ctx).
+		Bind(threadID, channelID, id, idgen.GetBucket(id)).
+		Exec()
+	if err != nil {
+		return fmt.Errorf("unable to set message thread: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) UpdateMessageContent(ctx context.Context, id, channelID int64, content string) error {
+	err := e.c.Session().
+		Query(updateMessageContent).
+		WithContext(ctx).
+		Bind(content, channelID, id, idgen.GetBucket(id)).
+		Exec()
+	if err != nil {
+		return fmt.Errorf("unable to update message content: %w", err)
 	}
 	return nil
 }
@@ -109,7 +225,7 @@ func (e *Entity) GetMessage(ctx context.Context, id, channelID int64) (model.Mes
 		Query(getMessage).
 		WithContext(ctx).
 		Bind(id, channelID, idgen.GetBucket(id)).
-		Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type)
+		Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Position, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type, &m.ReferenceChannel, &m.Reference, &m.Thread)
 	if err != nil {
 		return m, fmt.Errorf("unable to get message: %w", err)
 	}
@@ -131,7 +247,7 @@ func (e *Entity) GetMessagesBefore(ctx context.Context, channelID, msgID int64, 
 			Bind(channelID, msgID, lastBucket, limit-len(msgs)).
 			Iter()
 		var m model.Message
-		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type) {
+		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Position, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type, &m.ReferenceChannel, &m.Reference, &m.Thread) {
 			msgs = append(msgs, cloneMessageRow(m))
 			users[m.UserId] = true
 		}
@@ -165,7 +281,7 @@ func (e *Entity) GetMessagesAfter(ctx context.Context, channelID, msgID, lastCha
 			Bind(channelID, msgID, lastBucket, limit-len(msgs)).
 			Iter()
 		var m model.Message
-		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type) {
+		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Position, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type, &m.ReferenceChannel, &m.Reference, &m.Thread) {
 			msgs = append(msgs, cloneMessageRow(m))
 			users[m.UserId] = true
 		}
@@ -213,7 +329,7 @@ func (e *Entity) GetMessagesList(ctx context.Context, msgIDs []int64) ([]model.M
 		Bind(msgIDs).
 		Iter()
 	var m model.Message
-	for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type) {
+	for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Position, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type, &m.ReferenceChannel, &m.Reference, &m.Thread) {
 		msgs = append(msgs, cloneMessageRow(m))
 	}
 	if err := iter.Close(); err != nil {
@@ -256,7 +372,7 @@ func (e *Entity) GetChannelMessagesByIDs(ctx context.Context, channelID int64, i
 				Iter()
 
 			var m model.Message
-			for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type) {
+			for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Position, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type, &m.ReferenceChannel, &m.Reference, &m.Thread) {
 				results = append(results, cloneMessageRow(m))
 			}
 			if err := iter.Close(); err != nil {

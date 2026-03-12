@@ -2,6 +2,7 @@ package message
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/FlameInTheDark/gochat/internal/embed"
 	"github.com/FlameInTheDark/gochat/internal/helper"
@@ -29,6 +30,15 @@ const (
 	ErrUnableToSetReadState         = "unable to set read state"
 	ErrUnableToSendTypingEvent      = "unable to send typing event"
 	ErrInvalidAttachments           = "invalid attachments"
+	ErrUnableToCreateThread         = "unable to create thread"
+	ErrThreadClosed                 = "thread is closed"
+	ErrThreadSourceInvalid          = "threads can only be created from guild text channel messages"
+	ErrThreadNestingForbidden       = "cannot create a thread inside a thread"
+	ErrThreadAlreadyExists          = "thread already exists for this message"
+	ErrThreadNameTooLong            = "thread name must be 256 characters or fewer"
+	ErrMessageNotEditable           = "message type cannot be edited"
+	ErrNonceRequiredWithEnforce     = "nonce is required when enforce_nonce is true"
+	ErrReferenceIdInvalid           = "reference ID must be positive"
 
 	// Validation error messages
 	ErrMessagePayloadRequired = "message content, attachments, or embeds are required"
@@ -47,30 +57,66 @@ const (
 	ErrFlagsInvalid           = "flags must be non-negative"
 )
 
+const (
+	maxThreadNameLength = 256
+)
+
 type SendMessageRequest struct {
-	Content     string                  `json:"content" example:"Hello world!"`            // Message content
-	Attachments helper.StringInt64Array `json:"attachments" example:"2230469276416868352"` // IDs of attached files
-	Mentions    helper.StringInt64Array `json:"mentions" example:"2230469276416868352"`    // IDs of mentioned users
-	Embeds      []embed.Embed           `json:"embeds,omitempty"`                          // Manual embeds supplied by the client. These are stored separately from generated URL embeds.
+	Content      string                  `json:"content" example:"Hello world!"`                                          // Message content
+	Nonce        *helper.MessageNonce    `json:"nonce,omitempty" swaggertype:"string" example:"draft-1"`                  // Optional client correlation token echoed back to the author.
+	EnforceNonce bool                    `json:"enforce_nonce,omitempty"`                                                 // When true, deduplicates sends with the same nonce in the same channel for a short window.
+	Reference    *helper.StringInt64     `json:"reference,omitempty" swaggertype:"integer" example:"2230469276416868352"` // Referenced message ID in the same channel. When set, the new message is stored as type 1 (Reply).
+	Attachments  helper.StringInt64Array `json:"attachments" example:"2230469276416868352"`                               // IDs of attached files
+	Mentions     helper.StringInt64Array `json:"mentions" example:"2230469276416868352"`                                  // IDs of mentioned users
+	Embeds       []embed.Embed           `json:"embeds,omitempty"`                                                        // Manual embeds supplied by the client. These are stored separately from generated URL embeds.
 }
 
 func (r SendMessageRequest) Validate() error {
-	if err := validation.ValidateStruct(&r,
-		validation.Field(&r.Content,
-			validation.When(len(r.Attachments) == 0 && len(r.Embeds) == 0, validation.Required.Error(ErrMessagePayloadRequired)),
-			validation.RuneLength(0, 2000).Error(ErrMessageContentTooLong),
-		),
-		validation.Field(&r.Attachments,
-			validation.Each(validation.Min(int64(1)).Error(ErrAttachmentIdInvalid)),
-		),
-		validation.Field(&r.Mentions,
-			validation.Each(validation.Min(int64(1)).Error(ErrMentionIdInvalid)),
-		),
-	); err != nil {
+	if r.EnforceNonce && (r.Nonce == nil || r.Nonce.IsZero()) {
+		return errors.New(ErrNonceRequiredWithEnforce)
+	}
+	if r.Reference != nil && int64(*r.Reference) < 1 {
+		return errors.New(ErrReferenceIdInvalid)
+	}
+	return validateMessagePayload(r.Content, r.Attachments, r.Mentions, r.Embeds)
+}
+
+type CreateThreadRequest struct {
+	Name        string                  `json:"name,omitempty" example:"Thread title"`                  // Optional explicit thread name.
+	Content     string                  `json:"content" example:"Hello from thread!"`                   // First thread message content.
+	Nonce       *helper.MessageNonce    `json:"nonce,omitempty" swaggertype:"string" example:"draft-1"` // Optional client correlation token for the starter message event.
+	Attachments helper.StringInt64Array `json:"attachments" example:"2230469276416868352"`              // IDs of attached files uploaded to the parent channel before thread creation.
+	Mentions    helper.StringInt64Array `json:"mentions" example:"2230469276416868352"`                 // IDs of mentioned users.
+	Embeds      []embed.Embed           `json:"embeds,omitempty"`                                       // Manual embeds for the first thread message.
+}
+
+func (r CreateThreadRequest) Validate() error {
+	if err := validateMessagePayload(r.Content, r.Attachments, r.Mentions, r.Embeds); err != nil {
 		return err
 	}
 
-	return embed.ValidateEmbeds(r.Embeds)
+	name := strings.TrimSpace(r.Name)
+	if name == "" {
+		return nil
+	}
+
+	return validation.Validate(name,
+		validation.RuneLength(1, maxThreadNameLength).Error(ErrThreadNameTooLong),
+	)
+}
+
+func (r CreateThreadRequest) MessageRequest(attachmentIDs []int64) *SendMessageRequest {
+	var nonce *helper.MessageNonce
+	if r.Nonce != nil {
+		nonce = r.Nonce.Clone()
+	}
+	return &SendMessageRequest{
+		Content:     r.Content,
+		Nonce:       nonce,
+		Attachments: helper.StringInt64Array(attachmentIDs),
+		Mentions:    r.Mentions,
+		Embeds:      append([]embed.Embed(nil), r.Embeds...),
+	}
 }
 
 type UpdateMessageRequest struct {
@@ -107,6 +153,35 @@ func (r UpdateMessageRequest) Validate() error {
 	}
 
 	return nil
+}
+
+func validateMessagePayload(content string, attachments, mentions helper.StringInt64Array, embeds []embed.Embed) error {
+	payload := struct {
+		Content     string
+		Attachments helper.StringInt64Array
+		Mentions    helper.StringInt64Array
+	}{
+		Content:     content,
+		Attachments: attachments,
+		Mentions:    mentions,
+	}
+
+	if err := validation.ValidateStruct(&payload,
+		validation.Field(&payload.Content,
+			validation.When(len(payload.Attachments) == 0 && len(embeds) == 0, validation.Required.Error(ErrMessagePayloadRequired)),
+			validation.RuneLength(0, 2000).Error(ErrMessageContentTooLong),
+		),
+		validation.Field(&payload.Attachments,
+			validation.Each(validation.Min(int64(1)).Error(ErrAttachmentIdInvalid)),
+		),
+		validation.Field(&payload.Mentions,
+			validation.Each(validation.Min(int64(1)).Error(ErrMentionIdInvalid)),
+		),
+	); err != nil {
+		return err
+	}
+
+	return embed.ValidateEmbeds(embeds)
 }
 
 type UploadAttachmentRequest struct {

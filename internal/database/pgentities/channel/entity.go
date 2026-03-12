@@ -11,6 +11,7 @@ type Channel interface {
 	GetChannel(ctx context.Context, id int64) (model.Channel, error)
 	GetChannelsBulk(ctx context.Context, ids []int64) ([]model.Channel, error)
 	GetChannelThreads(ctx context.Context, channelId int64) ([]model.Channel, error)
+	GetChannelMessagePosition(ctx context.Context, id int64) (int64, error)
 	CreateChannel(ctx context.Context, id int64, name string, channelType model.ChannelType, parent *int64, permissions *int64, private bool) error
 	DeleteChannel(ctx context.Context, id int64) error
 	RenameChannel(ctx context.Context, id int64, newName string) error
@@ -20,7 +21,9 @@ type Channel interface {
 	SetChannelParent(ctx context.Context, id int64, parent *int64) error
 	SetChannelParentBulk(ctx context.Context, id []int64, parent *int64) error
 	SetLastMessage(ctx context.Context, id, lastMessage int64) error
-	UpdateChannel(ctx context.Context, id int64, parent *int64, private *bool, name, topic *string) (model.Channel, error)
+	AdjustMessageCount(ctx context.Context, id, delta int64) error
+	ReserveMessagePositions(ctx context.Context, id, count int64) (int64, error)
+	UpdateChannel(ctx context.Context, id int64, parent *int64, private *bool, name, topic *string, closed *bool) (model.Channel, error)
 	SetChannelVoiceRegion(ctx context.Context, id int64, region *string) error
 	GetChannelVoiceRegion(ctx context.Context, id int64) (*string, error)
 }

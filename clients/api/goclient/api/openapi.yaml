@@ -1322,6 +1322,148 @@ paths:
       tags:
       - Guild Roles
       x-codegen-request-body-name: req
+  /guild/{guild_id}/channel/{channel_id}/thread-member/me:
+    delete:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Thread channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Left
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Leave thread
+      tags:
+      - Guild
+    put:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Thread channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.ThreadMember'
+          description: Thread membership
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Join thread
+      tags:
+      - Guild
+  /guild/{guild_id}/channel/{channel_id}/threads:
+    get:
+      parameters:
+      - description: Guild id
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Channel'
+                type: array
+          description: List of threads
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Get channel threads
+      tags:
+      - Guild
   /guild/{guild_id}/emojis:
     get:
       parameters:
@@ -2827,6 +2969,69 @@ paths:
       summary: Set channel read state for current user
       tags:
       - Message
+  /message/channel/{channel_id}/{message_id}/thread:
+    post:
+      parameters:
+      - description: Parent channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Source message id
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/message.CreateThreadRequest'
+        description: Thread data
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Channel'
+          description: Thread channel
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Create thread from message
+      tags:
+      - Message
+      x-codegen-request-body-name: request
   /search/messages:
     post:
       requestBody:
@@ -4450,24 +4655,37 @@ components:
     dto.Channel:
       example:
         private: false
+        member_ids:
+        - 2230469276416868352
         participant_id: 2230469276416868352
         roles:
         - 2230469276416868352
         created_at: created_at
         type: 0
+        message_count: 42
         last_message_id: 2230469276416868352
         voice_region: us-east
         parent_id: 2230469276416868352
         permissions: 0
+        creator_id: 2230469276416868352
         guild_id: 2230469276416868352
+        member: "{}"
         name: channel-name
+        closed: true
         topic: Just a channel topic
         id: 2230469276416868352
         position: 4
       properties:
+        closed:
+          description: Whether the thread is closed for new messages.
+          type: boolean
         created_at:
           description: Timestamp of channel creation
           type: string
+        creator_id:
+          description: "For threads: user who created the thread"
+          example: 2230469276416868352
+          type: integer
         guild_id:
           description: Guild ID channel was created in
           example: 2230469276416868352
@@ -4479,6 +4697,23 @@ components:
         last_message_id:
           description: ID of the last message in the channel
           example: 2230469276416868352
+          type: integer
+        member:
+          allOf:
+          - $ref: '#/components/schemas/dto.ThreadMember'
+          description: "For threads: current user's membership state when returned\
+            \ via HTTP."
+          type: object
+        member_ids:
+          description: "For threads: IDs of users who have joined the thread."
+          example:
+          - 2230469276416868352
+          items:
+            type: integer
+          type: array
+        message_count:
+          description: "For threads: approximate stored message count."
+          example: 42
           type: integer
         name:
           description: "Channel name, without spaces"
@@ -4749,6 +4984,7 @@ components:
       type: object
     dto.Message:
       example:
+        reference_channel_id: 2230469276416868352
         attachments:
         - filename: image.png
           content_type: image/png
@@ -4764,7 +5000,6 @@ components:
           width: 800
           url: https://example.com/image.png
           height: 600
-        updated_at: updated_at
         author:
           name: FancyUserName
           avatar:
@@ -4777,8 +5012,15 @@ components:
           id: 2230469276416868352
           discriminator: uniquename
         flags: 0
-        id: 2230469276416868352
+        thread: "{}"
         type: 0
+        nonce: draft-1
+        content: Hello world!
+        reference: 2230469276416868352
+        thread_id: 2230469276416868352
+        updated_at: updated_at
+        id: 2230469276416868352
+        position: 512
         channel_id: 2230469276416868352
         embeds:
         - image: "{}"
@@ -4819,7 +5061,6 @@ components:
             name: Status
             value: Stable
           timestamp: 2000-01-23T04:56:07.000+00:00
-        content: Hello world!
       properties:
         attachments:
           items:
@@ -4844,6 +5085,31 @@ components:
           type: integer
         id:
           description: Message ID
+          example: 2230469276416868352
+          type: integer
+        nonce:
+          description: Ephemeral client correlation token echoed only to the author.
+          example: draft-1
+          type: string
+        position:
+          description: Monotonic channel-local message position used for navigation.
+          example: 512
+          type: integer
+        reference:
+          description: Referenced source message id.
+          example: 2230469276416868352
+          type: integer
+        reference_channel_id:
+          description: Channel id of the referenced source message.
+          example: 2230469276416868352
+          type: integer
+        thread:
+          allOf:
+          - $ref: '#/components/schemas/dto.Channel'
+          description: Thread metadata when the message is linked to a thread.
+          type: object
+        thread_id:
+          description: Thread linked from this message.
           example: 2230469276416868352
           type: integer
         type:
@@ -4885,6 +5151,20 @@ components:
         position:
           description: Role position. Lower values are shown first in guild role lists.
           example: 0
+          type: integer
+      type: object
+    dto.ThreadMember:
+      example:
+        join_timestamp: join_timestamp
+        user_id: 2230469276416868352
+        flags: 0
+      properties:
+        flags:
+          type: integer
+        join_timestamp:
+          type: string
+        user_id:
+          example: 2230469276416868352
           type: integer
       type: object
     dto.User:
@@ -5285,6 +5565,10 @@ components:
       type: object
     guild.PatchGuildChannelRequest:
       properties:
+        closed:
+          default: false
+          description: Whether the thread is closed for new messages.
+          type: boolean
         name:
           description: Channel name.
           example: new-channel-name
@@ -5380,6 +5664,41 @@ components:
           description: Whether the guild is public
           type: boolean
       type: object
+    message.CreateThreadRequest:
+      properties:
+        attachments:
+          description: IDs of attached files uploaded to the parent channel before
+            thread creation.
+          example:
+          - 2230469276416868352
+          items:
+            type: integer
+          type: array
+        content:
+          description: First thread message content.
+          example: Hello from thread!
+          type: string
+        embeds:
+          description: Manual embeds for the first thread message.
+          items:
+            $ref: '#/components/schemas/embed.Embed'
+          type: array
+        mentions:
+          description: IDs of mentioned users.
+          example:
+          - 2230469276416868352
+          items:
+            type: integer
+          type: array
+        name:
+          description: Optional explicit thread name.
+          example: Thread title
+          type: string
+        nonce:
+          description: Optional client correlation token for the starter message event.
+          example: draft-1
+          type: string
+      type: object
     message.SendMessageRequest:
       properties:
         attachments:
@@ -5399,6 +5718,10 @@ components:
           items:
             $ref: '#/components/schemas/embed.Embed'
           type: array
+        enforce_nonce:
+          description: "When true, deduplicates sends with the same nonce in the same\
+            \ channel for a short window."
+          type: boolean
         mentions:
           description: IDs of mentioned users
           example:
@@ -5406,6 +5729,15 @@ components:
           items:
             type: integer
           type: array
+        nonce:
+          description: Optional client correlation token echoed back to the author.
+          example: draft-1
+          type: string
+        reference:
+          description: "Referenced message ID in the same channel. When set, the new\
+            \ message is stored as type 1 (Reply)."
+          example: 2230469276416868352
+          type: integer
       type: object
     message.UpdateMessageRequest:
       properties:
@@ -5495,11 +5827,11 @@ components:
       - ChannelTypeThread
     model.Devices:
       example:
-        audio_input_level: 7.457744773683766
+        audio_input_level: 1.1730742509559433
         auto_gain_control: true
         audio_output_device: audio_output_device
-        audio_output_level: 4.965218492984954
-        audio_input_threshold: 1.1730742509559433
+        audio_output_level: 5.025004791520295
+        audio_input_threshold: 4.965218492984954
         echo_cancellation: true
         video_device: video_device
         noise_suppression: true
@@ -5529,10 +5861,10 @@ components:
       type: object
     model.Mention:
       example:
-        messageId: 2
-        authorId: 9
-        userId: 4
-        channelId: 3
+        messageId: 4
+        authorId: 3
+        userId: 7
+        channelId: 2
       properties:
         authorId:
           type: integer
@@ -5566,9 +5898,9 @@ components:
     model.UserDMChannels:
       example:
         hidden: true
-        user_id: 9
+        user_id: 6
         hidden_after: 9
-        channel_id: 5
+        channel_id: 9
       properties:
         channel_id:
           type: integer
@@ -5581,9 +5913,9 @@ components:
       type: object
     model.UserSettingsAppearance:
       example:
-        chat_font_scale: 1.2315135367772556
+        chat_font_scale: 1.0246457001441578
         color_scheme: color_scheme
-        chat_spacing: 1.0246457001441578
+        chat_spacing: 1.4894159098541704
       properties:
         chat_font_scale:
           type: number
@@ -5594,11 +5926,11 @@ components:
       type: object
     model.UserSettingsChannel:
       example:
-        channel_id: 1
+        channel_id: 6
         notifications:
           muted_until: muted_until
           muted: true
-          notifications: 6
+          notifications: 7
       properties:
         channel_id:
           type: integer
@@ -5612,85 +5944,85 @@ components:
         - favorite_gifs
         dm_channels:
         - hidden: true
-          user_id: 9
+          user_id: 6
           hidden_after: 9
-          channel_id: 5
+          channel_id: 9
         - hidden: true
-          user_id: 9
+          user_id: 6
           hidden_after: 9
-          channel_id: 5
+          channel_id: 9
         appearance:
-          chat_font_scale: 1.2315135367772556
+          chat_font_scale: 1.0246457001441578
           color_scheme: color_scheme
-          chat_spacing: 1.0246457001441578
+          chat_spacing: 1.4894159098541704
         channels:
-        - channel_id: 1
+        - channel_id: 6
           notifications:
             muted_until: muted_until
             muted: true
-            notifications: 6
-        - channel_id: 1
+            notifications: 7
+        - channel_id: 6
           notifications:
             muted_until: muted_until
             muted: true
-            notifications: 6
+            notifications: 7
         devices:
-          audio_input_level: 7.457744773683766
+          audio_input_level: 1.1730742509559433
           auto_gain_control: true
           audio_output_device: audio_output_device
-          audio_output_level: 4.965218492984954
-          audio_input_threshold: 1.1730742509559433
+          audio_output_level: 5.025004791520295
+          audio_input_threshold: 4.965218492984954
           echo_cancellation: true
           video_device: video_device
           noise_suppression: true
           denoiser_type: denoiser_type
           audio_input_device: audio_input_device
         guilds:
-        - selected_channel: 6
-          guild_id: 6
-          position: 3
+        - selected_channel: 1
+          guild_id: 3
+          position: 6
           notifications:
             muted_until: muted_until
             muted: true
-            notifications: 6
-        - selected_channel: 6
-          guild_id: 6
-          position: 3
+            notifications: 7
+        - selected_channel: 1
+          guild_id: 3
+          position: 6
           notifications:
             muted_until: muted_until
             muted: true
-            notifications: 6
+            notifications: 7
         language: language
         forced_presence: forced_presence
         guild_folders:
-        - color: 6
+        - color: 8
           guilds:
-          - 8
-          - 8
+          - 9
+          - 9
           name: name
-          position: 9
-        - color: 6
+          position: 6
+        - color: 8
           guilds:
-          - 8
-          - 8
+          - 9
+          - 9
           name: name
-          position: 9
+          position: 6
         ui_sounds:
           notification: true
           mute: true
           voice_channel: true
           deafen: true
         users:
-        - user_id: 1
+        - user_id: 2
           notifications:
             muted_until: muted_until
             muted: true
-            notifications: 6
-        - user_id: 1
+            notifications: 7
+        - user_id: 2
           notifications:
             muted_until: muted_until
             muted: true
-            notifications: 6
+            notifications: 7
         status:
           custom_status_text: custom_status_text
           status: status
@@ -5734,12 +6066,12 @@ components:
       type: object
     model.UserSettingsGuildFolders:
       example:
-        color: 6
+        color: 8
         guilds:
-        - 8
-        - 8
+        - 9
+        - 9
         name: name
-        position: 9
+        position: 6
       properties:
         color:
           type: integer
@@ -5754,13 +6086,13 @@ components:
       type: object
     model.UserSettingsGuilds:
       example:
-        selected_channel: 6
-        guild_id: 6
-        position: 3
+        selected_channel: 1
+        guild_id: 3
+        position: 6
         notifications:
           muted_until: muted_until
           muted: true
-          notifications: 6
+          notifications: 7
       properties:
         guild_id:
           type: integer
@@ -5775,7 +6107,7 @@ components:
       example:
         muted_until: muted_until
         muted: true
-        notifications: 6
+        notifications: 7
       properties:
         muted:
           type: boolean
@@ -5786,11 +6118,11 @@ components:
       type: object
     model.UserSettingsUsers:
       example:
-        user_id: 1
+        user_id: 2
         notifications:
           muted_until: muted_until
           muted: true
-          notifications: 6
+          notifications: 7
       properties:
         notifications:
           $ref: '#/components/schemas/model.UserSettingsNotifications'
@@ -5853,7 +6185,8 @@ components:
       example:
         pages: 0
         messages:
-        - attachments:
+        - reference_channel_id: 2230469276416868352
+          attachments:
           - filename: image.png
             content_type: image/png
             size: 1000000
@@ -5868,7 +6201,6 @@ components:
             width: 800
             url: https://example.com/image.png
             height: 600
-          updated_at: updated_at
           author:
             name: FancyUserName
             avatar:
@@ -5881,8 +6213,15 @@ components:
             id: 2230469276416868352
             discriminator: uniquename
           flags: 0
-          id: 2230469276416868352
+          thread: "{}"
           type: 0
+          nonce: draft-1
+          content: Hello world!
+          reference: 2230469276416868352
+          thread_id: 2230469276416868352
+          updated_at: updated_at
+          id: 2230469276416868352
+          position: 512
           channel_id: 2230469276416868352
           embeds:
           - image: "{}"
@@ -5923,8 +6262,8 @@ components:
               name: Status
               value: Stable
             timestamp: 2000-01-23T04:56:07.000+00:00
-          content: Hello world!
-        - attachments:
+        - reference_channel_id: 2230469276416868352
+          attachments:
           - filename: image.png
             content_type: image/png
             size: 1000000
@@ -5939,7 +6278,6 @@ components:
             width: 800
             url: https://example.com/image.png
             height: 600
-          updated_at: updated_at
           author:
             name: FancyUserName
             avatar:
@@ -5952,8 +6290,15 @@ components:
             id: 2230469276416868352
             discriminator: uniquename
           flags: 0
-          id: 2230469276416868352
+          thread: "{}"
           type: 0
+          nonce: draft-1
+          content: Hello world!
+          reference: 2230469276416868352
+          thread_id: 2230469276416868352
+          updated_at: updated_at
+          id: 2230469276416868352
+          position: 512
           channel_id: 2230469276416868352
           embeds:
           - image: "{}"
@@ -5994,7 +6339,6 @@ components:
               name: Status
               value: Stable
             timestamp: 2000-01-23T04:56:07.000+00:00
-          content: Hello world!
       properties:
         messages:
           description: List of messages
@@ -6100,85 +6444,85 @@ components:
           - favorite_gifs
           dm_channels:
           - hidden: true
-            user_id: 9
+            user_id: 6
             hidden_after: 9
-            channel_id: 5
+            channel_id: 9
           - hidden: true
-            user_id: 9
+            user_id: 6
             hidden_after: 9
-            channel_id: 5
+            channel_id: 9
           appearance:
-            chat_font_scale: 1.2315135367772556
+            chat_font_scale: 1.0246457001441578
             color_scheme: color_scheme
-            chat_spacing: 1.0246457001441578
+            chat_spacing: 1.4894159098541704
           channels:
-          - channel_id: 1
+          - channel_id: 6
             notifications:
               muted_until: muted_until
               muted: true
-              notifications: 6
-          - channel_id: 1
+              notifications: 7
+          - channel_id: 6
             notifications:
               muted_until: muted_until
               muted: true
-              notifications: 6
+              notifications: 7
           devices:
-            audio_input_level: 7.457744773683766
+            audio_input_level: 1.1730742509559433
             auto_gain_control: true
             audio_output_device: audio_output_device
-            audio_output_level: 4.965218492984954
-            audio_input_threshold: 1.1730742509559433
+            audio_output_level: 5.025004791520295
+            audio_input_threshold: 4.965218492984954
             echo_cancellation: true
             video_device: video_device
             noise_suppression: true
             denoiser_type: denoiser_type
             audio_input_device: audio_input_device
           guilds:
-          - selected_channel: 6
-            guild_id: 6
-            position: 3
+          - selected_channel: 1
+            guild_id: 3
+            position: 6
             notifications:
               muted_until: muted_until
               muted: true
-              notifications: 6
-          - selected_channel: 6
-            guild_id: 6
-            position: 3
+              notifications: 7
+          - selected_channel: 1
+            guild_id: 3
+            position: 6
             notifications:
               muted_until: muted_until
               muted: true
-              notifications: 6
+              notifications: 7
           language: language
           forced_presence: forced_presence
           guild_folders:
-          - color: 6
+          - color: 8
             guilds:
-            - 8
-            - 8
+            - 9
+            - 9
             name: name
-            position: 9
-          - color: 6
+            position: 6
+          - color: 8
             guilds:
-            - 8
-            - 8
+            - 9
+            - 9
             name: name
-            position: 9
+            position: 6
           ui_sounds:
             notification: true
             mute: true
             voice_channel: true
             deafen: true
           users:
-          - user_id: 1
+          - user_id: 2
             notifications:
               muted_until: muted_until
               muted: true
-              notifications: 6
-          - user_id: 1
+              notifications: 7
+          - user_id: 2
             notifications:
               muted_until: muted_until
               muted: true
-              notifications: 6
+              notifications: 7
           status:
             custom_status_text: custom_status_text
             status: status
@@ -6211,14 +6555,14 @@ components:
           id: 2230469276416868352
         mentions:
           key:
-          - messageId: 2
-            authorId: 9
-            userId: 4
-            channelId: 3
-          - messageId: 2
-            authorId: 9
-            userId: 4
-            channelId: 3
+          - messageId: 4
+            authorId: 3
+            userId: 7
+            channelId: 2
+          - messageId: 4
+            authorId: 3
+            userId: 7
+            channelId: 2
         content_hosts:
         - content_hosts
         - content_hosts
@@ -6229,11 +6573,18 @@ components:
           - name: name
             id: "0"
         read_states:
-          key: 7
-        version: 2
+          key: 1
+        threads_last_messages:
+          key: 6
+        version: 6
         guilds_last_messages:
           key:
             key: 7
+        joined_threads:
+          key:
+            key:
+            - 9
+            - 9
       properties:
         channel_mentions:
           additionalProperties:
@@ -6261,6 +6612,16 @@ components:
               type: integer
             type: object
           type: object
+        joined_threads:
+          additionalProperties:
+            additionalProperties:
+              items:
+                type: integer
+              type: array
+            type: object
+          description: Joined thread IDs grouped as guild_id -> parent_channel_id
+            -> sorted thread ids.
+          type: object
         mentions:
           additionalProperties:
             items:
@@ -6273,6 +6634,10 @@ components:
           type: object
         settings:
           $ref: '#/components/schemas/model.UserSettingsData'
+        threads_last_messages:
+          additionalProperties:
+            type: integer
+          type: object
         version:
           type: integer
       type: object

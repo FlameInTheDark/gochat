@@ -4,10 +4,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**Closed** | Pointer to **bool** | Whether the thread is closed for new messages. | [optional] 
 **CreatedAt** | Pointer to **string** | Timestamp of channel creation | [optional] 
+**CreatorId** | Pointer to **int32** | For threads: user who created the thread | [optional] 
 **GuildId** | Pointer to **int32** | Guild ID channel was created in | [optional] 
 **Id** | Pointer to **int32** | Channel ID | [optional] 
 **LastMessageId** | Pointer to **int32** | ID of the last message in the channel | [optional] 
+**Member** | Pointer to [**DtoThreadMember**](DtoThreadMember.md) | For threads: current user&#39;s membership state when returned via HTTP. | [optional] 
+**MemberIds** | Pointer to **[]int32** | For threads: IDs of users who have joined the thread. | [optional] 
+**MessageCount** | Pointer to **int32** | For threads: approximate stored message count. | [optional] 
 **Name** | Pointer to **string** | Channel name, without spaces | [optional] 
 **ParentId** | Pointer to **int32** | Parent channel id | [optional] 
 **ParticipantId** | Pointer to **int32** | For DM channels: the other participant&#39;s user ID | [optional] 
@@ -38,6 +43,31 @@ NewDtoChannelWithDefaults instantiates a new DtoChannel object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
+### GetClosed
+
+`func (o *DtoChannel) GetClosed() bool`
+
+GetClosed returns the Closed field if non-nil, zero value otherwise.
+
+### GetClosedOk
+
+`func (o *DtoChannel) GetClosedOk() (*bool, bool)`
+
+GetClosedOk returns a tuple with the Closed field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetClosed
+
+`func (o *DtoChannel) SetClosed(v bool)`
+
+SetClosed sets Closed field to given value.
+
+### HasClosed
+
+`func (o *DtoChannel) HasClosed() bool`
+
+HasClosed returns a boolean if a field has been set.
+
 ### GetCreatedAt
 
 `func (o *DtoChannel) GetCreatedAt() string`
@@ -62,6 +92,31 @@ SetCreatedAt sets CreatedAt field to given value.
 `func (o *DtoChannel) HasCreatedAt() bool`
 
 HasCreatedAt returns a boolean if a field has been set.
+
+### GetCreatorId
+
+`func (o *DtoChannel) GetCreatorId() int32`
+
+GetCreatorId returns the CreatorId field if non-nil, zero value otherwise.
+
+### GetCreatorIdOk
+
+`func (o *DtoChannel) GetCreatorIdOk() (*int32, bool)`
+
+GetCreatorIdOk returns a tuple with the CreatorId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetCreatorId
+
+`func (o *DtoChannel) SetCreatorId(v int32)`
+
+SetCreatorId sets CreatorId field to given value.
+
+### HasCreatorId
+
+`func (o *DtoChannel) HasCreatorId() bool`
+
+HasCreatorId returns a boolean if a field has been set.
 
 ### GetGuildId
 
@@ -137,6 +192,81 @@ SetLastMessageId sets LastMessageId field to given value.
 `func (o *DtoChannel) HasLastMessageId() bool`
 
 HasLastMessageId returns a boolean if a field has been set.
+
+### GetMember
+
+`func (o *DtoChannel) GetMember() DtoThreadMember`
+
+GetMember returns the Member field if non-nil, zero value otherwise.
+
+### GetMemberOk
+
+`func (o *DtoChannel) GetMemberOk() (*DtoThreadMember, bool)`
+
+GetMemberOk returns a tuple with the Member field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetMember
+
+`func (o *DtoChannel) SetMember(v DtoThreadMember)`
+
+SetMember sets Member field to given value.
+
+### HasMember
+
+`func (o *DtoChannel) HasMember() bool`
+
+HasMember returns a boolean if a field has been set.
+
+### GetMemberIds
+
+`func (o *DtoChannel) GetMemberIds() []int32`
+
+GetMemberIds returns the MemberIds field if non-nil, zero value otherwise.
+
+### GetMemberIdsOk
+
+`func (o *DtoChannel) GetMemberIdsOk() (*[]int32, bool)`
+
+GetMemberIdsOk returns a tuple with the MemberIds field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetMemberIds
+
+`func (o *DtoChannel) SetMemberIds(v []int32)`
+
+SetMemberIds sets MemberIds field to given value.
+
+### HasMemberIds
+
+`func (o *DtoChannel) HasMemberIds() bool`
+
+HasMemberIds returns a boolean if a field has been set.
+
+### GetMessageCount
+
+`func (o *DtoChannel) GetMessageCount() int32`
+
+GetMessageCount returns the MessageCount field if non-nil, zero value otherwise.
+
+### GetMessageCountOk
+
+`func (o *DtoChannel) GetMessageCountOk() (*int32, bool)`
+
+GetMessageCountOk returns a tuple with the MessageCount field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetMessageCount
+
+`func (o *DtoChannel) SetMessageCount(v int32)`
+
+SetMessageCount sets MessageCount field to given value.
+
+### HasMessageCount
+
+`func (o *DtoChannel) HasMessageCount() bool`
+
+HasMessageCount returns a boolean if a field has been set.
 
 ### GetName
 

@@ -23,6 +23,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/threadmember"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/usersettings"
@@ -82,6 +83,7 @@ type entity struct {
 	mention mention.Mention
 	gc      guildchannels.GuildChannels
 	emoji   emojirepo.Emoji
+	tm      threadmember.ThreadMember
 
 	attachTTL    int64
 	contentHosts []string
@@ -117,5 +119,6 @@ func New(cql *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, cache cache.Cache,
 		mention:      mention.New(cql),
 		gc:           guildchannels.New(pg.Conn()),
 		emoji:        emojirepo.New(pg.Conn()),
+		tm:           threadmember.New(pg.Conn()),
 	}
 }

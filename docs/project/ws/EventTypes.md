@@ -1,15 +1,15 @@
-﻿[<- Documentation](../README.md) - [WebSocket Events](README.md)
+[<- Documentation](../README.md) - [WebSocket Events](README.md)
 
 # Event Types
 
 When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies the event type. This page lists all event type values, their payloads, and which NATS topic delivers them.
 
 > [!NOTE]
-> All events on this page (100вЂ“406) are delivered over the **Gateway WebSocket** (`/subscribe`). Voice/WebRTC signaling events (500вЂ“515) are exchanged over the separate **SFU WebSocket** (`/signal`) вЂ” see [SFU Protocol](../voice/SFUProtocol.md). Only a few voice-related control events (509, 512, 513) pass through the Gateway WS as noted in the [RTC Events](#rtc-events-500515-gateway-ws-only) section.
+> All events on this page (100-406) are delivered over the **Gateway WebSocket** (`/subscribe`). Voice/WebRTC signaling events (500-515) are exchanged over the separate **SFU WebSocket** (`/signal`) - see [SFU Protocol](../voice/SFUProtocol.md). Only a few voice-related control events (509, 512, 513) pass through the Gateway WS as noted in the [RTC Events](#rtc-events-500515-gateway-ws-only) section.
 
 ---
 
-## Message Events (100вЂ“102)
+## Message Events (100-102)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -29,10 +29,19 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
       "name": "FlameInTheDark",
       "discriminator": "flameinthedark"
     },
-    "content": "Hello"
+    "content": "Hello",
+    "position": 512,
+    "nonce": "draft-1"
   }
 }
 ```
+
+Notes:
+- `position` is channel-local, monotonic, and immutable after create. It may have gaps.
+- `nonce` appears only for the author of the message.
+- Other users subscribed to the same `channel.{channelId}` event receive the same payload without the `nonce` field.
+- Historical fetches and later message updates do not restore `nonce`.
+- Replies use this same event. For reply messages, `message.type = 1` and the payload includes `reference` plus same-channel `reference_channel_id`.
 
 **Payload (t=101, Message Update):**
 ```json
@@ -47,10 +56,15 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
       "discriminator": "flameinthedark"
     },
     "content": "Hello, edited!",
+    "position": 512,
     "updated_at": "2026-01-15T10:30:00Z"
   }
 }
 ```
+
+Notes:
+- `Message Update` normally does not include `nonce`.
+- If a `nonce` field is ever present on a channel-scoped update payload, it is stripped for non-authors by the gateway the same way as `Message Create`.
 
 **Payload (t=102, Message Delete):**
 ```json
@@ -63,7 +77,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## Guild Events (103вЂ“105)
+## Guild Events (103-105)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -105,7 +119,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## Channel Events (106вЂ“109)
+## Channel Events (106-109)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -173,7 +187,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## Guild Role Events (110вЂ“112)
+## Guild Role Events (110-112)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -217,11 +231,11 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## Thread Events (113вЂ“115)
+## Thread Events (113-115)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
-| 113 | Thread Create | `guild.{guildId}` | Thread created |
+| 113 | Thread Create | `guild.{guildId}` | Thread created in guild |
 | 114 | Thread Update | `guild.{guildId}` | Thread properties changed |
 | 115 | Thread Delete | `guild.{guildId}` | Thread deleted |
 
@@ -229,17 +243,17 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 ```json
 {
   "guild_id": 2226022078304223200,
-  "channel": {
-    "id": 2226022078341973000,
-    "type": 2,
+  "thread": {
+    "id": 2226022078341972999,
+    "type": 5,
     "guild_id": 2226022078304223200,
-    "name": "thread-discussion",
+    "name": "release discussion",
     "parent_id": 2226022078341972000,
     "position": 0,
-    "topic": null,
-    "private": false,
-    "last_message_id": 0,
-    "created_at": "2026-01-15T10:30:00Z"
+    "closed": false,
+    "last_message_id": 2228801793842741299,
+    "message_count": 2,
+    "created_at": "2026-01-15T10:00:00Z"
   }
 }
 ```
@@ -248,17 +262,17 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 ```json
 {
   "guild_id": 2226022078304223200,
-  "channel": {
-    "id": 2226022078341973000,
-    "type": 2,
+  "thread": {
+    "id": 2226022078341972999,
+    "type": 5,
     "guild_id": 2226022078304223200,
-    "name": "updated-thread-name",
+    "name": "release planning",
     "parent_id": 2226022078341972000,
     "position": 0,
-    "topic": "Updated topic",
-    "private": false,
-    "last_message_id": 2228801793842741300,
-    "created_at": "2026-01-15T10:30:00Z"
+    "closed": true,
+    "last_message_id": 2228801793842741299,
+    "message_count": 14,
+    "created_at": "2026-01-15T10:00:00Z"
   }
 }
 ```
@@ -267,10 +281,46 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 ```json
 {
   "guild_id": 2226022078304223200,
-  "channel_type": 2,
-  "channel_id": 2226022078341973000
+  "thread_id": 2226022078341972999
 }
 ```
+
+Notes:
+- Guild subscribers still receive the generic `Channel Create` / `Channel Update` / `Channel Delete` events for threads.
+- These thread-specific events are sent in addition to the generic channel events.
+
+---
+
+## Thread Lifecycle
+
+Guild subscribers receive both lifecycle representations for threads:
+
+- generic `Channel Create` / `Channel Update` / `Channel Delete`
+- dedicated `Thread Create` / `Thread Update` / `Thread Delete`
+
+In the generic channel lifecycle payloads, the thread is identified by channel type:
+
+- `channel.type = 5` for create and update payloads
+- `channel_type = 5` for delete payloads
+
+Thread creation also emits normal message events:
+
+- a **Message Update** (`t=101`) in the parent channel because the original type-0 source message receives both `thread_id` and nested `thread` metadata
+- a **Message Create** (`t=100`) in the parent channel for the informative thread-created message (`type = 3`)
+- a **Message Create** (`t=100`) in the thread channel for the thread-initial message (`type = 4`)
+- a **Message Create** (`t=100`) in the thread channel for the creator's starter message (`type = 0`)
+
+In those shared message payloads:
+
+- nested `message.thread` metadata includes `member_ids`
+- nested `message.thread` metadata includes approximate `message_count`
+- nested `message.thread` metadata does not include current-user `member` state
+
+When a thread is renamed, clients also receive:
+
+- a **Message Update** (`t=101`) in the parent channel for the type-3 thread-created message, because its `content` mirrors the current thread name
+
+See [Threads](../channels/Threads.md) for the full creation flow and subscription rules.
 
 ---
 
@@ -315,7 +365,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 ```
 
 ---
-## Guild Member Events (200вЂ“209)
+## Guild Member Events (200-209)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -473,11 +523,11 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## Channel Message Events (300вЂ“302)
+## Channel Message Events (300-302)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
-| 300 | Guild Channel Message | `channel.{channelId}` | Activity notification for a guild channel |
+| 300 | Guild Channel Message | `guild.{guildId}` for regular guild channels, `user.{userId}` for joined-thread activity | Activity notification used for unread / notification surfaces |
 | 301 | Channel Typing Event | `channel.{channelId}` | User started typing |
 | 302 | Mention | `user.{userId}` | User was mentioned |
 
@@ -489,6 +539,11 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
   "message_id": 2228801793842741200
 }
 ```
+
+**Notes:**
+- For regular guild text channels, this event is fanned out on `guild.{guildId}`.
+- For thread channels, this event is sent only to joined thread members on `user.{userId}`.
+- Raw thread message create/update/delete events still stay on `channel.{threadId}` and require explicit thread subscription.
 
 **Payload (t=301, Channel Typing):**
 ```json
@@ -511,7 +566,7 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## User Events (400вЂ“406)
+## User Events (400-406)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -642,18 +697,18 @@ Presence updates are dispatched with `op: 3` (not `op: 0`). They are delivered v
 
 ---
 
-## RTC Events (500вЂ“515, Gateway WS Only)
+## RTC Events (500-515, Gateway WS Only)
 
 > [!IMPORTANT]
-> The full RTC signaling protocol (Join, Offer, Answer, Candidate, Speaking, Mute, Deafen, Kick, Block вЂ” events 500вЂ“515) is handled over the **separate SFU WebSocket** connection (`/signal` on port 3300). See [SFU Protocol](../voice/SFUProtocol.md) for that protocol.
+> The full RTC signaling protocol (Join, Offer, Answer, Candidate, Speaking, Mute, Deafen, Kick, Block - events 500-515) is handled over the **separate SFU WebSocket** connection (`/signal` on port 3300). See [SFU Protocol](../voice/SFUProtocol.md) for that protocol.
 >
 > Only the following **3 voice control events** pass through the **Gateway WS** (`/subscribe`):
 
 | Type | Name | NATS Topic | Direction | Description |
 |------|------|------------|-----------|-------------|
-| 509 | RTC Binding Alive | вЂ” | Client в†’ Gateway | Keep `voice:route:{channelId}` TTL alive in Redis |
-| 512 | RTC Moved | `user.{userId}` | Gateway в†’ Client | Admin moved user to another channel; includes new SFU URL |
-| 513 | RTC Server Rebind | `guild.{guildId}` | Gateway в†’ Client | SFU route changed (region migration); reconnect required |
+| 509 | RTC Binding Alive | - | Client -> Gateway | Keep `voice:route:{channelId}` TTL alive in Redis |
+| 512 | RTC Moved | `user.{userId}` | Gateway -> Client | Admin moved user to another channel; includes new SFU URL |
+| 513 | RTC Server Rebind | `guild.{guildId}` | Gateway -> Client | SFU route changed (region migration); reconnect required |
 
 **Payload (t=513, VoiceRebind):**
 ```json
@@ -676,6 +731,6 @@ Presence updates are dispatched with `op: 3` (not `op: 0`). They are delivered v
 
 **Client action:** Disconnect from current SFU, connect to the new `sfu_url`, and send Join with the new token.
 
-For the full SFU WebSocket protocol (events 500вЂ“515), see [SFU Protocol](../voice/SFUProtocol.md).
+For the full SFU WebSocket protocol (events 500-515), see [SFU Protocol](../voice/SFUProtocol.md).
 
 

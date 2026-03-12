@@ -25,10 +25,13 @@ type UserUserSettingsResponse struct {
 	GuildEmojis        *map[string][]DtoEmojiRef         `json:"guild_emojis,omitempty"`
 	Guilds             []DtoGuild                        `json:"guilds,omitempty"`
 	GuildsLastMessages *map[string]map[string]int32      `json:"guilds_last_messages,omitempty"`
-	Mentions           *map[string][]ModelMention        `json:"mentions,omitempty"`
-	ReadStates         *map[string]int32                 `json:"read_states,omitempty"`
-	Settings           *ModelUserSettingsData            `json:"settings,omitempty"`
-	Version            *int32                            `json:"version,omitempty"`
+	// Joined thread IDs grouped as guild_id -> parent_channel_id -> sorted thread ids.
+	JoinedThreads       *map[string]map[string][]int32 `json:"joined_threads,omitempty"`
+	Mentions            *map[string][]ModelMention     `json:"mentions,omitempty"`
+	ReadStates          *map[string]int32              `json:"read_states,omitempty"`
+	Settings            *ModelUserSettingsData         `json:"settings,omitempty"`
+	ThreadsLastMessages *map[string]int32              `json:"threads_last_messages,omitempty"`
+	Version             *int32                         `json:"version,omitempty"`
 }
 
 // NewUserUserSettingsResponse instantiates a new UserUserSettingsResponse object
@@ -208,6 +211,38 @@ func (o *UserUserSettingsResponse) SetGuildsLastMessages(v map[string]map[string
 	o.GuildsLastMessages = &v
 }
 
+// GetJoinedThreads returns the JoinedThreads field value if set, zero value otherwise.
+func (o *UserUserSettingsResponse) GetJoinedThreads() map[string]map[string][]int32 {
+	if o == nil || IsNil(o.JoinedThreads) {
+		var ret map[string]map[string][]int32
+		return ret
+	}
+	return *o.JoinedThreads
+}
+
+// GetJoinedThreadsOk returns a tuple with the JoinedThreads field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserUserSettingsResponse) GetJoinedThreadsOk() (*map[string]map[string][]int32, bool) {
+	if o == nil || IsNil(o.JoinedThreads) {
+		return nil, false
+	}
+	return o.JoinedThreads, true
+}
+
+// HasJoinedThreads returns a boolean if a field has been set.
+func (o *UserUserSettingsResponse) HasJoinedThreads() bool {
+	if o != nil && !IsNil(o.JoinedThreads) {
+		return true
+	}
+
+	return false
+}
+
+// SetJoinedThreads gets a reference to the given map[string]map[string][]int32 and assigns it to the JoinedThreads field.
+func (o *UserUserSettingsResponse) SetJoinedThreads(v map[string]map[string][]int32) {
+	o.JoinedThreads = &v
+}
+
 // GetMentions returns the Mentions field value if set, zero value otherwise.
 func (o *UserUserSettingsResponse) GetMentions() map[string][]ModelMention {
 	if o == nil || IsNil(o.Mentions) {
@@ -304,6 +339,38 @@ func (o *UserUserSettingsResponse) SetSettings(v ModelUserSettingsData) {
 	o.Settings = &v
 }
 
+// GetThreadsLastMessages returns the ThreadsLastMessages field value if set, zero value otherwise.
+func (o *UserUserSettingsResponse) GetThreadsLastMessages() map[string]int32 {
+	if o == nil || IsNil(o.ThreadsLastMessages) {
+		var ret map[string]int32
+		return ret
+	}
+	return *o.ThreadsLastMessages
+}
+
+// GetThreadsLastMessagesOk returns a tuple with the ThreadsLastMessages field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserUserSettingsResponse) GetThreadsLastMessagesOk() (*map[string]int32, bool) {
+	if o == nil || IsNil(o.ThreadsLastMessages) {
+		return nil, false
+	}
+	return o.ThreadsLastMessages, true
+}
+
+// HasThreadsLastMessages returns a boolean if a field has been set.
+func (o *UserUserSettingsResponse) HasThreadsLastMessages() bool {
+	if o != nil && !IsNil(o.ThreadsLastMessages) {
+		return true
+	}
+
+	return false
+}
+
+// SetThreadsLastMessages gets a reference to the given map[string]int32 and assigns it to the ThreadsLastMessages field.
+func (o *UserUserSettingsResponse) SetThreadsLastMessages(v map[string]int32) {
+	o.ThreadsLastMessages = &v
+}
+
 // GetVersion returns the Version field value if set, zero value otherwise.
 func (o *UserUserSettingsResponse) GetVersion() int32 {
 	if o == nil || IsNil(o.Version) {
@@ -361,6 +428,9 @@ func (o UserUserSettingsResponse) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.GuildsLastMessages) {
 		toSerialize["guilds_last_messages"] = o.GuildsLastMessages
 	}
+	if !IsNil(o.JoinedThreads) {
+		toSerialize["joined_threads"] = o.JoinedThreads
+	}
 	if !IsNil(o.Mentions) {
 		toSerialize["mentions"] = o.Mentions
 	}
@@ -369,6 +439,9 @@ func (o UserUserSettingsResponse) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Settings) {
 		toSerialize["settings"] = o.Settings
+	}
+	if !IsNil(o.ThreadsLastMessages) {
+		toSerialize["threads_last_messages"] = o.ThreadsLastMessages
 	}
 	if !IsNil(o.Version) {
 		toSerialize["version"] = o.Version

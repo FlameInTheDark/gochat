@@ -53,7 +53,7 @@ func (a *AuthAPIService) AuthConfirmationPost(ctx context.Context) ApiAuthConfir
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *AuthAPIService) AuthConfirmationPostExecute(r ApiAuthConfirmationPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -206,7 +206,7 @@ func (a *AuthAPIService) AuthLoginPost(ctx context.Context) ApiAuthLoginPostRequ
 
 // Execute executes the request
 //
-//	@return AuthLoginResponse
+//	@return	AuthLoginResponse
 func (a *AuthAPIService) AuthLoginPostExecute(r ApiAuthLoginPostRequest) (*AuthLoginResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -348,7 +348,7 @@ func (a *AuthAPIService) AuthRecoveryPost(ctx context.Context) ApiAuthRecoveryPo
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *AuthAPIService) AuthRecoveryPostExecute(r ApiAuthRecoveryPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -523,7 +523,7 @@ func (a *AuthAPIService) AuthRefreshGet(ctx context.Context) ApiAuthRefreshGetRe
 
 // Execute executes the request
 //
-//	@return AuthRefreshTokenResponse
+//	@return	AuthRefreshTokenResponse
 func (a *AuthAPIService) AuthRefreshGetExecute(r ApiAuthRefreshGetRequest) (*AuthRefreshTokenResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -664,7 +664,7 @@ func (a *AuthAPIService) AuthRegistrationPost(ctx context.Context) ApiAuthRegist
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *AuthAPIService) AuthRegistrationPostExecute(r ApiAuthRegistrationPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -817,7 +817,7 @@ func (a *AuthAPIService) AuthResetPost(ctx context.Context) ApiAuthResetPostRequ
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *AuthAPIService) AuthResetPostExecute(r ApiAuthResetPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

@@ -399,7 +399,7 @@ func (g *Generator) GenerateURL(ctx context.Context, rawURL string) (*embed.Embe
 	youtubeID, hasYouTubeID := extractYouTubeID(parsedURL)
 	oembedURL := ""
 	if hasYouTubeID {
-		oembedURL = g.buildYouTubeOEmbedURL(parsedURL.String())
+		oembedURL = g.buildYouTubeOEmbedURL(g.buildYouTubeWatchURL(youtubeID))
 	} else if hasTwitterRef {
 		oembedURL = buildTwitterOEmbedURL(firstNonEmpty(twitterRef.CanonicalURL, normalizedURL))
 		if canonicalParsed, parseErr := url.Parse(firstNonEmpty(twitterRef.CanonicalURL, normalizedURL)); parseErr == nil && canonicalParsed != nil {
@@ -417,9 +417,7 @@ func (g *Generator) GenerateURL(ctx context.Context, rawURL string) (*embed.Embe
 				if id, ok := extractYouTubeID(page.FinalURL); ok {
 					youtubeID = id
 					hasYouTubeID = true
-					if oembedURL == "" {
-						oembedURL = g.buildYouTubeOEmbedURL(page.FinalURL.String())
-					}
+					oembedURL = g.buildYouTubeOEmbedURL(g.buildYouTubeWatchURL(youtubeID))
 				}
 			}
 
@@ -1314,6 +1312,10 @@ func (g *Generator) buildYouTubeOEmbedURL(rawURL string) string {
 	query.Set("url", rawURL)
 	query.Set("format", "json")
 	return fmt.Sprintf("%s?%s", strings.TrimRight(g.youtubeOEmbedEndpoint, "?"), query.Encode())
+}
+
+func (g *Generator) buildYouTubeWatchURL(videoID string) string {
+	return fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID)
 }
 
 func (g *Generator) buildYouTubeVideoURL(videoID string) string {

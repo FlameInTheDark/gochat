@@ -50,7 +50,10 @@ func (f *fakeChannelRepo) SetChannelParentBulk(ctx context.Context, id []int64, 
 func (f *fakeChannelRepo) SetLastMessage(ctx context.Context, id, lastMessage int64) error {
 	return nil
 }
-func (f *fakeChannelRepo) UpdateChannel(ctx context.Context, id int64, parent *int64, private *bool, name, topic *string) (model.Channel, error) {
+func (f *fakeChannelRepo) AdjustMessageCount(ctx context.Context, id, delta int64) error {
+	return nil
+}
+func (f *fakeChannelRepo) UpdateChannel(ctx context.Context, id int64, parent *int64, private *bool, name, topic *string, closed *bool) (model.Channel, error) {
 	return model.Channel{}, nil
 }
 func (f *fakeChannelRepo) SetChannelVoiceRegion(ctx context.Context, id int64, region *string) error {
@@ -59,13 +62,19 @@ func (f *fakeChannelRepo) SetChannelVoiceRegion(ctx context.Context, id int64, r
 func (f *fakeChannelRepo) GetChannelVoiceRegion(ctx context.Context, id int64) (*string, error) {
 	return nil, nil
 }
+func (f *fakeChannelRepo) GetChannelMessagePosition(ctx context.Context, id int64) (int64, error) {
+	return 0, nil
+}
+func (f *fakeChannelRepo) ReserveMessagePositions(ctx context.Context, id, count int64) (int64, error) {
+	return count, nil
+}
 
 type fakeGuildChannelsRepo struct {
 	guildByChannel model.GuildChannel
 	err            error
 }
 
-func (f *fakeGuildChannelsRepo) AddChannel(ctx context.Context, guildID, channelID int64, channelName string, channelType model.ChannelType, parentID *int64, private bool, position int) error {
+func (f *fakeGuildChannelsRepo) AddChannel(ctx context.Context, guildID, channelID int64, channelName string, channelType model.ChannelType, parentID *int64, private bool, position int, topic *string, creatorID *int64, closed bool) error {
 	return nil
 }
 func (f *fakeGuildChannelsRepo) GetGuildChannel(ctx context.Context, guildID, channelID int64) (model.GuildChannel, error) {
@@ -76,6 +85,9 @@ func (f *fakeGuildChannelsRepo) GetGuildChannels(ctx context.Context, guildID in
 }
 func (f *fakeGuildChannelsRepo) GetGuildByChannel(ctx context.Context, channelID int64) (model.GuildChannel, error) {
 	return f.guildByChannel, f.err
+}
+func (f *fakeGuildChannelsRepo) GetGuildChannelsByChannelIDs(ctx context.Context, channelIDs []int64) ([]model.GuildChannel, error) {
+	return nil, nil
 }
 func (f *fakeGuildChannelsRepo) RemoveChannel(ctx context.Context, guildID, channelID int64) error {
 	return nil

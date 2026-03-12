@@ -92,6 +92,9 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdChannelChannelIdDelete**](docs/GuildAPI.md#guildguildidchannelchanneliddelete) | **Delete** /guild/{guild_id}/channel/{channel_id} | Delete channel
 *GuildAPI* | [**GuildGuildIdChannelChannelIdGet**](docs/GuildAPI.md#guildguildidchannelchannelidget) | **Get** /guild/{guild_id}/channel/{channel_id} | Get guild channel
 *GuildAPI* | [**GuildGuildIdChannelChannelIdPatch**](docs/GuildAPI.md#guildguildidchannelchannelidpatch) | **Patch** /guild/{guild_id}/channel/{channel_id} | Change channels data
+*GuildAPI* | [**GuildGuildIdChannelChannelIdThreadMemberMeDelete**](docs/GuildAPI.md#guildguildidchannelchannelidthreadmembermedelete) | **Delete** /guild/{guild_id}/channel/{channel_id}/thread-member/me | Leave thread
+*GuildAPI* | [**GuildGuildIdChannelChannelIdThreadMemberMePut**](docs/GuildAPI.md#guildguildidchannelchannelidthreadmembermeput) | **Put** /guild/{guild_id}/channel/{channel_id}/thread-member/me | Join thread
+*GuildAPI* | [**GuildGuildIdChannelChannelIdThreadsGet**](docs/GuildAPI.md#guildguildidchannelchannelidthreadsget) | **Get** /guild/{guild_id}/channel/{channel_id}/threads | Get channel threads
 *GuildAPI* | [**GuildGuildIdChannelGet**](docs/GuildAPI.md#guildguildidchannelget) | **Get** /guild/{guild_id}/channel | Get guild channels
 *GuildAPI* | [**GuildGuildIdChannelOrderPatch**](docs/GuildAPI.md#guildguildidchannelorderpatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 *GuildAPI* | [**GuildGuildIdChannelPost**](docs/GuildAPI.md#guildguildidchannelpost) | **Post** /guild/{guild_id}/channel | Create guild channel
@@ -137,6 +140,7 @@ Class | Method | HTTP request | Description
 *MessageAPI* | [**MessageChannelChannelIdMessageIdAckPost**](docs/MessageAPI.md#messagechannelchannelidmessageidackpost) | **Post** /message/channel/{channel_id}/{message_id}/ack | Set channel read state for current user
 *MessageAPI* | [**MessageChannelChannelIdMessageIdDelete**](docs/MessageAPI.md#messagechannelchannelidmessageiddelete) | **Delete** /message/channel/{channel_id}/{message_id} | Delete message
 *MessageAPI* | [**MessageChannelChannelIdMessageIdPatch**](docs/MessageAPI.md#messagechannelchannelidmessageidpatch) | **Patch** /message/channel/{channel_id}/{message_id} | Update message
+*MessageAPI* | [**MessageChannelChannelIdMessageIdThreadPost**](docs/MessageAPI.md#messagechannelchannelidmessageidthreadpost) | **Post** /message/channel/{channel_id}/{message_id}/thread | Create thread from message
 *MessageAPI* | [**MessageChannelChannelIdPost**](docs/MessageAPI.md#messagechannelchannelidpost) | **Post** /message/channel/{channel_id} | Send message
 *MessageAPI* | [**MessageChannelChannelIdTypingPost**](docs/MessageAPI.md#messagechannelchannelidtypingpost) | **Post** /message/channel/{channel_id}/typing | Send user typing event in the channel
 *SearchAPI* | [**SearchGuildIdMessagesPost**](docs/SearchAPI.md#searchguildidmessagespost) | **Post** /search/{guild_id}/messages | Search messages
@@ -201,6 +205,7 @@ Class | Method | HTTP request | Description
  - [DtoMember](docs/DtoMember.md)
  - [DtoMessage](docs/DtoMessage.md)
  - [DtoRole](docs/DtoRole.md)
+ - [DtoThreadMember](docs/DtoThreadMember.md)
  - [DtoUser](docs/DtoUser.md)
  - [EmbedEmbed](docs/EmbedEmbed.md)
  - [EmbedEmbedAuthor](docs/EmbedEmbedAuthor.md)
@@ -232,6 +237,7 @@ Class | Method | HTTP request | Description
  - [GuildSetVoiceRegionResponse](docs/GuildSetVoiceRegionResponse.md)
  - [GuildUpdateEmojiRequest](docs/GuildUpdateEmojiRequest.md)
  - [GuildUpdateGuildRequest](docs/GuildUpdateGuildRequest.md)
+ - [MessageCreateThreadRequest](docs/MessageCreateThreadRequest.md)
  - [MessageSendMessageRequest](docs/MessageSendMessageRequest.md)
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)
  - [MessageUploadAttachmentRequest](docs/MessageUploadAttachmentRequest.md)

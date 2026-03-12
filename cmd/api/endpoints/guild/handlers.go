@@ -12,10 +12,13 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/FlameInTheDark/gochat/internal/embed"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
+	"github.com/FlameInTheDark/gochat/internal/threadcount"
+	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -122,40 +125,112 @@ func (e *entity) getUserRoles(c *fiber.Ctx, guildId, userId int64) (map[int64]*m
 	return roleMap, nil
 }
 
+func buildThreadMemberDTO(member *model.ThreadMember) *dto.ThreadMember {
+	if member == nil {
+		return nil
+	}
+	return &dto.ThreadMember{
+		UserId:        member.UserId,
+		JoinTimestamp: member.JoinAt,
+		Flags:         member.Flags,
+	}
+}
+
+func (e *entity) applyThreadMessageCount(ctx context.Context, channel *model.Channel) {
+	if channel == nil || channel.Type != model.ChannelTypeThread || e.cache == nil {
+		return
+	}
+	delta, err := e.cache.GetInt64(ctx, threadcount.DeltaKey(channel.Id))
+	if err != nil || delta <= 0 {
+		return
+	}
+	channel.MessageCount += delta
+}
+
+func (e *entity) applyThreadMessageCounts(ctx context.Context, channels []model.Channel) {
+	for i := range channels {
+		e.applyThreadMessageCount(ctx, &channels[i])
+	}
+}
+
+func buildThreadMemberIDs(members []model.ThreadMember) []int64 {
+	if len(members) == 0 {
+		return nil
+	}
+	userIDs := make([]int64, 0, len(members))
+	seen := make(map[int64]struct{}, len(members))
+	for _, member := range members {
+		if _, ok := seen[member.UserId]; ok {
+			continue
+		}
+		seen[member.UserId] = struct{}{}
+		userIDs = append(userIDs, member.UserId)
+	}
+	return userIDs
+}
+
+func (e *entity) currentUserThreadMember(ctx context.Context, userID int64, channel *model.Channel) (*dto.ThreadMember, []int64, error) {
+	if channel == nil || channel.Type != model.ChannelTypeThread {
+		return nil, nil, nil
+	}
+
+	members, err := e.tm.GetThreadMembers(ctx, channel.Id)
+	if err != nil {
+		return nil, nil, err
+	}
+	var currentMember *dto.ThreadMember
+	for i := range members {
+		if members[i].UserId == userID {
+			currentMember = buildThreadMemberDTO(&members[i])
+			break
+		}
+	}
+	return currentMember, buildThreadMemberIDs(members), nil
+}
+
+func (e *entity) currentUserThreadMembers(ctx context.Context, userID int64, channels []model.Channel) (map[int64]*dto.ThreadMember, map[int64][]int64, error) {
+	threadIDs := make([]int64, 0, len(channels))
+	for _, channel := range channels {
+		if channel.Type == model.ChannelTypeThread {
+			threadIDs = append(threadIDs, channel.Id)
+		}
+	}
+	if len(threadIDs) == 0 {
+		return map[int64]*dto.ThreadMember{}, map[int64][]int64{}, nil
+	}
+
+	members, err := e.tm.GetThreadMembersBulk(ctx, threadIDs)
+	if err != nil {
+		return nil, nil, err
+	}
+	byThreadID := make(map[int64]*dto.ThreadMember, len(members))
+	memberIDsByThread := make(map[int64][]int64, len(threadIDs))
+	seenByThread := make(map[int64]map[int64]struct{}, len(threadIDs))
+	for i := range members {
+		member := members[i]
+		seen, ok := seenByThread[member.ThreadId]
+		if !ok {
+			seen = make(map[int64]struct{})
+			seenByThread[member.ThreadId] = seen
+		}
+		if _, ok := seen[member.UserId]; !ok {
+			seen[member.UserId] = struct{}{}
+			memberIDsByThread[member.ThreadId] = append(memberIDsByThread[member.ThreadId], member.UserId)
+		}
+		if member.UserId == userID {
+			byThreadID[member.ThreadId] = buildThreadMemberDTO(&member)
+		}
+	}
+	return byThreadID, memberIDsByThread, nil
+}
+
 // checkChannelPermissions validates if user can view a private channel
 func (e *entity) checkChannelPermissions(c *fiber.Ctx, channel *model.Channel, guild *model.Guild, user *helper.JWTUser, roles map[int64]*model.Role) (bool, error) {
-	if !channel.Private || guild.OwnerId == user.Id {
-		return true, nil
-	}
-
-	userPerm, err := e.uperm.GetUserChannelPermission(c.UserContext(), channel.Id, user.Id)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	_, _, _, canView, err := e.perm.ChannelPerm(c.UserContext(), guild.Id, channel.Id, user.Id, permissions.PermServerViewChannels)
+	if err != nil {
 		return false, fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
-
-	if errors.Is(err, sql.ErrNoRows) {
-		rolePerms, err := e.rperm.GetChannelRolePermissions(c.UserContext(), channel.Id)
-		if err != nil {
-			return false, fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-
-		var combinedRole int64
-		for _, rp := range rolePerms {
-			if role, exists := roles[rp.RoleId]; exists {
-				combinedRole = permissions.AddRoles(combinedRole, role.Permissions)
-			}
-		}
-
-		return permissions.CheckPermissions(combinedRole, permissions.PermServerViewChannels), nil
-	}
-
-	basePerms := *channel.Permissions
-	if channel.Permissions == nil {
-		basePerms = guild.Permissions
-	}
-	finalPerms := permissions.SubtractRoles(permissions.AddRoles(basePerms, userPerm.Accept), userPerm.Deny)
-
-	return permissions.CheckPermissions(finalPerms, permissions.PermServerViewChannels), nil
+	return canView, nil
 }
 
 // createDefaultChannels creates default text category and general channel for new guild
@@ -163,11 +238,11 @@ func (e *entity) createDefaultChannels(c *fiber.Ctx, guildId int64, isPublic boo
 	categoryId := idgen.Next()
 	channelId := idgen.Next()
 
-	if err := e.gc.AddChannel(c.UserContext(), guildId, categoryId, "text", model.ChannelTypeGuildCategory, nil, isPublic, 0); err != nil {
+	if err := e.gc.AddChannel(c.UserContext(), guildId, categoryId, "text", model.ChannelTypeGuildCategory, nil, isPublic, 0, nil, nil, false); err != nil {
 		return 0, fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	if err := e.gc.AddChannel(c.UserContext(), guildId, channelId, "general", model.ChannelTypeGuild, &categoryId, isPublic, 0); err != nil {
+	if err := e.gc.AddChannel(c.UserContext(), guildId, channelId, "general", model.ChannelTypeGuild, &categoryId, isPublic, 0, nil, nil, false); err != nil {
 		return 0, fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
@@ -273,12 +348,15 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) er
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	var channelsData = make([]dto.Channel, len(channels))
+	channelsData := make([]dto.Channel, 0, len(channels))
 	for i, ch := range channels {
+		if ch.Type == model.ChannelTypeThread {
+			continue
+		}
 		if ch.Permissions == nil {
 			ch.Permissions = &guildCtx.Guild.Permissions
 		}
-		channelsData[i] = channelModelToDTO(&ch, &guildCtx.Guild.Id, guildChannels[i].Position, croles[i].Roles)
+		channelsData = append(channelsData, channelModelToDTO(&ch, &guildCtx.Guild.Id, guildChannels[i].Position, croles[i].Roles))
 	}
 
 	deriveChannelParents(channelsData)
@@ -332,21 +410,113 @@ func (e *entity) GetChannel(c *fiber.Ctx) error {
 	return e.fetchSingleChannel(c, guildCtx, channelId, roles)
 }
 
+// GetChannelThreads
+//
+//	@Summary	Get channel threads
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		guild_id	path		int64		true	"Guild id"		example(2230469276416868352)
+//	@Param		channel_id	path		int64		true	"Channel id"	example(2230469276416868352)
+//	@Success	200			{array}		dto.Channel	"List of threads"
+//	@failure	400			{string}	string		"Incorrect request body"
+//	@failure	401			{string}	string		"Unauthorized"
+//	@failure	500			{string}	string		"Something bad happened"
+//	@Router		/guild/{guild_id}/channel/{channel_id}/threads [get]
+func (e *entity) GetChannelThreads(c *fiber.Ctx) error {
+	guildId, err := e.parseGuildID(c)
+	if err != nil {
+		return err
+	}
+
+	channelId, err := e.parseChannelID(c)
+	if err != nil {
+		return err
+	}
+
+	guildCtx, err := e.validateGuildAccess(c, guildId)
+	if err != nil {
+		return err
+	}
+
+	parentChannel, _, _, canView, err := e.perm.ChannelPerm(c.UserContext(), guildCtx.Guild.Id, channelId, guildCtx.User.Id, permissions.PermServerViewChannels)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	if !canView || parentChannel == nil {
+		return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+	}
+	if parentChannel.Type != model.ChannelTypeGuild {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetChannel)
+	}
+
+	threads, err := e.ch.GetChannelThreads(c.UserContext(), channelId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	if len(threads) == 0 {
+		return c.JSON([]dto.Channel{})
+	}
+	e.applyThreadMessageCounts(c.UserContext(), threads)
+	threadMembers, threadMemberIDs, err := e.currentUserThreadMembers(c.UserContext(), guildCtx.User.Id, threads)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	guildChannels, err := e.gc.GetGuildChannels(c.UserContext(), guildCtx.Guild.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	positions := make(map[int64]int, len(guildChannels))
+	for _, guildChannel := range guildChannels {
+		positions[guildChannel.ChannelId] = guildChannel.Position
+	}
+
+	resp := make([]dto.Channel, 0, len(threads))
+	for i := range threads {
+		if threads[i].Permissions == nil {
+			if parentChannel.Permissions != nil {
+				threads[i].Permissions = parentChannel.Permissions
+			} else {
+				threads[i].Permissions = &guildCtx.Guild.Permissions
+			}
+		}
+		resp = append(resp, channelModelToDTOWithThreadMember(&threads[i], &guildCtx.Guild.Id, positions[threads[i].Id], nil, threadMembers[threads[i].Id], threadMemberIDs[threads[i].Id]))
+	}
+
+	return c.JSON(resp)
+}
+
 // fetchSingleChannel retrieves and validates access to a specific channel
 func (e *entity) fetchSingleChannel(c *fiber.Ctx, guildCtx *guildContext, channelId int64, roles map[int64]*model.Role) error {
 	guildChannel, err := e.gc.GetGuildChannel(c.UserContext(), guildCtx.Guild.Id, channelId)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fiber.NewError(fiber.StatusNotFound, ErrUnableToGetChannel)
+		}
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	channel, err := e.ch.GetChannel(c.UserContext(), guildChannel.ChannelId)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fiber.NewError(fiber.StatusNotFound, ErrUnableToGetChannel)
+		}
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
+	if channel.Type == model.ChannelTypeThread && channel.Permissions == nil && channel.ParentID != nil {
+		if parentChannel, err := e.ch.GetChannel(c.UserContext(), *channel.ParentID); err == nil {
+			if parentChannel.Permissions != nil {
+				channel.Permissions = parentChannel.Permissions
+			} else {
+				channel.Permissions = &guildCtx.Guild.Permissions
+			}
+		}
+	}
 	if channel.Permissions == nil {
 		channel.Permissions = &guildCtx.Guild.Permissions
 	}
+	e.applyThreadMessageCount(c.UserContext(), &channel)
 
 	canView, err := e.checkChannelPermissions(c, &channel, guildCtx.Guild, guildCtx.User, roles)
 	if err != nil {
@@ -357,7 +527,107 @@ func (e *entity) fetchSingleChannel(c *fiber.Ctx, guildCtx *guildContext, channe
 		return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
 	}
 
-	return c.JSON(channelModelToDTO(&channel, &guildCtx.Guild.Id, guildChannel.Position, nil))
+	threadMember, threadMemberIDs, err := e.currentUserThreadMember(c.UserContext(), guildCtx.User.Id, &channel)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(channelModelToDTOWithThreadMember(&channel, &guildCtx.Guild.Id, guildChannel.Position, nil, threadMember, threadMemberIDs))
+}
+
+// JoinThread
+//
+//	@Summary	Join thread
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		guild_id	path		int64				true	"Guild ID"
+//	@Param		channel_id	path		int64				true	"Thread channel ID"
+//	@Success	200			{object}	dto.ThreadMember	"Thread membership"
+//	@failure	400			{string}	string				"Incorrect request body"
+//	@failure	401			{string}	string				"Unauthorized"
+//	@failure	403			{string}	string				"Forbidden"
+//	@failure	500			{string}	string				"Something bad happened"
+//	@Router		/guild/{guild_id}/channel/{channel_id}/thread-member/me [put]
+func (e *entity) JoinThread(c *fiber.Ctx) error {
+	guildId, err := e.parseGuildID(c)
+	if err != nil {
+		return err
+	}
+
+	channelId, err := e.parseChannelID(c)
+	if err != nil {
+		return err
+	}
+
+	guildCtx, err := e.validateGuildAccess(c, guildId)
+	if err != nil {
+		return err
+	}
+
+	channel, _, _, canView, err := e.perm.ChannelPerm(c.UserContext(), guildCtx.Guild.Id, channelId, guildCtx.User.Id, permissions.PermServerViewChannels)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	if !canView || channel == nil {
+		return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+	}
+	if channel.Type != model.ChannelTypeThread {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetChannel)
+	}
+
+	member, err := e.tm.AddThreadMember(c.UserContext(), channelId, guildCtx.User.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "unable to join thread")
+	}
+
+	return c.JSON(buildThreadMemberDTO(&member))
+}
+
+// LeaveThread
+//
+//	@Summary	Leave thread
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		guild_id	path		int64	true	"Guild ID"
+//	@Param		channel_id	path		int64	true	"Thread channel ID"
+//	@Success	200			{string}	string	"Left"
+//	@failure	400			{string}	string	"Incorrect request body"
+//	@failure	401			{string}	string	"Unauthorized"
+//	@failure	403			{string}	string	"Forbidden"
+//	@failure	500			{string}	string	"Something bad happened"
+//	@Router		/guild/{guild_id}/channel/{channel_id}/thread-member/me [delete]
+func (e *entity) LeaveThread(c *fiber.Ctx) error {
+	guildId, err := e.parseGuildID(c)
+	if err != nil {
+		return err
+	}
+
+	channelId, err := e.parseChannelID(c)
+	if err != nil {
+		return err
+	}
+
+	guildCtx, err := e.validateGuildAccess(c, guildId)
+	if err != nil {
+		return err
+	}
+
+	channel, _, _, canView, err := e.perm.ChannelPerm(c.UserContext(), guildCtx.Guild.Id, channelId, guildCtx.User.Id, permissions.PermServerViewChannels)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	if !canView || channel == nil {
+		return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+	}
+	if channel.Type != model.ChannelTypeThread {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetChannel)
+	}
+
+	if err := e.tm.RemoveThreadMember(c.UserContext(), channelId, guildCtx.User.Id); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "unable to leave thread")
+	}
+
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // Create
@@ -763,20 +1033,14 @@ func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId 
 
 	channelId := idgen.Next()
 
-	// Only threads use an explicit parent; category membership is derived from position
-	var effectiveParentId *int64
-	if channelType == model.ChannelTypeThread {
-		effectiveParentId = parentId
-	}
-
 	// Add channel to guild
-	if err := e.gc.AddChannel(c.UserContext(), guild.Id, channelId, name, channelType, effectiveParentId, isPrivate, position); err != nil {
+	if err := e.gc.AddChannel(c.UserContext(), guild.Id, channelId, name, channelType, nil, isPrivate, position, nil, nil, false); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
 	}
 
 	// Send create channel event and clean cached data
 	go func() {
-		if err := e.sendCreateChannelEvent(guildId, guild.Id, channelId, name, channelType, effectiveParentId); err != nil {
+		if err := e.sendCreateChannelEvent(guildId, guild.Id, channelId, name, channelType, nil); err != nil {
 			slog.Error("unable to send create channel event", slog.String("error", err.Error()))
 		}
 		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
@@ -785,6 +1049,328 @@ func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId 
 	}()
 
 	return c.SendStatus(fiber.StatusCreated)
+}
+
+func (e *entity) canManageThread(ctx context.Context, guildId int64, thread *model.Channel, userId int64) (bool, error) {
+	if thread.Type != model.ChannelTypeThread {
+		return false, nil
+	}
+	if thread.CreatorID != nil && *thread.CreatorID == userId {
+		return true, nil
+	}
+
+	_, _, _, canManage, err := e.perm.ChannelPerm(ctx, guildId, thread.Id, userId, permissions.PermTextManageThreads)
+	if err != nil {
+		return false, err
+	}
+	return canManage, nil
+}
+
+func (e *entity) validatePatchChannelRequest(channel *model.Channel, req *PatchGuildChannelRequest) error {
+	if channel.Type == model.ChannelTypeThread {
+		if req.Private != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "threads inherit parent permissions")
+		}
+		if req.Name != nil {
+			if err := validateThreadChannelName(*req.Name); err != nil {
+				return fiber.NewError(fiber.StatusBadRequest, err.Error())
+			}
+		}
+		return nil
+	}
+
+	if req.Closed != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "only threads can be closed")
+	}
+	if req.Name != nil {
+		if err := validateGuildChannelName(*req.Name); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+	}
+	return nil
+}
+
+type threadCreatedMessageUpdate struct {
+	channelID int64
+	message   dto.Message
+}
+
+func (e *entity) buildThreadMessageAuthor(ctx context.Context, userID int64) dto.User {
+	if e.user == nil || e.disc == nil {
+		return dto.User{Id: userID, Name: strconv.FormatInt(userID, 10)}
+	}
+	user, err := e.user.GetUserById(ctx, userID)
+	if err != nil {
+		return dto.User{Id: userID, Name: strconv.FormatInt(userID, 10)}
+	}
+
+	discriminator, err := e.disc.GetDiscriminatorByUserId(ctx, userID)
+	if err != nil {
+		return dto.User{Id: userID, Name: user.Name}
+	}
+
+	author := userToDTO(user, discriminator.Discriminator)
+	if user.Avatar != nil {
+		if ad, err := e.getAvatarDataCached(ctx, userID, *user.Avatar); err == nil && ad != nil {
+			author.Avatar = ad
+		}
+	}
+	return author
+}
+
+func guildOptionalInt64(value int64) *int64 {
+	if value == 0 {
+		return nil
+	}
+	v := value
+	return &v
+}
+
+func guildOptionalReferenceChannelID(messageChannelID, referenceChannelID, referenceID int64) *int64 {
+	if referenceID == 0 {
+		return nil
+	}
+	if referenceChannelID == 0 {
+		referenceChannelID = messageChannelID
+	}
+	return guildOptionalInt64(referenceChannelID)
+}
+
+func (e *entity) buildGuildMessageAttachments(ctx context.Context, channelID int64, attachmentIDs []int64) []dto.Attachment {
+	if len(attachmentIDs) == 0 || e.at == nil {
+		return nil
+	}
+
+	attachments, err := e.at.SelectAttachmentsByChannel(ctx, channelID, attachmentIDs)
+	if err != nil {
+		if e.log != nil {
+			e.log.Error("unable to load message attachments",
+				"channel_id", channelID,
+				"error", err.Error())
+		}
+		return nil
+	}
+
+	attachmentsByID := make(map[int64]model.Attachment, len(attachments))
+	for _, attachment := range attachments {
+		attachmentsByID[attachment.Id] = attachment
+	}
+
+	result := make([]dto.Attachment, 0, len(attachmentIDs))
+	for _, attachmentID := range attachmentIDs {
+		attachment, ok := attachmentsByID[attachmentID]
+		if !ok {
+			continue
+		}
+		var url string
+		if attachment.URL != nil {
+			url = *attachment.URL
+		}
+		result = append(result, dto.Attachment{
+			ContentType: attachment.ContentType,
+			Filename:    attachment.Name,
+			Height:      attachment.Height,
+			Width:       attachment.Width,
+			URL:         url,
+			PreviewURL:  attachment.PreviewURL,
+			Size:        attachment.FileSize,
+		})
+	}
+
+	return result
+}
+
+func (e *entity) buildGuildMessageDTO(ctx context.Context, message model.Message, thread *dto.Channel) dto.Message {
+	flags := model.NormalizeMessageFlags(message.Flags)
+	mergedEmbeds, err := embed.ParseMergedEmbeds(message.EmbedsJSON, message.AutoEmbedsJSON, model.HasMessageFlag(flags, model.MessageFlagSuppressEmbeds))
+	if err != nil && e.log != nil {
+		e.log.Error("unable to parse merged message embeds",
+			"channel_id", message.ChannelId,
+			"message_id", message.Id,
+			"error", err.Error())
+	}
+
+	return dto.Message{
+		Id:                 message.Id,
+		ChannelId:          message.ChannelId,
+		Author:             e.buildThreadMessageAuthor(ctx, message.UserId),
+		Content:            message.Content,
+		Position:           guildOptionalInt64(message.Position),
+		Attachments:        e.buildGuildMessageAttachments(ctx, message.ChannelId, message.Attachments),
+		Embeds:             mergedEmbeds,
+		Flags:              flags,
+		Type:               message.Type,
+		Reference:          guildOptionalInt64(message.Reference),
+		ReferenceChannelId: guildOptionalReferenceChannelID(message.ChannelId, message.ReferenceChannel, message.Reference),
+		ThreadId:           guildOptionalInt64(message.Thread),
+		Thread:             thread,
+		UpdatedAt:          message.EditedAt,
+	}
+}
+
+type deletedThreadMessageRefs struct {
+	parentChannelID int64
+	followupMessage *model.Message
+	sourceChannelID int64
+	sourceMessage   *model.Message
+}
+
+func (e *entity) loadDeletedThreadMessageRefs(ctx context.Context, threadID int64) (*deletedThreadMessageRefs, error) {
+	parentChannelID, followupMessageID, err := e.msg.GetThreadCreatedMessageRef(ctx, threadID)
+	if err != nil {
+		if errors.Is(err, gocql.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	refs := &deletedThreadMessageRefs{parentChannelID: parentChannelID}
+	followupMessage, err := e.msg.GetMessage(ctx, followupMessageID, parentChannelID)
+	if err != nil {
+		if errors.Is(err, gocql.ErrNotFound) {
+			return refs, nil
+		}
+		return nil, err
+	}
+	refs.followupMessage = &followupMessage
+
+	if followupMessage.Reference == 0 {
+		return refs, nil
+	}
+
+	sourceChannelID := parentChannelID
+	if followupMessage.ReferenceChannel != 0 {
+		sourceChannelID = followupMessage.ReferenceChannel
+	}
+	sourceMessage, err := e.msg.GetMessage(ctx, followupMessage.Reference, sourceChannelID)
+	if err != nil {
+		if errors.Is(err, gocql.ErrNotFound) {
+			return refs, nil
+		}
+		return nil, err
+	}
+	refs.sourceChannelID = sourceChannelID
+	refs.sourceMessage = &sourceMessage
+	return refs, nil
+}
+
+func (e *entity) sendDetachedThreadMessageUpdate(guildID int64, message dto.Message) {
+	if err := e.mqt.SendChannelMessage(message.ChannelId, &mqmsg.UpdateMessage{
+		GuildId: &guildID,
+		Message: message,
+	}); err != nil && e.log != nil {
+		e.log.Error("unable to send detached thread message update",
+			"channel_id", message.ChannelId,
+			"message_id", message.Id,
+			"error", err.Error())
+	}
+}
+
+func (e *entity) detachDeletedThreadMessages(ctx context.Context, guildID, threadID int64) error {
+	refs, err := e.loadDeletedThreadMessageRefs(ctx, threadID)
+	if err != nil || refs == nil {
+		return err
+	}
+
+	var detachErr error
+
+	if refs.sourceMessage != nil {
+		if err := e.msg.SetThread(ctx, refs.sourceMessage.Id, refs.sourceChannelID, 0); err != nil {
+			detachErr = errors.Join(detachErr, fmt.Errorf("detach source message thread: %w", err))
+		} else {
+			refs.sourceMessage.Thread = 0
+			e.sendDetachedThreadMessageUpdate(guildID, e.buildGuildMessageDTO(ctx, *refs.sourceMessage, nil))
+		}
+		if err := e.msg.ReleaseThreadClaim(ctx, refs.sourceChannelID, refs.sourceMessage.Id); err != nil {
+			detachErr = errors.Join(detachErr, fmt.Errorf("release source message thread claim: %w", err))
+		}
+	}
+
+	if refs.followupMessage != nil {
+		if err := e.msg.SetThread(ctx, refs.followupMessage.Id, refs.parentChannelID, 0); err != nil {
+			detachErr = errors.Join(detachErr, fmt.Errorf("detach thread-created message thread: %w", err))
+		} else {
+			refs.followupMessage.Thread = 0
+			e.sendDetachedThreadMessageUpdate(guildID, e.buildGuildMessageDTO(ctx, *refs.followupMessage, nil))
+		}
+	}
+
+	if err := e.msg.DeleteThreadCreatedMessageRef(ctx, threadID); err != nil {
+		detachErr = errors.Join(detachErr, fmt.Errorf("delete thread-created message ref: %w", err))
+	}
+
+	return detachErr
+}
+
+func (e *entity) syncThreadCreatedMessage(ctx context.Context, guildID int64, thread *model.Channel, position int, memberIDs []int64) (*threadCreatedMessageUpdate, error) {
+	if thread == nil || thread.Type != model.ChannelTypeThread {
+		return nil, nil
+	}
+	e.applyThreadMessageCount(ctx, thread)
+
+	parentChannelID, messageID, err := e.msg.GetThreadCreatedMessageRef(ctx, thread.Id)
+	if err != nil {
+		if errors.Is(err, gocql.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	message, err := e.msg.GetMessage(ctx, messageID, parentChannelID)
+	if err != nil {
+		if errors.Is(err, gocql.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if model.MessageType(message.Type) != model.MessageTypeThreadCreated {
+		return nil, nil
+	}
+
+	if message.Content == thread.Name {
+		return nil, nil
+	}
+
+	if err := e.msg.UpdateMessageContent(ctx, message.Id, parentChannelID, thread.Name); err != nil {
+		return nil, err
+	}
+
+	threadDTO := channelModelToDTOWithThreadMember(thread, &guildID, position, nil, nil, memberIDs)
+	return &threadCreatedMessageUpdate{
+		channelID: parentChannelID,
+		message: dto.Message{
+			Id:                 message.Id,
+			ChannelId:          parentChannelID,
+			Author:             e.buildThreadMessageAuthor(ctx, message.UserId),
+			Content:            thread.Name,
+			Position:           guildOptionalInt64(message.Position),
+			Attachments:        nil,
+			Embeds:             nil,
+			Flags:              model.NormalizeMessageFlags(message.Flags),
+			Type:               message.Type,
+			Reference:          guildOptionalInt64(message.Reference),
+			ReferenceChannelId: guildOptionalReferenceChannelID(message.ChannelId, message.ReferenceChannel, message.Reference),
+			ThreadId:           guildOptionalInt64(message.Thread),
+			Thread:             &threadDTO,
+			UpdatedAt:          nil,
+		},
+	}, nil
+}
+
+func (e *entity) sendThreadCreatedMessageUpdate(guildID int64, update *threadCreatedMessageUpdate) {
+	if update == nil {
+		return
+	}
+
+	if err := e.mqt.SendChannelMessage(update.channelID, &mqmsg.UpdateMessage{
+		GuildId: &guildID,
+		Message: update.message,
+	}); err != nil {
+		e.log.Error("unable to send thread-created message update",
+			"channel_id", update.channelID,
+			"message_id", update.message.Id,
+			"error", err.Error())
+	}
 }
 
 // sendCreateChannelEvent sends channel creation message to message queue
@@ -875,13 +1461,43 @@ func (e *entity) DeleteChannel(c *fiber.Ctx) error {
 
 // deleteChannelWithPermissionCheck validates permissions and deletes a channel
 func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channelId, userId int64) error {
-	channel, _, _, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, channelId, userId, permissions.PermServerManageChannels)
+	isMember, err := e.memb.IsGuildMember(c.UserContext(), guildId, userId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
+	}
+	if !isMember {
+		return fiber.NewError(fiber.StatusForbidden, ErrNotAMember)
+	}
+
+	channel, err := e.ch.GetChannel(c.UserContext(), channelId)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	if !hasPermission || channel.Type == model.ChannelTypeGuildCategory {
-		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+	if channel.Type == model.ChannelTypeGuildCategory {
+		_, _, _, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, channelId, userId, permissions.PermServerManageChannels)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+		if !hasPermission {
+			return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+		}
+	} else if channel.Type == model.ChannelTypeThread {
+		canManage, err := e.canManageThread(c.UserContext(), guildId, &channel, userId)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+		if !canManage {
+			return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+		}
+	} else {
+		_, _, _, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, channelId, userId, permissions.PermServerManageChannels)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+		if !hasPermission {
+			return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+		}
 	}
 
 	// Delete the channel
@@ -895,10 +1511,18 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 	}
+	if channel.Type == model.ChannelTypeThread {
+		if err := e.detachDeletedThreadMessages(c.UserContext(), guildId, channelId); err != nil {
+			slog.Error("unable to detach deleted thread messages", slog.String("error", err.Error()))
+		}
+		if err := e.tm.RemoveThreadMembers(c.UserContext(), channelId); err != nil {
+			slog.Error("unable to delete thread members", slog.String("error", err.Error()))
+		}
+	}
 
 	// Send delete channel event and clean cached value
 	go func() {
-		if err := e.sendDeleteChannelEvent(guildId, channel); err != nil {
+		if err := e.sendDeleteChannelEvent(guildId, &channel); err != nil {
 			slog.Error("unable to send guild event after channel deletion", slog.String("error", err.Error()))
 		}
 		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
@@ -977,6 +1601,32 @@ func (e *entity) sendDeleteChannelEvent(guildId int64, channel *model.Channel) e
 		ChannelId:   channel.Id,
 	}); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
+	}
+	if channel.Type == model.ChannelTypeThread {
+		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.DeleteThread{
+			GuildId:  &guildId,
+			ThreadId: channel.Id,
+		}); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
+		}
+	}
+	return nil
+}
+
+func (e *entity) sendUpdateChannelEvent(guildId int64, channel dto.Channel) error {
+	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateChannel{
+		GuildId: &guildId,
+		Channel: channel,
+	}); err != nil {
+		return err
+	}
+	if channel.Type == model.ChannelTypeThread {
+		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateThread{
+			GuildId: &guildId,
+			Thread:  channel,
+		}); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -1116,12 +1766,12 @@ func (e *entity) PatchChannel(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageChannels)
+	isMember, err := e.memb.IsGuildMember(c.UserContext(), guildId, user.Id)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
 	}
-	if !hasPermission {
-		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+	if !isMember {
+		return fiber.NewError(fiber.StatusForbidden, ErrNotAMember)
 	}
 
 	guildChannel, err := e.gc.GetGuildChannel(c.UserContext(), guildId, channelId)
@@ -1129,21 +1779,63 @@ func (e *entity) PatchChannel(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
 	}
 
-	upd, err := e.ch.UpdateChannel(c.UserContext(), guildChannel.ChannelId, nil, req.Private, req.Name, req.Topic)
+	channel, err := e.ch.GetChannel(c.UserContext(), guildChannel.ChannelId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
+	}
+	if err := e.validatePatchChannelRequest(&channel, &req); err != nil {
+		return err
+	}
+
+	if channel.Type == model.ChannelTypeThread {
+		canManage, err := e.canManageThread(c.UserContext(), guildId, &channel, user.Id)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+		if !canManage {
+			return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+		}
+	} else {
+		_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageChannels)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+		if !hasPermission {
+			return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
+		}
+	}
+
+	upd, err := e.ch.UpdateChannel(c.UserContext(), guildChannel.ChannelId, nil, req.Private, req.Name, req.Topic, req.Closed)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotModified, ErrUnableToUpdateChannel)
 	}
 
-	resp := channelModelToDTO(&upd, &guildId, guildChannel.Position, nil)
+	var threadMember *dto.ThreadMember
+	var threadMemberIDs []int64
+	if upd.Type == model.ChannelTypeThread {
+		threadMember, threadMemberIDs, err = e.currentUserThreadMember(c.UserContext(), user.Id, &upd)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
+		}
+		e.applyThreadMessageCount(c.UserContext(), &upd)
+	}
+
+	var threadCreatedUpdate *threadCreatedMessageUpdate
+	if upd.Type == model.ChannelTypeThread && req.Name != nil {
+		threadCreatedUpdate, err = e.syncThreadCreatedMessage(c.UserContext(), guildId, &upd, guildChannel.Position, threadMemberIDs)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "unable to update thread creation message")
+		}
+	}
+
+	resp := channelModelToDTOWithThreadMember(&upd, &guildId, guildChannel.Position, nil, threadMember, threadMemberIDs)
 
 	// Notify clients about the channel update and clean cached data
 	go func() {
-		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateChannel{
-			GuildId: &guildId,
-			Channel: resp,
-		}); err != nil {
+		if err := e.sendUpdateChannelEvent(guildId, resp); err != nil {
 			slog.Error("unable to send guild update event after channel update", slog.String("error", err.Error()))
 		}
+		e.sendThreadCreatedMessageUpdate(guildId, threadCreatedUpdate)
 		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
 			slog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
 		}

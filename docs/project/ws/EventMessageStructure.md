@@ -22,6 +22,8 @@ All messages exchanged over the Gateway WebSocket share a single JSON envelope:
 | `t` | int | ❌ | Event type — only meaningful when `op = 0` (Dispatch) or `op = 7` (RTC). Omitted for control ops |
 
 > **Note:** The server accepts both `"d"` and `"data"` as the payload key (for client convenience).
+>
+> **Note:** Some Dispatch payloads are personalized per recipient. For example, message `nonce` is present only in the author's own live message event and is stripped from the same channel event delivered to other users.
 
 ---
 
@@ -169,7 +171,7 @@ Subscribe to channel-specific events (typing, messages) and/or additional guild 
 {
   "op": 5,
   "d": {
-    "channel": 2226022078341972000,
+    "channels": [2226022078341972000, 2226022078341972001],
     "guilds": [2226022078304223200]
   }
 }
@@ -177,7 +179,8 @@ Subscribe to channel-specific events (typing, messages) and/or additional guild 
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `channel` | int64 | ❌ | Channel ID to subscribe to (guild channel, DM, or group DM) |
+| `channels` | int64[] | ❌ | Exact channel ID list to subscribe to (guild channels, DMs, or group DMs) |
+| `channel` | int64 | ❌ | Legacy one-channel fallback; treated as `channels: [channel]` when `channels` is absent |
 | `guilds` | int64[] | ❌ | Additional guild IDs to subscribe to |
 
 **Permission checks for channel subscriptions:**
@@ -186,6 +189,12 @@ Subscribe to channel-specific events (typing, messages) and/or additional guild 
 3. **Group DM** — must be a participant.
 
 If none match, the subscription is silently rejected (logged server-side).
+
+When `channels` is present, it replaces the connection's entire explicit channel-subscription set. Send `channels: []` to clear all channel subscriptions.
+
+For threads:
+- include the thread ID in `channels` if this connection should receive live thread message events
+- thread membership is managed separately through the REST thread-member routes and controls personal notifications / unread behavior
 
 ---
 

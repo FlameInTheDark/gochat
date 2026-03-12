@@ -265,10 +265,13 @@ func (e *entity) executeSearch(c *fiber.Ctx, req *MessageSearchRequest, guildID 
 					Discriminator: "",
 				},
 				Content:     m.Content,
+				Position:    optionalInt64(m.Position),
 				Attachments: dtoAts,
 				Embeds:      embeds,
 				Flags:       flags,
 				Type:        m.Type,
+				Reference:   optionalInt64(m.Reference),
+				ThreadId:    optionalInt64(m.Thread),
 				UpdatedAt:   m.EditedAt,
 			})
 			continue
@@ -279,13 +282,24 @@ func (e *entity) executeSearch(c *fiber.Ctx, req *MessageSearchRequest, guildID 
 			ChannelId:   m.ChannelId,
 			Author:      dto.User{},
 			Content:     m.Content,
+			Position:    optionalInt64(m.Position),
 			Attachments: dtoAts,
 			Embeds:      embeds,
 			Flags:       flags,
 			Type:        m.Type,
+			Reference:   optionalInt64(m.Reference),
+			ThreadId:    optionalInt64(m.Thread),
 			UpdatedAt:   m.EditedAt,
 		})
 	}
 
 	return c.JSON(resp)
+}
+
+func optionalInt64(value int64) *int64 {
+	if value == 0 {
+		return nil
+	}
+	v := value
+	return &v
 }

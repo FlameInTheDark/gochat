@@ -56,7 +56,7 @@ func (a *UserAPIService) UserMeAvatarPost(ctx context.Context) ApiUserMeAvatarPo
 
 // Execute executes the request
 //
-//	@return DtoAvatarUpload
+//	@return	DtoAvatarUpload
 func (a *UserAPIService) UserMeAvatarPostExecute(r ApiUserMeAvatarPostRequest) (*DtoAvatarUpload, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -162,7 +162,7 @@ func (a *UserAPIService) UserMeAvatarsAvatarIdDelete(ctx context.Context, avatar
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *UserAPIService) UserMeAvatarsAvatarIdDeleteExecute(r ApiUserMeAvatarsAvatarIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -295,7 +295,7 @@ func (a *UserAPIService) UserMeAvatarsGet(ctx context.Context) ApiUserMeAvatarsG
 
 // Execute executes the request
 //
-//	@return []DtoAvatar
+//	@return	[]DtoAvatar
 func (a *UserAPIService) UserMeAvatarsGetExecute(r ApiUserMeAvatarsGetRequest) ([]DtoAvatar, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -403,7 +403,7 @@ func (a *UserAPIService) UserMeChannelsGet(ctx context.Context) ApiUserMeChannel
 
 // Execute executes the request
 //
-//	@return []DtoChannel
+//	@return	[]DtoChannel
 func (a *UserAPIService) UserMeChannelsGetExecute(r ApiUserMeChannelsGetRequest) ([]DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -529,7 +529,7 @@ func (a *UserAPIService) UserMeChannelsGroupPost(ctx context.Context) ApiUserMeC
 
 // Execute executes the request
 //
-//	@return DtoChannel
+//	@return	DtoChannel
 func (a *UserAPIService) UserMeChannelsGroupPostExecute(r ApiUserMeChannelsGroupPostRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -682,7 +682,7 @@ func (a *UserAPIService) UserMeChannelsPost(ctx context.Context) ApiUserMeChanne
 
 // Execute executes the request
 //
-//	@return DtoChannel
+//	@return	DtoChannel
 func (a *UserAPIService) UserMeChannelsPostExecute(r ApiUserMeChannelsPostRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -824,7 +824,7 @@ func (a *UserAPIService) UserMeFriendsDelete(ctx context.Context) ApiUserMeFrien
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *UserAPIService) UserMeFriendsDeleteExecute(r ApiUserMeFriendsDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -948,7 +948,7 @@ func (a *UserAPIService) UserMeFriendsGet(ctx context.Context) ApiUserMeFriendsG
 
 // Execute executes the request
 //
-//	@return []DtoUser
+//	@return	[]DtoUser
 func (a *UserAPIService) UserMeFriendsGetExecute(r ApiUserMeFriendsGetRequest) ([]DtoUser, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1074,7 +1074,7 @@ func (a *UserAPIService) UserMeFriendsPost(ctx context.Context) ApiUserMeFriends
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *UserAPIService) UserMeFriendsPostExecute(r ApiUserMeFriendsPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1205,7 +1205,7 @@ func (a *UserAPIService) UserMeFriendsRequestsDelete(ctx context.Context) ApiUse
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *UserAPIService) UserMeFriendsRequestsDeleteExecute(r ApiUserMeFriendsRequestsDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1329,7 +1329,7 @@ func (a *UserAPIService) UserMeFriendsRequestsGet(ctx context.Context) ApiUserMe
 
 // Execute executes the request
 //
-//	@return []DtoUser
+//	@return	[]DtoUser
 func (a *UserAPIService) UserMeFriendsRequestsGetExecute(r ApiUserMeFriendsRequestsGetRequest) ([]DtoUser, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1455,7 +1455,7 @@ func (a *UserAPIService) UserMeFriendsRequestsPost(ctx context.Context) ApiUserM
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *UserAPIService) UserMeFriendsRequestsPostExecute(r ApiUserMeFriendsRequestsPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1582,7 +1582,7 @@ func (a *UserAPIService) UserMeFriendsUserIdGet(ctx context.Context, userId int3
 
 // Execute executes the request
 //
-//	@return DtoChannel
+//	@return	DtoChannel
 func (a *UserAPIService) UserMeFriendsUserIdGetExecute(r ApiUserMeFriendsUserIdGetRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1713,7 +1713,7 @@ func (a *UserAPIService) UserMeGuildsGet(ctx context.Context) ApiUserMeGuildsGet
 
 // Execute executes the request
 //
-//	@return []DtoGuild
+//	@return	[]DtoGuild
 func (a *UserAPIService) UserMeGuildsGetExecute(r ApiUserMeGuildsGetRequest) ([]DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1846,7 +1846,7 @@ func (a *UserAPIService) UserMeGuildsGuildIdDelete(ctx context.Context, guildId 
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *UserAPIService) UserMeGuildsGuildIdDeleteExecute(r ApiUserMeGuildsGuildIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1991,7 +1991,7 @@ func (a *UserAPIService) UserMeGuildsGuildIdMemberGet(ctx context.Context, guild
 
 // Execute executes the request
 //
-//	@return DtoMember
+//	@return	DtoMember
 func (a *UserAPIService) UserMeGuildsGuildIdMemberGetExecute(r ApiUserMeGuildsGuildIdMemberGetRequest) (*DtoMember, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2129,7 +2129,7 @@ func (a *UserAPIService) UserMePatch(ctx context.Context) ApiUserMePatchRequest 
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *UserAPIService) UserMePatchExecute(r ApiUserMePatchRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -2271,7 +2271,7 @@ func (a *UserAPIService) UserMeSettingsGet(ctx context.Context) ApiUserMeSetting
 
 // Execute executes the request
 //
-//	@return UserUserSettingsResponse
+//	@return	UserUserSettingsResponse
 func (a *UserAPIService) UserMeSettingsGetExecute(r ApiUserMeSettingsGetRequest) (*UserUserSettingsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2400,7 +2400,7 @@ func (a *UserAPIService) UserMeSettingsPost(ctx context.Context) ApiUserMeSettin
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *UserAPIService) UserMeSettingsPostExecute(r ApiUserMeSettingsPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -2527,7 +2527,7 @@ func (a *UserAPIService) UserUserIdGet(ctx context.Context, userId string) ApiUs
 
 // Execute executes the request
 //
-//	@return DtoUser
+//	@return	DtoUser
 func (a *UserAPIService) UserUserIdGetExecute(r ApiUserUserIdGetRequest) (*DtoUser, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet

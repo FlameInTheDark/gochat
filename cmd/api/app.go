@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -21,6 +22,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	channelrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/embedmq"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
@@ -31,9 +33,11 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
+	"github.com/FlameInTheDark/gochat/internal/threadcount"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
 	"github.com/gofiber/fiber/v2"
 	natsio "github.com/nats-io/nats.go"
+	"github.com/redis/go-redis/v9"
 )
 
 type App struct {
@@ -42,6 +46,76 @@ type App struct {
 	logger *slog.Logger
 
 	addr string
+}
+
+const threadMessageCountFlushInterval = 5 * time.Second
+
+func startThreadMessageCountFlusher(ctx context.Context, cache *kvs.Cache, repo channelrepo.Channel, logger *slog.Logger) {
+	if cache == nil || repo == nil {
+		return
+	}
+	ticker := time.NewTicker(threadMessageCountFlushInterval)
+	defer ticker.Stop()
+
+	flush := func() {
+		var cursor uint64
+		for {
+			keys, next, err := cache.Client().Scan(ctx, cursor, threadcount.DeltaKeyPattern, 128).Result()
+			if err != nil {
+				if logger != nil {
+					logger.Error("failed to scan thread message count deltas", slog.String("error", err.Error()))
+				}
+				return
+			}
+			for _, key := range keys {
+				delta, err := cache.Client().GetSet(ctx, key, "0").Int64()
+				if errors.Is(err, redis.Nil) || delta <= 0 {
+					continue
+				}
+				if err != nil {
+					if logger != nil {
+						logger.Error("failed to swap thread message count delta", slog.String("key", key), slog.String("error", err.Error()))
+					}
+					continue
+				}
+
+				threadID, err := threadcount.ParseDeltaKey(key)
+				if err != nil {
+					if logger != nil {
+						logger.Error("failed to parse thread message count key", slog.String("key", key), slog.String("error", err.Error()))
+					}
+					_, _ = cache.Client().IncrBy(ctx, key, delta).Result()
+					continue
+				}
+				if err := repo.AdjustMessageCount(ctx, threadID, delta); err != nil {
+					if logger != nil {
+						logger.Error("failed to flush thread message count delta",
+							slog.Int64("thread_id", threadID),
+							slog.Int64("delta", delta),
+							slog.String("error", err.Error()))
+					}
+					_, _ = cache.Client().IncrBy(ctx, key, delta).Result()
+					continue
+				}
+
+				_ = cache.Client().Expire(ctx, key, time.Duration(threadcount.DeltaTTLSeconds)*time.Second).Err()
+			}
+			cursor = next
+			if cursor == 0 {
+				return
+			}
+		}
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			flush()
+			return
+		case <-ticker.C:
+			flush()
+		}
+	}
 }
 
 func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
@@ -103,6 +177,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 	shut.Up(cache)
+
+	threadCountCtx, cancelThreadCount := context.WithCancel(context.Background())
+	shut.UpFunc(cancelThreadCount)
+	go startThreadMessageCountFlusher(threadCountCtx, cache, channelrepo.New(pg.Conn()), logger)
 
 	logger.Info("Connecting to NATS for SFU occupancy updates")
 	if cfg.NatsConnString != "" {

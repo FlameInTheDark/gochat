@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"sort"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
@@ -54,10 +55,14 @@ type Handler struct {
 	pstore   *presence.Store
 	// IDs this connection is watching for presence updates
 	psubs map[int64]struct{}
+	// Channel IDs this connection is explicitly subscribed to.
+	csubs map[int64]struct{}
 	// Whether we successfully set presence after hello
 	presenceSet bool
 	// session identifier for this ws connection
 	sessionID string
+	// callback used to expose the authenticated user id to the outer ws connection
+	onAuthenticated func(userID int64)
 
 	lastEventId int64
 	hbTimeout   int64
@@ -72,7 +77,7 @@ type Handler struct {
 	lastPresenceTouch time.Time
 }
 
-func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v any) error, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger, nats *nats.Conn, pstore *presence.Store, cache *kvs.Cache) *Handler {
+func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v any) error, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger, nats *nats.Conn, pstore *presence.Store, cache *kvs.Cache, onAuthenticated func(userID int64)) *Handler {
 	initTimer := time.AfterFunc(time.Second*5, closer)
 	return &Handler{
 		sub:      sub,
@@ -88,12 +93,14 @@ func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v 
 		nats:     nats,
 		pstore:   pstore,
 		psubs:    make(map[int64]struct{}),
+		csubs:    make(map[int64]struct{}),
 
-		hbTimeout: hbTimeout,
-		initTimer: initTimer,
-		closer:    closer,
-		log:       logger,
-		cache:     cache,
+		hbTimeout:       hbTimeout,
+		initTimer:       initTimer,
+		closer:          closer,
+		log:             logger,
+		cache:           cache,
+		onAuthenticated: onAuthenticated,
 	}
 }
 
@@ -141,45 +148,8 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			return
 		}
 
-		if m.Channel != nil {
-			subscribed := false
-			if gcinfo, err := h.gc.GetGuildByChannel(context.Background(), *m.Channel); err == nil {
-				_, _, _, ok, perr := h.perm.ChannelPerm(context.Background(), gcinfo.GuildId, gcinfo.ChannelId, h.user.Id, permissions.PermServerViewChannels)
-				if perr != nil {
-					h.log.Warn("Error checking channel permissions", "error", perr)
-				} else if ok {
-					if err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel)); err != nil {
-						h.log.Warn("Error subscribing to channel", "error", err)
-					} else {
-						subscribed = true
-					}
-				}
-			}
-
-			if !subscribed {
-				if ok, err := h.dm.IsDmChannelParticipant(context.Background(), *m.Channel, h.user.Id); err == nil && ok {
-					if err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel)); err != nil {
-						h.log.Warn("Error subscribing to DM channel", "error", err)
-					}
-					subscribed = true
-				} else if err != nil {
-					h.log.Warn("Error checking DM participation", "error", err)
-				}
-
-				if !subscribed {
-					if ok, err := h.gdm.IsGroupDmParticipant(context.Background(), *m.Channel, h.user.Id); err == nil && ok {
-						if err := h.sub.Subscribe("channel", fmt.Sprintf("channel.%d", *m.Channel)); err != nil {
-							h.log.Warn("Error subscribing to Group DM channel", "error", err)
-						}
-						subscribed = true
-					} else if err != nil {
-						h.log.Warn("Error checking Group DM participation", "error", err)
-					}
-				}
-				if !subscribed {
-					h.log.Warn("User does not have permission/access to channel", "user_id", h.user.Id, "channel_id", *m.Channel)
-				}
-			}
+		if requestedChannels, ok := resolveRequestedChannels(m); ok {
+			h.syncChannelSubscriptions(requestedChannels)
 		}
 
 		for _, guildID := range m.Guilds {
@@ -366,6 +336,122 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 	default:
 		h.log.Warn("Unknown operation", "operation", e.Operation)
 	}
+}
+
+func resolveRequestedChannels(m mqmsg.Subscribe) ([]int64, bool) {
+	if m.Channels != nil {
+		return normalizeChannelIDs(m.Channels), true
+	}
+	if m.Channel != nil {
+		if *m.Channel <= 0 {
+			return nil, false
+		}
+		return []int64{*m.Channel}, true
+	}
+	return nil, false
+}
+
+func normalizeChannelIDs(channelIDs []int64) []int64 {
+	if len(channelIDs) == 0 {
+		return []int64{}
+	}
+
+	set := make(map[int64]struct{}, len(channelIDs))
+	result := make([]int64, 0, len(channelIDs))
+	for _, channelID := range channelIDs {
+		if channelID <= 0 {
+			continue
+		}
+		if _, ok := set[channelID]; ok {
+			continue
+		}
+		set[channelID] = struct{}{}
+		result = append(result, channelID)
+	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i] < result[j]
+	})
+	return result
+}
+
+func buildChannelSubscriptionDiff(current map[int64]struct{}, requested []int64) (subscribe []int64, unsubscribe []int64) {
+	requestedSet := make(map[int64]struct{}, len(requested))
+	for _, channelID := range requested {
+		if _, ok := requestedSet[channelID]; ok {
+			continue
+		}
+		requestedSet[channelID] = struct{}{}
+		if _, ok := current[channelID]; !ok {
+			subscribe = append(subscribe, channelID)
+		}
+	}
+	for channelID := range current {
+		if _, ok := requestedSet[channelID]; !ok {
+			unsubscribe = append(unsubscribe, channelID)
+		}
+	}
+	sort.Slice(subscribe, func(i, j int) bool {
+		return subscribe[i] < subscribe[j]
+	})
+	sort.Slice(unsubscribe, func(i, j int) bool {
+		return unsubscribe[i] < unsubscribe[j]
+	})
+	return subscribe, unsubscribe
+}
+
+func channelSubscriptionKey(channelID int64) string {
+	return fmt.Sprintf("channel.%d", channelID)
+}
+
+func (h *Handler) syncChannelSubscriptions(requested []int64) {
+	allowed := make([]int64, 0, len(requested))
+	for _, channelID := range requested {
+		if h.canSubscribeChannel(channelID) {
+			allowed = append(allowed, channelID)
+		}
+	}
+
+	toSubscribe, toUnsubscribe := buildChannelSubscriptionDiff(h.csubs, allowed)
+	for _, channelID := range toSubscribe {
+		key := channelSubscriptionKey(channelID)
+		if err := h.sub.Subscribe(key, key); err != nil {
+			h.log.Warn("Error subscribing to channel", "error", err, "channel_id", channelID)
+			continue
+		}
+		h.csubs[channelID] = struct{}{}
+	}
+	for _, channelID := range toUnsubscribe {
+		_ = h.sub.Unsubscribe(channelSubscriptionKey(channelID))
+		delete(h.csubs, channelID)
+	}
+}
+
+func (h *Handler) canSubscribeChannel(channelID int64) bool {
+	if gcinfo, err := h.gc.GetGuildByChannel(context.Background(), channelID); err == nil {
+		_, _, _, ok, perr := h.perm.ChannelPerm(context.Background(), gcinfo.GuildId, gcinfo.ChannelId, h.user.Id, permissions.PermServerViewChannels)
+		if perr != nil {
+			h.log.Warn("Error checking channel permissions", "error", perr, "channel_id", channelID)
+			return false
+		}
+		if ok {
+			return true
+		}
+	}
+
+	if ok, err := h.dm.IsDmChannelParticipant(context.Background(), channelID, h.user.Id); err == nil && ok {
+		return true
+	} else if err != nil {
+		h.log.Warn("Error checking DM participation", "error", err, "channel_id", channelID)
+	}
+
+	if ok, err := h.gdm.IsGroupDmParticipant(context.Background(), channelID, h.user.Id); err == nil && ok {
+		return true
+	} else if err != nil {
+		h.log.Warn("Error checking Group DM participation", "error", err, "channel_id", channelID)
+	}
+
+	h.log.Warn("User does not have permission/access to channel", "user_id", h.user.Id, "channel_id", channelID)
+	return false
 }
 
 func (h *Handler) Close() error {

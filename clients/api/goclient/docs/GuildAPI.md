@@ -10,6 +10,9 @@ Method | HTTP request | Description
 [**GuildGuildIdChannelChannelIdDelete**](GuildAPI.md#GuildGuildIdChannelChannelIdDelete) | **Delete** /guild/{guild_id}/channel/{channel_id} | Delete channel
 [**GuildGuildIdChannelChannelIdGet**](GuildAPI.md#GuildGuildIdChannelChannelIdGet) | **Get** /guild/{guild_id}/channel/{channel_id} | Get guild channel
 [**GuildGuildIdChannelChannelIdPatch**](GuildAPI.md#GuildGuildIdChannelChannelIdPatch) | **Patch** /guild/{guild_id}/channel/{channel_id} | Change channels data
+[**GuildGuildIdChannelChannelIdThreadMemberMeDelete**](GuildAPI.md#GuildGuildIdChannelChannelIdThreadMemberMeDelete) | **Delete** /guild/{guild_id}/channel/{channel_id}/thread-member/me | Leave thread
+[**GuildGuildIdChannelChannelIdThreadMemberMePut**](GuildAPI.md#GuildGuildIdChannelChannelIdThreadMemberMePut) | **Put** /guild/{guild_id}/channel/{channel_id}/thread-member/me | Join thread
+[**GuildGuildIdChannelChannelIdThreadsGet**](GuildAPI.md#GuildGuildIdChannelChannelIdThreadsGet) | **Get** /guild/{guild_id}/channel/{channel_id}/threads | Get channel threads
 [**GuildGuildIdChannelGet**](GuildAPI.md#GuildGuildIdChannelGet) | **Get** /guild/{guild_id}/channel | Get guild channels
 [**GuildGuildIdChannelOrderPatch**](GuildAPI.md#GuildGuildIdChannelOrderPatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 [**GuildGuildIdChannelPost**](GuildAPI.md#GuildGuildIdChannelPost) | **Post** /guild/{guild_id}/channel | Create guild channel
@@ -446,6 +449,219 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**DtoChannel**](DtoChannel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdChannelChannelIdThreadMemberMeDelete
+
+> string GuildGuildIdChannelChannelIdThreadMemberMeDelete(ctx, guildId, channelId).Execute()
+
+Leave thread
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Thread channel ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdChannelChannelIdThreadMemberMeDelete(context.Background(), guildId, channelId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdChannelChannelIdThreadMemberMeDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdChannelChannelIdThreadMemberMeDelete`: string
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdChannelChannelIdThreadMemberMeDelete`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Thread channel ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdChannelChannelIdThreadMemberMeDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdChannelChannelIdThreadMemberMePut
+
+> DtoThreadMember GuildGuildIdChannelChannelIdThreadMemberMePut(ctx, guildId, channelId).Execute()
+
+Join thread
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Thread channel ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdChannelChannelIdThreadMemberMePut(context.Background(), guildId, channelId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdChannelChannelIdThreadMemberMePut``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdChannelChannelIdThreadMemberMePut`: DtoThreadMember
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdChannelChannelIdThreadMemberMePut`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Thread channel ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdChannelChannelIdThreadMemberMePutRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+[**DtoThreadMember**](DtoThreadMember.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdChannelChannelIdThreadsGet
+
+> []DtoChannel GuildGuildIdChannelChannelIdThreadsGet(ctx, guildId, channelId).Execute()
+
+Get channel threads
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild id
+	channelId := int32(56) // int32 | Channel id
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdChannelChannelIdThreadsGet(context.Background(), guildId, channelId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdChannelChannelIdThreadsGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdChannelChannelIdThreadsGet`: []DtoChannel
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdChannelChannelIdThreadsGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild id | 
+**channelId** | **int32** | Channel id | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdChannelChannelIdThreadsGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+[**[]DtoChannel**](DtoChannel.md)
 
 ### Authorization
 

@@ -9,6 +9,7 @@ Method | HTTP request | Description
 [**MessageChannelChannelIdMessageIdAckPost**](MessageAPI.md#MessageChannelChannelIdMessageIdAckPost) | **Post** /message/channel/{channel_id}/{message_id}/ack | Set channel read state for current user
 [**MessageChannelChannelIdMessageIdDelete**](MessageAPI.md#MessageChannelChannelIdMessageIdDelete) | **Delete** /message/channel/{channel_id}/{message_id} | Delete message
 [**MessageChannelChannelIdMessageIdPatch**](MessageAPI.md#MessageChannelChannelIdMessageIdPatch) | **Patch** /message/channel/{channel_id}/{message_id} | Update message
+[**MessageChannelChannelIdMessageIdThreadPost**](MessageAPI.md#MessageChannelChannelIdMessageIdThreadPost) | **Post** /message/channel/{channel_id}/{message_id}/thread | Create thread from message
 [**MessageChannelChannelIdPost**](MessageAPI.md#MessageChannelChannelIdPost) | **Post** /message/channel/{channel_id} | Send message
 [**MessageChannelChannelIdTypingPost**](MessageAPI.md#MessageChannelChannelIdTypingPost) | **Post** /message/channel/{channel_id}/typing | Send user typing event in the channel
 
@@ -358,6 +359,79 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**DtoMessage**](DtoMessage.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## MessageChannelChannelIdMessageIdThreadPost
+
+> DtoChannel MessageChannelChannelIdMessageIdThreadPost(ctx, channelId, messageId).Request(request).Execute()
+
+Create thread from message
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Parent channel id
+	messageId := int32(56) // int32 | Source message id
+	request := *openapiclient.NewMessageCreateThreadRequest() // MessageCreateThreadRequest | Thread data
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.MessageAPI.MessageChannelChannelIdMessageIdThreadPost(context.Background(), channelId, messageId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `MessageAPI.MessageChannelChannelIdMessageIdThreadPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `MessageChannelChannelIdMessageIdThreadPost`: DtoChannel
+	fmt.Fprintf(os.Stdout, "Response from `MessageAPI.MessageChannelChannelIdMessageIdThreadPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Parent channel id | 
+**messageId** | **int32** | Source message id | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiMessageChannelChannelIdMessageIdThreadPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+ **request** | [**MessageCreateThreadRequest**](MessageCreateThreadRequest.md) | Thread data | 
+
+### Return type
+
+[**DtoChannel**](DtoChannel.md)
 
 ### Authorization
 

@@ -29,8 +29,20 @@ type DtoMessage struct {
 	// Bitmask. Includes suppress-embeds and banned-author markers in API responses.
 	Flags *int32 `json:"flags,omitempty"`
 	// Message ID
-	Id   *int32 `json:"id,omitempty"`
-	Type *int32 `json:"type,omitempty"`
+	Id *int32 `json:"id,omitempty"`
+	// Ephemeral client correlation token echoed only to the author.
+	Nonce *string `json:"nonce,omitempty"`
+	// Monotonic channel-local message position used for navigation.
+	Position *int32 `json:"position,omitempty"`
+	// Referenced source message id.
+	Reference *int32 `json:"reference,omitempty"`
+	// Channel id of the referenced source message.
+	ReferenceChannelId *int32 `json:"reference_channel_id,omitempty"`
+	// Thread metadata when the message is linked to a thread.
+	Thread *DtoChannel `json:"thread,omitempty"`
+	// Thread linked from this message.
+	ThreadId *int32 `json:"thread_id,omitempty"`
+	Type     *int32 `json:"type,omitempty"`
 	// Timestamp of the last message edit
 	UpdatedAt *string `json:"updated_at,omitempty"`
 }
@@ -276,6 +288,198 @@ func (o *DtoMessage) SetId(v int32) {
 	o.Id = &v
 }
 
+// GetNonce returns the Nonce field value if set, zero value otherwise.
+func (o *DtoMessage) GetNonce() string {
+	if o == nil || IsNil(o.Nonce) {
+		var ret string
+		return ret
+	}
+	return *o.Nonce
+}
+
+// GetNonceOk returns a tuple with the Nonce field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoMessage) GetNonceOk() (*string, bool) {
+	if o == nil || IsNil(o.Nonce) {
+		return nil, false
+	}
+	return o.Nonce, true
+}
+
+// HasNonce returns a boolean if a field has been set.
+func (o *DtoMessage) HasNonce() bool {
+	if o != nil && !IsNil(o.Nonce) {
+		return true
+	}
+
+	return false
+}
+
+// SetNonce gets a reference to the given string and assigns it to the Nonce field.
+func (o *DtoMessage) SetNonce(v string) {
+	o.Nonce = &v
+}
+
+// GetPosition returns the Position field value if set, zero value otherwise.
+func (o *DtoMessage) GetPosition() int32 {
+	if o == nil || IsNil(o.Position) {
+		var ret int32
+		return ret
+	}
+	return *o.Position
+}
+
+// GetPositionOk returns a tuple with the Position field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoMessage) GetPositionOk() (*int32, bool) {
+	if o == nil || IsNil(o.Position) {
+		return nil, false
+	}
+	return o.Position, true
+}
+
+// HasPosition returns a boolean if a field has been set.
+func (o *DtoMessage) HasPosition() bool {
+	if o != nil && !IsNil(o.Position) {
+		return true
+	}
+
+	return false
+}
+
+// SetPosition gets a reference to the given int32 and assigns it to the Position field.
+func (o *DtoMessage) SetPosition(v int32) {
+	o.Position = &v
+}
+
+// GetReference returns the Reference field value if set, zero value otherwise.
+func (o *DtoMessage) GetReference() int32 {
+	if o == nil || IsNil(o.Reference) {
+		var ret int32
+		return ret
+	}
+	return *o.Reference
+}
+
+// GetReferenceOk returns a tuple with the Reference field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoMessage) GetReferenceOk() (*int32, bool) {
+	if o == nil || IsNil(o.Reference) {
+		return nil, false
+	}
+	return o.Reference, true
+}
+
+// HasReference returns a boolean if a field has been set.
+func (o *DtoMessage) HasReference() bool {
+	if o != nil && !IsNil(o.Reference) {
+		return true
+	}
+
+	return false
+}
+
+// SetReference gets a reference to the given int32 and assigns it to the Reference field.
+func (o *DtoMessage) SetReference(v int32) {
+	o.Reference = &v
+}
+
+// GetReferenceChannelId returns the ReferenceChannelId field value if set, zero value otherwise.
+func (o *DtoMessage) GetReferenceChannelId() int32 {
+	if o == nil || IsNil(o.ReferenceChannelId) {
+		var ret int32
+		return ret
+	}
+	return *o.ReferenceChannelId
+}
+
+// GetReferenceChannelIdOk returns a tuple with the ReferenceChannelId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoMessage) GetReferenceChannelIdOk() (*int32, bool) {
+	if o == nil || IsNil(o.ReferenceChannelId) {
+		return nil, false
+	}
+	return o.ReferenceChannelId, true
+}
+
+// HasReferenceChannelId returns a boolean if a field has been set.
+func (o *DtoMessage) HasReferenceChannelId() bool {
+	if o != nil && !IsNil(o.ReferenceChannelId) {
+		return true
+	}
+
+	return false
+}
+
+// SetReferenceChannelId gets a reference to the given int32 and assigns it to the ReferenceChannelId field.
+func (o *DtoMessage) SetReferenceChannelId(v int32) {
+	o.ReferenceChannelId = &v
+}
+
+// GetThread returns the Thread field value if set, zero value otherwise.
+func (o *DtoMessage) GetThread() DtoChannel {
+	if o == nil || IsNil(o.Thread) {
+		var ret DtoChannel
+		return ret
+	}
+	return *o.Thread
+}
+
+// GetThreadOk returns a tuple with the Thread field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoMessage) GetThreadOk() (*DtoChannel, bool) {
+	if o == nil || IsNil(o.Thread) {
+		return nil, false
+	}
+	return o.Thread, true
+}
+
+// HasThread returns a boolean if a field has been set.
+func (o *DtoMessage) HasThread() bool {
+	if o != nil && !IsNil(o.Thread) {
+		return true
+	}
+
+	return false
+}
+
+// SetThread gets a reference to the given DtoChannel and assigns it to the Thread field.
+func (o *DtoMessage) SetThread(v DtoChannel) {
+	o.Thread = &v
+}
+
+// GetThreadId returns the ThreadId field value if set, zero value otherwise.
+func (o *DtoMessage) GetThreadId() int32 {
+	if o == nil || IsNil(o.ThreadId) {
+		var ret int32
+		return ret
+	}
+	return *o.ThreadId
+}
+
+// GetThreadIdOk returns a tuple with the ThreadId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoMessage) GetThreadIdOk() (*int32, bool) {
+	if o == nil || IsNil(o.ThreadId) {
+		return nil, false
+	}
+	return o.ThreadId, true
+}
+
+// HasThreadId returns a boolean if a field has been set.
+func (o *DtoMessage) HasThreadId() bool {
+	if o != nil && !IsNil(o.ThreadId) {
+		return true
+	}
+
+	return false
+}
+
+// SetThreadId gets a reference to the given int32 and assigns it to the ThreadId field.
+func (o *DtoMessage) SetThreadId(v int32) {
+	o.ThreadId = &v
+}
+
 // GetType returns the Type field value if set, zero value otherwise.
 func (o *DtoMessage) GetType() int32 {
 	if o == nil || IsNil(o.Type) {
@@ -370,6 +574,24 @@ func (o DtoMessage) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Id) {
 		toSerialize["id"] = o.Id
+	}
+	if !IsNil(o.Nonce) {
+		toSerialize["nonce"] = o.Nonce
+	}
+	if !IsNil(o.Position) {
+		toSerialize["position"] = o.Position
+	}
+	if !IsNil(o.Reference) {
+		toSerialize["reference"] = o.Reference
+	}
+	if !IsNil(o.ReferenceChannelId) {
+		toSerialize["reference_channel_id"] = o.ReferenceChannelId
+	}
+	if !IsNil(o.Thread) {
+		toSerialize["thread"] = o.Thread
+	}
+	if !IsNil(o.ThreadId) {
+		toSerialize["thread_id"] = o.ThreadId
 	}
 	if !IsNil(o.Type) {
 		toSerialize["type"] = o.Type
