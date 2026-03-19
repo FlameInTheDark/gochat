@@ -1,3 +1,11 @@
+# [1.8.0](https://github.com/FlameInTheDark/gochat/compare/v1.7.0...v1.8.0) (2026-03-19)
+
+
+### Features
+
+* additional member customization ([e5a20f2](https://github.com/FlameInTheDark/gochat/commit/e5a20f2ad70ac9ac674cd0bfcd3650e878fb1896))
+* threads and replies ([980eae3](https://github.com/FlameInTheDark/gochat/commit/980eae38318efe4f7c816e06f87c50bc678a634d))
+
 # [1.7.0](https://github.com/FlameInTheDark/gochat/compare/v1.6.0...v1.7.0) (2026-03-09)
 
 
