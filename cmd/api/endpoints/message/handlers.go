@@ -923,11 +923,7 @@ func (e *entity) buildMessageAuthor(c *fiber.Ctx, userID int64, guildID *int64) 
 		return dto.User{Id: userID, Name: strconv.FormatInt(userID, 10)}
 	}
 
-	author := dto.User{
-		Id:            userData.User.Id,
-		Name:          userData.DisplayName,
-		Discriminator: userData.Discriminator.Discriminator,
-	}
+	author := publicUserDTO(*userData.User, userData.DisplayName, userData.Discriminator.Discriminator)
 	if userData.Avatar != nil {
 		if ad, err := e.getAvatarDataCached(c.UserContext(), userData.User.Id, *userData.Avatar); err == nil && ad != nil {
 			author.Avatar = ad
@@ -1599,11 +1595,7 @@ func (e *entity) buildMessageResponse(c *fiber.Ctx, messageId int64, channel *mo
 	attachments := e.buildAttachmentDTOs([]int64(req.Attachments), validatedAttachments)
 
 	// Build author with avatar data if present
-	author := dto.User{
-		Id:            userData.User.Id,
-		Name:          userData.User.Name,
-		Discriminator: userData.Discriminator.Discriminator,
-	}
+	author := publicUserDTO(*userData.User, userData.User.Name, userData.Discriminator.Discriminator)
 	if userData.User.Avatar != nil {
 		if ad, err := e.getAvatarDataCached(c.UserContext(), userData.User.Id, *userData.User.Avatar); err == nil && ad != nil {
 			author.Avatar = ad
@@ -2491,11 +2483,7 @@ func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageR
 
 	// Build response
 	updatedAt := time.Now()
-	author := dto.User{
-		Id:            userData.User.Id,
-		Name:          userData.DisplayName,
-		Discriminator: userData.Discriminator.Discriminator,
-	}
+	author := publicUserDTO(*userData.User, userData.DisplayName, userData.Discriminator.Discriminator)
 	if userData.Avatar != nil {
 		if ad, err := e.getAvatarDataCached(c.UserContext(), userData.User.Id, *userData.Avatar); err == nil && ad != nil {
 			author.Avatar = ad
@@ -2957,10 +2945,7 @@ func (e *entity) buildAuthorOptimized(userId int64, data *messageRelatedData) dt
 		}
 	}
 
-	author := dto.User{
-		Id:   userId,
-		Name: user.Name,
-	}
+	author := publicUserDTO(*user, user.Name, "")
 	if ad, ok := data.AvData[userId]; ok {
 		author.Avatar = ad
 	}
@@ -2977,6 +2962,17 @@ func (e *entity) buildAuthorOptimized(userId int64, data *messageRelatedData) dt
 	}
 
 	return author
+}
+
+func publicUserDTO(user model.User, name, discriminator string) dto.User {
+	return dto.User{
+		Id:            user.Id,
+		Name:          name,
+		Discriminator: discriminator,
+		Bio:           user.Bio,
+		BannerColor:   user.BannerColor,
+		PanelColor:    user.PanelColor,
+	}
 }
 
 // buildAttachmentsOptimized constructs attachment DTOs efficiently

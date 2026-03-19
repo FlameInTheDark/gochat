@@ -1,10 +1,79 @@
 package user
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 )
+
+func TestModifyUserRequestValidateAllowsBioAndProfileColors(t *testing.T) {
+	bio := "Building gochat one endpoint at a time"
+	bannerColor := 0
+	panelColor := maxProfileColorValue
+
+	req := ModifyUserRequest{
+		Bio:         &bio,
+		BannerColor: &bannerColor,
+		PanelColor:  &panelColor,
+	}
+
+	if err := req.Validate(); err != nil {
+		t.Fatalf("expected request to be valid, got %v", err)
+	}
+}
+
+func TestModifyUserRequestValidateRejectsTooLongBio(t *testing.T) {
+	bio := strings.Repeat("a", 191)
+
+	req := ModifyUserRequest{Bio: &bio}
+
+	err := req.Validate()
+	if err == nil {
+		t.Fatal("expected bio length validation error")
+	}
+	if !strings.Contains(err.Error(), ErrUserBioTooLong) {
+		t.Fatalf("expected %q, got %q", ErrUserBioTooLong, err.Error())
+	}
+}
+
+func TestModifyUserRequestValidateRejectsInvalidProfileColor(t *testing.T) {
+	bannerColor := maxProfileColorValue + 1
+
+	req := ModifyUserRequest{BannerColor: &bannerColor}
+
+	err := req.Validate()
+	if err == nil {
+		t.Fatal("expected profile color validation error")
+	}
+	if !strings.Contains(err.Error(), ErrProfileColorInvalid) {
+		t.Fatalf("expected %q, got %q", ErrProfileColorInvalid, err.Error())
+	}
+}
+
+func TestModelToUserIncludesProfileFields(t *testing.T) {
+	bio := "Public profile bio"
+	bannerColor := 3447003
+	panelColor := 15158332
+
+	got := modelToUser(model.User{
+		Id:          42,
+		Name:        "FancyUserName",
+		Bio:         &bio,
+		BannerColor: &bannerColor,
+		PanelColor:  &panelColor,
+	})
+
+	if got.Bio == nil || *got.Bio != bio {
+		t.Fatalf("expected bio to be copied, got %#v", got.Bio)
+	}
+	if got.BannerColor == nil || *got.BannerColor != bannerColor {
+		t.Fatalf("expected banner color to be copied, got %#v", got.BannerColor)
+	}
+	if got.PanelColor == nil || *got.PanelColor != panelColor {
+		t.Fatalf("expected panel color to be copied, got %#v", got.PanelColor)
+	}
+}
 
 func TestFilterGuildLastMessagesExcludesThreadsAndDeletedChannels(t *testing.T) {
 	glms := map[int64]map[int64]int64{

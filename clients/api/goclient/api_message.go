@@ -57,7 +57,7 @@ func (a *MessageAPIService) MessageChannelChannelIdAttachmentPost(ctx context.Co
 
 // Execute executes the request
 //
-//	@return	DtoAttachmentUpload
+//	@return DtoAttachmentUpload
 func (a *MessageAPIService) MessageChannelChannelIdAttachmentPostExecute(r ApiMessageChannelChannelIdAttachmentPostRequest) (*DtoAttachmentUpload, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -189,13 +189,13 @@ type ApiMessageChannelChannelIdGetRequest struct {
 	limit      *int32
 }
 
-// Start point for messages
+// Start point for messages. Included in the response when it exists.
 func (r ApiMessageChannelChannelIdGetRequest) From(from int32) ApiMessageChannelChannelIdGetRequest {
 	r.from = &from
 	return r
 }
 
-// Select direction
+// Select direction and response order: before&#x3D;newest-&gt;oldest, after&#x3D;oldest-&gt;newest, around&#x3D;from first then older desc then newer asc.
 func (r ApiMessageChannelChannelIdGetRequest) Direction(direction string) ApiMessageChannelChannelIdGetRequest {
 	r.direction = &direction
 	return r
@@ -214,6 +214,11 @@ func (r ApiMessageChannelChannelIdGetRequest) Execute() ([]DtoMessage, *http.Res
 /*
 MessageChannelChannelIdGet Get messages
 
+Response order depends on `direction`.
+`before`: newest to oldest, including the `from` message when it exists. If `from` is omitted, the server starts from the channel's current `last_message_id`.
+`after`: oldest to newest, including the `from` message.
+`around`: the `from` message first, then older messages in descending order, then newer messages in ascending order.
+
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param channelId Channel id
 	@return ApiMessageChannelChannelIdGetRequest
@@ -228,7 +233,7 @@ func (a *MessageAPIService) MessageChannelChannelIdGet(ctx context.Context, chan
 
 // Execute executes the request
 //
-//	@return	[]DtoMessage
+//	@return []DtoMessage
 func (a *MessageAPIService) MessageChannelChannelIdGetExecute(r ApiMessageChannelChannelIdGetRequest) ([]DtoMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -385,7 +390,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPost(ctx context.
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPostExecute(r ApiMessageChannelChannelIdMessageIdAckPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -512,7 +517,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdDelete(ctx context.C
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdDeleteExecute(r ApiMessageChannelChannelIdMessageIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -668,7 +673,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatch(ctx context.Co
 
 // Execute executes the request
 //
-//	@return	DtoMessage
+//	@return DtoMessage
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatchExecute(r ApiMessageChannelChannelIdMessageIdPatchRequest) (*DtoMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -829,7 +834,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdThreadPost(ctx conte
 
 // Execute executes the request
 //
-//	@return	DtoChannel
+//	@return DtoChannel
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdThreadPostExecute(r ApiMessageChannelChannelIdMessageIdThreadPostRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -998,7 +1003,7 @@ func (a *MessageAPIService) MessageChannelChannelIdPost(ctx context.Context, cha
 
 // Execute executes the request
 //
-//	@return	DtoMessage
+//	@return DtoMessage
 func (a *MessageAPIService) MessageChannelChannelIdPostExecute(r ApiMessageChannelChannelIdPostRequest) (*DtoMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1148,7 +1153,7 @@ func (a *MessageAPIService) MessageChannelChannelIdTypingPost(ctx context.Contex
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *MessageAPIService) MessageChannelChannelIdTypingPostExecute(r ApiMessageChannelChannelIdTypingPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

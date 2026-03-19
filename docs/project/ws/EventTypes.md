@@ -27,7 +27,10 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
     "author": {
       "id": 2226021950625415200,
       "name": "FlameInTheDark",
-      "discriminator": "flameinthedark"
+      "discriminator": "flameinthedark",
+      "bio": "Building gochat one endpoint at a time",
+      "banner_color": 3447003,
+      "panel_color": 15158332
     },
     "content": "Hello",
     "position": 512,
@@ -53,7 +56,10 @@ Notes:
     "author": {
       "id": 2226021950625415200,
       "name": "FlameInTheDark",
-      "discriminator": "flameinthedark"
+      "discriminator": "flameinthedark",
+      "bio": "Building gochat one endpoint at a time",
+      "banner_color": 3447003,
+      "panel_color": 15158332
     },
     "content": "Hello, edited!",
     "position": 512,
@@ -389,6 +395,9 @@ See [Threads](../channels/Threads.md) for the full creation flow and subscriptio
       "id": 2226021950625415200,
       "name": "NewUser",
       "discriminator": "newuser",
+      "bio": null,
+      "banner_color": null,
+      "panel_color": null,
       "avatar": null
     },
     "username": "FancyNickname",
@@ -408,6 +417,9 @@ See [Threads](../channels/Threads.md) for the full creation flow and subscriptio
       "id": 2226021950625415200,
       "name": "NewUser",
       "discriminator": "newuser",
+      "bio": null,
+      "banner_color": null,
+      "panel_color": null,
       "avatar": null
     },
     "username": "UpdatedNickname",
@@ -657,10 +669,17 @@ See [Threads](../channels/Threads.md) for the full creation flow and subscriptio
     "id": 2226021950625415200,
     "name": "UpdatedName",
     "discriminator": "updatedname",
+    "bio": "Updated public profile bio",
+    "banner_color": 3447003,
+    "panel_color": 15158332,
     "avatar": null
   }
 }
 ```
+
+Notes:
+- `User Update` carries the public profile fields from `dto.User`, including `bio`, `banner_color`, and `panel_color`.
+- These profile fields may be `null` if the user has not set them.
 
 ---
 

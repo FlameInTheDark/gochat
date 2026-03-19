@@ -2253,6 +2253,67 @@
                 }
             }
         },
+        "/guild/{guild_id}/member/{user_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Get guild member",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 2230469276416868352,
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "example": 2230469276416868352,
+                        "description": "Member user ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Member"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Member not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/guild/{guild_id}/member/{user_id}/ban": {
             "post": {
                 "description": "Bans a guild member with an optional reason. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.",
@@ -6168,6 +6229,14 @@
                 "avatar": {
                     "$ref": "#/definitions/dto.AvatarData"
                 },
+                "banner_color": {
+                    "type": "integer",
+                    "example": 3447003
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "Building gochat one endpoint at a time"
+                },
                 "discriminator": {
                     "type": "string",
                     "example": "uniquename"
@@ -6179,6 +6248,10 @@
                 "name": {
                     "type": "string",
                     "example": "FancyUserName"
+                },
+                "panel_color": {
+                    "type": "integer",
+                    "example": 15158332
                 }
             }
         },
@@ -7417,10 +7490,25 @@
                     "type": "integer",
                     "example": 2230469276416868352
                 },
+                "banner_color": {
+                    "description": "Banner/header RGB int value.",
+                    "type": "integer",
+                    "example": 3447003
+                },
+                "bio": {
+                    "description": "Public user bio.",
+                    "type": "string",
+                    "example": "Building gochat one endpoint at a time"
+                },
                 "name": {
                     "description": "User name.",
                     "type": "string",
                     "example": "NewFancyName"
+                },
+                "panel_color": {
+                    "description": "User panel RGB int value.",
+                    "type": "integer",
+                    "example": 15158332
                 }
             }
         },

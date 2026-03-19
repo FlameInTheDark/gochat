@@ -1106,7 +1106,7 @@ func (e *entity) buildThreadMessageAuthor(ctx context.Context, userID int64) dto
 
 	discriminator, err := e.disc.GetDiscriminatorByUserId(ctx, userID)
 	if err != nil {
-		return dto.User{Id: userID, Name: user.Name}
+		return userToDTO(user, "")
 	}
 
 	author := userToDTO(user, discriminator.Discriminator)
@@ -1842,6 +1842,95 @@ func (e *entity) PatchChannel(c *fiber.Ctx) error {
 	}()
 
 	return c.JSON(resp)
+}
+
+// GetMembers
+//
+//	@Summary	Get guild member
+//	@Produce	json
+//	@Tags		Guild
+//	@Param		guild_id	path		int64		true	"Guild ID"			example(2230469276416868352)
+//	@Param		user_id		path		int64		true	"Member user ID"	example(2230469276416868352)
+//	@Success	200			{object}	dto.Member	"Ok"
+//	@failure	400			{string}	string		"Incorrect request body"
+//	@failure	401			{string}	string		"Unauthorized"
+//	@failure	404			{string}	string		"Member not found"
+//	@failure	500			{string}	string		"Something bad happened"
+//	@Router		/guild/{guild_id}/member/{user_id} [get]
+func (e *entity) GetMember(c *fiber.Ctx) error {
+	guildId, err := e.parseGuildID(c)
+	if err != nil {
+		return err
+	}
+
+	memberId, err := e.parseUserID(c)
+	if err != nil {
+		return err
+	}
+
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+
+	isRequesterMember, err := e.memb.IsGuildMember(c.UserContext(), guildId, user.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMemberToken)
+	}
+	if !isRequesterMember {
+		return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
+	}
+
+	member, err := e.fetchMemberDTO(c, guildId, memberId)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(member)
+}
+
+func (e *entity) fetchMemberDTO(c *fiber.Ctx, guildId, memberId int64) (dto.Member, error) {
+	member, err := e.memb.GetMember(c.UserContext(), memberId, guildId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return dto.Member{}, fiber.NewError(fiber.StatusNotFound, ErrNotAMember)
+		}
+		return dto.Member{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
+	}
+
+	user, err := e.user.GetUserById(c.UserContext(), memberId)
+	if err != nil {
+		return dto.Member{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUsers)
+	}
+
+	disc, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), memberId)
+	if err != nil {
+		return dto.Member{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetDiscriminator)
+	}
+
+	userRoles, err := e.ur.GetUserRoles(c.UserContext(), guildId, memberId)
+	if err != nil {
+		return dto.Member{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
+	}
+
+	roleIds := make([]int64, len(userRoles))
+	for i, role := range userRoles {
+		roleIds[i] = role.RoleId
+	}
+
+	var avatarData *dto.AvatarData
+	if member.Avatar != nil {
+		if ad, err := e.getAvatarDataCached(c.UserContext(), user.Id, *member.Avatar); err == nil && ad != nil {
+			avatarData = ad
+		}
+	}
+	if avatarData == nil && user.Avatar != nil {
+		if ad, err := e.getAvatarDataCached(c.UserContext(), user.Id, *user.Avatar); err == nil && ad != nil {
+			avatarData = ad
+		}
+	}
+
+	return memberToDTO(member, user, disc.Discriminator, avatarData, roleIds), nil
 }
 
 // GetMembers

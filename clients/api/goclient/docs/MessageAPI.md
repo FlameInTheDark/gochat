@@ -91,6 +91,8 @@ No authorization required
 
 Get messages
 
+
+
 ### Example
 
 ```go
@@ -105,8 +107,8 @@ import (
 
 func main() {
 	channelId := int32(56) // int32 | Channel id
-	from := int32(56) // int32 | Start point for messages (optional)
-	direction := "direction_example" // string | Select direction (optional)
+	from := int32(56) // int32 | Start point for messages. Included in the response when it exists. (optional)
+	direction := "direction_example" // string | Select direction and response order: before=newest->oldest, after=oldest->newest, around=from first then older desc then newer asc. (optional)
 	limit := int32(56) // int32 | Message count limit (optional)
 
 	configuration := openapiclient.NewConfiguration()
@@ -137,8 +139,8 @@ Other parameters are passed through a pointer to a apiMessageChannelChannelIdGet
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **from** | **int32** | Start point for messages | 
- **direction** | **string** | Select direction | 
+ **from** | **int32** | Start point for messages. Included in the response when it exists. | 
+ **direction** | **string** | Select direction and response order: before&#x3D;newest-&gt;oldest, after&#x3D;oldest-&gt;newest, around&#x3D;from first then older desc then newer asc. | 
  **limit** | **int32** | Message count limit | 
 
 ### Return type

@@ -64,7 +64,7 @@ type fakeUserRepo struct {
 	setCh chan struct{}
 }
 
-func (f *fakeUserRepo) ModifyUser(ctx context.Context, userId int64, name *string, avatar *int64) error {
+func (f *fakeUserRepo) ModifyUser(ctx context.Context, userId int64, name *string, avatar *int64, bio *string, bannerColor, panelColor *int) error {
 	return nil
 }
 func (f *fakeUserRepo) GetUserById(ctx context.Context, id int64) (model.User, error) {

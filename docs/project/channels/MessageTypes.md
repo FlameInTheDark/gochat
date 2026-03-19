@@ -28,6 +28,9 @@ Messages can have different types based on their purpose:
     "id": 2226021950625415200,
     "name": "FlameInTheDark",
     "discriminator": "flameinthedark",
+    "bio": "Building gochat one endpoint at a time",
+    "banner_color": 3447003,
+    "panel_color": 15158332,
     "avatar": null
   },
   "content": "Hello world!",
@@ -64,6 +67,9 @@ Messages can have different types based on their purpose:
   "id": 2226021950625415200,
   "name": "FlameInTheDark",
   "discriminator": "flameinthedark",
+  "bio": "Building gochat one endpoint at a time",
+  "banner_color": 3447003,
+  "panel_color": 15158332,
   "avatar": {
     "url": "https://cdn.gochat.io/avatars/...",
     "content_type": "image/png",
@@ -73,6 +79,18 @@ Messages can have different types based on their purpose:
   }
 }
 ```
+
+### User Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | int64 | User ID |
+| `name` | string | Public username or member display name in message payloads |
+| `discriminator` | string | Unique discriminator |
+| `bio` | string? | Public user bio, up to 190 characters |
+| `banner_color` | int? | Banner/header RGB integer color |
+| `panel_color` | int? | User panel RGB integer color |
+| `avatar` | object? | Active avatar metadata |
 
 ## Attachment Structure
 
@@ -114,6 +132,9 @@ Standard user message:
     "id": 2226021950625415200,
     "name": "FlameInTheDark",
     "discriminator": "flameinthedark",
+    "bio": "Building gochat one endpoint at a time",
+    "banner_color": 3447003,
+    "panel_color": 15158332,
     "avatar": null
   },
   "content": "Hey everyone! How's it going?",
@@ -143,6 +164,9 @@ Message with file attachments:
     "id": 2226021950625415200,
     "name": "FlameInTheDark",
     "discriminator": "flameinthedark",
+    "bio": "Building gochat one endpoint at a time",
+    "banner_color": 3447003,
+    "panel_color": 15158332,
     "avatar": null
   },
   "content": "Check out this image!",
@@ -175,6 +199,9 @@ Message with file attachments:
     "id": 2226021950625415201,
     "name": "AnotherUser",
     "discriminator": "anotheruser",
+    "bio": null,
+    "banner_color": null,
+    "panel_color": null,
     "avatar": null
   },
   "content": "Thanks for sharing!",
@@ -198,6 +225,9 @@ System message sent when a user joins a guild:
     "id": 2226021950625415202,
     "name": "NewMember",
     "discriminator": "newmember",
+    "bio": null,
+    "banner_color": null,
+    "panel_color": null,
     "avatar": null
   },
   "content": "NewMember joined the server",
@@ -219,6 +249,9 @@ When a thread is created from a regular parent-channel message, that original me
     "id": 2226021950625415200,
     "name": "FlameInTheDark",
     "discriminator": "flameinthedark",
+    "bio": "Building gochat one endpoint at a time",
+    "banner_color": 3447003,
+    "panel_color": 15158332,
     "avatar": null
   },
   "content": "Can we track this separately?",
@@ -253,6 +286,9 @@ Informative message posted in the parent channel after a thread is created:
     "id": 2226021950625415200,
     "name": "FlameInTheDark",
     "discriminator": "flameinthedark",
+    "bio": "Building gochat one endpoint at a time",
+    "banner_color": 3447003,
+    "panel_color": 15158332,
     "avatar": null
   },
   "content": "release discussion",
@@ -294,6 +330,9 @@ Informative copy of the source message stored as the first message inside the th
     "id": 2226021950625415200,
     "name": "FlameInTheDark",
     "discriminator": "flameinthedark",
+    "bio": "Building gochat one endpoint at a time",
+    "banner_color": 3447003,
+    "panel_color": 15158332,
     "avatar": null
   },
   "content": "Original message content",
@@ -324,6 +363,9 @@ When a message is edited, the `updated_at` field contains the timestamp of the e
     "id": 2226021950625415200,
     "name": "FlameInTheDark",
     "discriminator": "flameinthedark",
+    "bio": "Building gochat one endpoint at a time",
+    "banner_color": 3447003,
+    "panel_color": 15158332,
     "avatar": null
   },
   "content": "This is the edited content",

@@ -215,7 +215,7 @@ type fakeUserRepo struct {
 	users map[int64]model.User
 }
 
-func (f *fakeUserRepo) ModifyUser(ctx context.Context, userId int64, name *string, avatar *int64) error {
+func (f *fakeUserRepo) ModifyUser(ctx context.Context, userId int64, name *string, avatar *int64, bio *string, bannerColor, panelColor *int) error {
 	return nil
 }
 func (f *fakeUserRepo) GetUserById(ctx context.Context, id int64) (model.User, error) {
@@ -236,6 +236,63 @@ func (f *fakeUserRepo) SetUsername(ctx context.Context, id, name string) error  
 func (f *fakeUserRepo) SetUserBlocked(ctx context.Context, id int64, blocked bool) error { return nil }
 func (f *fakeUserRepo) SetUploadLimit(ctx context.Context, id int64, uploadLimit int64) error {
 	return nil
+}
+
+type fakeUserRoleRepo struct {
+	roles map[testMemberKey][]int64
+}
+
+func (f *fakeUserRoleRepo) GetUserRoles(ctx context.Context, guildID, userID int64) ([]model.UserRole, error) {
+	roleIDs := f.roles[testMemberKey{guildID: guildID, userID: userID}]
+	result := make([]model.UserRole, len(roleIDs))
+	for i, roleID := range roleIDs {
+		result[i] = model.UserRole{GuildId: guildID, UserId: userID, RoleId: roleID}
+	}
+	return result, nil
+}
+
+func (f *fakeUserRoleRepo) AddUserRole(ctx context.Context, guildID, userID, roleID int64) error {
+	key := testMemberKey{guildID: guildID, userID: userID}
+	f.roles[key] = append(f.roles[key], roleID)
+	return nil
+}
+
+func (f *fakeUserRoleRepo) RemoveUserRole(ctx context.Context, guildID, userID, roleID int64) error {
+	key := testMemberKey{guildID: guildID, userID: userID}
+	roleIDs := f.roles[key]
+	filtered := roleIDs[:0]
+	for _, existingRoleID := range roleIDs {
+		if existingRoleID != roleID {
+			filtered = append(filtered, existingRoleID)
+		}
+	}
+	f.roles[key] = filtered
+	return nil
+}
+
+func (f *fakeUserRoleRepo) RemoveRoleAssignments(ctx context.Context, guildID, roleID int64) error {
+	for key, roleIDs := range f.roles {
+		if key.guildID != guildID {
+			continue
+		}
+		filtered := roleIDs[:0]
+		for _, existingRoleID := range roleIDs {
+			if existingRoleID != roleID {
+				filtered = append(filtered, existingRoleID)
+			}
+		}
+		f.roles[key] = filtered
+	}
+	return nil
+}
+
+func (f *fakeUserRoleRepo) GetUsersRolesByGuild(ctx context.Context, guildID int64, userIDs []int64) ([]model.UserRoles, error) {
+	result := make([]model.UserRoles, 0, len(userIDs))
+	for _, userID := range userIDs {
+		roles := append([]int64(nil), f.roles[testMemberKey{guildID: guildID, userID: userID}]...)
+		result = append(result, model.UserRoles{UserId: userID, Roles: roles})
+	}
+	return result, nil
 }
 
 type fakeDiscriminatorRepo struct {
@@ -287,6 +344,105 @@ func newGuildTestApp(t *testing.T, userID int64, path string, handler fiber.Hand
 		return handler(c)
 	})
 	return app
+}
+
+func TestGetMemberReturnsGuildMemberData(t *testing.T) {
+	bio := "Writes concise handlers"
+	bannerColor := 3447003
+	panelColor := 15158332
+	members := &fakeMemberRepo{
+		members: map[testMemberKey]bool{
+			{guildID: 1, userID: 10}: true,
+			{guildID: 1, userID: 11}: true,
+		},
+	}
+	userRoles := &fakeUserRoleRepo{
+		roles: map[testMemberKey][]int64{
+			{guildID: 1, userID: 11}: {21, 42},
+		},
+	}
+	e := &entity{
+		memb: members,
+		user: &fakeUserRepo{users: map[int64]model.User{
+			11: {
+				Id:          11,
+				Name:        "member-user",
+				Bio:         &bio,
+				BannerColor: &bannerColor,
+				PanelColor:  &panelColor,
+			},
+		}},
+		disc: &fakeDiscriminatorRepo{discriminators: map[int64]string{11: "4242"}},
+		ur:   userRoles,
+	}
+	app := newGuildTestApp(t, 10, "/guild/:guild_id/member/:user_id", e.GetMember)
+
+	req := httptest.NewRequest("GET", "/guild/1/member/11", nil)
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+
+	var got dto.Member
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
+		t.Fatalf("unable to decode response: %v", err)
+	}
+	if got.User.Id != 11 || got.User.Name != "member-user" || got.User.Discriminator != "4242" {
+		t.Fatalf("unexpected user payload: %#v", got.User)
+	}
+	if got.User.Bio == nil || *got.User.Bio != bio {
+		t.Fatalf("unexpected bio: %#v", got.User.Bio)
+	}
+	if got.User.BannerColor == nil || *got.User.BannerColor != bannerColor {
+		t.Fatalf("unexpected banner color: %#v", got.User.BannerColor)
+	}
+	if got.User.PanelColor == nil || *got.User.PanelColor != panelColor {
+		t.Fatalf("unexpected panel color: %#v", got.User.PanelColor)
+	}
+	if len(got.Roles) != 2 || got.Roles[0] != 21 || got.Roles[1] != 42 {
+		t.Fatalf("unexpected roles: %#v", got.Roles)
+	}
+}
+
+func TestGetMemberRejectsRequesterOutsideGuild(t *testing.T) {
+	members := &fakeMemberRepo{
+		members: map[testMemberKey]bool{
+			{guildID: 1, userID: 11}: true,
+		},
+	}
+	e := &entity{memb: members}
+	app := newGuildTestApp(t, 10, "/guild/:guild_id/member/:user_id", e.GetMember)
+
+	req := httptest.NewRequest("GET", "/guild/1/member/11", nil)
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", resp.StatusCode)
+	}
+}
+
+func TestGetMemberReturnsNotFoundForMissingTargetMember(t *testing.T) {
+	members := &fakeMemberRepo{
+		members: map[testMemberKey]bool{
+			{guildID: 1, userID: 10}: true,
+		},
+	}
+	e := &entity{memb: members}
+	app := newGuildTestApp(t, 10, "/guild/:guild_id/member/:user_id", e.GetMember)
+
+	req := httptest.NewRequest("GET", "/guild/1/member/11", nil)
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusNotFound {
+		t.Fatalf("expected 404, got %d", resp.StatusCode)
+	}
 }
 
 func TestKickMemberRemovesMemberAndSendsEvents(t *testing.T) {

@@ -44,7 +44,9 @@ const (
 	// Validation error messages
 	ErrUserNameTooShort           = "user name must be at least 4 characters"
 	ErrUserNameTooLong            = "user name must be less than 20 characters"
+	ErrUserBioTooLong             = "user bio must be less than or equal to 190 characters"
 	ErrAvatarIdInvalid            = "avatar ID must be positive"
+	ErrProfileColorInvalid        = "profile color must be between 0 and 16777215"
 	ErrRecipientIdRequired        = "recipient ID is required"
 	ErrRecipientIdInvalid         = "recipient ID must be positive"
 	ErrChannelIdInvalid           = "channel ID must be positive"
@@ -55,14 +57,19 @@ const (
 	ErrNoFieldsToUpdate           = "at least one field must be provided for update"
 )
 
+const maxProfileColorValue = 16777215
+
 type ModifyUserRequest struct {
-	Avatar *int64  `json:"avatar,omitempty" example:"2230469276416868352"` // Avatar ID.
-	Name   *string `json:"name,omitempty" example:"NewFancyName"`          // User name.
+	Avatar      *int64  `json:"avatar,omitempty" example:"2230469276416868352"`                 // Avatar ID.
+	Name        *string `json:"name,omitempty" example:"NewFancyName"`                          // User name.
+	Bio         *string `json:"bio,omitempty" example:"Building gochat one endpoint at a time"` // Public user bio.
+	BannerColor *int    `json:"banner_color,omitempty" example:"3447003"`                       // Banner/header RGB int value.
+	PanelColor  *int    `json:"panel_color,omitempty" example:"15158332"`                       // User panel RGB int value.
 }
 
 func (r ModifyUserRequest) Validate() error {
 	// Check if at least one field is provided
-	if r.Avatar == nil && r.Name == nil {
+	if r.Avatar == nil && r.Name == nil && r.Bio == nil && r.BannerColor == nil && r.PanelColor == nil {
 		return validation.NewError("VALIDATION_NO_FIELDS", ErrNoFieldsToUpdate)
 	}
 
@@ -75,6 +82,23 @@ func (r ModifyUserRequest) Validate() error {
 		),
 		validation.Field(&r.Avatar,
 			validation.When(r.Avatar != nil, validation.Min(int64(1)).Error(ErrAvatarIdInvalid)),
+		),
+		validation.Field(&r.Bio,
+			validation.When(r.Bio != nil,
+				validation.RuneLength(0, 190).Error(ErrUserBioTooLong),
+			),
+		),
+		validation.Field(&r.BannerColor,
+			validation.When(r.BannerColor != nil,
+				validation.Min(0).Error(ErrProfileColorInvalid),
+				validation.Max(maxProfileColorValue).Error(ErrProfileColorInvalid),
+			),
+		),
+		validation.Field(&r.PanelColor,
+			validation.When(r.PanelColor != nil,
+				validation.Min(0).Error(ErrProfileColorInvalid),
+				validation.Max(maxProfileColorValue).Error(ErrProfileColorInvalid),
+			),
 		),
 	)
 }
@@ -245,8 +269,11 @@ func buildJoinedThreads(joined map[int64]struct{}, channels []model.Channel, gui
 
 func modelToUser(m model.User) dto.User {
 	return dto.User{
-		Id:   m.Id,
-		Name: m.Name,
+		Id:          m.Id,
+		Name:        m.Name,
+		Bio:         m.Bio,
+		BannerColor: m.BannerColor,
+		PanelColor:  m.PanelColor,
 	}
 }
 
@@ -351,11 +378,8 @@ func usersWithDiscriminators(users []model.User, discs []model.Discriminator) []
 	}
 	res := make([]dto.User, len(users))
 	for i, u := range users {
-		res[i] = dto.User{
-			Id:            u.Id,
-			Name:          u.Name,
-			Discriminator: discMap[u.Id],
-		}
+		res[i] = modelToUser(u)
+		res[i].Discriminator = discMap[u.Id]
 	}
 	return res
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-func (e *Entity) ModifyUser(ctx context.Context, userId int64, name *string, avatar *int64) error {
+func (e *Entity) ModifyUser(ctx context.Context, userId int64, name *string, avatar *int64, bio *string, bannerColor, panelColor *int) error {
 	q := squirrel.Update("users").
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{"id": userId})
@@ -23,6 +23,15 @@ func (e *Entity) ModifyUser(ctx context.Context, userId int64, name *string, ava
 		} else {
 			q = q.Set("avatar", *avatar)
 		}
+	}
+	if bio != nil {
+		q = q.Set("bio", *bio)
+	}
+	if bannerColor != nil {
+		q = q.Set("banner_color", *bannerColor)
+	}
+	if panelColor != nil {
+		q = q.Set("panel_color", *panelColor)
 	}
 	raw, args, err := q.ToSql()
 	if err != nil {

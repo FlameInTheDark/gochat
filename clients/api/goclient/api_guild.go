@@ -52,7 +52,7 @@ func (a *GuildAPIService) GuildGuildIdBansGet(ctx context.Context, guildId int32
 
 // Execute executes the request
 //
-//	@return	[]DtoGuildBan
+//	@return []DtoGuildBan
 func (a *GuildAPIService) GuildGuildIdBansGetExecute(r ApiGuildGuildIdBansGetRequest) ([]DtoGuildBan, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -178,7 +178,7 @@ func (a *GuildAPIService) GuildGuildIdCategoryCategoryIdDelete(ctx context.Conte
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdCategoryCategoryIdDeleteExecute(r ApiGuildGuildIdCategoryCategoryIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -320,7 +320,7 @@ func (a *GuildAPIService) GuildGuildIdCategoryPost(ctx context.Context, guildId 
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdCategoryPostExecute(r ApiGuildGuildIdCategoryPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -462,7 +462,7 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdDelete(ctx context.Context
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdChannelChannelIdDeleteExecute(r ApiGuildGuildIdChannelChannelIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -600,7 +600,7 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdGet(ctx context.Context, g
 
 // Execute executes the request
 //
-//	@return	DtoChannel
+//	@return DtoChannel
 func (a *GuildAPIService) GuildGuildIdChannelChannelIdGetExecute(r ApiGuildGuildIdChannelChannelIdGetRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -745,7 +745,7 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatch(ctx context.Context,
 
 // Execute executes the request
 //
-//	@return	DtoChannel
+//	@return DtoChannel
 func (a *GuildAPIService) GuildGuildIdChannelChannelIdPatchExecute(r ApiGuildGuildIdChannelChannelIdPatchRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -910,7 +910,7 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdThreadMemberMeDelete(ctx c
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdChannelChannelIdThreadMemberMeDeleteExecute(r ApiGuildGuildIdChannelChannelIdThreadMemberMeDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1059,7 +1059,7 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdThreadMemberMePut(ctx cont
 
 // Execute executes the request
 //
-//	@return	DtoThreadMember
+//	@return DtoThreadMember
 func (a *GuildAPIService) GuildGuildIdChannelChannelIdThreadMemberMePutExecute(r ApiGuildGuildIdChannelChannelIdThreadMemberMePutRequest) (*DtoThreadMember, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut
@@ -1208,7 +1208,7 @@ func (a *GuildAPIService) GuildGuildIdChannelChannelIdThreadsGet(ctx context.Con
 
 // Execute executes the request
 //
-//	@return	[]DtoChannel
+//	@return []DtoChannel
 func (a *GuildAPIService) GuildGuildIdChannelChannelIdThreadsGetExecute(r ApiGuildGuildIdChannelChannelIdThreadsGetRequest) ([]DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1343,7 +1343,7 @@ func (a *GuildAPIService) GuildGuildIdChannelGet(ctx context.Context, guildId in
 
 // Execute executes the request
 //
-//	@return	[]DtoChannel
+//	@return []DtoChannel
 func (a *GuildAPIService) GuildGuildIdChannelGetExecute(r ApiGuildGuildIdChannelGetRequest) ([]DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1484,7 +1484,7 @@ func (a *GuildAPIService) GuildGuildIdChannelOrderPatch(ctx context.Context, gui
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdChannelOrderPatchExecute(r ApiGuildGuildIdChannelOrderPatchRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -1652,7 +1652,7 @@ func (a *GuildAPIService) GuildGuildIdChannelPost(ctx context.Context, guildId i
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdChannelPostExecute(r ApiGuildGuildIdChannelPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1793,7 +1793,7 @@ func (a *GuildAPIService) GuildGuildIdDelete(ctx context.Context, guildId int32)
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdDeleteExecute(r ApiGuildGuildIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1930,7 +1930,7 @@ func (a *GuildAPIService) GuildGuildIdEmojisEmojiIdDelete(ctx context.Context, g
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdEmojisEmojiIdDeleteExecute(r ApiGuildGuildIdEmojisEmojiIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -2097,7 +2097,7 @@ func (a *GuildAPIService) GuildGuildIdEmojisEmojiIdPatch(ctx context.Context, gu
 
 // Execute executes the request
 //
-//	@return	DtoGuildEmoji
+//	@return DtoGuildEmoji
 func (a *GuildAPIService) GuildGuildIdEmojisEmojiIdPatchExecute(r ApiGuildGuildIdEmojisEmojiIdPatchRequest) (*DtoGuildEmoji, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -2270,7 +2270,7 @@ func (a *GuildAPIService) GuildGuildIdEmojisGet(ctx context.Context, guildId int
 
 // Execute executes the request
 //
-//	@return	[]DtoGuildEmoji
+//	@return []DtoGuildEmoji
 func (a *GuildAPIService) GuildGuildIdEmojisGetExecute(r ApiGuildGuildIdEmojisGetRequest) ([]DtoGuildEmoji, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2422,7 +2422,7 @@ func (a *GuildAPIService) GuildGuildIdEmojisPost(ctx context.Context, guildId in
 
 // Execute executes the request
 //
-//	@return	DtoEmojiUpload
+//	@return DtoEmojiUpload
 func (a *GuildAPIService) GuildGuildIdEmojisPostExecute(r ApiGuildGuildIdEmojisPostRequest) (*DtoEmojiUpload, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -2583,7 +2583,7 @@ func (a *GuildAPIService) GuildGuildIdGet(ctx context.Context, guildId int32) Ap
 
 // Execute executes the request
 //
-//	@return	DtoGuild
+//	@return DtoGuild
 func (a *GuildAPIService) GuildGuildIdGetExecute(r ApiGuildGuildIdGetRequest) (*DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2726,7 +2726,7 @@ func (a *GuildAPIService) GuildGuildIdIconPost(ctx context.Context, guildId int3
 
 // Execute executes the request
 //
-//	@return	DtoIconUpload
+//	@return DtoIconUpload
 func (a *GuildAPIService) GuildGuildIdIconPostExecute(r ApiGuildGuildIdIconPostRequest) (*DtoIconUpload, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -2878,7 +2878,7 @@ func (a *GuildAPIService) GuildGuildIdIconsGet(ctx context.Context, guildId int3
 
 // Execute executes the request
 //
-//	@return	[]DtoIcon
+//	@return []DtoIcon
 func (a *GuildAPIService) GuildGuildIdIconsGetExecute(r ApiGuildGuildIdIconsGetRequest) ([]DtoIcon, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -3017,7 +3017,7 @@ func (a *GuildAPIService) GuildGuildIdIconsIconIdDelete(ctx context.Context, gui
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdIconsIconIdDeleteExecute(r ApiGuildGuildIdIconsIconIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -3157,7 +3157,7 @@ func (a *GuildAPIService) GuildGuildIdMemberUserIdBanDelete(ctx context.Context,
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdMemberUserIdBanDeleteExecute(r ApiGuildGuildIdMemberUserIdBanDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -3293,7 +3293,7 @@ func (a *GuildAPIService) GuildGuildIdMemberUserIdBanPost(ctx context.Context, g
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdMemberUserIdBanPostExecute(r ApiGuildGuildIdMemberUserIdBanPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -3403,6 +3403,155 @@ func (a *GuildAPIService) GuildGuildIdMemberUserIdBanPostExecute(r ApiGuildGuild
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiGuildGuildIdMemberUserIdGetRequest struct {
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int32
+	userId     int32
+}
+
+func (r ApiGuildGuildIdMemberUserIdGetRequest) Execute() (*DtoMember, *http.Response, error) {
+	return r.ApiService.GuildGuildIdMemberUserIdGetExecute(r)
+}
+
+/*
+GuildGuildIdMemberUserIdGet Get guild member
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param guildId Guild ID
+	@param userId Member user ID
+	@return ApiGuildGuildIdMemberUserIdGetRequest
+*/
+func (a *GuildAPIService) GuildGuildIdMemberUserIdGet(ctx context.Context, guildId int32, userId int32) ApiGuildGuildIdMemberUserIdGetRequest {
+	return ApiGuildGuildIdMemberUserIdGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+		guildId:    guildId,
+		userId:     userId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return DtoMember
+func (a *GuildAPIService) GuildGuildIdMemberUserIdGetExecute(r ApiGuildGuildIdMemberUserIdGetRequest) (*DtoMember, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DtoMember
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdMemberUserIdGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/guild/{guild_id}/member/{user_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", url.PathEscape(parameterValueToString(r.userId, "userId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiGuildGuildIdMemberUserIdKickPostRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService
@@ -3435,7 +3584,7 @@ func (a *GuildAPIService) GuildGuildIdMemberUserIdKickPost(ctx context.Context, 
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *GuildAPIService) GuildGuildIdMemberUserIdKickPostExecute(r ApiGuildGuildIdMemberUserIdKickPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -3570,7 +3719,7 @@ func (a *GuildAPIService) GuildGuildIdMembersGet(ctx context.Context, guildId in
 
 // Execute executes the request
 //
-//	@return	[]DtoMember
+//	@return []DtoMember
 func (a *GuildAPIService) GuildGuildIdMembersGetExecute(r ApiGuildGuildIdMembersGetRequest) ([]DtoMember, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -3711,7 +3860,7 @@ func (a *GuildAPIService) GuildGuildIdPatch(ctx context.Context, guildId int32) 
 
 // Execute executes the request
 //
-//	@return	DtoGuild
+//	@return DtoGuild
 func (a *GuildAPIService) GuildGuildIdPatchExecute(r ApiGuildGuildIdPatchRequest) (*DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -3857,7 +4006,7 @@ func (a *GuildAPIService) GuildGuildIdSystemchPatch(ctx context.Context, guildId
 
 // Execute executes the request
 //
-//	@return	DtoGuild
+//	@return DtoGuild
 func (a *GuildAPIService) GuildGuildIdSystemchPatchExecute(r ApiGuildGuildIdSystemchPatchRequest) (*DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -4001,7 +4150,7 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdJoinPost(ctx context.Context
 
 // Execute executes the request
 //
-//	@return	GuildJoinVoiceResponse
+//	@return GuildJoinVoiceResponse
 func (a *GuildAPIService) GuildGuildIdVoiceChannelIdJoinPostExecute(r ApiGuildGuildIdVoiceChannelIdJoinPostRequest) (*GuildJoinVoiceResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -4148,7 +4297,7 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatch(ctx context.Cont
 
 // Execute executes the request
 //
-//	@return	GuildSetVoiceRegionResponse
+//	@return GuildSetVoiceRegionResponse
 func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatchExecute(r ApiGuildGuildIdVoiceChannelIdRegionPatchRequest) (*GuildSetVoiceRegionResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -4308,7 +4457,7 @@ func (a *GuildAPIService) GuildGuildIdVoiceMovePost(ctx context.Context, guildId
 
 // Execute executes the request
 //
-//	@return	GuildMoveMemberResponse
+//	@return GuildMoveMemberResponse
 func (a *GuildAPIService) GuildGuildIdVoiceMovePostExecute(r ApiGuildGuildIdVoiceMovePostRequest) (*GuildMoveMemberResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -4451,7 +4600,7 @@ func (a *GuildAPIService) GuildPost(ctx context.Context) ApiGuildPostRequest {
 
 // Execute executes the request
 //
-//	@return	DtoGuild
+//	@return DtoGuild
 func (a *GuildAPIService) GuildPostExecute(r ApiGuildPostRequest) (*DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

@@ -492,23 +492,30 @@ func userToDTO(user model.User, dsc string) dto.User {
 		Id:            user.Id,
 		Name:          user.Name,
 		Discriminator: dsc,
+		Bio:           user.Bio,
+		BannerColor:   user.BannerColor,
+		PanelColor:    user.PanelColor,
+	}
+}
+
+func memberToDTO(member model.Member, user model.User, dsc string, avatar *dto.AvatarData, roles []int64) dto.Member {
+	userDTO := userToDTO(user, dsc)
+	if avatar != nil {
+		userDTO.Avatar = avatar
+	}
+	return dto.Member{
+		User:     userDTO,
+		Username: member.Username,
+		Avatar:   member.Avatar,
+		JoinAt:   member.JoinAt,
+		Roles:    roles,
 	}
 }
 
 func membersToDTO(members []model.Member, users []model.User, roles []model.UserRoles, dscs []model.Discriminator, avData map[int64]*dto.AvatarData) []dto.Member {
 	var data = make([]dto.Member, len(members))
 	for i, m := range members {
-		u := userToDTO(users[i], dscs[i].Discriminator)
-		if ad, ok := avData[m.UserId]; ok {
-			u.Avatar = ad
-		}
-		data[i] = dto.Member{
-			User:     u,
-			Username: m.Username,
-			Avatar:   m.Avatar,
-			JoinAt:   m.JoinAt,
-			Roles:    roles[i].Roles,
-		}
+		data[i] = memberToDTO(m, users[i], dscs[i].Discriminator, avData[m.UserId], roles[i].Roles)
 	}
 	return data
 }

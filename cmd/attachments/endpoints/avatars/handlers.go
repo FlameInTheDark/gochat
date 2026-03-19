@@ -89,7 +89,15 @@ func (e *entity) finalizeAvatarSideEffects(userId, avatarId int64, result *uploa
 		width := result.Width
 		height := result.Height
 		ad := dto.AvatarData{URL: result.URL, ContentType: &contentType, Width: &width, Height: &height, Size: result.Size}
-		upd := mqmsg.UpdateUser{User: dto.User{Id: u.Id, Name: u.Name, Discriminator: "", Avatar: &ad}}
+		upd := mqmsg.UpdateUser{User: dto.User{
+			Id:            u.Id,
+			Name:          u.Name,
+			Discriminator: "",
+			Bio:           u.Bio,
+			BannerColor:   u.BannerColor,
+			PanelColor:    u.PanelColor,
+			Avatar:        &ad,
+		}}
 		return e.mqt.SendUserUpdate(userId, &upd)
 	}); err != nil {
 		e.log.Error("failed to publish avatar upload update", "user_id", userId, "avatar_id", avatarId, "error", err)

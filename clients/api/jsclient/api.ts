@@ -1038,6 +1038,18 @@ export interface DtoUser {
     'avatar'?: DtoAvatarData;
     /**
      * 
+     * @type {number}
+     * @memberof DtoUser
+     */
+    'banner_color'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoUser
+     */
+    'bio'?: string;
+    /**
+     * 
      * @type {string}
      * @memberof DtoUser
      */
@@ -1054,6 +1066,12 @@ export interface DtoUser {
      * @memberof DtoUser
      */
     'name'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoUser
+     */
+    'panel_color'?: number;
 }
 /**
  * 
@@ -2721,11 +2739,29 @@ export interface UserModifyUserRequest {
      */
     'avatar'?: number;
     /**
+     * Banner/header RGB int value.
+     * @type {number}
+     * @memberof UserModifyUserRequest
+     */
+    'banner_color'?: number;
+    /**
+     * Public user bio.
+     * @type {string}
+     * @memberof UserModifyUserRequest
+     */
+    'bio'?: string;
+    /**
      * User name.
      * @type {string}
      * @memberof UserModifyUserRequest
      */
     'name'?: string;
+    /**
+     * User panel RGB int value.
+     * @type {number}
+     * @memberof UserModifyUserRequest
+     */
+    'panel_color'?: number;
 }
 /**
  * 
@@ -4499,6 +4535,44 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
+         * 
+         * @summary Get guild member
+         * @param {number} guildId Guild ID
+         * @param {number} userId Member user ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdGet: async (guildId: number, userId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdGet', 'guildId', guildId)
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('guildGuildIdMemberUserIdGet', 'userId', userId)
+            const localVarPath = `/guild/{guild_id}/member/{user_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Removes a guild member. Allowed for guild owner, administrators, or members with PermMembershipKickMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
          * @summary Kick guild member
          * @param {number} guildId Guild ID
@@ -5138,6 +5212,20 @@ export const GuildApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * 
+         * @summary Get guild member
+         * @param {number} guildId Guild ID
+         * @param {number} userId Member user ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdMemberUserIdGet(guildId: number, userId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMember>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdMemberUserIdGet(guildId, userId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdMemberUserIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Removes a guild member. Allowed for guild owner, administrators, or members with PermMembershipKickMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
          * @summary Kick guild member
          * @param {number} guildId Guild ID
@@ -5489,6 +5577,16 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.guildGuildIdMemberUserIdBanPost(requestParameters.guildId, requestParameters.userId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
+         * 
+         * @summary Get guild member
+         * @param {GuildApiGuildGuildIdMemberUserIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdMemberUserIdGet(requestParameters: GuildApiGuildGuildIdMemberUserIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMember> {
+            return localVarFp.guildGuildIdMemberUserIdGet(requestParameters.guildId, requestParameters.userId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Removes a guild member. Allowed for guild owner, administrators, or members with PermMembershipKickMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
          * @summary Kick guild member
          * @param {GuildApiGuildGuildIdMemberUserIdKickPostRequest} requestParameters Request parameters.
@@ -5806,6 +5904,16 @@ export interface GuildApiInterface {
      * @memberof GuildApiInterface
      */
     guildGuildIdMemberUserIdBanPost(requestParameters: GuildApiGuildGuildIdMemberUserIdBanPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Get guild member
+     * @param {GuildApiGuildGuildIdMemberUserIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdMemberUserIdGet(requestParameters: GuildApiGuildGuildIdMemberUserIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMember>;
 
     /**
      * Removes a guild member. Allowed for guild owner, administrators, or members with PermMembershipKickMembers. Cannot target the guild owner. Members with administrator permission can only be moderated by the guild owner.
@@ -6352,6 +6460,27 @@ export interface GuildApiGuildGuildIdMemberUserIdBanPostRequest {
 }
 
 /**
+ * Request parameters for guildGuildIdMemberUserIdGet operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdMemberUserIdGetRequest
+ */
+export interface GuildApiGuildGuildIdMemberUserIdGetRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdMemberUserIdGet
+     */
+    readonly guildId: number
+
+    /**
+     * Member user ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdMemberUserIdGet
+     */
+    readonly userId: number
+}
+
+/**
  * Request parameters for guildGuildIdMemberUserIdKickPost operation in GuildApi.
  * @export
  * @interface GuildApiGuildGuildIdMemberUserIdKickPostRequest
@@ -6793,6 +6922,18 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      */
     public guildGuildIdMemberUserIdBanPost(requestParameters: GuildApiGuildGuildIdMemberUserIdBanPostRequest, options?: RawAxiosRequestConfig) {
         return GuildApiFp(this.configuration).guildGuildIdMemberUserIdBanPost(requestParameters.guildId, requestParameters.userId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get guild member
+     * @param {GuildApiGuildGuildIdMemberUserIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdMemberUserIdGet(requestParameters: GuildApiGuildGuildIdMemberUserIdGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdMemberUserIdGet(requestParameters.guildId, requestParameters.userId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -8997,11 +9138,11 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * 
+         * Response order depends on `direction`. `before`: newest to oldest, including the `from` message when it exists. If `from` is omitted, the server starts from the channel\'s current `last_message_id`. `after`: oldest to newest, including the `from` message. `around`: the `from` message first, then older messages in descending order, then newer messages in ascending order.
          * @summary Get messages
          * @param {number} channelId Channel id
-         * @param {number} [from] Start point for messages
-         * @param {MessageChannelChannelIdGetDirectionEnum} [direction] Select direction
+         * @param {number} [from] Start point for messages. Included in the response when it exists.
+         * @param {MessageChannelChannelIdGetDirectionEnum} [direction] Select direction and response order: before&#x3D;newest-&gt;oldest, after&#x3D;oldest-&gt;newest, around&#x3D;from first then older desc then newer asc.
          * @param {number} [limit] Message count limit
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -9308,11 +9449,11 @@ export const MessageApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         * Response order depends on `direction`. `before`: newest to oldest, including the `from` message when it exists. If `from` is omitted, the server starts from the channel\'s current `last_message_id`. `after`: oldest to newest, including the `from` message. `around`: the `from` message first, then older messages in descending order, then newer messages in ascending order.
          * @summary Get messages
          * @param {number} channelId Channel id
-         * @param {number} [from] Start point for messages
-         * @param {MessageChannelChannelIdGetDirectionEnum} [direction] Select direction
+         * @param {number} [from] Start point for messages. Included in the response when it exists.
+         * @param {MessageChannelChannelIdGetDirectionEnum} [direction] Select direction and response order: before&#x3D;newest-&gt;oldest, after&#x3D;oldest-&gt;newest, around&#x3D;from first then older desc then newer asc.
          * @param {number} [limit] Message count limit
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -9429,7 +9570,7 @@ export const MessageApiFactory = function (configuration?: Configuration, basePa
             return localVarFp.messageChannelChannelIdAttachmentPost(requestParameters.channelId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         * Response order depends on `direction`. `before`: newest to oldest, including the `from` message when it exists. If `from` is omitted, the server starts from the channel\'s current `last_message_id`. `after`: oldest to newest, including the `from` message. `around`: the `from` message first, then older messages in descending order, then newer messages in ascending order.
          * @summary Get messages
          * @param {MessageApiMessageChannelChannelIdGetRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -9518,7 +9659,7 @@ export interface MessageApiInterface {
     messageChannelChannelIdAttachmentPost(requestParameters: MessageApiMessageChannelChannelIdAttachmentPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoAttachmentUpload>;
 
     /**
-     * 
+     * Response order depends on `direction`. `before`: newest to oldest, including the `from` message when it exists. If `from` is omitted, the server starts from the channel\'s current `last_message_id`. `after`: oldest to newest, including the `from` message. `around`: the `from` message first, then older messages in descending order, then newer messages in ascending order.
      * @summary Get messages
      * @param {MessageApiMessageChannelChannelIdGetRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -9624,14 +9765,14 @@ export interface MessageApiMessageChannelChannelIdGetRequest {
     readonly channelId: number
 
     /**
-     * Start point for messages
+     * Start point for messages. Included in the response when it exists.
      * @type {number}
      * @memberof MessageApiMessageChannelChannelIdGet
      */
     readonly from?: number
 
     /**
-     * Select direction
+     * Select direction and response order: before&#x3D;newest-&gt;oldest, after&#x3D;oldest-&gt;newest, around&#x3D;from first then older desc then newer asc.
      * @type {'before' | 'after' | 'around'}
      * @memberof MessageApiMessageChannelChannelIdGet
      */
@@ -9798,7 +9939,7 @@ export class MessageApi extends BaseAPI implements MessageApiInterface {
     }
 
     /**
-     * 
+     * Response order depends on `direction`. `before`: newest to oldest, including the `from` message when it exists. If `from` is omitted, the server starts from the channel\'s current `last_message_id`. `after`: oldest to newest, including the `from` message. `around`: the `from` message first, then older messages in descending order, then newer messages in ascending order.
      * @summary Get messages
      * @param {MessageApiMessageChannelChannelIdGetRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.

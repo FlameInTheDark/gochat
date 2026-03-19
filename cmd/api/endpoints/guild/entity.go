@@ -69,6 +69,7 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/:guild_id<int>/voice/move", e.MoveMember)
 
 	router.Get("/:guild_id<int>/members", e.GetMembers)
+	router.Get("/:guild_id<int>/member/:user_id<int>", e.GetMember)
 	router.Get("/:guild_id<int>/bans", e.GetBans)
 	router.Post("/:guild_id<int>/member/:user_id<int>/kick", e.KickMember)
 	router.Post("/:guild_id<int>/member/:user_id<int>/ban", e.BanMember)

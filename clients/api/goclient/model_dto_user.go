@@ -21,9 +21,12 @@ var _ MappedNullable = &DtoUser{}
 // DtoUser struct for DtoUser
 type DtoUser struct {
 	Avatar        *DtoAvatarData `json:"avatar,omitempty"`
+	BannerColor   *int32         `json:"banner_color,omitempty"`
+	Bio           *string        `json:"bio,omitempty"`
 	Discriminator *string        `json:"discriminator,omitempty"`
 	Id            *int32         `json:"id,omitempty"`
 	Name          *string        `json:"name,omitempty"`
+	PanelColor    *int32         `json:"panel_color,omitempty"`
 }
 
 // NewDtoUser instantiates a new DtoUser object
@@ -73,6 +76,70 @@ func (o *DtoUser) HasAvatar() bool {
 // SetAvatar gets a reference to the given DtoAvatarData and assigns it to the Avatar field.
 func (o *DtoUser) SetAvatar(v DtoAvatarData) {
 	o.Avatar = &v
+}
+
+// GetBannerColor returns the BannerColor field value if set, zero value otherwise.
+func (o *DtoUser) GetBannerColor() int32 {
+	if o == nil || IsNil(o.BannerColor) {
+		var ret int32
+		return ret
+	}
+	return *o.BannerColor
+}
+
+// GetBannerColorOk returns a tuple with the BannerColor field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoUser) GetBannerColorOk() (*int32, bool) {
+	if o == nil || IsNil(o.BannerColor) {
+		return nil, false
+	}
+	return o.BannerColor, true
+}
+
+// HasBannerColor returns a boolean if a field has been set.
+func (o *DtoUser) HasBannerColor() bool {
+	if o != nil && !IsNil(o.BannerColor) {
+		return true
+	}
+
+	return false
+}
+
+// SetBannerColor gets a reference to the given int32 and assigns it to the BannerColor field.
+func (o *DtoUser) SetBannerColor(v int32) {
+	o.BannerColor = &v
+}
+
+// GetBio returns the Bio field value if set, zero value otherwise.
+func (o *DtoUser) GetBio() string {
+	if o == nil || IsNil(o.Bio) {
+		var ret string
+		return ret
+	}
+	return *o.Bio
+}
+
+// GetBioOk returns a tuple with the Bio field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoUser) GetBioOk() (*string, bool) {
+	if o == nil || IsNil(o.Bio) {
+		return nil, false
+	}
+	return o.Bio, true
+}
+
+// HasBio returns a boolean if a field has been set.
+func (o *DtoUser) HasBio() bool {
+	if o != nil && !IsNil(o.Bio) {
+		return true
+	}
+
+	return false
+}
+
+// SetBio gets a reference to the given string and assigns it to the Bio field.
+func (o *DtoUser) SetBio(v string) {
+	o.Bio = &v
 }
 
 // GetDiscriminator returns the Discriminator field value if set, zero value otherwise.
@@ -171,6 +238,38 @@ func (o *DtoUser) SetName(v string) {
 	o.Name = &v
 }
 
+// GetPanelColor returns the PanelColor field value if set, zero value otherwise.
+func (o *DtoUser) GetPanelColor() int32 {
+	if o == nil || IsNil(o.PanelColor) {
+		var ret int32
+		return ret
+	}
+	return *o.PanelColor
+}
+
+// GetPanelColorOk returns a tuple with the PanelColor field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoUser) GetPanelColorOk() (*int32, bool) {
+	if o == nil || IsNil(o.PanelColor) {
+		return nil, false
+	}
+	return o.PanelColor, true
+}
+
+// HasPanelColor returns a boolean if a field has been set.
+func (o *DtoUser) HasPanelColor() bool {
+	if o != nil && !IsNil(o.PanelColor) {
+		return true
+	}
+
+	return false
+}
+
+// SetPanelColor gets a reference to the given int32 and assigns it to the PanelColor field.
+func (o *DtoUser) SetPanelColor(v int32) {
+	o.PanelColor = &v
+}
+
 func (o DtoUser) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -184,6 +283,12 @@ func (o DtoUser) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Avatar) {
 		toSerialize["avatar"] = o.Avatar
 	}
+	if !IsNil(o.BannerColor) {
+		toSerialize["banner_color"] = o.BannerColor
+	}
+	if !IsNil(o.Bio) {
+		toSerialize["bio"] = o.Bio
+	}
 	if !IsNil(o.Discriminator) {
 		toSerialize["discriminator"] = o.Discriminator
 	}
@@ -192,6 +297,9 @@ func (o DtoUser) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
+	}
+	if !IsNil(o.PanelColor) {
+		toSerialize["panel_color"] = o.PanelColor
 	}
 	return toSerialize, nil
 }

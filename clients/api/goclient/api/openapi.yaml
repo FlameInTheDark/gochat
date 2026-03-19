@@ -1826,6 +1826,55 @@ paths:
       summary: Delete guild icon by ID
       tags:
       - Guild
+  /guild/{guild_id}/member/{user_id}:
+    get:
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Member user ID
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Member'
+          description: Ok
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Member not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Get guild member
+      tags:
+      - Guild
   /guild/{guild_id}/member/{user_id}/ban:
     delete:
       description: "Removes a guild ban. Allowed for guild owner, administrators,\
@@ -2633,6 +2682,11 @@ paths:
       x-codegen-request-body-name: request
   /message/channel/{channel_id}:
     get:
+      description: |-
+        Response order depends on `direction`.
+        `before`: newest to oldest, including the `from` message when it exists. If `from` is omitted, the server starts from the channel's current `last_message_id`.
+        `after`: oldest to newest, including the `from` message.
+        `around`: the `from` message first, then older messages in descending order, then newer messages in ascending order.
       parameters:
       - description: Channel id
         in: path
@@ -2640,12 +2694,13 @@ paths:
         required: true
         schema:
           type: integer
-      - description: Start point for messages
+      - description: Start point for messages. Included in the response when it exists.
         in: query
         name: from
         schema:
           type: integer
-      - description: Select direction
+      - description: "Select direction and response order: before=newest->oldest,\
+          \ after=oldest->newest, around=from first then older desc then newer asc."
         in: query
         name: direction
         schema:
@@ -2667,7 +2722,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/dto.Message'
                 type: array
-          description: Messages
+          description: Messages returned in the order implied by `direction`.
         "400":
           content:
             application/json:
@@ -4826,7 +4881,9 @@ components:
       example:
         reason: reason
         user:
+          banner_color: 3447003
           name: FancyUserName
+          bio: Building gochat one endpoint at a time
           avatar:
             content_type: image/webp
             size: 245678
@@ -4835,6 +4892,7 @@ components:
             url: https://cdn.example.com/avatars/2230/2231.webp
             height: 128
           id: 2230469276416868352
+          panel_color: 15158332
           discriminator: uniquename
       properties:
         reason:
@@ -5001,7 +5059,9 @@ components:
           url: https://example.com/image.png
           height: 600
         author:
+          banner_color: 3447003
           name: FancyUserName
+          bio: Building gochat one endpoint at a time
           avatar:
             content_type: image/webp
             size: 245678
@@ -5010,6 +5070,7 @@ components:
             url: https://cdn.example.com/avatars/2230/2231.webp
             height: 128
           id: 2230469276416868352
+          panel_color: 15158332
           discriminator: uniquename
         flags: 0
         thread: "{}"
@@ -5169,7 +5230,9 @@ components:
       type: object
     dto.User:
       example:
+        banner_color: 3447003
         name: FancyUserName
+        bio: Building gochat one endpoint at a time
         avatar:
           content_type: image/webp
           size: 245678
@@ -5178,10 +5241,17 @@ components:
           url: https://cdn.example.com/avatars/2230/2231.webp
           height: 128
         id: 2230469276416868352
+        panel_color: 15158332
         discriminator: uniquename
       properties:
         avatar:
           $ref: '#/components/schemas/dto.AvatarData'
+        banner_color:
+          example: 3447003
+          type: integer
+        bio:
+          example: Building gochat one endpoint at a time
+          type: string
         discriminator:
           example: uniquename
           type: string
@@ -5191,6 +5261,9 @@ components:
         name:
           example: FancyUserName
           type: string
+        panel_color:
+          example: 15158332
+          type: integer
       type: object
     embed.Embed:
       example:
@@ -6202,7 +6275,9 @@ components:
             url: https://example.com/image.png
             height: 600
           author:
+            banner_color: 3447003
             name: FancyUserName
+            bio: Building gochat one endpoint at a time
             avatar:
               content_type: image/webp
               size: 245678
@@ -6211,6 +6286,7 @@ components:
               url: https://cdn.example.com/avatars/2230/2231.webp
               height: 128
             id: 2230469276416868352
+            panel_color: 15158332
             discriminator: uniquename
           flags: 0
           thread: "{}"
@@ -6279,7 +6355,9 @@ components:
             url: https://example.com/image.png
             height: 600
           author:
+            banner_color: 3447003
             name: FancyUserName
+            bio: Building gochat one endpoint at a time
             avatar:
               content_type: image/webp
               size: 245678
@@ -6288,6 +6366,7 @@ components:
               url: https://cdn.example.com/avatars/2230/2231.webp
               height: 128
             id: 2230469276416868352
+            panel_color: 15158332
             discriminator: uniquename
           flags: 0
           thread: "{}"
@@ -6425,10 +6504,22 @@ components:
           description: Avatar ID.
           example: 2230469276416868352
           type: integer
+        banner_color:
+          description: Banner/header RGB int value.
+          example: 3447003
+          type: integer
+        bio:
+          description: Public user bio.
+          example: Building gochat one endpoint at a time
+          type: string
         name:
           description: User name.
           example: NewFancyName
           type: string
+        panel_color:
+          description: User panel RGB int value.
+          example: 15158332
+          type: integer
       type: object
     user.UnfriendRequest:
       properties:

@@ -109,6 +109,7 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdIconsIconIdDelete**](docs/GuildAPI.md#guildguildidiconsiconiddelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
 *GuildAPI* | [**GuildGuildIdMemberUserIdBanDelete**](docs/GuildAPI.md#guildguildidmemberuseridbandelete) | **Delete** /guild/{guild_id}/member/{user_id}/ban | Unban guild member
 *GuildAPI* | [**GuildGuildIdMemberUserIdBanPost**](docs/GuildAPI.md#guildguildidmemberuseridbanpost) | **Post** /guild/{guild_id}/member/{user_id}/ban | Ban guild member
+*GuildAPI* | [**GuildGuildIdMemberUserIdGet**](docs/GuildAPI.md#guildguildidmemberuseridget) | **Get** /guild/{guild_id}/member/{user_id} | Get guild member
 *GuildAPI* | [**GuildGuildIdMemberUserIdKickPost**](docs/GuildAPI.md#guildguildidmemberuseridkickpost) | **Post** /guild/{guild_id}/member/{user_id}/kick | Kick guild member
 *GuildAPI* | [**GuildGuildIdMembersGet**](docs/GuildAPI.md#guildguildidmembersget) | **Get** /guild/{guild_id}/members | Get guild members
 *GuildAPI* | [**GuildGuildIdPatch**](docs/GuildAPI.md#guildguildidpatch) | **Patch** /guild/{guild_id} | Update guild

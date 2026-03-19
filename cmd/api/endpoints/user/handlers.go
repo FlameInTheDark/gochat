@@ -142,7 +142,7 @@ func (e *entity) ModifyUser(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	err = e.user.ModifyUser(c.UserContext(), user.Id, req.Name, req.Avatar)
+	err = e.user.ModifyUser(c.UserContext(), user.Id, req.Name, req.Avatar, req.Bio, req.BannerColor, req.PanelColor)
 	if err := helper.HttpDbError(err, ErrUnableToModifyUser); err != nil {
 		return err
 	}
@@ -338,11 +338,8 @@ func (e *entity) fetchGuildMemberData(c *fiber.Ctx, userId, guildId int64) (dto.
 	}
 
 	// Build user DTO with possible avatar data
-	userDTO := dto.User{
-		Id:            userRes.user.Id,
-		Name:          userRes.user.Name,
-		Discriminator: discRes.disc.Discriminator,
-	}
+	userDTO := modelToUser(*userRes.user)
+	userDTO.Discriminator = discRes.disc.Discriminator
 	// Prefer member avatar over user avatar
 	if memberRes.member.Avatar != nil {
 		if ad, err := e.getAvatarDataCached(c.UserContext(), userRes.user.Id, *memberRes.member.Avatar); err == nil && ad != nil {
