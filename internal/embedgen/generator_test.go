@@ -156,6 +156,44 @@ func TestGenerateFromYouTubeURL(t *testing.T) {
 	}
 }
 
+func TestGenerateFromShortYouTubeURLUsesCanonicalOEmbedAndKeepsAuthor(t *testing.T) {
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.URL.Query().Get("url"); got != "https://www.youtube.com/watch?v=abc123xyz" {
+			t.Fatalf("expected canonical youtube watch url in oembed query, got %q", got)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"type":          "video",
+			"title":         "Video title",
+			"author_name":   "Channel",
+			"author_url":    server.URL + "/channel",
+			"provider_name": "YouTube",
+			"provider_url":  "https://www.youtube.com",
+			"width":         1280,
+			"height":        720,
+		})
+	}))
+	defer server.Close()
+
+	generator := mustNewGenerator(t, Config{
+		AllowPrivateHosts:     true,
+		YouTubeOEmbedEndpoint: server.URL,
+	})
+	generated, err := generator.GenerateURL(context.Background(), "https://youtu.be/abc123xyz")
+	if err != nil {
+		t.Fatalf("GenerateURL returned error: %v", err)
+	}
+	if generated == nil {
+		t.Fatal("expected embed")
+	}
+	if generated.Author == nil || generated.Author.Name != "Channel" {
+		t.Fatalf("unexpected author: %#v", generated.Author)
+	}
+	if generated.Video == nil || generated.Video.URL != "https://www.youtube.com/embed/abc123xyz" {
+		t.Fatalf("unexpected video payload: %#v", generated.Video)
+	}
+}
+
 func TestGenerateFromYouTubeURLWithCustomEmbedBase(t *testing.T) {
 	var server *httptest.Server
 	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

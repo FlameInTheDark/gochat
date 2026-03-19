@@ -38,7 +38,7 @@ The WebSocket gateway uses a shared NATS subscription model. Rather than each co
 
 | Topic Pattern | Subscribed When | Events Delivered |
 |---------------|----------------|-----------------|
-| `user.{userId}` | Hello (automatic) | Read state, settings, friend events, DMs, user updates, VoiceMove |
+| `user.{userId}` | Hello (automatic) | Read state, settings, friend events, DMs, direct mentions, joined-thread activity, user updates, VoiceMove |
 | `guild.{guildId}` | Hello (automatic for all guilds) + OP 5 | Guild/channel/role/member/voice events |
 | `channel.{channelId}` | OP 5 Channel Subscription | Messages, typing indicators, channel-specific events |
 | `presence.user.{userId}` | OP 6 Presence Subscription | Presence status changes for watched users |
@@ -57,11 +57,18 @@ These are registered using the guild ID as both the key and topic identifier.
 
 ### Manual (OP 5 — Channel Subscription)
 
-Client subscribes to specific channels for real-time typing and message events:
+Client subscribes to a specific set of channels for real-time typing and message events:
 
 ```json
-{ "op": 5, "d": { "channel": 123, "guilds": [456] } }
+{ "op": 5, "d": { "channels": [123, 124], "guilds": [456] } }
 ```
+
+Channel subscription semantics:
+
+- `channels` is the exact channel-subscription set for this connection.
+- Sending `channels: []` unsubscribes the client from all channel topics.
+- To receive events in both a parent channel and its thread, the client must include both IDs in `channels`.
+- The legacy `channel` field is still accepted as a one-channel fallback for older clients.
 
 **Channel permission check order:**
 1. Is it a guild channel? → Check `PermServerViewChannels`.
@@ -70,6 +77,12 @@ Client subscribes to specific channels for real-time typing and message events:
 4. None match → subscription rejected (silent, logged server-side).
 
 For guild IDs in the `guilds` array, the server verifies the user is a member before subscribing.
+
+> [!IMPORTANT]
+> Thread subscriptions are explicit. Subscribing to a parent guild text channel does **not** subscribe the client to `channel.{threadId}` topics. A client must subscribe to the thread channel itself to receive thread message create/update/delete events.
+
+> [!IMPORTANT]
+> Joining a thread and subscribing to a thread are different things. Joining controls unread / notification behavior for that user. OP 5 `channels` controls whether this specific connection receives the live thread message stream.
 
 ### Manual (OP 6 — Presence Subscription)
 
@@ -121,5 +134,5 @@ Hub.UnregisterAll(conn):
 ### Key Properties
 
 - **Non-blocking delivery:** `conn.Send()` uses a buffered channel with `select/default` — if the buffer is full, the message is dropped. The heartbeat/ping timeout will eventually evict dead connections.
-- **Deduplication:** The Subscriber layer prevents duplicate subscriptions. If `Subscribe("channel", "channel.123")` is called again with the same key and topic, it's a no-op.
+- **Deduplication:** The Subscriber layer prevents duplicate subscriptions. If `Subscribe("channel.123", "channel.123")` is called again with the same key and topic, it's a no-op.
 - **Thread safety:** The Hub uses `sync.RWMutex`; each topic entry has its own `sync.RWMutex` for the connection set.

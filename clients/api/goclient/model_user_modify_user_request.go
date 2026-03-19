@@ -22,8 +22,14 @@ var _ MappedNullable = &UserModifyUserRequest{}
 type UserModifyUserRequest struct {
 	// Avatar ID.
 	Avatar *int32 `json:"avatar,omitempty"`
+	// Banner/header RGB int value.
+	BannerColor *int32 `json:"banner_color,omitempty"`
+	// Public user bio.
+	Bio *string `json:"bio,omitempty"`
 	// User name.
 	Name *string `json:"name,omitempty"`
+	// User panel RGB int value.
+	PanelColor *int32 `json:"panel_color,omitempty"`
 }
 
 // NewUserModifyUserRequest instantiates a new UserModifyUserRequest object
@@ -75,6 +81,70 @@ func (o *UserModifyUserRequest) SetAvatar(v int32) {
 	o.Avatar = &v
 }
 
+// GetBannerColor returns the BannerColor field value if set, zero value otherwise.
+func (o *UserModifyUserRequest) GetBannerColor() int32 {
+	if o == nil || IsNil(o.BannerColor) {
+		var ret int32
+		return ret
+	}
+	return *o.BannerColor
+}
+
+// GetBannerColorOk returns a tuple with the BannerColor field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserModifyUserRequest) GetBannerColorOk() (*int32, bool) {
+	if o == nil || IsNil(o.BannerColor) {
+		return nil, false
+	}
+	return o.BannerColor, true
+}
+
+// HasBannerColor returns a boolean if a field has been set.
+func (o *UserModifyUserRequest) HasBannerColor() bool {
+	if o != nil && !IsNil(o.BannerColor) {
+		return true
+	}
+
+	return false
+}
+
+// SetBannerColor gets a reference to the given int32 and assigns it to the BannerColor field.
+func (o *UserModifyUserRequest) SetBannerColor(v int32) {
+	o.BannerColor = &v
+}
+
+// GetBio returns the Bio field value if set, zero value otherwise.
+func (o *UserModifyUserRequest) GetBio() string {
+	if o == nil || IsNil(o.Bio) {
+		var ret string
+		return ret
+	}
+	return *o.Bio
+}
+
+// GetBioOk returns a tuple with the Bio field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserModifyUserRequest) GetBioOk() (*string, bool) {
+	if o == nil || IsNil(o.Bio) {
+		return nil, false
+	}
+	return o.Bio, true
+}
+
+// HasBio returns a boolean if a field has been set.
+func (o *UserModifyUserRequest) HasBio() bool {
+	if o != nil && !IsNil(o.Bio) {
+		return true
+	}
+
+	return false
+}
+
+// SetBio gets a reference to the given string and assigns it to the Bio field.
+func (o *UserModifyUserRequest) SetBio(v string) {
+	o.Bio = &v
+}
+
 // GetName returns the Name field value if set, zero value otherwise.
 func (o *UserModifyUserRequest) GetName() string {
 	if o == nil || IsNil(o.Name) {
@@ -107,6 +177,38 @@ func (o *UserModifyUserRequest) SetName(v string) {
 	o.Name = &v
 }
 
+// GetPanelColor returns the PanelColor field value if set, zero value otherwise.
+func (o *UserModifyUserRequest) GetPanelColor() int32 {
+	if o == nil || IsNil(o.PanelColor) {
+		var ret int32
+		return ret
+	}
+	return *o.PanelColor
+}
+
+// GetPanelColorOk returns a tuple with the PanelColor field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserModifyUserRequest) GetPanelColorOk() (*int32, bool) {
+	if o == nil || IsNil(o.PanelColor) {
+		return nil, false
+	}
+	return o.PanelColor, true
+}
+
+// HasPanelColor returns a boolean if a field has been set.
+func (o *UserModifyUserRequest) HasPanelColor() bool {
+	if o != nil && !IsNil(o.PanelColor) {
+		return true
+	}
+
+	return false
+}
+
+// SetPanelColor gets a reference to the given int32 and assigns it to the PanelColor field.
+func (o *UserModifyUserRequest) SetPanelColor(v int32) {
+	o.PanelColor = &v
+}
+
 func (o UserModifyUserRequest) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -120,8 +222,17 @@ func (o UserModifyUserRequest) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Avatar) {
 		toSerialize["avatar"] = o.Avatar
 	}
+	if !IsNil(o.BannerColor) {
+		toSerialize["banner_color"] = o.BannerColor
+	}
+	if !IsNil(o.Bio) {
+		toSerialize["bio"] = o.Bio
+	}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
+	}
+	if !IsNil(o.PanelColor) {
+		toSerialize["panel_color"] = o.PanelColor
 	}
 	return toSerialize, nil
 }

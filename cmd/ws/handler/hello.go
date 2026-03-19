@@ -74,8 +74,14 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 	h.initTimer.Stop()
 
 	h.user = &dto.User{
-		Id:   ur.user.Id,
-		Name: ur.user.Name,
+		Id:          ur.user.Id,
+		Name:        ur.user.Name,
+		Bio:         ur.user.Bio,
+		BannerColor: ur.user.BannerColor,
+		PanelColor:  ur.user.PanelColor,
+	}
+	if h.onAuthenticated != nil {
+		h.onAuthenticated(token.UserID)
 	}
 
 	// Establish or reuse session ID (UUID v4 style). Presence will be set only after client PresenceUpdate.

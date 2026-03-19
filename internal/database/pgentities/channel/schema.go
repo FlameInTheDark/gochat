@@ -72,6 +72,23 @@ func (e *Entity) GetChannelThreads(ctx context.Context, channelId int64) ([]mode
 	return channels, nil
 }
 
+func (e *Entity) GetChannelMessagePosition(ctx context.Context, id int64) (int64, error) {
+	var position int64
+	q := squirrel.Select("message_position").
+		PlaceholderFormat(squirrel.Dollar).
+		From("channels").
+		Where(squirrel.Eq{"id": id}).
+		Limit(1)
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	if err := e.c.GetContext(ctx, &position, raw, args...); err != nil {
+		return 0, fmt.Errorf("unable to get channel message position: %w", err)
+	}
+	return position, nil
+}
+
 func (e *Entity) CreateChannel(ctx context.Context, id int64, name string, channelType model.ChannelType, parent *int64, permissions *int64, private bool) error {
 	q := squirrel.Insert("channels").
 		PlaceholderFormat(squirrel.Dollar).
@@ -255,7 +272,39 @@ func (e *Entity) SetLastMessage(ctx context.Context, id, lastMessage int64) erro
 	return nil
 }
 
-func (e *Entity) UpdateChannel(ctx context.Context, id int64, parent *int64, private *bool, name, topic *string) (model.Channel, error) {
+func (e *Entity) AdjustMessageCount(ctx context.Context, id, delta int64) error {
+	q := squirrel.Update("channels").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"id": id}).
+		Set("message_count", squirrel.Expr("GREATEST(message_count + ?, 0)", delta))
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	if _, err := e.c.ExecContext(ctx, raw, args...); err != nil {
+		return fmt.Errorf("unable to adjust channel message count: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) ReserveMessagePositions(ctx context.Context, id, count int64) (int64, error) {
+	var position int64
+	q := squirrel.Update("channels").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"id": id}).
+		Set("message_position", squirrel.Expr("message_position + ?", count)).
+		Suffix("RETURNING message_position")
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	if err := e.c.GetContext(ctx, &position, raw, args...); err != nil {
+		return 0, fmt.Errorf("unable to reserve channel message positions: %w", err)
+	}
+	return position, nil
+}
+
+func (e *Entity) UpdateChannel(ctx context.Context, id int64, parent *int64, private *bool, name, topic *string, closed *bool) (model.Channel, error) {
 	q := squirrel.Update("channels").
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{"id": id}).
@@ -275,6 +324,9 @@ func (e *Entity) UpdateChannel(ctx context.Context, id int64, parent *int64, pri
 	}
 	if topic != nil {
 		q = q.Set("topic", *topic)
+	}
+	if closed != nil {
+		q = q.Set("closed", *closed)
 	}
 	raw, args, err := q.ToSql()
 	if err != nil {

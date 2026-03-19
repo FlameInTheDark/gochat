@@ -9,6 +9,7 @@
   <a href="docs/project/README.md"><img alt="Docs" src="https://img.shields.io/badge/Docs-Project%20Guide-0f172a?style=for-the-badge" /></a>
   <a href="docs/api/swagger.json"><img alt="API" src="https://img.shields.io/badge/API-Swagger-f59e0b?style=for-the-badge" /></a>
   <a href="https://github.com/FlameInTheDark/gochat-react"><img alt="UI" src="https://img.shields.io/badge/UI-gochat--react-2563eb?style=for-the-badge" /></a>
+<a href="https://github.com/FlameInTheDark/gochat-electron"><img alt="UI" src="https://img.shields.io/badge/DESKTOP-gochat--electron-2563eb?style=for-the-badge" /></a>
   <a href="https://github.com/FlameInTheDark/gochat-deployment"><img alt="Deployment" src="https://img.shields.io/badge/Deployment-gochat--deployment-059669?style=for-the-badge" /></a>
 </p>
 
@@ -240,18 +241,19 @@ Useful Make targets:
 
 ## Documentation and Clients
 
-| Resource | Link |
-| --- | --- |
-| Project docs | [docs/project/README.md](docs/project/README.md) |
-| Service documentation | [docs/project/Services.md](docs/project/Services.md) |
-| WebSocket protocol | [docs/project/ws/README.md](docs/project/ws/README.md) |
-| Voice and SFU docs | [docs/project/voice/README.md](docs/project/voice/README.md) |
-| Presence model | [docs/project/Presence.md](docs/project/Presence.md) |
-| OpenAPI schema | [docs/api/swagger.json](docs/api/swagger.json) |
-| Go API client | [clients/api/goclient/](clients/api/goclient/) |
-| TypeScript API client | [clients/api/jsclient/](clients/api/jsclient/) |
-| Frontend repository | [gochat-react](https://github.com/FlameInTheDark/gochat-react) |
-| Deployment repository | [gochat-deployment](https://github.com/FlameInTheDark/gochat-deployment) |
+| Resource                  | Link                                                                     |
+|---------------------------|--------------------------------------------------------------------------|
+| Project docs              | [docs/project/README.md](docs/project/README.md)                         |
+| Service documentation     | [docs/project/Services.md](docs/project/Services.md)                     |
+| WebSocket protocol        | [docs/project/ws/README.md](docs/project/ws/README.md)                   |
+| Voice and SFU docs        | [docs/project/voice/README.md](docs/project/voice/README.md)             |
+| Presence model            | [docs/project/Presence.md](docs/project/Presence.md)                     |
+| OpenAPI schema            | [docs/api/swagger.json](docs/api/swagger.json)                           |
+| Go API client             | [clients/api/goclient/](clients/api/goclient/)                           |
+| TypeScript API client     | [clients/api/jsclient/](clients/api/jsclient/)                           |
+| Frontend repository       | [gochat-react](https://github.com/FlameInTheDark/gochat-react)           |
+| Desktop client repository | [gochat-electron](https://github.com/FlameInTheDark/gochat-electron)     |
+| Deployment repository     | [gochat-deployment](https://github.com/FlameInTheDark/gochat-deployment) |
 
 ## Local Operations
 

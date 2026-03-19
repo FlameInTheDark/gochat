@@ -14,6 +14,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/cmd/ws/handler"
 	"github.com/FlameInTheDark/gochat/cmd/ws/subscriber"
+	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/presence"
 )
@@ -22,21 +23,71 @@ import (
 // It wraps the writer pump's outbound channel so the hub can deliver
 // messages without blocking.
 type wsConn struct {
-	id  string
-	out chan<- outMsg
+	id     string
+	out    chan<- outMsg
+	userID int64
 }
 
-func (w *wsConn) Send(data []byte) {
-	// Copy the data so the hub's buffer can be reused.
-	cp := make([]byte, len(data))
-	copy(cp, data)
+func (w *wsConn) Send(topic string, data []byte) {
+	payload := personalizeMessageForRecipient(topic, atomic.LoadInt64(&w.userID), data)
 	// Non-blocking: drop the message if the connection's buffer is full.
 	select {
-	case w.out <- outMsg{kind: 1, data: cp}:
+	case w.out <- outMsg{kind: 1, data: payload}:
 	default:
 		// Slow consumer вЂ” message dropped. The ping/heartbeat timeout
 		// will eventually evict this connection.
 	}
+}
+
+func (w *wsConn) SetUserID(userID int64) {
+	atomic.StoreInt64(&w.userID, userID)
+}
+
+func personalizeMessageForRecipient(topic string, userID int64, data []byte) []byte {
+	if !strings.HasPrefix(topic, "channel.") || userID == 0 {
+		return cloneWSMessage(data)
+	}
+
+	var envelope mqmsg.Message
+	if err := json.Unmarshal(data, &envelope); err != nil || envelope.EventType == nil {
+		return cloneWSMessage(data)
+	}
+
+	switch *envelope.EventType {
+	case mqmsg.EventTypeMessageCreate, mqmsg.EventTypeMessageUpdate:
+	default:
+		return cloneWSMessage(data)
+	}
+
+	var payload struct {
+		GuildId *int64      `json:"guild_id"`
+		Message dto.Message `json:"message"`
+	}
+	if err := json.Unmarshal(envelope.Data, &payload); err != nil {
+		return cloneWSMessage(data)
+	}
+	if payload.Message.Nonce == nil || payload.Message.Author.Id == userID {
+		return cloneWSMessage(data)
+	}
+
+	payload.Message.Nonce = nil
+	redactedData, err := json.Marshal(payload)
+	if err != nil {
+		return cloneWSMessage(data)
+	}
+	envelope.Data = redactedData
+
+	out, err := json.Marshal(envelope)
+	if err != nil {
+		return cloneWSMessage(data)
+	}
+	return out
+}
+
+func cloneWSMessage(data []byte) []byte {
+	cp := make([]byte, len(data))
+	copy(cp, data)
+	return cp
 }
 
 // outMsg is an internal message sent through the writer pump channel.
@@ -180,7 +231,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 
 	h := handler.New(a.cdb, a.pg, subs, sendJSON, a.jwt, a.cfg.HearthBeatTimeout, func() {
 		sendClose("Closed")
-	}, a.log, a.natsConn, pstore, a.cache)
+	}, a.log, a.natsConn, pstore, a.cache, conn.SetUserID)
 
 	defer func() { _ = h.Close() }()
 

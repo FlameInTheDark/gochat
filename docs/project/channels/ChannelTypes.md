@@ -50,6 +50,7 @@ This document describes the different channel types available in gochat, their p
 | `private` | bool | If true, only visible to specific roles |
 | `roles` | int64[] | Role IDs with access to private channels |
 | `last_message_id` | int64 | ID of the most recent message |
+| `message_count` | int64? | For threads: approximate message count derived from the stored Postgres base plus any pending KeyDB delta |
 | `voice_region` | string? | Voice region for voice channels (e.g., "us-east", "eu-west") |
 | `created_at` | string (ISO8601) | When the channel was created |
 
@@ -233,10 +234,28 @@ A conversation thread attached to a specific message.
 
 **Features:**
 - Created from an existing message
-- Organized discussion on a specific topic
+- Belongs to a guild text channel
 - `parent_id` references the source channel
-- Archived automatically after inactivity
-- Supports all text channel features
+- Inherits permissions from the parent channel
+- Can be closed without being deleted
+- Uses the same message APIs as other text channels
+
+**Thread-specific fields:**
+- `creator_id`: User who created the thread
+- `member`: Current user's thread membership when the thread is returned over HTTP
+- `member_ids`: User IDs of members who have joined the thread
+- `message_count`: Approximate thread message count returned as the stored Postgres base plus any pending KeyDB delta
+- `closed`: If true, the thread is read-only
+
+**Notes:**
+- A source message can have only one thread
+- Threads cannot be created from inside other threads
+- Threads are not returned by `GET /guild/{guild_id}/channel`
+- Thread lifecycle uses normal guild channel create/update/delete events
+- Threads support explicit join/leave membership for notifications and unread tracking
+- Creating a thread or sending a message in it automatically joins that user to the thread
+
+See [Threads](Threads.md) for creation rules, permissions, lifecycle, and event behavior.
 
 **Example:**
 ```json
@@ -244,12 +263,23 @@ A conversation thread attached to a specific message.
   "id": 2226022078341973000,
   "type": 5,
   "guild_id": 2226022078304223200,
+  "creator_id": 2226021950625415200,
+  "member": {
+    "user_id": 2226021950625415200,
+    "join_timestamp": "2026-01-15T10:30:00Z",
+    "flags": 0
+  },
+  "member_ids": [
+    2226021950625415200,
+    2226021950625415201
+  ],
   "name": "thread-feature-ideas",
   "parent_id": 2226022078341972000,
   "position": 0,
   "topic": null,
   "private": false,
   "last_message_id": 2228801793842741500,
+  "message_count": 14,
   "created_at": "2026-01-15T10:30:00Z"
 }
 ```

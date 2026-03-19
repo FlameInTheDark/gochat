@@ -189,13 +189,13 @@ type ApiMessageChannelChannelIdGetRequest struct {
 	limit      *int32
 }
 
-// Start point for messages
+// Start point for messages. Included in the response when it exists.
 func (r ApiMessageChannelChannelIdGetRequest) From(from int32) ApiMessageChannelChannelIdGetRequest {
 	r.from = &from
 	return r
 }
 
-// Select direction
+// Select direction and response order: before&#x3D;newest-&gt;oldest, after&#x3D;oldest-&gt;newest, around&#x3D;from first then older desc then newer asc.
 func (r ApiMessageChannelChannelIdGetRequest) Direction(direction string) ApiMessageChannelChannelIdGetRequest {
 	r.direction = &direction
 	return r
@@ -213,6 +213,11 @@ func (r ApiMessageChannelChannelIdGetRequest) Execute() ([]DtoMessage, *http.Res
 
 /*
 MessageChannelChannelIdGet Get messages
+
+Response order depends on `direction`.
+`before`: newest to oldest, including the `from` message when it exists. If `from` is omitted, the server starts from the channel's current `last_message_id`.
+`after`: oldest to newest, including the `from` message.
+`around`: the `from` message first, then older messages in descending order, then newer messages in ascending order.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param channelId Channel id
@@ -757,6 +762,178 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatchExecute(r ApiMe
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiMessageChannelChannelIdMessageIdThreadPostRequest struct {
+	ctx        context.Context
+	ApiService *MessageAPIService
+	channelId  int32
+	messageId  int32
+	request    *MessageCreateThreadRequest
+}
+
+// Thread data
+func (r ApiMessageChannelChannelIdMessageIdThreadPostRequest) Request(request MessageCreateThreadRequest) ApiMessageChannelChannelIdMessageIdThreadPostRequest {
+	r.request = &request
+	return r
+}
+
+func (r ApiMessageChannelChannelIdMessageIdThreadPostRequest) Execute() (*DtoChannel, *http.Response, error) {
+	return r.ApiService.MessageChannelChannelIdMessageIdThreadPostExecute(r)
+}
+
+/*
+MessageChannelChannelIdMessageIdThreadPost Create thread from message
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param channelId Parent channel id
+	@param messageId Source message id
+	@return ApiMessageChannelChannelIdMessageIdThreadPostRequest
+*/
+func (a *MessageAPIService) MessageChannelChannelIdMessageIdThreadPost(ctx context.Context, channelId int32, messageId int32) ApiMessageChannelChannelIdMessageIdThreadPostRequest {
+	return ApiMessageChannelChannelIdMessageIdThreadPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+		channelId:  channelId,
+		messageId:  messageId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return DtoChannel
+func (a *MessageAPIService) MessageChannelChannelIdMessageIdThreadPostExecute(r ApiMessageChannelChannelIdMessageIdThreadPostRequest) (*DtoChannel, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DtoChannel
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MessageAPIService.MessageChannelChannelIdMessageIdThreadPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/message/channel/{channel_id}/{message_id}/thread"
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"message_id"+"}", url.PathEscape(parameterValueToString(r.messageId, "messageId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.request
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 409 {
 			var v string
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {

@@ -4,6 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**Closed** | Pointer to **bool** | Whether the thread is closed for new messages. | [optional] [default to false]
 **Name** | Pointer to **string** | Channel name. | [optional] 
 **Private** | Pointer to **bool** | Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel. | [optional] [default to false]
 **Topic** | Pointer to **string** | Channel topic. | [optional] 
@@ -26,6 +27,31 @@ will change when the set of required properties is changed
 NewGuildPatchGuildChannelRequestWithDefaults instantiates a new GuildPatchGuildChannelRequest object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetClosed
+
+`func (o *GuildPatchGuildChannelRequest) GetClosed() bool`
+
+GetClosed returns the Closed field if non-nil, zero value otherwise.
+
+### GetClosedOk
+
+`func (o *GuildPatchGuildChannelRequest) GetClosedOk() (*bool, bool)`
+
+GetClosedOk returns a tuple with the Closed field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetClosed
+
+`func (o *GuildPatchGuildChannelRequest) SetClosed(v bool)`
+
+SetClosed sets Closed field to given value.
+
+### HasClosed
+
+`func (o *GuildPatchGuildChannelRequest) HasClosed() bool`
+
+HasClosed returns a boolean if a field has been set.
 
 ### GetName
 

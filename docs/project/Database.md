@@ -158,6 +158,9 @@ classDiagram
 
         class users {
             text name
+            text bio
+            integer banner_color
+            integer panel_color
             bigint avatar
             boolean blocked
             bigint upload_limit
