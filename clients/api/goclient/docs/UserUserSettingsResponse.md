@@ -9,9 +9,11 @@ Name | Type | Description | Notes
 **GuildEmojis** | Pointer to [**map[string][]DtoEmojiRef**](array.md) |  | [optional] 
 **Guilds** | Pointer to [**[]DtoGuild**](DtoGuild.md) |  | [optional] 
 **GuildsLastMessages** | Pointer to **map[string]map[string]int32** |  | [optional] 
+**JoinedThreads** | Pointer to [**map[string]map[string][]int32**](map.md) | Joined thread IDs grouped as guild_id -&gt; parent_channel_id -&gt; sorted thread ids. | [optional] 
 **Mentions** | Pointer to [**map[string][]ModelMention**](array.md) |  | [optional] 
 **ReadStates** | Pointer to **map[string]int32** |  | [optional] 
 **Settings** | Pointer to [**ModelUserSettingsData**](ModelUserSettingsData.md) |  | [optional] 
+**ThreadsLastMessages** | Pointer to **map[string]int32** |  | [optional] 
 **Version** | Pointer to **int32** |  | [optional] 
 
 ## Methods
@@ -158,6 +160,31 @@ SetGuildsLastMessages sets GuildsLastMessages field to given value.
 
 HasGuildsLastMessages returns a boolean if a field has been set.
 
+### GetJoinedThreads
+
+`func (o *UserUserSettingsResponse) GetJoinedThreads() map[string]map[string][]int32`
+
+GetJoinedThreads returns the JoinedThreads field if non-nil, zero value otherwise.
+
+### GetJoinedThreadsOk
+
+`func (o *UserUserSettingsResponse) GetJoinedThreadsOk() (*map[string]map[string][]int32, bool)`
+
+GetJoinedThreadsOk returns a tuple with the JoinedThreads field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetJoinedThreads
+
+`func (o *UserUserSettingsResponse) SetJoinedThreads(v map[string]map[string][]int32)`
+
+SetJoinedThreads sets JoinedThreads field to given value.
+
+### HasJoinedThreads
+
+`func (o *UserUserSettingsResponse) HasJoinedThreads() bool`
+
+HasJoinedThreads returns a boolean if a field has been set.
+
 ### GetMentions
 
 `func (o *UserUserSettingsResponse) GetMentions() map[string][]ModelMention`
@@ -232,6 +259,31 @@ SetSettings sets Settings field to given value.
 `func (o *UserUserSettingsResponse) HasSettings() bool`
 
 HasSettings returns a boolean if a field has been set.
+
+### GetThreadsLastMessages
+
+`func (o *UserUserSettingsResponse) GetThreadsLastMessages() map[string]int32`
+
+GetThreadsLastMessages returns the ThreadsLastMessages field if non-nil, zero value otherwise.
+
+### GetThreadsLastMessagesOk
+
+`func (o *UserUserSettingsResponse) GetThreadsLastMessagesOk() (*map[string]int32, bool)`
+
+GetThreadsLastMessagesOk returns a tuple with the ThreadsLastMessages field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetThreadsLastMessages
+
+`func (o *UserUserSettingsResponse) SetThreadsLastMessages(v map[string]int32)`
+
+SetThreadsLastMessages sets ThreadsLastMessages field to given value.
+
+### HasThreadsLastMessages
+
+`func (o *UserUserSettingsResponse) HasThreadsLastMessages() bool`
+
+HasThreadsLastMessages returns a boolean if a field has been set.
 
 ### GetVersion
 

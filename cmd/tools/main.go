@@ -13,6 +13,7 @@ func main() {
 		Name:  "gctools",
 		Usage: "Utility tools for GoChat services",
 		Commands: []*cli.Command{
+			messages(),
 			permissions(),
 			tokens(),
 		},

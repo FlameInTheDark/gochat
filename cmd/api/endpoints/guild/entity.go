@@ -24,6 +24,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/role"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/threadmember"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
@@ -53,6 +54,9 @@ func (e *entity) Init(router fiber.Router) {
 
 	router.Get("/:guild_id<int>/channel/:channel_id<int>", e.GetChannel)
 	router.Get("/:guild_id<int>/channel", e.GetChannels)
+	router.Get("/:guild_id<int>/channel/:channel_id<int>/threads", e.GetChannelThreads)
+	router.Put("/:guild_id<int>/channel/:channel_id<int>/thread-member/me", e.JoinThread)
+	router.Delete("/:guild_id<int>/channel/:channel_id<int>/thread-member/me", e.LeaveThread)
 	router.Post("/:guild_id<int>/channel", e.CreateChannel)
 	router.Patch("/:guild_id<int>/channel/order", e.PatchChannelOrder)
 	router.Patch("/:guild_id<int>/channel/:channel_id<int>", e.PatchChannel)
@@ -65,6 +69,7 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/:guild_id<int>/voice/move", e.MoveMember)
 
 	router.Get("/:guild_id<int>/members", e.GetMembers)
+	router.Get("/:guild_id<int>/member/:user_id<int>", e.GetMember)
 	router.Get("/:guild_id<int>/bans", e.GetBans)
 	router.Post("/:guild_id<int>/member/:user_id<int>/kick", e.KickMember)
 	router.Post("/:guild_id<int>/member/:user_id<int>/ban", e.BanMember)
@@ -111,6 +116,7 @@ type entity struct {
 	rperm channelroleperm.ChannelRolePerm
 	role  role.Role
 	ur    userrole.UserRole
+	tm    threadmember.ThreadMember
 	icon  icon.Icon
 	emoji emojirepo.Emoji
 	memb  member.Member
@@ -156,6 +162,7 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.Ind
 		rperm:              channelroleperm.New(pg.Conn()),
 		role:               role.New(pg.Conn()),
 		ur:                 userrole.New(pg.Conn()),
+		tm:                 threadmember.New(pg.Conn()),
 		icon:               icon.New(dbcon),
 		emoji:              emojirepo.New(pg.Conn()),
 		memb:               member.New(pg.Conn()),

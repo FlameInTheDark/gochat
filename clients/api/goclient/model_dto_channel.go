@@ -20,14 +20,24 @@ var _ MappedNullable = &DtoChannel{}
 
 // DtoChannel struct for DtoChannel
 type DtoChannel struct {
+	// Whether the thread is closed for new messages.
+	Closed *bool `json:"closed,omitempty"`
 	// Timestamp of channel creation
 	CreatedAt *string `json:"created_at,omitempty"`
+	// For threads: user who created the thread
+	CreatorId *int32 `json:"creator_id,omitempty"`
 	// Guild ID channel was created in
 	GuildId *int32 `json:"guild_id,omitempty"`
 	// Channel ID
 	Id *int32 `json:"id,omitempty"`
 	// ID of the last message in the channel
 	LastMessageId *int32 `json:"last_message_id,omitempty"`
+	// For threads: current user's membership state when returned via HTTP.
+	Member *DtoThreadMember `json:"member,omitempty"`
+	// For threads: IDs of users who have joined the thread.
+	MemberIds []int32 `json:"member_ids,omitempty"`
+	// For threads: approximate stored message count.
+	MessageCount *int32 `json:"message_count,omitempty"`
 	// Channel name, without spaces
 	Name *string `json:"name,omitempty"`
 	// Parent channel id
@@ -71,6 +81,38 @@ func NewDtoChannelWithDefaults() *DtoChannel {
 	return &this
 }
 
+// GetClosed returns the Closed field value if set, zero value otherwise.
+func (o *DtoChannel) GetClosed() bool {
+	if o == nil || IsNil(o.Closed) {
+		var ret bool
+		return ret
+	}
+	return *o.Closed
+}
+
+// GetClosedOk returns a tuple with the Closed field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoChannel) GetClosedOk() (*bool, bool) {
+	if o == nil || IsNil(o.Closed) {
+		return nil, false
+	}
+	return o.Closed, true
+}
+
+// HasClosed returns a boolean if a field has been set.
+func (o *DtoChannel) HasClosed() bool {
+	if o != nil && !IsNil(o.Closed) {
+		return true
+	}
+
+	return false
+}
+
+// SetClosed gets a reference to the given bool and assigns it to the Closed field.
+func (o *DtoChannel) SetClosed(v bool) {
+	o.Closed = &v
+}
+
 // GetCreatedAt returns the CreatedAt field value if set, zero value otherwise.
 func (o *DtoChannel) GetCreatedAt() string {
 	if o == nil || IsNil(o.CreatedAt) {
@@ -101,6 +143,38 @@ func (o *DtoChannel) HasCreatedAt() bool {
 // SetCreatedAt gets a reference to the given string and assigns it to the CreatedAt field.
 func (o *DtoChannel) SetCreatedAt(v string) {
 	o.CreatedAt = &v
+}
+
+// GetCreatorId returns the CreatorId field value if set, zero value otherwise.
+func (o *DtoChannel) GetCreatorId() int32 {
+	if o == nil || IsNil(o.CreatorId) {
+		var ret int32
+		return ret
+	}
+	return *o.CreatorId
+}
+
+// GetCreatorIdOk returns a tuple with the CreatorId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoChannel) GetCreatorIdOk() (*int32, bool) {
+	if o == nil || IsNil(o.CreatorId) {
+		return nil, false
+	}
+	return o.CreatorId, true
+}
+
+// HasCreatorId returns a boolean if a field has been set.
+func (o *DtoChannel) HasCreatorId() bool {
+	if o != nil && !IsNil(o.CreatorId) {
+		return true
+	}
+
+	return false
+}
+
+// SetCreatorId gets a reference to the given int32 and assigns it to the CreatorId field.
+func (o *DtoChannel) SetCreatorId(v int32) {
+	o.CreatorId = &v
 }
 
 // GetGuildId returns the GuildId field value if set, zero value otherwise.
@@ -197,6 +271,102 @@ func (o *DtoChannel) HasLastMessageId() bool {
 // SetLastMessageId gets a reference to the given int32 and assigns it to the LastMessageId field.
 func (o *DtoChannel) SetLastMessageId(v int32) {
 	o.LastMessageId = &v
+}
+
+// GetMember returns the Member field value if set, zero value otherwise.
+func (o *DtoChannel) GetMember() DtoThreadMember {
+	if o == nil || IsNil(o.Member) {
+		var ret DtoThreadMember
+		return ret
+	}
+	return *o.Member
+}
+
+// GetMemberOk returns a tuple with the Member field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoChannel) GetMemberOk() (*DtoThreadMember, bool) {
+	if o == nil || IsNil(o.Member) {
+		return nil, false
+	}
+	return o.Member, true
+}
+
+// HasMember returns a boolean if a field has been set.
+func (o *DtoChannel) HasMember() bool {
+	if o != nil && !IsNil(o.Member) {
+		return true
+	}
+
+	return false
+}
+
+// SetMember gets a reference to the given DtoThreadMember and assigns it to the Member field.
+func (o *DtoChannel) SetMember(v DtoThreadMember) {
+	o.Member = &v
+}
+
+// GetMemberIds returns the MemberIds field value if set, zero value otherwise.
+func (o *DtoChannel) GetMemberIds() []int32 {
+	if o == nil || IsNil(o.MemberIds) {
+		var ret []int32
+		return ret
+	}
+	return o.MemberIds
+}
+
+// GetMemberIdsOk returns a tuple with the MemberIds field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoChannel) GetMemberIdsOk() ([]int32, bool) {
+	if o == nil || IsNil(o.MemberIds) {
+		return nil, false
+	}
+	return o.MemberIds, true
+}
+
+// HasMemberIds returns a boolean if a field has been set.
+func (o *DtoChannel) HasMemberIds() bool {
+	if o != nil && !IsNil(o.MemberIds) {
+		return true
+	}
+
+	return false
+}
+
+// SetMemberIds gets a reference to the given []int32 and assigns it to the MemberIds field.
+func (o *DtoChannel) SetMemberIds(v []int32) {
+	o.MemberIds = v
+}
+
+// GetMessageCount returns the MessageCount field value if set, zero value otherwise.
+func (o *DtoChannel) GetMessageCount() int32 {
+	if o == nil || IsNil(o.MessageCount) {
+		var ret int32
+		return ret
+	}
+	return *o.MessageCount
+}
+
+// GetMessageCountOk returns a tuple with the MessageCount field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoChannel) GetMessageCountOk() (*int32, bool) {
+	if o == nil || IsNil(o.MessageCount) {
+		return nil, false
+	}
+	return o.MessageCount, true
+}
+
+// HasMessageCount returns a boolean if a field has been set.
+func (o *DtoChannel) HasMessageCount() bool {
+	if o != nil && !IsNil(o.MessageCount) {
+		return true
+	}
+
+	return false
+}
+
+// SetMessageCount gets a reference to the given int32 and assigns it to the MessageCount field.
+func (o *DtoChannel) SetMessageCount(v int32) {
+	o.MessageCount = &v
 }
 
 // GetName returns the Name field value if set, zero value otherwise.
@@ -529,8 +699,14 @@ func (o DtoChannel) MarshalJSON() ([]byte, error) {
 
 func (o DtoChannel) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.Closed) {
+		toSerialize["closed"] = o.Closed
+	}
 	if !IsNil(o.CreatedAt) {
 		toSerialize["created_at"] = o.CreatedAt
+	}
+	if !IsNil(o.CreatorId) {
+		toSerialize["creator_id"] = o.CreatorId
 	}
 	if !IsNil(o.GuildId) {
 		toSerialize["guild_id"] = o.GuildId
@@ -540,6 +716,15 @@ func (o DtoChannel) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.LastMessageId) {
 		toSerialize["last_message_id"] = o.LastMessageId
+	}
+	if !IsNil(o.Member) {
+		toSerialize["member"] = o.Member
+	}
+	if !IsNil(o.MemberIds) {
+		toSerialize["member_ids"] = o.MemberIds
+	}
+	if !IsNil(o.MessageCount) {
+		toSerialize["message_count"] = o.MessageCount
 	}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name

@@ -26,8 +26,14 @@ type MessageSendMessageRequest struct {
 	Content *string `json:"content,omitempty"`
 	// Manual embeds supplied by the client. These are stored separately from generated URL embeds.
 	Embeds []EmbedEmbed `json:"embeds,omitempty"`
+	// When true, deduplicates sends with the same nonce in the same channel for a short window.
+	EnforceNonce *bool `json:"enforce_nonce,omitempty"`
 	// IDs of mentioned users
 	Mentions []int32 `json:"mentions,omitempty"`
+	// Optional client correlation token echoed back to the author.
+	Nonce *string `json:"nonce,omitempty"`
+	// Referenced message ID in the same channel. When set, the new message is stored as type 1 (Reply).
+	Reference *int32 `json:"reference,omitempty"`
 }
 
 // NewMessageSendMessageRequest instantiates a new MessageSendMessageRequest object
@@ -143,6 +149,38 @@ func (o *MessageSendMessageRequest) SetEmbeds(v []EmbedEmbed) {
 	o.Embeds = v
 }
 
+// GetEnforceNonce returns the EnforceNonce field value if set, zero value otherwise.
+func (o *MessageSendMessageRequest) GetEnforceNonce() bool {
+	if o == nil || IsNil(o.EnforceNonce) {
+		var ret bool
+		return ret
+	}
+	return *o.EnforceNonce
+}
+
+// GetEnforceNonceOk returns a tuple with the EnforceNonce field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *MessageSendMessageRequest) GetEnforceNonceOk() (*bool, bool) {
+	if o == nil || IsNil(o.EnforceNonce) {
+		return nil, false
+	}
+	return o.EnforceNonce, true
+}
+
+// HasEnforceNonce returns a boolean if a field has been set.
+func (o *MessageSendMessageRequest) HasEnforceNonce() bool {
+	if o != nil && !IsNil(o.EnforceNonce) {
+		return true
+	}
+
+	return false
+}
+
+// SetEnforceNonce gets a reference to the given bool and assigns it to the EnforceNonce field.
+func (o *MessageSendMessageRequest) SetEnforceNonce(v bool) {
+	o.EnforceNonce = &v
+}
+
 // GetMentions returns the Mentions field value if set, zero value otherwise.
 func (o *MessageSendMessageRequest) GetMentions() []int32 {
 	if o == nil || IsNil(o.Mentions) {
@@ -175,6 +213,70 @@ func (o *MessageSendMessageRequest) SetMentions(v []int32) {
 	o.Mentions = v
 }
 
+// GetNonce returns the Nonce field value if set, zero value otherwise.
+func (o *MessageSendMessageRequest) GetNonce() string {
+	if o == nil || IsNil(o.Nonce) {
+		var ret string
+		return ret
+	}
+	return *o.Nonce
+}
+
+// GetNonceOk returns a tuple with the Nonce field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *MessageSendMessageRequest) GetNonceOk() (*string, bool) {
+	if o == nil || IsNil(o.Nonce) {
+		return nil, false
+	}
+	return o.Nonce, true
+}
+
+// HasNonce returns a boolean if a field has been set.
+func (o *MessageSendMessageRequest) HasNonce() bool {
+	if o != nil && !IsNil(o.Nonce) {
+		return true
+	}
+
+	return false
+}
+
+// SetNonce gets a reference to the given string and assigns it to the Nonce field.
+func (o *MessageSendMessageRequest) SetNonce(v string) {
+	o.Nonce = &v
+}
+
+// GetReference returns the Reference field value if set, zero value otherwise.
+func (o *MessageSendMessageRequest) GetReference() int32 {
+	if o == nil || IsNil(o.Reference) {
+		var ret int32
+		return ret
+	}
+	return *o.Reference
+}
+
+// GetReferenceOk returns a tuple with the Reference field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *MessageSendMessageRequest) GetReferenceOk() (*int32, bool) {
+	if o == nil || IsNil(o.Reference) {
+		return nil, false
+	}
+	return o.Reference, true
+}
+
+// HasReference returns a boolean if a field has been set.
+func (o *MessageSendMessageRequest) HasReference() bool {
+	if o != nil && !IsNil(o.Reference) {
+		return true
+	}
+
+	return false
+}
+
+// SetReference gets a reference to the given int32 and assigns it to the Reference field.
+func (o *MessageSendMessageRequest) SetReference(v int32) {
+	o.Reference = &v
+}
+
 func (o MessageSendMessageRequest) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -194,8 +296,17 @@ func (o MessageSendMessageRequest) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Embeds) {
 		toSerialize["embeds"] = o.Embeds
 	}
+	if !IsNil(o.EnforceNonce) {
+		toSerialize["enforce_nonce"] = o.EnforceNonce
+	}
 	if !IsNil(o.Mentions) {
 		toSerialize["mentions"] = o.Mentions
+	}
+	if !IsNil(o.Nonce) {
+		toSerialize["nonce"] = o.Nonce
+	}
+	if !IsNil(o.Reference) {
+		toSerialize["reference"] = o.Reference
 	}
 	return toSerialize, nil
 }

@@ -11,6 +11,12 @@ Name | Type | Description | Notes
 **Embeds** | Pointer to [**[]EmbedEmbed**](EmbedEmbed.md) |  | [optional] 
 **Flags** | Pointer to **int32** | Bitmask. Includes suppress-embeds and banned-author markers in API responses. | [optional] 
 **Id** | Pointer to **int32** | Message ID | [optional] 
+**Nonce** | Pointer to **string** | Ephemeral client correlation token echoed only to the author. | [optional] 
+**Position** | Pointer to **int32** | Monotonic channel-local message position used for navigation. | [optional] 
+**Reference** | Pointer to **int32** | Referenced source message id. | [optional] 
+**ReferenceChannelId** | Pointer to **int32** | Channel id of the referenced source message. | [optional] 
+**Thread** | Pointer to [**DtoChannel**](DtoChannel.md) | Thread metadata when the message is linked to a thread. | [optional] 
+**ThreadId** | Pointer to **int32** | Thread linked from this message. | [optional] 
 **Type** | Pointer to **int32** |  | [optional] 
 **UpdatedAt** | Pointer to **string** | Timestamp of the last message edit | [optional] 
 
@@ -207,6 +213,156 @@ SetId sets Id field to given value.
 `func (o *DtoMessage) HasId() bool`
 
 HasId returns a boolean if a field has been set.
+
+### GetNonce
+
+`func (o *DtoMessage) GetNonce() string`
+
+GetNonce returns the Nonce field if non-nil, zero value otherwise.
+
+### GetNonceOk
+
+`func (o *DtoMessage) GetNonceOk() (*string, bool)`
+
+GetNonceOk returns a tuple with the Nonce field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetNonce
+
+`func (o *DtoMessage) SetNonce(v string)`
+
+SetNonce sets Nonce field to given value.
+
+### HasNonce
+
+`func (o *DtoMessage) HasNonce() bool`
+
+HasNonce returns a boolean if a field has been set.
+
+### GetPosition
+
+`func (o *DtoMessage) GetPosition() int32`
+
+GetPosition returns the Position field if non-nil, zero value otherwise.
+
+### GetPositionOk
+
+`func (o *DtoMessage) GetPositionOk() (*int32, bool)`
+
+GetPositionOk returns a tuple with the Position field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPosition
+
+`func (o *DtoMessage) SetPosition(v int32)`
+
+SetPosition sets Position field to given value.
+
+### HasPosition
+
+`func (o *DtoMessage) HasPosition() bool`
+
+HasPosition returns a boolean if a field has been set.
+
+### GetReference
+
+`func (o *DtoMessage) GetReference() int32`
+
+GetReference returns the Reference field if non-nil, zero value otherwise.
+
+### GetReferenceOk
+
+`func (o *DtoMessage) GetReferenceOk() (*int32, bool)`
+
+GetReferenceOk returns a tuple with the Reference field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetReference
+
+`func (o *DtoMessage) SetReference(v int32)`
+
+SetReference sets Reference field to given value.
+
+### HasReference
+
+`func (o *DtoMessage) HasReference() bool`
+
+HasReference returns a boolean if a field has been set.
+
+### GetReferenceChannelId
+
+`func (o *DtoMessage) GetReferenceChannelId() int32`
+
+GetReferenceChannelId returns the ReferenceChannelId field if non-nil, zero value otherwise.
+
+### GetReferenceChannelIdOk
+
+`func (o *DtoMessage) GetReferenceChannelIdOk() (*int32, bool)`
+
+GetReferenceChannelIdOk returns a tuple with the ReferenceChannelId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetReferenceChannelId
+
+`func (o *DtoMessage) SetReferenceChannelId(v int32)`
+
+SetReferenceChannelId sets ReferenceChannelId field to given value.
+
+### HasReferenceChannelId
+
+`func (o *DtoMessage) HasReferenceChannelId() bool`
+
+HasReferenceChannelId returns a boolean if a field has been set.
+
+### GetThread
+
+`func (o *DtoMessage) GetThread() DtoChannel`
+
+GetThread returns the Thread field if non-nil, zero value otherwise.
+
+### GetThreadOk
+
+`func (o *DtoMessage) GetThreadOk() (*DtoChannel, bool)`
+
+GetThreadOk returns a tuple with the Thread field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetThread
+
+`func (o *DtoMessage) SetThread(v DtoChannel)`
+
+SetThread sets Thread field to given value.
+
+### HasThread
+
+`func (o *DtoMessage) HasThread() bool`
+
+HasThread returns a boolean if a field has been set.
+
+### GetThreadId
+
+`func (o *DtoMessage) GetThreadId() int32`
+
+GetThreadId returns the ThreadId field if non-nil, zero value otherwise.
+
+### GetThreadIdOk
+
+`func (o *DtoMessage) GetThreadIdOk() (*int32, bool)`
+
+GetThreadIdOk returns a tuple with the ThreadId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetThreadId
+
+`func (o *DtoMessage) SetThreadId(v int32)`
+
+SetThreadId sets ThreadId field to given value.
+
+### HasThreadId
+
+`func (o *DtoMessage) HasThreadId() bool`
+
+HasThreadId returns a boolean if a field has been set.
 
 ### GetType
 

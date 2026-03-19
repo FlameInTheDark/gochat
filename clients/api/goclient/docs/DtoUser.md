@@ -5,9 +5,12 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Avatar** | Pointer to [**DtoAvatarData**](DtoAvatarData.md) |  | [optional] 
+**BannerColor** | Pointer to **int32** |  | [optional] 
+**Bio** | Pointer to **string** |  | [optional] 
 **Discriminator** | Pointer to **string** |  | [optional] 
 **Id** | Pointer to **int32** |  | [optional] 
 **Name** | Pointer to **string** |  | [optional] 
+**PanelColor** | Pointer to **int32** |  | [optional] 
 
 ## Methods
 
@@ -52,6 +55,56 @@ SetAvatar sets Avatar field to given value.
 `func (o *DtoUser) HasAvatar() bool`
 
 HasAvatar returns a boolean if a field has been set.
+
+### GetBannerColor
+
+`func (o *DtoUser) GetBannerColor() int32`
+
+GetBannerColor returns the BannerColor field if non-nil, zero value otherwise.
+
+### GetBannerColorOk
+
+`func (o *DtoUser) GetBannerColorOk() (*int32, bool)`
+
+GetBannerColorOk returns a tuple with the BannerColor field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetBannerColor
+
+`func (o *DtoUser) SetBannerColor(v int32)`
+
+SetBannerColor sets BannerColor field to given value.
+
+### HasBannerColor
+
+`func (o *DtoUser) HasBannerColor() bool`
+
+HasBannerColor returns a boolean if a field has been set.
+
+### GetBio
+
+`func (o *DtoUser) GetBio() string`
+
+GetBio returns the Bio field if non-nil, zero value otherwise.
+
+### GetBioOk
+
+`func (o *DtoUser) GetBioOk() (*string, bool)`
+
+GetBioOk returns a tuple with the Bio field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetBio
+
+`func (o *DtoUser) SetBio(v string)`
+
+SetBio sets Bio field to given value.
+
+### HasBio
+
+`func (o *DtoUser) HasBio() bool`
+
+HasBio returns a boolean if a field has been set.
 
 ### GetDiscriminator
 
@@ -127,6 +180,31 @@ SetName sets Name field to given value.
 `func (o *DtoUser) HasName() bool`
 
 HasName returns a boolean if a field has been set.
+
+### GetPanelColor
+
+`func (o *DtoUser) GetPanelColor() int32`
+
+GetPanelColor returns the PanelColor field if non-nil, zero value otherwise.
+
+### GetPanelColorOk
+
+`func (o *DtoUser) GetPanelColorOk() (*int32, bool)`
+
+GetPanelColorOk returns a tuple with the PanelColor field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPanelColor
+
+`func (o *DtoUser) SetPanelColor(v int32)`
+
+SetPanelColor sets PanelColor field to given value.
+
+### HasPanelColor
+
+`func (o *DtoUser) HasPanelColor() bool`
+
+HasPanelColor returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

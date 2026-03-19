@@ -142,7 +142,7 @@ func (e *entity) ModifyUser(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	err = e.user.ModifyUser(c.UserContext(), user.Id, req.Name, req.Avatar)
+	err = e.user.ModifyUser(c.UserContext(), user.Id, req.Name, req.Avatar, req.Bio, req.BannerColor, req.PanelColor)
 	if err := helper.HttpDbError(err, ErrUnableToModifyUser); err != nil {
 		return err
 	}
@@ -338,11 +338,8 @@ func (e *entity) fetchGuildMemberData(c *fiber.Ctx, userId, guildId int64) (dto.
 	}
 
 	// Build user DTO with possible avatar data
-	userDTO := dto.User{
-		Id:            userRes.user.Id,
-		Name:          userRes.user.Name,
-		Discriminator: discRes.disc.Discriminator,
-	}
+	userDTO := modelToUser(*userRes.user)
+	userDTO.Discriminator = discRes.disc.Discriminator
 	// Prefer member avatar over user avatar
 	if memberRes.member.Avatar != nil {
 		if ad, err := e.getAvatarDataCached(c.UserContext(), userRes.user.Id, *memberRes.member.Avatar); err == nil && ad != nil {
@@ -828,20 +825,52 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
 	}
+	threadMembers, err := e.tm.GetUserThreadMembers(c.UserContext(), user.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
+	}
+	joinedThreadSet := make(map[int64]struct{}, len(threadMembers))
+	for _, member := range threadMembers {
+		if _, ok := joinedThreadSet[member.ThreadId]; ok {
+			continue
+		}
+		joinedThreadSet[member.ThreadId] = struct{}{}
+	}
 
 	// skip channels without new messages beyond the user's read state.
 	chModels, err := e.ch.GetChannelsBulk(c.UserContext(), gchs)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
 	}
+	guildChannels, err := e.gc.GetGuildChannelsByChannelIDs(c.UserContext(), gchs)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
+	}
+	threadsLastMessages := filterThreadLastMessages(joinedThreadSet, chModels, gclm)
+	joinedThreads := buildJoinedThreads(joinedThreadSet, chModels, guildChannels)
+	gclm = filterGuildLastMessages(gclm, chModels)
 	lastMsg := make(map[int64]int64, len(chModels))
+	threadChannels := make(map[int64]struct{}, len(joinedThreadSet))
 	for _, ch := range chModels {
 		lastMsg[ch.Id] = ch.LastMessage
+		if ch.Type == model.ChannelTypeThread {
+			threadChannels[ch.Id] = struct{}{}
+		}
+	}
+
+	activeCandidates := make([]int64, 0, len(chModels))
+	for _, ch := range chModels {
+		if ch.Type == model.ChannelTypeThread {
+			if _, ok := joinedThreadSet[ch.Id]; !ok {
+				continue
+			}
+		}
+		activeCandidates = append(activeCandidates, ch.Id)
 	}
 
 	// Build a list of channels that actually have new messages for the user.
-	active := make([]int64, 0, len(gchs))
-	for _, ch := range gchs {
+	active := make([]int64, 0, len(activeCandidates))
+	for _, ch := range activeCandidates {
 		var threshold int64
 		if rid, ok := rs[ch]; ok {
 			threshold = rid
@@ -884,6 +913,9 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 				mentions[ch] = m
 				mu.Unlock()
 			}
+			if _, isThread := threadChannels[ch]; isThread {
+				continue
+			}
 			if cm, err := e.mention.GetChannelMentionsAfter(ctx, ch, id); err != nil {
 				e.log.Error("unable to get channel mentions", slog.String("error", err.Error()))
 			} else if len(cm) > 0 {
@@ -910,6 +942,8 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUnmarshalUserSettings)
 	}
 	settings.ContentHosts = append([]string(nil), e.contentHosts...)
+	settings.ThreadsLastMessages = threadsLastMessages
+	settings.JoinedThreads = joinedThreads
 	settings.Mentions = mentions
 	settings.ChannelMentions = channelMentions
 	return c.JSON(settings)

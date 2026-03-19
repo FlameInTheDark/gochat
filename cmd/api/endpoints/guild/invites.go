@@ -15,6 +15,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
+	"github.com/FlameInTheDark/gochat/internal/messageposition"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
 
@@ -68,7 +69,7 @@ func (e *entity) ReceiveInvite(c *fiber.Ctx) error {
 
 	inv, err := e.inv.FetchInvite(c.UserContext(), code)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, ErrInviteNotFound)
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetInvites)
@@ -173,7 +174,12 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 		}
 		if g.SystemMessages != nil {
 			msgid := idgen.Next()
-			err := e.msg.CreateSystemMessage(context.Background(), msgid, *g.SystemMessages, user.Id, "", model.MessageTypeJoin)
+			position, err := messageposition.Next(context.Background(), e.cache, e.ch, *g.SystemMessages)
+			if err != nil {
+				e.log.Error("unable to allocate join message position", slog.String("error", err.Error()))
+				return
+			}
+			err = e.msg.CreateSystemMessage(context.Background(), msgid, *g.SystemMessages, user.Id, "", model.MessageTypeJoin, position)
 			if err != nil {
 				e.log.Error("unable to send system user join message", slog.String("error", err.Error()))
 				return
@@ -188,6 +194,7 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 					Id:        msgid,
 					ChannelId: *g.SystemMessages,
 					Author:    userToDTO(u, disc.Discriminator),
+					Position:  guildOptionalInt64(position),
 					Type:      int(model.MessageTypeJoin),
 				},
 			}); err != nil {

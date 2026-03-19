@@ -11,7 +11,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func (e *Entity) AddChannel(ctx context.Context, guildID, channelID int64, channelName string, channelType model.ChannelType, parentID *int64, private bool, position int) error {
+func (e *Entity) AddChannel(ctx context.Context, guildID, channelID int64, channelName string, channelType model.ChannelType, parentID *int64, private bool, position int, topic *string, creatorID *int64, closed bool) error {
 	tx, err := e.c.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -26,8 +26,8 @@ func (e *Entity) AddChannel(ctx context.Context, guildID, channelID int64, chann
 
 	chq := squirrel.Insert("channels").
 		PlaceholderFormat(squirrel.Dollar).
-		Columns("id", "name", "type", "parent_id", "private", "last_message").
-		Values(channelID, channelName, channelType, parentID, private, 0)
+		Columns("id", "name", "type", "parent_id", "topic", "private", "closed", "creator_id", "last_message").
+		Values(channelID, channelName, channelType, parentID, topic, private, closed, creatorID, 0)
 	sql, args, err := chq.ToSql()
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query for create channel: %w", err)
@@ -108,6 +108,26 @@ func (e *Entity) GetGuildByChannel(ctx context.Context, channelID int64) (model.
 		return model.GuildChannel{}, fmt.Errorf("unable to get guild by channel: %w", err)
 	}
 	return ch, nil
+}
+
+func (e *Entity) GetGuildChannelsByChannelIDs(ctx context.Context, channelIDs []int64) ([]model.GuildChannel, error) {
+	if len(channelIDs) == 0 {
+		return nil, nil
+	}
+
+	var chans []model.GuildChannel
+	q := squirrel.Select("*").
+		PlaceholderFormat(squirrel.Dollar).
+		From("guild_channels").
+		Where(squirrel.Eq{"channel_id": channelIDs})
+	query, args, err := q.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	if err := e.c.SelectContext(ctx, &chans, query, args...); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("unable to get guild channels by channel ids: %w", err)
+	}
+	return chans, nil
 }
 
 func (e *Entity) RemoveChannel(ctx context.Context, guildID, channelID int64) error {

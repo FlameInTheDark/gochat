@@ -51,9 +51,10 @@ sequenceDiagram
     end
 
     Note over C, S: Client subscribes to events
-    C->>S: op:5 { channel: 123 }
-    S->>S: Check permissions
+    C->>S: op:5 { channels: [123, 124] }
+    S->>S: Check permissions for each channel
     S->>N: Subscribe channel.123
+    S->>N: Subscribe channel.124
 
     C->>S: op:6 { add: [456] }
     S->>N: Subscribe presence.user.456

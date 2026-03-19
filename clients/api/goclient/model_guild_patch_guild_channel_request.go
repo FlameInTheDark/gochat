@@ -20,6 +20,8 @@ var _ MappedNullable = &GuildPatchGuildChannelRequest{}
 
 // GuildPatchGuildChannelRequest struct for GuildPatchGuildChannelRequest
 type GuildPatchGuildChannelRequest struct {
+	// Whether the thread is closed for new messages.
+	Closed *bool `json:"closed,omitempty"`
 	// Channel name.
 	Name *string `json:"name,omitempty"`
 	// Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
@@ -34,6 +36,8 @@ type GuildPatchGuildChannelRequest struct {
 // will change when the set of required properties is changed
 func NewGuildPatchGuildChannelRequest() *GuildPatchGuildChannelRequest {
 	this := GuildPatchGuildChannelRequest{}
+	var closed bool = false
+	this.Closed = &closed
 	var private bool = false
 	this.Private = &private
 	return &this
@@ -44,9 +48,43 @@ func NewGuildPatchGuildChannelRequest() *GuildPatchGuildChannelRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewGuildPatchGuildChannelRequestWithDefaults() *GuildPatchGuildChannelRequest {
 	this := GuildPatchGuildChannelRequest{}
+	var closed bool = false
+	this.Closed = &closed
 	var private bool = false
 	this.Private = &private
 	return &this
+}
+
+// GetClosed returns the Closed field value if set, zero value otherwise.
+func (o *GuildPatchGuildChannelRequest) GetClosed() bool {
+	if o == nil || IsNil(o.Closed) {
+		var ret bool
+		return ret
+	}
+	return *o.Closed
+}
+
+// GetClosedOk returns a tuple with the Closed field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *GuildPatchGuildChannelRequest) GetClosedOk() (*bool, bool) {
+	if o == nil || IsNil(o.Closed) {
+		return nil, false
+	}
+	return o.Closed, true
+}
+
+// HasClosed returns a boolean if a field has been set.
+func (o *GuildPatchGuildChannelRequest) HasClosed() bool {
+	if o != nil && !IsNil(o.Closed) {
+		return true
+	}
+
+	return false
+}
+
+// SetClosed gets a reference to the given bool and assigns it to the Closed field.
+func (o *GuildPatchGuildChannelRequest) SetClosed(v bool) {
+	o.Closed = &v
 }
 
 // GetName returns the Name field value if set, zero value otherwise.
@@ -155,6 +193,9 @@ func (o GuildPatchGuildChannelRequest) MarshalJSON() ([]byte, error) {
 
 func (o GuildPatchGuildChannelRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.Closed) {
+		toSerialize["closed"] = o.Closed
+	}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
 	}
