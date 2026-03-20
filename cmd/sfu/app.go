@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -14,16 +15,16 @@ import (
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	recm "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	slogfiber "github.com/samber/slog-fiber"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/FlameInTheDark/gochat/cmd/sfu/config"
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
@@ -42,6 +43,7 @@ type App struct {
 	instID      string
 	totalPeers  atomic.Int64
 	discoverLog sync.Once
+	telemetry   *observability.SFUTelemetry
 }
 
 // websocketMessage is the simple event-based message format used over WebSocket.
@@ -51,24 +53,24 @@ type websocketMessage struct {
 }
 
 // NewApp creates a fully configured SFU application.
-func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		logger.Error("unable to load config", slog.String("error", err.Error()))
-		panic(err)
+func NewApp(shut *shutter.Shut, logger *slog.Logger, cfg *config.Config) *App {
+	if cfg == nil {
+		var err error
+		cfg, err = config.LoadConfig()
+		if err != nil {
+			logger.Error("unable to load config", slog.String("error", err.Error()))
+			panic(err)
+		}
 	}
 
 	iceCfg := buildICEConfig(cfg.STUNServers)
 	api := buildWebRTCAPI(logger)
 
 	fiberApp := fiber.New(fiber.Config{DisableStartupMessage: true})
-	lm := slogfiber.NewWithFilters(logger, slogfiber.IgnorePath("/metrics"))
-	fiberApp.Use(lm)
+	fiberApp.Use(observability.RequestContextMiddleware())
+	fiberApp.Use(observability.RequestLogger(logger))
+	fiberApp.Use(observability.NewHTTPServerTelemetry("gochat-sfu").Middleware())
 	fiberApp.Use(recm.New())
-
-	// Prometheus metrics
-	h := promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{})
-	fiberApp.Get("/metrics", adaptor.HTTPHandler(h))
 
 	// Compute max audio bitrate in bps (0 means disabled)
 	var maxAudioBps uint64
@@ -82,7 +84,11 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	} else if marginPct > 100 {
 		marginPct = 100
 	}
-	sfu := NewSFU(cfg.WebhookURL, cfg.WebhookToken, logger, maxAudioBps, cfg.EnforceAudioBitrate, marginPct)
+	telemetry := observability.NewSFUTelemetry("gochat-sfu",
+		attribute.String("voice.region", cfg.Region),
+		attribute.String("service.instance.id", cfg.ServiceID),
+	)
+	sfu := NewSFU(cfg.WebhookURL, cfg.WebhookToken, logger, maxAudioBps, cfg.EnforceAudioBitrate, marginPct, telemetry)
 
 	a := &App{
 		app:       fiberApp,
@@ -93,6 +99,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 		instID:    cfg.ServiceID,
 		iceConfig: iceCfg,
 		webrtcAPI: api,
+		telemetry: telemetry,
 	}
 
 	fiberApp.Get("/signal", websocket.New(a.handleSignalWS, websocket.Config{}))
@@ -203,9 +210,11 @@ func buildWebRTCAPI(logger *slog.Logger) *webrtc.API {
 // ---------------------------------------------------------------------------
 
 // notifyUserJoin sends an async webhook notification for a user joining voice.
-func (a *App) notifyUserJoin(uid, channelID int64, guildID *int64) {
+func (a *App) notifyUserJoin(ctx context.Context, uid, channelID int64, guildID *int64) {
 	go func() {
+		reqCtx := observability.BackgroundFromContext(ctx)
 		resp, err := a.sfu.httpClient.R().
+			SetContext(reqCtx).
 			SetHeader("Content-Type", "application/json").
 			SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
 			SetBody(UserJoinNotify{UserId: uid, ChannelId: channelID, GuildId: guildID}).
@@ -220,8 +229,9 @@ func (a *App) notifyUserJoin(uid, channelID int64, guildID *int64) {
 
 // notifyUserLeave sends a synchronous webhook notification for a user leaving voice.
 // Called in a defer, so it runs before the WebSocket is torn down.
-func (a *App) notifyUserLeave(uid, channelID int64, guildID *int64) {
+func (a *App) notifyUserLeave(ctx context.Context, uid, channelID int64, guildID *int64) {
 	resp, err := a.sfu.httpClient.R().
+		SetContext(ctx).
 		SetHeader("Content-Type", "application/json").
 		SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
 		SetBody(UserLeaveNotify{UserId: uid, ChannelId: channelID, GuildId: guildID}).
@@ -238,35 +248,61 @@ func (a *App) notifyUserLeave(uid, channelID int64, guildID *int64) {
 // ---------------------------------------------------------------------------
 
 func (a *App) handleSignalWS(c *websocket.Conn) {
+	requestCtx := context.Background()
+	if raw := c.Locals("request_context"); raw != nil {
+		if current, ok := raw.(context.Context); ok && current != nil {
+			requestCtx = observability.BackgroundFromContext(current)
+		}
+	}
+	signalCtx, signalSpan := observability.Tracer("gochat/sfu").Start(requestCtx, "sfu.signal")
+	log := helper.WithContext(a.log, signalCtx)
+	defer signalSpan.End()
 	defer func() { _ = c.Close() }()
 
 	// Phase 1: Handshake вЂ” read join envelope and authorize.
 	joinEnv, err := a.readJoinEnvelope(c)
 	if err != nil {
-		a.log.Warn("invalid join envelope", slog.String("error", err.Error()))
+		signalSpan.RecordError(err)
+		signalSpan.SetStatus(codes.Error, err.Error())
+		log.Warn("invalid join envelope", slog.String("error", err.Error()))
 		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: "invalid message"}})
 		return
 	}
 	uid, channelID, guildID, perms, _, err := a.authorizeJoin(joinEnv)
 	if err != nil {
-		a.log.Warn("join unauthorized", slog.String("error", err.Error()))
+		signalSpan.RecordError(err)
+		signalSpan.SetStatus(codes.Error, err.Error())
+		log.Warn("join unauthorized", slog.String("error", err.Error()))
 		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: err.Error()}})
 		return
 	}
+	sessionCtx := helper.ContextWithUserID(signalCtx, uid)
+	peerAttrs := []attribute.KeyValue{
+		attribute.Int64("voice.channel_id", channelID),
+		attribute.Int64("user.id", uid),
+	}
+	if guildID != nil {
+		peerAttrs = append(peerAttrs, attribute.Int64("guild.id", *guildID))
+	}
+	a.telemetry.Join(sessionCtx, peerAttrs...)
+	sessionStarted := time.Now()
+	log = helper.WithContext(a.log, sessionCtx)
 
 	if a.sfu.IsBlocked(channelID, uid) {
-		a.log.Warn("blocked user tried to join", slog.Int64("user", uid), slog.Int64("channel", channelID))
+		log.Warn("blocked user tried to join", slog.Int64("user", uid), slog.Int64("channel", channelID))
 		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: "blocked"}})
 		return
 	}
 
 	// Phase 2: Setup вЂ” create PeerConnection and register it.
-	a.notifyUserJoin(uid, channelID, guildID)
-	defer a.notifyUserLeave(uid, channelID, guildID)
+	a.notifyUserJoin(sessionCtx, uid, channelID, guildID)
+	defer a.notifyUserLeave(observability.BackgroundFromContext(sessionCtx), uid, channelID, guildID)
 
 	pc, err := a.webrtcAPI.NewPeerConnection(a.iceConfig)
 	if err != nil {
-		a.log.Error("failed to create peer connection", slog.String("error", err.Error()))
+		signalSpan.RecordError(err)
+		signalSpan.SetStatus(codes.Error, err.Error())
+		log.Error("failed to create peer connection", slog.String("error", err.Error()))
 		return
 	}
 	defer func() { _ = pc.Close() }()
@@ -275,32 +311,33 @@ func (a *App) handleSignalWS(c *websocket.Conn) {
 	state := &peerConnectionState{peerConnection: pc, websocket: writer, userID: uid, perms: perms}
 
 	if err := a.setupTransceivers(pc); err != nil {
-		a.log.Error("failed to setup transceivers", slog.String("error", err.Error()))
+		log.Error("failed to setup transceivers", slog.String("error", err.Error()))
 		return
 	}
 
-	a.registerPeerCallbacks(pc, writer, state, uid, channelID, perms)
+	a.registerPeerCallbacks(sessionCtx, pc, writer, state, uid, channelID, perms)
 
 	if err := writer.SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: JoinAck{Ok: true}}); err != nil {
-		a.log.Warn("failed to send join ack", slog.String("error", err.Error()))
+		log.Warn("failed to send join ack", slog.String("error", err.Error()))
 		return
 	}
 
-	a.log.Info("client joined", slog.Int64("user", uid), slog.Int64("channel", channelID))
+	log.Info("client joined", slog.Int64("user", uid), slog.Int64("channel", channelID))
 
-	a.sfu.AddPeer(channelID, state)
+	a.sfu.AddPeer(sessionCtx, channelID, state)
 	a.totalPeers.Add(1)
 	defer func() {
 		writer.Close()
-		a.sfu.RemovePeer(channelID, pc)
+		a.sfu.RemovePeer(sessionCtx, channelID, pc)
 		a.totalPeers.Add(-1)
-		a.log.Info("client left", slog.Int64("user", uid), slog.Int64("channel", channelID))
+		a.telemetry.Leave(sessionCtx, sessionStarted, peerAttrs...)
+		log.Info("client left", slog.Int64("user", uid), slog.Int64("channel", channelID))
 	}()
 
-	a.sfu.SignalChannel(channelID)
+	a.sfu.SignalPeer(sessionCtx, channelID, pc)
 
 	// Phase 3: Message loop
-	a.messageLoop(c, pc, writer, uid, perms, channelID)
+	a.messageLoop(sessionCtx, c, pc, writer, uid, perms, channelID)
 }
 
 // setupTransceivers adds audio and video sendrecv transceivers to the peer connection.
@@ -317,18 +354,28 @@ func (a *App) setupTransceivers(pc *webrtc.PeerConnection) error {
 
 // registerPeerCallbacks sets up OnICECandidate, OnConnectionStateChange, and OnTrack.
 func (a *App) registerPeerCallbacks(
+	ctx context.Context,
 	pc *webrtc.PeerConnection,
 	writer *threadSafeWriter,
 	state *peerConnectionState,
 	uid, channelID, perms int64,
 ) {
+	peerAttrs := []attribute.KeyValue{
+		attribute.Int64("voice.channel_id", channelID),
+		attribute.Int64("user.id", uid),
+	}
 	pc.OnICECandidate(func(i *webrtc.ICECandidate) {
 		if err := writer.SendRTCCandidate(i); err != nil {
 			a.log.Warn("failed to send candidate", slog.String("error", err.Error()))
+			return
+		}
+		if i != nil {
+			a.telemetry.Candidate(ctx, "outbound", peerAttrs...)
 		}
 	})
 
 	pc.OnConnectionStateChange(func(connState webrtc.PeerConnectionState) {
+		a.telemetry.ConnectionState(ctx, connState.String(), peerAttrs...)
 		a.log.Info("connection state change", slog.String("state", connState.String()), slog.Int64("user", uid))
 		switch connState {
 		case webrtc.PeerConnectionStateFailed:
@@ -336,18 +383,19 @@ func (a *App) registerPeerCallbacks(
 				a.log.Warn("failed to close peer connection", slog.String("error", err.Error()))
 			}
 		case webrtc.PeerConnectionStateClosed:
-			a.sfu.SignalChannel(channelID)
+			a.sfu.SignalChannel(ctx, channelID)
 		}
 	})
 
 	pc.OnTrack(func(t *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
-		a.handleInboundTrack(pc, state, t, uid, channelID, perms)
+		a.handleInboundTrack(ctx, pc, state, t, uid, channelID, perms)
 	})
 }
 
 // handleInboundTrack processes a single inbound track, forwarding RTP packets to
 // a local track while enforcing permissions and bitrate limits.
 func (a *App) handleInboundTrack(
+	ctx context.Context,
 	pc *webrtc.PeerConnection,
 	state *peerConnectionState,
 	t *webrtc.TrackRemote,
@@ -365,6 +413,15 @@ func (a *App) handleInboundTrack(
 			)
 		}
 	}()
+
+	trackCtx, trackSpan := observability.Tracer("gochat/sfu").Start(ctx, "sfu.track")
+	trackSpan.SetAttributes(
+		attribute.String("track.kind", t.Kind().String()),
+		attribute.String("track.id", t.ID()),
+		attribute.Int64("voice.channel_id", channelID),
+		attribute.Int64("user.id", uid),
+	)
+	defer trackSpan.End()
 
 	a.log.Info("inbound track", slog.String("kind", t.Kind().String()), slog.String("id", t.ID()))
 
@@ -384,19 +441,20 @@ func (a *App) handleInboundTrack(
 		return
 	}
 
-	trackLocal := a.sfu.AddTrack(channelID, uid, t)
+	trackLocal := a.sfu.AddTrack(trackCtx, channelID, uid, t)
 	if trackLocal == nil {
 		a.log.Warn("failed to create forwarding track", slog.Int64("user", uid), slog.Int64("channel", channelID), slog.String("track", t.ID()), slog.String("kind", t.Kind().String()))
 		return
 	}
-	defer a.sfu.RemoveTrack(channelID, trackLocal)
+	defer a.sfu.RemoveTrack(trackCtx, channelID, trackLocal)
 
-	a.forwardRTP(pc, t, trackLocal, uid, channelID)
+	a.forwardRTP(trackCtx, pc, t, trackLocal, uid, channelID)
 }
 
 // forwardRTP reads RTP packets from the remote track and writes them to the local track.
 // Handles audio bitrate enforcement when configured.
 func (a *App) forwardRTP(
+	ctx context.Context,
 	pc *webrtc.PeerConnection,
 	remote *webrtc.TrackRemote,
 	local *webrtc.TrackLocalStaticRTP,
@@ -491,6 +549,11 @@ func (a *App) forwardRTP(
 				bytesInWindow = 0
 				// Allow brief spikes, disconnect on sustained exceed (2+ consecutive windows)
 				if overCount >= 2 {
+					a.telemetry.BitrateDisconnect(ctx,
+						attribute.Int64("voice.channel_id", channelID),
+						attribute.Int64("user.id", uid),
+						attribute.String("track.kind", remote.Kind().String()),
+					)
 					a.log.Warn("disconnecting peer due to audio bitrate limit exceed",
 						slog.Int64("user", uid),
 						slog.Float64("bps", bps),
@@ -516,6 +579,7 @@ func (a *App) forwardRTP(
 // ---------------------------------------------------------------------------
 
 func (a *App) messageLoop(
+	ctx context.Context,
 	c *websocket.Conn,
 	pc *webrtc.PeerConnection,
 	writer *threadSafeWriter,
@@ -531,7 +595,7 @@ func (a *App) messageLoop(
 		// Try simple event-based format first
 		var msg websocketMessage
 		if err := json.Unmarshal(raw, &msg); err == nil && msg.Event != "" {
-			if a.handleSimpleMessage(msg, pc, writer, uid, channelID) {
+			if a.handleSimpleMessage(ctx, msg, pc, writer, uid, channelID) {
 				return
 			}
 			continue
@@ -540,7 +604,7 @@ func (a *App) messageLoop(
 		// Fall back to legacy envelope format
 		var env envelope
 		if err := json.Unmarshal(raw, &env); err == nil && env.OP != 0 {
-			if a.handleLegacyEnvelope(env, pc, writer, uid, perms, channelID) {
+			if a.handleLegacyEnvelope(ctx, env, pc, writer, uid, perms, channelID) {
 				return
 			}
 			continue
@@ -553,11 +617,16 @@ func (a *App) messageLoop(
 // handleSimpleMessage processes simple event-based WebSocket messages.
 // Returns true if the connection should be closed.
 func (a *App) handleSimpleMessage(
+	ctx context.Context,
 	msg websocketMessage,
 	pc *webrtc.PeerConnection,
 	writer *threadSafeWriter,
 	uid, channelID int64,
 ) bool {
+	attrs := []attribute.KeyValue{
+		attribute.Int64("voice.channel_id", channelID),
+		attribute.Int64("user.id", uid),
+	}
 	switch msg.Event {
 	case "candidate":
 		var cand webrtc.ICECandidateInit
@@ -569,6 +638,7 @@ func (a *App) handleSimpleMessage(
 			a.log.Warn("failed to add candidate", slog.String("error", err.Error()))
 			return true
 		}
+		a.telemetry.Candidate(ctx, "inbound", attrs...)
 
 	case "answer":
 		var answer webrtc.SessionDescription
@@ -583,15 +653,18 @@ func (a *App) handleSimpleMessage(
 			a.log.Warn("failed to set remote description", slog.String("error", err.Error()))
 			return true
 		}
+		a.sfu.ApplyAnswer(ctx, channelID, pc)
+		a.telemetry.Answer(ctx, "inbound", attrs...)
 
 	case "negotiate":
 		a.log.Info("client requested renegotiation", slog.Int64("channel", channelID), slog.Int64("user", uid))
-		a.sfu.SignalChannel(channelID)
+		a.telemetry.Renegotiation(ctx, attrs...)
+		a.sfu.SignalPeer(ctx, channelID, pc)
 
 	case "speaking":
 		speaking := parseSpeakingData(msg.Data)
 		a.log.Debug("speaking event", slog.Int64("user", uid), slog.Int64("channel", channelID), slog.Int("speaking", speaking))
-		a.sfu.BroadcastSpeaking(channelID, uid, speaking)
+		a.sfu.BroadcastSpeaking(ctx, channelID, uid, speaking)
 
 	default:
 		a.log.Warn("unknown message", slog.String("event", msg.Event))
@@ -621,7 +694,7 @@ func parseSpeakingData(data string) int {
 // Legacy envelope handler
 // ---------------------------------------------------------------------------
 
-func (a *App) handleLegacyEnvelope(env envelope, pc *webrtc.PeerConnection, writer *threadSafeWriter, uid int64, perms int64, channelID int64) bool {
+func (a *App) handleLegacyEnvelope(ctx context.Context, env envelope, pc *webrtc.PeerConnection, writer *threadSafeWriter, uid int64, perms int64, channelID int64) bool {
 	switch env.OP {
 	case int(mqmsg.OPCodeHeartBeat):
 		var hb heartbeatData
@@ -630,12 +703,16 @@ func (a *App) handleLegacyEnvelope(env envelope, pc *webrtc.PeerConnection, writ
 		return false
 
 	case int(mqmsg.OPCodeRTC):
-		return a.handleLegacyRTCEvent(env, pc, writer, uid, perms, channelID)
+		return a.handleLegacyRTCEvent(ctx, env, pc, writer, uid, perms, channelID)
 	}
 	return false
 }
 
-func (a *App) handleLegacyRTCEvent(env envelope, pc *webrtc.PeerConnection, writer *threadSafeWriter, uid int64, perms int64, channelID int64) bool {
+func (a *App) handleLegacyRTCEvent(ctx context.Context, env envelope, pc *webrtc.PeerConnection, writer *threadSafeWriter, uid int64, perms int64, channelID int64) bool {
+	attrs := []attribute.KeyValue{
+		attribute.Int64("voice.channel_id", channelID),
+		attribute.Int64("user.id", uid),
+	}
 	switch env.T {
 	case int(mqmsg.EventTypeRTCAnswer):
 		var ans rtcAnswer
@@ -646,7 +723,10 @@ func (a *App) handleLegacyRTCEvent(env envelope, pc *webrtc.PeerConnection, writ
 		desc := webrtc.SessionDescription{Type: descType, SDP: ans.SDP}
 		if err := pc.SetRemoteDescription(desc); err != nil {
 			a.log.Warn("failed to apply legacy answer", slog.String("error", err.Error()))
+		} else {
+			a.sfu.ApplyAnswer(ctx, channelID, pc)
 		}
+		a.telemetry.Answer(ctx, "inbound", attrs...)
 
 	case int(mqmsg.EventTypeRTCCandidate):
 		var cand rtcCandidate
@@ -656,6 +736,7 @@ func (a *App) handleLegacyRTCEvent(env envelope, pc *webrtc.PeerConnection, writ
 		if err := pc.AddICECandidate(webrtc.ICECandidateInit{Candidate: cand.Candidate, SDPMid: cand.SDPMid, SDPMLineIndex: cand.SDPMLineIndex}); err != nil {
 			a.log.Warn("failed to add legacy candidate", slog.String("error", err.Error()))
 		}
+		a.telemetry.Candidate(ctx, "inbound", attrs...)
 
 	case int(mqmsg.EventTypeRTCLeave):
 		return true
@@ -670,7 +751,7 @@ func (a *App) handleLegacyRTCEvent(env envelope, pc *webrtc.PeerConnection, writ
 		if err := json.Unmarshal(env.D, &data); err != nil {
 			return false
 		}
-		a.sfu.ServerMuteUser(channelID, data.User, data.Muted)
+		a.sfu.ServerMuteUser(ctx, channelID, data.User, data.Muted)
 
 	case int(mqmsg.EventTypeRTCServerDeafenUser):
 		if !hasPerm(perms, permissions.PermVoiceDeafenMembers) {
@@ -681,7 +762,7 @@ func (a *App) handleLegacyRTCEvent(env envelope, pc *webrtc.PeerConnection, writ
 		if err := json.Unmarshal(env.D, &data); err != nil {
 			return false
 		}
-		a.sfu.ServerDeafenUser(channelID, data.User, data.Deafened)
+		a.sfu.ServerDeafenUser(ctx, channelID, data.User, data.Deafened)
 
 	case int(mqmsg.EventTypeRTCServerKickUser):
 		if !hasPerm(perms, permissions.PermVoiceMoveMembers) {
@@ -692,7 +773,7 @@ func (a *App) handleLegacyRTCEvent(env envelope, pc *webrtc.PeerConnection, writ
 		if err := json.Unmarshal(env.D, &data); err != nil {
 			return false
 		}
-		a.sfu.KickUser(channelID, data.User)
+		a.sfu.KickUser(ctx, channelID, data.User)
 
 	case int(mqmsg.EventTypeRTCServerBlockUser):
 		if !hasPerm(perms, permissions.PermVoiceMoveMembers) {
@@ -703,7 +784,7 @@ func (a *App) handleLegacyRTCEvent(env envelope, pc *webrtc.PeerConnection, writ
 		if err := json.Unmarshal(env.D, &data); err != nil {
 			return false
 		}
-		a.sfu.BlockUser(channelID, data.UserId, data.Block)
+		a.sfu.BlockUser(ctx, channelID, data.UserId, data.Block)
 	}
 	return false
 }
@@ -729,20 +810,25 @@ func parseLegacySDPType(t string) webrtc.SDPType {
 // handleAdminCloseChannel closes all peer connections in a voice channel.
 // Requires a valid admin JWT in the Authorization header.
 func (a *App) handleAdminCloseChannel(c *fiber.Ctx) error {
+	started := time.Now()
 	token := c.Get("Authorization")
 	channelID, err := a.validateAdminToken(token)
 	if err != nil {
+		a.telemetry.AdminClose(c.UserContext(), started, "unauthorized", attribute.Int64("voice.channel_id", channelID))
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 	}
 	var req CloseChannelRequest
 	if err := c.BodyParser(&req); err != nil || req.ChannelID == 0 {
+		a.telemetry.AdminClose(c.UserContext(), started, "bad_request", attribute.Int64("voice.channel_id", req.ChannelID))
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
 	}
 	// Honour channel_id from both the token and the body; they must match.
 	if channelID != 0 && channelID != req.ChannelID {
+		a.telemetry.AdminClose(c.UserContext(), started, "forbidden", attribute.Int64("voice.channel_id", req.ChannelID))
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "channel mismatch"})
 	}
-	a.sfu.KickAll(req.ChannelID)
+	a.sfu.KickAll(c.UserContext(), req.ChannelID)
+	a.telemetry.AdminClose(c.UserContext(), started, "ok", attribute.Int64("voice.channel_id", req.ChannelID))
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
@@ -772,6 +858,12 @@ func (a *App) discoveryHeartbeat() {
 	for {
 		select {
 		case <-ticker.C:
+			heartbeatStart := time.Now()
+			hbCtx, hbSpan := observability.Tracer("gochat/sfu").Start(context.Background(), "sfu.discovery_heartbeat")
+			hbSpan.SetAttributes(
+				attribute.String("voice.region", a.cfg.Region),
+				attribute.String("service.instance.id", a.cfg.ServiceID),
+			)
 			payload := heartbeatPayload{
 				ID:     a.instID,
 				Region: a.cfg.Region,
@@ -779,18 +871,29 @@ func (a *App) discoveryHeartbeat() {
 				Load:   a.totalPeers.Load(),
 			}
 			resp, err := client.R().
+				SetContext(hbCtx).
 				SetHeader("Content-Type", "application/json").
 				SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
 				SetBody(payload).
 				Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/heartbeat")
 			if err != nil {
+				hbSpan.RecordError(err)
+				hbSpan.SetStatus(codes.Error, err.Error())
+				a.telemetry.Heartbeat(hbCtx, heartbeatStart, "error")
+				hbSpan.End()
 				a.log.Error("heartbeat request failed", slog.String("error", err.Error()))
 				continue
 			}
 			if resp.StatusCode() != 204 {
+				hbSpan.SetStatus(codes.Error, fmt.Sprintf("status_%d", resp.StatusCode()))
+				a.telemetry.Heartbeat(hbCtx, heartbeatStart, fmt.Sprintf("status_%d", resp.StatusCode()))
+				hbSpan.End()
 				a.log.Warn("heartbeat unexpected status", slog.Int("status", resp.StatusCode()), slog.String("body", resp.String()))
 				continue
 			}
+			hbSpan.SetStatus(codes.Ok, "registered")
+			a.telemetry.Heartbeat(hbCtx, heartbeatStart, "ok")
+			hbSpan.End()
 			a.discoverLog.Do(func() {
 				a.log.Info("Service registered and discoverable")
 			})

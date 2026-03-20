@@ -8,7 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Cache struct {
@@ -22,7 +25,10 @@ func New(addr string) (*Cache, error) {
 		Addr: addr,
 	})
 
-	return &Cache{c: client}, client.Ping(context.Background()).Err()
+	ctx, end := observability.StartDependencySpan(context.Background(), "redis", "ping", addr)
+	err := client.Ping(ctx).Err()
+	end(err)
+	return &Cache{c: client}, err
 }
 
 func normalizeAddr(addr string) string {
@@ -61,61 +67,85 @@ func (c *Cache) Close() error {
 
 // Set string value
 func (c *Cache) Set(ctx context.Context, key, val string) error {
-	res := c.c.Set(ctx, key, val, 0)
-	return res.Err()
+	ctx, end := c.operation(ctx, "set", key)
+	err := c.c.Set(ctx, key, val, 0).Err()
+	end(err)
+	return err
 }
 
 // Get string value
 func (c *Cache) Get(ctx context.Context, key string) (string, error) {
+	ctx, end := c.operation(ctx, "get", key)
 	res := c.c.Get(ctx, key)
-	return res.String(), res.Err()
+	err := res.Err()
+	finishCacheOperation(ctx, end, err)
+	return res.String(), err
 }
 
 // Delete key
 func (c *Cache) Delete(ctx context.Context, key string) error {
-	res := c.c.Del(ctx, key)
-	return res.Err()
+	ctx, end := c.operation(ctx, "delete", key)
+	err := c.c.Del(ctx, key).Err()
+	end(err)
+	return err
 }
 
 func (c *Cache) GetBytes(ctx context.Context, key string) ([]byte, error) {
+	ctx, end := c.operation(ctx, "get_bytes", key)
 	res := c.c.Get(ctx, key)
-	return res.Bytes()
+	val, err := res.Bytes()
+	finishCacheOperation(ctx, end, err)
+	return val, err
 }
 
 // SetTimed set string value with expiration time in seconds
 func (c *Cache) SetTimed(ctx context.Context, key, val string, ttl int64) error {
-	res := c.c.Set(ctx, key, val, time.Duration(ttl)*time.Second)
-	return res.Err()
+	ctx, end := c.operation(ctx, "set_timed", key)
+	err := c.c.Set(ctx, key, val, time.Duration(ttl)*time.Second).Err()
+	end(err)
+	return err
 }
 
 // SetTimedInt64 set int64 value with expiration time in seconds
 func (c *Cache) SetTimedInt64(ctx context.Context, key string, val int64, ttl int64) error {
-	res := c.c.Set(ctx, key, val, time.Duration(ttl)*time.Second)
-	return res.Err()
+	ctx, end := c.operation(ctx, "set_timed_int64", key)
+	err := c.c.Set(ctx, key, val, time.Duration(ttl)*time.Second).Err()
+	end(err)
+	return err
 }
 
 // SetInt64 set int64 value
 func (c *Cache) SetInt64(ctx context.Context, key string, val int64) error {
-	res := c.c.Set(ctx, key, val, 0)
-	return res.Err()
+	ctx, end := c.operation(ctx, "set_int64", key)
+	err := c.c.Set(ctx, key, val, 0).Err()
+	end(err)
+	return err
 }
 
 // SetTTL set expiration time for key
 func (c *Cache) SetTTL(ctx context.Context, key string, ttl int64) error {
-	res := c.c.Expire(ctx, key, time.Duration(ttl)*time.Second)
-	return res.Err()
+	ctx, end := c.operation(ctx, "expire", key)
+	err := c.c.Expire(ctx, key, time.Duration(ttl)*time.Second).Err()
+	end(err)
+	return err
 }
 
 // Incr increment numerical value
 func (c *Cache) Incr(ctx context.Context, key string) (int64, error) {
+	ctx, end := c.operation(ctx, "incr", key)
 	res := c.c.Incr(ctx, key)
-	return res.Val(), res.Err()
+	err := res.Err()
+	end(err)
+	return res.Val(), err
 }
 
 // GetInt64 return int64 value of key
 func (c *Cache) GetInt64(ctx context.Context, key string) (int64, error) {
+	ctx, end := c.operation(ctx, "get_int64", key)
 	res := c.c.Get(ctx, key)
-	return res.Int64()
+	val, err := res.Int64()
+	finishCacheOperation(ctx, end, err)
+	return val, err
 }
 
 // SetJSON marshal set marshaled json of val
@@ -124,8 +154,10 @@ func (c *Cache) SetJSON(ctx context.Context, key string, val interface{}) error 
 	if err != nil {
 		return err
 	}
-	res := c.c.Set(ctx, key, string(msg), 0)
-	return res.Err()
+	ctx, end := c.operation(ctx, "set_json", key)
+	err = c.c.Set(ctx, key, string(msg), 0).Err()
+	end(err)
+	return err
 }
 
 func (c *Cache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64) error {
@@ -133,8 +165,10 @@ func (c *Cache) SetTimedJSON(ctx context.Context, key string, val interface{}, t
 	if err != nil {
 		return err
 	}
-	res := c.c.Set(ctx, key, string(msg), time.Duration(ttl)*time.Second)
-	return res.Err()
+	ctx, end := c.operation(ctx, "set_timed_json", key)
+	err = c.c.Set(ctx, key, string(msg), time.Duration(ttl)*time.Second).Err()
+	end(err)
+	return err
 }
 
 func (c *Cache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64) (bool, error) {
@@ -142,60 +176,83 @@ func (c *Cache) SetTimedJSONNX(ctx context.Context, key string, val interface{},
 	if err != nil {
 		return false, err
 	}
+	ctx, end := c.operation(ctx, "set_timed_json_nx", key)
 	res := c.c.SetArgs(ctx, key, string(msg), redis.SetArgs{
 		TTL:  time.Duration(ttl) * time.Second,
 		Mode: "NX",
 	})
 	if err := res.Err(); err != nil && err != redis.Nil {
+		end(err)
 		return false, err
 	}
+	end(nil)
 	return res.Val() == "OK", nil
 }
 
 // GetJSON unmarshal json into v
 func (c *Cache) GetJSON(ctx context.Context, key string, v interface{}) error {
+	ctx, end := c.operation(ctx, "get_json", key)
 	res := c.c.Get(ctx, key)
 	if res.Err() != nil {
-		return res.Err()
+		err := res.Err()
+		finishCacheOperation(ctx, end, err)
+		return err
 	}
 	b, err := res.Bytes()
 	if err != nil {
+		finishCacheOperation(ctx, end, err)
 		return err
 	}
-
-	return json.Unmarshal(b, v)
+	err = json.Unmarshal(b, v)
+	finishCacheOperation(ctx, end, err)
+	return err
 }
 
 func (c *Cache) HGet(ctx context.Context, key, field string) (string, error) {
+	ctx, end := c.operation(ctx, "hget", key)
 	h := c.c.HGet(ctx, key, field)
 	if h.Err() != nil {
+		finishCacheOperation(ctx, end, h.Err())
 		return "", nil
 	}
+	end(nil)
 	return h.Val(), nil
 }
 
 func (c *Cache) HSet(ctx context.Context, key, field, value string) error {
+	ctx, end := c.operation(ctx, "hset", key)
 	h := c.c.HSet(ctx, key, field, value)
 	if h.Err() != nil {
-		return h.Err()
+		err := h.Err()
+		end(err)
+		return err
 	}
+	end(nil)
 	return nil
 }
 
 func (c *Cache) HDel(ctx context.Context, key, field string) error {
+	ctx, end := c.operation(ctx, "hdel", key)
 	h := c.c.HDel(ctx, key, field)
-	return h.Err()
+	err := h.Err()
+	end(err)
+	return err
 }
 
 func (c *Cache) HGetAll(ctx context.Context, key string) (map[string]string, error) {
+	ctx, end := c.operation(ctx, "hgetall", key)
 	h := c.c.HGetAll(ctx, key)
 	if h.Err() != nil {
-		return nil, h.Err()
+		err := h.Err()
+		end(err)
+		return nil, err
 	}
+	end(nil)
 	return h.Val(), nil
 }
 
 func (c *Cache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
+	ctx, end := c.operation(ctx, "xadd", stream)
 	h := c.c.XAdd(ctx, &redis.XAddArgs{
 		Stream: stream,
 		MaxLen: maxLen,
@@ -203,7 +260,43 @@ func (c *Cache) XAdd(ctx context.Context, stream string, maxLen int64, approx bo
 		Values: values,
 	})
 	if h.Err() != nil {
-		return h.Err()
+		err := h.Err()
+		end(err)
+		return err
 	}
+	end(nil)
 	return nil
+}
+
+func (c *Cache) operation(ctx context.Context, operation, key string) (context.Context, func(error)) {
+	return observability.StartDependencySpan(ctx, "redis", operation, cacheTarget(key))
+}
+
+func cacheTarget(key string) string {
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return "unknown"
+	}
+	if idx := strings.Index(key, ":"); idx > 0 {
+		return key[:idx]
+	}
+	return key
+}
+
+func finishCacheOperation(ctx context.Context, end func(error), err error) {
+	if end == nil {
+		return
+	}
+	if errors.Is(err, redis.Nil) {
+		observability.SetDependencyResult(ctx, "miss")
+		span := trace.SpanFromContext(ctx)
+		span.SetAttributes(
+			attribute.Bool("cache.miss", true),
+			attribute.String("dependency.result", "miss"),
+		)
+		span.AddEvent("cache.miss")
+		end(nil)
+		return
+	}
+	end(err)
 }

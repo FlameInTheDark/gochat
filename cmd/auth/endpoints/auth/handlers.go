@@ -9,6 +9,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/mailer"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -104,6 +105,8 @@ func (e *entity) RefreshToken(c *fiber.Ctx) error {
 //	@failure	500		{string}	string			"Something bad happened"
 //	@Router		/auth/registration [post]
 func (e *entity) Registration(c *fiber.Ctx) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	var req RegisterRequest
 	err := c.BodyParser(&req)
 	if err != nil {
@@ -116,7 +119,7 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 	if err == nil {
 		return c.SendStatus(fiber.StatusFound)
 	} else if !errors.Is(err, sql.ErrNoRows) {
-		e.log.Error("unable to get authentication by email", slog.String("error", err.Error()))
+		log.Error("unable to get authentication by email", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetAuthenticationByEmail)
 	}
 
@@ -152,7 +155,7 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 
 	err = e.mailer.Send(c.UserContext(), id, req.Email, token, mailer.EmailTypeRegistration)
 	if err != nil {
-		e.log.Error("send email error", slog.String("error", err.Error()))
+		log.Error("send email error", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendEmail)
 	}
 	return c.SendStatus(fiber.StatusCreated)
@@ -171,6 +174,8 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 //	@failure	500		{string}	string				"Something bad happened"
 //	@Router		/auth/confirmation [post]
 func (e *entity) Confirmation(c *fiber.Ctx) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	var req ConfirmationRequest
 	err := c.BodyParser(&req)
 	if err != nil {
@@ -208,7 +213,7 @@ func (e *entity) Confirmation(c *fiber.Ctx) error {
 	}
 	err = e.auth.CreateAuthentication(c.UserContext(), req.Id, reg.Email, hash)
 	if err != nil {
-		e.log.Error("unable to create authentication", slog.String("error", err.Error()))
+		log.Error("unable to create authentication", slog.String("error", err.Error()))
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 	return c.SendStatus(fiber.StatusCreated)
@@ -229,6 +234,8 @@ func (e *entity) Confirmation(c *fiber.Ctx) error {
 //	@failure	500		{string}	string					"Something bad happened"
 //	@Router		/auth/recovery [post]
 func (e *entity) PasswordRecovery(c *fiber.Ctx) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	var req PasswordRecoveryRequest
 	err := c.BodyParser(&req)
 	if err != nil {
@@ -244,7 +251,7 @@ func (e *entity) PasswordRecovery(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotFound, ErrEmailNotFound)
 	}
 	if err != nil {
-		e.log.Error("unable to get authentication by email", slog.String("error", err.Error()))
+		log.Error("unable to get authentication by email", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetAuthenticationByEmail)
 	}
 
@@ -307,6 +314,8 @@ func (e *entity) PasswordRecovery(c *fiber.Ctx) error {
 //	@failure	500		{string}	string					"Something bad happened"
 //	@Router		/auth/reset [post]
 func (e *entity) PasswordReset(c *fiber.Ctx) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	var req PasswordResetRequest
 	err := c.BodyParser(&req)
 	if err != nil {
@@ -336,7 +345,7 @@ func (e *entity) PasswordReset(c *fiber.Ctx) error {
 	// Update the password hash in the authentication table
 	err = e.auth.SetPasswordHash(c.UserContext(), req.Id, hash)
 	if err != nil {
-		e.log.Error("unable to set password hash", slog.String("error", err.Error()))
+		log.Error("unable to set password hash", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetPasswordHash)
 	}
 

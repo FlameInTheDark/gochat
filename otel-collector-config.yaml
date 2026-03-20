@@ -1,0 +1,82 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  fluentforward/docker:
+    endpoint: 0.0.0.0:24224
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+  transform/logs:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - merge_maps(log.cache, ParseJSON(log.body), "upsert") where IsString(log.body) and IsMatch(log.body, "^\\s*\\{")
+          - set(log.attributes["time"], log.cache["time"]) where log.cache["time"] != nil
+          - set(log.attributes["level"], log.cache["level"]) where log.cache["level"] != nil
+          - set(log.attributes["service.name"], log.cache["service.name"]) where log.cache["service.name"] != nil
+          - set(log.attributes["deployment.environment"], log.cache["deployment.environment"]) where log.cache["deployment.environment"] != nil
+          - set(log.attributes["request_id"], log.cache["request_id"]) where log.cache["request_id"] != nil
+          - set(log.attributes["trace_id"], log.cache["trace_id"]) where log.cache["trace_id"] != nil
+          - set(log.attributes["span_id"], log.cache["span_id"]) where log.cache["span_id"] != nil
+          - set(log.attributes["user_id"], log.cache["user_id"]) where log.cache["user_id"] != nil
+          - set(log.attributes["method"], log.cache["method"]) where log.cache["method"] != nil
+          - set(log.attributes["route"], log.cache["route"]) where log.cache["route"] != nil
+          - set(log.attributes["status"], log.cache["status"]) where log.cache["status"] != nil
+          - set(log.attributes["duration"], log.cache["duration"]) where log.cache["duration"] != nil
+          - set(log.attributes["ip"], log.cache["ip"]) where log.cache["ip"] != nil
+          - set(log.attributes["error"], log.cache["error"]) where log.cache["error"] != nil
+          - set(log.body, log.cache["msg"]) where log.cache["msg"] != nil
+          - set(log.severity_text, log.cache["level"]) where log.cache["level"] != nil
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+exporters:
+  otlphttp/openobserve_logs:
+    endpoint: http://openobserve:5080/api/${env:OPENOBSERVE_ORG}
+    headers:
+      Authorization: Basic ${env:OPENOBSERVE_BASIC_AUTH}
+      stream-name: ${env:OPENOBSERVE_LOG_STREAM}
+
+  otlphttp/openobserve_metrics:
+    endpoint: http://openobserve:5080/api/${env:OPENOBSERVE_ORG}
+    headers:
+      Authorization: Basic ${env:OPENOBSERVE_BASIC_AUTH}
+      stream-name: ${env:OPENOBSERVE_METRIC_STREAM}
+
+  otlphttp/openobserve_traces:
+    endpoint: http://openobserve:5080/api/${env:OPENOBSERVE_ORG}
+    headers:
+      Authorization: Basic ${env:OPENOBSERVE_BASIC_AUTH}
+      stream-name: ${env:OPENOBSERVE_TRACE_STREAM}
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/openobserve_traces]
+
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/openobserve_metrics]
+
+    logs:
+      receivers: [fluentforward/docker]
+      processors: [memory_limiter, transform/logs, batch]
+      exporters: [otlphttp/openobserve_logs]

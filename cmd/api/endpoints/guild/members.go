@@ -9,7 +9,9 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
 
@@ -45,7 +47,7 @@ func (e *entity) KickMember(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToRemoveMember)
 	}
 
-	e.sendGuildMemberRemoved(guildId, memberId, user.Id, mqmsg.GuildMemberModerationKick, nil)
+	e.sendGuildMemberRemoved(observability.BackgroundFromContext(c.UserContext()), guildId, memberId, user.Id, mqmsg.GuildMemberModerationKick, nil)
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
@@ -91,7 +93,7 @@ func (e *entity) BanMember(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToRemoveMember)
 	}
 
-	e.sendGuildMemberRemoved(guildId, memberId, user.Id, mqmsg.GuildMemberModerationBan, req.Reason)
+	e.sendGuildMemberRemoved(observability.BackgroundFromContext(c.UserContext()), guildId, memberId, user.Id, mqmsg.GuildMemberModerationBan, req.Reason)
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
@@ -122,7 +124,7 @@ func (e *entity) UnbanMember(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUnbanMember)
 	}
 
-	e.sendGuildModerationEvent(guildId, memberId, user.Id, mqmsg.GuildMemberModerationUnban, nil)
+	e.sendGuildModerationEvent(observability.BackgroundFromContext(c.UserContext()), guildId, memberId, user.Id, mqmsg.GuildMemberModerationUnban, nil)
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
@@ -281,23 +283,20 @@ func (e *entity) authorizeMemberModeration(ctx context.Context, guildId, actorId
 	return guild, nil
 }
 
-func (e *entity) sendGuildMemberRemoved(guildId, memberId, actorId int64, action mqmsg.GuildMemberModerationAction, reason *string) {
+func (e *entity) sendGuildMemberRemoved(ctx context.Context, guildId, memberId, actorId int64, action mqmsg.GuildMemberModerationAction, reason *string) {
 	if e.mqt == nil {
 		return
 	}
-	logger := e.log
-	if logger == nil {
-		logger = slog.Default()
-	}
+	logger := observability.LoggerWithContext(ctx, e.log)
 	go func() {
-		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMember{GuildId: guildId, UserId: memberId}); err != nil {
+		if err := mq.SendGuildUpdate(ctx, e.mqt, guildId, &mqmsg.RemoveGuildMember{GuildId: guildId, UserId: memberId}); err != nil {
 			logger.Error("unable to send guild member remove event after moderation",
 				slog.String("action", string(action)),
 				slog.Int64("guild_id", guildId),
 				slog.Int64("user_id", memberId),
 				slog.String("error", err.Error()))
 		}
-		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.GuildMemberModeration{GuildId: guildId, UserId: memberId, ActorId: actorId, Action: action, Reason: reason}); err != nil {
+		if err := mq.SendGuildUpdate(ctx, e.mqt, guildId, &mqmsg.GuildMemberModeration{GuildId: guildId, UserId: memberId, ActorId: actorId, Action: action, Reason: reason}); err != nil {
 			logger.Error("unable to send guild member moderation event",
 				slog.String("action", string(action)),
 				slog.Int64("guild_id", guildId),
@@ -307,16 +306,13 @@ func (e *entity) sendGuildMemberRemoved(guildId, memberId, actorId int64, action
 	}()
 }
 
-func (e *entity) sendGuildModerationEvent(guildId, memberId, actorId int64, action mqmsg.GuildMemberModerationAction, reason *string) {
+func (e *entity) sendGuildModerationEvent(ctx context.Context, guildId, memberId, actorId int64, action mqmsg.GuildMemberModerationAction, reason *string) {
 	if e.mqt == nil {
 		return
 	}
-	logger := e.log
-	if logger == nil {
-		logger = slog.Default()
-	}
+	logger := observability.LoggerWithContext(ctx, e.log)
 	go func() {
-		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.GuildMemberModeration{GuildId: guildId, UserId: memberId, ActorId: actorId, Action: action, Reason: reason}); err != nil {
+		if err := mq.SendGuildUpdate(ctx, e.mqt, guildId, &mqmsg.GuildMemberModeration{GuildId: guildId, UserId: memberId, ActorId: actorId, Action: action, Reason: reason}); err != nil {
 			logger.Error("unable to send guild member moderation event",
 				slog.String("action", string(action)),
 				slog.Int64("guild_id", guildId),

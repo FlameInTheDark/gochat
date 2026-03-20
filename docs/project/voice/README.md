@@ -9,3 +9,4 @@
 - [SFU Permissions (Bitmasks)](SFUPermissions.md) - Permission definitions
 - [Regions Configuration](VoiceRegions.md) - Voice region configuration
 - [React Frontend Integration](SFUReactIntegration.md) - Frontend integration guide
+- [Observability](../observability/ExternalSFU.md) - External deployment and telemetry model for SFU nodes

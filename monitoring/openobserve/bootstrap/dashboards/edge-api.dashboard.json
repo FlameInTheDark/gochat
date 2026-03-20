@@ -1,0 +1,529 @@
+{
+  "version": 8,
+  "dashboardId": "7416801000000000001",
+  "title": "Edge/API",
+  "description": "HTTP entrypoint throughput, route latency, failures, auth pressure, and idempotency behavior across public services.",
+  "role": "",
+  "owner": "",
+  "created": "2026-03-19T00:00:00Z",
+  "tabs": [
+    {
+      "tabId": "edge_api_overview",
+      "name": "Overview",
+      "panels": [
+        {
+          "id": "Panel_API_OVERVIEW_001",
+          "type": "line",
+          "title": "HTTP request rate",
+          "description": "Requests per second by service.",
+          "config": {
+            "show_legends": true,
+            "legends_position": "bottom",
+            "unit": "short",
+            "decimals": 2,
+            "top_results_others": false,
+            "axis_border_show": true,
+            "drilldown": [],
+            "mark_line": [],
+            "connect_nulls": false,
+            "no_value_replacement": "",
+            "wrap_table_cells": false,
+            "table_transpose": false,
+            "table_dynamic_columns": false
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum by (service_name) (rate(gochat_http_server_requests_total[5m]))",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "gochat-metrics",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "{service_name}"
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 0,
+            "w": 96,
+            "h": 18,
+            "i": 1
+          },
+          "htmlContent": "",
+          "markdownContent": ""
+        },
+        {
+          "id": "Panel_API_OVERVIEW_002",
+          "type": "gauge",
+          "title": "Inflight requests",
+          "description": "Current concurrent HTTP requests by service.",
+          "config": {
+            "show_legends": true,
+            "legends_position": "bottom",
+            "unit": "short",
+            "decimals": 0,
+            "top_results_others": false,
+            "axis_border_show": false,
+            "drilldown": [],
+            "mark_line": [],
+            "connect_nulls": false,
+            "no_value_replacement": "",
+            "wrap_table_cells": false,
+            "table_transpose": false,
+            "table_dynamic_columns": false
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum by (service_name) (gochat_http_server_inflight)",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "gochat-metrics",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "{service_name}"
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 0,
+            "w": 96,
+            "h": 18,
+            "i": 2
+          },
+          "htmlContent": "",
+          "markdownContent": ""
+        },
+        {
+          "id": "Panel_API_OVERVIEW_003",
+          "type": "line",
+          "title": "HTTP latency p95 by service",
+          "description": "95th percentile latency grouped by service.",
+          "config": {
+            "show_legends": true,
+            "legends_position": "bottom",
+            "unit": "ms",
+            "decimals": 1,
+            "top_results_others": false,
+            "axis_border_show": true,
+            "drilldown": [],
+            "mark_line": [],
+            "connect_nulls": false,
+            "no_value_replacement": "",
+            "wrap_table_cells": false,
+            "table_transpose": false,
+            "table_dynamic_columns": false
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "1000 * histogram_quantile(0.95, sum by (le, service_name) (rate(gochat_http_server_duration_bucket[5m])))",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "gochat-metrics",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "{service_name}"
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 18,
+            "w": 192,
+            "h": 18,
+            "i": 3
+          },
+          "htmlContent": "",
+          "markdownContent": ""
+        }
+      ]
+    },
+    {
+      "tabId": "edge_api_latency",
+      "name": "Latency By Route",
+      "panels": [
+        {
+          "id": "Panel_API_LATENCY_001",
+          "type": "line",
+          "title": "HTTP latency p95 by route",
+          "description": "95th percentile latency by service and route.",
+          "config": {
+            "show_legends": true,
+            "legends_position": "bottom",
+            "unit": "ms",
+            "decimals": 1,
+            "top_results_others": false,
+            "axis_border_show": true,
+            "drilldown": [],
+            "mark_line": [],
+            "connect_nulls": false,
+            "no_value_replacement": "",
+            "wrap_table_cells": false,
+            "table_transpose": false,
+            "table_dynamic_columns": false
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "1000 * histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(gochat_http_server_duration_bucket[5m])))",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "gochat-metrics",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "{service_name} {http_route}"
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 0,
+            "w": 96,
+            "h": 18,
+            "i": 1
+          },
+          "htmlContent": "",
+          "markdownContent": ""
+        },
+        {
+          "id": "Panel_API_LATENCY_002",
+          "type": "bar",
+          "title": "Hot routes by request volume",
+          "description": "Route throughput over the last five minutes.",
+          "config": {
+            "show_legends": true,
+            "legends_position": "bottom",
+            "unit": "short",
+            "decimals": 2,
+            "top_results_others": false,
+            "axis_border_show": true,
+            "drilldown": [],
+            "mark_line": [],
+            "connect_nulls": false,
+            "no_value_replacement": "",
+            "wrap_table_cells": false,
+            "table_transpose": false,
+            "table_dynamic_columns": false
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum by (service_name, http_route) (rate(gochat_http_server_requests_total[5m]))",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "gochat-metrics",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "{service_name} {http_route}"
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 0,
+            "w": 96,
+            "h": 18,
+            "i": 2
+          },
+          "htmlContent": "",
+          "markdownContent": ""
+        }
+      ]
+    },
+    {
+      "tabId": "edge_api_errors_auth",
+      "name": "Errors And Auth",
+      "panels": [
+        {
+          "id": "Panel_API_ERRORS_001",
+          "type": "bar",
+          "title": "HTTP 5xx rate by route",
+          "description": "Server errors broken down by service and route.",
+          "config": {
+            "show_legends": true,
+            "legends_position": "bottom",
+            "unit": "short",
+            "decimals": 2,
+            "top_results_others": false,
+            "axis_border_show": true,
+            "drilldown": [],
+            "mark_line": [],
+            "connect_nulls": false,
+            "no_value_replacement": "",
+            "wrap_table_cells": false,
+            "table_transpose": false,
+            "table_dynamic_columns": false
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum by (service_name, http_route) (rate(gochat_http_server_errors_total[5m]))",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "gochat-metrics",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "{service_name} {http_route}"
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 0,
+            "w": 96,
+            "h": 18,
+            "i": 1
+          },
+          "htmlContent": "",
+          "markdownContent": ""
+        },
+        {
+          "id": "Panel_API_ERRORS_002",
+          "type": "bar",
+          "title": "Auth failures by route",
+          "description": "Authentication and authorization failures over the last 15 minutes.",
+          "config": {
+            "show_legends": true,
+            "legends_position": "bottom",
+            "unit": "short",
+            "decimals": 0,
+            "top_results_others": false,
+            "axis_border_show": true,
+            "drilldown": [],
+            "mark_line": [],
+            "connect_nulls": false,
+            "no_value_replacement": "",
+            "wrap_table_cells": false,
+            "table_transpose": false,
+            "table_dynamic_columns": false
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum by (service_name, http_route) (increase(gochat_http_server_auth_failures_total[15m]))",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "gochat-metrics",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "{service_name} {http_route}"
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 0,
+            "w": 96,
+            "h": 18,
+            "i": 2
+          },
+          "htmlContent": "",
+          "markdownContent": ""
+        }
+      ]
+    },
+    {
+      "tabId": "edge_api_rate_limit_idempotency",
+      "name": "Rate Limit And Idempotency",
+      "panels": [
+        {
+          "id": "Panel_API_RATE_001",
+          "type": "bar",
+          "title": "Rate-limit hits by route",
+          "description": "Rate-limit responses over the last 15 minutes.",
+          "config": {
+            "show_legends": true,
+            "legends_position": "bottom",
+            "unit": "short",
+            "decimals": 0,
+            "top_results_others": false,
+            "axis_border_show": true,
+            "drilldown": [],
+            "mark_line": [],
+            "connect_nulls": false,
+            "no_value_replacement": "",
+            "wrap_table_cells": false,
+            "table_transpose": false,
+            "table_dynamic_columns": false
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum by (service_name, http_route) (increase(gochat_http_server_rate_limit_hits_total[15m]))",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "gochat-metrics",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "{service_name} {http_route}"
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 0,
+            "w": 96,
+            "h": 18,
+            "i": 1
+          },
+          "htmlContent": "",
+          "markdownContent": ""
+        },
+        {
+          "id": "Panel_API_RATE_002",
+          "type": "bar",
+          "title": "Idempotency cache hits by route",
+          "description": "Idempotent replay hits over the last 15 minutes.",
+          "config": {
+            "show_legends": true,
+            "legends_position": "bottom",
+            "unit": "short",
+            "decimals": 0,
+            "top_results_others": false,
+            "axis_border_show": true,
+            "drilldown": [],
+            "mark_line": [],
+            "connect_nulls": false,
+            "no_value_replacement": "",
+            "wrap_table_cells": false,
+            "table_transpose": false,
+            "table_dynamic_columns": false
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum by (service_name, http_route) (increase(gochat_http_server_idempotency_hits_total[15m]))",
+              "vrlFunctionQuery": "",
+              "customQuery": true,
+              "fields": {
+                "stream": "gochat-metrics",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "{service_name} {http_route}"
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 0,
+            "w": 96,
+            "h": 18,
+            "i": 2
+          },
+          "htmlContent": "",
+          "markdownContent": ""
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "list": [],
+    "showDynamicFilters": true
+  },
+  "defaultDatetimeDuration": {
+    "type": "relative",
+    "relativeTimePeriod": "1h"
+  }
+}

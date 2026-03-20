@@ -14,6 +14,7 @@ func main() {
 		Usage: "Utility tools for GoChat services",
 		Commands: []*cli.Command{
 			messages(),
+			observability(),
 			permissions(),
 			tokens(),
 		},

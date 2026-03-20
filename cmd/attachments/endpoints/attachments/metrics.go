@@ -1,28 +1,28 @@
 package attachments
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
+	"context"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 )
 
 var (
-	attachmentsBytesTransferred = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "gochat",
-			Subsystem: "attachments",
-			Name:      "bytes_transferred_total",
-			Help:      "Total bytes successfully transferred for attachments (original objects)",
-		},
-		[]string{"kind"}, // kind: image|video|other
-	)
+	attachmentsBytesTransferred metric.Int64Counter
 )
 
 func init() {
-	prometheus.MustRegister(attachmentsBytesTransferred)
+	attachmentsBytesTransferred, _ = otel.Meter("gochat-attachments").Int64Counter("gochat.attachments.bytes_transferred")
 }
 
 func incTransferred(kind string, n int64) {
 	if n <= 0 {
 		return
 	}
-	attachmentsBytesTransferred.WithLabelValues(kind).Add(float64(n))
+	attachmentsBytesTransferred.Add(
+		context.Background(),
+		n,
+		metric.WithAttributes(attribute.String("kind", kind)),
+	)
 }

@@ -180,11 +180,11 @@ type CreateGuildChannelCategoryRequest struct {
 func (r CreateGuildChannelCategoryRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.Name, validation.By(func(value interface{}) error {
-			name, _ := value.(*string)
-			if name == nil {
+			name, ok := value.(string)
+			if !ok {
 				return validateGuildChannelName("")
 			}
-			return validateGuildChannelName(*name)
+			return validateGuildChannelName(name)
 		})),
 	)
 }
@@ -200,11 +200,11 @@ type CreateGuildChannelRequest struct {
 func (r CreateGuildChannelRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.Name, validation.By(func(value interface{}) error {
-			name, _ := value.(*string)
-			if name == nil {
+			name, ok := value.(string)
+			if !ok {
 				return validateGuildChannelName("")
 			}
-			return validateGuildChannelName(*name)
+			return validateGuildChannelName(name)
 		})),
 		validation.Field(&r.Type,
 			validation.In(

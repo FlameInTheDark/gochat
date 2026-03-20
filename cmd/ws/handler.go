@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"compress/zlib"
+	"context"
 	"encoding/json"
 	"errors"
 	"strings"
@@ -11,11 +12,17 @@ import (
 	"time"
 
 	"github.com/gofiber/contrib/websocket"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/FlameInTheDark/gochat/cmd/ws/handler"
+	"github.com/FlameInTheDark/gochat/cmd/ws/hub"
 	"github.com/FlameInTheDark/gochat/cmd/ws/subscriber"
 	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/presence"
 )
 
@@ -23,18 +30,22 @@ import (
 // It wraps the writer pump's outbound channel so the hub can deliver
 // messages without blocking.
 type wsConn struct {
-	id     string
-	out    chan<- outMsg
-	userID int64
+	id        string
+	out       chan<- outMsg
+	userID    int64
+	telemetry *observability.WSTelemetry
 }
 
-func (w *wsConn) Send(topic string, data []byte) {
-	payload := personalizeMessageForRecipient(topic, atomic.LoadInt64(&w.userID), data)
+func (w *wsConn) Send(delivery hub.Delivery) {
+	payload := personalizeMessageForRecipient(delivery.Topic, atomic.LoadInt64(&w.userID), delivery.Data)
 	// Non-blocking: drop the message if the connection's buffer is full.
 	select {
-	case w.out <- outMsg{kind: 1, data: payload}:
+	case w.out <- outMsg{kind: 1, data: payload, topic: delivery.Topic, ctx: delivery.Context}:
 	default:
-		// Slow consumer вЂ” message dropped. The ping/heartbeat timeout
+		if w.telemetry != nil {
+			w.telemetry.OutboundDrop(delivery.Context, delivery.Topic)
+		}
+		// Slow consumer - message dropped. The ping/heartbeat timeout
 		// will eventually evict this connection.
 	}
 }
@@ -92,22 +103,35 @@ func cloneWSMessage(data []byte) []byte {
 
 // outMsg is an internal message sent through the writer pump channel.
 type outMsg struct {
-	kind int
-	data []byte
-	v    any
-	done chan error
+	kind  int
+	data  []byte
+	v     any
+	done  chan error
+	topic string
+	ctx   context.Context
 }
 
 func (a *App) wsHandler(c *websocket.Conn) {
-	// Track active clients
-	if a.wsActive != nil {
-		a.wsActive.Inc()
-		defer a.wsActive.Dec()
+	requestCtx := context.Background()
+	if raw := c.Locals("request_context"); raw != nil {
+		if current, ok := raw.(context.Context); ok && current != nil {
+			requestCtx = observability.BackgroundFromContext(current)
+		}
 	}
+	compressMode := strings.EqualFold(c.Query("compress"), "zlib-stream")
+	connCtx, connSpan := observability.Tracer("gochat/ws").Start(requestCtx, "ws.connection")
+	connSpan.SetAttributes(attribute.Bool("ws.compression", compressMode))
+	connLog := helper.WithContext(a.log, connCtx)
+	connectionStarted := time.Now()
+	a.wsm.ConnectionOpened(connCtx, attribute.Bool("ws.compression", compressMode))
+	defer func() {
+		a.wsm.ConnectionClosed(connCtx, connectionStarted)
+		connSpan.End()
+	}()
+
 	out := make(chan outMsg, 256)
 	writerClosed := make(chan struct{})
 
-	compressMode := strings.EqualFold(c.Query("compress"), "zlib-stream")
 	var zbuf bytes.Buffer
 	var zw *zlib.Writer
 	if compressMode {
@@ -116,7 +140,20 @@ func (a *App) wsHandler(c *websocket.Conn) {
 
 	go func() {
 		for m := range out {
+			writeCtx := m.ctx
+			if writeCtx == nil {
+				writeCtx = connCtx
+			}
+			writeCtx = observability.BackgroundFromContext(writeCtx)
 			var err error
+			var span trace.Span
+			if m.kind == 1 || m.kind == 2 {
+				writeCtx, span = observability.Tracer("gochat/ws").Start(writeCtx, "ws.write")
+				span.SetAttributes(
+					attribute.String("topic", m.topic),
+					attribute.Int("ws.message.kind", m.kind),
+				)
+			}
 			switch m.kind {
 			case 1:
 				if compressMode {
@@ -172,6 +209,17 @@ func (a *App) wsHandler(c *websocket.Conn) {
 				}
 				err = c.WriteControl(websocket.PingMessage, nil, time.Now().Add(5*time.Second))
 			}
+			if span != nil {
+				if err != nil {
+					span.RecordError(err)
+					span.SetStatus(codes.Error, err.Error())
+					a.wsm.MessageOut(writeCtx, m.topic, "error")
+				} else {
+					span.SetStatus(codes.Ok, "sent")
+					a.wsm.MessageOut(writeCtx, m.topic, "sent")
+				}
+				span.End()
+			}
 			if m.done != nil {
 				m.done <- err
 			}
@@ -193,7 +241,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 		}
 		done := make(chan error, 1)
 		select {
-		case out <- outMsg{kind: 2, v: v, done: done}:
+		case out <- outMsg{kind: 2, v: v, done: done, topic: "connection", ctx: connCtx}:
 			return <-done
 		case <-writerClosed:
 			atomic.StoreInt32(&closed, 1)
@@ -205,7 +253,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 			atomic.StoreInt32(&closed, 1)
 			close(writerClosed)
 			done := make(chan error, 1)
-			out <- outMsg{kind: 3, data: []byte(reason), done: done}
+			out <- outMsg{kind: 3, data: []byte(reason), done: done, topic: "connection.close", ctx: connCtx}
 			<-done
 		})
 	}
@@ -214,24 +262,25 @@ func (a *App) wsHandler(c *websocket.Conn) {
 		if c.Conn != nil {
 			err := c.Close()
 			if err != nil && websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
-				a.log.Error("Error closing WebSocket", "error", err)
+				connSpan.RecordError(err)
+				connLog.Error("Error closing WebSocket", "error", err)
 			}
 		}
 	}()
 
-	conn := &wsConn{id: c.RemoteAddr().String(), out: out}
-	subs := subscriber.New(a.hub, conn)
+	conn := &wsConn{id: c.RemoteAddr().String(), out: out, telemetry: a.wsm}
+	subs := subscriber.New(a.hub, conn, a.wsm, func() context.Context { return connCtx })
 	defer func() {
 		cerr := subs.Close()
 		if cerr != nil {
-			a.log.Error("Error closing subscriber", "error", cerr)
+			connLog.Error("Error closing subscriber", "error", cerr)
 		}
 	}()
 	pstore := presence.NewStore(a.cache)
 
 	h := handler.New(a.cdb, a.pg, subs, sendJSON, a.jwt, a.cfg.HearthBeatTimeout, func() {
 		sendClose("Closed")
-	}, a.log, a.natsConn, pstore, a.cache, conn.SetUserID)
+	}, a.log, a.natsConn, pstore, a.cache, conn.SetUserID, connCtx, a.wsm)
 
 	defer func() { _ = h.Close() }()
 
@@ -255,7 +304,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 			case <-ticker.C:
 				done := make(chan error, 1)
 				select {
-				case out <- outMsg{kind: 4, done: done}:
+				case out <- outMsg{kind: 4, done: done, topic: "connection.ping", ctx: connCtx}:
 					<-done
 				case <-writerClosed:
 					return
@@ -277,7 +326,8 @@ func (a *App) wsHandler(c *websocket.Conn) {
 			) {
 				return
 			}
-			a.log.Error("Read WS message error", "error", err)
+			connSpan.RecordError(err)
+			connLog.Error("Read WS message error", "error", err)
 			continue
 		}
 
@@ -285,13 +335,13 @@ func (a *App) wsHandler(c *websocket.Conn) {
 		case websocket.TextMessage:
 			var message mqmsg.Message
 			if err := json.Unmarshal(msg, &message); err != nil {
-				a.log.Error("Error unmarshalling message", "error", err)
+				connLog.Error("Error unmarshalling message", "error", err)
 				continue
 			}
 			h.HandleMessage(message)
 
 		case websocket.BinaryMessage:
-			a.log.Info("Received binary message", "length", len(msg))
+			connLog.Info("Received binary message", "length", len(msg))
 
 		case -1:
 			fallthrough

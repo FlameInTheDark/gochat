@@ -31,6 +31,7 @@ GoChat is a service-oriented messaging platform built around focused Go services
 
 - [Project documentation](docs/project/README.md)
 - [Services overview](docs/project/Services.md)
+- [Observability docs](docs/project/observability/README.md)
 - [WebSocket docs](docs/project/ws/README.md)
 - [Voice docs](docs/project/voice/README.md)
 - [Presence system](docs/project/Presence.md)
@@ -50,7 +51,7 @@ GoChat is a service-oriented messaging platform built around focused Go services
 | Search | OpenSearch indexing pipeline driven by the `indexer` service |
 | Discovery | etcd-backed voice service discovery through the `webhook` service |
 | Clients | Generated Go and TypeScript API clients under `clients/api/` |
-| Operations | Docker Compose stack, monitoring, dashboards, and helper CLI tooling |
+| Operations | Docker Compose stack, OpenObserve assets, OTEL collector wiring, and helper CLI tooling |
 
 ## Architecture
 
@@ -65,9 +66,12 @@ flowchart LR
         WS[WebSocket Gateway]
         Attachments[Attachments]
         Webhook[Webhook]
-        SFU[SFU]
         Indexer[Indexer]
         Embedder[Embedder]
+    end
+
+    subgraph Voice[External Voice Plane]
+        SFU[SFU]
     end
 
     subgraph Data[State and Infra]
@@ -86,7 +90,6 @@ flowchart LR
     Traefik --> WS
     Traefik --> Attachments
     Traefik --> Webhook
-    Traefik --> SFU
 
     API --> PG
     API --> Scylla
@@ -117,6 +120,7 @@ flowchart LR
     Embedder --> NATS
     Embedder --> Scylla
 
+    Client --> SFU
     SFU --> Webhook
 ```
 
@@ -129,7 +133,7 @@ flowchart LR
 | WebSocket Gateway | `cmd/ws` | Real-time subscriptions, event delivery, presence updates, and session handling |
 | Attachments | `cmd/attachments` | Upload pipeline for attachments, avatars, icons, and related metadata |
 | Webhook | `cmd/webhook` | Internal webhook surface for trusted service callbacks such as SFU heartbeats and attachment finalization |
-| SFU | `cmd/sfu` | WebRTC media relay and signaling for voice channels |
+| SFU | `cmd/sfu` | External WebRTC media relay and signaling service for voice channels |
 | Indexer | `cmd/indexer` | Consumes message events and writes search documents to OpenSearch |
 | Embedder | `cmd/embedder` | Builds generated message embeds from remote metadata and republishes updates |
 | Tools | `cmd/tools` | Operational helpers such as webhook token generation |
@@ -155,7 +159,7 @@ flowchart LR
 - OpenSearch for full-text search
 - S3-compatible storage for media assets
 - etcd for service discovery
-- Traefik, Prometheus, Grafana, Loki, and OpenSearch Dashboards for local operations
+- Traefik, OpenObserve, OpenTelemetry Collector, and OpenSearch Dashboards for local operations
 
 ## Repository Layout
 
@@ -210,7 +214,7 @@ Review the example configuration files before running services locally:
 - `auth_config.example.yaml`
 - `attachments_config.example.yaml`
 - `ws_config.example.yaml`
-- `sfu_config.example.yaml`
+- `sfu_config.example.yaml` for standalone SFU deployments outside Compose
 - `webhook_config.example.yaml`
 - `indexer_config.example.yaml`
 - `embedder_config.example.yaml`
@@ -225,9 +229,14 @@ go run ./cmd/auth
 go run ./cmd/ws
 go run ./cmd/attachments
 go run ./cmd/webhook
-go run ./cmd/sfu
 go run ./cmd/indexer
 go run ./cmd/embedder
+```
+
+Run the SFU separately when you need voice media in a non-Compose environment:
+
+```bash
+go run ./cmd/sfu
 ```
 
 Useful Make targets:
@@ -245,6 +254,7 @@ Useful Make targets:
 |---------------------------|--------------------------------------------------------------------------|
 | Project docs              | [docs/project/README.md](docs/project/README.md)                         |
 | Service documentation     | [docs/project/Services.md](docs/project/Services.md)                     |
+| Observability             | [docs/project/observability/README.md](docs/project/observability/README.md) |
 | WebSocket protocol        | [docs/project/ws/README.md](docs/project/ws/README.md)                   |
 | Voice and SFU docs        | [docs/project/voice/README.md](docs/project/voice/README.md)             |
 | Presence model            | [docs/project/Presence.md](docs/project/Presence.md)                     |
@@ -255,14 +265,19 @@ Useful Make targets:
 | Desktop client repository | [gochat-electron](https://github.com/FlameInTheDark/gochat-electron)     |
 | Deployment repository     | [gochat-deployment](https://github.com/FlameInTheDark/gochat-deployment) |
 
-## Local Operations
+## Local Observability
 
-The Compose stack includes additional tooling for local inspection and troubleshooting:
+The supported local observability workflow is OpenObserve plus the OpenTelemetry Collector:
 
-- Traefik dashboard on `http://localhost:8080`
-- Prometheus on `http://localhost:9090`
-- Grafana on `http://localhost:3030`
-- OpenSearch Dashboards on `http://localhost:5601`
+- Start fresh with `docker compose down --remove-orphans` and then `docker compose up -d`.
+- Bootstrap dashboards and alerts with `go run ./cmd/tools observability bootstrap --url http://localhost:5080 --org default --user root@example.com --password Complexpass#123`.
+- Run the smoke check with `go run ./cmd/tools observability smoke --url http://localhost:5080 --org default --user root@example.com --password Complexpass#123`.
+- OpenObserve is available on `http://localhost:5080`.
+- OTEL collector health is available on `http://localhost:13133/`.
+- Traefik dashboard remains available on `http://localhost:8080`.
+- OpenSearch Dashboards remains available on `http://localhost:5601`.
+
+PostgreSQL health in the local stack is now reported through native service-side probe telemetry rather than a Prometheus exporter bridge.
 
 ## License
 

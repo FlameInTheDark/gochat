@@ -1,0 +1,159 @@
+dashboards:
+  - name: Edge/API
+    description: Multi-tab HTTP service views for throughput, route latency, failures, rate limits, and idempotency behavior.
+    panels:
+      - title: HTTP request rate
+        signal: metrics
+        metric: gochat.http.server.requests
+        group_by: [service_name, http_route, http_status_code]
+      - title: HTTP latency p95
+        signal: metrics
+        metric: gochat.http.server.duration
+        aggregation: p95
+        group_by: [service_name, http_route]
+      - title: HTTP 5xx by route
+        signal: metrics
+        metric: gochat.http.server.errors
+        group_by: [service_name, http_route]
+      - title: Auth failures
+        signal: metrics
+        metric: gochat.http.server.auth_failures
+        group_by: [service_name, http_route]
+      - title: Rate-limit hits
+        signal: metrics
+        metric: gochat.http.server.rate_limit_hits
+        group_by: [service_name, http_route]
+      - title: Idempotency hits
+        signal: metrics
+        metric: gochat.http.server.idempotency_hits
+        group_by: [service_name, http_route]
+
+  - name: Realtime/WS
+    description: Multi-tab WebSocket views for connection load, auth, heartbeats, delivery reliability, and inbound/outbound message mix.
+    panels:
+      - title: WS active clients
+        signal: metrics
+        metric: gochat.ws.connections.active
+        group_by: [ws.compression]
+      - title: WS active subscriptions
+        signal: metrics
+        metric: gochat.ws.subscriptions.active
+        group_by: [subscription.kind]
+      - title: WS request latency
+        signal: metrics
+        metric: gochat.http.server.duration
+        filter: service_name="gochat-ws"
+        aggregation: p95
+      - title: WS request errors
+        signal: metrics
+        metric: gochat.http.server.errors
+        filter: service_name="gochat-ws"
+      - title: WS auth failures
+        signal: metrics
+        metric: gochat.ws.auth.failures
+        group_by: [reason]
+      - title: WS heartbeats by result
+        signal: metrics
+        metric: gochat.ws.heartbeats
+        group_by: [result]
+      - title: WS dropped deliveries
+        signal: metrics
+        metric: gochat.ws.messages.dropped
+        group_by: [topic]
+
+  - name: Voice/SFU
+    description: Externally deployed SFU node health, signaling traffic, peer lifecycle, heartbeat quality, and admin-close drilldown.
+    panels:
+      - title: SFU active topology by node
+        signal: metrics
+        metric: gochat.sfu.peers.active
+        group_by: [voice_region, service_instance_id]
+      - title: SFU join and leave rate by node
+        signal: metrics
+        metric: gochat.sfu.joins / gochat.sfu.leaves
+        group_by: [voice_region, service_instance_id]
+      - title: SFU heartbeat latency p95 by node
+        signal: metrics
+        metric: gochat.sfu.heartbeat.duration
+        aggregation: p95
+        group_by: [status, voice_region, service_instance_id]
+      - title: SFU connection states by node
+        signal: metrics
+        metric: gochat.sfu.connection_state_changes
+        group_by: [state, voice_region, service_instance_id]
+      - title: SFU signaling counters
+        signal: metrics
+        metric: gochat.sfu.offers / gochat.sfu.answers / gochat.sfu.candidates
+        group_by: [direction, voice_region, service_instance_id]
+      - title: SFU bitrate disconnects
+        signal: metrics
+        metric: gochat.sfu.bitrate_disconnects
+        group_by: [voice_region, service_instance_id]
+      - title: SFU admin-close latency
+        signal: metrics
+        metric: gochat.sfu.admin_close.duration
+        aggregation: p95
+        group_by: [status, voice_region, service_instance_id]
+
+  - name: Async Workers
+    description: Indexer and embedder throughput, latency, decode failures, and recent successful work split by subject and operation.
+    panels:
+      - title: Indexer consume duration
+        signal: metrics
+        metric: gochat.indexer.consume.duration
+        aggregation: p95
+        group_by: [subject, operation]
+      - title: Indexer failures
+        signal: metrics
+        metric: gochat.indexer.consume.failure
+        group_by: [subject, operation]
+      - title: Embedder consume duration
+        signal: metrics
+        metric: gochat.embedder.consume.duration
+        aggregation: p95
+        group_by: [subject]
+      - title: Embedder failures
+        signal: metrics
+        metric: gochat.embedder.consume.failure
+        group_by: [subject]
+      - title: Indexer success throughput
+        signal: metrics
+        metric: gochat.indexer.consume.success
+        group_by: [subject, operation]
+      - title: Embedder success throughput
+        signal: metrics
+        metric: gochat.embedder.consume.success
+        group_by: [subject]
+
+  - name: Data Stores
+    description: Native Postgres probe metrics and dependency telemetry for Redis, OpenSearch, S3, and etcd with cache result drilldown.
+    panels:
+      - title: Postgres probe status
+        signal: metrics
+        metric: gochat.postgres.probe.status
+        group_by: [service_name]
+      - title: Postgres probe latency p95
+        signal: metrics
+        metric: gochat.postgres.probe.duration
+        aggregation: p95
+        group_by: [service_name]
+      - title: Postgres probe failures
+        signal: metrics
+        metric: gochat.postgres.probe.failure
+        group_by: [service_name]
+      - title: Dependency p95 latency
+        signal: metrics
+        metric: gochat.dependency.duration
+        aggregation: p95
+        group_by: [dependency_system, dependency_operation]
+      - title: Dependency errors
+        signal: metrics
+        metric: gochat.dependency.errors
+        group_by: [dependency_system, dependency_operation, dependency_result]
+      - title: Cache miss rate
+        signal: metrics
+        metric: gochat.dependency.calls
+        group_by: [dependency_operation, dependency_result]
+      - title: Postgres pool wait
+        signal: metrics
+        metric: gochat.postgres.pool.wait_count / gochat.postgres.pool.wait_duration
