@@ -21,7 +21,9 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/messageposition"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/threadcount"
 )
@@ -63,6 +65,8 @@ type enforcedNonceReservation struct {
 //	@failure	500			{string}	string				"Internal server error"
 //	@Router		/message/channel/{channel_id} [post]
 func (e *entity) Send(c *fiber.Ctx) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	// Parse and validate request
 	req, user, channelId, err := e.parseSendMessageRequest(c)
 	if err != nil {
@@ -98,7 +102,7 @@ func (e *entity) Send(c *fiber.Ctx) error {
 			return err
 		} else if found {
 			if err := e.rs.SetReadState(c.UserContext(), user.Id, channelId, message.Id); err != nil {
-				e.log.Error("unable to set read state after nonce replay", slog.String("error", err.Error()))
+				reqLog.Error("unable to set read state after nonce replay", slog.String("error", err.Error()))
 			}
 			return c.JSON(message)
 		}
@@ -111,7 +115,7 @@ func (e *entity) Send(c *fiber.Ctx) error {
 	}
 
 	if err := e.persistEnforcedNonce(c.UserContext(), nonceReservation, channel.Id, message.Id); err != nil && e.log != nil {
-		e.log.Error("failed to persist enforced message nonce",
+		reqLog.Error("failed to persist enforced message nonce",
 			"user_id", user.Id,
 			"channel_id", channel.Id,
 			"message_id", message.Id,
@@ -119,7 +123,7 @@ func (e *entity) Send(c *fiber.Ctx) error {
 	}
 
 	if err := e.rs.SetReadState(c.UserContext(), user.Id, channelId, message.Id); err != nil {
-		e.log.Error("unable to set read state after message sent", slog.String("error", err.Error()))
+		reqLog.Error("unable to set read state after message sent", slog.String("error", err.Error()))
 	}
 
 	return c.JSON(message)
@@ -182,7 +186,7 @@ func (e *entity) CreateThread(c *fiber.Ctx) error {
 		return err
 	}
 
-	go e.sendThreadCreateEvents(guildID, parentChannel, result, userData)
+	go e.sendThreadCreateEvents(observability.BackgroundFromContext(c.UserContext()), guildID, parentChannel, result, userData)
 
 	return c.Status(fiber.StatusCreated).JSON(e.dtoThreadChannel(result.Channel, guildID, result.Position, result.Member, result.MemberIds))
 }
@@ -461,6 +465,7 @@ type threadCreateResult struct {
 }
 
 func (e *entity) createThreadFromMessage(c *fiber.Ctx, req *CreateThreadRequest, creatorID, guildID int64, guildChannel *model.GuildChannel, parentChannel *model.Channel, sourceMessage *model.Message, validatedAttachments []model.Attachment, userData *messageUserData) (*threadCreateResult, error) {
+	reqLog := observability.LoggerFromFiber(c, e.log)
 	threadID := idgen.Next()
 	threadName := deriveThreadName(req.Name, sourceMessage, req.Content)
 	threadPosition := guildChannel.Position
@@ -502,46 +507,48 @@ func (e *entity) createThreadFromMessage(c *fiber.Ctx, req *CreateThreadRequest,
 	var threadClaimed bool
 	var sourceThreadAttached bool
 	var expectedSourceThread int64
+	rollbackCtx := observability.BackgroundFromContext(c.UserContext())
+	rollbackLog := observability.LoggerWithContext(rollbackCtx, reqLog)
 	cleanupThread := func() {
 		if sourceThreadAttached {
-			if err := e.msg.SetThread(context.Background(), sourceMessage.Id, parentChannel.Id, expectedSourceThread); err != nil && e.log != nil {
-				e.log.Error("failed to rollback source message thread after thread create failure",
+			if err := e.msg.SetThread(rollbackCtx, sourceMessage.Id, parentChannel.Id, expectedSourceThread); err != nil && e.log != nil {
+				rollbackLog.Error("failed to rollback source message thread after thread create failure",
 					"message_id", sourceMessage.Id,
 					"channel_id", parentChannel.Id,
 					"error", err.Error())
 			}
 		}
 		if threadClaimed {
-			if err := e.msg.ReleaseThreadClaim(context.Background(), parentChannel.Id, sourceMessage.Id); err != nil && e.log != nil {
-				e.log.Error("failed to release source message thread claim after thread create failure",
+			if err := e.msg.ReleaseThreadClaim(rollbackCtx, parentChannel.Id, sourceMessage.Id); err != nil && e.log != nil {
+				rollbackLog.Error("failed to release source message thread claim after thread create failure",
 					"message_id", sourceMessage.Id,
 					"channel_id", parentChannel.Id,
 					"error", err.Error())
 			}
 		}
 		if followupMessageRefCreated {
-			if err := e.msg.DeleteThreadCreatedMessageRef(context.Background(), threadID); err != nil && e.log != nil {
-				e.log.Error("failed to delete thread-created message ref after thread create failure",
+			if err := e.msg.DeleteThreadCreatedMessageRef(rollbackCtx, threadID); err != nil && e.log != nil {
+				rollbackLog.Error("failed to delete thread-created message ref after thread create failure",
 					"thread_id", threadID,
 					"error", err.Error())
 			}
 		}
 		if followupMessageID != 0 {
-			_ = e.msg.DeleteMessage(context.Background(), followupMessageID, parentChannel.Id)
+			_ = e.msg.DeleteMessage(rollbackCtx, followupMessageID, parentChannel.Id)
 		}
 		if initialMessageID != 0 {
-			_ = e.msg.DeleteMessage(context.Background(), initialMessageID, threadID)
+			_ = e.msg.DeleteMessage(rollbackCtx, initialMessageID, threadID)
 		}
 		if starterMessageID != 0 {
-			_ = e.msg.DeleteMessage(context.Background(), starterMessageID, threadID)
+			_ = e.msg.DeleteMessage(rollbackCtx, starterMessageID, threadID)
 		}
 		for _, attachmentID := range initialAttachmentIDs {
-			_ = e.at.RemoveAttachment(context.Background(), attachmentID, threadID)
+			_ = e.at.RemoveAttachment(rollbackCtx, attachmentID, threadID)
 		}
 		for _, attachmentID := range starterAttachmentIDs {
-			_ = e.at.RemoveAttachment(context.Background(), attachmentID, threadID)
+			_ = e.at.RemoveAttachment(rollbackCtx, attachmentID, threadID)
 		}
-		_ = e.gc.RemoveChannel(context.Background(), guildID, threadID)
+		_ = e.gc.RemoveChannel(rollbackCtx, guildID, threadID)
 	}
 
 	sourceAttachments := e.loadAttachments(c.UserContext(), parentChannel.Id, sourceMessage.Attachments)
@@ -645,7 +652,7 @@ func (e *entity) createThreadFromMessage(c *fiber.Ctx, req *CreateThreadRequest,
 		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
 	}
 	if err := e.gclm.SetChannelLastMessage(c.UserContext(), guildID, threadID, starterMessageID); err != nil {
-		slog.Error("unable to set thread last message id", slog.String("error", err.Error()))
+		reqLog.Error("unable to set thread last message id", slog.String("error", err.Error()))
 	}
 
 	starterDTO, err := e.buildMessageResponse(c, starterMessageID, &threadChannel, starterMessagePosition, userData, starterReq, starterAttachments)
@@ -722,7 +729,7 @@ func (e *entity) createThreadFromMessage(c *fiber.Ctx, req *CreateThreadRequest,
 		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
 	}
 	if err := e.gclm.SetChannelLastMessage(c.UserContext(), guildID, parentChannel.Id, followupMessageID); err != nil {
-		slog.Error("unable to set parent channel last message id", slog.String("error", err.Error()))
+		reqLog.Error("unable to set parent channel last message id", slog.String("error", err.Error()))
 	}
 	if err := e.msg.CreateThreadCreatedMessageRef(c.UserContext(), threadID, parentChannel.Id, followupMessageID); err != nil {
 		cleanupThread()
@@ -733,21 +740,21 @@ func (e *entity) createThreadFromMessage(c *fiber.Ctx, req *CreateThreadRequest,
 
 	for _, attachment := range validatedAttachments {
 		if err := e.at.RemoveAttachment(c.UserContext(), attachment.Id, parentChannel.Id); err != nil && e.log != nil {
-			e.log.Error("failed to remove temporary parent attachment after thread create",
+			reqLog.Error("failed to remove temporary parent attachment after thread create",
 				"attachment_id", attachment.Id,
 				"channel_id", parentChannel.Id,
 				"error", err.Error())
 		}
 	}
 	if err := e.rs.SetReadState(c.UserContext(), creatorID, threadID, starterMessageID); err != nil && e.log != nil {
-		e.log.Error("unable to set thread read state after thread create", slog.String("error", err.Error()))
+		reqLog.Error("unable to set thread read state after thread create", slog.String("error", err.Error()))
 	}
 	if err := e.rs.SetReadState(c.UserContext(), creatorID, parentChannel.Id, followupMessageID); err != nil && e.log != nil {
-		e.log.Error("unable to set parent read state after thread create", slog.String("error", err.Error()))
+		reqLog.Error("unable to set parent read state after thread create", slog.String("error", err.Error()))
 	}
 	if err := e.ch.AdjustMessageCount(c.UserContext(), threadID, 2); err != nil {
 		if e.log != nil {
-			e.log.Error("unable to persist initial thread message count",
+			reqLog.Error("unable to persist initial thread message count",
 				"thread_id", threadID,
 				"error", err.Error())
 		}
@@ -859,17 +866,17 @@ func (e *entity) cloneAttachmentsToChannel(ctx context.Context, sourceChannelID,
 }
 
 func (e *entity) loadAttachments(ctx context.Context, channelID int64, attachmentIDs []int64) []model.Attachment {
+	log := observability.LoggerWithContext(ctx, e.log)
+
 	if len(attachmentIDs) == 0 {
 		return nil
 	}
 
 	attachments, err := e.at.SelectAttachmentsByChannel(ctx, channelID, attachmentIDs)
 	if err != nil {
-		if e.log != nil {
-			e.log.Error("failed to load attachments",
-				"channel_id", channelID,
-				"error", err.Error())
-		}
+		log.Error("failed to load attachments",
+			"channel_id", channelID,
+			"error", err.Error())
 		return nil
 	}
 
@@ -906,7 +913,7 @@ func (e *entity) buildThreadMessageDTO(c *fiber.Ctx, messageID, channelID, autho
 		Content:            content,
 		Position:           optionalInt64(messagePosition),
 		Attachments:        e.buildAttachmentDTOs(attachmentIDs, attachments),
-		Embeds:             e.mergedMessageEmbeds(messageID, manualEmbedsJSON, autoEmbedsJSON, flags),
+		Embeds:             e.mergedMessageEmbeds(c.UserContext(), messageID, manualEmbedsJSON, autoEmbedsJSON, flags),
 		Flags:              flags,
 		Type:               msgType,
 		Reference:          optionalInt64(reference),
@@ -996,22 +1003,22 @@ func (e *entity) applyThreadMessageCount(ctx context.Context, channel *model.Cha
 }
 
 func (e *entity) bumpThreadMessageCount(ctx context.Context, threadID int64, delta int64) {
+	log := observability.LoggerWithContext(ctx, e.log)
+
 	if threadID == 0 || delta <= 0 || e.cache == nil {
 		return
 	}
 	for i := int64(0); i < delta; i++ {
 		if _, err := e.cache.Incr(ctx, threadcount.DeltaKey(threadID)); err != nil {
-			if e.log != nil {
-				e.log.Error("failed to increment cached thread message count",
-					"thread_id", threadID,
-					"delta", delta,
-					"error", err.Error())
-			}
+			log.Error("failed to increment cached thread message count",
+				"thread_id", threadID,
+				"delta", delta,
+				"error", err.Error())
 			return
 		}
 	}
-	if err := e.cache.SetTTL(ctx, threadcount.DeltaKey(threadID), threadcount.DeltaTTLSeconds); err != nil && e.log != nil {
-		e.log.Error("failed to refresh cached thread message count ttl",
+	if err := e.cache.SetTTL(ctx, threadcount.DeltaKey(threadID), threadcount.DeltaTTLSeconds); err != nil {
+		log.Error("failed to refresh cached thread message count ttl",
 			"thread_id", threadID,
 			"error", err.Error())
 	}
@@ -1047,31 +1054,32 @@ func (e *entity) dtoThreadChannel(channel *model.Channel, guildID int64, positio
 	}
 }
 
-func (e *entity) sendThreadCreateEvents(guildID int64, parentChannel *model.Channel, result *threadCreateResult, userData *messageUserData) {
+func (e *entity) sendThreadCreateEvents(ctx context.Context, guildID int64, parentChannel *model.Channel, result *threadCreateResult, userData *messageUserData) {
+	log := observability.LoggerWithContext(ctx, e.log)
 	threadDTO := e.dtoThreadChannel(result.Channel, guildID, result.Position, nil, result.MemberIds)
-	if err := e.mqt.SendGuildUpdate(guildID, &mqmsg.CreateChannel{
+	if err := mq.SendGuildUpdate(ctx, e.mqt, guildID, &mqmsg.CreateChannel{
 		GuildId: &guildID,
 		Channel: threadDTO,
 	}); err != nil {
-		e.log.Error("failed to send channel create event for thread",
+		log.Error("failed to send channel create event for thread",
 			"thread_id", result.Channel.Id,
 			"error", err.Error())
 	}
-	if err := e.mqt.SendGuildUpdate(guildID, &mqmsg.CreateThread{
+	if err := mq.SendGuildUpdate(ctx, e.mqt, guildID, &mqmsg.CreateThread{
 		GuildId: &guildID,
 		Thread:  threadDTO,
 	}); err != nil {
-		e.log.Error("failed to send thread create event",
+		log.Error("failed to send thread create event",
 			"thread_id", result.Channel.Id,
 			"error", err.Error())
 	}
 
-	e.sendUpdateEvent(parentChannel.Id, &guildID, result.SourceMessage)
-	e.sendMessageCreateEvent(result.Channel, &guildID, result.Initial)
-	e.dispatchMessageSideEffects(result.Channel, &guildID, result.Starter, userData, result.StarterReq)
-	e.sendMessageCreateEvent(parentChannel, &guildID, result.Followup)
-	if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildID)); err != nil && e.log != nil {
-		e.log.Error("failed to invalidate guild channel cache after thread create",
+	e.sendUpdateEvent(ctx, parentChannel.Id, &guildID, result.SourceMessage)
+	e.sendMessageCreateEvent(ctx, result.Channel, &guildID, result.Initial)
+	e.dispatchMessageSideEffects(ctx, result.Channel, &guildID, result.Starter, userData, result.StarterReq)
+	e.sendMessageCreateEvent(ctx, parentChannel, &guildID, result.Followup)
+	if err := e.cache.Delete(ctx, fmt.Sprintf("guild:%d:channels", guildID)); err != nil {
+		log.Error("failed to invalidate guild channel cache after thread create",
 			"guild_id", guildID,
 			"error", err.Error())
 	}
@@ -1253,6 +1261,8 @@ func (e *entity) validateSendPermissions(c *fiber.Ctx, channelId, userId int64) 
 
 // createAndSendMessage creates the message and handles all related operations
 func (e *entity) createAndSendMessage(c *fiber.Ctx, req *SendMessageRequest, jwtUser *helper.JWTUser, channel *model.Channel, guildId *int64, validatedAttachments []model.Attachment) (dto.Message, error) {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	// Fetch user data concurrently
 	userData, err := e.fetchUserDataForMessage(c, jwtUser.Id)
 	if err != nil {
@@ -1289,28 +1299,30 @@ func (e *entity) createAndSendMessage(c *fiber.Ctx, req *SendMessageRequest, jwt
 	if guildId != nil {
 		err := e.gclm.SetChannelLastMessage(c.UserContext(), *guildId, channel.Id, messageId)
 		if err != nil {
-			slog.Error("unable to set guild channel last message id", slog.String("error", err.Error()))
+			log.Error("unable to set guild channel last message id", slog.String("error", err.Error()))
 		}
 	}
 
-	e.dispatchMessageSideEffects(channel, guildId, message, userData, req)
+	e.dispatchMessageSideEffects(c.UserContext(), channel, guildId, message, userData, req)
 
 	return message, nil
 }
 
-func (e *entity) dispatchMessageSideEffects(channel *model.Channel, guildId *int64, message dto.Message, userData *messageUserData, req *SendMessageRequest) {
+func (e *entity) dispatchMessageSideEffects(ctx context.Context, channel *model.Channel, guildId *int64, message dto.Message, userData *messageUserData, req *SendMessageRequest) {
+	log := observability.LoggerWithContext(ctx, e.log)
+
 	if channel == nil || userData == nil || req == nil {
 		return
 	}
 
-	go e.sendMessageEvents(channel, guildId, message, userData, req)
+	go e.sendMessageEvents(observability.BackgroundFromContext(ctx), channel, guildId, message, userData, req)
 
 	if !model.IsEditableMessageType(model.MessageType(message.Type)) {
 		return
 	}
 
 	if HasURL(message.Content) {
-		go e.enqueueMakeEmbed(guildId, message)
+		go e.enqueueMakeEmbed(observability.BackgroundFromContext(ctx), guildId, message)
 	}
 
 	users, roles, everyone, here := MentionsExtractor(req.Content)
@@ -1318,105 +1330,107 @@ func (e *entity) dispatchMessageSideEffects(channel *model.Channel, guildId *int
 		return
 	}
 
+	asyncCtx := observability.BackgroundFromContext(ctx)
+	asyncLog := observability.LoggerWithContext(asyncCtx, log)
 	go func() {
 		for _, u := range users {
 			switch channel.Type {
 			case model.ChannelTypeGuild, model.ChannelTypeThread:
 				if guildId != nil {
-					if ok, err := e.m.IsGuildMember(context.Background(), *guildId, u); err == nil && ok {
-						if err := e.mention.AddMention(context.Background(), u, channel.Id, message.Id, message.Author.Id); err != nil {
-							e.log.Error("unable to save mention", slog.String("error", err.Error()))
+					if ok, err := e.m.IsGuildMember(asyncCtx, *guildId, u); err == nil && ok {
+						if err := e.mention.AddMention(asyncCtx, u, channel.Id, message.Id, message.Author.Id); err != nil {
+							asyncLog.Error("unable to save mention", slog.String("error", err.Error()))
 						}
-						e.sendMentionUserUpdate(u, guildId, channel.Id, message.Id, message.Author.Id, model.ChannelMentionUser)
+						e.sendMentionUserUpdate(asyncCtx, u, guildId, channel.Id, message.Id, message.Author.Id, model.ChannelMentionUser)
 					}
 				}
 			default:
-				if ok, err := e.fr.IsFriend(context.Background(), u, message.Author.Id); err == nil && ok {
-					if err := e.mention.AddMention(context.Background(), u, channel.Id, message.Id, message.Author.Id); err != nil {
-						e.log.Error("unable to save mention", slog.String("error", err.Error()))
+				if ok, err := e.fr.IsFriend(asyncCtx, u, message.Author.Id); err == nil && ok {
+					if err := e.mention.AddMention(asyncCtx, u, channel.Id, message.Id, message.Author.Id); err != nil {
+						asyncLog.Error("unable to save mention", slog.String("error", err.Error()))
 					}
-					e.sendMentionUserUpdate(u, nil, channel.Id, message.Id, message.Author.Id, model.ChannelMentionUser)
+					e.sendMentionUserUpdate(asyncCtx, u, nil, channel.Id, message.Id, message.Author.Id, model.ChannelMentionUser)
 				}
 			}
 		}
 		if guildId != nil {
 			threadMentionRecipients := []int64(nil)
 			if channel.Type == model.ChannelTypeThread {
-				recipients, err := e.threadMemberUserIDs(context.Background(), channel.Id, message.Author.Id)
+				recipients, err := e.threadMemberUserIDs(asyncCtx, channel.Id, message.Author.Id)
 				if err != nil {
-					e.log.Error("unable to get thread mention recipients", slog.String("error", err.Error()))
+					asyncLog.Error("unable to get thread mention recipients", slog.String("error", err.Error()))
 				} else {
 					threadMentionRecipients = recipients
 				}
 			}
 			for _, r := range roles {
 				if err := e.mention.AddChannelMention(
-					context.Background(),
+					asyncCtx,
 					*guildId,
 					channel.Id,
 					message.Id,
 					message.Author.Id,
 					&r,
 					model.ChannelMentionRole); err != nil {
-					e.log.Error("unable to save role mention", slog.String("error", err.Error()))
+					asyncLog.Error("unable to save role mention", slog.String("error", err.Error()))
 				}
 				if channel.Type == model.ChannelTypeThread {
-					recipients, err := e.threadRoleMentionRecipients(context.Background(), *guildId, threadMentionRecipients, r)
+					recipients, err := e.threadRoleMentionRecipients(asyncCtx, *guildId, threadMentionRecipients, r)
 					if err != nil {
-						e.log.Error("unable to resolve thread role mention recipients", slog.String("error", err.Error()))
+						asyncLog.Error("unable to resolve thread role mention recipients", slog.String("error", err.Error()))
 						continue
 					}
 					for _, userID := range recipients {
-						e.sendMentionUserUpdate(userID, guildId, channel.Id, message.Id, message.Author.Id, model.ChannelMentionRole)
+						e.sendMentionUserUpdate(asyncCtx, userID, guildId, channel.Id, message.Id, message.Author.Id, model.ChannelMentionRole)
 					}
-				} else if err := e.mqt.SendGuildUpdate(*guildId, &mqmsg.Mention{
+				} else if err := mq.SendGuildUpdate(asyncCtx, e.mqt, *guildId, &mqmsg.Mention{
 					GuildId:   guildId,
 					ChannelId: channel.Id,
 					MessageId: message.Id,
 					AuthorId:  message.Author.Id,
 					Type:      int(model.ChannelMentionRole),
 				}); err != nil {
-					e.log.Error("unable to send role mention notification", slog.String("error", err.Error()))
+					asyncLog.Error("unable to send role mention notification", slog.String("error", err.Error()))
 				}
 			}
 			if everyone {
 				if err := e.mention.AddChannelMention(
-					context.Background(),
+					asyncCtx,
 					*guildId,
 					channel.Id,
 					message.Id,
 					message.Author.Id,
 					nil,
 					model.ChannelMentionEveryone); err != nil {
-					e.log.Error("unable to save role mention", slog.String("error", err.Error()))
+					asyncLog.Error("unable to save role mention", slog.String("error", err.Error()))
 				}
 				if channel.Type == model.ChannelTypeThread {
 					for _, userID := range threadMentionRecipients {
-						e.sendMentionUserUpdate(userID, guildId, channel.Id, message.Id, message.Author.Id, model.ChannelMentionEveryone)
+						e.sendMentionUserUpdate(asyncCtx, userID, guildId, channel.Id, message.Id, message.Author.Id, model.ChannelMentionEveryone)
 					}
-				} else if err := e.mqt.SendGuildUpdate(*guildId, &mqmsg.Mention{
+				} else if err := mq.SendGuildUpdate(asyncCtx, e.mqt, *guildId, &mqmsg.Mention{
 					GuildId:   guildId,
 					ChannelId: channel.Id,
 					MessageId: message.Id,
 					AuthorId:  message.Author.Id,
 					Type:      int(model.ChannelMentionEveryone),
 				}); err != nil {
-					e.log.Error("unable to send role mention notification", slog.String("error", err.Error()))
+					asyncLog.Error("unable to send role mention notification", slog.String("error", err.Error()))
 				}
 			}
 			if here {
 				if channel.Type == model.ChannelTypeThread {
 					for _, userID := range threadMentionRecipients {
-						e.sendMentionUserUpdate(userID, guildId, channel.Id, message.Id, message.Author.Id, model.ChannelMentionHere)
+						e.sendMentionUserUpdate(asyncCtx, userID, guildId, channel.Id, message.Id, message.Author.Id, model.ChannelMentionHere)
 					}
-				} else if err := e.mqt.SendGuildUpdate(*guildId, &mqmsg.Mention{
+				} else if err := mq.SendGuildUpdate(asyncCtx, e.mqt, *guildId, &mqmsg.Mention{
 					GuildId:   guildId,
 					ChannelId: channel.Id,
 					MessageId: message.Id,
 					AuthorId:  message.Author.Id,
 					Type:      int(model.ChannelMentionHere),
 				}); err != nil {
-					e.log.Error("unable to send role mention notification", slog.String("error", err.Error()))
+					asyncLog.Error("unable to send role mention notification", slog.String("error", err.Error()))
 				}
 			}
 		}
@@ -1436,14 +1450,15 @@ func (e *entity) fetchUserDataForMessage(c *fiber.Ctx, userId int64) (*messageUs
 
 	userCh := make(chan userResult, 1)
 	discCh := make(chan discResult, 1)
+	ctx := c.UserContext()
 
 	go func() {
-		user, err := e.user.GetUserById(c.UserContext(), userId)
+		user, err := e.user.GetUserById(ctx, userId)
 		userCh <- userResult{&user, err}
 	}()
 
 	go func() {
-		disc, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), userId)
+		disc, err := e.disc.GetDiscriminatorByUserId(ctx, userId)
 		discCh <- discResult{&disc, err}
 	}()
 
@@ -1632,7 +1647,7 @@ func (e *entity) buildStoredMessageResponse(c *fiber.Ctx, channel *model.Channel
 		return dto.Message{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendMessage)
 	}
 
-	messages := e.buildMessageDTOsOptimized([]model.Message{message}, data)
+	messages := e.buildMessageDTOsOptimized(c.UserContext(), []model.Message{message}, data)
 	if len(messages) != 1 {
 		return dto.Message{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendMessage)
 	}
@@ -1649,40 +1664,39 @@ func (e *entity) buildStoredMessageResponse(c *fiber.Ctx, channel *model.Channel
 	return messages[0], nil
 }
 
-func (e *entity) parseMessageEmbeds(messageId int64, raw *string) []embed.Embed {
+func (e *entity) parseMessageEmbeds(ctx context.Context, messageId int64, raw *string) []embed.Embed {
+	log := observability.LoggerWithContext(ctx, e.log)
 	embeds, err := embed.ParseEmbeds(raw)
 	if err != nil {
-		if e.log != nil {
-			e.log.Error("failed to decode message embeds",
-				"message_id", messageId,
-				"error", err.Error())
-		}
+		log.Error("failed to decode message embeds",
+			"message_id", messageId,
+			"error", err.Error())
 		return nil
 	}
 
 	return embeds
 }
 
-func (e *entity) mergedMessageEmbeds(messageId int64, manualRaw, autoRaw *string, flags int) []embed.Embed {
+func (e *entity) mergedMessageEmbeds(ctx context.Context, messageId int64, manualRaw, autoRaw *string, flags int) []embed.Embed {
+	log := observability.LoggerWithContext(ctx, e.log)
 	embeds, err := embed.ParseMergedEmbeds(manualRaw, autoRaw, model.HasMessageFlag(flags, model.MessageFlagSuppressEmbeds))
 	if err != nil {
-		if e.log != nil {
-			e.log.Error("failed to decode message embeds",
-				"message_id", messageId,
-				"error", err.Error())
-		}
+		log.Error("failed to decode message embeds",
+			"message_id", messageId,
+			"error", err.Error())
 		return nil
 	}
 
 	return embeds
 }
 
-func (e *entity) enqueueMakeEmbed(guildId *int64, message dto.Message) {
+func (e *entity) enqueueMakeEmbed(ctx context.Context, guildId *int64, message dto.Message) {
+	log := observability.LoggerWithContext(ctx, e.log)
 	if e.emq == nil {
 		return
 	}
-	if err := e.emq.MakeEmbed(embedmq.MakeEmbedRequest{GuildId: guildId, Message: message}); err != nil && e.log != nil {
-		e.log.Error("failed to enqueue embed generation",
+	if err := e.emq.MakeEmbedContext(ctx, embedmq.MakeEmbedRequest{GuildId: guildId, Message: message}); err != nil {
+		log.Error("failed to enqueue embed generation",
 			"message_id", message.Id,
 			"channel_id", message.ChannelId,
 			"error", err.Error())
@@ -1690,8 +1704,9 @@ func (e *entity) enqueueMakeEmbed(guildId *int64, message dto.Message) {
 }
 
 // sendMessageEvents sends message and indexing events asynchronously
-func (e *entity) sendMessageEvents(channel *model.Channel, guildId *int64, message dto.Message, userData *messageUserData, req *SendMessageRequest) {
-	e.sendMessageCreateEvent(channel, guildId, message)
+func (e *entity) sendMessageEvents(ctx context.Context, channel *model.Channel, guildId *int64, message dto.Message, userData *messageUserData, req *SendMessageRequest) {
+	log := observability.LoggerWithContext(ctx, e.log)
+	e.sendMessageCreateEvent(ctx, channel, guildId, message)
 
 	if userData == nil || req == nil || !model.IsEditableMessageType(model.MessageType(message.Type)) {
 		return
@@ -1708,7 +1723,7 @@ func (e *entity) sendMessageEvents(channel *model.Channel, guildId *int64, messa
 		}
 	}
 
-	if err := e.imq.IndexMessage(dto.IndexMessage{
+	if err := e.imq.IndexMessageContext(ctx, dto.IndexMessage{
 		MessageId: message.Id,
 		UserId:    userData.User.Id,
 		ChannelId: channel.Id,
@@ -1718,7 +1733,7 @@ func (e *entity) sendMessageEvents(channel *model.Channel, guildId *int64, messa
 		Type:      message.Type,
 		Content:   message.Content,
 	}); err != nil {
-		e.log.Error("failed to send index message event",
+		log.Error("failed to send index message event",
 			"message_id", message.Id,
 			"error", err.Error())
 	}
@@ -1726,10 +1741,10 @@ func (e *entity) sendMessageEvents(channel *model.Channel, guildId *int64, messa
 	// Notify DM recipient via user topic for 1:1 DMs
 	if guildId == nil {
 		// Determine channel type and DM participants
-		ch, err := e.ch.GetChannel(context.Background(), channel.Id)
+		ch, err := e.ch.GetChannel(ctx, channel.Id)
 		if err == nil && ch.Type == model.ChannelTypeDM {
 			// Fetch both rows for this DM channel and pick the other user
-			rows, rerr := e.dmc.GetDmChannelByChannelId(context.Background(), channel.Id)
+			rows, rerr := e.dmc.GetDmChannelByChannelId(ctx, channel.Id)
 			if rerr == nil {
 				var recipientId int64
 				for _, r := range rows {
@@ -1741,11 +1756,11 @@ func (e *entity) sendMessageEvents(channel *model.Channel, guildId *int64, messa
 				if recipientId != 0 {
 					var ad *dto.AvatarData
 					if userData.User.Avatar != nil {
-						if v, err := e.getAvatarDataCached(context.Background(), userData.User.Id, *userData.User.Avatar); err == nil {
+						if v, err := e.getAvatarDataCached(ctx, userData.User.Id, *userData.User.Avatar); err == nil {
 							ad = v
 						}
 					}
-					_ = e.mqt.SendUserUpdate(recipientId, &mqmsg.DMMessage{
+					_ = mq.SendUserUpdate(ctx, e.mqt, recipientId, &mqmsg.DMMessage{
 						ChannelId: channel.Id,
 						MessageId: message.Id,
 						From:      mqmsg.UserBrief{Id: userData.User.Id, Name: userData.User.Name, Discriminator: userData.Discriminator.Discriminator, Avatar: userData.User.Avatar, AvatarData: ad},
@@ -1756,16 +1771,17 @@ func (e *entity) sendMessageEvents(channel *model.Channel, guildId *int64, messa
 	}
 }
 
-func (e *entity) sendMessageCreateEvent(channel *model.Channel, guildId *int64, message dto.Message) {
+func (e *entity) sendMessageCreateEvent(ctx context.Context, channel *model.Channel, guildId *int64, message dto.Message) {
+	log := observability.LoggerWithContext(ctx, e.log)
 	if channel == nil {
 		return
 	}
 	channelId := channel.Id
-	if err := e.mqt.SendChannelMessage(channelId, &mqmsg.CreateMessage{
+	if err := mq.SendChannelMessage(ctx, e.mqt, channelId, &mqmsg.CreateMessage{
 		GuildId: guildId,
 		Message: message,
 	}); err != nil {
-		e.log.Error("failed to send message event",
+		log.Error("failed to send message event",
 			"message_id", message.Id,
 			"channel_id", channelId,
 			"error", err.Error())
@@ -1773,15 +1789,15 @@ func (e *entity) sendMessageCreateEvent(channel *model.Channel, guildId *int64, 
 
 	if guildId != nil {
 		if channel.Type == model.ChannelTypeThread {
-			e.sendThreadActivityEvent(*guildId, channelId, message.Id, message.Author.Id)
+			e.sendThreadActivityEvent(ctx, *guildId, channelId, message.Id, message.Author.Id)
 			return
 		}
-		if err := e.mqt.SendGuildUpdate(*guildId, &mqmsg.GuildChannelMessage{
+		if err := mq.SendGuildUpdate(ctx, e.mqt, *guildId, &mqmsg.GuildChannelMessage{
 			GuildId:   guildId,
 			ChannelId: channelId,
 			MessageId: message.Id,
 		}); err != nil {
-			e.log.Error("failed to send guild message event",
+			log.Error("failed to send guild message event",
 				slog.String("error", err.Error()))
 		}
 	}
@@ -1827,22 +1843,23 @@ func (e *entity) threadRoleMentionRecipients(ctx context.Context, guildID int64,
 	return recipients, nil
 }
 
-func (e *entity) sendThreadActivityEvent(guildID, threadID, messageID, authorID int64) {
-	userIDs, err := e.threadMemberUserIDs(context.Background(), threadID, authorID)
+func (e *entity) sendThreadActivityEvent(ctx context.Context, guildID, threadID, messageID, authorID int64) {
+	log := observability.LoggerWithContext(ctx, e.log)
+	userIDs, err := e.threadMemberUserIDs(ctx, threadID, authorID)
 	if err != nil {
-		e.log.Error("failed to load thread members for activity event",
+		log.Error("failed to load thread members for activity event",
 			"thread_id", threadID,
 			"error", err.Error())
 		return
 	}
 
 	for _, userID := range userIDs {
-		if err := e.mqt.SendUserUpdate(userID, &mqmsg.GuildChannelMessage{
+		if err := mq.SendUserUpdate(ctx, e.mqt, userID, &mqmsg.GuildChannelMessage{
 			GuildId:   &guildID,
 			ChannelId: threadID,
 			MessageId: messageID,
 		}); err != nil {
-			e.log.Error("failed to send thread activity event",
+			log.Error("failed to send thread activity event",
 				"user_id", userID,
 				"thread_id", threadID,
 				"message_id", messageID,
@@ -1851,15 +1868,16 @@ func (e *entity) sendThreadActivityEvent(guildID, threadID, messageID, authorID 
 	}
 }
 
-func (e *entity) sendMentionUserUpdate(userID int64, guildID *int64, channelID, messageID, authorID int64, mentionType model.ChannelMentionType) {
-	if err := e.mqt.SendUserUpdate(userID, &mqmsg.Mention{
+func (e *entity) sendMentionUserUpdate(ctx context.Context, userID int64, guildID *int64, channelID, messageID, authorID int64, mentionType model.ChannelMentionType) {
+	log := observability.LoggerWithContext(ctx, e.log)
+	if err := mq.SendUserUpdate(ctx, e.mqt, userID, &mqmsg.Mention{
 		GuildId:   guildID,
 		ChannelId: channelID,
 		MessageId: messageID,
 		AuthorId:  authorID,
 		Type:      int(mentionType),
 	}); err != nil {
-		e.log.Error("unable to send mention notification",
+		log.Error("unable to send mention notification",
 			slog.String("error", err.Error()),
 			slog.Int64("user_id", userID),
 			slog.Int64("channel_id", channelID),
@@ -2052,7 +2070,7 @@ func (e *entity) fetchAndBuildMessages(c *fiber.Ctx, req *GetMessagesRequest, ch
 	}
 
 	// Build message DTOs with memory optimization
-	messages := e.buildMessageDTOsOptimized(rawMessages, messageData)
+	messages := e.buildMessageDTOsOptimized(c.UserContext(), rawMessages, messageData)
 	if guildId != nil {
 		if err := e.redactBannedMessages(c.UserContext(), *guildId, rawMessages, messages); err != nil {
 			return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to apply banned message visibility")
@@ -2128,17 +2146,18 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 	membersCh := make(chan membersResult, 1)
 	attachmentsCh := make(chan attachmentsResult, 1)
 	threadsCh := make(chan threadsResult, 1)
+	ctx := c.UserContext()
 
 	// Fetch users
 	go func() {
-		users, err := e.user.GetUsersList(c.UserContext(), userIds)
+		users, err := e.user.GetUsersList(ctx, userIds)
 		usersCh <- usersResult{users, err}
 	}()
 
 	// Fetch members if guild channel
 	go func() {
 		if guildId != nil {
-			members, err := e.m.GetMembersList(c.UserContext(), *guildId, userIds)
+			members, err := e.m.GetMembersList(ctx, *guildId, userIds)
 			membersCh <- membersResult{members, err}
 		} else {
 			membersCh <- membersResult{nil, nil}
@@ -2149,7 +2168,7 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 	go func() {
 		attachmentIds := e.extractAttachmentIds(messages)
 		if len(attachmentIds) > 0 && len(messages) > 0 {
-			attachments, err := e.at.SelectAttachmentsByChannel(c.UserContext(), messages[0].ChannelId, attachmentIds)
+			attachments, err := e.at.SelectAttachmentsByChannel(ctx, messages[0].ChannelId, attachmentIds)
 			attachmentsCh <- attachmentsResult{attachments, err}
 		} else {
 			attachmentsCh <- attachmentsResult{nil, nil}
@@ -2163,17 +2182,17 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 			return
 		}
 
-		threadChannels, err := e.ch.GetChannelsBulk(c.UserContext(), threadIDs)
+		threadChannels, err := e.ch.GetChannelsBulk(ctx, threadIDs)
 		if err != nil {
 			threadsCh <- threadsResult{err: err}
 			return
 		}
-		guildChannels, err := e.gc.GetGuildChannelsByChannelIDs(c.UserContext(), threadIDs)
+		guildChannels, err := e.gc.GetGuildChannelsByChannelIDs(ctx, threadIDs)
 		if err != nil {
 			threadsCh <- threadsResult{err: err}
 			return
 		}
-		threadMembers, err := e.tm.GetThreadMembersBulk(c.UserContext(), threadIDs)
+		threadMembers, err := e.tm.GetThreadMembersBulk(ctx, threadIDs)
 		if err != nil {
 			threadsCh <- threadsResult{err: err}
 			return
@@ -2338,13 +2357,13 @@ func (e *entity) Update(c *fiber.Ctx) error {
 	}
 
 	// Send update event
-	go e.sendUpdateEvent(channelId, guildId, updatedMessage)
+	go e.sendUpdateEvent(observability.BackgroundFromContext(c.UserContext()), channelId, guildId, updatedMessage)
 
 	contentChanged := req.Content != nil && *req.Content != message.Content
 	suppressIsEnabled := model.HasMessageFlag(updatedMessage.Flags, model.MessageFlagSuppressEmbeds)
 	suppressLifted := suppressWasEnabled && !suppressIsEnabled
 	if !suppressIsEnabled && HasURL(updatedMessage.Content) && (contentChanged || suppressLifted) {
-		go e.enqueueMakeEmbed(guildId, updatedMessage)
+		go e.enqueueMakeEmbed(observability.BackgroundFromContext(c.UserContext()), guildId, updatedMessage)
 	}
 
 	return c.JSON(updatedMessage)
@@ -2543,23 +2562,24 @@ func (e *entity) fetchUserDataForUpdate(c *fiber.Ctx, userId int64, guildId *int
 	userCh := make(chan userResult, 1)
 	discCh := make(chan discResult, 1)
 	memberCh := make(chan memberResult, 1)
+	ctx := c.UserContext()
 
 	// Fetch user data
 	go func() {
-		user, err := e.user.GetUserById(c.UserContext(), userId)
+		user, err := e.user.GetUserById(ctx, userId)
 		userCh <- userResult{&user, err}
 	}()
 
 	// Fetch discriminator
 	go func() {
-		disc, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), userId)
+		disc, err := e.disc.GetDiscriminatorByUserId(ctx, userId)
 		discCh <- discResult{&disc, err}
 	}()
 
 	// Fetch member data if guild channel
 	go func() {
 		if guildId != nil {
-			member, err := e.m.GetMember(c.UserContext(), userId, *guildId)
+			member, err := e.m.GetMember(ctx, userId, *guildId)
 			memberCh <- memberResult{&member, err}
 		} else {
 			memberCh <- memberResult{nil, nil}
@@ -2604,12 +2624,13 @@ func (e *entity) fetchUserDataForUpdate(c *fiber.Ctx, userId int64, guildId *int
 }
 
 // sendUpdateEvent sends the message update event asynchronously
-func (e *entity) sendUpdateEvent(channelId int64, guildId *int64, message dto.Message) {
-	if err := e.mqt.SendChannelMessage(channelId, &mqmsg.UpdateMessage{
+func (e *entity) sendUpdateEvent(ctx context.Context, channelId int64, guildId *int64, message dto.Message) {
+	log := observability.LoggerWithContext(ctx, e.log)
+	if err := mq.SendChannelMessage(ctx, e.mqt, channelId, &mqmsg.UpdateMessage{
 		GuildId: guildId,
 		Message: message,
 	}); err != nil {
-		e.log.Error("failed to send message update event",
+		log.Error("failed to send message update event",
 			"message_id", message.Id,
 			"channel_id", channelId,
 			"error", err.Error())
@@ -2626,7 +2647,7 @@ func (e *entity) sendUpdateEvent(channelId int64, guildId *int64, message dto.Me
 	}
 
 	if e.imq != nil {
-		if err := e.imq.UpdateMessage(dto.IndexMessage{
+		if err := e.imq.UpdateMessageContext(ctx, dto.IndexMessage{
 			MessageId: message.Id,
 			UserId:    message.Author.Id,
 			ChannelId: channelId,
@@ -2635,7 +2656,7 @@ func (e *entity) sendUpdateEvent(channelId int64, guildId *int64, message dto.Me
 			Has:       UniqueAttachmentTypes(hasTypes),
 			Content:   message.Content,
 		}); err != nil {
-			e.log.Error("failed to send update message event",
+			log.Error("failed to send update message event",
 				"message_id", message.Id,
 				"channel_id", channelId,
 				"error", err.Error())
@@ -2732,28 +2753,29 @@ func (e *entity) deleteMessageAndNotify(c *fiber.Ctx, message *model.Message) er
 	}
 
 	// Send delete event asynchronously
-	go e.sendDeleteEvent(message.ChannelId, message.Id)
+	go e.sendDeleteEvent(observability.BackgroundFromContext(c.UserContext()), message.ChannelId, message.Id)
 
 	return nil
 }
 
 // sendDeleteEvent sends the message delete event asynchronously
-func (e *entity) sendDeleteEvent(channelId, messageId int64) {
-	if err := e.mqt.SendChannelMessage(channelId, &mqmsg.DeleteMessage{
+func (e *entity) sendDeleteEvent(ctx context.Context, channelId, messageId int64) {
+	log := observability.LoggerWithContext(ctx, e.log)
+	if err := mq.SendChannelMessage(ctx, e.mqt, channelId, &mqmsg.DeleteMessage{
 		MessageId: messageId,
 		ChannelId: channelId,
 	}); err != nil {
-		e.log.Error("failed to send message delete event",
+		log.Error("failed to send message delete event",
 			"message_id", messageId,
 			"channel_id", channelId,
 			"error", err.Error())
 	}
 
-	if err := e.imq.IndexDeleteMessage(dto.IndexDeleteMessage{
+	if err := e.imq.IndexDeleteMessageContext(ctx, dto.IndexDeleteMessage{
 		MessageId: messageId,
 		ChannelId: channelId,
 	}); err != nil {
-		e.log.Error("failed to send index delete message event",
+		log.Error("failed to send index delete message event",
 			"message_id", messageId,
 			"error", err.Error())
 	}
@@ -2909,7 +2931,7 @@ func (e *entity) createAttachmentUpload(c *fiber.Ctx, req *UploadAttachmentReque
 }
 
 // buildMessageDTOsOptimized constructs message DTOs efficiently
-func (e *entity) buildMessageDTOsOptimized(messages []model.Message, data *messageRelatedData) []dto.Message {
+func (e *entity) buildMessageDTOsOptimized(ctx context.Context, messages []model.Message, data *messageRelatedData) []dto.Message {
 	result := make([]dto.Message, len(messages))
 
 	for i, message := range messages {
@@ -2917,11 +2939,11 @@ func (e *entity) buildMessageDTOsOptimized(messages []model.Message, data *messa
 		result[i] = dto.Message{
 			Id:                 message.Id,
 			ChannelId:          message.ChannelId,
-			Author:             e.buildAuthorOptimized(message.UserId, data),
+			Author:             e.buildAuthorOptimized(ctx, message.UserId, data),
 			Content:            message.Content,
 			Position:           optionalInt64(message.Position),
 			Attachments:        e.buildAttachmentsOptimized(message.Attachments, data),
-			Embeds:             e.mergedMessageEmbeds(message.Id, message.EmbedsJSON, message.AutoEmbedsJSON, flags),
+			Embeds:             e.mergedMessageEmbeds(ctx, message.Id, message.EmbedsJSON, message.AutoEmbedsJSON, flags),
 			Flags:              flags,
 			UpdatedAt:          message.EditedAt,
 			Type:               message.Type,
@@ -2936,7 +2958,7 @@ func (e *entity) buildMessageDTOsOptimized(messages []model.Message, data *messa
 }
 
 // buildAuthorOptimized constructs author DTO with member override if available
-func (e *entity) buildAuthorOptimized(userId int64, data *messageRelatedData) dto.User {
+func (e *entity) buildAuthorOptimized(ctx context.Context, userId int64, data *messageRelatedData) dto.User {
 	user, userExists := data.Users[userId]
 	if !userExists {
 		return dto.User{
@@ -2955,7 +2977,7 @@ func (e *entity) buildAuthorOptimized(userId int64, data *messageRelatedData) dt
 			author.Name = *member.Username
 		}
 		if member.Avatar != nil {
-			if ad, err := e.getAvatarDataCached(context.Background(), userId, *member.Avatar); err == nil && ad != nil {
+			if ad, err := e.getAvatarDataCached(ctx, userId, *member.Avatar); err == nil && ad != nil {
 				author.Avatar = ad
 			}
 		}
@@ -3044,17 +3066,23 @@ func (e *entity) SetReadState(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetReadState)
 	}
 
+	e.sendReadStateUpdateAsync(c.UserContext(), user.Id, channelId, messageId)
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (e *entity) sendReadStateUpdateAsync(ctx context.Context, userId, channelId, messageId int64) {
+	asyncCtx := observability.BackgroundFromContext(ctx)
+	asyncLog := observability.LoggerWithContext(asyncCtx, e.log)
 	go func() {
-		if err := e.mqt.SendUserUpdate(user.Id, &mqmsg.UpdateReadState{
+		if err := mq.SendUserUpdate(asyncCtx, e.mqt, userId, &mqmsg.UpdateReadState{
 			ChannelId: channelId,
 			MessageId: messageId,
 		}); err != nil {
-			slog.Error("unable to send user update read state event",
+			asyncLog.Error("unable to send user update read state event",
 				slog.String("error", err.Error()))
 		}
 	}()
-
-	return c.SendStatus(fiber.StatusOK)
 }
 
 // Typing
@@ -3082,7 +3110,7 @@ func (e *entity) Typing(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	err = e.mqt.SendChannelMessage(channelId, &mqmsg.ChannelUserTyping{
+	err = mq.SendChannelMessage(c.UserContext(), e.mqt, channelId, &mqmsg.ChannelUserTyping{
 		ChannelId: channel.Id,
 		UserId:    user.Id,
 	})

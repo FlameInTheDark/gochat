@@ -10,8 +10,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/opensearch-project/opensearch-go/v2"
 	"github.com/opensearch-project/opensearch-go/v2/opensearchapi"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type Search struct {
@@ -24,9 +26,10 @@ func closeQuietly(c io.Closer) {
 
 // NewSearch creates a Search service.
 func NewSearch(addresses []string, tlsSkip bool, username, password string) (*Search, error) {
+	target := searchTarget(addresses)
 	conf := opensearch.Config{
 		Addresses: addresses,
-		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: tlsSkip}},
+		Transport: observability.NewHTTPTransport("opensearch", &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: tlsSkip}}),
 		Username:  username,
 		Password:  password,
 	}
@@ -36,17 +39,21 @@ func NewSearch(addresses []string, tlsSkip bool, username, password string) (*Se
 	}
 
 	// Init indices if not exist
-	res, err := c.Indices.Exists([]string{"messages"})
+	existsCtx, finishExists := observability.StartDependencySpan(context.Background(), "opensearch", "indices.exists", target, attribute.String("index", "messages"))
+	res, err := c.Indices.Exists([]string{"messages"}, c.Indices.Exists.WithContext(existsCtx))
 	if err != nil {
+		finishExists(err)
 		return nil, fmt.Errorf("failed to check if index exists: %w", err)
 	}
+	finishExists(nil)
 	defer closeQuietly(res.Body)
 
 	if res.StatusCode != 200 {
-		ctx := context.Background()
+		ctx, finishCreate := observability.StartDependencySpan(context.Background(), "opensearch", "indices.create", target, attribute.String("index", "messages"))
 
 		data, err := json.Marshal(defaultMessagesIndex)
 		if err != nil {
+			finishCreate(err)
 			return nil, err
 		}
 
@@ -55,6 +62,7 @@ func NewSearch(addresses []string, tlsSkip bool, username, password string) (*Se
 			c.Indices.Create.WithBody(bytes.NewReader(data)),
 			c.Indices.Create.WithContext(ctx),
 		)
+		finishCreate(err)
 		if err != nil {
 			return nil, err
 		}
@@ -68,6 +76,7 @@ func (s *Search) IndexMessage(ctx context.Context, m Message) error {
 	if err != nil {
 		return err
 	}
+	ctx, end := observability.StartDependencySpan(ctx, "opensearch", "index", "messages", attribute.Int64("channel.id", m.ChannelId))
 	index, err := s.osc.Index(
 		"messages",
 		bytes.NewReader(data),
@@ -76,12 +85,16 @@ func (s *Search) IndexMessage(ctx context.Context, m Message) error {
 		s.osc.Index.WithContext(ctx),
 	)
 	if err != nil {
+		end(err)
 		return err
 	}
 	if index.IsError() {
-		return fmt.Errorf("error indexing message: %s", index.String())
+		err = fmt.Errorf("error indexing message: %s", index.String())
+		end(err)
+		return err
 	}
 	defer closeQuietly(index.Body)
+	end(nil)
 	return nil
 }
 
@@ -108,22 +121,29 @@ func (s *Search) Search(ctx context.Context, req SearchRequest) (results *Result
 		s.osc.Search.WithRouting(fmt.Sprintf("%d", req.ChannelId)),
 	}
 
+	ctx, end := observability.StartDependencySpan(ctx, "opensearch", "search", "messages", attribute.Int64("channel.id", req.ChannelId))
+	opts[0] = s.osc.Search.WithContext(ctx)
 	res, err := s.osc.Search(opts...)
 	if err != nil {
+		end(err)
 		return nil, err
 	}
 	defer closeQuietly(res.Body)
 	if res.IsError() {
 		if res.StatusCode == http.StatusNotFound {
+			end(nil)
 			return
 		}
 		b, _ := io.ReadAll(res.Body)
-		return nil, fmt.Errorf("search response error: %s", string(b))
+		err = fmt.Errorf("search response error: %s", string(b))
+		end(err)
+		return nil, err
 	}
 
 	var sr osSearchResponse
 	dec := json.NewDecoder(res.Body)
 	if err := dec.Decode(&sr); err != nil {
+		end(err)
 		return nil, err
 	}
 
@@ -131,6 +151,7 @@ func (s *Search) Search(ctx context.Context, req SearchRequest) (results *Result
 	for _, h := range sr.Hits.Hits {
 		ids = append(ids, h.Source.MessageId)
 	}
+	end(nil)
 	return &Results{Ids: ids, Total: sr.Hits.Total.Value}, nil
 }
 
@@ -204,6 +225,7 @@ func (s *Search) DeleteMessage(ctx context.Context, m DeleteMessage) error {
 		return fmt.Errorf("opensearch client is not initialized")
 	}
 
+	ctx, end := observability.StartDependencySpan(ctx, "opensearch", "delete", "messages", attribute.Int64("channel.id", m.ChannelId))
 	res, err := s.osc.Delete(
 		"messages",
 		fmt.Sprintf("%d", m.MessageId),
@@ -211,17 +233,22 @@ func (s *Search) DeleteMessage(ctx context.Context, m DeleteMessage) error {
 		s.osc.Delete.WithContext(ctx),
 	)
 	if err != nil {
+		end(err)
 		return err
 	}
 	defer closeQuietly(res.Body)
 
 	if res.IsError() {
 		if res.StatusCode == http.StatusNotFound {
+			end(nil)
 			return nil
 		}
 		b, _ := io.ReadAll(res.Body)
-		return fmt.Errorf("delete response error: %s", string(b))
+		err = fmt.Errorf("delete response error: %s", string(b))
+		end(err)
+		return err
 	}
+	end(nil)
 	return nil
 }
 
@@ -236,6 +263,7 @@ func (s *Search) UpdateMessage(ctx context.Context, m Message) error {
 		return err
 	}
 
+	ctx, end := observability.StartDependencySpan(ctx, "opensearch", "update", "messages", attribute.Int64("channel.id", m.ChannelId))
 	res, err := opensearchapi.UpdateRequest{
 		Index:      "messages",
 		DocumentID: fmt.Sprintf("%d", m.MessageId),
@@ -244,16 +272,31 @@ func (s *Search) UpdateMessage(ctx context.Context, m Message) error {
 		Refresh:    "wait_for",
 	}.Do(ctx, s.osc)
 	if err != nil {
+		end(err)
 		return err
 	}
 	defer closeQuietly(res.Body)
 
 	if res.StatusCode >= 300 {
 		if res.StatusCode == http.StatusNotFound {
+			end(nil)
 			return nil
 		}
 		b, _ := io.ReadAll(res.Body)
-		return fmt.Errorf("update response error: %s", string(b))
+		err = fmt.Errorf("update response error: %s", string(b))
+		end(err)
+		return err
 	}
+	end(nil)
 	return nil
+}
+
+func searchTarget(addresses []string) string {
+	for _, address := range addresses {
+		address = strings.TrimSpace(address)
+		if address != "" {
+			return address
+		}
+	}
+	return "messages"
 }

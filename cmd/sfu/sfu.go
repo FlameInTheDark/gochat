@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -10,9 +12,11 @@ import (
 	"github.com/fasthttp/websocket"
 	"github.com/pion/rtcp"
 	"github.com/pion/webrtc/v4"
+	"go.opentelemetry.io/otel/attribute"
 	"resty.dev/v3"
 
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
 
@@ -68,12 +72,16 @@ func (t *threadSafeWriter) Close() {
 // ---------------------------------------------------------------------------
 
 type peerConnectionState struct {
-	peerConnection *webrtc.PeerConnection
-	websocket      *threadSafeWriter
-	userID         int64
-	perms          int64 // voice permission bitmask from JWT
-	serverMuted    bool  // server-wide mute (admin action)
-	serverDeafened bool  // server-wide deafen (admin action)
+	peerConnection  *webrtc.PeerConnection
+	websocket       *threadSafeWriter
+	userID          int64
+	perms           int64 // voice permission bitmask from JWT
+	serverMuted     bool  // server-wide mute (admin action)
+	serverDeafened  bool  // server-wide deafen (admin action)
+	negotiated      bool  // true after the peer has answered at least one offer
+	forceOffer      bool  // explicit renegotiation request for this peer
+	offeredRevision uint64
+	appliedRevision uint64
 }
 
 // ---------------------------------------------------------------------------
@@ -83,6 +91,7 @@ type peerConnectionState struct {
 type trackLocalEntry struct {
 	track *webrtc.TrackLocalStaticRTP
 	owner int64
+	kind  string
 }
 
 // ---------------------------------------------------------------------------
@@ -94,9 +103,10 @@ type channelState struct {
 	id  int64
 	log *slog.Logger
 
-	mu          sync.RWMutex
-	peers       []*peerConnectionState
-	trackLocals map[string]trackLocalEntry
+	mu               sync.RWMutex
+	peers            []*peerConnectionState
+	trackLocals      map[string]trackLocalEntry
+	topologyRevision uint64
 
 	ttlTicker   *time.Ticker
 	ttlStopChan chan struct{}
@@ -112,9 +122,10 @@ type channelState struct {
 
 	// Configured limits
 	maxAudioBitrateBps uint64
+	telemetry          *observability.SFUTelemetry
 }
 
-func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToken string, log *slog.Logger, maxAudioBitrateBps uint64) *channelState {
+func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToken string, log *slog.Logger, maxAudioBitrateBps uint64, telemetry *observability.SFUTelemetry) *channelState {
 	t := time.NewTicker(time.Minute)
 	stop := make(chan struct{})
 	go func(channelId int64, ch chan struct{}) {
@@ -154,6 +165,7 @@ func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToke
 		signalCh:           sigCh,
 		signalStop:         sigStop,
 		maxAudioBitrateBps: maxAudioBitrateBps,
+		telemetry:          telemetry,
 	}
 
 	// Dedicated goroutine for debounced signaling.
@@ -190,13 +202,15 @@ func (c *channelState) stop() {
 func (c *channelState) addPeer(state *peerConnectionState) {
 	c.mu.Lock()
 	c.peers = append(c.peers, state)
+	rev := c.bumpTopologyRevisionLocked()
 	n := len(c.peers)
 	c.mu.Unlock()
-	c.log.Debug("peer added", slog.Int64("channel", c.id), slog.Int64("user", state.userID), slog.Int("total_peers", n))
+	c.log.Debug("peer added", slog.Int64("channel", c.id), slog.Int64("user", state.userID), slog.Int("total_peers", n), slog.Uint64("revision", rev))
 }
 
 func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removed bool, empty bool) {
 	var removedUser int64
+	var rev uint64
 	c.mu.Lock()
 	for i := range c.peers {
 		if c.peers[i].peerConnection == pc {
@@ -207,6 +221,7 @@ func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removed bool, empt
 			c.peers[last] = nil // help GC
 			c.peers = c.peers[:last]
 			removed = true
+			rev = c.bumpTopologyRevisionLocked()
 			break
 		}
 	}
@@ -217,7 +232,7 @@ func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removed bool, empt
 	n := len(c.peers)
 	c.mu.Unlock()
 	if removed {
-		c.log.Debug("peer removed", slog.Int64("channel", c.id), slog.Int64("user", removedUser), slog.Int("total_peers", n))
+		c.log.Debug("peer removed", slog.Int64("channel", c.id), slog.Int64("user", removedUser), slog.Int("total_peers", n), slog.Uint64("revision", rev))
 	}
 	return removed, empty
 }
@@ -235,27 +250,65 @@ func (c *channelState) addTrack(userID int64, t *webrtc.TrackRemote) *webrtc.Tra
 	}
 
 	c.mu.Lock()
-	c.trackLocals[trackID] = trackLocalEntry{track: trackLocal, owner: userID}
+	c.trackLocals[trackID] = trackLocalEntry{track: trackLocal, owner: userID, kind: t.Kind().String()}
+	rev := c.bumpTopologyRevisionLocked()
 	c.mu.Unlock()
-	c.log.Debug("track added", slog.Int64("channel", c.id), slog.Int64("user", userID), slog.String("track", trackID), slog.String("kind", t.Kind().String()))
+	c.log.Debug("track added", slog.Int64("channel", c.id), slog.Int64("user", userID), slog.String("track", trackID), slog.String("kind", t.Kind().String()), slog.Uint64("revision", rev))
 	return trackLocal
 }
 
-func (c *channelState) removeTrack(track *webrtc.TrackLocalStaticRTP) (removed bool, empty bool) {
+func (c *channelState) removeTrack(track *webrtc.TrackLocalStaticRTP) (kind string, removed bool, empty bool) {
 	if track == nil {
-		return false, false
+		return "", false, false
 	}
+	var rev uint64
 	c.mu.Lock()
-	if _, ok := c.trackLocals[track.ID()]; ok {
+	if entry, ok := c.trackLocals[track.ID()]; ok {
 		delete(c.trackLocals, track.ID())
+		kind = entry.kind
 		removed = true
+		rev = c.bumpTopologyRevisionLocked()
 	}
 	empty = len(c.peers) == 0 && len(c.trackLocals) == 0
 	c.mu.Unlock()
 	if removed {
-		c.log.Debug("track removed", slog.Int64("channel", c.id), slog.String("track", track.ID()))
+		c.log.Debug("track removed", slog.Int64("channel", c.id), slog.String("track", track.ID()), slog.Uint64("revision", rev))
 	}
-	return removed, empty
+	return kind, removed, empty
+}
+
+func (c *channelState) bumpTopologyRevisionLocked() uint64 {
+	c.topologyRevision++
+	return c.topologyRevision
+}
+
+func (c *channelState) requestPeerNegotiation(pc *webrtc.PeerConnection) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, state := range c.peers {
+		if state.peerConnection == pc {
+			state.forceOffer = true
+			return true
+		}
+	}
+	return false
+}
+
+func (c *channelState) applyPeerAnswer(pc *webrtc.PeerConnection) (needsSignal bool, ok bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, state := range c.peers {
+		if state.peerConnection != pc {
+			continue
+		}
+		state.negotiated = true
+		if state.offeredRevision > state.appliedRevision {
+			state.appliedRevision = state.offeredRevision
+		}
+		needsSignal = state.forceOffer || state.appliedRevision < c.topologyRevision
+		return needsSignal, true
+	}
+	return false, false
 }
 
 // signalPeerConnections enqueues a signal request to the dedicated goroutine.
@@ -276,8 +329,9 @@ func (c *channelState) signalPeerConnections() {
 //
 // The logic:
 //  1. Under lock, remove ALL closed/failed peers in a single sweep (no retry loop).
-//  2. For each remaining peer in stable signaling state, reconcile senders
-//     with the current track set, create an offer, and set local description.
+//  2. For each peer that still needs negotiation, reconcile senders with the
+//     current track set and create an offer if the effective sender layout changed
+//     or the peer explicitly needs an offer.
 //  3. Release the lock and send offers over WebSocket.
 func (c *channelState) doSignalPeerConnections() {
 	c.mu.Lock()
@@ -303,45 +357,22 @@ func (c *channelState) doSignalPeerConnections() {
 		offer webrtc.SessionDescription
 	}
 	work := make([]peerWork, 0, len(c.peers))
-	c.log.Debug("signaling peers", slog.Int64("channel", c.id), slog.Int("peers", len(c.peers)), slog.Int("tracks", len(c.trackLocals)))
+	currentRevision := c.topologyRevision
+	c.log.Debug("signaling peers", slog.Int64("channel", c.id), slog.Int("peers", len(c.peers)), slog.Int("tracks", len(c.trackLocals)), slog.Uint64("revision", currentRevision))
 
 	for _, state := range c.peers {
+		needsOffer := !state.negotiated || state.forceOffer || state.appliedRevision < currentRevision
+		if !needsOffer {
+			continue
+		}
 		if state.peerConnection.SignalingState() != webrtc.SignalingStateStable {
 			continue
 		}
 
-		existingSenders := make(map[string]bool)
-		// Remove senders that should no longer be sent (track gone, or belongs to same user)
-		for _, sender := range state.peerConnection.GetSenders() {
-			if sender.Track() == nil {
-				continue
-			}
-			trackID := sender.Track().ID()
-			entry, exists := c.trackLocals[trackID]
-			// Remove if: track no longer exists, belongs to the same user,
-			// or the receiver is server-deafened (should receive nothing).
-			if !exists || entry.owner == state.userID || state.serverDeafened {
-				if err := state.peerConnection.RemoveTrack(sender); err != nil {
-					c.log.Warn("failed to remove sender", slog.Int64("channel", c.id), slog.String("error", err.Error()))
-				}
-				continue
-			}
-			existingSenders[trackID] = true
-		}
-
-		// Add missing tracks for other users (skip if receiver is deafened)
-		if !state.serverDeafened {
-			for id, entry := range c.trackLocals {
-				if entry.owner == state.userID {
-					continue
-				}
-				if existingSenders[id] {
-					continue
-				}
-				if _, err := state.peerConnection.AddTrack(entry.track); err != nil {
-					c.log.Warn("failed to add track to peer", slog.Int64("channel", c.id), slog.String("error", err.Error()))
-				}
-			}
+		sendersChanged := c.syncPeerSenders(state)
+		if !state.forceOffer && state.negotiated && !sendersChanged {
+			state.appliedRevision = currentRevision
+			continue
 		}
 
 		offer, err := state.peerConnection.CreateOffer(nil)
@@ -357,6 +388,8 @@ func (c *channelState) doSignalPeerConnections() {
 			continue
 		}
 
+		state.offeredRevision = currentRevision
+		state.forceOffer = false
 		work = append(work, peerWork{state: state, offer: offer})
 	}
 	c.mu.Unlock()
@@ -365,8 +398,57 @@ func (c *channelState) doSignalPeerConnections() {
 	for _, w := range work {
 		if err := w.state.websocket.SendRTCOffer(w.offer); err != nil {
 			c.log.Warn("failed to send offer", slog.Int64("channel", c.id), slog.String("error", err.Error()))
+			continue
+		}
+		if c.telemetry != nil {
+			c.telemetry.Offer(context.Background(), "outbound",
+				attribute.Int64("voice.channel_id", c.id),
+				attribute.Int64("user.id", w.state.userID),
+			)
 		}
 	}
+}
+
+func (c *channelState) syncPeerSenders(state *peerConnectionState) (changed bool) {
+	existingSenders := make(map[string]bool)
+	// Remove senders that should no longer be sent (track gone, or belongs to same user)
+	for _, sender := range state.peerConnection.GetSenders() {
+		if sender.Track() == nil {
+			continue
+		}
+		trackID := sender.Track().ID()
+		entry, exists := c.trackLocals[trackID]
+		// Remove if: track no longer exists, belongs to the same user,
+		// or the receiver is server-deafened (should receive nothing).
+		if !exists || entry.owner == state.userID || state.serverDeafened {
+			if err := state.peerConnection.RemoveTrack(sender); err != nil {
+				c.log.Warn("failed to remove sender", slog.Int64("channel", c.id), slog.String("error", err.Error()))
+			} else {
+				changed = true
+			}
+			continue
+		}
+		existingSenders[trackID] = true
+	}
+
+	// Add missing tracks for other users (skip if receiver is deafened)
+	if !state.serverDeafened {
+		for id, entry := range c.trackLocals {
+			if entry.owner == state.userID {
+				continue
+			}
+			if existingSenders[id] {
+				continue
+			}
+			if _, err := state.peerConnection.AddTrack(entry.track); err != nil {
+				c.log.Warn("failed to add track to peer", slog.Int64("channel", c.id), slog.String("error", err.Error()))
+			} else {
+				changed = true
+			}
+		}
+	}
+
+	return changed
 }
 
 func (c *channelState) dispatchKeyFrame() {
@@ -443,6 +525,7 @@ func (c *channelState) broadcastDeafenState(userID int64, deafened bool) {
 // serverMuteUser sets/unsets server-wide mute on a target user.
 // When muted, the user's audio tracks are removed so no one receives them.
 func (c *channelState) serverMuteUser(targetUserID int64, muted bool) {
+	var changedTopology bool
 	c.mu.Lock()
 	for _, p := range c.peers {
 		if p.userID == targetUserID {
@@ -455,31 +538,46 @@ func (c *channelState) serverMuteUser(targetUserID int64, muted bool) {
 		for id, entry := range c.trackLocals {
 			if entry.owner == targetUserID {
 				delete(c.trackLocals, id)
+				changedTopology = true
 			}
 		}
+	}
+	if changedTopology {
+		c.bumpTopologyRevisionLocked()
 	}
 	c.mu.Unlock()
 	c.log.Info("server mute user", slog.Int64("channel", c.id), slog.Int64("user", targetUserID), slog.Bool("muted", muted))
 	// Notify all peers about the mute state and renegotiate
 	c.broadcastMuteState(targetUserID, muted)
-	c.signalPeerConnections()
+	if changedTopology {
+		c.signalPeerConnections()
+	}
 }
 
 // serverDeafenUser sets/unsets server-wide deafen on a target user.
 // When deafened, the user receives no audio/video from anyone.
 func (c *channelState) serverDeafenUser(targetUserID int64, deafened bool) {
+	var changedTopology bool
 	c.mu.Lock()
 	for _, p := range c.peers {
 		if p.userID == targetUserID {
+			if p.serverDeafened != deafened {
+				changedTopology = true
+			}
 			p.serverDeafened = deafened
 			break
 		}
+	}
+	if changedTopology {
+		c.bumpTopologyRevisionLocked()
 	}
 	c.mu.Unlock()
 	c.log.Info("server deafen user", slog.Int64("channel", c.id), slog.Int64("user", targetUserID), slog.Bool("deafened", deafened))
 	// Notify all peers and renegotiate (deafened user gets no senders)
 	c.broadcastDeafenState(targetUserID, deafened)
-	c.signalPeerConnections()
+	if changedTopology {
+		c.signalPeerConnections()
+	}
 }
 
 // kickUser closes the peer connection of the target user.
@@ -536,21 +634,23 @@ type SFU struct {
 	maxAudioBitrateBps    uint64
 	enforceAudioBitrate   bool
 	audioBitrateMarginPct int
+	telemetry             *observability.SFUTelemetry
 
 	// Graceful shutdown
 	done chan struct{}
 }
 
-func NewSFU(webhookUrl, webhookToken string, log *slog.Logger, maxAudioBitrateBps uint64, enforceAudioBitrate bool, audioBitrateMarginPct int) *SFU {
+func NewSFU(webhookUrl, webhookToken string, log *slog.Logger, maxAudioBitrateBps uint64, enforceAudioBitrate bool, audioBitrateMarginPct int, telemetry *observability.SFUTelemetry) *SFU {
 	return &SFU{
 		log:                   log,
 		channels:              make(map[int64]*channelState),
 		webhookUrl:            webhookUrl,
 		webhookToken:          webhookToken,
-		httpClient:            resty.New().SetTimeout(5 * time.Second),
+		httpClient:            resty.New().SetTransport(observability.NewHTTPTransport("gochat-sfu-webhook", http.DefaultTransport)).SetTimeout(5 * time.Second),
 		maxAudioBitrateBps:    maxAudioBitrateBps,
 		enforceAudioBitrate:   enforceAudioBitrate,
 		audioBitrateMarginPct: audioBitrateMarginPct,
+		telemetry:             telemetry,
 		done:                  make(chan struct{}),
 	}
 }
@@ -572,33 +672,44 @@ func (s *SFU) Close() {
 	s.mu.Unlock()
 }
 
-func (s *SFU) getOrCreateChannel(channelID int64) *channelState {
+func (s *SFU) getOrCreateChannel(channelID int64) (*channelState, bool) {
 	// Fast path: read lock
 	s.mu.RLock()
 	ch, ok := s.channels[channelID]
 	s.mu.RUnlock()
 	if ok {
-		return ch
+		return ch, false
 	}
 
 	// Slow path: write lock + double-check
 	s.mu.Lock()
 	ch, ok = s.channels[channelID]
+	created := false
 	if !ok {
-		ch = newChannelState(channelID, s.httpClient, s.webhookUrl, s.webhookToken, s.log, s.maxAudioBitrateBps)
+		ch = newChannelState(channelID, s.httpClient, s.webhookUrl, s.webhookToken, s.log, s.maxAudioBitrateBps, s.telemetry)
 		s.channels[channelID] = ch
+		created = true
 	}
 	s.mu.Unlock()
-	return ch
+	return ch, created
 }
 
-func (s *SFU) AddPeer(channelID int64, state *peerConnectionState) *channelState {
-	ch := s.getOrCreateChannel(channelID)
+func (s *SFU) AddPeer(ctx context.Context, channelID int64, state *peerConnectionState) *channelState {
+	ch, created := s.getOrCreateChannel(channelID)
+	if created && s.telemetry != nil {
+		s.telemetry.ChannelDelta(ctx, 1)
+	}
 	ch.addPeer(state)
+	if s.telemetry != nil {
+		s.telemetry.PeerDelta(ctx, 1,
+			attribute.Int64("voice.channel_id", channelID),
+			attribute.Int64("user.id", state.userID),
+		)
+	}
 	return ch
 }
 
-func (s *SFU) RemovePeer(channelID int64, pc *webrtc.PeerConnection) {
+func (s *SFU) RemovePeer(ctx context.Context, channelID int64, pc *webrtc.PeerConnection) {
 	s.mu.RLock()
 	ch, ok := s.channels[channelID]
 	s.mu.RUnlock()
@@ -609,57 +720,108 @@ func (s *SFU) RemovePeer(channelID int64, pc *webrtc.PeerConnection) {
 
 	removed, empty := ch.removePeer(pc)
 	if removed {
+		if s.telemetry != nil {
+			s.telemetry.PeerDelta(ctx, -1, attribute.Int64("voice.channel_id", channelID))
+		}
 		ch.signalPeerConnections()
 	}
 	if empty {
-		s.cleanupChannel(channelID, ch)
+		s.cleanupChannel(ctx, channelID, ch)
 	}
 }
 
-func (s *SFU) AddTrack(channelID int64, userID int64, t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
-	ch := s.getOrCreateChannel(channelID)
+func (s *SFU) AddTrack(ctx context.Context, channelID int64, userID int64, t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
+	ch, _ := s.getOrCreateChannel(channelID)
 	track := ch.addTrack(userID, t)
 	if track != nil {
+		if s.telemetry != nil {
+			s.telemetry.TrackDelta(ctx, t.Kind().String(), 1,
+				attribute.Int64("voice.channel_id", channelID),
+				attribute.Int64("user.id", userID),
+			)
+		}
 		ch.signalPeerConnections()
 	}
 	return track
 }
 
-func (s *SFU) RemoveTrack(channelID int64, track *webrtc.TrackLocalStaticRTP) {
+func (s *SFU) RemoveTrack(ctx context.Context, channelID int64, track *webrtc.TrackLocalStaticRTP) {
 	s.mu.RLock()
 	ch, ok := s.channels[channelID]
 	s.mu.RUnlock()
 	if !ok {
 		return
 	}
-	removed, empty := ch.removeTrack(track)
+	kind, removed, empty := ch.removeTrack(track)
 	if removed {
+		if s.telemetry != nil {
+			s.telemetry.TrackDelta(ctx, kind, -1, attribute.Int64("voice.channel_id", channelID))
+		}
 		ch.signalPeerConnections()
 	}
 	if empty {
-		s.cleanupChannel(channelID, ch)
+		s.cleanupChannel(ctx, channelID, ch)
 	}
 }
 
 // cleanupChannel stops goroutines and removes a channel from the map.
 // Uses double-check under write lock to prevent races.
-func (s *SFU) cleanupChannel(channelID int64, ch *channelState) {
+func (s *SFU) cleanupChannel(ctx context.Context, channelID int64, ch *channelState) {
 	s.mu.Lock()
 	// Double-check: another goroutine may have added a new peer between
 	// the empty check and acquiring this write lock.
 	if current, ok := s.channels[channelID]; ok && current == ch && ch.isEmpty() {
 		ch.stop()
 		delete(s.channels, channelID)
+		if s.telemetry != nil {
+			s.telemetry.ChannelDelta(ctx, -1)
+		}
 	}
 	s.mu.Unlock()
 }
 
-func (s *SFU) SignalChannel(channelID int64) {
+func (s *SFU) SignalChannel(ctx context.Context, channelID int64) {
 	s.mu.RLock()
 	ch, ok := s.channels[channelID]
 	s.mu.RUnlock()
 	if !ok {
 		return
+	}
+	if s.telemetry != nil {
+		s.telemetry.Renegotiation(ctx, attribute.Int64("voice.channel_id", channelID))
+	}
+	ch.signalPeerConnections()
+}
+
+func (s *SFU) SignalPeer(ctx context.Context, channelID int64, pc *webrtc.PeerConnection) {
+	s.mu.RLock()
+	ch, ok := s.channels[channelID]
+	s.mu.RUnlock()
+	if !ok {
+		return
+	}
+	if !ch.requestPeerNegotiation(pc) {
+		return
+	}
+	if s.telemetry != nil {
+		s.telemetry.Renegotiation(ctx, attribute.Int64("voice.channel_id", channelID))
+	}
+	ch.signalPeerConnections()
+}
+
+func (s *SFU) ApplyAnswer(ctx context.Context, channelID int64, pc *webrtc.PeerConnection) {
+	s.mu.RLock()
+	ch, ok := s.channels[channelID]
+	s.mu.RUnlock()
+	if !ok {
+		return
+	}
+	needsSignal, found := ch.applyPeerAnswer(pc)
+	if !found || !needsSignal {
+		return
+	}
+	if s.telemetry != nil {
+		s.telemetry.Renegotiation(ctx, attribute.Int64("voice.channel_id", channelID))
 	}
 	ch.signalPeerConnections()
 }
@@ -678,7 +840,7 @@ func (s *SFU) dispatchKeyFrameAll() {
 }
 
 // BroadcastSpeaking relays speaking state to all peers in the channel except the origin.
-func (s *SFU) BroadcastSpeaking(channelID int64, fromUser int64, speaking int) {
+func (s *SFU) BroadcastSpeaking(_ context.Context, channelID int64, fromUser int64, speaking int) {
 	s.mu.RLock()
 	ch, ok := s.channels[channelID]
 	s.mu.RUnlock()
@@ -713,7 +875,7 @@ func hasPerm(perms int64, required permissions.RolePermission) bool {
 }
 
 // ServerMuteUser sets/unsets server-wide mute on a target user in a channel.
-func (s *SFU) ServerMuteUser(channelID int64, targetUserID int64, muted bool) {
+func (s *SFU) ServerMuteUser(ctx context.Context, channelID int64, targetUserID int64, muted bool) {
 	s.mu.RLock()
 	ch, ok := s.channels[channelID]
 	s.mu.RUnlock()
@@ -721,10 +883,13 @@ func (s *SFU) ServerMuteUser(channelID int64, targetUserID int64, muted bool) {
 		return
 	}
 	ch.serverMuteUser(targetUserID, muted)
+	if s.telemetry != nil {
+		s.telemetry.Renegotiation(ctx, attribute.Int64("voice.channel_id", channelID))
+	}
 }
 
 // ServerDeafenUser sets/unsets server-wide deafen on a target user.
-func (s *SFU) ServerDeafenUser(channelID int64, targetUserID int64, deafened bool) {
+func (s *SFU) ServerDeafenUser(ctx context.Context, channelID int64, targetUserID int64, deafened bool) {
 	s.mu.RLock()
 	ch, ok := s.channels[channelID]
 	s.mu.RUnlock()
@@ -732,10 +897,13 @@ func (s *SFU) ServerDeafenUser(channelID int64, targetUserID int64, deafened boo
 		return
 	}
 	ch.serverDeafenUser(targetUserID, deafened)
+	if s.telemetry != nil {
+		s.telemetry.Renegotiation(ctx, attribute.Int64("voice.channel_id", channelID))
+	}
 }
 
 // KickUser closes the peer connection of the target user, removing them from the channel.
-func (s *SFU) KickUser(channelID int64, targetUserID int64) {
+func (s *SFU) KickUser(_ context.Context, channelID int64, targetUserID int64) {
 	s.mu.RLock()
 	ch, ok := s.channels[channelID]
 	s.mu.RUnlock()
@@ -746,7 +914,7 @@ func (s *SFU) KickUser(channelID int64, targetUserID int64) {
 }
 
 // BlockUser adds or removes a user from the channel's block list.
-func (s *SFU) BlockUser(channelID int64, targetUserID int64, block bool) {
+func (s *SFU) BlockUser(_ context.Context, channelID int64, targetUserID int64, block bool) {
 	s.mu.RLock()
 	ch, ok := s.channels[channelID]
 	s.mu.RUnlock()
@@ -758,7 +926,7 @@ func (s *SFU) BlockUser(channelID int64, targetUserID int64, block bool) {
 
 // KickAll sends a kick envelope to every peer in the channel and closes their peer connections.
 // Used when the channel's SFU region changes and this instance is the old SFU.
-func (s *SFU) KickAll(channelID int64) {
+func (s *SFU) KickAll(_ context.Context, channelID int64) {
 	s.mu.RLock()
 	ch, ok := s.channels[channelID]
 	s.mu.RUnlock()

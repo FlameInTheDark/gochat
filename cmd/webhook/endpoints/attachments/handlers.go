@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -29,6 +30,8 @@ const (
 //	@Failure		502	{string}	string	"Bad gateway"
 //	@Router			/webhook/attachments/finalize [post]
 func (e *entity) Finalize(c *fiber.Ctx) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	if !e.tokens.Validate("attachments", "", c.Get(hdrToken)) {
 		return fiber.ErrUnauthorized
 	}
@@ -47,7 +50,7 @@ func (e *entity) Finalize(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(c.UserContext(), reqTO)
 	defer cancel()
 	if err := e.att.DoneAttachment(ctx, req.ID, req.ChannelID, req.ContentType, req.URL, req.PreviewURL, req.Height, req.Width, req.FileSize, req.Name, req.AuthorID); err != nil {
-		e.log.Error("attachment finalize failed", slog.String("error", err.Error()), slog.Int64("id", req.ID), slog.Int64("channel", req.ChannelID))
+		log.Error("attachment finalize failed", slog.String("error", err.Error()), slog.Int64("id", req.ID), slog.Int64("channel", req.ChannelID))
 		return fiber.NewError(fiber.StatusBadGateway, "finalize failed")
 	}
 	return c.SendStatus(fiber.StatusNoContent)

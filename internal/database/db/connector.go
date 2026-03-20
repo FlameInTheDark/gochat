@@ -1,7 +1,6 @@
 package db
 
 import (
-	"log"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -35,7 +34,6 @@ func NewCQLCon(keyspace string, logger gocql.StdLogger, cluster ...string) (*CQL
 		if err == nil {
 			break
 		}
-		log.Printf("[cql] connect attempt %d failed: %v; retrying in 5s", n, err)
 		if logger != nil {
 			logger.Printf("CQL connect attempt %d failed: %v", n, err)
 		}

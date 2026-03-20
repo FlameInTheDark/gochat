@@ -9,30 +9,34 @@ import (
 	crand "crypto/rand"
 
 	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 
 	pgmodel "github.com/FlameInTheDark/gochat/internal/database/model"
 )
 
 func (h *Handler) hello(msg *mqmsg.Message) {
+	ctx := h.baseContext()
+	log := helper.WithContext(h.log, ctx)
 	var m helloMessage
 	err := json.Unmarshal(msg.Data, &m)
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()
-		h.log.Error("Error unmarshalling hello message", "error", err)
+		log.Error("Error unmarshalling hello message", "error", err)
 		return
 	}
 	token, err := h.jwt.ParseAccess(m.Token)
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()
-		h.log.Error("Error parsing token", "error", err)
+		h.telemetry.AuthFailure(ctx, "invalid_token")
+		log.Error("Error parsing token", "error", err)
 		return
 	}
 
 	// --- Parallel DB fetch: user + guilds ---
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(h.hbTimeout))
+	ctx, cancel := context.WithTimeout(helper.ContextWithUserID(ctx, token.UserID), time.Second*time.Duration(h.hbTimeout))
 	defer cancel()
 
 	type userResult struct {
@@ -61,13 +65,14 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 	if ur.err != nil {
 		h.initTimer.Stop()
 		h.closer()
-		h.log.Error("Error getting user", "error", ur.err)
+		h.telemetry.AuthFailure(ctx, "user_lookup")
+		log.Error("Error getting user", "error", ur.err)
 		return
 	}
 	if gr.err != nil {
 		h.initTimer.Stop()
 		h.closer()
-		h.log.Error("Error getting user's guilds", "error", gr.err)
+		log.Error("Error getting user's guilds", "error", gr.err)
 		return
 	}
 
@@ -102,11 +107,13 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()
-		h.log.Error("Error sending hello message", "error", err)
+		log.Error("Error sending hello message", "error", err)
 		return
 	}
 	h.hTimer = time.AfterFunc(time.Millisecond*time.Duration(h.hbTimeout+10000), func() {
-		h.log.Warn("Heartbeat timeout; closing WS", "user_id", func() any {
+		timeoutCtx := h.baseContext()
+		h.telemetry.HeartbeatTimeout(timeoutCtx)
+		helper.WithContext(h.log, timeoutCtx).Warn("Heartbeat timeout; closing WS", "user_id", func() any {
 			if h.user != nil {
 				return h.user.Id
 			}
@@ -114,7 +121,7 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 		}())
 		err := h.Close()
 		if err != nil {
-			h.log.Error("Error closing WS connection after timeout", "error", err)
+			helper.WithContext(h.log, timeoutCtx).Error("Error closing WS connection after timeout", "error", err)
 		}
 	})
 
@@ -123,14 +130,14 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()
-		h.log.Error("Error subscribing to user", "error", err)
+		log.Error("Error subscribing to user", "error", err)
 		return
 	}
 
 	// Subscribe to all guilds (hub registrations are fast in-memory ops)
 	for _, g := range gr.guilds {
 		if err := h.sub.Subscribe(fmt.Sprintf("guild.%d", g.GuildId), fmt.Sprintf("guild.%d", g.UserId)); err != nil {
-			h.log.Warn("Error subscribing to guild", "error", err, "guild_id", g.GuildId)
+			log.Warn("Error subscribing to guild", "error", err, "guild_id", g.GuildId)
 		}
 	}
 }

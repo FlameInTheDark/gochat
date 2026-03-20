@@ -15,7 +15,9 @@ import (
 	emojiutil "github.com/FlameInTheDark/gochat/internal/emoji"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/upload"
 )
@@ -195,7 +197,7 @@ func (e *entity) UpdateEmoji(c *fiber.Ctx) error {
 	}
 
 	_ = e.invalidateEmojiCache(c.UserContext(), guildId, emojiId)
-	go e.publishEmojiUpdate(guildId, guildEmojiToDTO(updated))
+	go e.publishEmojiUpdate(observability.BackgroundFromContext(c.UserContext()), guildId, guildEmojiToDTO(updated))
 	return c.JSON(guildEmojiToDTO(updated))
 }
 
@@ -244,7 +246,7 @@ func (e *entity) DeleteEmoji(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToDeleteEmoji)
 	}
 	_ = e.invalidateEmojiCache(c.UserContext(), guildId, emojiId)
-	go e.publishEmojiDelete(guildId, emojiId)
+	go e.publishEmojiDelete(observability.BackgroundFromContext(c.UserContext()), guildId, emojiId)
 	return c.SendStatus(fiber.StatusOK)
 }
 
@@ -309,14 +311,14 @@ func (e *entity) removeEmojiObjects(ctx context.Context, emojiId int64) error {
 	return nil
 }
 
-func (e *entity) publishEmojiUpdate(guildId int64, emoji dto.GuildEmoji) {
-	_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateGuildEmoji{Emoji: emoji})
+func (e *entity) publishEmojiUpdate(ctx context.Context, guildId int64, emoji dto.GuildEmoji) {
+	_ = mq.SendGuildUpdate(ctx, e.mqt, guildId, &mqmsg.UpdateGuildEmoji{Emoji: emoji})
 }
 
-func (e *entity) publishEmojiCreate(guildId int64, emoji dto.GuildEmoji) {
-	_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.CreateGuildEmoji{Emoji: emoji})
+func (e *entity) publishEmojiCreate(ctx context.Context, guildId int64, emoji dto.GuildEmoji) {
+	_ = mq.SendGuildUpdate(ctx, e.mqt, guildId, &mqmsg.CreateGuildEmoji{Emoji: emoji})
 }
 
-func (e *entity) publishEmojiDelete(guildId, emojiId int64) {
-	_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.DeleteGuildEmoji{GuildId: guildId, EmojiId: emojiId})
+func (e *entity) publishEmojiDelete(ctx context.Context, guildId, emojiId int64) {
+	_ = mq.SendGuildUpdate(ctx, e.mqt, guildId, &mqmsg.DeleteGuildEmoji{GuildId: guildId, EmojiId: emojiId})
 }

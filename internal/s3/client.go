@@ -5,13 +5,16 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	aws "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	awss3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 const (
@@ -30,6 +33,7 @@ func NewClient(endpoint, accessKeyId, secretAccessKey, region, bucket string, us
 	cfg := aws.Config{
 		Region:      region,
 		Credentials: aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(accessKeyId, secretAccessKey, "")),
+		HTTPClient:  observability.NewHTTPClient(&http.Client{Timeout: 30 * time.Second}, "s3"),
 	}
 
 	s3Client := awss3.NewFromConfig(cfg, func(o *awss3.Options) {
@@ -49,14 +53,17 @@ func NewClient(endpoint, accessKeyId, secretAccessKey, region, bucket string, us
 // MakeUploadAttachment returns a presigned PUT URL to upload the object with one-minute duration.
 func (c *Client) MakeUploadAttachment(ctx context.Context, channelId, objectId, fileSize int64, objectName string) (string, error) {
 	key := fmt.Sprintf("%s/%d/%d/%s", attachmentDirectory, channelId, objectId, objectName)
+	ctx, end := observability.StartDependencySpan(ctx, "s3", "presign_put", c.bucket, attribute.String("s3.key_prefix", attachmentDirectory))
 	req, err := c.presign.PresignPutObject(ctx, &awss3.PutObjectInput{
 		Bucket:        aws.String(c.bucket),
 		Key:           aws.String(key),
 		ContentLength: aws.Int64(fileSize),
 	}, awss3.WithPresignExpires(time.Minute))
 	if err != nil {
+		end(err)
 		return "", err
 	}
+	end(nil)
 	return req.URL, nil
 }
 
@@ -64,26 +71,36 @@ func (c *Client) MakeDownloadURL(ctx context.Context, key string, ttl time.Durat
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
+	ctx, end := observability.StartDependencySpan(ctx, "s3", "presign_get", c.bucket, attribute.String("s3.key_prefix", objectPrefix(key)))
 	req, err := c.presign.PresignGetObject(ctx, &awss3.GetObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),
 	}, awss3.WithPresignExpires(ttl))
 	if err != nil {
+		end(err)
 		return "", err
 	}
+	end(nil)
 	return req.URL, nil
 }
 
 func (c *Client) RemoveAttachment(ctx context.Context, key string) error {
+	ctx, end := observability.StartDependencySpan(ctx, "s3", "delete_object", c.bucket, attribute.String("s3.key_prefix", objectPrefix(key)))
 	_, err := c.s3.DeleteObject(ctx, &awss3.DeleteObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),
 	})
+	end(err)
 	return err
 }
 
 // UploadObject uploads an object from a stream to S3 without requiring local disk.
 func (c *Client) UploadObject(ctx context.Context, key string, body io.Reader, contentType string) (err error) {
+	ctx, end := observability.StartDependencySpan(ctx, "s3", "multipart_upload", c.bucket, attribute.String("s3.key_prefix", objectPrefix(key)))
+	defer func() {
+		end(err)
+	}()
+
 	createIn := &awss3.CreateMultipartUploadInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),
@@ -102,7 +119,9 @@ func (c *Client) UploadObject(ctx context.Context, key string, body io.Reader, c
 		if err == nil || uploadID == nil {
 			return
 		}
-		_, _ = c.s3.AbortMultipartUpload(context.Background(), &awss3.AbortMultipartUploadInput{
+		abortCtx, cancel := context.WithTimeout(observability.BackgroundFromContext(ctx), 10*time.Second)
+		defer cancel()
+		_, _ = c.s3.AbortMultipartUpload(abortCtx, &awss3.AbortMultipartUploadInput{
 			Bucket:   aws.String(c.bucket),
 			Key:      aws.String(key),
 			UploadId: uploadID,
@@ -172,17 +191,20 @@ func readNextUploadChunk(reader io.Reader, maxSize int64) ([]byte, error) {
 
 // StatObject performs a HEAD request to retrieve object size and content type
 func (c *Client) StatObject(ctx context.Context, key string) (int64, *string, error) {
+	ctx, end := observability.StartDependencySpan(ctx, "s3", "head_object", c.bucket, attribute.String("s3.key_prefix", objectPrefix(key)))
 	out, err := c.s3.HeadObject(ctx, &awss3.HeadObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),
 	})
 	if err != nil {
+		end(err)
 		return 0, nil, err
 	}
 	var size int64
 	if out.ContentLength != nil {
 		size = *out.ContentLength
 	}
+	end(nil)
 	return size, out.ContentType, nil
 }
 
@@ -194,6 +216,12 @@ type ObjectInfo struct {
 
 // ListObjectsPrefix lists object keys under a given prefix
 func (c *Client) ListObjectsPrefix(ctx context.Context, prefix string, max int64) ([]ObjectInfo, error) {
+	ctx, end := observability.StartDependencySpan(ctx, "s3", "list_objects", c.bucket, attribute.String("s3.key_prefix", objectPrefix(prefix)))
+	var opErr error
+	defer func() {
+		end(opErr)
+	}()
+
 	var result []ObjectInfo
 	var token *string
 	fetched := int64(0)
@@ -205,6 +233,7 @@ func (c *Client) ListObjectsPrefix(ctx context.Context, prefix string, max int64
 			MaxKeys:           aws.Int32(1000),
 		})
 		if err != nil {
+			opErr = err
 			return nil, err
 		}
 		for _, obj := range out.Contents {
@@ -241,4 +270,15 @@ func normalizeEndpoint(endpoint string, useSSL bool) string {
 		return "https://" + ep
 	}
 	return "http://" + ep
+}
+
+func objectPrefix(key string) string {
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return "unknown"
+	}
+	if idx := strings.Index(key, "/"); idx > 0 {
+		return key[:idx]
+	}
+	return key
 }

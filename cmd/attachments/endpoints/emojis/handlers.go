@@ -12,7 +12,9 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	emojiutil "github.com/FlameInTheDark/gochat/internal/emoji"
 	"github.com/FlameInTheDark/gochat/internal/helper"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/upload"
 )
@@ -40,6 +42,8 @@ import (
 //	@failure		500			{string}	string	"Internal server error"
 //	@Router			/upload/emojis/{guild_id}/{emoji_id} [post]
 func (e *entity) Upload(c *fiber.Ctx) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	guildId, err := strconv.ParseInt(c.Params("guild_id"), 10, 64)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
@@ -69,14 +73,12 @@ func (e *entity) Upload(c *fiber.Ctx) error {
 
 	result, err := e.uploader.Upload(c.UserContext(), guildId, emojiId, body)
 	if err != nil {
-		if e.log != nil {
-			e.log.Error("emoji upload failed",
-				slog.String("error", err.Error()),
-				slog.Int64("guild_id", guildId),
-				slog.Int64("emoji_id", emojiId),
-				slog.Int64("user_id", user.Id),
-			)
-		}
+		log.Error("emoji upload failed",
+			slog.String("error", err.Error()),
+			slog.Int64("guild_id", guildId),
+			slog.Int64("emoji_id", emojiId),
+			slog.Int64("user_id", user.Id),
+		)
 		return emojiUploadError(err)
 	}
 	if result.AlreadyDone {
@@ -87,8 +89,9 @@ func (e *entity) Upload(c *fiber.Ctx) error {
 		_ = e.cache.Delete(c.UserContext(), emojiutil.LookupCacheKey(emojiId))
 		_ = e.cache.Delete(c.UserContext(), emojiutil.GuildCacheKey(guildId))
 	}
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
 	go func() {
-		_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.CreateGuildEmoji{Emoji: dto.GuildEmoji{Id: emojiId, GuildId: guildId, Name: result.Name, Animated: result.Animated}})
+		_ = mq.SendGuildUpdate(asyncCtx, e.mqt, guildId, &mqmsg.CreateGuildEmoji{Emoji: dto.GuildEmoji{Id: emojiId, GuildId: guildId, Name: result.Name, Animated: result.Animated}})
 	}()
 	return c.SendStatus(fiber.StatusCreated)
 }

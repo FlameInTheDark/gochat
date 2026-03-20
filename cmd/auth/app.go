@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -41,6 +42,9 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 	shut.Up(pg)
+	postgresProbeCtx, cancelPostgresProbe := context.WithCancel(context.Background())
+	shut.UpFunc(cancelPostgresProbe)
+	go pg.StartProbeLoop(postgresProbeCtx, 30*time.Second)
 
 	cache, err := kvs.New(cfg.KeyDB)
 	if err != nil {

@@ -11,6 +11,9 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
 	"github.com/nats-io/nats.go"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/FlameInTheDark/gochat/cmd/ws/auth"
 	"github.com/FlameInTheDark/gochat/cmd/ws/subscriber"
@@ -24,7 +27,9 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/presence"
 )
@@ -71,13 +76,15 @@ type Handler struct {
 	closer      func()
 	log         *slog.Logger
 	cache       *kvs.Cache
+	ctx         context.Context
+	telemetry   *observability.WSTelemetry
 
 	// lastPresenceTouch throttles TouchSessionTTL calls to avoid
 	// redundant Redis round-trips on every heartbeat.
 	lastPresenceTouch time.Time
 }
 
-func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v any) error, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger, nats *nats.Conn, pstore *presence.Store, cache *kvs.Cache, onAuthenticated func(userID int64)) *Handler {
+func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v any) error, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger, nats *nats.Conn, pstore *presence.Store, cache *kvs.Cache, onAuthenticated func(userID int64), baseCtx context.Context, telemetry *observability.WSTelemetry) *Handler {
 	initTimer := time.AfterFunc(time.Second*5, closer)
 	return &Handler{
 		sub:      sub,
@@ -101,50 +108,62 @@ func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v 
 		log:             logger,
 		cache:           cache,
 		onAuthenticated: onAuthenticated,
+		ctx:             baseCtx,
+		telemetry:       telemetry,
 	}
 }
 
 func (h *Handler) HandleMessage(e mqmsg.Message) {
+	ctx, span := h.startMessageSpan(e)
+	defer span.End()
+	log := helper.WithContext(h.log, ctx)
+
 	if e.Operation != mqmsg.OPCodeHello && h.user == nil {
 		return
 	}
+	h.telemetry.MessageIn(ctx, int(e.Operation), messageEventType(e.EventType))
 	switch e.Operation {
 	case mqmsg.OPCodeHello:
 		h.hello(&e)
 	case mqmsg.OPCodeHeartBeat:
 		if len(e.Data) == 0 || string(bytes.TrimSpace(e.Data)) == "null" {
+			h.telemetry.Heartbeat(ctx, "empty")
 			return
 		}
 		var m heartbeatMessage
 		err := json.Unmarshal(e.Data, &m)
 		if err != nil {
-			h.log.Warn("Error unmarshalling heart beat msg", "error", err)
+			h.telemetry.Heartbeat(ctx, "invalid")
+			log.Warn("Error unmarshalling heart beat msg", "error", err)
 			return
 		}
 		if m.LastEventId >= h.lastEventId {
+			h.telemetry.Heartbeat(ctx, "accepted")
 			// add grace to tolerate network jitter (10s)
 			h.hTimer.Reset(time.Millisecond * time.Duration(h.hbTimeout+10000))
 			// Refresh this session TTL: heartbeat_interval * 2
 			// Throttled: skip if we touched within the last 10s.
 			if h.user != nil && h.pstore != nil && h.sessionID != "" && h.presenceSet &&
 				time.Since(h.lastPresenceTouch) > 10*time.Second {
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+				opCtx, cancel := context.WithTimeout(ctx, time.Second*2)
 				// TTL expects seconds
 				ttl := h.hbTimeout * 2 / 1000
 				if ttl < 1 {
 					ttl = 1
 				}
-				_ = h.pstore.TouchSessionTTL(ctx, h.user.Id, h.sessionID, ttl)
+				_ = h.pstore.TouchSessionTTL(opCtx, h.user.Id, h.sessionID, ttl)
 				cancel()
 				h.lastPresenceTouch = time.Now()
 			}
 			h.lastEventId = m.LastEventId
+		} else {
+			h.telemetry.Heartbeat(ctx, "stale")
 		}
 	case mqmsg.OPCodeChannelSubscription:
 		var m mqmsg.Subscribe
 		err := json.Unmarshal(e.Data, &m)
 		if err != nil {
-			h.log.Warn("Error unmarshalling channel subscription msg", "error", err)
+			log.Warn("Error unmarshalling channel subscription msg", "error", err)
 			return
 		}
 
@@ -153,23 +172,23 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		}
 
 		for _, guildID := range m.Guilds {
-			ok, err := h.m.IsGuildMember(context.Background(), guildID, h.user.Id)
+			ok, err := h.m.IsGuildMember(ctx, guildID, h.user.Id)
 			if err != nil {
-				h.log.Warn("Error checking guild access", "error", err)
+				log.Warn("Error checking guild access", "error", err)
 			} else if ok {
 				err := h.sub.Subscribe(fmt.Sprintf("guild.%d", guildID), fmt.Sprintf("guild.%d", guildID))
 				if err != nil {
-					h.log.Warn("Error subscribing to guild", "error", err)
+					log.Warn("Error subscribing to guild", "error", err)
 				}
 			} else {
-				h.log.Warn("User does not have permission to view guild", "user_id", h.user.Id, "guild_id", guildID)
+				log.Warn("User does not have permission to view guild", "user_id", h.user.Id, "guild_id", guildID)
 			}
 		}
 
 	case mqmsg.OPCodePresenceSubscription:
 		var m mqmsg.PresenceSubscription
 		if err := json.Unmarshal(e.Data, &m); err != nil {
-			h.log.Warn("Error unmarshalling presence subscription msg", "error", err)
+			log.Warn("Error unmarshalling presence subscription msg", "error", err)
 			return
 		}
 
@@ -187,7 +206,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			for _, uid := range m.Set {
 				key := fmt.Sprintf("presence.%d", uid)
 				if err := h.sub.Subscribe(key, fmt.Sprintf("presence.user.%d", uid)); err != nil {
-					h.log.Warn("Error subscribing to presence", "error", err, "user_id", uid)
+					log.Warn("Error subscribing to presence", "error", err, "user_id", uid)
 					continue
 				}
 				h.psubs[uid] = struct{}{}
@@ -201,7 +220,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			}
 			key := fmt.Sprintf("presence.%d", uid)
 			if err := h.sub.Subscribe(key, fmt.Sprintf("presence.user.%d", uid)); err != nil {
-				h.log.Warn("Error subscribing to presence", "error", err, "user_id", uid)
+				log.Warn("Error subscribing to presence", "error", err, "user_id", uid)
 				continue
 			}
 			h.psubs[uid] = struct{}{}
@@ -236,16 +255,16 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		if m.Channel <= 0 {
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		_ = h.cache.SetTTL(ctx, fmt.Sprintf("voice:route:%d", m.Channel), 60)
+		opCtx, cancel := context.WithTimeout(ctx, time.Second)
+		_ = h.cache.SetTTL(opCtx, fmt.Sprintf("voice:route:%d", m.Channel), 60)
 		// Update this session's voice channel and publish aggregated presence
 		if h.pstore != nil && h.sessionID != "" && h.user != nil {
 			// Set session voice channel
 			ch := m.Channel
-			_ = h.pstore.SetSessionVoiceChannel(ctx, h.user.Id, h.sessionID, &ch, h.hbTimeout*2/1000)
-			agg, _, _ := h.pstore.Aggregate(ctx, h.user.Id, time.Now().Unix())
+			_ = h.pstore.SetSessionVoiceChannel(opCtx, h.user.Id, h.sessionID, &ch, h.hbTimeout*2/1000)
+			agg, _, _ := h.pstore.Aggregate(opCtx, h.user.Id, time.Now().Unix())
 			// cache aggregated presence and publish
-			_ = h.pstore.SetAggregated(ctx, agg, h.hbTimeout*2/1000)
+			_ = h.pstore.SetAggregated(opCtx, agg, h.hbTimeout*2/1000)
 			h.publishPresence(agg)
 		}
 		cancel()
@@ -257,7 +276,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 
 		var m mqmsg.PresenceUpdateRequest
 		if err := json.Unmarshal(e.Data, &m); err != nil {
-			h.log.Warn("Error unmarshalling presence update msg", "error", err)
+			log.Warn("Error unmarshalling presence update msg", "error", err)
 			return
 		}
 		// Allow offline for manual invisible mode; other valid statuses are online/idle/dnd
@@ -267,24 +286,24 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			ttl = 1
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+		opCtx, cancel := context.WithTimeout(ctx, time.Second*2)
 		defer cancel()
 
 		if m.Status == presence.StatusOffline {
 			// Set global override to appear offline
-			if err := h.pstore.SetOverride(ctx, h.user.Id, presence.StatusOffline, now, m.CustomStatusText); err != nil {
-				h.log.Warn("Error setting offline override", "error", err)
+			if err := h.pstore.SetOverride(opCtx, h.user.Id, presence.StatusOffline, now, m.CustomStatusText); err != nil {
+				log.Warn("Error setting offline override", "error", err)
 				return
 			}
-			agg, _, _ := h.pstore.Aggregate(ctx, h.user.Id, now)
-			_ = h.pstore.SetAggregated(ctx, agg, ttl)
+			agg, _, _ := h.pstore.Aggregate(opCtx, h.user.Id, now)
+			_ = h.pstore.SetAggregated(opCtx, agg, ttl)
 			h.publishPresence(agg)
 			return
 		}
 
 		// Clear override and upsert session presence
-		if err := h.pstore.ClearOverride(ctx, h.user.Id); err != nil {
-			h.log.Warn("Error clearing presence override", "error", err)
+		if err := h.pstore.ClearOverride(opCtx, h.user.Id); err != nil {
+			log.Warn("Error clearing presence override", "error", err)
 		}
 		if h.sessionID == "" {
 			h.sessionID = fmt.Sprintf("%d-%d", h.user.Id, now)
@@ -318,23 +337,23 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			sp.Deafen = deafen
 
 			// Update voice state in store
-			if err := h.pstore.SetSessionVoiceState(ctx, h.user.Id, h.sessionID, mute, deafen, ttl); err != nil {
-				h.log.Warn("Error setting session voice state", "error", err)
+			if err := h.pstore.SetSessionVoiceState(opCtx, h.user.Id, h.sessionID, mute, deafen, ttl); err != nil {
+				log.Warn("Error setting session voice state", "error", err)
 			}
 		}
 
-		if err := h.pstore.UpsertSession(ctx, h.user.Id, h.sessionID, sp, ttl); err != nil {
-			h.log.Warn("Error upserting session presence", "error", err)
+		if err := h.pstore.UpsertSession(opCtx, h.user.Id, h.sessionID, sp, ttl); err != nil {
+			log.Warn("Error upserting session presence", "error", err)
 			return
 		}
 
-		agg, _, _ := h.pstore.Aggregate(ctx, h.user.Id, now)
-		_ = h.pstore.SetAggregated(ctx, agg, ttl)
+		agg, _, _ := h.pstore.Aggregate(opCtx, h.user.Id, now)
+		_ = h.pstore.SetAggregated(opCtx, agg, ttl)
 		h.publishPresence(agg)
 		h.presenceSet = true
 
 	default:
-		h.log.Warn("Unknown operation", "operation", e.Operation)
+		log.Warn("Unknown operation", "operation", e.Operation)
 	}
 }
 
@@ -427,10 +446,12 @@ func (h *Handler) syncChannelSubscriptions(requested []int64) {
 }
 
 func (h *Handler) canSubscribeChannel(channelID int64) bool {
-	if gcinfo, err := h.gc.GetGuildByChannel(context.Background(), channelID); err == nil {
-		_, _, _, ok, perr := h.perm.ChannelPerm(context.Background(), gcinfo.GuildId, gcinfo.ChannelId, h.user.Id, permissions.PermServerViewChannels)
+	ctx := h.baseContext()
+	log := helper.WithContext(h.log, ctx)
+	if gcinfo, err := h.gc.GetGuildByChannel(ctx, channelID); err == nil {
+		_, _, _, ok, perr := h.perm.ChannelPerm(ctx, gcinfo.GuildId, gcinfo.ChannelId, h.user.Id, permissions.PermServerViewChannels)
 		if perr != nil {
-			h.log.Warn("Error checking channel permissions", "error", perr, "channel_id", channelID)
+			log.Warn("Error checking channel permissions", "error", perr, "channel_id", channelID)
 			return false
 		}
 		if ok {
@@ -438,19 +459,19 @@ func (h *Handler) canSubscribeChannel(channelID int64) bool {
 		}
 	}
 
-	if ok, err := h.dm.IsDmChannelParticipant(context.Background(), channelID, h.user.Id); err == nil && ok {
+	if ok, err := h.dm.IsDmChannelParticipant(ctx, channelID, h.user.Id); err == nil && ok {
 		return true
 	} else if err != nil {
-		h.log.Warn("Error checking DM participation", "error", err, "channel_id", channelID)
+		log.Warn("Error checking DM participation", "error", err, "channel_id", channelID)
 	}
 
-	if ok, err := h.gdm.IsGroupDmParticipant(context.Background(), channelID, h.user.Id); err == nil && ok {
+	if ok, err := h.gdm.IsGroupDmParticipant(ctx, channelID, h.user.Id); err == nil && ok {
 		return true
 	} else if err != nil {
-		h.log.Warn("Error checking Group DM participation", "error", err, "channel_id", channelID)
+		log.Warn("Error checking Group DM participation", "error", err, "channel_id", channelID)
 	}
 
-	h.log.Warn("User does not have permission/access to channel", "user_id", h.user.Id, "channel_id", channelID)
+	log.Warn("User does not have permission/access to channel", "user_id", h.user.Id, "channel_id", channelID)
 	return false
 }
 
@@ -464,7 +485,7 @@ func (h *Handler) OnWSClosed() {
 	if h.user == nil || h.pstore == nil || h.nats == nil || !h.presenceSet || h.sessionID == "" {
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, cancel := context.WithTimeout(h.baseContext(), time.Second*2)
 	defer cancel()
 	// Read previous aggregated presence
 	prev, _, _ := h.pstore.Get(ctx, h.user.Id)
@@ -489,7 +510,7 @@ func (h *Handler) sendPresenceSnapshot(userID int64) {
 	if h.pstore == nil {
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, cancel := context.WithTimeout(h.baseContext(), time.Second*2)
 	defer cancel()
 	p, ok, _ := h.pstore.Get(ctx, userID)
 	status := presence.StatusOffline
@@ -525,5 +546,43 @@ func (h *Handler) publishPresence(agg presence.Presence) {
 	if err != nil {
 		return
 	}
-	_ = h.nats.Publish(fmt.Sprintf("presence.user.%d", agg.UserID), b)
+	subject := fmt.Sprintf("presence.user.%d", agg.UserID)
+	ctx, finish := observability.StartNATSPublishSpan(h.baseContext(), subject)
+	defer finish(err)
+	headers := observability.InjectNATSHeaders(ctx, nil)
+	err = h.nats.PublishMsg(&nats.Msg{
+		Subject: subject,
+		Header:  headers,
+		Data:    b,
+	})
+}
+
+func (h *Handler) baseContext() context.Context {
+	ctx := observability.BackgroundFromContext(h.ctx)
+	if h.user != nil {
+		ctx = helper.ContextWithUserID(ctx, h.user.Id)
+	}
+	return ctx
+}
+
+func (h *Handler) startMessageSpan(e mqmsg.Message) (context.Context, trace.Span) {
+	ctx := h.baseContext()
+	attrs := []attribute.KeyValue{
+		attribute.Int("message.operation", int(e.Operation)),
+	}
+	if e.EventType != nil {
+		attrs = append(attrs, attribute.Int("message.event_type", int(*e.EventType)))
+	}
+	ctx, span := observability.Tracer("gochat/ws.handler").Start(ctx, "ws.message")
+	span.SetAttributes(attrs...)
+	span.SetStatus(codes.Ok, "handled")
+	return ctx, span
+}
+
+func messageEventType(eventType *mqmsg.EventType) *int {
+	if eventType == nil {
+		return nil
+	}
+	value := int(*eventType)
+	return &value
 }
