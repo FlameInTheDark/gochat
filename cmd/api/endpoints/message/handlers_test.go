@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"log/slog"
 	"strings"
 	"sync"
 	"testing"
@@ -17,6 +19,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 )
 
@@ -418,6 +421,37 @@ func (f *fakeMessageTransport) SendUserUpdate(userId int64, message mqmsg.EventD
 	return nil
 }
 
+type fakeContextualUserTransport struct {
+	ctxCh chan context.Context
+}
+
+var _ mq.ContextSendTransporter = (*fakeContextualUserTransport)(nil)
+
+func (f *fakeContextualUserTransport) SendChannelMessage(channelId int64, message mqmsg.EventDataMessage) error {
+	return nil
+}
+
+func (f *fakeContextualUserTransport) SendGuildUpdate(guildId int64, message mqmsg.EventDataMessage) error {
+	return nil
+}
+
+func (f *fakeContextualUserTransport) SendUserUpdate(userId int64, message mqmsg.EventDataMessage) error {
+	return nil
+}
+
+func (f *fakeContextualUserTransport) SendChannelMessageContext(ctx context.Context, channelId int64, message mqmsg.EventDataMessage) error {
+	return nil
+}
+
+func (f *fakeContextualUserTransport) SendGuildUpdateContext(ctx context.Context, guildId int64, message mqmsg.EventDataMessage) error {
+	return nil
+}
+
+func (f *fakeContextualUserTransport) SendUserUpdateContext(ctx context.Context, userId int64, message mqmsg.EventDataMessage) error {
+	f.ctxCh <- ctx
+	return nil
+}
+
 type fakeMessageCache struct {
 	deleted []string
 }
@@ -484,7 +518,7 @@ func TestSendMessageCreateEventForThreadTargetsJoinedUsersOnly(t *testing.T) {
 		tm:  threadMembers,
 	}
 
-	e.sendMessageCreateEvent(&model.Channel{Id: 99, Type: model.ChannelTypeThread}, &guildID, dto.Message{
+	e.sendMessageCreateEvent(context.Background(), &model.Channel{Id: 99, Type: model.ChannelTypeThread}, &guildID, dto.Message{
 		Id:     500,
 		Author: dto.User{Id: 1},
 	})
@@ -517,7 +551,7 @@ func TestSendThreadCreateEventsSendsGuildThreadLifecycleEvents(t *testing.T) {
 		cache: cacheStore,
 	}
 
-	e.sendThreadCreateEvents(guildID, &model.Channel{Id: parentChannelID, Type: model.ChannelTypeGuild}, &threadCreateResult{
+	e.sendThreadCreateEvents(context.Background(), guildID, &model.Channel{Id: parentChannelID, Type: model.ChannelTypeGuild}, &threadCreateResult{
 		Channel: &model.Channel{
 			Id:           threadID,
 			Type:         model.ChannelTypeThread,
@@ -723,5 +757,32 @@ func TestCreateMessageWithCleanupStoresReplyMetadata(t *testing.T) {
 	}
 	if chRepo.lastSetChannelID != 9 || chRepo.lastSetMessageID != 15 {
 		t.Fatalf("expected channel last message update, got channel=%d message=%d", chRepo.lastSetChannelID, chRepo.lastSetMessageID)
+	}
+}
+
+func TestSendReadStateUpdateAsyncPreservesRequestContext(t *testing.T) {
+	transport := &fakeContextualUserTransport{ctxCh: make(chan context.Context, 1)}
+	e := &entity{
+		mqt: transport,
+		log: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+
+	ctx := helper.ContextWithRequestID(context.Background(), "req-123")
+	ctx = helper.ContextWithUserID(ctx, 42)
+
+	e.sendReadStateUpdateAsync(ctx, 42, 77, 88)
+
+	select {
+	case sentCtx := <-transport.ctxCh:
+		requestID, ok := helper.RequestIDFromContext(sentCtx)
+		if !ok || requestID != "req-123" {
+			t.Fatalf("expected propagated request id, got %q ok=%v", requestID, ok)
+		}
+		userID, ok := helper.UserIDFromContext(sentCtx)
+		if !ok || userID != 42 {
+			t.Fatalf("expected propagated user id, got %d ok=%v", userID, ok)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for async read state update")
 	}
 }

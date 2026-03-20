@@ -9,7 +9,7 @@ The `cmd/tools` application provides helper commands for operating the platform.
 Generate a JWT for services that authenticate to the Webhook.
 
 Flags
-- `--type` Service type (e.g., `sfu`, `attachments`, `prom`).
+- `--type` Service type (e.g., `sfu`, `attachments`).
 - `--id` Optional service id (UUIDv4). When omitted, a random UUID is generated. For SFU, this should match `service_id` in `sfu_config.yaml`.
 - `--secret` HS256 secret used by the Webhook service (`jwt_secret`).
 - `--format` Output format: `text` (default) or `json`.
@@ -26,12 +26,25 @@ tools token webhook generate --type sfu --secret supersecret --header --curl
 
 # JSON output (contains id and token fields)
 tools token webhook generate --type attachments --secret supersecret --format json
-
-# Prometheus HTTP SD token
-# Use the output token as a Bearer token when scraping the secured SD endpoint:
-#   Authorization: Bearer <token>
-tools token webhook generate --type prom --secret supersecret --header --curl
 ```
 
 Use the output token as `webhook_token` in `sfu_config.yaml` or as the value for `X-Webhook-Token` when calling Webhook endpoints from trusted services.
+
+## Observability Commands
+
+Use the observability subcommands in `cmd/tools` as the supported operator entrypoints for the local stack.
+
+Bootstrap OpenObserve dashboards and alerts:
+
+```
+go run ./cmd/tools observability bootstrap --url http://localhost:5080 --org default --user root@example.com --password Complexpass#123
+```
+
+Run the local smoke check:
+
+```
+go run ./cmd/tools observability smoke --url http://localhost:5080 --org default --user root@example.com --password Complexpass#123
+```
+
+The local Postgres exporter path is still a temporary internal bridge behind the collector. It is not a user-facing monitoring workflow.
 

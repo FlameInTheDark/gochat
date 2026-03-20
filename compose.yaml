@@ -1,3 +1,15 @@
+x-otel-app-env: &otel-app-env
+  GOCHAT_DEPLOYMENT_ENV: docker-compose
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+  OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+
+x-go-service-logging: &go-service-logging
+  driver: fluentd
+  options:
+    fluentd-address: localhost:24224
+    fluentd-async: "true"
+    tag: "{{.Name}}"
+
 services:
 
 # ---------- Application services ----------
@@ -7,6 +19,8 @@ services:
     build:
       dockerfile: auth.Dockerfile
     restart: always
+    logging: *go-service-logging
+    environment: *otel-app-env
     volumes:
       - ./auth_config.yaml:/dist/config.yaml
       - ./email_notify.tmpl:/dist/email_notify.tmpl
@@ -31,6 +45,8 @@ services:
     build:
       dockerfile: api.Dockerfile
     restart: always
+    logging: *go-service-logging
+    environment: *otel-app-env
     volumes:
       - ./api_config.yaml:/dist/config.yaml
     labels:
@@ -57,6 +73,8 @@ services:
     build:
       dockerfile: attachments.Dockerfile
     restart: always
+    logging: *go-service-logging
+    environment: *otel-app-env
     volumes:
       - ./attachments_config.yaml:/dist/config.yaml
     labels:
@@ -84,6 +102,8 @@ services:
     build:
       dockerfile: ws.Dockerfile
     restart: always
+    logging: *go-service-logging
+    environment: *otel-app-env
     volumes:
       - ./ws_config.yaml:/dist/config.yaml
     labels:
@@ -102,33 +122,13 @@ services:
       - traefik
       - default
 
-  sfu:
-    image: gochat/sfu
-    build:
-      dockerfile: sfu.Dockerfile
-    restart: always
-    volumes:
-      - ./sfu_config.yaml:/dist/config.yaml
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.sfu.rule=PathPrefix(`/sfu`)"
-      - "traefik.http.routers.sfu.middlewares=sfu-stripprefix"
-      - "traefik.http.middlewares.sfu-stripprefix.stripprefix.prefixes=/sfu"
-      - "traefik.http.middlewares.sfu-stripprefix.stripprefix.forceslash=true"
-      - "traefik.http.routers.sfu.service=sfu"
-      - "traefik.http.services.sfu.loadbalancer.server.port=3300"
-      - "traefik.docker.network=gochat_traefik"
-    depends_on:
-      - traefik
-    networks:
-      - traefik
-      - default
-
   webhook:
     image: gochat/webhook
     build:
       dockerfile: webhook.Dockerfile
     restart: always
+    logging: *go-service-logging
+    environment: *otel-app-env
     volumes:
       - ./webhook_config.yaml:/dist/config.yaml
     labels:
@@ -149,6 +149,8 @@ services:
     build:
       dockerfile: indexer.Dockerfile
     restart: always
+    logging: *go-service-logging
+    environment: *otel-app-env
     volumes:
       - ./indexer_config.yaml:/dist/config.yaml
     depends_on:
@@ -162,6 +164,8 @@ services:
     build:
       dockerfile: embedder.Dockerfile
     restart: always
+    logging: *go-service-logging
+    environment: *otel-app-env
     volumes:
       - ./embedder_config.yaml:/dist/config.yaml
     depends_on:
@@ -258,63 +262,39 @@ services:
     networks:
       - traefik
 
-  prometheus:
-    image: prom/prometheus
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./monitoring/prometheus/rules:/etc/prometheus/rules
-      - prometheus-data:/prometheus
+  openobserve:
+    image: openobserve/openobserve:latest
     restart: always
-    ports:
-      - "9090:9090"
-
-  postgres-exporter-master:
-    image: quay.io/prometheuscommunity/postgres-exporter:latest
     environment:
-      - DATA_SOURCE_NAME=postgresql://postgres:postgres@citus-master:5432/gochat?sslmode=disable
-      - PG_EXPORTER_EXTEND_QUERY_PATH=/etc/postgres_exporter/queries.yml
-      - PG_EXPORTER_AUTO_DISCOVER_DATABASES=false
-      - PG_EXPORTER_EXCLUDE_DATABASES=postgres,template0,template1
+      ZO_DATA_DIR: /data
+      ZO_ROOT_USER_EMAIL: root@example.com
+      ZO_ROOT_USER_PASSWORD: Complexpass#123
+    volumes:
+      - openobserve-data:/data
+    ports:
+      - "5080:5080"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    restart: always
+    command:
+      - "--config=/etc/otelcol-contrib/config.yaml"
+    environment:
+      OPENOBSERVE_ORG: default
+      OPENOBSERVE_BASIC_AUTH: cm9vdEBleGFtcGxlLmNvbTpDb21wbGV4cGFzcyMxMjM=
+      OPENOBSERVE_LOG_STREAM: gochat_logs
+      OPENOBSERVE_METRIC_STREAM: gochat-metrics
+      OPENOBSERVE_TRACE_STREAM: gochat_traces
     depends_on:
-      citus-master:
+      openobserve:
         condition: service_started
-      citus-init:
-        condition: service_completed_successfully
     volumes:
-      - ./monitoring/postgres-exporter/queries-citus.yml:/etc/postgres_exporter/queries.yml:ro
-
-  postgres-exporter-worker:
-    image: quay.io/prometheuscommunity/postgres-exporter:latest
-    environment:
-      - DATA_SOURCE_NAME=postgresql://postgres:postgres@citus-worker:5432/postgres?sslmode=disable
-      - PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
-    depends_on:
-      - citus-worker
-
-  loki:
-    image: grafana/loki:latest
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
     ports:
-      - "3200:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-
-  promtail:
-    image: grafana/promtail:latest
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./promtail-config.yml:/etc/promtail/config.yml
-    command: -config.file=/etc/promtail/config.yml
-
-  grafana:
-    image: grafana/grafana-oss
-    restart: always
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
-    ports:
-      - "3030:3000"
+      - "13133:13133"
+      - "24224:24224"
+      - "4317:4317"
+      - "4318:4318"
 
   citus-master:
     container_name: "${COMPOSE_PROJECT_NAME:-citus}_master"
@@ -401,8 +381,7 @@ services:
 
 volumes:
   scylla-data:
-  prometheus-data:
-  grafana-data:
+  openobserve-data:
   opensearch-data:
   healthcheck-volume:
 

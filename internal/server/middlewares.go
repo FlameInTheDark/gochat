@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/cache/kvcpiped"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
@@ -22,12 +23,16 @@ func (s *Server) AuthMiddleware(secret string) {
 		Filter: func(c *fiber.Ctx) bool {
 			path := c.Path()
 			switch path {
-			case "/docs/swagger", "/api/v1/auth/login", "/api/v1/auth/registration", "/api/v1/auth/confirmation", "/api/v1/auth/recovery", "/api/v1/auth/reset", "/healthz", "/metrics":
+			case "/docs/swagger", "/api/v1/auth/login", "/api/v1/auth/registration", "/api/v1/auth/confirmation", "/api/v1/auth/recovery", "/api/v1/auth/reset", "/healthz":
 				return true
 			}
 			return strings.HasPrefix(path, "/emoji/")
 		},
 	}))
+	s.Use(func(c *fiber.Ctx) error {
+		observability.AttachUserToFiberContext(c)
+		return c.Next()
+	})
 }
 
 func (s *Server) RateLimitMiddleware(limit, exp int) {
@@ -49,7 +54,7 @@ func (s *Server) RateLimitMiddleware(limit, exp int) {
 				return true
 			case "/docs/swagger":
 				return true
-			case "/healthz", "/metrics":
+			case "/healthz":
 				return true
 			}
 			return false
@@ -111,7 +116,7 @@ func (s *Server) RateLimitPipedMiddleware(limit, exp int) {
 				"/api/v1/auth/registration", "/auth/registration",
 				"/api/v1/auth/confirmation", "/auth/confirmation",
 				"/api/v1/auth/recovery", "/auth/recovery",
-				"/docs/swagger", "/healthz", "/metrics":
+				"/docs/swagger", "/healthz":
 				return true
 			}
 			return false

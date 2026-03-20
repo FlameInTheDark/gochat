@@ -13,6 +13,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/msgsearch"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
 
@@ -158,6 +159,8 @@ func (e *entity) authorizeSearchScope(ctx context.Context, channelID, userID int
 }
 
 func (e *entity) executeSearch(c *fiber.Ctx, req *MessageSearchRequest, guildID *int64) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	res, err := e.search.Search(c.UserContext(), msgsearch.SearchRequest{
 		GuildId:   guildID,
 		ChannelId: req.ChannelId,
@@ -249,9 +252,7 @@ func (e *entity) executeSearch(c *fiber.Ctx, req *MessageSearchRequest, guildID 
 		flags := model.NormalizeMessageFlags(m.Flags)
 		embeds, err := embed.ParseMergedEmbeds(m.EmbedsJSON, m.AutoEmbedsJSON, model.HasMessageFlag(flags, model.MessageFlagSuppressEmbeds))
 		if err != nil {
-			if e.log != nil {
-				e.log.Error("failed to decode message embeds", "message_id", m.Id, "error", err.Error())
-			}
+			log.Error("failed to decode message embeds", "message_id", m.Id, "error", err.Error())
 			embeds = nil
 		}
 

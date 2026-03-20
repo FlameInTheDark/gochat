@@ -27,7 +27,7 @@ Traefik routes `/ws` → `ws:3100` (with `StripPrefix`), so the external URL is 
 - **zlib-stream compression** — append `?compress=zlib-stream` to receive binary frames compressed with zlib (best-speed level).
 - **Connection Hub** — one shared NATS subscription per topic across all local connections, with in-memory fan-out.
 - **Writer pump** — async outbound channel (256 buffer) with non-blocking drop for slow consumers.
-- **Prometheus metrics** — `gochat_ws_active_clients` gauge; scraped at `/metrics`.
+- **OpenTelemetry telemetry** — connection lifecycle, subscriptions, heartbeat timeouts, inbound/outbound delivery, and drop metrics flow into OpenObserve through the shared observability pipeline.
 
 ## Documentation
 

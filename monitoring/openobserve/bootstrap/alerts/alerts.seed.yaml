@@ -1,0 +1,160 @@
+alerts:
+  - name: HTTP 5xx spike
+    signal: metrics
+    metric: gochat.http.server.errors
+    window: 5m
+    threshold: "> 25"
+    group_by: [service_name, http_route]
+    severity: high
+
+  - name: HTTP latency p95 regression
+    signal: metrics
+    metric: gochat.http.server.duration
+    aggregation: p95
+    window: 10m
+    threshold: "> 1.5"
+    group_by: [service_name, http_route]
+    severity: medium
+
+  - name: Auth failure burst
+    signal: metrics
+    metric: gochat.http.server.auth_failures
+    window: 5m
+    threshold: "> 20"
+    group_by: [service_name, http_route]
+    severity: medium
+
+  - name: HTTP rate-limit burst
+    signal: metrics
+    metric: gochat.http.server.rate_limit_hits
+    window: 5m
+    threshold: "> 20"
+    group_by: [service_name, http_route]
+    severity: medium
+
+  - name: HTTP idempotency anomaly
+    signal: metrics
+    metric: gochat.http.server.idempotency_hits
+    window: 10m
+    threshold: "> 25"
+    group_by: [service_name, http_route]
+    severity: low
+
+  - name: Indexer stalled
+    signal: metrics
+    metric: gochat.indexer.consume.success
+    window: 15m
+    threshold: "= 0"
+    severity: high
+
+  - name: Embedder stalled
+    signal: metrics
+    metric: gochat.embedder.consume.success
+    window: 15m
+    threshold: "= 0"
+    severity: high
+
+  - name: Worker decode failures
+    signal: metrics
+    metric: gochat.indexer.decode.failure or gochat.embedder.decode.failure
+    window: 10m
+    threshold: "> 0"
+    severity: medium
+
+  - name: WS auth failure burst
+    signal: metrics
+    metric: gochat.ws.auth.failures
+    window: 5m
+    threshold: "> 20"
+    group_by: [reason]
+    severity: medium
+
+  - name: WS heartbeat timeout burst
+    signal: metrics
+    metric: gochat.ws.heartbeat.timeouts
+    window: 10m
+    threshold: "> 0"
+    severity: high
+
+  - name: WS dropped delivery burst
+    signal: metrics
+    metric: gochat.ws.messages.dropped
+    window: 10m
+    threshold: "> 10"
+    group_by: [topic]
+    severity: medium
+
+  - name: Redis/cache dependency error burst
+    signal: metrics
+    metric: gochat.dependency.errors
+    window: 10m
+    threshold: "> 5"
+    group_by: [dependency_system, dependency_operation]
+    severity: medium
+
+  - name: OpenSearch latency regression
+    signal: metrics
+    metric: gochat.dependency.duration
+    aggregation: p95
+    window: 10m
+    threshold: "> 1"
+    group_by: [dependency_system, dependency_operation]
+    severity: medium
+
+  - name: S3 dependency failure burst
+    signal: metrics
+    metric: gochat.dependency.errors
+    window: 10m
+    threshold: "> 5"
+    group_by: [dependency_system, dependency_operation]
+    severity: medium
+
+  - name: SFU heartbeat failure logs
+    signal: logs
+    filter: service_name="gochat-sfu" and body like "%heartbeat request failed%"
+    window: 5m
+    threshold: "> 0"
+    group_by: [voice_region, service_instance_id]
+    severity: high
+
+  - name: Postgres probe failing
+    signal: metrics
+    metric: gochat.postgres.probe.status
+    window: 5m
+    threshold: "< 1"
+    group_by: [service_name]
+    severity: high
+
+  - name: Postgres probe latency regression
+    signal: metrics
+    metric: gochat.postgres.probe.duration
+    aggregation: p95
+    window: 10m
+    threshold: "> 0.5"
+    group_by: [service_name]
+    severity: medium
+
+  - name: SFU bitrate disconnect burst
+    signal: metrics
+    metric: gochat.sfu.bitrate_disconnects
+    window: 10m
+    threshold: "> 0"
+    group_by: [voice_region, service_instance_id]
+    severity: high
+
+  - name: SFU admin-close latency regression
+    signal: metrics
+    metric: gochat.sfu.admin_close.duration
+    aggregation: p95
+    window: 10m
+    threshold: "> 1"
+    group_by: [status, voice_region, service_instance_id]
+    severity: medium
+
+  - name: Error log burst
+    signal: logs
+    filter: level="ERROR"
+    window: 5m
+    threshold: "> 50"
+    group_by: [service_name]
+    severity: medium

@@ -15,7 +15,9 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/embed"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/threadcount"
 	"github.com/gocql/gocql"
@@ -322,6 +324,8 @@ func deriveChannelParents(channels []dto.Channel) {
 
 // fetchAndFilterChannels retrieves guild channels and filters based on permissions
 func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	var cachedChannels []dto.Channel
 	err := e.cache.GetJSON(c.UserContext(), fmt.Sprintf("guild:%d:channels", guildCtx.Guild.Id), cachedChannels)
 	if err == nil {
@@ -361,13 +365,15 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) er
 
 	deriveChannelParents(channelsData)
 
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
 		if err := e.cache.SetTimedJSON(
-			context.Background(),
+			asyncCtx,
 			fmt.Sprintf("guild:%d:channels", guildCtx.Guild.Id),
 			channelsData,
 			3600); err != nil {
-			slog.Error("unable to set cached response for guild channels list", slog.String("error", err.Error()))
+			asyncLog.Error("unable to set cached response for guild channels list", slog.String("error", err.Error()))
 		}
 	}()
 
@@ -661,11 +667,13 @@ func (e *entity) Create(c *fiber.Ctx) error {
 
 // createGuildWithDefaults creates a new guild with default channels and settings
 func (e *entity) createGuildWithDefaults(c *fiber.Ctx, req *CreateGuildRequest, user *helper.JWTUser) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	guildId := idgen.Next()
 
 	// Create the guild
 	if err := e.g.CreateGuild(c.UserContext(), guildId, req.Name, user.Id, permissions.DefaultPermissions); err != nil {
-		e.log.Error("unable to create guild", slog.String("error", err.Error()))
+		log.Error("unable to create guild", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateGuild)
 	}
 
@@ -968,7 +976,7 @@ func (e *entity) updateGuildWithPermissionCheck(c *fiber.Ctx, guildId, userId in
 	}
 
 	// Send update event
-	if err := e.sendGuildUpdateEvent(guildId, &updatedGuild); err != nil {
+	if err := e.sendGuildUpdateEvent(c.UserContext(), guildId, &updatedGuild); err != nil {
 		return err
 	}
 
@@ -976,8 +984,8 @@ func (e *entity) updateGuildWithPermissionCheck(c *fiber.Ctx, guildId, userId in
 }
 
 // sendGuildUpdateEvent sends guild update message to message queue
-func (e *entity) sendGuildUpdateEvent(guildId int64, guild *model.Guild) error {
-	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateGuild{
+func (e *entity) sendGuildUpdateEvent(ctx context.Context, guildId int64, guild *model.Guild) error {
+	if err := mq.SendGuildUpdate(ctx, e.mqt, guildId, &mqmsg.UpdateGuild{
 		Guild: buildGuildDTO(guild),
 	}); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
@@ -1022,6 +1030,8 @@ func (e *entity) CreateCategory(c *fiber.Ctx) error {
 
 // createChannelWithPermissionCheck validates permissions and creates a channel
 func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId int64, name string, channelType model.ChannelType, parentId *int64, isPrivate bool, position int) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	guild, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, userId, permissions.PermServerManageChannels)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
@@ -1039,12 +1049,14 @@ func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId 
 	}
 
 	// Send create channel event and clean cached data
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
-		if err := e.sendCreateChannelEvent(guildId, guild.Id, channelId, name, channelType, nil); err != nil {
-			slog.Error("unable to send create channel event", slog.String("error", err.Error()))
+		if err := e.sendCreateChannelEvent(asyncCtx, guildId, guild.Id, channelId, name, channelType, nil); err != nil {
+			asyncLog.Error("unable to send create channel event", slog.String("error", err.Error()))
 		}
-		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
-			slog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
+		if err := e.cache.Delete(asyncCtx, fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
+			asyncLog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
 		}
 	}()
 
@@ -1137,17 +1149,17 @@ func guildOptionalReferenceChannelID(messageChannelID, referenceChannelID, refer
 }
 
 func (e *entity) buildGuildMessageAttachments(ctx context.Context, channelID int64, attachmentIDs []int64) []dto.Attachment {
+	log := observability.LoggerWithContext(ctx, e.log)
+
 	if len(attachmentIDs) == 0 || e.at == nil {
 		return nil
 	}
 
 	attachments, err := e.at.SelectAttachmentsByChannel(ctx, channelID, attachmentIDs)
 	if err != nil {
-		if e.log != nil {
-			e.log.Error("unable to load message attachments",
-				"channel_id", channelID,
-				"error", err.Error())
-		}
+		log.Error("unable to load message attachments",
+			"channel_id", channelID,
+			"error", err.Error())
 		return nil
 	}
 
@@ -1181,10 +1193,12 @@ func (e *entity) buildGuildMessageAttachments(ctx context.Context, channelID int
 }
 
 func (e *entity) buildGuildMessageDTO(ctx context.Context, message model.Message, thread *dto.Channel) dto.Message {
+	log := observability.LoggerWithContext(ctx, e.log)
+
 	flags := model.NormalizeMessageFlags(message.Flags)
 	mergedEmbeds, err := embed.ParseMergedEmbeds(message.EmbedsJSON, message.AutoEmbedsJSON, model.HasMessageFlag(flags, model.MessageFlagSuppressEmbeds))
-	if err != nil && e.log != nil {
-		e.log.Error("unable to parse merged message embeds",
+	if err != nil {
+		log.Error("unable to parse merged message embeds",
 			"channel_id", message.ChannelId,
 			"message_id", message.Id,
 			"error", err.Error())
@@ -1254,12 +1268,14 @@ func (e *entity) loadDeletedThreadMessageRefs(ctx context.Context, threadID int6
 	return refs, nil
 }
 
-func (e *entity) sendDetachedThreadMessageUpdate(guildID int64, message dto.Message) {
-	if err := e.mqt.SendChannelMessage(message.ChannelId, &mqmsg.UpdateMessage{
+func (e *entity) sendDetachedThreadMessageUpdate(ctx context.Context, guildID int64, message dto.Message) {
+	log := observability.LoggerWithContext(ctx, e.log)
+
+	if err := mq.SendChannelMessage(ctx, e.mqt, message.ChannelId, &mqmsg.UpdateMessage{
 		GuildId: &guildID,
 		Message: message,
-	}); err != nil && e.log != nil {
-		e.log.Error("unable to send detached thread message update",
+	}); err != nil {
+		log.Error("unable to send detached thread message update",
 			"channel_id", message.ChannelId,
 			"message_id", message.Id,
 			"error", err.Error())
@@ -1279,7 +1295,7 @@ func (e *entity) detachDeletedThreadMessages(ctx context.Context, guildID, threa
 			detachErr = errors.Join(detachErr, fmt.Errorf("detach source message thread: %w", err))
 		} else {
 			refs.sourceMessage.Thread = 0
-			e.sendDetachedThreadMessageUpdate(guildID, e.buildGuildMessageDTO(ctx, *refs.sourceMessage, nil))
+			e.sendDetachedThreadMessageUpdate(ctx, guildID, e.buildGuildMessageDTO(ctx, *refs.sourceMessage, nil))
 		}
 		if err := e.msg.ReleaseThreadClaim(ctx, refs.sourceChannelID, refs.sourceMessage.Id); err != nil {
 			detachErr = errors.Join(detachErr, fmt.Errorf("release source message thread claim: %w", err))
@@ -1291,7 +1307,7 @@ func (e *entity) detachDeletedThreadMessages(ctx context.Context, guildID, threa
 			detachErr = errors.Join(detachErr, fmt.Errorf("detach thread-created message thread: %w", err))
 		} else {
 			refs.followupMessage.Thread = 0
-			e.sendDetachedThreadMessageUpdate(guildID, e.buildGuildMessageDTO(ctx, *refs.followupMessage, nil))
+			e.sendDetachedThreadMessageUpdate(ctx, guildID, e.buildGuildMessageDTO(ctx, *refs.followupMessage, nil))
 		}
 	}
 
@@ -1357,16 +1373,17 @@ func (e *entity) syncThreadCreatedMessage(ctx context.Context, guildID int64, th
 	}, nil
 }
 
-func (e *entity) sendThreadCreatedMessageUpdate(guildID int64, update *threadCreatedMessageUpdate) {
+func (e *entity) sendThreadCreatedMessageUpdate(ctx context.Context, guildID int64, update *threadCreatedMessageUpdate) {
 	if update == nil {
 		return
 	}
+	log := observability.LoggerWithContext(ctx, e.log)
 
-	if err := e.mqt.SendChannelMessage(update.channelID, &mqmsg.UpdateMessage{
+	if err := mq.SendChannelMessage(ctx, e.mqt, update.channelID, &mqmsg.UpdateMessage{
 		GuildId: &guildID,
 		Message: update.message,
 	}); err != nil {
-		e.log.Error("unable to send thread-created message update",
+		log.Error("unable to send thread-created message update",
 			"channel_id", update.channelID,
 			"message_id", update.message.Id,
 			"error", err.Error())
@@ -1374,8 +1391,9 @@ func (e *entity) sendThreadCreatedMessageUpdate(guildID int64, update *threadCre
 }
 
 // sendCreateChannelEvent sends channel creation message to message queue
-func (e *entity) sendCreateChannelEvent(guildId, guildModelId, channelId int64, name string, channelType model.ChannelType, parentId *int64) error {
-	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.CreateChannel{
+func (e *entity) sendCreateChannelEvent(ctx context.Context, guildId, guildModelId, channelId int64, name string, channelType model.ChannelType, parentId *int64) error {
+	sendCtx := observability.BackgroundFromContext(ctx)
+	if err := mq.SendGuildUpdate(sendCtx, e.mqt, guildId, &mqmsg.CreateChannel{
 		GuildId: &guildModelId,
 		Channel: dto.Channel{
 			Id:        channelId,
@@ -1461,6 +1479,8 @@ func (e *entity) DeleteChannel(c *fiber.Ctx) error {
 
 // deleteChannelWithPermissionCheck validates permissions and deletes a channel
 func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channelId, userId int64) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	isMember, err := e.memb.IsGuildMember(c.UserContext(), guildId, userId)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
@@ -1513,20 +1533,22 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 	}
 	if channel.Type == model.ChannelTypeThread {
 		if err := e.detachDeletedThreadMessages(c.UserContext(), guildId, channelId); err != nil {
-			slog.Error("unable to detach deleted thread messages", slog.String("error", err.Error()))
+			reqLog.Error("unable to detach deleted thread messages", slog.String("error", err.Error()))
 		}
 		if err := e.tm.RemoveThreadMembers(c.UserContext(), channelId); err != nil {
-			slog.Error("unable to delete thread members", slog.String("error", err.Error()))
+			reqLog.Error("unable to delete thread members", slog.String("error", err.Error()))
 		}
 	}
 
 	// Send delete channel event and clean cached value
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
-		if err := e.sendDeleteChannelEvent(guildId, &channel); err != nil {
-			slog.Error("unable to send guild event after channel deletion", slog.String("error", err.Error()))
+		if err := e.sendDeleteChannelEvent(asyncCtx, guildId, &channel); err != nil {
+			asyncLog.Error("unable to send guild event after channel deletion", slog.String("error", err.Error()))
 		}
-		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
-			slog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
+		if err := e.cache.Delete(asyncCtx, fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
+			asyncLog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
 		}
 	}()
 
@@ -1566,6 +1588,8 @@ func (e *entity) DeleteCategory(c *fiber.Ctx) error {
 
 // deleteCategoryWithPermissionCheck validates permissions and deletes a category
 func (e *entity) deleteCategoryWithPermissionCheck(c *fiber.Ctx, guildId, categoryId, userId int64) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	channel, _, _, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, categoryId, userId, permissions.PermServerManageChannels)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
@@ -1581,12 +1605,14 @@ func (e *entity) deleteCategoryWithPermissionCheck(c *fiber.Ctx, guildId, catego
 	}
 
 	// Send delete channel event and clean cached data
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
-		if err := e.sendDeleteChannelEvent(guildId, channel); err != nil {
-			slog.Error("unable to send guild event after channel deletion", slog.String("error", err.Error()))
+		if err := e.sendDeleteChannelEvent(asyncCtx, guildId, channel); err != nil {
+			asyncLog.Error("unable to send guild event after channel deletion", slog.String("error", err.Error()))
 		}
-		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
-			slog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
+		if err := e.cache.Delete(asyncCtx, fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
+			asyncLog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
 		}
 	}()
 
@@ -1594,8 +1620,9 @@ func (e *entity) deleteCategoryWithPermissionCheck(c *fiber.Ctx, guildId, catego
 }
 
 // sendDeleteChannelEvent sends channel deletion message to message queue
-func (e *entity) sendDeleteChannelEvent(guildId int64, channel *model.Channel) error {
-	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.DeleteChannel{
+func (e *entity) sendDeleteChannelEvent(ctx context.Context, guildId int64, channel *model.Channel) error {
+	sendCtx := observability.BackgroundFromContext(ctx)
+	if err := mq.SendGuildUpdate(sendCtx, e.mqt, guildId, &mqmsg.DeleteChannel{
 		GuildId:     &guildId,
 		ChannelType: channel.Type,
 		ChannelId:   channel.Id,
@@ -1603,7 +1630,7 @@ func (e *entity) sendDeleteChannelEvent(guildId int64, channel *model.Channel) e
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
 	}
 	if channel.Type == model.ChannelTypeThread {
-		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.DeleteThread{
+		if err := mq.SendGuildUpdate(sendCtx, e.mqt, guildId, &mqmsg.DeleteThread{
 			GuildId:  &guildId,
 			ThreadId: channel.Id,
 		}); err != nil {
@@ -1613,15 +1640,16 @@ func (e *entity) sendDeleteChannelEvent(guildId int64, channel *model.Channel) e
 	return nil
 }
 
-func (e *entity) sendUpdateChannelEvent(guildId int64, channel dto.Channel) error {
-	if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateChannel{
+func (e *entity) sendUpdateChannelEvent(ctx context.Context, guildId int64, channel dto.Channel) error {
+	sendCtx := observability.BackgroundFromContext(ctx)
+	if err := mq.SendGuildUpdate(sendCtx, e.mqt, guildId, &mqmsg.UpdateChannel{
 		GuildId: &guildId,
 		Channel: channel,
 	}); err != nil {
 		return err
 	}
 	if channel.Type == model.ChannelTypeThread {
-		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateThread{
+		if err := mq.SendGuildUpdate(sendCtx, e.mqt, guildId, &mqmsg.UpdateThread{
 			GuildId: &guildId,
 			Thread:  channel,
 		}); err != nil {
@@ -1646,6 +1674,8 @@ func (e *entity) sendUpdateChannelEvent(guildId int64, channel dto.Channel) erro
 //	@failure	500			{string}	string							"Something bad happened"
 //	@Router		/guild/{guild_id}/channel/order [patch]
 func (e *entity) PatchChannelOrder(c *fiber.Ctx) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	guildId, err := e.parseGuildID(c)
 	if err != nil {
 		return err
@@ -1710,15 +1740,17 @@ func (e *entity) PatchChannelOrder(c *fiber.Ctx) error {
 	}
 
 	// Notify clients about the new order and clean cached data
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
-		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateChannelList{
+		if err := mq.SendGuildUpdate(asyncCtx, e.mqt, guildId, &mqmsg.UpdateChannelList{
 			GuildId:  &guildId,
 			Channels: evt,
 		}); err != nil {
-			slog.Error("unable to send guild update event after channel reorder", slog.String("error", err.Error()))
+			asyncLog.Error("unable to send guild update event after channel reorder", slog.String("error", err.Error()))
 		}
-		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
-			slog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
+		if err := e.cache.Delete(asyncCtx, fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
+			asyncLog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
 		}
 	}()
 
@@ -1741,6 +1773,8 @@ func (e *entity) PatchChannelOrder(c *fiber.Ctx) error {
 //	@failure	500			{string}	string						"Something bad happened"
 //	@Router		/guild/{guild_id}/channel/{channel_id} [patch]
 func (e *entity) PatchChannel(c *fiber.Ctx) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	guildId, err := e.parseGuildID(c)
 	if err != nil {
 		return err
@@ -1831,13 +1865,15 @@ func (e *entity) PatchChannel(c *fiber.Ctx) error {
 	resp := channelModelToDTOWithThreadMember(&upd, &guildId, guildChannel.Position, nil, threadMember, threadMemberIDs)
 
 	// Notify clients about the channel update and clean cached data
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
-		if err := e.sendUpdateChannelEvent(guildId, resp); err != nil {
-			slog.Error("unable to send guild update event after channel update", slog.String("error", err.Error()))
+		if err := e.sendUpdateChannelEvent(asyncCtx, guildId, resp); err != nil {
+			asyncLog.Error("unable to send guild update event after channel update", slog.String("error", err.Error()))
 		}
-		e.sendThreadCreatedMessageUpdate(guildId, threadCreatedUpdate)
-		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
-			slog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
+		e.sendThreadCreatedMessageUpdate(asyncCtx, guildId, threadCreatedUpdate)
+		if err := e.cache.Delete(asyncCtx, fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
+			asyncLog.Error("unable to clean cached channels value", slog.String("error", err.Error()))
 		}
 	}()
 
@@ -1984,7 +2020,7 @@ func (e *entity) GetMembers(c *fiber.Ctx) error {
 
 	roles, err := e.ur.GetUsersRolesByGuild(c.UserContext(), guildId, memberIds)
 	if err != nil {
-		slog.Error("unable to get users roles", slog.String("error", err.Error()))
+		observability.LoggerFromFiber(c, e.log).Error("unable to get users roles", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetUsersRoles)
 	}
 

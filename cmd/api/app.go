@@ -138,6 +138,9 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 	shut.Up(pg)
+	postgresProbeCtx, cancelPostgresProbe := context.WithCancel(context.Background())
+	shut.UpFunc(cancelPostgresProbe)
+	go pg.StartProbeLoop(postgresProbeCtx, 30*time.Second)
 
 	var storage *s3.Client
 	if cfg.S3Endpoint != "" {

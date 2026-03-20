@@ -22,12 +22,13 @@ This project is composed of several services located under the `cmd/` directory.
 - Purpose: Persistent WebSocket gateway for client real‑time updates.
 - Key features:
   - Bridges NATS topics to user connections (subscribe/publish per user/guild/channel).
-  - Presence heartbeats and aggregation, session tracking, and metrics (`/metrics`).
+  - Presence heartbeats and aggregation, session tracking, and OTEL-based telemetry shipped to OpenObserve.
   - Validates client tokens and enforces access on subscriptions.
 - Dependencies: NATS, Scylla/Cassandra, PostgreSQL, Redis/KeyDB (presence/cache).
 
 ## SFU (`cmd/sfu`)
 - Purpose: Voice Selective Forwarding Unit with WebRTC media relay and WS signaling.
+- Deployment: external to local Compose. The SFU is expected to run as a standalone service and self-ship telemetry to OpenObserve.
 - Key features:
   - WebSocket signaling endpoint at `/sfu/signal`.
   - Validates short‑lived SFU tokens and enforces voice permissions (speak/video/connect).
@@ -39,6 +40,7 @@ This project is composed of several services located under the `cmd/` directory.
   - API reads instances from etcd when serving JoinVoice. No fallback to origin; returns 503 when no instance exists.
 - Dependencies: Webhook (for discovery), etcd (backing store for discovery), optional STUN servers.
  - Config: `webhook_url`, pre-generated `webhook_token` (HS256 JWT), and `service_id` (must match token `id`).
+ - Observability: see `docs/project/observability/ExternalSFU.md` for the direct OTLP and direct log-shipping contract.
 
 ## Webhook (`cmd/webhook`)
 - Purpose: Secure integration surface for internal events (currently: SFU discovery heartbeat, attachment finalize).

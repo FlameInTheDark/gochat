@@ -18,6 +18,8 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
+	"github.com/FlameInTheDark/gochat/internal/mq"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 )
 
 // GetUser
@@ -128,6 +130,8 @@ func (e *entity) fetchUserWithDiscriminatorCtx(ctx context.Context, userId int64
 //	@failure	500		{string}	string				"Something bad happened"
 //	@Router		/user/me [patch]
 func (e *entity) ModifyUser(c *fiber.Ctx) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	var req ModifyUserRequest
 	err := c.BodyParser(&req)
 	if err != nil {
@@ -147,14 +151,16 @@ func (e *entity) ModifyUser(c *fiber.Ctx) error {
 		return err
 	}
 	// Emit user update event with fresh data (best-effort). Do not use fiber.Ctx from goroutine.
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
-		dtoUser, ferr := e.fetchUserWithDiscriminatorCtx(context.Background(), user.Id)
+		dtoUser, ferr := e.fetchUserWithDiscriminatorCtx(asyncCtx, user.Id)
 		if ferr != nil {
-			slog.Error("unable to build updated user dto", slog.String("error", ferr.Error()))
+			asyncLog.Error("unable to build updated user dto", slog.String("error", ferr.Error()))
 			return
 		}
-		if err := e.mqt.SendUserUpdate(user.Id, &mqmsg.UpdateUser{User: dtoUser}); err != nil {
-			slog.Error("unable to send user update event", slog.String("error", err.Error()))
+		if err := mq.SendUserUpdate(asyncCtx, e.mqt, user.Id, &mqmsg.UpdateUser{User: dtoUser}); err != nil {
+			asyncLog.Error("unable to send user update event", slog.String("error", err.Error()))
 		}
 	}()
 	return c.SendStatus(fiber.StatusOK)
@@ -188,6 +194,8 @@ func (e *entity) GetUserGuilds(c *fiber.Ctx) error {
 
 // fetchUserGuilds retrieves all guilds for a user with proper error handling
 func (e *entity) fetchUserGuilds(c *fiber.Ctx, userId int64) ([]dto.Guild, error) {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	// Get user's guild memberships
 	memberships, err := e.member.GetUserGuilds(c.UserContext(), userId)
 	if err != nil {
@@ -208,7 +216,7 @@ func (e *entity) fetchUserGuilds(c *fiber.Ctx, userId int64) ([]dto.Guild, error
 	// Fetch guild details
 	guilds, err := e.guild.GetGuildsList(c.UserContext(), guildIds)
 	if err != nil {
-		e.log.Error("failed to fetch guild details",
+		log.Error("failed to fetch guild details",
 			"user_id", userId,
 			"guild_count", len(guildIds),
 			"error", err.Error())
@@ -286,28 +294,29 @@ func (e *entity) fetchGuildMemberData(c *fiber.Ctx, userId, guildId int64) (dto.
 	userCh := make(chan userResult, 1)
 	discCh := make(chan discResult, 1)
 	rolesCh := make(chan rolesResult, 1)
+	ctx := c.UserContext()
 
 	// Fetch member data
 	go func() {
-		member, err := e.member.GetMember(c.UserContext(), userId, guildId)
+		member, err := e.member.GetMember(ctx, userId, guildId)
 		memberCh <- memberResult{&member, err}
 	}()
 
 	// Fetch user data
 	go func() {
-		user, err := e.user.GetUserById(c.UserContext(), userId)
+		user, err := e.user.GetUserById(ctx, userId)
 		userCh <- userResult{&user, err}
 	}()
 
 	// Fetch discriminator
 	go func() {
-		disc, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), userId)
+		disc, err := e.disc.GetDiscriminatorByUserId(ctx, userId)
 		discCh <- discResult{&disc, err}
 	}()
 
 	// Fetch user roles
 	go func() {
-		roles, err := e.urole.GetUserRoles(c.UserContext(), guildId, userId)
+		roles, err := e.urole.GetUserRoles(ctx, guildId, userId)
 		rolesCh <- rolesResult{roles, err}
 	}()
 
@@ -419,8 +428,9 @@ func (e *entity) LeaveGuild(c *fiber.Ctx) error {
 		return helper.HttpDbError(err, ErrUnableToRemoveMember)
 	}
 
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
 	go func() {
-		_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMember{GuildId: guildId, UserId: user.Id})
+		_ = mq.SendGuildUpdate(asyncCtx, e.mqt, guildId, &mqmsg.RemoveGuildMember{GuildId: guildId, UserId: user.Id})
 	}()
 
 	return c.SendStatus(fiber.StatusOK)
@@ -563,6 +573,8 @@ func (e *entity) findExistingDMChannel(c *fiber.Ctx, userId, recipientId int64) 
 
 // createNewDMChannel creates a new DM channel with proper cleanup
 func (e *entity) createNewDMChannel(c *fiber.Ctx, userId, recipientId int64) (dto.Channel, error) {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	channelId := idgen.Next()
 
 	// Create the channel
@@ -574,7 +586,7 @@ func (e *entity) createNewDMChannel(c *fiber.Ctx, userId, recipientId int64) (dt
 	if err := e.dm.CreateDmChannel(c.UserContext(), userId, recipientId, channelId); err != nil {
 		// Cleanup: delete the channel if DM association creation fails
 		if cleanupErr := e.ch.DeleteChannel(c.UserContext(), channelId); cleanupErr != nil {
-			e.log.Error("failed to cleanup channel after DM creation failure",
+			log.Error("failed to cleanup channel after DM creation failure",
 				"channel_id", channelId,
 				"user_id", userId,
 				"recipient_id", recipientId,
@@ -718,6 +730,8 @@ func (e *entity) createNewGroupDM(c *fiber.Ctx, userId int64, recipientIds []int
 
 // createGroupDMWithParticipants creates a group DM channel and adds participants with proper cleanup
 func (e *entity) createGroupDMWithParticipants(c *fiber.Ctx, channelId int64, participants []int64) (dto.Channel, error) {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	// Create the channel
 	if err := e.ch.CreateChannel(c.UserContext(), channelId, "", model.ChannelTypeGroupDM, nil, nil, false); err != nil {
 		return dto.Channel{}, helper.HttpDbError(err, ErrUnableToCreateChannel)
@@ -728,7 +742,7 @@ func (e *entity) createGroupDMWithParticipants(c *fiber.Ctx, channelId int64, pa
 		// Cleanup: delete the channel if adding participants fails
 		if cleanupErr := e.ch.DeleteChannel(c.UserContext(), channelId); cleanupErr != nil {
 			// Log cleanup failure but return original error
-			e.log.Error("failed to cleanup channel after participant join failure",
+			log.Error("failed to cleanup channel after participant join failure",
 				"channel_id", channelId,
 				"cleanup_error", cleanupErr.Error(),
 				"original_error", err.Error())
@@ -772,6 +786,8 @@ func (e *entity) channelToDTO(channel *model.Channel) dto.Channel {
 //	@failure	500		{string}	string					"Internal server error"
 //	@Router		/user/me/settings [get]
 func (e *entity) GetUserSettings(c *fiber.Ctx) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	user, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
@@ -907,7 +923,7 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 				id = rid
 			}
 			if m, err := e.mention.GetMentionsAfter(ctx, user.Id, ch, id); err != nil {
-				e.log.Error("unable to get mentions for channel", slog.String("error", err.Error()))
+				log.Error("unable to get mentions for channel", slog.String("error", err.Error()))
 			} else if len(m) > 0 {
 				mu.Lock()
 				mentions[ch] = m
@@ -917,7 +933,7 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 				continue
 			}
 			if cm, err := e.mention.GetChannelMentionsAfter(ctx, ch, id); err != nil {
-				e.log.Error("unable to get channel mentions", slog.String("error", err.Error()))
+				log.Error("unable to get channel mentions", slog.String("error", err.Error()))
 			} else if len(cm) > 0 {
 				mu.Lock()
 				channelMentions[ch] = cm
@@ -961,9 +977,11 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 //	@failure	500		{string}	string					"Internal server error"
 //	@Router		/user/me/settings [post]
 func (e *entity) SetUserSettings(c *fiber.Ctx) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	var req model.UserSettingsData
 	if err := json.Unmarshal(c.Body(), &req); err != nil {
-		slog.Error("failed to parse request body", slog.String("error", err.Error()))
+		reqLog.Error("failed to parse request body", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusBadRequest, "parse error: "+err.Error())
 	}
 	if err := req.Validate(); err != nil {
@@ -979,11 +997,13 @@ func (e *entity) SetUserSettings(c *fiber.Ctx) error {
 		return helper.HttpDbError(err, ErrUnableToSetUserSettings)
 	}
 
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
-		if err := e.mqt.SendUserUpdate(user.Id, &mqmsg.UpdateUserSettings{
+		if err := mq.SendUserUpdate(asyncCtx, e.mqt, user.Id, &mqmsg.UpdateUserSettings{
 			Settings: req,
 		}); err != nil {
-			slog.Error("unable to send update user settings event", slog.String("error", err.Error()))
+			asyncLog.Error("unable to send update user settings event", slog.String("error", err.Error()))
 		}
 	}()
 

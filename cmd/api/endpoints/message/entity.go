@@ -1,6 +1,7 @@
 package message
 
 import (
+	"context"
 	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
@@ -52,6 +53,7 @@ func (e *entity) Init(router fiber.Router) {
 
 type embedQueue interface {
 	MakeEmbed(msg embedmq.MakeEmbedRequest) error
+	MakeEmbedContext(ctx context.Context, msg embedmq.MakeEmbedRequest) error
 }
 
 type entity struct {

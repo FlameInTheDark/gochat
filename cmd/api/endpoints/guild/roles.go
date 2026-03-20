@@ -1,7 +1,6 @@
 package guild
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -11,7 +10,9 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/gofiber/fiber/v2"
 )
@@ -91,6 +92,8 @@ func (e *entity) GetMemberRoles(c *fiber.Ctx) error {
 //	@failure	500			{string}	string		"Something bad happened"
 //	@Router		/guild/{guild_id}/roles [get]
 func (e *entity) GetGuildRoles(c *fiber.Ctx) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	guildId, err := e.parseGuildID(c)
 	if err != nil {
 		return err
@@ -118,13 +121,15 @@ func (e *entity) GetGuildRoles(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
 	rolesData := roleModelToDTOMany(roles)
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
 		if err := e.cache.SetTimedJSON(
-			context.Background(),
+			asyncCtx,
 			fmt.Sprintf("guild:%d:roles", guildId),
 			rolesData,
 			3600); err != nil {
-			slog.Error("unable to cache guild roles", slog.String("error", err.Error()))
+			asyncLog.Error("unable to cache guild roles", slog.String("error", err.Error()))
 		}
 	}()
 	return c.JSON(rolesData)
@@ -144,6 +149,8 @@ func (e *entity) GetGuildRoles(c *fiber.Ctx) error {
 //	@failure	500			{string}	string					"Something bad happened"
 //	@Router		/guild/{guild_id}/roles [post]
 func (e *entity) CreateGuildRole(c *fiber.Ctx) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	guildId, err := e.parseGuildID(c)
 	if err != nil {
 		return err
@@ -180,12 +187,14 @@ func (e *entity) CreateGuildRole(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
 	created := roleModelToDTO(createdRole)
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
-		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.CreateGuildRole{Role: created}); err != nil {
-			slog.Error("unable to send guild update after role creation", slog.String("error", err.Error()))
+		if err := mq.SendGuildUpdate(asyncCtx, e.mqt, guildId, &mqmsg.CreateGuildRole{Role: created}); err != nil {
+			asyncLog.Error("unable to send guild update after role creation", slog.String("error", err.Error()))
 		}
-		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:roles", guildId)); err != nil {
-			slog.Error("unable to delete guild roles cache", slog.String("error", err.Error()))
+		if err := e.cache.Delete(asyncCtx, fmt.Sprintf("guild:%d:roles", guildId)); err != nil {
+			asyncLog.Error("unable to delete guild roles cache", slog.String("error", err.Error()))
 		}
 	}()
 
@@ -208,6 +217,8 @@ func (e *entity) CreateGuildRole(c *fiber.Ctx) error {
 //	@failure	500			{string}	string					"Something bad happened"
 //	@Router		/guild/{guild_id}/roles/{role_id} [patch]
 func (e *entity) PatchGuildRole(c *fiber.Ctx) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	guildId, err := e.parseGuildID(c)
 	if err != nil {
 		return err
@@ -268,12 +279,14 @@ func (e *entity) PatchGuildRole(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
 	role := roleModelToDTO(ur)
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
-		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateGuildRole{GuildId: guildId, Role: role}); err != nil {
-			slog.Error("unable to send guild event after role update", slog.String("error", err.Error()))
+		if err := mq.SendGuildUpdate(asyncCtx, e.mqt, guildId, &mqmsg.UpdateGuildRole{GuildId: guildId, Role: role}); err != nil {
+			asyncLog.Error("unable to send guild event after role update", slog.String("error", err.Error()))
 		}
-		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:roles", guildId)); err != nil {
-			slog.Error("unable to delete guild roles cache", slog.String("error", err.Error()))
+		if err := e.cache.Delete(asyncCtx, fmt.Sprintf("guild:%d:roles", guildId)); err != nil {
+			asyncLog.Error("unable to delete guild roles cache", slog.String("error", err.Error()))
 		}
 	}()
 
@@ -294,6 +307,8 @@ func (e *entity) PatchGuildRole(c *fiber.Ctx) error {
 //	@failure	500			{string}	string						"Something bad happened"
 //	@Router		/guild/{guild_id}/roles/order [patch]
 func (e *entity) PatchRoleOrder(c *fiber.Ctx) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	guildId, err := e.parseGuildID(c)
 	if err != nil {
 		return err
@@ -356,15 +371,17 @@ func (e *entity) PatchRoleOrder(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
 	updated := roleModelToDTOMany(updatedRoles)
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 
 	go func() {
 		for _, role := range updated {
-			if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.UpdateGuildRole{GuildId: guildId, Role: role}); err != nil {
-				slog.Error("unable to send guild event after role reorder", slog.String("error", err.Error()))
+			if err := mq.SendGuildUpdate(asyncCtx, e.mqt, guildId, &mqmsg.UpdateGuildRole{GuildId: guildId, Role: role}); err != nil {
+				asyncLog.Error("unable to send guild event after role reorder", slog.String("error", err.Error()))
 			}
 		}
-		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:roles", guildId)); err != nil {
-			slog.Error("unable to delete guild roles cache", slog.String("error", err.Error()))
+		if err := e.cache.Delete(asyncCtx, fmt.Sprintf("guild:%d:roles", guildId)); err != nil {
+			asyncLog.Error("unable to delete guild roles cache", slog.String("error", err.Error()))
 		}
 	}()
 
@@ -386,6 +403,8 @@ func (e *entity) PatchRoleOrder(c *fiber.Ctx) error {
 //	@failure	500			{string}	string	"Something bad happened"
 //	@Router		/guild/{guild_id}/roles/{role_id} [delete]
 func (e *entity) DeleteGuildRole(c *fiber.Ctx) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	guildId, err := e.parseGuildID(c)
 	if err != nil {
 		return err
@@ -423,12 +442,14 @@ func (e *entity) DeleteGuildRole(c *fiber.Ctx) error {
 	if err := e.role.RemoveRole(c.UserContext(), roleId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
-		if err := e.mqt.SendGuildUpdate(guildId, &mqmsg.DeleteGuildRole{GuildId: guildId, RoleId: roleId}); err != nil {
-			slog.Error("unable to send guild event after role deletion", slog.String("error", err.Error()))
+		if err := mq.SendGuildUpdate(asyncCtx, e.mqt, guildId, &mqmsg.DeleteGuildRole{GuildId: guildId, RoleId: roleId}); err != nil {
+			asyncLog.Error("unable to send guild event after role deletion", slog.String("error", err.Error()))
 		}
-		if err := e.cache.Delete(context.Background(), fmt.Sprintf("guild:%d:roles", guildId)); err != nil {
-			slog.Error("unable to delete guild roles cache", slog.String("error", err.Error()))
+		if err := e.cache.Delete(asyncCtx, fmt.Sprintf("guild:%d:roles", guildId)); err != nil {
+			asyncLog.Error("unable to delete guild roles cache", slog.String("error", err.Error()))
 		}
 	}()
 	return c.SendStatus(fiber.StatusOK)
@@ -498,8 +519,9 @@ func (e *entity) AddMemberRole(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetUserRole)
 	}
 
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
 	go func() {
-		_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.AddGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
+		_ = mq.SendGuildUpdate(asyncCtx, e.mqt, guildId, &mqmsg.AddGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
 	}()
 
 	return c.SendStatus(fiber.StatusOK)
@@ -569,8 +591,9 @@ func (e *entity) RemoveMemberRole(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToRemoveUserRole)
 	}
 
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
 	go func() {
-		_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.RemoveGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
+		_ = mq.SendGuildUpdate(asyncCtx, e.mqt, guildId, &mqmsg.RemoveGuildMemberRole{GuildId: guildId, RoleId: roleId, UserId: memberId})
 	}()
 
 	return c.SendStatus(fiber.StatusOK)

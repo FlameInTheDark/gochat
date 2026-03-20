@@ -3,6 +3,8 @@ package helper
 import (
 	"context"
 	"log/slog"
+
+	"go.opentelemetry.io/otel/trace"
 )
 
 // ctxKey is an unexported type to avoid collisions with keys from other packages.
@@ -39,12 +41,40 @@ func RequestIDFromContext(ctx context.Context) (string, bool) {
 	return "", false
 }
 
+// ContextWithUserID returns a new context with the provided user id attached.
+func ContextWithUserID(ctx context.Context, userID int64) context.Context {
+	if ctx == nil || userID == 0 {
+		return ctx
+	}
+	return context.WithValue(ctx, ContextKeyUserID, userID)
+}
+
+// UserIDFromContext extracts a user id from context if present.
+func UserIDFromContext(ctx context.Context) (int64, bool) {
+	if ctx == nil {
+		return 0, false
+	}
+	if v := ctx.Value(ContextKeyUserID); v != nil {
+		switch t := v.(type) {
+		case int64:
+			if t != 0 {
+				return t, true
+			}
+		case int:
+			if t != 0 {
+				return int64(t), true
+			}
+		}
+	}
+	return 0, false
+}
+
 // AttrsFromContext collects well-known attributes from context to attach to logs.
 func AttrsFromContext(ctx context.Context) []slog.Attr {
 	if ctx == nil {
 		return nil
 	}
-	attrs := make([]slog.Attr, 0, 2)
+	attrs := make([]slog.Attr, 0, 4)
 	if rid, ok := RequestIDFromContext(ctx); ok {
 		attrs = append(attrs, slog.String("request_id", rid))
 	}
@@ -59,6 +89,12 @@ func AttrsFromContext(ctx context.Context) []slog.Attr {
 				attrs = append(attrs, slog.String("user_id", t))
 			}
 		}
+	}
+	if spanCtx := trace.SpanContextFromContext(ctx); spanCtx.IsValid() {
+		attrs = append(attrs,
+			slog.String("trace_id", spanCtx.TraceID().String()),
+			slog.String("span_id", spanCtx.SpanID().String()),
+		)
 	}
 	return attrs
 }

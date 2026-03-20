@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -12,7 +13,9 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/upload"
 )
 
@@ -37,6 +40,8 @@ import (
 //	@failure		500			{string}	string	"Internal server error"
 //	@Router			/upload/avatars/{user_id}/{avatar_id} [post]
 func (e *entity) Upload(c *fiber.Ctx) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	userId, err := strconv.ParseInt(c.Params("user_id"), 10, 64)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectUserID)
@@ -64,19 +69,20 @@ func (e *entity) Upload(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusNoContent)
 	}
 
-	go e.finalizeAvatarSideEffects(userId, avatarId, result)
+	go e.finalizeAvatarSideEffects(observability.BackgroundFromContext(c.UserContext()), userId, avatarId, result, reqLog)
 
 	return c.SendStatus(fiber.StatusCreated)
 }
 
-func (e *entity) finalizeAvatarSideEffects(userId, avatarId int64, result *upload.AvatarResult) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+func (e *entity) finalizeAvatarSideEffects(ctx context.Context, userId, avatarId int64, result *upload.AvatarResult, logger *slog.Logger) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
+	log := observability.LoggerWithContext(ctx, logger)
 
 	if err := upload.Retry(ctx, 3, 100*time.Millisecond, func(ctx context.Context) error {
 		return e.usr.SetUserAvatar(ctx, userId, avatarId)
 	}); err != nil {
-		e.log.Error("failed to activate uploaded avatar", "user_id", userId, "avatar_id", avatarId, "error", err)
+		log.Error("failed to activate uploaded avatar", "user_id", userId, "avatar_id", avatarId, "error", err)
 		return
 	}
 
@@ -98,9 +104,9 @@ func (e *entity) finalizeAvatarSideEffects(userId, avatarId int64, result *uploa
 			PanelColor:    u.PanelColor,
 			Avatar:        &ad,
 		}}
-		return e.mqt.SendUserUpdate(userId, &upd)
+		return mq.SendUserUpdate(ctx, e.mqt, userId, &upd)
 	}); err != nil {
-		e.log.Error("failed to publish avatar upload update", "user_id", userId, "avatar_id", avatarId, "error", err)
+		log.Error("failed to publish avatar upload update", "user_id", userId, "avatar_id", avatarId, "error", err)
 	}
 }
 

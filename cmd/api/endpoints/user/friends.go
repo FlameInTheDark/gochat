@@ -9,7 +9,9 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 )
 
 // GetFriends
@@ -153,8 +155,9 @@ func (e *entity) CreateFriendRequest(c *fiber.Ctx) error {
 		return helper.HttpDbError(err, ErrUnableToCreateFriendRequest)
 	}
 
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		ctx, cancel := context.WithTimeout(asyncCtx, time.Second*30)
 		defer cancel()
 		if u, uerr := e.user.GetUserById(ctx, me.Id); uerr == nil {
 			if d, derr := e.disc.GetDiscriminatorByUserId(ctx, me.Id); derr == nil {
@@ -164,7 +167,7 @@ func (e *entity) CreateFriendRequest(c *fiber.Ctx) error {
 						ad = v
 					}
 				}
-				_ = e.mqt.SendUserUpdate(disc.UserId, &mqmsg.IncomingFriendRequest{
+				_ = mq.SendUserUpdate(ctx, e.mqt, disc.UserId, &mqmsg.IncomingFriendRequest{
 					From: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad},
 				})
 			}
@@ -207,8 +210,9 @@ func (e *entity) Unfriend(c *fiber.Ctx) error {
 		return helper.HttpDbError(err, ErrUnableToRemoveFriend)
 	}
 
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		ctx, cancel := context.WithTimeout(asyncCtx, time.Second*30)
 		defer cancel()
 
 		if u, err := e.user.GetUserById(ctx, req.UserId); err == nil {
@@ -219,7 +223,7 @@ func (e *entity) Unfriend(c *fiber.Ctx) error {
 				}
 			}
 			if d, derr := e.disc.GetDiscriminatorByUserId(ctx, req.UserId); derr == nil {
-				_ = e.mqt.SendUserUpdate(me.Id, &mqmsg.FriendRemoved{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad}})
+				_ = mq.SendUserUpdate(ctx, e.mqt, me.Id, &mqmsg.FriendRemoved{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad}})
 			}
 		}
 
@@ -231,7 +235,7 @@ func (e *entity) Unfriend(c *fiber.Ctx) error {
 				}
 			}
 			if d, derr := e.disc.GetDiscriminatorByUserId(ctx, me.Id); derr == nil {
-				_ = e.mqt.SendUserUpdate(req.UserId, &mqmsg.FriendRemoved{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad}})
+				_ = mq.SendUserUpdate(ctx, e.mqt, req.UserId, &mqmsg.FriendRemoved{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad}})
 			}
 		}
 	}()
@@ -329,8 +333,9 @@ func (e *entity) AcceptFriendRequest(c *fiber.Ctx) error {
 		return helper.HttpDbError(err, ErrUnableToAcceptFriendRequest)
 	}
 
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		ctx, cancel := context.WithTimeout(asyncCtx, time.Second*30)
 		defer cancel()
 
 		if u, err := e.user.GetUserById(ctx, req.UserId); err == nil {
@@ -341,7 +346,7 @@ func (e *entity) AcceptFriendRequest(c *fiber.Ctx) error {
 						ad = v
 					}
 				}
-				_ = e.mqt.SendUserUpdate(me.Id, &mqmsg.FriendAdded{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad}})
+				_ = mq.SendUserUpdate(ctx, e.mqt, me.Id, &mqmsg.FriendAdded{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad}})
 			}
 		}
 
@@ -353,7 +358,7 @@ func (e *entity) AcceptFriendRequest(c *fiber.Ctx) error {
 						ad = v
 					}
 				}
-				_ = e.mqt.SendUserUpdate(req.UserId, &mqmsg.FriendAdded{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad}})
+				_ = mq.SendUserUpdate(ctx, e.mqt, req.UserId, &mqmsg.FriendAdded{Friend: mqmsg.UserBrief{Id: u.Id, Name: u.Name, Discriminator: d.Discriminator, Avatar: u.Avatar, AvatarData: ad}})
 			}
 		}
 	}()

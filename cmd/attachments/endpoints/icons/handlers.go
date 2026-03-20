@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -12,7 +13,9 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/upload"
 )
 
@@ -37,6 +40,8 @@ import (
 //	@failure		500			{string}	string	"Internal server error"
 //	@Router			/upload/icons/{guild_id}/{icon_id} [post]
 func (e *entity) Upload(c *fiber.Ctx) error {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+
 	guildId, err := strconv.ParseInt(c.Params("guild_id"), 10, 64)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectGuildID)
@@ -72,19 +77,20 @@ func (e *entity) Upload(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusNoContent)
 	}
 
-	go e.finalizeIconSideEffects(guildId, iconId, result)
+	go e.finalizeIconSideEffects(observability.BackgroundFromContext(c.UserContext()), guildId, iconId, result, reqLog)
 
 	return c.SendStatus(fiber.StatusCreated)
 }
 
-func (e *entity) finalizeIconSideEffects(guildId, iconId int64, result *upload.IconResult) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+func (e *entity) finalizeIconSideEffects(ctx context.Context, guildId, iconId int64, result *upload.IconResult, logger *slog.Logger) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
+	log := observability.LoggerWithContext(ctx, logger)
 
 	if err := upload.Retry(ctx, 3, 100*time.Millisecond, func(ctx context.Context) error {
 		return e.gld.SetGuildIcon(ctx, guildId, iconId)
 	}); err != nil {
-		e.log.Error("failed to activate uploaded guild icon", "guild_id", guildId, "icon_id", iconId, "error", err)
+		log.Error("failed to activate uploaded guild icon", "guild_id", guildId, "icon_id", iconId, "error", err)
 		return
 	}
 
@@ -95,9 +101,9 @@ func (e *entity) finalizeIconSideEffects(guildId, iconId int64, result *upload.I
 		}
 		icon := dto.Icon{Id: iconId, URL: result.URL, Filesize: result.Size, Width: result.Width, Height: result.Height}
 		upd := mqmsg.UpdateGuild{Guild: dto.Guild{Id: guild.Id, Name: guild.Name, Icon: &icon, Owner: guild.OwnerId, Public: guild.Public, Permissions: guild.Permissions}}
-		return e.mqt.SendGuildUpdate(guildId, &upd)
+		return mq.SendGuildUpdate(ctx, e.mqt, guildId, &upd)
 	}); err != nil {
-		e.log.Error("failed to publish guild icon update", "guild_id", guildId, "icon_id", iconId, "error", err)
+		log.Error("failed to publish guild icon update", "guild_id", guildId, "icon_id", iconId, "error", err)
 	}
 }
 

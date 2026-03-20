@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type EtcdManager struct {
@@ -27,21 +29,26 @@ func NewEtcdManager(endpoints []string, prefix, username, password string) (*Etc
 }
 
 func (m *EtcdManager) Register(ctx context.Context, region string, inst Instance) error {
+	ctx, end := observability.StartDependencySpan(ctx, "etcd", "register", m.prefix, attribute.String("region", region), attribute.String("instance.id", inst.ID))
 	key := fmt.Sprintf("%s/%s/%s", m.prefix, region, inst.ID)
 	val, _ := json.Marshal(inst)
 	// create a short lease and attach it to the key
 	lease, err := m.cli.Grant(ctx, m.ttlS)
 	if err != nil {
+		end(err)
 		return err
 	}
 	_, err = m.cli.Put(ctx, key, string(val), clientv3.WithLease(lease.ID))
+	end(err)
 	return err
 }
 
 func (m *EtcdManager) List(ctx context.Context, region string) ([]Instance, error) {
+	ctx, end := observability.StartDependencySpan(ctx, "etcd", "list", m.prefix, attribute.String("region", region))
 	key := fmt.Sprintf("%s/%s/", m.prefix, region)
 	resp, err := m.cli.Get(ctx, key, clientv3.WithPrefix())
 	if err != nil {
+		end(err)
 		return nil, err
 	}
 	out := make([]Instance, 0, len(resp.Kvs))
@@ -54,6 +61,7 @@ func (m *EtcdManager) List(ctx context.Context, region string) ([]Instance, erro
 			}
 		}
 	}
+	end(nil)
 	return out, nil
 }
 
@@ -71,9 +79,11 @@ func (m *EtcdManager) Regions(ctx context.Context) ([]string, error) {
 	if m == nil || m.cli == nil {
 		return nil, nil
 	}
+	ctx, end := observability.StartDependencySpan(ctx, "etcd", "regions", m.prefix)
 	// List all keys under prefix and extract the region segment: <prefix>/<region>/<id>
 	resp, err := m.cli.Get(ctx, m.prefix+"/", clientv3.WithPrefix(), clientv3.WithKeysOnly())
 	if err != nil {
+		end(err)
 		return nil, err
 	}
 	uniq := make(map[string]struct{})
@@ -98,5 +108,6 @@ func (m *EtcdManager) Regions(ctx context.Context) ([]string, error) {
 	for r := range uniq {
 		out = append(out, r)
 	}
+	end(nil)
 	return out, nil
 }

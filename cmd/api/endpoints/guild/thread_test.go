@@ -175,7 +175,7 @@ func TestSendUpdateChannelEventForThreadSendsThreadUpdate(t *testing.T) {
 	e := &entity{mqt: transport}
 	parentID := int64(10)
 
-	err := e.sendUpdateChannelEvent(guildID, dto.Channel{
+	err := e.sendUpdateChannelEvent(context.Background(), guildID, dto.Channel{
 		Id:       55,
 		Type:     model.ChannelTypeThread,
 		GuildId:  &guildID,
@@ -207,7 +207,7 @@ func TestSendDeleteChannelEventForThreadSendsThreadDelete(t *testing.T) {
 	transport := &fakeGuildLifecycleTransport{}
 	e := &entity{mqt: transport}
 
-	err := e.sendDeleteChannelEvent(guildID, &model.Channel{Id: 55, Type: model.ChannelTypeThread})
+	err := e.sendDeleteChannelEvent(context.Background(), guildID, &model.Channel{Id: 55, Type: model.ChannelTypeThread})
 	if err != nil {
 		t.Fatalf("sendDeleteChannelEvent returned error: %v", err)
 	}
