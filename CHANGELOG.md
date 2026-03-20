@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/FlameInTheDark/gochat/compare/v1.8.0...v1.9.0) (2026-03-20)
+
+
+### Features
+
+* added observability features (OpenObserve and OpenTelemetry), fixed SFU video renegotiation, fixed migrations ([aa82431](https://github.com/FlameInTheDark/gochat/commit/aa824310a17119eafcbd5fa4d9526abdf229763f))
+
 # [1.8.0](https://github.com/FlameInTheDark/gochat/compare/v1.7.0...v1.8.0) (2026-03-19)
 
 
