@@ -28,7 +28,7 @@ func New(cql *db.CQLCon, pg *pgdb.DB, storage *s3.Client, externalURL string, lo
 	return &entity{
 		name:     entityName,
 		log:      log,
-		uploader: upload.NewAttachmentService(attachment.New(cql), storage, externalURL, upload.NewFFmpegProcessor()),
+		uploader: upload.NewAttachmentService(attachment.New(cql), storage, externalURL, upload.NewFFmpegProcessor(), log),
 	}
 }
 

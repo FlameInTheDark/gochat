@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"path/filepath"
 	"strings"
 	"time"
@@ -45,15 +46,17 @@ type AttachmentService struct {
 	processor      MediaProcessor
 	publicBase     string
 	previewMaxSize int
+	log            *slog.Logger
 }
 
-func NewAttachmentService(repo attachmentrepo.Attachment, storage Storage, publicBase string, processor MediaProcessor) *AttachmentService {
+func NewAttachmentService(repo attachmentrepo.Attachment, storage Storage, publicBase string, processor MediaProcessor, logger *slog.Logger) *AttachmentService {
 	return &AttachmentService{
 		repo:           repo,
 		storage:        storage,
 		processor:      processor,
 		publicBase:     publicBase,
 		previewMaxSize: DefaultAttachmentPreviewSize,
+		log:            logger,
 	}
 }
 
@@ -83,6 +86,7 @@ func (s *AttachmentService) Upload(ctx context.Context, actorID, channelID, atta
 	}
 	originalKey := AttachmentOriginalKey(channelID, attachmentID)
 	finalURL := PublicURL(s.publicBase, originalKey)
+	isWebP, isAnimatedWebP, widthPtr, heightPtr := sniffWEBPMetadata(prepared.Sniff)
 
 	uploadedKeys := make([]string, 0, 2)
 	defer func() {
@@ -101,35 +105,53 @@ func (s *AttachmentService) Upload(ctx context.Context, actorID, channelID, atta
 	uploadedKeys = append(uploadedKeys, originalKey)
 
 	var previewURL *string
-	var widthPtr *int64
-	var heightPtr *int64
 
 	if kind == "image" || kind == "video" {
-		source, urlErr := s.storage.MakeDownloadURL(ctx, originalKey, defaultDownloadURLTTL)
-		if urlErr != nil {
-			return nil, fmt.Errorf("%w: %v", ErrStorage, urlErr)
-		}
+		if kind == "image" && isAnimatedWebP {
+			preview := finalURL
+			previewURL = &preview
+			s.logAttachmentPreviewFallback(slog.LevelInfo, "animated webp preview skipped; using original asset",
+				channelID, attachmentID, placeholder.Name, prepared.ContentType, actualDimensions(widthPtr, heightPtr), "")
+		} else {
+			source, urlErr := s.storage.MakeDownloadURL(ctx, originalKey, defaultDownloadURLTTL)
+			if urlErr != nil {
+				return nil, fmt.Errorf("%w: %v", ErrStorage, urlErr)
+			}
 
-		if width, height, probeErr := s.processor.ProbeDimensions(ctx, source); probeErr == nil {
-			widthPtr = &width
-			heightPtr = &height
-		}
+			if widthPtr == nil || heightPtr == nil {
+				if width, height, probeErr := s.processor.ProbeDimensions(ctx, source); probeErr == nil && width > 0 && height > 0 {
+					widthPtr = &width
+					heightPtr = &height
+				}
+			}
 
-		previewBytes, previewErr := s.processor.CreateWebPPreview(ctx, source, s.previewMaxSize)
-		if previewErr != nil {
-			return nil, previewErr
+			previewBytes, previewErr := s.processor.CreateWebPPreview(ctx, source, s.previewMaxSize)
+			switch {
+			case previewErr == nil && len(previewBytes) > 0:
+				previewKey := AttachmentPreviewKey(channelID, attachmentID)
+				if err := uploadBytes(ctx, s.storage, previewKey, previewBytes, "image/webp"); err != nil {
+					return nil, err
+				}
+				uploadedKeys = append(uploadedKeys, previewKey)
+				preview := PublicURL(s.publicBase, previewKey)
+				previewURL = &preview
+			case kind == "image" && isWebP:
+				preview := finalURL
+				previewURL = &preview
+				reason := "empty_preview_output"
+				extra := make([]any, 0, 2)
+				if previewErr != nil {
+					reason = "preview_generation_failed"
+					extra = append(extra, "error", previewErr.Error())
+				}
+				s.logAttachmentPreviewFallback(slog.LevelWarn, "webp preview fallback to original asset",
+					channelID, attachmentID, placeholder.Name, prepared.ContentType, actualDimensions(widthPtr, heightPtr), reason, extra...)
+			case previewErr != nil:
+				return nil, previewErr
+			default:
+				return nil, ErrMediaProcess
+			}
 		}
-		if len(previewBytes) == 0 {
-			return nil, ErrMediaProcess
-		}
-
-		previewKey := AttachmentPreviewKey(channelID, attachmentID)
-		if err := uploadBytes(ctx, s.storage, previewKey, previewBytes, "image/webp"); err != nil {
-			return nil, err
-		}
-		uploadedKeys = append(uploadedKeys, previewKey)
-		preview := PublicURL(s.publicBase, previewKey)
-		previewURL = &preview
 	}
 
 	actualSize := prepared.Size
@@ -146,6 +168,52 @@ func (s *AttachmentService) Upload(ctx context.Context, actorID, channelID, atta
 		Height:      heightPtr,
 		Size:        actualSize,
 	}, nil
+}
+
+func sniffWEBPMetadata(sniff []byte) (bool, bool, *int64, *int64) {
+	if !isWEBP(sniff) {
+		return false, false, nil, nil
+	}
+
+	var widthPtr *int64
+	var heightPtr *int64
+	if width, height, err := DecodeImageDimensions(sniff); err == nil && width > 0 && height > 0 {
+		widthPtr = &width
+		heightPtr = &height
+	}
+
+	return true, isAnimatedWEBP(sniff), widthPtr, heightPtr
+}
+
+func actualDimensions(widthPtr, heightPtr *int64) string {
+	if widthPtr == nil || heightPtr == nil {
+		return ""
+	}
+	return fmt.Sprintf("%dx%d", *widthPtr, *heightPtr)
+}
+
+func (s *AttachmentService) logAttachmentPreviewFallback(level slog.Level, msg string, channelID, attachmentID int64, fileName, contentType, dimensions, reason string, extra ...any) {
+	if s.log == nil {
+		return
+	}
+
+	attrs := []any{
+		"channel_id", channelID,
+		"attachment_id", attachmentID,
+		"file_name", fileName,
+		"content_type", contentType,
+		"preview_strategy", "original_asset",
+	}
+	if dimensions != "" {
+		attrs = append(attrs, "dimensions", dimensions)
+	}
+	if reason != "" {
+		attrs = append(attrs, "reason", reason)
+	}
+	if len(extra) > 0 {
+		attrs = append(attrs, extra...)
+	}
+	s.log.Log(context.Background(), level, msg, attrs...)
 }
 
 type AvatarResult struct {

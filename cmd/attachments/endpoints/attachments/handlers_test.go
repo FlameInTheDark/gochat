@@ -76,7 +76,7 @@ func TestUploadHandlerReturnsCreated(t *testing.T) {
 	body := []byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 'd', 'a', 't', 'a'}
 	repo := &fakeAttachmentRepo{placeholder: model.Attachment{Id: 66, ChannelId: 55, Name: "preview.webp", FileSize: int64(len(body)), AuthorId: &ownerID}}
 	storage := &fakeStorage{}
-	e := &entity{uploader: upload.NewAttachmentService(repo, storage, "", &fakeProcessor{})}
+	e := &entity{uploader: upload.NewAttachmentService(repo, storage, "", &fakeProcessor{}, nil)}
 
 	app := fiber.New()
 	app.Post("/:channel_id/:attachment_id", func(c *fiber.Ctx) error {

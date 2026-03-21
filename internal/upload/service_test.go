@@ -228,7 +228,7 @@ func TestAttachmentServiceUploadImageUsesDeterministicKeys(t *testing.T) {
 	repo := &fakeAttachmentRepo{placeholder: model.Attachment{Id: 66, ChannelId: 55, Name: "preview.webp", FileSize: int64(len(body)), AuthorId: &ownerID}}
 	storage := &fakeStorage{downloadURL: "signed://media/55/66/original"}
 	processor := &fakeProcessor{previewBytes: makeWebP(300, 200), probeWidth: 640, probeHeight: 480}
-	service := NewAttachmentService(repo, storage, "", processor)
+	service := NewAttachmentService(repo, storage, "", processor, nil)
 
 	result, err := service.Upload(context.Background(), ownerID, 55, 66, bytes.NewReader(body))
 	if err != nil {
@@ -275,7 +275,7 @@ func TestAttachmentServiceUploadVideoUsesExtensionFallback(t *testing.T) {
 	repo := &fakeAttachmentRepo{placeholder: model.Attachment{Id: 4, ChannelId: 9, Name: "clip.mp4", FileSize: int64(len(body)), AuthorId: &ownerID}}
 	storage := &fakeStorage{downloadURL: "signed://media/9/4/original"}
 	processor := &fakeProcessor{previewBytes: makeWebP(100, 50), probeWidth: 1920, probeHeight: 1080}
-	service := NewAttachmentService(repo, storage, "https://files.example", processor)
+	service := NewAttachmentService(repo, storage, "https://files.example", processor, nil)
 
 	result, err := service.Upload(context.Background(), ownerID, 9, 4, bytes.NewReader(body))
 	if err != nil {
@@ -297,7 +297,7 @@ func TestAttachmentServiceUploadOtherStoresOnlyOriginal(t *testing.T) {
 	body := []byte("plain text body")
 	repo := &fakeAttachmentRepo{placeholder: model.Attachment{Id: 3, ChannelId: 2, Name: "notes.txt", FileSize: int64(len(body)), AuthorId: &ownerID}}
 	storage := &fakeStorage{}
-	service := NewAttachmentService(repo, storage, "https://files.example", &fakeProcessor{})
+	service := NewAttachmentService(repo, storage, "https://files.example", &fakeProcessor{}, nil)
 
 	result, err := service.Upload(context.Background(), ownerID, 2, 3, bytes.NewReader(body))
 	if err != nil {
@@ -317,13 +317,73 @@ func TestAttachmentServiceUploadOtherStoresOnlyOriginal(t *testing.T) {
 	}
 }
 
+func TestAttachmentServiceUploadAnimatedWEBPUsesOriginalAsPreview(t *testing.T) {
+	ownerID := int64(17)
+	body := makeAnimatedWEBP(64, 48)
+	repo := &fakeAttachmentRepo{placeholder: model.Attachment{Id: 9, ChannelId: 4, Name: "dance.webp", FileSize: int64(len(body)), AuthorId: &ownerID}}
+	storage := &fakeStorage{}
+	service := NewAttachmentService(repo, storage, "https://files.example", &fakeProcessor{}, nil)
+
+	result, err := service.Upload(context.Background(), ownerID, 4, 9, bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("Upload returned error: %v", err)
+	}
+	if result.Kind != "image" {
+		t.Fatalf("expected image kind, got %q", result.Kind)
+	}
+	if result.PreviewURL == nil || *result.PreviewURL != "https://files.example/media/4/9/original" {
+		t.Fatalf("expected original URL preview fallback, got %#v", result.PreviewURL)
+	}
+	if result.Width == nil || *result.Width != 64 || result.Height == nil || *result.Height != 48 {
+		t.Fatalf("expected sniffed dimensions, got width=%v height=%v", result.Width, result.Height)
+	}
+	if len(storage.uploads) != 1 || storage.uploads[0].key != "media/4/9/original" {
+		t.Fatalf("unexpected uploads: %#v", storage.uploads)
+	}
+	if len(storage.downloadKeys) != 0 {
+		t.Fatalf("expected animated webp preview path to skip signed download, got %#v", storage.downloadKeys)
+	}
+	if repo.doneCall == nil || repo.doneCall.previewURL == nil || *repo.doneCall.previewURL != "https://files.example/media/4/9/original" {
+		t.Fatalf("expected finalize preview fallback, got %#v", repo.doneCall)
+	}
+}
+
+func TestAttachmentServiceUploadWEBPPreviewFailureFallsBackToOriginal(t *testing.T) {
+	ownerID := int64(19)
+	body := makeWebP(48, 24)
+	repo := &fakeAttachmentRepo{placeholder: model.Attachment{Id: 8, ChannelId: 6, Name: "still.webp", FileSize: int64(len(body)), AuthorId: &ownerID}}
+	storage := &fakeStorage{downloadURL: "signed://media/6/8/original"}
+	processor := &fakeProcessor{previewErr: errors.New("ffmpeg failed"), probeErr: errors.New("ffprobe failed")}
+	service := NewAttachmentService(repo, storage, "https://files.example", processor, nil)
+
+	result, err := service.Upload(context.Background(), ownerID, 6, 8, bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("Upload returned error: %v", err)
+	}
+	if result.PreviewURL == nil || *result.PreviewURL != "https://files.example/media/6/8/original" {
+		t.Fatalf("expected original URL preview fallback, got %#v", result.PreviewURL)
+	}
+	if result.Width == nil || *result.Width != 48 || result.Height == nil || *result.Height != 24 {
+		t.Fatalf("expected sniffed dimensions, got width=%v height=%v", result.Width, result.Height)
+	}
+	if len(storage.uploads) != 1 || storage.uploads[0].key != "media/6/8/original" {
+		t.Fatalf("unexpected uploads: %#v", storage.uploads)
+	}
+	if len(storage.downloadKeys) != 1 || storage.downloadKeys[0] != "media/6/8/original" {
+		t.Fatalf("expected preview attempt to use signed download URL, got %#v", storage.downloadKeys)
+	}
+	if repo.doneCall == nil || repo.doneCall.previewURL == nil || *repo.doneCall.previewURL != "https://files.example/media/6/8/original" {
+		t.Fatalf("expected finalize preview fallback, got %#v", repo.doneCall)
+	}
+}
+
 func TestAttachmentServiceUploadFinalizeFailureCleansUp(t *testing.T) {
 	ownerID := int64(8)
 	body := pngPayload()
 	repo := &fakeAttachmentRepo{placeholder: model.Attachment{Id: 1, ChannelId: 2, Name: "photo.png", FileSize: int64(len(body)), AuthorId: &ownerID}, doneErr: errors.New("boom")}
 	storage := &fakeStorage{}
 	processor := &fakeProcessor{previewBytes: makeWebP(50, 50), probeWidth: 50, probeHeight: 50}
-	service := NewAttachmentService(repo, storage, "https://files.example", processor)
+	service := NewAttachmentService(repo, storage, "https://files.example", processor, nil)
 
 	_, err := service.Upload(context.Background(), ownerID, 2, 1, bytes.NewReader(body))
 	if !errors.Is(err, ErrFinalize) {
