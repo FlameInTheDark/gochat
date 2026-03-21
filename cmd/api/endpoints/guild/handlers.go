@@ -327,7 +327,7 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) er
 	reqLog := observability.LoggerFromFiber(c, e.log)
 
 	var cachedChannels []dto.Channel
-	err := e.cache.GetJSON(c.UserContext(), fmt.Sprintf("guild:%d:channels", guildCtx.Guild.Id), cachedChannels)
+	err := e.cache.GetJSON(c.UserContext(), fmt.Sprintf("guild:%d:channels", guildCtx.Guild.Id), &cachedChannels)
 	if err == nil {
 		return c.JSON(cachedChannels)
 	}
