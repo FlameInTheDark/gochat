@@ -129,7 +129,19 @@ func (f *fakeCreateGuildChannelsRepo) GetGuildsChannelsIDsMany(ctx context.Conte
 }
 
 type fakeCreateChannelRepo struct {
-	channels map[int64]model.Channel
+	channels         map[int64]model.Channel
+	setParentCalls   []fakeSetChannelParentCall
+	setParentBulkOps []fakeSetChannelParentBulkCall
+}
+
+type fakeSetChannelParentCall struct {
+	channelID int64
+	parentID  *int64
+}
+
+type fakeSetChannelParentBulkCall struct {
+	channelIDs []int64
+	parentID   *int64
 }
 
 func (f *fakeCreateChannelRepo) GetChannel(ctx context.Context, id int64) (model.Channel, error) {
@@ -186,10 +198,26 @@ func (f *fakeCreateChannelRepo) SetChannelTopic(ctx context.Context, id int64, t
 }
 
 func (f *fakeCreateChannelRepo) SetChannelParent(ctx context.Context, id int64, parent *int64) error {
+	f.setParentCalls = append(f.setParentCalls, fakeSetChannelParentCall{
+		channelID: id,
+		parentID:  cloneInt64Ptr(parent),
+	})
+	channel := f.channels[id]
+	channel.ParentID = cloneInt64Ptr(parent)
+	f.channels[id] = channel
 	return nil
 }
 
 func (f *fakeCreateChannelRepo) SetChannelParentBulk(ctx context.Context, id []int64, parent *int64) error {
+	f.setParentBulkOps = append(f.setParentBulkOps, fakeSetChannelParentBulkCall{
+		channelIDs: append([]int64(nil), id...),
+		parentID:   cloneInt64Ptr(parent),
+	})
+	for _, channelID := range id {
+		channel := f.channels[channelID]
+		channel.ParentID = cloneInt64Ptr(parent)
+		f.channels[channelID] = channel
+	}
 	return nil
 }
 
@@ -452,6 +480,92 @@ func TestGetChannelsPreservesStoredParentAndSortsByPosition(t *testing.T) {
 	}
 	if got[2].ParentID == nil || *got[2].ParentID != parentID {
 		t.Fatalf("expected child to keep stored parent_id %d, got %#v", parentID, got[2].ParentID)
+	}
+}
+
+func TestPatchChannelOrderPersistsDerivedParentFromCategoryOrder(t *testing.T) {
+	const (
+		textCategoryID int64 = 2297107003392131072
+		generalID      int64 = 2297107003392131073
+		yepyapID       int64 = 2297450204871262208
+		yepID          int64 = 2297450548699332608
+		testID         int64 = 2297455907950297088
+	)
+
+	guildChannelsRepo := &fakeCreateGuildChannelsRepo{
+		guildChannels: map[int64]model.GuildChannel{
+			textCategoryID: {GuildId: 1, ChannelId: textCategoryID, Position: 0},
+			generalID:      {GuildId: 1, ChannelId: generalID, Position: 1},
+			yepyapID:       {GuildId: 1, ChannelId: yepyapID, Position: 2},
+			yepID:          {GuildId: 1, ChannelId: yepID, Position: 3},
+			testID:         {GuildId: 1, ChannelId: testID, Position: 4},
+		},
+	}
+	channelRepo := &fakeCreateChannelRepo{
+		channels: map[int64]model.Channel{
+			textCategoryID: {Id: textCategoryID, Type: model.ChannelTypeGuildCategory, Name: "text"},
+			generalID:      {Id: generalID, Type: model.ChannelTypeGuild, Name: "general", ParentID: int64Ptr(textCategoryID)},
+			yepyapID:       {Id: yepyapID, Type: model.ChannelTypeGuildCategory, Name: "yepyap"},
+			yepID:          {Id: yepID, Type: model.ChannelTypeGuild, Name: "yep"},
+			testID:         {Id: testID, Type: model.ChannelTypeGuild, Name: "test", ParentID: int64Ptr(yepyapID)},
+		},
+	}
+	cache := &fakeCache{deleteCh: make(chan string, 1)}
+	transport := &fakeGuildLifecycleTransport{}
+	perms := &fakePermissionChecker{results: map[testPermKey]bool{
+		{guildID: 1, userID: 10, perm: permissions.PermServerManageChannels}: true,
+	}}
+	e := &entity{
+		gc:    guildChannelsRepo,
+		ch:    channelRepo,
+		cache: cache,
+		mqt:   transport,
+		perm:  perms,
+	}
+	app := newGuildTestApp(t, 10, "/guild/:guild_id/channel/order", e.PatchChannelOrder)
+
+	body := strings.NewReader(`{"channels":[{"id":"2297107003392131072","position":0},{"id":"2297107003392131073","position":1},{"id":"2297450204871262208","position":2},{"id":"2297450548699332608","position":3},{"id":"2297455907950297088","position":4}]}`)
+	req := httptest.NewRequest("PATCH", "/guild/1/channel/order", body)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+
+	if channelRepo.channels[yepID].ParentID == nil || *channelRepo.channels[yepID].ParentID != yepyapID {
+		t.Fatalf("expected reordered channel to get parent %d, got %#v", yepyapID, channelRepo.channels[yepID].ParentID)
+	}
+	if len(channelRepo.setParentCalls) != 1 {
+		t.Fatalf("expected one parent update call, got %#v", channelRepo.setParentCalls)
+	}
+	if channelRepo.setParentCalls[0].parentID == nil || *channelRepo.setParentCalls[0].parentID != yepyapID {
+		t.Fatalf("unexpected parent update payload: %#v", channelRepo.setParentCalls[0])
+	}
+
+	select {
+	case key := <-cache.deleteCh:
+		if key != "guild:1:channels" {
+			t.Fatalf("unexpected deleted cache key: %s", key)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("expected channel cache invalidation")
+	}
+
+	if len(transport.guildEvents) != 2 {
+		t.Fatalf("expected order update and channel update events, got %d", len(transport.guildEvents))
+	}
+	if _, ok := transport.guildEvents[0].(*mqmsg.UpdateChannelList); !ok {
+		t.Fatalf("expected first event to be UpdateChannelList, got %T", transport.guildEvents[0])
+	}
+	updateEvent, ok := transport.guildEvents[1].(*mqmsg.UpdateChannel)
+	if !ok {
+		t.Fatalf("expected second event to be UpdateChannel, got %T", transport.guildEvents[1])
+	}
+	if updateEvent.Channel.ParentId == nil || *updateEvent.Channel.ParentId != yepyapID {
+		t.Fatalf("expected updated channel event parent_id %d, got %#v", yepyapID, updateEvent.Channel.ParentId)
 	}
 }
 
