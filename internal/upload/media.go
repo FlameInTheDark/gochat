@@ -13,6 +13,7 @@ import (
 
 type MediaProcessor interface {
 	CreateWebPPreview(ctx context.Context, source string, maxDimension int) ([]byte, error)
+	CreateWebPPreviewFromReader(ctx context.Context, source io.Reader, maxDimension int) ([]byte, error)
 	ConvertToWebP(ctx context.Context, source io.Reader, maxDimension int, sizeLimit int64) ([]byte, error)
 	ProbeDimensions(ctx context.Context, source string) (int64, int64, error)
 }
@@ -38,6 +39,19 @@ func (p *FFmpegProcessor) CreateWebPPreview(ctx context.Context, source string, 
 		"-v", "error",
 		"-y",
 		"-i", source,
+		"-vframes", "1",
+		"-vf", fmt.Sprintf("scale=%d:%d:force_original_aspect_ratio=decrease", maxDimension, maxDimension),
+		"-f", "image2pipe",
+		"-vcodec", "webp",
+		"-",
+	)
+}
+
+func (p *FFmpegProcessor) CreateWebPPreviewFromReader(ctx context.Context, source io.Reader, maxDimension int) ([]byte, error) {
+	return p.runFFmpeg(ctx, source,
+		"-v", "error",
+		"-y",
+		"-i", "pipe:0",
 		"-vframes", "1",
 		"-vf", fmt.Sprintf("scale=%d:%d:force_original_aspect_ratio=decrease", maxDimension, maxDimension),
 		"-f", "image2pipe",

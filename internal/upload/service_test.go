@@ -3,8 +3,10 @@ package upload
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/binary"
 	"errors"
+	"image/png"
 	"io"
 	"testing"
 	"time"
@@ -56,16 +58,19 @@ func (f *fakeStorage) RemoveAttachment(ctx context.Context, key string) error {
 }
 
 type fakeProcessor struct {
-	previewBytes  []byte
-	convertBytes  []byte
-	probeWidth    int64
-	probeHeight   int64
-	previewErr    error
-	convertErr    error
-	probeErr      error
-	previewSource string
-	probeSource   string
-	convertData   []byte
+	previewBytes   []byte
+	previewReader  []byte
+	convertBytes   []byte
+	probeWidth     int64
+	probeHeight    int64
+	previewErr     error
+	previewReadErr error
+	convertErr     error
+	probeErr       error
+	previewSource  string
+	probeSource    string
+	convertData    []byte
+	previewData    []byte
 }
 
 func (f *fakeProcessor) CreateWebPPreview(ctx context.Context, source string, maxDimension int) ([]byte, error) {
@@ -74,6 +79,14 @@ func (f *fakeProcessor) CreateWebPPreview(ctx context.Context, source string, ma
 		return nil, f.previewErr
 	}
 	return append([]byte(nil), f.previewBytes...), nil
+}
+
+func (f *fakeProcessor) CreateWebPPreviewFromReader(ctx context.Context, source io.Reader, maxDimension int) ([]byte, error) {
+	f.previewData, _ = io.ReadAll(source)
+	if f.previewReadErr != nil {
+		return nil, f.previewReadErr
+	}
+	return append([]byte(nil), f.previewReader...), nil
 }
 
 func (f *fakeProcessor) ConvertToWebP(ctx context.Context, source io.Reader, maxDimension int, sizeLimit int64) ([]byte, error) {
@@ -317,12 +330,37 @@ func TestAttachmentServiceUploadOtherStoresOnlyOriginal(t *testing.T) {
 	}
 }
 
-func TestAttachmentServiceUploadAnimatedWEBPUsesOriginalAsPreview(t *testing.T) {
+func TestRenderAnimatedWEBPFirstFramePNG(t *testing.T) {
+	body := animatedWEBPFixture()
+
+	rendered, width, height, err := RenderAnimatedWEBPFirstFramePNG(body)
+	if err != nil {
+		t.Fatalf("RenderAnimatedWEBPFirstFramePNG returned error: %v", err)
+	}
+	if width != 4 || height != 2 {
+		t.Fatalf("unexpected rendered dimensions: %dx%d", width, height)
+	}
+
+	img, err := png.Decode(bytes.NewReader(rendered))
+	if err != nil {
+		t.Fatalf("png decode failed: %v", err)
+	}
+	if img.Bounds().Dx() != 4 || img.Bounds().Dy() != 2 {
+		t.Fatalf("unexpected rendered png bounds: %v", img.Bounds())
+	}
+	r, g, b, a := img.At(0, 0).RGBA()
+	if r>>8 < 200 || g>>8 > 30 || b>>8 > 30 || a>>8 < 200 {
+		t.Fatalf("unexpected rendered pixel rgba=%d,%d,%d,%d", r>>8, g>>8, b>>8, a>>8)
+	}
+}
+
+func TestAttachmentServiceUploadAnimatedWEBPUsesExtractedPreview(t *testing.T) {
 	ownerID := int64(17)
-	body := makeAnimatedWEBP(64, 48)
+	body := animatedWEBPFixture()
 	repo := &fakeAttachmentRepo{placeholder: model.Attachment{Id: 9, ChannelId: 4, Name: "dance.webp", FileSize: int64(len(body)), AuthorId: &ownerID}}
 	storage := &fakeStorage{}
-	service := NewAttachmentService(repo, storage, "https://files.example", &fakeProcessor{}, nil)
+	processor := &fakeProcessor{previewReader: makeWebP(64, 48)}
+	service := NewAttachmentService(repo, storage, "https://files.example", processor, nil)
 
 	result, err := service.Upload(context.Background(), ownerID, 4, 9, bytes.NewReader(body))
 	if err != nil {
@@ -331,19 +369,22 @@ func TestAttachmentServiceUploadAnimatedWEBPUsesOriginalAsPreview(t *testing.T) 
 	if result.Kind != "image" {
 		t.Fatalf("expected image kind, got %q", result.Kind)
 	}
-	if result.PreviewURL == nil || *result.PreviewURL != "https://files.example/media/4/9/original" {
-		t.Fatalf("expected original URL preview fallback, got %#v", result.PreviewURL)
+	if result.PreviewURL == nil || *result.PreviewURL != "https://files.example/media/4/9/preview.webp" {
+		t.Fatalf("expected generated preview URL, got %#v", result.PreviewURL)
 	}
-	if result.Width == nil || *result.Width != 64 || result.Height == nil || *result.Height != 48 {
-		t.Fatalf("expected sniffed dimensions, got width=%v height=%v", result.Width, result.Height)
+	if result.Width == nil || *result.Width != 4 || result.Height == nil || *result.Height != 2 {
+		t.Fatalf("expected rendered dimensions, got width=%v height=%v", result.Width, result.Height)
 	}
-	if len(storage.uploads) != 1 || storage.uploads[0].key != "media/4/9/original" {
+	if len(storage.uploads) != 2 || storage.uploads[0].key != "media/4/9/original" || storage.uploads[1].key != "media/4/9/preview.webp" {
 		t.Fatalf("unexpected uploads: %#v", storage.uploads)
 	}
 	if len(storage.downloadKeys) != 0 {
 		t.Fatalf("expected animated webp preview path to skip signed download, got %#v", storage.downloadKeys)
 	}
-	if repo.doneCall == nil || repo.doneCall.previewURL == nil || *repo.doneCall.previewURL != "https://files.example/media/4/9/original" {
+	if len(processor.previewData) == 0 {
+		t.Fatal("expected rendered frame to be passed to the preview processor")
+	}
+	if repo.doneCall == nil || repo.doneCall.previewURL == nil || *repo.doneCall.previewURL != "https://files.example/media/4/9/preview.webp" {
 		t.Fatalf("expected finalize preview fallback, got %#v", repo.doneCall)
 	}
 }
@@ -472,4 +513,38 @@ func makeWebP(width, height int) []byte {
 	data[28] = byte(h >> 8)
 	data[29] = byte(h >> 16)
 	return data
+}
+
+func animatedWEBPFixture() []byte {
+	still, err := base64.StdEncoding.DecodeString("UklGRjwAAABXRUJQVlA4IDAAAADQAQCdASoEAAIAAgA0JaACdLoB+AADsAD+8Oj3/yC5YXXI1/8gP+QH/ID/+PIAAAA=")
+	if err != nil {
+		panic(err)
+	}
+	payload := append([]byte(nil), still[12:]...)
+	anmfHeader := make([]byte, 16)
+	anmfHeader[6] = 3
+	anmfHeader[9] = 1
+	anmfPayload := append(anmfHeader, payload...)
+
+	body := make([]byte, 0, 128)
+	body = append(body, makeChunk("VP8X", []byte{0x02, 0, 0, 0, 3, 0, 0, 1, 0, 0})...)
+	body = append(body, makeChunk("ANIM", []byte{0, 0, 0, 0, 0, 0})...)
+	body = append(body, makeChunk("ANMF", anmfPayload)...)
+
+	data := make([]byte, 12, 12+len(body))
+	copy(data[:4], []byte("RIFF"))
+	binary.LittleEndian.PutUint32(data[4:8], uint32(4+len(body)))
+	copy(data[8:12], []byte("WEBP"))
+	return append(data, body...)
+}
+
+func makeChunk(tag string, payload []byte) []byte {
+	out := make([]byte, 8, 8+len(payload)+1)
+	copy(out[:4], []byte(tag))
+	binary.LittleEndian.PutUint32(out[4:8], uint32(len(payload)))
+	out = append(out, payload...)
+	if len(payload)%2 == 1 {
+		out = append(out, 0)
+	}
+	return out
 }

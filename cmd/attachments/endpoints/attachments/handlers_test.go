@@ -64,6 +64,10 @@ type fakeProcessor struct{}
 func (f *fakeProcessor) CreateWebPPreview(ctx context.Context, source string, maxDimension int) ([]byte, error) {
 	return []byte("RIFFxxxxWEBPVP8Xabcdefghij"), nil
 }
+func (f *fakeProcessor) CreateWebPPreviewFromReader(ctx context.Context, source io.Reader, maxDimension int) ([]byte, error) {
+	_, _ = io.ReadAll(source)
+	return []byte("RIFFxxxxWEBPVP8Xabcdefghij"), nil
+}
 func (f *fakeProcessor) ConvertToWebP(ctx context.Context, source io.Reader, maxDimension int, sizeLimit int64) ([]byte, error) {
 	return nil, nil
 }
