@@ -6,6 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"net"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -317,18 +319,12 @@ func (a *App) wsHandler(c *websocket.Conn) {
 	for {
 		mt, msg, err := c.ReadMessage()
 		if err != nil {
-			if websocket.IsCloseError(
-				err,
-				websocket.CloseNormalClosure,
-				websocket.CloseProtocolError,
-				websocket.CloseNoStatusReceived,
-				websocket.CloseGoingAway,
-			) {
+			if isExpectedWSReadError(err) {
 				return
 			}
 			connSpan.RecordError(err)
 			connLog.Error("Read WS message error", "error", err)
-			continue
+			return
 		}
 
 		switch mt {
@@ -349,4 +345,23 @@ func (a *App) wsHandler(c *websocket.Conn) {
 			return
 		}
 	}
+}
+
+func isExpectedWSReadError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if websocket.IsCloseError(
+		err,
+		websocket.CloseNormalClosure,
+		websocket.CloseProtocolError,
+		websocket.CloseNoStatusReceived,
+		websocket.CloseGoingAway,
+		websocket.CloseAbnormalClosure,
+	) {
+		return true
+	}
+
+	return errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, net.ErrClosed)
 }
