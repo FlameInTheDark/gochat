@@ -1,10 +1,13 @@
 package subscriber
 
 import (
+	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/FlameInTheDark/gochat/cmd/ws/hub"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 )
 
 // Subscriber manages topic subscriptions for a single WebSocket connection
@@ -12,18 +15,22 @@ import (
 // has at most one NATS subscription per server instance, fanning messages out
 // to all local connections in-memory.
 type Subscriber struct {
-	hub    *hub.Hub
-	conn   hub.Conn
-	topics map[string]string // key → NATS topic (for unsubscribe tracking)
-	mx     sync.Mutex
+	hub       *hub.Hub
+	conn      hub.Conn
+	topics    map[string]string // key → NATS topic (for unsubscribe tracking)
+	telemetry *observability.WSTelemetry
+	ctx       func() context.Context
+	mx        sync.Mutex
 }
 
 // New creates a subscriber backed by the shared hub for the given connection.
-func New(h *hub.Hub, conn hub.Conn) *Subscriber {
+func New(h *hub.Hub, conn hub.Conn, telemetry *observability.WSTelemetry, ctx func() context.Context) *Subscriber {
 	return &Subscriber{
-		hub:    h,
-		conn:   conn,
-		topics: make(map[string]string),
+		hub:       h,
+		conn:      conn,
+		topics:    make(map[string]string),
+		telemetry: telemetry,
+		ctx:       ctx,
 	}
 }
 
@@ -39,12 +46,14 @@ func (s *Subscriber) Subscribe(key, topic string) error {
 			return nil // already subscribed to the exact same topic
 		}
 		s.hub.Unregister(s.conn, old)
+		s.recordSubscriptionDelta(old, -1)
 	}
 
 	if err := s.hub.Register(s.conn, topic); err != nil {
 		return fmt.Errorf("subscribe to '%s' error: %w", topic, err)
 	}
 	s.topics[key] = topic
+	s.recordSubscriptionDelta(topic, 1)
 	return nil
 }
 
@@ -55,6 +64,7 @@ func (s *Subscriber) Unsubscribe(key string) error {
 	if topic, ok := s.topics[key]; ok {
 		s.hub.Unregister(s.conn, topic)
 		delete(s.topics, key)
+		s.recordSubscriptionDelta(topic, -1)
 	}
 	return nil
 }
@@ -63,7 +73,38 @@ func (s *Subscriber) Unsubscribe(key string) error {
 func (s *Subscriber) Close() error {
 	s.mx.Lock()
 	defer s.mx.Unlock()
+	for _, topic := range s.topics {
+		s.recordSubscriptionDelta(topic, -1)
+	}
 	s.hub.UnregisterAll(s.conn)
 	s.topics = make(map[string]string)
 	return nil
+}
+
+func (s *Subscriber) recordSubscriptionDelta(topic string, delta int64) {
+	if s.telemetry == nil || delta == 0 {
+		return
+	}
+	ctx := context.Background()
+	if s.ctx != nil {
+		if current := s.ctx(); current != nil {
+			ctx = observability.BackgroundFromContext(current)
+		}
+	}
+	s.telemetry.SubscriptionDelta(ctx, subscriptionKind(topic), delta)
+}
+
+func subscriptionKind(topic string) string {
+	switch {
+	case strings.HasPrefix(topic, "guild."):
+		return "guild"
+	case strings.HasPrefix(topic, "channel."):
+		return "channel"
+	case strings.HasPrefix(topic, "presence."):
+		return "presence"
+	case strings.HasPrefix(topic, "user."):
+		return "user"
+	default:
+		return "other"
+	}
 }

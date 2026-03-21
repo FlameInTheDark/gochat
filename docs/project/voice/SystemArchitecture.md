@@ -403,7 +403,7 @@ This endpoint kicks all peers in the specified channel by sending `EventTypeRTCS
 
 - STUN servers configured via `config.STUNServers`.
 - No TURN servers by default (direct P2P ICE candidates).
-- All WebSocket signaling over WSS (TLS via Traefik).
+- All WebSocket signaling runs over WSS with TLS terminated by the deployed ingress or load balancer.
 
 ### 5.4 Codec Restriction
 
@@ -458,7 +458,9 @@ Load values are stale by up to 5 seconds (heartbeat interval), but the weighted-
 
 ### 8.1 SFU Metrics
 - `totalPeers atomic.Int64`: Exported as the `load` field in heartbeats.
-- Prometheus endpoint planned but not yet implemented.
+- The SFU also emits traces and metrics directly to OpenObserve over OTLP HTTP.
+- When enabled, the SFU mirrors structured JSON logs directly to OpenObserve with a best-effort async exporter while still writing logs to stdout.
+- Canonical voice dimensions are `voice.region` and `service.instance.id`.
 
 ### 8.2 Channel Alive Notification
 Every 60 seconds while a channel has active users, the SFU sends `ChannelAliveNotify` to the webhook server, maintaining the channel's "active" record in any persistence layer.
@@ -473,35 +475,20 @@ These events flow: `SFU → Webhook → NATS → WS hub → subscribed clients`.
 
 ## 9. Infrastructure Deployment
 
-From `compose.yaml`:
+The local Compose stack runs the control-plane services and local observability components:
 
-```yaml
-sfu:
-  - Exposed via Traefik on path /sfu
-  - Internal port 3300
-  - WebSocket endpoint: /signal
+- `api` exposes the public REST API behind Traefik.
+- `auth` handles login and account flows.
+- `ws` provides the persistent real-time gateway.
+- `attachments` handles media uploads.
+- `webhook` receives trusted callbacks from SFU and attachments flows.
+- `nats`, `etcd`, `keydb`, `postgres/citus`, `scylla`, `opensearch`, `openobserve`, and the OTEL collector support the application services.
 
-api:
-  - Port 3100
-  - Depends on: PostgreSQL, KeyDB (Redis), NATS, auth service
+The SFU is intentionally deployed outside local Compose:
 
-ws:
-  - Port 3100
-  - Depends on: NATS
+- It runs as a standalone service on the target host or platform.
+- Clients connect directly to its `/signal` endpoint over WSS.
+- It heartbeats into the Webhook service for discovery registration.
+- It self-ships traces, metrics, and optional direct logs without requiring a sidecar or host collector.
 
-webhook:
-  - Port 3200
-  - Depends on: NATS, etcd
-
-nats:
-  - Ports: 4222 (client), 8222 (monitoring), 6222 (cluster)
-
-etcd:
-  - Ports: 2379 (client), 2380 (peer)
-
-keydb:
-  - Port 6379
-  - Redis-compatible
-```
-
-All public endpoints proxied through Traefik with TLS termination.
+See [External SFU Observability](../observability/ExternalSFU.md) for the standalone telemetry contract.

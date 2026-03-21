@@ -1,21 +1,31 @@
 package hub
 
 import (
-	"log"
+	"context"
+	"log/slog"
 	"strings"
 	"sync"
 
 	"github.com/nats-io/nats.go"
+
+	"github.com/FlameInTheDark/gochat/internal/observability"
 )
 
 // Conn is the interface each WebSocket connection must implement to receive
 // messages from the hub. Send must be non-blocking (drop if the connection's
 // buffer is full).
 type Conn interface {
-	// Send delivers raw message bytes to the connection.
+	// Send delivers a message envelope to the connection.
 	// Implementations must be non-blocking: if the outbound buffer is full
 	// the message should be dropped (and the connection optionally evicted).
-	Send(topic string, data []byte)
+	Send(delivery Delivery)
+}
+
+type Delivery struct {
+	Topic   string
+	Data    []byte
+	Headers nats.Header
+	Context context.Context
 }
 
 // topicEntry tracks a shared NATS subscription and all local connections
@@ -34,13 +44,18 @@ type Hub struct {
 	nc     *nats.Conn
 	mu     sync.RWMutex
 	topics map[string]*topicEntry
+	log    *slog.Logger
 }
 
 // New creates a new Hub backed by the given NATS connection.
-func New(nc *nats.Conn) *Hub {
+func New(nc *nats.Conn, logger *slog.Logger) *Hub {
+	if logger == nil {
+		logger = observability.Logger()
+	}
 	return &Hub{
 		nc:     nc,
 		topics: make(map[string]*topicEntry),
+		log:    logger,
 	}
 }
 
@@ -67,10 +82,19 @@ func (h *Hub) Register(conn Conn, topic string) error {
 	h.mu.Unlock()
 
 	sub, err := h.nc.Subscribe(topic, func(msg *nats.Msg) {
+		ctx := observability.ExtractNATSContext(context.Background(), msg)
+		ctx, finish := observability.StartNATSConsumeSpan(ctx, topic)
+		defer finish(nil)
+
 		te.mu.RLock()
 		defer te.mu.RUnlock()
 		for c := range te.conns {
-			c.Send(topic, msg.Data) // non-blocking by contract
+			c.Send(Delivery{
+				Topic:   topic,
+				Data:    msg.Data,
+				Headers: msg.Header,
+				Context: ctx,
+			})
 		}
 	})
 	if err != nil {
@@ -114,7 +138,7 @@ func (h *Hub) Unregister(conn Conn, topic string) {
 			if te.sub != nil {
 				if err := te.sub.Unsubscribe(); err != nil {
 					if !strings.Contains(err.Error(), "invalid subscription") {
-						log.Println("hub: unsubscribe error:", err)
+						h.log.Warn("hub unsubscribe error", slog.String("error", err.Error()), slog.String("topic", topic))
 					}
 				}
 			}

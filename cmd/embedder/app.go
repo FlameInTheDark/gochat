@@ -20,8 +20,12 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/embed"
 	"github.com/FlameInTheDark/gochat/internal/embedgen"
 	"github.com/FlameInTheDark/gochat/internal/embedmq"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	mqnats "github.com/FlameInTheDark/gochat/internal/mq/nats"
+	"github.com/FlameInTheDark/gochat/internal/observability"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 )
 
 const embedQueueGroup = "embedder"
@@ -36,6 +40,11 @@ type App struct {
 	mqt   *mqnats.NatsQueue
 
 	subs []*nq.Subscription
+
+	consumeDuration metric.Float64Histogram
+	processSuccess  metric.Int64Counter
+	processFailure  metric.Int64Counter
+	decodeFailure   metric.Int64Counter
 }
 
 func NewApp(logger *slog.Logger) (*App, error) {
@@ -94,30 +103,49 @@ func NewApp(logger *slog.Logger) (*App, error) {
 	}
 
 	return &App{
-		log:   logger,
-		db:    database,
-		msg:   messageentity.New(database),
-		gen:   generator,
-		cache: embedCache,
-		conn:  conn,
-		mqt:   transport,
+		log:             logger,
+		db:              database,
+		msg:             messageentity.New(database),
+		gen:             generator,
+		cache:           embedCache,
+		conn:            conn,
+		mqt:             transport,
+		consumeDuration: mustEmbedHistogram("gochat.embedder.consume.duration"),
+		processSuccess:  mustEmbedCounter("gochat.embedder.consume.success"),
+		processFailure:  mustEmbedCounter("gochat.embedder.consume.failure"),
+		decodeFailure:   mustEmbedCounter("gochat.embedder.decode.failure"),
 	}, nil
 }
 
 func (a *App) Start() error {
 	a.log.Info("Starting service")
 	sub, err := a.conn.QueueSubscribe(embedmq.MakeEmbedSubject, embedQueueGroup, func(msg *nq.Msg) {
+		start := time.Now()
+		ctx := observability.ExtractNATSContext(context.Background(), msg)
+		ctx, finish := observability.StartNATSConsumeSpan(ctx, msg.Subject)
+		var processErr error
+		defer func() {
+			a.consumeDuration.Record(ctx, time.Since(start).Seconds(), metric.WithAttributes(attribute.String("subject", msg.Subject)))
+			finish(processErr)
+		}()
+
 		var request embedmq.MakeEmbedRequest
 		if err := json.Unmarshal(msg.Data, &request); err != nil {
-			a.log.Error("failed to decode embed request", slog.String("error", err.Error()))
+			processErr = err
+			a.decodeFailure.Add(ctx, 1, metric.WithAttributes(attribute.String("subject", msg.Subject)))
+			a.log.ErrorContext(ctx, "failed to decode embed request", slog.String("error", err.Error()))
 			return
 		}
-		if err := a.processRequest(request); err != nil {
-			a.log.Error("failed to process embed request",
+		processErr = a.processRequest(ctx, request)
+		if processErr != nil {
+			a.processFailure.Add(ctx, 1, metric.WithAttributes(attribute.String("subject", msg.Subject)))
+			a.log.ErrorContext(ctx, "failed to process embed request",
 				slog.Int64("message_id", request.Message.Id),
 				slog.Int64("channel_id", request.Message.ChannelId),
-				slog.String("error", err.Error()))
+				slog.String("error", processErr.Error()))
+			return
 		}
+		a.processSuccess.Add(ctx, 1, metric.WithAttributes(attribute.String("subject", msg.Subject)))
 	})
 	if err != nil {
 		return err
@@ -126,8 +154,8 @@ func (a *App) Start() error {
 	return nil
 }
 
-func (a *App) processRequest(request embedmq.MakeEmbedRequest) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+func (a *App) processRequest(ctx context.Context, request embedmq.MakeEmbedRequest) error {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
 	currentMessage, err := a.msg.GetMessage(ctx, request.Message.Id, request.Message.ChannelId)
@@ -195,7 +223,7 @@ func (a *App) persistAndPublish(ctx context.Context, request embedmq.MakeEmbedRe
 		Type:        currentMessage.Type,
 		UpdatedAt:   currentMessage.EditedAt,
 	}
-	return a.mqt.SendChannelMessage(currentMessage.ChannelId, &mqmsg.UpdateMessage{
+	return mq.SendChannelMessage(ctx, a.mqt, currentMessage.ChannelId, &mqmsg.UpdateMessage{
 		GuildId: request.GuildId,
 		Message: updatedMessage,
 	})
@@ -220,6 +248,16 @@ func (a *App) Close() error {
 		_ = a.db.Close()
 	}
 	return nil
+}
+
+func mustEmbedHistogram(name string) metric.Float64Histogram {
+	h, _ := observability.Meter("gochat-embedder").Float64Histogram(name)
+	return h
+}
+
+func mustEmbedCounter(name string) metric.Int64Counter {
+	c, _ := observability.Meter("gochat-embedder").Int64Counter(name)
+	return c
 }
 
 func optionalInt64(value int64) *int64 {

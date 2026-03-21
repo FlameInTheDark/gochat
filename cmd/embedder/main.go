@@ -6,13 +6,19 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil)).With(slog.String("service", "embedder"))
+	obs, err := observability.Init("gochat-embedder")
+	if err != nil {
+		slog.Error("unable to initialize observability", "error", err)
+	}
+	logger := obs.Logger()
 	shut := shutter.NewShutter(logger)
 	defer shut.Down()
+	shut.Up(obs)
 
 	app, err := NewApp(logger)
 	if err != nil {

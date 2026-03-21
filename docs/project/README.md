@@ -11,6 +11,7 @@ Here goes the project documentation.
 - [WebSocket Events](ws/README.md)
 
 - [Voice](voice/README.md)
+- [Observability](observability/README.md)
 
 - [Services Overview](Services.md)
 - [Presence System](Presence.md)

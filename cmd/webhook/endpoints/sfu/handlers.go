@@ -6,7 +6,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
 	"github.com/gofiber/fiber/v2"
 )
@@ -31,6 +33,8 @@ const (
 //	@Failure		502	{string}	string	"Bad gateway"
 //	@Router			/webhook/sfu/heartbeat [post]
 func (e *entity) Heartbeat(c *fiber.Ctx) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	var req HeartbeatRequest
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
@@ -54,7 +58,7 @@ func (e *entity) Heartbeat(c *fiber.Ctx) error {
 		UpdatedAt: time.Now().Unix(),
 	}
 	if err := e.disco.Register(c.UserContext(), req.Region, inst); err != nil {
-		e.log.Error("discovery register failed", slog.String("error", err.Error()), slog.String("id", req.ID), slog.String("region", req.Region))
+		log.Error("discovery register failed", slog.String("error", err.Error()), slog.String("id", req.ID), slog.String("region", req.Region))
 		return fiber.NewError(fiber.StatusBadGateway, "discovery register failed")
 	}
 	return c.SendStatus(fiber.StatusNoContent)
@@ -77,6 +81,8 @@ func (e *entity) Heartbeat(c *fiber.Ctx) error {
 //	@Failure		502	{string}	string	"Bad gateway"
 //	@Router			/webhook/sfu/voice/join [post]
 func (e *entity) ChannelUserJoin(c *fiber.Ctx) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	var req ChannelUserJoin
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
@@ -85,7 +91,10 @@ func (e *entity) ChannelUserJoin(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	slog.Info("Join data", slog.Any("data", req))
+	log.Info("voice join received",
+		slog.Int64("channel_id", req.ChannelId),
+		slog.Int64("user_id", req.UserId),
+		slog.Bool("has_guild_id", req.GuildId != nil))
 
 	if !e.tokens.Validate("sfu", "", c.Get(hdrToken)) {
 		return fiber.ErrUnauthorized
@@ -99,18 +108,20 @@ func (e *entity) ChannelUserJoin(c *fiber.Ctx) error {
 	}
 	ttlErr := e.cache.SetTTL(c.UserContext(), fmt.Sprintf("voice:clients:%d", req.ChannelId), 120)
 	if ttlErr != nil {
-		slog.Error("unable to set TTL for channel",
+		log.Error("unable to set ttl for voice clients",
 			slog.Int64("channel_id", req.ChannelId),
 			slog.String("error", ttlErr.Error()))
 	}
 	if req.GuildId != nil {
+		ctx := observability.BackgroundFromContext(c.UserContext())
+		asyncLog := observability.LoggerWithContext(ctx, log)
 		go func() {
-			if err := e.mqt.SendGuildUpdate(*req.GuildId, &mqmsg.GuildMemberJoinVoice{
+			if err := mq.SendGuildUpdate(ctx, e.mqt, *req.GuildId, &mqmsg.GuildMemberJoinVoice{
 				GuildId:   *req.GuildId,
 				UserId:    req.UserId,
 				ChannelId: req.ChannelId,
 			}); err != nil {
-				slog.Error("unable to send guild update", slog.String("error", err.Error()))
+				asyncLog.Error("unable to send guild voice join update", slog.String("error", err.Error()))
 			}
 		}()
 	}
@@ -134,6 +145,8 @@ func (e *entity) ChannelUserJoin(c *fiber.Ctx) error {
 //	@Failure		502	{string}	string	"Bad gateway"
 //	@Router			/webhook/sfu/voice/leave [post]
 func (e *entity) ChannelUserLeave(c *fiber.Ctx) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	var req ChannelUserLeave
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
@@ -154,18 +167,20 @@ func (e *entity) ChannelUserLeave(c *fiber.Ctx) error {
 	}
 	ttlErr := e.cache.SetTTL(c.UserContext(), fmt.Sprintf("voice:clients:%d", req.ChannelId), 120)
 	if ttlErr != nil {
-		slog.Error("unable to set TTL for channel",
+		log.Error("unable to set ttl for voice clients",
 			slog.Int64("channel_id", req.ChannelId),
 			slog.String("error", ttlErr.Error()))
 	}
 	if req.GuildId != nil {
+		ctx := observability.BackgroundFromContext(c.UserContext())
+		asyncLog := observability.LoggerWithContext(ctx, log)
 		go func() {
-			if err := e.mqt.SendGuildUpdate(*req.GuildId, &mqmsg.GuildMemberLeaveVoice{
+			if err := mq.SendGuildUpdate(ctx, e.mqt, *req.GuildId, &mqmsg.GuildMemberLeaveVoice{
 				GuildId:   *req.GuildId,
 				UserId:    req.UserId,
 				ChannelId: req.ChannelId,
 			}); err != nil {
-				slog.Error("unable to send guild update", slog.String("error", err.Error()))
+				asyncLog.Error("unable to send guild voice leave update", slog.String("error", err.Error()))
 			}
 		}()
 	}
@@ -189,6 +204,8 @@ func (e *entity) ChannelUserLeave(c *fiber.Ctx) error {
 //	@Failure		502	{string}	string	"Bad gateway"
 //	@Router			/webhook/sfu/channel/alive [post]
 func (e *entity) ChannelAlive(c *fiber.Ctx) error {
+	log := observability.LoggerFromFiber(c, e.log)
+
 	var req ChannelAlive
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
@@ -203,13 +220,13 @@ func (e *entity) ChannelAlive(c *fiber.Ctx) error {
 
 	ttlErr := e.cache.SetTTL(c.UserContext(), fmt.Sprintf("voice:clients:%d", req.ChannelId), 120)
 	if ttlErr != nil {
-		slog.Error("unable to set TTL for channel users",
+		log.Error("unable to set ttl for channel users",
 			slog.Int64("channel_id", req.ChannelId),
 			slog.String("error", ttlErr.Error()))
 	}
 	ttlErr = e.cache.SetTTL(c.UserContext(), fmt.Sprintf("voice:route:%d", req.ChannelId), 120)
 	if ttlErr != nil {
-		slog.Error("unable to set TTL for channel",
+		log.Error("unable to set ttl for voice route",
 			slog.Int64("channel_id", req.ChannelId),
 			slog.String("error", ttlErr.Error()))
 	}

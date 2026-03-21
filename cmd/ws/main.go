@@ -2,8 +2,8 @@ package main
 
 import (
 	"log/slog"
-	"os"
 
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
 
@@ -33,9 +33,14 @@ type Attachment struct {
 }
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	obs, err := observability.Init("gochat-ws")
+	if err != nil {
+		slog.Error("unable to initialize observability", "error", err)
+	}
+	logger := obs.Logger()
 	shut := shutter.NewShutter(logger)
 	defer shut.Down()
+	shut.Up(obs)
 
 	app := NewApp(shut, logger)
 	shut.Up(app)

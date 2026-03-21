@@ -16,7 +16,9 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/helper"
+	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
 )
@@ -97,7 +99,7 @@ func issueAdminJWT(channelID int64, authSecret string) (string, error) {
 
 // notifyOldSFUClose fires an async HTTP POST to the old SFU's admin endpoint
 // to close all peer connections for the given channel. Errors are logged only.
-func notifyOldSFUClose(oldSFUURL string, channelID int64, authSecret string, log *slog.Logger) {
+func notifyOldSFUClose(ctx context.Context, oldSFUURL string, channelID int64, authSecret string, log *slog.Logger) {
 	adminToken, err := issueAdminJWT(channelID, authSecret)
 	if err != nil {
 		log.Error("voice region change: failed to issue admin jwt", slog.String("error", err.Error()))
@@ -109,7 +111,7 @@ func notifyOldSFUClose(oldSFUURL string, channelID int64, authSecret string, log
 	}
 	body, _ := json.Marshal(closeReq{ChannelID: channelID})
 	baseURL := sfuAdminBaseURL(oldSFUURL)
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, baseURL+"/admin/channel/close", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/admin/channel/close", bytes.NewReader(body))
 	if err != nil {
 		log.Error("voice region change: failed to build admin request", slog.String("error", err.Error()))
 		return
@@ -117,7 +119,7 @@ func notifyOldSFUClose(oldSFUURL string, channelID int64, authSecret string, log
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+adminToken)
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := observability.NewHTTPClient(&http.Client{Timeout: 10 * time.Second}, "gochat-api-sfu-admin")
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Error("voice region change: admin close request failed", slog.String("error", err.Error()), slog.String("sfu", baseURL))
@@ -373,7 +375,7 @@ func (e *entity) MoveMember(c *fiber.Ctx) error {
 
 	// Send user update with connection info
 	evt := &mqmsg.VoiceMove{UserID: body.UserID, Channel: body.ChannelID, SFUURL: pickedURL, SFUToken: signed}
-	if err := e.mqt.SendUserUpdate(body.UserID, evt); err != nil {
+	if err := mq.SendUserUpdate(c.UserContext(), e.mqt, body.UserID, evt); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to send move notice")
 	}
 
@@ -553,7 +555,7 @@ func (e *entity) SetVoiceRegion(c *fiber.Ctx) error {
 					newBinding := voiceRouteBinding{ID: chosenID, URL: chosenURL, Region: newRegion}
 
 					// I7: Pre-notify guild members so clients can prepare for the reconnect
-					_ = e.mqt.SendGuildUpdate(guildId, &mqmsg.VoiceRegionChanging{
+					_ = mq.SendGuildUpdate(c.UserContext(), e.mqt, guildId, &mqmsg.VoiceRegionChanging{
 						ChannelId: channelId,
 						Region:    newRegion,
 						DelayMs:   3000,
@@ -563,22 +565,22 @@ func (e *entity) SetVoiceRegion(c *fiber.Ctx) error {
 					cache := e.cache
 					mqt := e.mqt
 					authSecret := e.authSecret
-					log := e.log
+					asyncCtx := observability.BackgroundFromContext(c.UserContext())
+					log := observability.LoggerWithContext(asyncCtx, e.log)
 
 					// Background goroutine: sleep 3s → update cache → publish VoiceRebind → close old SFU
 					go func() {
 						time.Sleep(3 * time.Second)
 
-						ctx := context.Background()
 						// I9: Write new binding with region
-						_ = cache.SetTimedJSON(ctx, bindingKey(channelId), newBinding, 60)
+						_ = cache.SetTimedJSON(asyncCtx, bindingKey(channelId), newBinding, 60)
 						// I6: Mark active migration so JoinVoice issues extended JWT
-						_ = cache.SetTimed(ctx, rebindMarkerKey(channelId), "1", 300)
+						_ = cache.SetTimed(asyncCtx, rebindMarkerKey(channelId), "1", 300)
 						// I4: Notify clients to reconnect with jitter to spread thundering herd
-						_ = mqt.SendChannelMessage(channelId, &mqmsg.VoiceRebind{Channel: channelId, JitterMs: 3000})
+						_ = mq.SendChannelMessage(asyncCtx, mqt, channelId, &mqmsg.VoiceRebind{Channel: channelId, JitterMs: 3000})
 						// I5: Tell old SFU to close all sessions
 						if oldURL != "" {
-							notifyOldSFUClose(oldURL, channelId, authSecret, log)
+							notifyOldSFUClose(asyncCtx, oldURL, channelId, authSecret, log)
 						}
 					}()
 				}

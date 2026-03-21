@@ -1,7 +1,6 @@
 package guild
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"log/slog"
@@ -9,14 +8,15 @@ import (
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
-	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
-	"github.com/gofiber/fiber/v2"
-
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/messageposition"
+	"github.com/FlameInTheDark/gochat/internal/mq"
+	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
+	"github.com/gofiber/fiber/v2"
 )
 
 // generateInviteCodeFromID returns an 8-char, uppercase base36 code derived from the snowflake ID
@@ -157,8 +157,10 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildByID)
 	}
 
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, e.log)
 	go func() {
-		err := e.mqt.SendGuildUpdate(inv.GuildId, &mqmsg.AddGuildMember{
+		err := mq.SendGuildUpdate(asyncCtx, e.mqt, inv.GuildId, &mqmsg.AddGuildMember{
 			GuildId: inv.GuildId,
 			UserId:  u.Id,
 			Member: dto.Member{
@@ -170,25 +172,25 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 			},
 		})
 		if err != nil {
-			e.log.Error("unable to send add guild member event", slog.String("error", err.Error()))
+			asyncLog.Error("unable to send add guild member event", slog.String("error", err.Error()))
 		}
 		if g.SystemMessages != nil {
 			msgid := idgen.Next()
-			position, err := messageposition.Next(context.Background(), e.cache, e.ch, *g.SystemMessages)
+			position, err := messageposition.Next(asyncCtx, e.cache, e.ch, *g.SystemMessages)
 			if err != nil {
-				e.log.Error("unable to allocate join message position", slog.String("error", err.Error()))
+				asyncLog.Error("unable to allocate join message position", slog.String("error", err.Error()))
 				return
 			}
-			err = e.msg.CreateSystemMessage(context.Background(), msgid, *g.SystemMessages, user.Id, "", model.MessageTypeJoin, position)
+			err = e.msg.CreateSystemMessage(asyncCtx, msgid, *g.SystemMessages, user.Id, "", model.MessageTypeJoin, position)
 			if err != nil {
-				e.log.Error("unable to send system user join message", slog.String("error", err.Error()))
+				asyncLog.Error("unable to send system user join message", slog.String("error", err.Error()))
 				return
 			}
-			err = e.ch.SetLastMessage(context.Background(), *g.SystemMessages, msgid)
+			err = e.ch.SetLastMessage(asyncCtx, *g.SystemMessages, msgid)
 			if err != nil {
-				e.log.Error("unable to set last message id", slog.String("error", err.Error()))
+				asyncLog.Error("unable to set last message id", slog.String("error", err.Error()))
 			}
-			if err := e.mqt.SendChannelMessage(*g.SystemMessages, &mqmsg.CreateMessage{
+			if err := mq.SendChannelMessage(asyncCtx, e.mqt, *g.SystemMessages, &mqmsg.CreateMessage{
 				GuildId: &g.Id,
 				Message: dto.Message{
 					Id:        msgid,
@@ -198,16 +200,16 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 					Type:      int(model.MessageTypeJoin),
 				},
 			}); err != nil {
-				e.log.Error("unable to send join message event", slog.String("error", err.Error()))
+				asyncLog.Error("unable to send join message event", slog.String("error", err.Error()))
 			}
-			if err := e.imq.IndexMessage(dto.IndexMessage{
+			if err := e.imq.IndexMessageContext(asyncCtx, dto.IndexMessage{
 				MessageId: msgid,
 				UserId:    u.Id,
 				ChannelId: *g.SystemMessages,
 				GuildId:   &g.Id,
 				Type:      int(model.MessageTypeJoin),
 			}); err != nil {
-				e.log.Error("failed to send index message event",
+				asyncLog.Error("failed to send index message event",
 					"message_id", msgid,
 					"error", err.Error())
 			}
