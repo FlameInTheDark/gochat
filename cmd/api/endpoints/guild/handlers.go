@@ -301,25 +301,19 @@ func (e *entity) GetChannels(c *fiber.Ctx) error {
 	return e.fetchAndFilterChannels(c, guildCtx)
 }
 
-// deriveChannelParents assigns ParentId to guild/voice channels based on positional order.
-// After sorting by Position, each guild or voice channel inherits the id of the last
-// category above it. Channels before any category have a nil parent.
-// Thread channels keep their existing ParentId unchanged.
-func deriveChannelParents(channels []dto.Channel) {
-	sort.Slice(channels, func(i, j int) bool {
-		return channels[i].Position < channels[j].Position
-	})
-	var currentCategoryId *int64
-	for i := range channels {
-		switch channels[i].Type {
-		case model.ChannelTypeGuildCategory:
-			id := channels[i].Id
-			currentCategoryId = &id
-			channels[i].ParentId = nil
-		case model.ChannelTypeGuild, model.ChannelTypeGuildVoice:
-			channels[i].ParentId = currentCategoryId
+// sortGuildChannels orders channels for guild list rendering while preserving stored parent ids.
+func sortGuildChannels(channels []dto.Channel) {
+	sort.SliceStable(channels, func(i, j int) bool {
+		if channels[i].Position != channels[j].Position {
+			return channels[i].Position < channels[j].Position
 		}
-	}
+		iCategory := channels[i].Type == model.ChannelTypeGuildCategory
+		jCategory := channels[j].Type == model.ChannelTypeGuildCategory
+		if iCategory != jCategory {
+			return iCategory
+		}
+		return channels[i].Id < channels[j].Id
+	})
 }
 
 // fetchAndFilterChannels retrieves guild channels and filters based on permissions
@@ -351,19 +345,27 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) er
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
+	positionsByChannelID := make(map[int64]int, len(guildChannels))
+	for _, guildChannel := range guildChannels {
+		positionsByChannelID[guildChannel.ChannelId] = guildChannel.Position
+	}
+	rolesByChannelID := make(map[int64][]int64, len(croles))
+	for _, channelRoles := range croles {
+		rolesByChannelID[channelRoles.ChannelId] = channelRoles.Roles
+	}
 
 	channelsData := make([]dto.Channel, 0, len(channels))
-	for i, ch := range channels {
+	for _, ch := range channels {
 		if ch.Type == model.ChannelTypeThread {
 			continue
 		}
 		if ch.Permissions == nil {
 			ch.Permissions = &guildCtx.Guild.Permissions
 		}
-		channelsData = append(channelsData, channelModelToDTO(&ch, &guildCtx.Guild.Id, guildChannels[i].Position, croles[i].Roles))
+		channelsData = append(channelsData, channelModelToDTO(&ch, &guildCtx.Guild.Id, positionsByChannelID[ch.Id], rolesByChannelID[ch.Id]))
 	}
 
-	deriveChannelParents(channelsData)
+	sortGuildChannels(channelsData)
 
 	asyncCtx := observability.BackgroundFromContext(c.UserContext())
 	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
@@ -1041,10 +1043,28 @@ func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId 
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
 	}
 
+	guildChannels, err := e.gc.GetGuildChannels(c.UserContext(), guild.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
+	}
+
+	minPosition, err := e.validateParentCategory(c.UserContext(), guild.Id, parentId)
+	if err != nil {
+		return err
+	}
+
+	insertPosition := normalizeChannelInsertPosition(guildChannels, position, minPosition)
+	updates := buildChannelInsertUpdates(guildChannels, insertPosition)
+	if len(updates) > 0 {
+		if err := e.gc.SetGuildChannelPosition(c.UserContext(), updates); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUpdateChannel)
+		}
+	}
+
 	channelId := idgen.Next()
 
 	// Add channel to guild
-	if err := e.gc.AddChannel(c.UserContext(), guild.Id, channelId, name, channelType, nil, isPrivate, position, nil, nil, false); err != nil {
+	if err := e.gc.AddChannel(c.UserContext(), guild.Id, channelId, name, channelType, parentId, isPrivate, insertPosition, nil, nil, false); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateChannelGroup)
 	}
 
@@ -1052,7 +1072,7 @@ func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId 
 	asyncCtx := observability.BackgroundFromContext(c.UserContext())
 	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
-		if err := e.sendCreateChannelEvent(asyncCtx, guildId, guild.Id, channelId, name, channelType, nil); err != nil {
+		if err := e.sendCreateChannelEvent(asyncCtx, guildId, guild.Id, channelId, name, channelType, parentId, insertPosition, isPrivate); err != nil {
 			asyncLog.Error("unable to send create channel event", slog.String("error", err.Error()))
 		}
 		if err := e.cache.Delete(asyncCtx, fmt.Sprintf("guild:%d:channels", guildId)); err != nil {
@@ -1061,6 +1081,71 @@ func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId 
 	}()
 
 	return c.SendStatus(fiber.StatusCreated)
+}
+
+func normalizeChannelInsertPosition(guildChannels []model.GuildChannel, requestedPosition, minPosition int) int {
+	insertPosition := requestedPosition
+	if insertPosition < 0 {
+		insertPosition = 0
+	}
+	if insertPosition < minPosition {
+		insertPosition = minPosition
+	}
+
+	maxPosition := 0
+	for _, guildChannel := range guildChannels {
+		if guildChannel.Position >= maxPosition {
+			maxPosition = guildChannel.Position + 1
+		}
+	}
+	if insertPosition > maxPosition {
+		insertPosition = maxPosition
+	}
+
+	return insertPosition
+}
+
+func buildChannelInsertUpdates(guildChannels []model.GuildChannel, insertPosition int) []model.GuildChannelUpdatePosition {
+	updates := make([]model.GuildChannelUpdatePosition, 0, len(guildChannels))
+	for _, guildChannel := range guildChannels {
+		if guildChannel.Position < insertPosition {
+			continue
+		}
+		updates = append(updates, model.GuildChannelUpdatePosition{
+			GuildId:   guildChannel.GuildId,
+			ChannelId: guildChannel.ChannelId,
+			Position:  guildChannel.Position + 1,
+		})
+	}
+	return updates
+}
+
+func (e *entity) validateParentCategory(ctx context.Context, guildID int64, parentID *int64) (int, error) {
+	if parentID == nil {
+		return 0, nil
+	}
+
+	guildChannel, err := e.gc.GetGuildChannel(ctx, guildID, *parentID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, fiber.NewError(fiber.StatusBadRequest, ErrParentCategoryInvalid)
+		}
+		return 0, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
+	}
+
+	channel, err := e.ch.GetChannel(ctx, *parentID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, fiber.NewError(fiber.StatusBadRequest, ErrParentCategoryInvalid)
+		}
+		return 0, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
+	}
+
+	if channel.Type != model.ChannelTypeGuildCategory {
+		return 0, fiber.NewError(fiber.StatusBadRequest, ErrParentCategoryInvalid)
+	}
+
+	return guildChannel.Position + 1, nil
 }
 
 func (e *entity) canManageThread(ctx context.Context, guildId int64, thread *model.Channel, userId int64) (bool, error) {
@@ -1391,7 +1476,7 @@ func (e *entity) sendThreadCreatedMessageUpdate(ctx context.Context, guildID int
 }
 
 // sendCreateChannelEvent sends channel creation message to message queue
-func (e *entity) sendCreateChannelEvent(ctx context.Context, guildId, guildModelId, channelId int64, name string, channelType model.ChannelType, parentId *int64) error {
+func (e *entity) sendCreateChannelEvent(ctx context.Context, guildId, guildModelId, channelId int64, name string, channelType model.ChannelType, parentId *int64, position int, private bool) error {
 	sendCtx := observability.BackgroundFromContext(ctx)
 	if err := mq.SendGuildUpdate(sendCtx, e.mqt, guildId, &mqmsg.CreateChannel{
 		GuildId: &guildModelId,
@@ -1401,8 +1486,9 @@ func (e *entity) sendCreateChannelEvent(ctx context.Context, guildId, guildModel
 			GuildId:   &guildModelId,
 			Name:      name,
 			ParentId:  parentId,
-			Position:  0,
+			Position:  position,
 			Topic:     nil,
+			Private:   private,
 			CreatedAt: time.Now(),
 		},
 	}); err != nil {
