@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"encoding/json"
 	"regexp"
+	"strconv"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
@@ -107,6 +109,34 @@ type ConfirmationRequest struct {
 	Password      string `json:"password" example:"VerYstR0NgP@66WoR6"`          // User password
 }
 
+func (r *ConfirmationRequest) UnmarshalJSON(data []byte) error {
+	type confirmationRequestAlias struct {
+		Id            json.RawMessage `json:"id"`
+		Token         string          `json:"token"`
+		Name          string          `json:"name"`
+		Discriminator string          `json:"discriminator"`
+		Password      string          `json:"password"`
+	}
+
+	var aux confirmationRequestAlias
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	id, err := parseFlexibleInt64(aux.Id)
+	if err != nil {
+		return err
+	}
+
+	r.Id = id
+	r.Token = aux.Token
+	r.Name = aux.Name
+	r.Discriminator = aux.Discriminator
+	r.Password = aux.Password
+
+	return nil
+}
+
 func (r ConfirmationRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.Password,
@@ -155,6 +185,30 @@ type PasswordResetRequest struct {
 	Password string `json:"password" example:"N3wVerYstR0NgP@66WoR6"`      // New password
 }
 
+func (r *PasswordResetRequest) UnmarshalJSON(data []byte) error {
+	type passwordResetRequestAlias struct {
+		Id       json.RawMessage `json:"id"`
+		Token    string          `json:"token"`
+		Password string          `json:"password"`
+	}
+
+	var aux passwordResetRequestAlias
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	id, err := parseFlexibleInt64(aux.Id)
+	if err != nil {
+		return err
+	}
+
+	r.Id = id
+	r.Token = aux.Token
+	r.Password = aux.Password
+
+	return nil
+}
+
 func (r PasswordResetRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.Password,
@@ -171,4 +225,25 @@ func (r PasswordResetRequest) Validate() error {
 			validation.Min(int64(1)).Error(ErrIdInvalid),
 		),
 	)
+}
+
+func parseFlexibleInt64(raw json.RawMessage) (int64, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return 0, nil
+	}
+
+	var id int64
+	if err := json.Unmarshal(raw, &id); err == nil {
+		return id, nil
+	}
+
+	var str string
+	if err := json.Unmarshal(raw, &str); err != nil {
+		return 0, err
+	}
+	if str == "" {
+		return 0, nil
+	}
+
+	return strconv.ParseInt(str, 10, 64)
 }
