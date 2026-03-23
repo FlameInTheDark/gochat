@@ -201,6 +201,26 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Extract metadata for MIGRATIONS image
+        id: meta_migrations
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/gochat-migrations
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable=true
+
+      - name: Build and push MIGRATIONS image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./migration.Dockerfile
+          push: true
+          tags: ${{ steps.meta_migrations.outputs.tags }}
+          labels: ${{ steps.meta_migrations.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   build-binaries:
     name: Build and Upload Release Binaries
     runs-on: ubuntu-latest
