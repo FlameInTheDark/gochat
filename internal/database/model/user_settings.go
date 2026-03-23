@@ -30,6 +30,30 @@ type UserSettingsData struct {
 	UISounds         UserUISounds               `json:"ui_sounds"`
 }
 
+func (s *UserSettingsData) NormalizeCollections() {
+	if s == nil {
+		return
+	}
+	if s.GuildFolders == nil {
+		s.GuildFolders = []UserSettingsGuildFolders{}
+	}
+	if s.Guilds == nil {
+		s.Guilds = []UserSettingsGuilds{}
+	}
+	if s.ChannelsSettings == nil {
+		s.ChannelsSettings = []UserSettingsChannel{}
+	}
+	if s.UsersSettings == nil {
+		s.UsersSettings = []UserSettingsUsers{}
+	}
+	if s.FavoriteGifs == nil {
+		s.FavoriteGifs = []string{}
+	}
+	if s.DMChannels == nil {
+		s.DMChannels = []UserDMChannels{}
+	}
+}
+
 func (s UserSettingsData) Validate() error {
 	return validation.ValidateStruct(&s,
 		validation.Field(&s.Appearance),
@@ -100,9 +124,13 @@ const (
 )
 
 type UserSettingsNotifications struct {
-	Muted         bool              `json:"muted"`
-	MutedUntil    *time.Time        `json:"muted_until,omitempty"`
-	Notifications NotificationsType `json:"notifications"`
+	Muted                    bool              `json:"muted"`
+	MutedUntil               *time.Time        `json:"muted_until,omitempty"`
+	Notifications            NotificationsType `json:"notifications"`
+	SuppressUserMentions     bool              `json:"suppress_user_mentions"`
+	SuppressRoleMentions     bool              `json:"suppress_role_mentions"`
+	SuppressEveryoneMentions bool              `json:"suppress_everyone_mentions"`
+	SuppressHereMentions     bool              `json:"suppress_here_mentions"`
 }
 
 func (n UserSettingsNotifications) Validate() error {

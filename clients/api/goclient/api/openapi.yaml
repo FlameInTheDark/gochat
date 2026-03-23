@@ -6002,6 +6002,10 @@ components:
         channel_id: 6
         notifications:
           muted_until: muted_until
+          suppress_everyone_mentions: true
+          suppress_here_mentions: true
+          suppress_role_mentions: true
+          suppress_user_mentions: true
           muted: true
           notifications: 7
       properties:
@@ -6032,11 +6036,19 @@ components:
         - channel_id: 6
           notifications:
             muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
             muted: true
             notifications: 7
         - channel_id: 6
           notifications:
             muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
             muted: true
             notifications: 7
         devices:
@@ -6056,6 +6068,10 @@ components:
           position: 6
           notifications:
             muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
             muted: true
             notifications: 7
         - selected_channel: 1
@@ -6063,6 +6079,10 @@ components:
           position: 6
           notifications:
             muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
             muted: true
             notifications: 7
         language: language
@@ -6089,11 +6109,19 @@ components:
         - user_id: 2
           notifications:
             muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
             muted: true
             notifications: 7
         - user_id: 2
           notifications:
             muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
             muted: true
             notifications: 7
         status:
@@ -6164,6 +6192,10 @@ components:
         position: 6
         notifications:
           muted_until: muted_until
+          suppress_everyone_mentions: true
+          suppress_here_mentions: true
+          suppress_role_mentions: true
+          suppress_user_mentions: true
           muted: true
           notifications: 7
       properties:
@@ -6179,6 +6211,10 @@ components:
     model.UserSettingsNotifications:
       example:
         muted_until: muted_until
+        suppress_everyone_mentions: true
+        suppress_here_mentions: true
+        suppress_role_mentions: true
+        suppress_user_mentions: true
         muted: true
         notifications: 7
       properties:
@@ -6188,12 +6224,24 @@ components:
           type: string
         notifications:
           $ref: '#/components/schemas/model.NotificationsType'
+        suppress_everyone_mentions:
+          type: boolean
+        suppress_here_mentions:
+          type: boolean
+        suppress_role_mentions:
+          type: boolean
+        suppress_user_mentions:
+          type: boolean
       type: object
     model.UserSettingsUsers:
       example:
         user_id: 2
         notifications:
           muted_until: muted_until
+          suppress_everyone_mentions: true
+          suppress_here_mentions: true
+          suppress_role_mentions: true
+          suppress_user_mentions: true
           muted: true
           notifications: 7
       properties:
@@ -6550,11 +6598,19 @@ components:
           - channel_id: 6
             notifications:
               muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
               muted: true
               notifications: 7
           - channel_id: 6
             notifications:
               muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
               muted: true
               notifications: 7
           devices:
@@ -6574,6 +6630,10 @@ components:
             position: 6
             notifications:
               muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
               muted: true
               notifications: 7
           - selected_channel: 1
@@ -6581,6 +6641,10 @@ components:
             position: 6
             notifications:
               muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
               muted: true
               notifications: 7
           language: language
@@ -6607,11 +6671,19 @@ components:
           - user_id: 2
             notifications:
               muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
               muted: true
               notifications: 7
           - user_id: 2
             notifications:
               muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
               muted: true
               notifications: 7
           status:

@@ -7279,6 +7279,18 @@
                 },
                 "notifications": {
                     "$ref": "#/definitions/model.NotificationsType"
+                },
+                "suppress_everyone_mentions": {
+                    "type": "boolean"
+                },
+                "suppress_here_mentions": {
+                    "type": "boolean"
+                },
+                "suppress_role_mentions": {
+                    "type": "boolean"
+                },
+                "suppress_user_mentions": {
+                    "type": "boolean"
                 }
             }
         },

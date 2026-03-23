@@ -156,6 +156,7 @@ func modelToSettings(m *model.UserSettings, guilds []dto.Guild, guildEmojis map[
 			return UserSettingsResponse{ReadStates: rs}, err
 		}
 	}
+	settings.NormalizeCollections()
 	return UserSettingsResponse{
 		Version:             m.Version,
 		Settings:            &settings,

@@ -2424,6 +2424,30 @@ export interface ModelUserSettingsNotifications {
      * @memberof ModelUserSettingsNotifications
      */
     'notifications'?: ModelNotificationsType;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelUserSettingsNotifications
+     */
+    'suppress_everyone_mentions'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelUserSettingsNotifications
+     */
+    'suppress_here_mentions'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelUserSettingsNotifications
+     */
+    'suppress_role_mentions'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelUserSettingsNotifications
+     */
+    'suppress_user_mentions'?: boolean;
 }
 
 
