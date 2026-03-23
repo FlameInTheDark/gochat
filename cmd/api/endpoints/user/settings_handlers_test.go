@@ -276,7 +276,7 @@ func TestUserSettingsRoundTripIncludesGuildChannelAndUserNotifications(t *testin
 		],
 		"channels":[
 			{
-				"channel_id":1234,
+				"channel_id":"1234",
 				"notifications":{
 					"muted":false,
 					"notifications":1,
@@ -289,7 +289,7 @@ func TestUserSettingsRoundTripIncludesGuildChannelAndUserNotifications(t *testin
 		],
 		"users":[
 			{
-				"user_id":77,
+				"user_id":"77",
 				"notifications":{
 					"muted":false,
 					"notifications":1,
@@ -298,6 +298,14 @@ func TestUserSettingsRoundTripIncludesGuildChannelAndUserNotifications(t *testin
 					"suppress_everyone_mentions":false,
 					"suppress_here_mentions":false
 				}
+			}
+		],
+		"dm_channels":[
+			{
+				"user_id":"88",
+				"channel_id":"188",
+				"hidden":true,
+				"hidden_after":55
 			}
 		]
 	}`))
@@ -372,6 +380,15 @@ func TestUserSettingsRoundTripIncludesGuildChannelAndUserNotifications(t *testin
 	}
 	if got.Settings.UsersSettings[0].Notifications.Notifications != model.NotificationsMentions {
 		t.Fatalf("expected user notification level %d, got %d", model.NotificationsMentions, got.Settings.UsersSettings[0].Notifications.Notifications)
+	}
+	if len(got.Settings.DMChannels) != 1 {
+		t.Fatalf("expected one DM channel settings entry, got %#v", got.Settings.DMChannels)
+	}
+	if got.Settings.DMChannels[0].UserId != 88 || got.Settings.DMChannels[0].ChannelId != 188 {
+		t.Fatalf("expected DM channel snowflake IDs to round-trip, got %#v", got.Settings.DMChannels[0])
+	}
+	if !got.Settings.DMChannels[0].Hidden || got.Settings.DMChannels[0].HiddenAfter != 55 {
+		t.Fatalf("expected DM channel settings to round-trip, got %#v", got.Settings.DMChannels[0])
 	}
 }
 

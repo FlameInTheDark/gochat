@@ -96,10 +96,10 @@ func (s Status) Validate() error {
 }
 
 type UserDMChannels struct {
-	UserId      int64 `json:"user_id"`
-	ChannelId   int64 `json:"channel_id"`
-	Hidden      bool  `json:"hidden"`
-	HiddenAfter int64 `json:"hidden_after"`
+	UserId      helper.StringInt64 `json:"user_id"`
+	ChannelId   helper.StringInt64 `json:"channel_id"`
+	Hidden      bool               `json:"hidden"`
+	HiddenAfter int64              `json:"hidden_after"`
 }
 
 type UserSettingsGuilds struct {
@@ -162,11 +162,11 @@ type UserSettingsGuildFolders struct {
 }
 
 type UserSettingsChannel struct {
-	ChannelId     int64                     `json:"channel_id"`
+	ChannelId     helper.StringInt64        `json:"channel_id"`
 	Notifications UserSettingsNotifications `json:"notifications"`
 }
 
 type UserSettingsUsers struct {
-	UserId        int64                     `json:"user_id"`
+	UserId        helper.StringInt64        `json:"user_id"`
 	Notifications UserSettingsNotifications `json:"notifications"`
 }
