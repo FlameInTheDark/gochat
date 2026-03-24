@@ -17,3 +17,9 @@ type EmojiUpload struct {
 	GuildId int64  `json:"guild_id,string"`
 	Name    string `json:"name"`
 }
+
+type EmojiInfo struct {
+	Name          string  `json:"name"`
+	ServerName    *string `json:"server_name,omitempty"`
+	ServerPrivate bool    `json:"server_private"`
+}

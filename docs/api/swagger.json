@@ -3268,6 +3268,58 @@
                 }
             }
         },
+        "/info/emoji/{emoji_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Emoji"
+                ],
+                "summary": "Get emoji info",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Emoji ID",
+                        "name": "emoji_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Emoji info",
+                        "schema": {
+                            "$ref": "#/definitions/dto.EmojiInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/message/channel/{channel_id}": {
             "get": {
                 "description": "Response order depends on `direction`.\n`before`: newest to oldest, including the `from` message when it exists. If `from` is omitted, the server starts from the channel's current `last_message_id`.\n`after`: oldest to newest, including the `from` message.\n`around`: the `from` message first, then older messages in descending order, then newer messages in ascending order.",
@@ -5873,6 +5925,20 @@
                     "description": "Voice channel region",
                     "type": "string",
                     "example": "us-east"
+                }
+            }
+        },
+        "dto.EmojiInfo": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "server_name": {
+                    "type": "string"
+                },
+                "server_private": {
+                    "type": "boolean"
                 }
             }
         },

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/FlameInTheDark/gochat/cmd/api/config"
+	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/emoji"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/guild"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/message"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/search"
@@ -261,6 +262,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 
 	s.Register(
 		"/api/v1",
+		emoji.New(pg, cache, logger),
 		user.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, contentHosts, logger),
 		message.New(database, pg, qt, imq, emq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
 		guild.New(database, pg, qt, imq, cache, storage, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, extractRegionIDs(cfg.VoiceRegions), logger),
