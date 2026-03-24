@@ -39,6 +39,8 @@ const (
 	ErrMessageNotEditable           = "message type cannot be edited"
 	ErrNonceRequiredWithEnforce     = "nonce is required when enforce_nonce is true"
 	ErrReferenceIdInvalid           = "reference ID must be positive"
+	ErrIncorrectReactionName        = "incorrect reaction name"
+	ErrAfterIdInvalid               = "after ID must be positive"
 
 	// Validation error messages
 	ErrMessagePayloadRequired = "message content, attachments, or embeds are required"
@@ -246,6 +248,25 @@ func (r GetMessagesRequest) Validate() error {
 		validation.Field(&r.Direction,
 			validation.When(r.Direction != nil,
 				validation.In(DirectionBefore, DirectionAfter, DirectionAround).Error(ErrDirectionInvalid),
+			),
+		),
+	)
+}
+
+type GetReactionUsersRequest struct {
+	After *int64 `query:"after" json:"after" example:"2230469276416868352"`
+	Limit *int   `query:"limit" json:"limit" example:"30"`
+}
+
+func (r GetReactionUsersRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.After,
+			validation.When(r.After != nil, validation.Min(int64(1)).Error(ErrAfterIdInvalid)),
+		),
+		validation.Field(&r.Limit,
+			validation.When(r.Limit != nil,
+				validation.Min(1).Error(ErrLimitInvalid),
+				validation.Max(100).Error(ErrLimitInvalid),
 			),
 		),
 	)

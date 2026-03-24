@@ -21,5 +21,6 @@ type EmojiUpload struct {
 type EmojiInfo struct {
 	Name          string  `json:"name"`
 	ServerName    *string `json:"server_name,omitempty"`
+	Icon          *Icon   `json:"icon,omitempty"`
 	ServerPrivate bool    `json:"server_private"`
 }

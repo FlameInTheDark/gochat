@@ -162,6 +162,20 @@ func Test_goclient_GuildRolesAPIService(t *testing.T) {
 
 	})
 
+	t.Run("Test GuildRolesAPIService GuildGuildIdRolesOrderPatch", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+
+		resp, httpRes, err := apiClient.GuildRolesAPI.GuildGuildIdRolesOrderPatch(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test GuildRolesAPIService GuildGuildIdRolesPost", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test

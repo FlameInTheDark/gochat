@@ -251,6 +251,53 @@ func (c *Cache) HGetAll(ctx context.Context, key string) (map[string]string, err
 	return h.Val(), nil
 }
 
+func (c *Cache) HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error) {
+	ctx, end := c.operation(ctx, "hincrby", key)
+	h := c.c.HIncrBy(ctx, key, field, delta)
+	if h.Err() != nil {
+		err := h.Err()
+		end(err)
+		return 0, err
+	}
+	end(nil)
+	return h.Val(), nil
+}
+
+func (c *Cache) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	ctx, end := c.operation(ctx, "zadd", key)
+	err := c.c.ZAdd(ctx, key, redis.Z{Score: score, Member: member}).Err()
+	end(err)
+	return err
+}
+
+func (c *Cache) ZRem(ctx context.Context, key string, members ...string) error {
+	ctx, end := c.operation(ctx, "zrem", key)
+	args := make([]interface{}, 0, len(members))
+	for _, member := range members {
+		args = append(args, member)
+	}
+	err := c.c.ZRem(ctx, key, args...).Err()
+	end(err)
+	return err
+}
+
+func (c *Cache) ZRevRangeByScore(ctx context.Context, key, max, min string, offset, count int64) ([]string, error) {
+	ctx, end := c.operation(ctx, "zrevrangebyscore", key)
+	res := c.c.ZRevRangeByScore(ctx, key, &redis.ZRangeBy{
+		Max:    max,
+		Min:    min,
+		Offset: offset,
+		Count:  count,
+	})
+	if res.Err() != nil {
+		err := res.Err()
+		finishCacheOperation(ctx, end, err)
+		return nil, err
+	}
+	end(nil)
+	return res.Val(), nil
+}
+
 func (c *Cache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
 	ctx, end := c.operation(ctx, "xadd", stream)
 	h := c.c.XAdd(ctx, &redis.XAddArgs{

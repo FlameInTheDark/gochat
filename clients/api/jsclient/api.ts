@@ -540,6 +540,37 @@ export interface DtoChannel {
 /**
  * 
  * @export
+ * @interface DtoEmojiInfo
+ */
+export interface DtoEmojiInfo {
+    /**
+     * 
+     * @type {DtoIcon}
+     * @memberof DtoEmojiInfo
+     */
+    'icon'?: DtoIcon;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoEmojiInfo
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoEmojiInfo
+     */
+    'server_name'?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DtoEmojiInfo
+     */
+    'server_private'?: boolean;
+}
+/**
+ * 
+ * @export
  * @interface DtoEmojiRef
  */
 export interface DtoEmojiRef {
@@ -920,6 +951,12 @@ export interface DtoMessage {
      */
     'position'?: number;
     /**
+     * Aggregated reactions for this message.
+     * @type {Array<DtoMessageReaction>}
+     * @memberof DtoMessage
+     */
+    'reactions'?: Array<DtoMessageReaction>;
+    /**
      * Referenced source message id.
      * @type {number}
      * @memberof DtoMessage
@@ -955,6 +992,69 @@ export interface DtoMessage {
      * @memberof DtoMessage
      */
     'updated_at'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface DtoMessageReaction
+ */
+export interface DtoMessageReaction {
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoMessageReaction
+     */
+    'count'?: number;
+    /**
+     * 
+     * @type {DtoMessageReactionEmoji}
+     * @memberof DtoMessageReaction
+     */
+    'emoji'?: DtoMessageReactionEmoji;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DtoMessageReaction
+     */
+    'me'?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface DtoMessageReactionEmoji
+ */
+export interface DtoMessageReactionEmoji {
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoMessageReactionEmoji
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoMessageReactionEmoji
+     */
+    'name'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface DtoMessageReactionUsersPage
+ */
+export interface DtoMessageReactionUsersPage {
+    /**
+     * 
+     * @type {Array<DtoUser>}
+     * @memberof DtoMessageReactionUsersPage
+     */
+    'items'?: Array<DtoUser>;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoMessageReactionUsersPage
+     */
+    'next_after'?: number;
 }
 /**
  * 
@@ -3568,6 +3668,40 @@ export const EmojiApiAxiosParamCreator = function (configuration?: Configuration
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Get emoji info
+         * @param {number} emojiId Emoji ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        infoEmojiEmojiIdGet: async (emojiId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'emojiId' is not null or undefined
+            assertParamExists('infoEmojiEmojiIdGet', 'emojiId', emojiId)
+            const localVarPath = `/info/emoji/{emoji_id}`
+                .replace(`{${"emoji_id"}}`, encodeURIComponent(String(emojiId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -3592,6 +3726,19 @@ export const EmojiApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['EmojiApi.emojiEmojiIdGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * 
+         * @summary Get emoji info
+         * @param {number} emojiId Emoji ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async infoEmojiEmojiIdGet(emojiId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoEmojiInfo>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.infoEmojiEmojiIdGet(emojiId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['EmojiApi.infoEmojiEmojiIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -3612,6 +3759,16 @@ export const EmojiApiFactory = function (configuration?: Configuration, basePath
         emojiEmojiIdGet(requestParameters: EmojiApiEmojiEmojiIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.emojiEmojiIdGet(requestParameters.emojiId, requestParameters.size, options).then((request) => request(axios, basePath));
         },
+        /**
+         * 
+         * @summary Get emoji info
+         * @param {EmojiApiInfoEmojiEmojiIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        infoEmojiEmojiIdGet(requestParameters: EmojiApiInfoEmojiEmojiIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoEmojiInfo> {
+            return localVarFp.infoEmojiEmojiIdGet(requestParameters.emojiId, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -3630,6 +3787,16 @@ export interface EmojiApiInterface {
      * @memberof EmojiApiInterface
      */
     emojiEmojiIdGet(requestParameters: EmojiApiEmojiEmojiIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * 
+     * @summary Get emoji info
+     * @param {EmojiApiInfoEmojiEmojiIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof EmojiApiInterface
+     */
+    infoEmojiEmojiIdGet(requestParameters: EmojiApiInfoEmojiEmojiIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoEmojiInfo>;
 
 }
 
@@ -3655,6 +3822,20 @@ export interface EmojiApiEmojiEmojiIdGetRequest {
 }
 
 /**
+ * Request parameters for infoEmojiEmojiIdGet operation in EmojiApi.
+ * @export
+ * @interface EmojiApiInfoEmojiEmojiIdGetRequest
+ */
+export interface EmojiApiInfoEmojiEmojiIdGetRequest {
+    /**
+     * Emoji ID
+     * @type {number}
+     * @memberof EmojiApiInfoEmojiEmojiIdGet
+     */
+    readonly emojiId: number
+}
+
+/**
  * EmojiApi - object-oriented interface
  * @export
  * @class EmojiApi
@@ -3671,6 +3852,18 @@ export class EmojiApi extends BaseAPI implements EmojiApiInterface {
      */
     public emojiEmojiIdGet(requestParameters: EmojiApiEmojiEmojiIdGetRequest, options?: RawAxiosRequestConfig) {
         return EmojiApiFp(this.configuration).emojiEmojiIdGet(requestParameters.emojiId, requestParameters.size, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get emoji info
+     * @param {EmojiApiInfoEmojiEmojiIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof EmojiApi
+     */
+    public infoEmojiEmojiIdGet(requestParameters: EmojiApiInfoEmojiEmojiIdGetRequest, options?: RawAxiosRequestConfig) {
+        return EmojiApiFp(this.configuration).infoEmojiEmojiIdGet(requestParameters.emojiId, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -9332,6 +9525,142 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Remove message reaction
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {string} reactionName Reaction name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdMessageIdReactionsReactionNameDelete: async (channelId: number, messageId: number, reactionName: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdReactionsReactionNameDelete', 'channelId', channelId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdReactionsReactionNameDelete', 'messageId', messageId)
+            // verify required parameter 'reactionName' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdReactionsReactionNameDelete', 'reactionName', reactionName)
+            const localVarPath = `/message/channel/{channel_id}/{message_id}/reactions/{reaction_name}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"message_id"}}`, encodeURIComponent(String(messageId)))
+                .replace(`{${"reaction_name"}}`, encodeURIComponent(String(reactionName)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List users who reacted with a specific reaction
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {string} reactionName Reaction name
+         * @param {number} [after] Reaction ID cursor
+         * @param {number} [limit] Page size
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdMessageIdReactionsReactionNameGet: async (channelId: number, messageId: number, reactionName: string, after?: number, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdReactionsReactionNameGet', 'channelId', channelId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdReactionsReactionNameGet', 'messageId', messageId)
+            // verify required parameter 'reactionName' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdReactionsReactionNameGet', 'reactionName', reactionName)
+            const localVarPath = `/message/channel/{channel_id}/{message_id}/reactions/{reaction_name}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"message_id"}}`, encodeURIComponent(String(messageId)))
+                .replace(`{${"reaction_name"}}`, encodeURIComponent(String(reactionName)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (after !== undefined) {
+                localVarQueryParameter['after'] = after;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Add message reaction
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {string} reactionName Reaction name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdMessageIdReactionsReactionNamePut: async (channelId: number, messageId: number, reactionName: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdReactionsReactionNamePut', 'channelId', channelId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdReactionsReactionNamePut', 'messageId', messageId)
+            // verify required parameter 'reactionName' is not null or undefined
+            assertParamExists('messageChannelChannelIdMessageIdReactionsReactionNamePut', 'reactionName', reactionName)
+            const localVarPath = `/message/channel/{channel_id}/{message_id}/reactions/{reaction_name}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"message_id"}}`, encodeURIComponent(String(messageId)))
+                .replace(`{${"reaction_name"}}`, encodeURIComponent(String(reactionName)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create thread from message
          * @param {number} channelId Parent channel id
          * @param {number} messageId Source message id
@@ -9533,6 +9862,53 @@ export const MessageApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Remove message reaction
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {string} reactionName Reaction name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async messageChannelChannelIdMessageIdReactionsReactionNameDelete(channelId: number, messageId: number, reactionName: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdMessageIdReactionsReactionNameDelete(channelId, messageId, reactionName, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdMessageIdReactionsReactionNameDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary List users who reacted with a specific reaction
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {string} reactionName Reaction name
+         * @param {number} [after] Reaction ID cursor
+         * @param {number} [limit] Page size
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async messageChannelChannelIdMessageIdReactionsReactionNameGet(channelId: number, messageId: number, reactionName: string, after?: number, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessageReactionUsersPage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdMessageIdReactionsReactionNameGet(channelId, messageId, reactionName, after, limit, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdMessageIdReactionsReactionNameGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Add message reaction
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {string} reactionName Reaction name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async messageChannelChannelIdMessageIdReactionsReactionNamePut(channelId: number, messageId: number, reactionName: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdMessageIdReactionsReactionNamePut(channelId, messageId, reactionName, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdMessageIdReactionsReactionNamePut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Create thread from message
          * @param {number} channelId Parent channel id
          * @param {number} messageId Source message id
@@ -9635,6 +10011,36 @@ export const MessageApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
+         * @summary Remove message reaction
+         * @param {MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdMessageIdReactionsReactionNameDelete(requestParameters: MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.messageChannelChannelIdMessageIdReactionsReactionNameDelete(requestParameters.channelId, requestParameters.messageId, requestParameters.reactionName, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary List users who reacted with a specific reaction
+         * @param {MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdMessageIdReactionsReactionNameGet(requestParameters: MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessageReactionUsersPage> {
+            return localVarFp.messageChannelChannelIdMessageIdReactionsReactionNameGet(requestParameters.channelId, requestParameters.messageId, requestParameters.reactionName, requestParameters.after, requestParameters.limit, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Add message reaction
+         * @param {MessageApiMessageChannelChannelIdMessageIdReactionsReactionNamePutRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdMessageIdReactionsReactionNamePut(requestParameters: MessageApiMessageChannelChannelIdMessageIdReactionsReactionNamePutRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.messageChannelChannelIdMessageIdReactionsReactionNamePut(requestParameters.channelId, requestParameters.messageId, requestParameters.reactionName, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Create thread from message
          * @param {MessageApiMessageChannelChannelIdMessageIdThreadPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -9721,6 +10127,36 @@ export interface MessageApiInterface {
      * @memberof MessageApiInterface
      */
     messageChannelChannelIdMessageIdPatch(requestParameters: MessageApiMessageChannelChannelIdMessageIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessage>;
+
+    /**
+     * 
+     * @summary Remove message reaction
+     * @param {MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApiInterface
+     */
+    messageChannelChannelIdMessageIdReactionsReactionNameDelete(requestParameters: MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary List users who reacted with a specific reaction
+     * @param {MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApiInterface
+     */
+    messageChannelChannelIdMessageIdReactionsReactionNameGet(requestParameters: MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessageReactionUsersPage>;
+
+    /**
+     * 
+     * @summary Add message reaction
+     * @param {MessageApiMessageChannelChannelIdMessageIdReactionsReactionNamePutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApiInterface
+     */
+    messageChannelChannelIdMessageIdReactionsReactionNamePut(requestParameters: MessageApiMessageChannelChannelIdMessageIdReactionsReactionNamePutRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
      * 
@@ -9881,6 +10317,104 @@ export interface MessageApiMessageChannelChannelIdMessageIdPatchRequest {
 }
 
 /**
+ * Request parameters for messageChannelChannelIdMessageIdReactionsReactionNameDelete operation in MessageApi.
+ * @export
+ * @interface MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest
+ */
+export interface MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameDelete
+     */
+    readonly channelId: number
+
+    /**
+     * Message id
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameDelete
+     */
+    readonly messageId: number
+
+    /**
+     * Reaction name
+     * @type {string}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameDelete
+     */
+    readonly reactionName: string
+}
+
+/**
+ * Request parameters for messageChannelChannelIdMessageIdReactionsReactionNameGet operation in MessageApi.
+ * @export
+ * @interface MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGetRequest
+ */
+export interface MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGetRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGet
+     */
+    readonly channelId: number
+
+    /**
+     * Message id
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGet
+     */
+    readonly messageId: number
+
+    /**
+     * Reaction name
+     * @type {string}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGet
+     */
+    readonly reactionName: string
+
+    /**
+     * Reaction ID cursor
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGet
+     */
+    readonly after?: number
+
+    /**
+     * Page size
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGet
+     */
+    readonly limit?: number
+}
+
+/**
+ * Request parameters for messageChannelChannelIdMessageIdReactionsReactionNamePut operation in MessageApi.
+ * @export
+ * @interface MessageApiMessageChannelChannelIdMessageIdReactionsReactionNamePutRequest
+ */
+export interface MessageApiMessageChannelChannelIdMessageIdReactionsReactionNamePutRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdReactionsReactionNamePut
+     */
+    readonly channelId: number
+
+    /**
+     * Message id
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdReactionsReactionNamePut
+     */
+    readonly messageId: number
+
+    /**
+     * Reaction name
+     * @type {string}
+     * @memberof MessageApiMessageChannelChannelIdMessageIdReactionsReactionNamePut
+     */
+    readonly reactionName: string
+}
+
+/**
  * Request parameters for messageChannelChannelIdMessageIdThreadPost operation in MessageApi.
  * @export
  * @interface MessageApiMessageChannelChannelIdMessageIdThreadPostRequest
@@ -10008,6 +10542,42 @@ export class MessageApi extends BaseAPI implements MessageApiInterface {
      */
     public messageChannelChannelIdMessageIdPatch(requestParameters: MessageApiMessageChannelChannelIdMessageIdPatchRequest, options?: RawAxiosRequestConfig) {
         return MessageApiFp(this.configuration).messageChannelChannelIdMessageIdPatch(requestParameters.messageId, requestParameters.channelId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Remove message reaction
+     * @param {MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApi
+     */
+    public messageChannelChannelIdMessageIdReactionsReactionNameDelete(requestParameters: MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest, options?: RawAxiosRequestConfig) {
+        return MessageApiFp(this.configuration).messageChannelChannelIdMessageIdReactionsReactionNameDelete(requestParameters.channelId, requestParameters.messageId, requestParameters.reactionName, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary List users who reacted with a specific reaction
+     * @param {MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApi
+     */
+    public messageChannelChannelIdMessageIdReactionsReactionNameGet(requestParameters: MessageApiMessageChannelChannelIdMessageIdReactionsReactionNameGetRequest, options?: RawAxiosRequestConfig) {
+        return MessageApiFp(this.configuration).messageChannelChannelIdMessageIdReactionsReactionNameGet(requestParameters.channelId, requestParameters.messageId, requestParameters.reactionName, requestParameters.after, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Add message reaction
+     * @param {MessageApiMessageChannelChannelIdMessageIdReactionsReactionNamePutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApi
+     */
+    public messageChannelChannelIdMessageIdReactionsReactionNamePut(requestParameters: MessageApiMessageChannelChannelIdMessageIdReactionsReactionNamePutRequest, options?: RawAxiosRequestConfig) {
+        return MessageApiFp(this.configuration).messageChannelChannelIdMessageIdReactionsReactionNamePut(requestParameters.channelId, requestParameters.messageId, requestParameters.reactionName, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

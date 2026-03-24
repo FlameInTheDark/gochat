@@ -50,6 +50,21 @@ func Test_goclient_MessageAPIService(t *testing.T) {
 
 	})
 
+	t.Run("Test MessageAPIService MessageChannelChannelIdMessageIdAckPost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var channelId int32
+		var messageId int32
+
+		resp, httpRes, err := apiClient.MessageAPI.MessageChannelChannelIdMessageIdAckPost(context.Background(), channelId, messageId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test MessageAPIService MessageChannelChannelIdMessageIdDelete", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
@@ -80,6 +95,69 @@ func Test_goclient_MessageAPIService(t *testing.T) {
 
 	})
 
+	t.Run("Test MessageAPIService MessageChannelChannelIdMessageIdReactionsReactionNameDelete", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var channelId int32
+		var messageId int32
+		var reactionName string
+
+		resp, httpRes, err := apiClient.MessageAPI.MessageChannelChannelIdMessageIdReactionsReactionNameDelete(context.Background(), channelId, messageId, reactionName).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test MessageAPIService MessageChannelChannelIdMessageIdReactionsReactionNameGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var channelId int32
+		var messageId int32
+		var reactionName string
+
+		resp, httpRes, err := apiClient.MessageAPI.MessageChannelChannelIdMessageIdReactionsReactionNameGet(context.Background(), channelId, messageId, reactionName).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test MessageAPIService MessageChannelChannelIdMessageIdReactionsReactionNamePut", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var channelId int32
+		var messageId int32
+		var reactionName string
+
+		resp, httpRes, err := apiClient.MessageAPI.MessageChannelChannelIdMessageIdReactionsReactionNamePut(context.Background(), channelId, messageId, reactionName).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test MessageAPIService MessageChannelChannelIdMessageIdThreadPost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var channelId int32
+		var messageId int32
+
+		resp, httpRes, err := apiClient.MessageAPI.MessageChannelChannelIdMessageIdThreadPost(context.Background(), channelId, messageId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test MessageAPIService MessageChannelChannelIdPost", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
@@ -87,6 +165,20 @@ func Test_goclient_MessageAPIService(t *testing.T) {
 		var channelId int32
 
 		resp, httpRes, err := apiClient.MessageAPI.MessageChannelChannelIdPost(context.Background(), channelId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test MessageAPIService MessageChannelChannelIdTypingPost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var channelId int32
+
+		resp, httpRes, err := apiClient.MessageAPI.MessageChannelChannelIdTypingPost(context.Background(), channelId).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)

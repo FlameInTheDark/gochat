@@ -23,5 +23,9 @@ type Cache interface {
 	HSet(ctx context.Context, key, field, value string) error
 	HDel(ctx context.Context, key, field string) error
 	HGetAll(ctx context.Context, key string) (map[string]string, error)
+	HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error)
+	ZAdd(ctx context.Context, key string, score float64, member string) error
+	ZRem(ctx context.Context, key string, members ...string) error
+	ZRevRangeByScore(ctx context.Context, key, max, min string, offset, count int64) ([]string, error)
 	XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error
 }

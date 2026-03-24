@@ -22,14 +22,57 @@ func Test_goclient_WebhookAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
-	t.Run("Test WebhookAPIService WebhookStorageEventsPost", func(t *testing.T) {
+	t.Run("Test WebhookAPIService WebhookAttachmentsFinalizePost", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
 
-		resp, httpRes, err := apiClient.WebhookAPI.WebhookStorageEventsPost(context.Background()).Execute()
+		httpRes, err := apiClient.WebhookAPI.WebhookAttachmentsFinalizePost(context.Background()).Execute()
 
 		require.Nil(t, err)
-		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test WebhookAPIService WebhookSfuChannelAlivePost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		httpRes, err := apiClient.WebhookAPI.WebhookSfuChannelAlivePost(context.Background()).Execute()
+
+		require.Nil(t, err)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test WebhookAPIService WebhookSfuHeartbeatPost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		httpRes, err := apiClient.WebhookAPI.WebhookSfuHeartbeatPost(context.Background()).Execute()
+
+		require.Nil(t, err)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test WebhookAPIService WebhookSfuVoiceJoinPost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		httpRes, err := apiClient.WebhookAPI.WebhookSfuVoiceJoinPost(context.Background()).Execute()
+
+		require.Nil(t, err)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test WebhookAPIService WebhookSfuVoiceLeavePost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		httpRes, err := apiClient.WebhookAPI.WebhookSfuVoiceLeavePost(context.Background()).Execute()
+
+		require.Nil(t, err)
 		assert.Equal(t, 200, httpRes.StatusCode)
 
 	})

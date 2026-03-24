@@ -22,6 +22,20 @@ func Test_goclient_GuildAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
+	t.Run("Test GuildAPIService GuildGuildIdBansGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdBansGet(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test GuildAPIService GuildGuildIdCategoryCategoryIdDelete", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
@@ -96,6 +110,51 @@ func Test_goclient_GuildAPIService(t *testing.T) {
 
 	})
 
+	t.Run("Test GuildAPIService GuildGuildIdChannelChannelIdThreadMemberMeDelete", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var channelId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdChannelChannelIdThreadMemberMeDelete(context.Background(), guildId, channelId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdChannelChannelIdThreadMemberMePut", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var channelId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdChannelChannelIdThreadMemberMePut(context.Background(), guildId, channelId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdChannelChannelIdThreadsGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var channelId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdChannelChannelIdThreadsGet(context.Background(), guildId, channelId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test GuildAPIService GuildGuildIdChannelGet", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
@@ -138,6 +197,78 @@ func Test_goclient_GuildAPIService(t *testing.T) {
 
 	})
 
+	t.Run("Test GuildAPIService GuildGuildIdDelete", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdDelete(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdEmojisEmojiIdDelete", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var emojiId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdEmojisEmojiIdDelete(context.Background(), guildId, emojiId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdEmojisEmojiIdPatch", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var emojiId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdEmojisEmojiIdPatch(context.Background(), guildId, emojiId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdEmojisGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdEmojisGet(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdEmojisPost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdEmojisPost(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test GuildAPIService GuildGuildIdGet", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
@@ -145,6 +276,109 @@ func Test_goclient_GuildAPIService(t *testing.T) {
 		var guildId int32
 
 		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdGet(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdIconPost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdIconPost(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdIconsGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdIconsGet(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdIconsIconIdDelete", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var iconId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdIconsIconIdDelete(context.Background(), guildId, iconId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdMemberUserIdBanDelete", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var userId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdMemberUserIdBanDelete(context.Background(), guildId, userId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdMemberUserIdBanPost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var userId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdMemberUserIdBanPost(context.Background(), guildId, userId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdMemberUserIdGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var userId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdMemberUserIdGet(context.Background(), guildId, userId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdMemberUserIdKickPost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var userId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdMemberUserIdKickPost(context.Background(), guildId, userId).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -173,6 +407,64 @@ func Test_goclient_GuildAPIService(t *testing.T) {
 		var guildId int32
 
 		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdPatch(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdSystemchPatch", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdSystemchPatch(context.Background(), guildId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdVoiceChannelIdJoinPost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var channelId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdVoiceChannelIdJoinPost(context.Background(), guildId, channelId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdVoiceChannelIdRegionPatch", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+		var channelId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdVoiceChannelIdRegionPatch(context.Background(), guildId, channelId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test GuildAPIService GuildGuildIdVoiceMovePost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var guildId int32
+
+		resp, httpRes, err := apiClient.GuildAPI.GuildGuildIdVoiceMovePost(context.Background(), guildId).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)

@@ -901,6 +901,22 @@ func (m *memoryCache) HGetAll(ctx context.Context, key string) (map[string]strin
 	return map[string]string{}, nil
 }
 
+func (m *memoryCache) HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error) {
+	return 0, nil
+}
+
+func (m *memoryCache) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	return nil
+}
+
+func (m *memoryCache) ZRem(ctx context.Context, key string, members ...string) error {
+	return nil
+}
+
+func (m *memoryCache) ZRevRangeByScore(ctx context.Context, key, max, min string, offset, count int64) ([]string, error) {
+	return nil, nil
+}
+
 func (m *memoryCache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
 	return nil
 }

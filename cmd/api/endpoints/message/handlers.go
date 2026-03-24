@@ -1642,7 +1642,12 @@ func cloneMessageNonce(nonce *helper.MessageNonce) *helper.MessageNonce {
 }
 
 func (e *entity) buildStoredMessageResponse(c *fiber.Ctx, channel *model.Channel, guildId *int64, message model.Message) (dto.Message, error) {
-	data, err := e.fetchMessageRelatedData(c, []model.Message{message}, []int64{message.UserId}, guildId)
+	user, _ := helper.GetUser(c)
+	userId := int64(0)
+	if user != nil {
+		userId = user.Id
+	}
+	data, err := e.fetchMessageRelatedData(c, []model.Message{message}, []int64{message.UserId}, guildId, userId)
 	if err != nil {
 		return dto.Message{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendMessage)
 	}
@@ -2063,8 +2068,13 @@ func (e *entity) fetchAndBuildMessages(c *fiber.Ctx, req *GetMessagesRequest, ch
 		return []dto.Message{}, nil
 	}
 
+	currentUserID := int64(0)
+	if user, err := helper.GetUser(c); err == nil && user != nil {
+		currentUserID = user.Id
+	}
+
 	// Fetch all related data concurrently
-	messageData, err := e.fetchMessageRelatedData(c, rawMessages, userIds, guildId)
+	messageData, err := e.fetchMessageRelatedData(c, rawMessages, userIds, guildId, currentUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -2119,10 +2129,11 @@ type messageRelatedData struct {
 	Attachments map[int64]*model.Attachment
 	AvData      map[int64]*dto.AvatarData
 	Threads     map[int64]dto.Channel
+	Reactions   map[int64][]dto.MessageReaction
 }
 
 // fetchMessageRelatedData fetches users, members, attachments, and thread metadata concurrently
-func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message, userIds []int64, guildId *int64) (*messageRelatedData, error) {
+func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message, userIds []int64, guildId *int64, currentUserId int64) (*messageRelatedData, error) {
 	type usersResult struct {
 		users []model.User
 		err   error
@@ -2141,11 +2152,16 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 		members       []model.ThreadMember
 		err           error
 	}
+	type reactionsResult struct {
+		reactions map[int64][]dto.MessageReaction
+		err       error
+	}
 
 	usersCh := make(chan usersResult, 1)
 	membersCh := make(chan membersResult, 1)
 	attachmentsCh := make(chan attachmentsResult, 1)
 	threadsCh := make(chan threadsResult, 1)
+	reactionsCh := make(chan reactionsResult, 1)
 	ctx := c.UserContext()
 
 	// Fetch users
@@ -2205,11 +2221,25 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 		}
 	}()
 
+	go func() {
+		reactions := make(map[int64][]dto.MessageReaction, len(messages))
+		for _, message := range messages {
+			rows, err := e.loadMessageReactions(ctx, message.Id, currentUserId)
+			if err != nil {
+				reactionsCh <- reactionsResult{err: err}
+				return
+			}
+			reactions[message.Id] = rows
+		}
+		reactionsCh <- reactionsResult{reactions: reactions}
+	}()
+
 	// Collect results
 	usersRes := <-usersCh
 	membersRes := <-membersCh
 	attachmentsRes := <-attachmentsCh
 	threadsRes := <-threadsCh
+	reactionsRes := <-reactionsCh
 
 	// Check for errors
 	if usersRes.err != nil {
@@ -2224,6 +2254,9 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 	if threadsRes.err != nil {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to fetch thread metadata")
 	}
+	if reactionsRes.err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to fetch reactions")
+	}
 
 	// Build maps
 	data := &messageRelatedData{
@@ -2232,6 +2265,7 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 		Attachments: make(map[int64]*model.Attachment),
 		AvData:      make(map[int64]*dto.AvatarData),
 		Threads:     make(map[int64]dto.Channel),
+		Reactions:   make(map[int64][]dto.MessageReaction),
 	}
 
 	for i := range usersRes.users {
@@ -2273,6 +2307,11 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 				continue
 			}
 			data.Threads[threadChannel.Id] = e.dtoThreadChannel(&threadChannel, guildChannel.GuildId, guildChannel.Position, nil, threadMemberIDsByThread[threadChannel.Id])
+		}
+	}
+	if reactionsRes.reactions != nil {
+		for messageId, reactions := range reactionsRes.reactions {
+			data.Reactions[messageId] = reactions
 		}
 	}
 
@@ -2518,6 +2557,11 @@ func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageR
 		responseEmbeds = embed.MergeEmbeds(updatedEmbeds, updatedAutoEmbeds)
 	}
 
+	reactions, err := e.loadMessageReactions(c.UserContext(), message.Id, jwtUser.Id)
+	if err != nil {
+		return dto.Message{}, fiber.NewError(fiber.StatusInternalServerError, "failed to load reactions")
+	}
+
 	return dto.Message{
 		Id:                 message.Id,
 		ChannelId:          message.ChannelId,
@@ -2532,6 +2576,7 @@ func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageR
 		ReferenceChannelId: optionalReferenceChannelID(message.ChannelId, message.ReferenceChannel, message.Reference),
 		ThreadId:           optionalInt64(message.Thread),
 		Thread:             e.lookupThreadMetadata(c.UserContext(), message.Thread),
+		Reactions:          reactions,
 		UpdatedAt:          &updatedAt,
 	}, nil
 }
@@ -2951,6 +2996,7 @@ func (e *entity) buildMessageDTOsOptimized(ctx context.Context, messages []model
 			ReferenceChannelId: optionalReferenceChannelID(message.ChannelId, message.ReferenceChannel, message.Reference),
 			ThreadId:           optionalInt64(message.Thread),
 			Thread:             e.threadMetadataFromCache(message.Thread, data),
+			Reactions:          data.Reactions[message.Id],
 		}
 	}
 
