@@ -3,6 +3,7 @@ package message
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -2247,28 +2248,8 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 	}()
 
 	go func() {
-		type msgReactionResult struct {
-			id   int64
-			rows []dto.MessageReaction
-			err  error
-		}
-		ch := make(chan msgReactionResult, len(messages))
-		for _, message := range messages {
-			go func() {
-				rows, err := e.loadMessageReactions(ctx, message.Id, currentUserId)
-				ch <- msgReactionResult{id: message.Id, rows: rows, err: err}
-			}()
-		}
-		reactions := make(map[int64][]dto.MessageReaction, len(messages))
-		for range messages {
-			res := <-ch
-			if res.err != nil {
-				reactionsCh <- reactionsResult{err: res.err}
-				return
-			}
-			reactions[res.id] = res.rows
-		}
-		reactionsCh <- reactionsResult{reactions: reactions}
+		reactions, err := e.loadAllMessageReactionsBatch(ctx, messages, currentUserId)
+		reactionsCh <- reactionsResult{reactions: reactions, err: err}
 	}()
 
 	// Collect results
@@ -3243,8 +3224,8 @@ func isLatestWindowRequest(req *GetMessagesRequest) bool {
 // Returns (messages, true) on a full cache hit, (nil, false) on any miss.
 //
 // A "full hit" requires:
-//   1. The sorted-set index contains at least WindowSize entries.
-//   2. Every individual DTO key referenced by the index is present and parseable.
+//  1. The sorted-set index contains at least WindowSize entries.
+//  2. Every individual DTO key referenced by the index is present and parseable.
 //
 // Any single miss causes an immediate fallback to the DB — we never serve
 // a partial window from cache.
@@ -3263,36 +3244,28 @@ func (e *entity) tryMessagesFromCache(ctx context.Context, channelID int64) ([]d
 		return nil, false
 	}
 
-	// Fan out GetJSON calls concurrently to avoid serial round-trips.
-	type msgResult struct {
-		idx int
-		msg dto.Message
-		err error
-	}
-	ch := make(chan msgResult, len(members))
+	// Build all message keys, then fetch them in a single MGET round-trip.
+	keys := make([]string, len(members))
 	for i, member := range members {
-		go func() {
-			msgID, err := messagecache.MemberToID(member)
-			if err != nil {
-				ch <- msgResult{idx: i, err: err}
-				return
-			}
-			var msg dto.Message
-			if err := e.cache.GetJSON(ctx, messagecache.MessageKey(channelID, msgID), &msg); err != nil {
-				ch <- msgResult{idx: i, err: err}
-				return
-			}
-			ch <- msgResult{idx: i, msg: msg}
-		}()
+		msgID, err := messagecache.MemberToID(member)
+		if err != nil {
+			return nil, false
+		}
+		keys[i] = messagecache.MessageKey(channelID, msgID)
+	}
+	blobs, err := e.cache.MGetBytes(ctx, keys...)
+	if err != nil {
+		return nil, false
 	}
 	msgs := make([]dto.Message, len(members))
-	for range members {
-		res := <-ch
-		if res.err != nil {
+	for i, blob := range blobs {
+		if blob == nil {
 			// Any individual miss invalidates the whole window attempt.
 			return nil, false
 		}
-		msgs[res.idx] = res.msg
+		if err := json.Unmarshal(blob, &msgs[i]); err != nil {
+			return nil, false
+		}
 	}
 	return msgs, true
 }
