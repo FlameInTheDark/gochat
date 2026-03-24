@@ -512,6 +512,12 @@ func (f *fakeMessageCache) ZRevRangeByScore(ctx context.Context, key, max, min s
 func (f *fakeMessageCache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
 	return nil
 }
+func (f *fakeMessageCache) HGetAllMulti(_ context.Context, keys []string) ([]map[string]string, error) {
+	return make([]map[string]string, len(keys)), nil
+}
+func (f *fakeMessageCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
+	return make([][]byte, len(keys)), nil
+}
 
 func TestSendMessageCreateEventForThreadTargetsJoinedUsersOnly(t *testing.T) {
 	guildID := int64(77)

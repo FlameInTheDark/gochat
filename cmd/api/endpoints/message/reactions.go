@@ -820,6 +820,152 @@ func (e *entity) loadMessageReactions(ctx context.Context, messageId, userId int
 	return result, nil
 }
 
+// loadAllMessageReactionsBatch fetches reactions for every message in one
+// Redis pipeline round-trip (3 HGETALLs per message: count, meta, user).
+// Falls back to DB only for messages whose summary cache is cold, and degrades
+// to serial per-message loading when the cache is unavailable.
+func (e *entity) loadAllMessageReactionsBatch(
+	ctx context.Context,
+	messages []model.Message,
+	userId int64,
+) (map[int64][]dto.MessageReaction, error) {
+	n := len(messages)
+	if n == 0 {
+		return map[int64][]dto.MessageReaction{}, nil
+	}
+	if e.cache == nil {
+		return e.loadAllMessageReactionsSerial(ctx, messages, userId)
+	}
+
+	const stride = 3 // countKey, metaKey, userKey per message
+	keys := make([]string, n*stride)
+	for i, msg := range messages {
+		keys[i*stride] = reactionutil.SummaryCountKey(msg.Id)
+		keys[i*stride+1] = reactionutil.SummaryMetaKey(msg.Id)
+		keys[i*stride+2] = reactionutil.UserKey(msg.Id, userId)
+	}
+
+	allMaps, err := e.cache.HGetAllMulti(ctx, keys)
+	if err != nil {
+		return e.loadAllMessageReactionsSerial(ctx, messages, userId)
+	}
+
+	result := make(map[int64][]dto.MessageReaction, n)
+	for i, msg := range messages {
+		countMap := allMaps[i*stride]
+		metaMap := allMaps[i*stride+1]
+		userMap := allMaps[i*stride+2]
+
+		summaryWarm := metaMap[reactionutil.WarmMarkerField] == "1"
+		var summaries map[string]model.ReactionSummary
+		if !summaryWarm {
+			rows, err := e.react.ListMessageSummaries(ctx, msg.Id)
+			if err != nil {
+				return nil, err
+			}
+			_ = e.backfillMessageSummariesCache(ctx, msg.Id, rows)
+			summaries = make(map[string]model.ReactionSummary, len(rows))
+			for _, row := range rows {
+				summaries[row.BucketKey] = row
+			}
+		} else {
+			summaries = parseSummaryMaps(msg.Id, countMap, metaMap)
+		}
+
+		userWarm := userMap[reactionutil.WarmMarkerField] == "1"
+		var userReactions map[string]model.Reaction
+		if !userWarm && len(summaries) > 0 {
+			rows, err := e.react.GetUserReactions(ctx, msg.Id, userId)
+			if err != nil {
+				return nil, err
+			}
+			_ = e.backfillUserReactionsCache(ctx, msg.Id, userId, rows)
+			userReactions = make(map[string]model.Reaction, len(rows))
+			for _, row := range rows {
+				userReactions[row.BucketKey] = row
+			}
+		} else {
+			userReactions = parseUserReactionMap(msg.Id, userId, userMap)
+		}
+
+		list := make([]dto.MessageReaction, 0, len(summaries))
+		for _, summary := range summaries {
+			if summary.Count <= 0 {
+				continue
+			}
+			_, me := userReactions[summary.BucketKey]
+			list = append(list, e.reactionSummaryToDTO(ctx, summary, me))
+		}
+		result[msg.Id] = list
+	}
+	return result, nil
+}
+
+// loadAllMessageReactionsSerial is the cache-unavailable fallback.
+func (e *entity) loadAllMessageReactionsSerial(
+	ctx context.Context,
+	messages []model.Message,
+	userId int64,
+) (map[int64][]dto.MessageReaction, error) {
+	result := make(map[int64][]dto.MessageReaction, len(messages))
+	for _, msg := range messages {
+		rows, err := e.loadMessageReactions(ctx, msg.Id, userId)
+		if err != nil {
+			return nil, err
+		}
+		result[msg.Id] = rows
+	}
+	return result, nil
+}
+
+// parseSummaryMaps reconstructs ReactionSummary entries from pipelined HGETALL
+// results. Mirrors the parsing in loadMessageSummariesCache.
+func parseSummaryMaps(msgId int64, countMap, metaMap map[string]string) map[string]model.ReactionSummary {
+	summaries := make(map[string]model.ReactionSummary)
+	for bucketKey, countStr := range countMap {
+		if bucketKey == reactionutil.WarmMarkerField {
+			continue
+		}
+		count, err := strconv.Atoi(countStr)
+		if err != nil || count <= 0 {
+			continue
+		}
+		summary := model.ReactionSummary{MessageId: msgId, BucketKey: bucketKey, Count: count}
+		if metaJSON, ok := metaMap[bucketKey]; ok && metaJSON != "" {
+			var meta reactionutil.CacheSummaryMeta
+			if err := json.Unmarshal([]byte(metaJSON), &meta); err == nil {
+				summary.Custom, summary.EmojiId, summary.EmojiName = meta.Custom, meta.EmojiId, meta.EmojiName
+			}
+		}
+		if summary.EmojiName == "" {
+			summary.Custom, summary.EmojiId, summary.EmojiName = reactionutil.BucketKeyEmoji(bucketKey)
+		}
+		summaries[bucketKey] = summary
+	}
+	return summaries
+}
+
+// parseUserReactionMap reconstructs user reactions from a pipelined HGETALL
+// result. Mirrors the parsing in loadUserReactionCache.
+func parseUserReactionMap(msgId, userId int64, userMap map[string]string) map[string]model.Reaction {
+	rows := make(map[string]model.Reaction)
+	for bucketKey, reactionIdStr := range userMap {
+		if bucketKey == reactionutil.WarmMarkerField {
+			continue
+		}
+		reactionId, err := strconv.ParseInt(reactionIdStr, 10, 64)
+		if err != nil {
+			continue
+		}
+		custom, emojiId, emojiName := reactionutil.BucketKeyEmoji(bucketKey)
+		rows[bucketKey] = model.Reaction{
+			MessageId: msgId, ReactionId: reactionId, UserId: userId,
+			BucketKey: bucketKey, Custom: custom, EmojiId: emojiId, EmojiName: emojiName,
+		}
+	}
+	return rows
+}
+
 func (e *entity) reactionSummaryToDTO(ctx context.Context, summary model.ReactionSummary, me bool) dto.MessageReaction {
 	name := summary.EmojiName
 	var emojiID *int64

@@ -23,6 +23,12 @@ type Cache interface {
 	HSet(ctx context.Context, key, field, value string) error
 	HDel(ctx context.Context, key, field string) error
 	HGetAll(ctx context.Context, key string) (map[string]string, error)
+	// HGetAllMulti pipelines multiple HGETALL commands in one round-trip.
+	// Returns one map per key in the same order; nil maps mean the key was empty/missing.
+	HGetAllMulti(ctx context.Context, keys []string) ([]map[string]string, error)
+	// MGetBytes fetches multiple string keys in a single MGET round-trip.
+	// Returns one []byte per key; nil entries mean key-not-found.
+	MGetBytes(ctx context.Context, keys ...string) ([][]byte, error)
 	HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error)
 	ZAdd(ctx context.Context, key string, score float64, member string) error
 	ZRem(ctx context.Context, key string, members ...string) error

@@ -163,6 +163,12 @@ func (f *fakeCache) ZRevRangeByScore(ctx context.Context, key, max, min string, 
 func (f *fakeCache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
 	return nil
 }
+func (f *fakeCache) HGetAllMulti(_ context.Context, keys []string) ([]map[string]string, error) {
+	return make([]map[string]string, len(keys)), nil
+}
+func (f *fakeCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
+	return make([][]byte, len(keys)), nil
+}
 
 func (f *fakeCache) Delete(ctx context.Context, key string) error {
 	f.deleted = append(f.deleted, key)

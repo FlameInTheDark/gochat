@@ -251,6 +251,53 @@ func (c *Cache) HGetAll(ctx context.Context, key string) (map[string]string, err
 	return h.Val(), nil
 }
 
+// HGetAllMulti pipelines len(keys) HGETALL commands in a single round-trip.
+func (c *Cache) HGetAllMulti(ctx context.Context, keys []string) ([]map[string]string, error) {
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	ctx, end := c.operation(ctx, "hgetall_multi", keys[0])
+	pipe := c.c.Pipeline()
+	cmds := make([]*redis.MapStringStringCmd, len(keys))
+	for i, key := range keys {
+		cmds[i] = pipe.HGetAll(ctx, key)
+	}
+	_, err := pipe.Exec(ctx)
+	end(err)
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return nil, err
+	}
+	results := make([]map[string]string, len(keys))
+	for i, cmd := range cmds {
+		if cmd.Err() == nil {
+			results[i] = cmd.Val()
+		}
+	}
+	return results, nil
+}
+
+// MGetBytes fetches multiple keys in a single MGET round-trip.
+func (c *Cache) MGetBytes(ctx context.Context, keys ...string) ([][]byte, error) {
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	ctx, end := c.operation(ctx, "mget", keys[0])
+	res := c.c.MGet(ctx, keys...)
+	if err := res.Err(); err != nil {
+		end(err)
+		return nil, err
+	}
+	end(nil)
+	vals := res.Val()
+	out := make([][]byte, len(vals))
+	for i, v := range vals {
+		if v != nil {
+			out[i] = []byte(v.(string))
+		}
+	}
+	return out, nil
+}
+
 func (c *Cache) HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error) {
 	ctx, end := c.operation(ctx, "hincrby", key)
 	h := c.c.HIncrBy(ctx, key, field, delta)

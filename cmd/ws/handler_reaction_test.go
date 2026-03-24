@@ -66,6 +66,12 @@ func (f *fakeReactionCache) ZRevRangeByScore(ctx context.Context, key, max, min 
 func (f *fakeReactionCache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
 	return nil
 }
+func (f *fakeReactionCache) HGetAllMulti(_ context.Context, keys []string) ([]map[string]string, error) {
+	return make([]map[string]string, len(keys)), nil
+}
+func (f *fakeReactionCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
+	return make([][]byte, len(keys)), nil
+}
 
 func decodeReactionAdd(t *testing.T, payload []byte) mqmsg.MessageReactionAdd {
 	t.Helper()
