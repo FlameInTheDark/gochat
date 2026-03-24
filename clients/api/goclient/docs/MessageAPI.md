@@ -9,6 +9,9 @@ Method | HTTP request | Description
 [**MessageChannelChannelIdMessageIdAckPost**](MessageAPI.md#MessageChannelChannelIdMessageIdAckPost) | **Post** /message/channel/{channel_id}/{message_id}/ack | Set channel read state for current user
 [**MessageChannelChannelIdMessageIdDelete**](MessageAPI.md#MessageChannelChannelIdMessageIdDelete) | **Delete** /message/channel/{channel_id}/{message_id} | Delete message
 [**MessageChannelChannelIdMessageIdPatch**](MessageAPI.md#MessageChannelChannelIdMessageIdPatch) | **Patch** /message/channel/{channel_id}/{message_id} | Update message
+[**MessageChannelChannelIdMessageIdReactionsReactionNameDelete**](MessageAPI.md#MessageChannelChannelIdMessageIdReactionsReactionNameDelete) | **Delete** /message/channel/{channel_id}/{message_id}/reactions/{reaction_name} | Remove message reaction
+[**MessageChannelChannelIdMessageIdReactionsReactionNameGet**](MessageAPI.md#MessageChannelChannelIdMessageIdReactionsReactionNameGet) | **Get** /message/channel/{channel_id}/{message_id}/reactions/{reaction_name} | List users who reacted with a specific reaction
+[**MessageChannelChannelIdMessageIdReactionsReactionNamePut**](MessageAPI.md#MessageChannelChannelIdMessageIdReactionsReactionNamePut) | **Put** /message/channel/{channel_id}/{message_id}/reactions/{reaction_name} | Add message reaction
 [**MessageChannelChannelIdMessageIdThreadPost**](MessageAPI.md#MessageChannelChannelIdMessageIdThreadPost) | **Post** /message/channel/{channel_id}/{message_id}/thread | Create thread from message
 [**MessageChannelChannelIdPost**](MessageAPI.md#MessageChannelChannelIdPost) | **Post** /message/channel/{channel_id} | Send message
 [**MessageChannelChannelIdTypingPost**](MessageAPI.md#MessageChannelChannelIdTypingPost) | **Post** /message/channel/{channel_id}/typing | Send user typing event in the channel
@@ -361,6 +364,232 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**DtoMessage**](DtoMessage.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## MessageChannelChannelIdMessageIdReactionsReactionNameDelete
+
+> string MessageChannelChannelIdMessageIdReactionsReactionNameDelete(ctx, channelId, messageId, reactionName).Execute()
+
+Remove message reaction
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Channel id
+	messageId := int32(56) // int32 | Message id
+	reactionName := "reactionName_example" // string | Reaction name
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.MessageAPI.MessageChannelChannelIdMessageIdReactionsReactionNameDelete(context.Background(), channelId, messageId, reactionName).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `MessageAPI.MessageChannelChannelIdMessageIdReactionsReactionNameDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `MessageChannelChannelIdMessageIdReactionsReactionNameDelete`: string
+	fmt.Fprintf(os.Stdout, "Response from `MessageAPI.MessageChannelChannelIdMessageIdReactionsReactionNameDelete`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Channel id | 
+**messageId** | **int32** | Message id | 
+**reactionName** | **string** | Reaction name | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiMessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## MessageChannelChannelIdMessageIdReactionsReactionNameGet
+
+> DtoMessageReactionUsersPage MessageChannelChannelIdMessageIdReactionsReactionNameGet(ctx, channelId, messageId, reactionName).After(after).Limit(limit).Execute()
+
+List users who reacted with a specific reaction
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Channel id
+	messageId := int32(56) // int32 | Message id
+	reactionName := "reactionName_example" // string | Reaction name
+	after := int32(56) // int32 | Reaction ID cursor (optional)
+	limit := int32(56) // int32 | Page size (optional)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.MessageAPI.MessageChannelChannelIdMessageIdReactionsReactionNameGet(context.Background(), channelId, messageId, reactionName).After(after).Limit(limit).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `MessageAPI.MessageChannelChannelIdMessageIdReactionsReactionNameGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `MessageChannelChannelIdMessageIdReactionsReactionNameGet`: DtoMessageReactionUsersPage
+	fmt.Fprintf(os.Stdout, "Response from `MessageAPI.MessageChannelChannelIdMessageIdReactionsReactionNameGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Channel id | 
+**messageId** | **int32** | Message id | 
+**reactionName** | **string** | Reaction name | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiMessageChannelChannelIdMessageIdReactionsReactionNameGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+ **after** | **int32** | Reaction ID cursor | 
+ **limit** | **int32** | Page size | 
+
+### Return type
+
+[**DtoMessageReactionUsersPage**](DtoMessageReactionUsersPage.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## MessageChannelChannelIdMessageIdReactionsReactionNamePut
+
+> string MessageChannelChannelIdMessageIdReactionsReactionNamePut(ctx, channelId, messageId, reactionName).Execute()
+
+Add message reaction
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Channel id
+	messageId := int32(56) // int32 | Message id
+	reactionName := "reactionName_example" // string | Reaction name
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.MessageAPI.MessageChannelChannelIdMessageIdReactionsReactionNamePut(context.Background(), channelId, messageId, reactionName).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `MessageAPI.MessageChannelChannelIdMessageIdReactionsReactionNamePut``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `MessageChannelChannelIdMessageIdReactionsReactionNamePut`: string
+	fmt.Fprintf(os.Stdout, "Response from `MessageAPI.MessageChannelChannelIdMessageIdReactionsReactionNamePut`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Channel id | 
+**messageId** | **int32** | Message id | 
+**reactionName** | **string** | Reaction name | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiMessageChannelChannelIdMessageIdReactionsReactionNamePutRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+
+### Return type
+
+**string**
 
 ### Authorization
 

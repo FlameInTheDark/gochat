@@ -34,6 +34,8 @@ type DtoMessage struct {
 	Nonce *string `json:"nonce,omitempty"`
 	// Monotonic channel-local message position used for navigation.
 	Position *int32 `json:"position,omitempty"`
+	// Aggregated reactions for this message.
+	Reactions []DtoMessageReaction `json:"reactions,omitempty"`
 	// Referenced source message id.
 	Reference *int32 `json:"reference,omitempty"`
 	// Channel id of the referenced source message.
@@ -352,6 +354,38 @@ func (o *DtoMessage) SetPosition(v int32) {
 	o.Position = &v
 }
 
+// GetReactions returns the Reactions field value if set, zero value otherwise.
+func (o *DtoMessage) GetReactions() []DtoMessageReaction {
+	if o == nil || IsNil(o.Reactions) {
+		var ret []DtoMessageReaction
+		return ret
+	}
+	return o.Reactions
+}
+
+// GetReactionsOk returns a tuple with the Reactions field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoMessage) GetReactionsOk() ([]DtoMessageReaction, bool) {
+	if o == nil || IsNil(o.Reactions) {
+		return nil, false
+	}
+	return o.Reactions, true
+}
+
+// HasReactions returns a boolean if a field has been set.
+func (o *DtoMessage) HasReactions() bool {
+	if o != nil && !IsNil(o.Reactions) {
+		return true
+	}
+
+	return false
+}
+
+// SetReactions gets a reference to the given []DtoMessageReaction and assigns it to the Reactions field.
+func (o *DtoMessage) SetReactions(v []DtoMessageReaction) {
+	o.Reactions = v
+}
+
 // GetReference returns the Reference field value if set, zero value otherwise.
 func (o *DtoMessage) GetReference() int32 {
 	if o == nil || IsNil(o.Reference) {
@@ -580,6 +614,9 @@ func (o DtoMessage) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Position) {
 		toSerialize["position"] = o.Position
+	}
+	if !IsNil(o.Reactions) {
+		toSerialize["reactions"] = o.Reactions
 	}
 	if !IsNil(o.Reference) {
 		toSerialize["reference"] = o.Reference

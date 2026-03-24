@@ -28,6 +28,8 @@ const (
 	EventTypeMessageCreate EventType = 100 + iota
 	EventTypeMessageUpdate
 	EventTypeMessageDelete
+	EventTypeMessageReactionAdd
+	EventTypeMessageReactionRemove
 	EventTypeGuildCreate
 	EventTypeGuildUpdate
 	EventTypeGuildDelete

@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/database/db"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/cache"
@@ -24,6 +26,7 @@ type entity struct {
 	emoji  emojirepo.Emoji
 	guild  guildrepo.Guild
 	member memberrepo.Member
+	icon   icon.Icon
 }
 
 type emojiLookupReader interface {
@@ -38,13 +41,14 @@ type memberChecker interface {
 	IsGuildMember(ctx context.Context, guildId, userId int64) (bool, error)
 }
 
-func New(pg *pgdb.DB, cache cache.Cache, log *slog.Logger) server.Entity {
+func New(cql *db.CQLCon, pg *pgdb.DB, cache cache.Cache, log *slog.Logger) server.Entity {
 	return &entity{
 		log:    log,
 		cache:  cache,
 		emoji:  emojirepo.New(pg.Conn()),
 		guild:  guildrepo.New(pg.Conn()),
 		member: memberrepo.New(pg.Conn()),
+		icon:   icon.New(cql),
 	}
 }
 

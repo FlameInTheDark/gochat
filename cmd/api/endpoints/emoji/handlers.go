@@ -3,6 +3,7 @@ package emoji
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -48,9 +49,38 @@ func (e *entity) GetInfo(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetEmojiInfo)
 	}
 
+	var gico *dto.Icon
+
+	if guild.Icon != nil {
+		key := fmt.Sprintf("icons:%d:%d", guild.Id, *guild.Icon)
+		var cached dto.Icon
+		if err := e.cache.GetJSON(c.UserContext(), key, &cached); err == nil && cached.URL != "" {
+			gico = &cached
+		} else {
+			if ic, err := e.icon.GetIcon(c.UserContext(), *guild.Icon, guild.Id); err == nil && ic.URL != nil {
+				var w, h, size int64
+				if ic.Width != nil {
+					w = *ic.Width
+				}
+				if ic.Height != nil {
+					h = *ic.Height
+				}
+				size = ic.FileSize
+				var urlStr string
+				if ic.URL != nil {
+					urlStr = *ic.URL
+				}
+				ico := dto.Icon{Id: *guild.Icon, URL: urlStr, Filesize: size, Width: w, Height: h}
+				gico = &ico
+				_ = e.cache.SetJSON(c.UserContext(), key, ico)
+			}
+		}
+	}
+
 	resp := dto.EmojiInfo{
 		Name:          lookup.Name,
 		ServerPrivate: !guild.Public,
+		Icon:          gico,
 	}
 	if guild.Public {
 		resp.ServerName = &guild.Name

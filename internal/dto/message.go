@@ -22,6 +22,7 @@ type Message struct {
 	ReferenceChannelId *int64               `json:"reference_channel_id,omitempty" example:"2230469276416868352"` // Channel id of the referenced source message.
 	ThreadId           *int64               `json:"thread_id,omitempty" example:"2230469276416868352"`            // Thread linked from this message.
 	Thread             *Channel             `json:"thread,omitempty"`                                             // Thread metadata when the message is linked to a thread.
+	Reactions          []MessageReaction    `json:"reactions,omitempty"`                                          // Aggregated reactions for this message.
 	UpdatedAt          *time.Time           `json:"updated_at,omitempty"`                                         // Timestamp of the last message edit
 }
 

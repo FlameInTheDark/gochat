@@ -14,6 +14,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/mention"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
+	reactionrepo "github.com/FlameInTheDark/gochat/internal/database/entities/reaction"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
@@ -49,6 +50,9 @@ func (e *entity) Init(router fiber.Router) {
 	router.Get("/channel/:channel_id<int>", e.GetMessages)
 	router.Post("/channel/:channel_id<int>/:message_id<int>/ack", e.SetReadState)
 	router.Post("/channel/:channel_id<int>/typing", e.Typing)
+	router.Put("/channel/:channel_id<int>/:message_id<int>/reactions/:reaction_name", e.AddReaction)
+	router.Delete("/channel/:channel_id<int>/:message_id<int>/reactions/:reaction_name", e.RemoveReaction)
+	router.Get("/channel/:channel_id<int>/:message_id<int>/reactions/:reaction_name", e.GetReactionUsers)
 }
 
 type embedQueue interface {
@@ -76,6 +80,7 @@ type entity struct {
 	dmc     dmchannel.DmChannel
 	gdmc    groupdmchannel.GroupDMChannel
 	msg     message.Message
+	react   reactionrepo.Reaction
 	at      attachment.Attachment
 	perm    rolecheck.RoleCheck
 	uperm   channeluserperm.ChannelUserPerm
@@ -116,6 +121,7 @@ func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, imq *indexmq.IndexMQ
 		g:           guild.New(pg.Conn()),
 		gc:          guildchannels.New(pg.Conn()),
 		msg:         message.New(cql),
+		react:       reactionrepo.New(cql),
 		at:          attachment.New(cql),
 		perm:        rolecheck.New(pg),
 		uperm:       channeluserperm.New(pg.Conn()),
