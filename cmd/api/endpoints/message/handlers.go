@@ -14,6 +14,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/FlameInTheDark/gochat/internal/cache/messagecache"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/embed"
@@ -125,6 +126,15 @@ func (e *entity) Send(c *fiber.Ctx) error {
 	if err := e.rs.SetReadState(c.UserContext(), user.Id, channelId, message.Id); err != nil {
 		reqLog.Error("unable to set read state after message sent", slog.String("error", err.Error()))
 	}
+
+	// Push to window cache. Nonce is stripped — it is author-only and must not
+	// appear for other users fetching the same channel.
+	msgToCache := message
+	msgToCache.Nonce = nil
+	go e.pushMessageToWindowCache(
+		observability.BackgroundFromContext(c.UserContext()),
+		channel.Id, msgToCache,
+	)
 
 	return c.JSON(message)
 }
@@ -1957,10 +1967,25 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 		return c.JSON([]dto.Message{})
 	}
 
+	// Hot path: latest-window request with no cursor — try cache before hitting the DB.
+	if isLatestWindowRequest(req) {
+		if msgs, ok := e.tryMessagesFromCache(c.UserContext(), channel.Id); ok {
+			return c.JSON(msgs)
+		}
+	}
+
 	// Fetch and build messages
 	messages, err := e.fetchAndBuildMessages(c, req, channel, guildId)
 	if err != nil {
 		return err
+	}
+
+	// Backfill cache so subsequent requests are served from Redis.
+	if isLatestWindowRequest(req) {
+		go e.backfillMessagesCache(
+			observability.BackgroundFromContext(c.UserContext()),
+			channel.Id, messages,
+		)
 	}
 
 	return c.JSON(messages)
@@ -2222,14 +2247,26 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 	}()
 
 	go func() {
-		reactions := make(map[int64][]dto.MessageReaction, len(messages))
+		type msgReactionResult struct {
+			id   int64
+			rows []dto.MessageReaction
+			err  error
+		}
+		ch := make(chan msgReactionResult, len(messages))
 		for _, message := range messages {
-			rows, err := e.loadMessageReactions(ctx, message.Id, currentUserId)
-			if err != nil {
-				reactionsCh <- reactionsResult{err: err}
+			go func() {
+				rows, err := e.loadMessageReactions(ctx, message.Id, currentUserId)
+				ch <- msgReactionResult{id: message.Id, rows: rows, err: err}
+			}()
+		}
+		reactions := make(map[int64][]dto.MessageReaction, len(messages))
+		for range messages {
+			res := <-ch
+			if res.err != nil {
+				reactionsCh <- reactionsResult{err: res.err}
 				return
 			}
-			reactions[message.Id] = rows
+			reactions[res.id] = res.rows
 		}
 		reactionsCh <- reactionsResult{reactions: reactions}
 	}()
@@ -2397,6 +2434,9 @@ func (e *entity) Update(c *fiber.Ctx) error {
 
 	// Send update event
 	go e.sendUpdateEvent(observability.BackgroundFromContext(c.UserContext()), channelId, guildId, updatedMessage)
+
+	// Refresh the cached DTO so readers see the updated content immediately.
+	go e.refreshMessageInCache(observability.BackgroundFromContext(c.UserContext()), channelId, updatedMessage)
 
 	contentChanged := req.Content != nil && *req.Content != message.Content
 	suppressIsEnabled := model.HasMessageFlag(updatedMessage.Flags, model.MessageFlagSuppressEmbeds)
@@ -2739,6 +2779,13 @@ func (e *entity) Delete(c *fiber.Ctx) error {
 	if err := e.deleteMessageAndNotify(c, message); err != nil {
 		return err
 	}
+
+	// Evict from cache: remove the DTO key and drop the ID from the index.
+	// Next window fetch for this channel will fall back to DB and rebuild.
+	go e.evictMessageFromCache(
+		observability.BackgroundFromContext(c.UserContext()),
+		channelId, messageId,
+	)
 
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -3164,4 +3211,146 @@ func (e *entity) Typing(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendTypingEvent)
 	}
 	return c.SendStatus(fiber.StatusOK)
+}
+
+// ── Message window cache helpers ──────────────────────────────────────────────
+//
+// Strategy: two Redis keys per channel.
+//
+//   channel:messages:index:{id}      – sorted set, score=float64(msgID), member=msgID string
+//   channel:message:{id}:{msgID}     – JSON blob of a fully-built dto.Message, TTL 5 min
+//
+// Correctness guarantees:
+//   • Nonce is stripped before caching (it is echoed only to the message author).
+//   • Reactions and embeds evict their DTO key on change, forcing a fresh DB read.
+//   • Deletions remove the ID from the sorted-set index; the next window request
+//     finds len(ids)<WindowSize and falls back to the DB, which rebuilds cleanly.
+//   • Only requests with direction=before and no cursor use the cache; all
+//     paginated/history requests always go to the DB — no stale windows for
+//     different users scrolling through history.
+//   • All cache operations are fire-and-forget; failures are silently ignored so
+//     the DB path always remains the authoritative fallback.
+
+// isLatestWindowRequest returns true for the hot-path "open channel" request:
+// direction=before with no cursor — i.e. fetch the most recent messages.
+func isLatestWindowRequest(req *GetMessagesRequest) bool {
+	return req.Direction != nil &&
+		*req.Direction == DirectionBefore &&
+		req.From == nil
+}
+
+// tryMessagesFromCache attempts to serve the latest-window from Redis.
+// Returns (messages, true) on a full cache hit, (nil, false) on any miss.
+//
+// A "full hit" requires:
+//   1. The sorted-set index contains at least WindowSize entries.
+//   2. Every individual DTO key referenced by the index is present and parseable.
+//
+// Any single miss causes an immediate fallback to the DB — we never serve
+// a partial window from cache.
+func (e *entity) tryMessagesFromCache(ctx context.Context, channelID int64) ([]dto.Message, bool) {
+	if e.cache == nil {
+		return nil, false
+	}
+
+	members, err := e.cache.ZRevRangeByScore(
+		ctx,
+		messagecache.IndexKey(channelID),
+		"+inf", "-inf",
+		0, messagecache.WindowSize,
+	)
+	if err != nil || len(members) < messagecache.WindowSize {
+		return nil, false
+	}
+
+	// Fan out GetJSON calls concurrently to avoid serial round-trips.
+	type msgResult struct {
+		idx int
+		msg dto.Message
+		err error
+	}
+	ch := make(chan msgResult, len(members))
+	for i, member := range members {
+		go func() {
+			msgID, err := messagecache.MemberToID(member)
+			if err != nil {
+				ch <- msgResult{idx: i, err: err}
+				return
+			}
+			var msg dto.Message
+			if err := e.cache.GetJSON(ctx, messagecache.MessageKey(channelID, msgID), &msg); err != nil {
+				ch <- msgResult{idx: i, err: err}
+				return
+			}
+			ch <- msgResult{idx: i, msg: msg}
+		}()
+	}
+	msgs := make([]dto.Message, len(members))
+	for range members {
+		res := <-ch
+		if res.err != nil {
+			// Any individual miss invalidates the whole window attempt.
+			return nil, false
+		}
+		msgs[res.idx] = res.msg
+	}
+	return msgs, true
+}
+
+// backfillMessagesCache populates the sorted-set index and individual DTO keys
+// from a freshly-built message slice (DB result). Called as a goroutine after a
+// cache miss so it does not add latency to the response.
+func (e *entity) backfillMessagesCache(ctx context.Context, channelID int64, msgs []dto.Message) {
+	if e.cache == nil {
+		return
+	}
+	for i := range msgs {
+		m := msgs[i]
+		m.Nonce = nil // nonce must never be visible to non-authors
+		_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, m.Id), m, messagecache.MessageTTLSeconds)
+		_ = e.cache.ZAdd(ctx, messagecache.IndexKey(channelID), float64(m.Id), messagecache.IDToMember(m.Id))
+	}
+	_ = e.cache.SetTTL(ctx, messagecache.IndexKey(channelID), messagecache.IndexTTLSeconds)
+}
+
+// pushMessageToWindowCache adds a newly-sent message to the index and caches its
+// DTO. Must be called with a nonce-stripped copy of the message.
+func (e *entity) pushMessageToWindowCache(ctx context.Context, channelID int64, msg dto.Message) {
+	if e.cache == nil {
+		return
+	}
+	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds)
+	_ = e.cache.ZAdd(ctx, messagecache.IndexKey(channelID), float64(msg.Id), messagecache.IDToMember(msg.Id))
+	_ = e.cache.SetTTL(ctx, messagecache.IndexKey(channelID), messagecache.IndexTTLSeconds)
+}
+
+// refreshMessageInCache overwrites the DTO key for an edited message.
+// The sorted-set index is unchanged — same ID, same score.
+func (e *entity) refreshMessageInCache(ctx context.Context, channelID int64, msg dto.Message) {
+	if e.cache == nil {
+		return
+	}
+	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds)
+}
+
+// evictMessageFromCache removes a deleted message's DTO key and drops its ID from
+// the sorted-set index. The next window request will see len(ids)<WindowSize and
+// fall back to the DB, which returns the correct post-deletion window.
+func (e *entity) evictMessageFromCache(ctx context.Context, channelID, messageID int64) {
+	if e.cache == nil {
+		return
+	}
+	_ = e.cache.Delete(ctx, messagecache.MessageKey(channelID, messageID))
+	_ = e.cache.ZRem(ctx, messagecache.IndexKey(channelID), messagecache.IDToMember(messageID))
+}
+
+// evictMessageDTOFromCache removes only the DTO key, leaving the ID in the index.
+// Used when reactions or embeds change: the message still exists, but its cached
+// representation is stale. The next window request will fail the full-hit check
+// (missing individual key) and fall back to the DB, which rebuilds with fresh data.
+func (e *entity) evictMessageDTOFromCache(ctx context.Context, channelID, messageID int64) {
+	if e.cache == nil {
+		return
+	}
+	_ = e.cache.Delete(ctx, messagecache.MessageKey(channelID, messageID))
 }

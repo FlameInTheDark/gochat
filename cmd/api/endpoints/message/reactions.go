@@ -66,6 +66,9 @@ func (e *entity) AddReaction(c *fiber.Ctx) error {
 	}
 	if created {
 		go e.sendReactionUpdateEvent(observability.BackgroundFromContext(c.UserContext()), channelId, guildId, messageId, summary, true)
+		// Stale cached DTO would show wrong reaction counts; evict so next window
+		// fetch rebuilds with fresh data.
+		go e.evictMessageDTOFromCache(observability.BackgroundFromContext(c.UserContext()), channelId, messageId)
 	}
 
 	return c.SendStatus(fiber.StatusOK)
@@ -109,6 +112,7 @@ func (e *entity) RemoveReaction(c *fiber.Ctx) error {
 	}
 	if removed {
 		go e.sendReactionUpdateEvent(observability.BackgroundFromContext(c.UserContext()), channelId, guildId, messageId, summary, false)
+		go e.evictMessageDTOFromCache(observability.BackgroundFromContext(c.UserContext()), channelId, messageId)
 	}
 
 	return c.SendStatus(fiber.StatusOK)
