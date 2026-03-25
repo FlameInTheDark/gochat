@@ -20,9 +20,13 @@ var _ MappedNullable = &ModelUserSettingsNotifications{}
 
 // ModelUserSettingsNotifications struct for ModelUserSettingsNotifications
 type ModelUserSettingsNotifications struct {
-	Muted         *bool                   `json:"muted,omitempty"`
-	MutedUntil    *string                 `json:"muted_until,omitempty"`
-	Notifications *ModelNotificationsType `json:"notifications,omitempty"`
+	Muted                    *bool                   `json:"muted,omitempty"`
+	MutedUntil               *string                 `json:"muted_until,omitempty"`
+	Notifications            *ModelNotificationsType `json:"notifications,omitempty"`
+	SuppressEveryoneMentions *bool                   `json:"suppress_everyone_mentions,omitempty"`
+	SuppressHereMentions     *bool                   `json:"suppress_here_mentions,omitempty"`
+	SuppressRoleMentions     *bool                   `json:"suppress_role_mentions,omitempty"`
+	SuppressUserMentions     *bool                   `json:"suppress_user_mentions,omitempty"`
 }
 
 // NewModelUserSettingsNotifications instantiates a new ModelUserSettingsNotifications object
@@ -138,6 +142,134 @@ func (o *ModelUserSettingsNotifications) SetNotifications(v ModelNotificationsTy
 	o.Notifications = &v
 }
 
+// GetSuppressEveryoneMentions returns the SuppressEveryoneMentions field value if set, zero value otherwise.
+func (o *ModelUserSettingsNotifications) GetSuppressEveryoneMentions() bool {
+	if o == nil || IsNil(o.SuppressEveryoneMentions) {
+		var ret bool
+		return ret
+	}
+	return *o.SuppressEveryoneMentions
+}
+
+// GetSuppressEveryoneMentionsOk returns a tuple with the SuppressEveryoneMentions field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsNotifications) GetSuppressEveryoneMentionsOk() (*bool, bool) {
+	if o == nil || IsNil(o.SuppressEveryoneMentions) {
+		return nil, false
+	}
+	return o.SuppressEveryoneMentions, true
+}
+
+// HasSuppressEveryoneMentions returns a boolean if a field has been set.
+func (o *ModelUserSettingsNotifications) HasSuppressEveryoneMentions() bool {
+	if o != nil && !IsNil(o.SuppressEveryoneMentions) {
+		return true
+	}
+
+	return false
+}
+
+// SetSuppressEveryoneMentions gets a reference to the given bool and assigns it to the SuppressEveryoneMentions field.
+func (o *ModelUserSettingsNotifications) SetSuppressEveryoneMentions(v bool) {
+	o.SuppressEveryoneMentions = &v
+}
+
+// GetSuppressHereMentions returns the SuppressHereMentions field value if set, zero value otherwise.
+func (o *ModelUserSettingsNotifications) GetSuppressHereMentions() bool {
+	if o == nil || IsNil(o.SuppressHereMentions) {
+		var ret bool
+		return ret
+	}
+	return *o.SuppressHereMentions
+}
+
+// GetSuppressHereMentionsOk returns a tuple with the SuppressHereMentions field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsNotifications) GetSuppressHereMentionsOk() (*bool, bool) {
+	if o == nil || IsNil(o.SuppressHereMentions) {
+		return nil, false
+	}
+	return o.SuppressHereMentions, true
+}
+
+// HasSuppressHereMentions returns a boolean if a field has been set.
+func (o *ModelUserSettingsNotifications) HasSuppressHereMentions() bool {
+	if o != nil && !IsNil(o.SuppressHereMentions) {
+		return true
+	}
+
+	return false
+}
+
+// SetSuppressHereMentions gets a reference to the given bool and assigns it to the SuppressHereMentions field.
+func (o *ModelUserSettingsNotifications) SetSuppressHereMentions(v bool) {
+	o.SuppressHereMentions = &v
+}
+
+// GetSuppressRoleMentions returns the SuppressRoleMentions field value if set, zero value otherwise.
+func (o *ModelUserSettingsNotifications) GetSuppressRoleMentions() bool {
+	if o == nil || IsNil(o.SuppressRoleMentions) {
+		var ret bool
+		return ret
+	}
+	return *o.SuppressRoleMentions
+}
+
+// GetSuppressRoleMentionsOk returns a tuple with the SuppressRoleMentions field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsNotifications) GetSuppressRoleMentionsOk() (*bool, bool) {
+	if o == nil || IsNil(o.SuppressRoleMentions) {
+		return nil, false
+	}
+	return o.SuppressRoleMentions, true
+}
+
+// HasSuppressRoleMentions returns a boolean if a field has been set.
+func (o *ModelUserSettingsNotifications) HasSuppressRoleMentions() bool {
+	if o != nil && !IsNil(o.SuppressRoleMentions) {
+		return true
+	}
+
+	return false
+}
+
+// SetSuppressRoleMentions gets a reference to the given bool and assigns it to the SuppressRoleMentions field.
+func (o *ModelUserSettingsNotifications) SetSuppressRoleMentions(v bool) {
+	o.SuppressRoleMentions = &v
+}
+
+// GetSuppressUserMentions returns the SuppressUserMentions field value if set, zero value otherwise.
+func (o *ModelUserSettingsNotifications) GetSuppressUserMentions() bool {
+	if o == nil || IsNil(o.SuppressUserMentions) {
+		var ret bool
+		return ret
+	}
+	return *o.SuppressUserMentions
+}
+
+// GetSuppressUserMentionsOk returns a tuple with the SuppressUserMentions field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsNotifications) GetSuppressUserMentionsOk() (*bool, bool) {
+	if o == nil || IsNil(o.SuppressUserMentions) {
+		return nil, false
+	}
+	return o.SuppressUserMentions, true
+}
+
+// HasSuppressUserMentions returns a boolean if a field has been set.
+func (o *ModelUserSettingsNotifications) HasSuppressUserMentions() bool {
+	if o != nil && !IsNil(o.SuppressUserMentions) {
+		return true
+	}
+
+	return false
+}
+
+// SetSuppressUserMentions gets a reference to the given bool and assigns it to the SuppressUserMentions field.
+func (o *ModelUserSettingsNotifications) SetSuppressUserMentions(v bool) {
+	o.SuppressUserMentions = &v
+}
+
 func (o ModelUserSettingsNotifications) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -156,6 +288,18 @@ func (o ModelUserSettingsNotifications) ToMap() (map[string]interface{}, error) 
 	}
 	if !IsNil(o.Notifications) {
 		toSerialize["notifications"] = o.Notifications
+	}
+	if !IsNil(o.SuppressEveryoneMentions) {
+		toSerialize["suppress_everyone_mentions"] = o.SuppressEveryoneMentions
+	}
+	if !IsNil(o.SuppressHereMentions) {
+		toSerialize["suppress_here_mentions"] = o.SuppressHereMentions
+	}
+	if !IsNil(o.SuppressRoleMentions) {
+		toSerialize["suppress_role_mentions"] = o.SuppressRoleMentions
+	}
+	if !IsNil(o.SuppressUserMentions) {
+		toSerialize["suppress_user_mentions"] = o.SuppressUserMentions
 	}
 	return toSerialize, nil
 }

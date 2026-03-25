@@ -5,9 +5,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
+)
+
+var (
+	ErrFriendRequestAlreadyExists = errors.New("friend request already exists")
+	ErrAlreadyFriends             = errors.New("users are already friends")
 )
 
 func (e *Entity) AddFriend(ctx context.Context, userID, friendID int64) error {
@@ -35,7 +42,7 @@ func (e *Entity) AddFriend(ctx context.Context, userID, friendID int64) error {
 	}
 	_, err = tx.ExecContext(ctx, raw, args...)
 	if err != nil {
-		return fmt.Errorf("unable to add friend: %w", err)
+		return mapFriendSQLError("unable to add friend", err)
 	}
 
 	frr := squirrel.Delete("friend_requests").
@@ -108,7 +115,7 @@ func (e *Entity) CreateFriendRequest(ctx context.Context, userId, friendId int64
 	}
 	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
-		return fmt.Errorf("unable to add friend: %w", err)
+		return mapFriendSQLError("unable to add friend request", err)
 	}
 	return nil
 }
@@ -123,7 +130,7 @@ func (e *Entity) RemoveFriendRequest(ctx context.Context, userId, friendId int64
 	}
 	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
-		return fmt.Errorf("unable to add friend: %w", err)
+		return fmt.Errorf("unable to remove friend request: %w", err)
 	}
 	return nil
 }
@@ -176,4 +183,21 @@ func (e *Entity) IsFriend(ctx context.Context, userId, friendId int64) (bool, er
 		return false, err
 	}
 	return areFriends, nil
+}
+
+func mapFriendSQLError(operation string, err error) error {
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+		switch {
+		case strings.HasPrefix(pqErr.Table, "friend_requests"),
+			strings.HasPrefix(pqErr.Constraint, "friend_requests_pkey"),
+			strings.HasPrefix(pqErr.Constraint, "idx_unique_friend_request"):
+			return ErrFriendRequestAlreadyExists
+		case strings.HasPrefix(pqErr.Table, "friends"),
+			strings.HasPrefix(pqErr.Constraint, "friends_pkey"),
+			strings.HasPrefix(pqErr.Constraint, "idx_unique_friend"):
+			return ErrAlreadyFriends
+		}
+	}
+	return fmt.Errorf("%s: %w", operation, err)
 }

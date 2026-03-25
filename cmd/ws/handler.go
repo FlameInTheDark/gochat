@@ -6,6 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"net"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -19,11 +21,13 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/ws/handler"
 	"github.com/FlameInTheDark/gochat/cmd/ws/hub"
 	"github.com/FlameInTheDark/gochat/cmd/ws/subscriber"
+	cachei "github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/presence"
+	reactionutil "github.com/FlameInTheDark/gochat/internal/reaction"
 )
 
 // wsConn implements hub.Conn for a single WebSocket connection.
@@ -34,10 +38,11 @@ type wsConn struct {
 	out       chan<- outMsg
 	userID    int64
 	telemetry *observability.WSTelemetry
+	cache     cachei.Cache
 }
 
 func (w *wsConn) Send(delivery hub.Delivery) {
-	payload := personalizeMessageForRecipient(delivery.Topic, atomic.LoadInt64(&w.userID), delivery.Data)
+	payload := personalizeMessageForRecipientWithCache(w.cache, delivery.Topic, atomic.LoadInt64(&w.userID), delivery.Data)
 	// Non-blocking: drop the message if the connection's buffer is full.
 	select {
 	case w.out <- outMsg{kind: 1, data: payload, topic: delivery.Topic, ctx: delivery.Context}:
@@ -55,6 +60,10 @@ func (w *wsConn) SetUserID(userID int64) {
 }
 
 func personalizeMessageForRecipient(topic string, userID int64, data []byte) []byte {
+	return personalizeMessageForRecipientWithCache(nil, topic, userID, data)
+}
+
+func personalizeMessageForRecipientWithCache(cache cachei.Cache, topic string, userID int64, data []byte) []byte {
 	if !strings.HasPrefix(topic, "channel.") || userID == 0 {
 		return cloneWSMessage(data)
 	}
@@ -66,33 +75,62 @@ func personalizeMessageForRecipient(topic string, userID int64, data []byte) []b
 
 	switch *envelope.EventType {
 	case mqmsg.EventTypeMessageCreate, mqmsg.EventTypeMessageUpdate:
+		var payload struct {
+			GuildId *int64      `json:"guild_id"`
+			Message dto.Message `json:"message"`
+		}
+		if err := json.Unmarshal(envelope.Data, &payload); err != nil {
+			return cloneWSMessage(data)
+		}
+		if payload.Message.Nonce == nil || payload.Message.Author.Id == userID {
+			return cloneWSMessage(data)
+		}
+
+		payload.Message.Nonce = nil
+		redactedData, err := json.Marshal(payload)
+		if err != nil {
+			return cloneWSMessage(data)
+		}
+		envelope.Data = redactedData
+
+	case mqmsg.EventTypeMessageReactionAdd, mqmsg.EventTypeMessageReactionRemove:
+		var payload struct {
+			GuildId   *int64              `json:"guild_id"`
+			ChannelId int64               `json:"channel_id"`
+			MessageId int64               `json:"message_id"`
+			Reaction  dto.MessageReaction `json:"reaction"`
+		}
+		if err := json.Unmarshal(envelope.Data, &payload); err != nil {
+			return cloneWSMessage(data)
+		}
+		if cache != nil {
+			bucketKey := reactionutil.BucketKeyFromParts(payload.Reaction.Emoji.Id != nil, reactionDTOEmojiID(payload.Reaction), payload.Reaction.Emoji.Name)
+			if reactionID, err := cache.HGet(context.Background(), reactionutil.UserKey(payload.MessageId, userID), bucketKey); err == nil {
+				payload.Reaction.Me = reactionID != ""
+			}
+		}
+		redactedData, err := json.Marshal(payload)
+		if err != nil {
+			return cloneWSMessage(data)
+		}
+		envelope.Data = redactedData
+
 	default:
 		return cloneWSMessage(data)
 	}
-
-	var payload struct {
-		GuildId *int64      `json:"guild_id"`
-		Message dto.Message `json:"message"`
-	}
-	if err := json.Unmarshal(envelope.Data, &payload); err != nil {
-		return cloneWSMessage(data)
-	}
-	if payload.Message.Nonce == nil || payload.Message.Author.Id == userID {
-		return cloneWSMessage(data)
-	}
-
-	payload.Message.Nonce = nil
-	redactedData, err := json.Marshal(payload)
-	if err != nil {
-		return cloneWSMessage(data)
-	}
-	envelope.Data = redactedData
 
 	out, err := json.Marshal(envelope)
 	if err != nil {
 		return cloneWSMessage(data)
 	}
 	return out
+}
+
+func reactionDTOEmojiID(reaction dto.MessageReaction) int64 {
+	if reaction.Emoji.Id == nil {
+		return 0
+	}
+	return *reaction.Emoji.Id
 }
 
 func cloneWSMessage(data []byte) []byte {
@@ -268,7 +306,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 		}
 	}()
 
-	conn := &wsConn{id: c.RemoteAddr().String(), out: out, telemetry: a.wsm}
+	conn := &wsConn{id: c.RemoteAddr().String(), out: out, telemetry: a.wsm, cache: a.cache}
 	subs := subscriber.New(a.hub, conn, a.wsm, func() context.Context { return connCtx })
 	defer func() {
 		cerr := subs.Close()
@@ -317,18 +355,12 @@ func (a *App) wsHandler(c *websocket.Conn) {
 	for {
 		mt, msg, err := c.ReadMessage()
 		if err != nil {
-			if websocket.IsCloseError(
-				err,
-				websocket.CloseNormalClosure,
-				websocket.CloseProtocolError,
-				websocket.CloseNoStatusReceived,
-				websocket.CloseGoingAway,
-			) {
+			if isExpectedWSReadError(err) {
 				return
 			}
 			connSpan.RecordError(err)
 			connLog.Error("Read WS message error", "error", err)
-			continue
+			return
 		}
 
 		switch mt {
@@ -349,4 +381,23 @@ func (a *App) wsHandler(c *websocket.Conn) {
 			return
 		}
 	}
+}
+
+func isExpectedWSReadError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if websocket.IsCloseError(
+		err,
+		websocket.CloseNormalClosure,
+		websocket.CloseProtocolError,
+		websocket.CloseNoStatusReceived,
+		websocket.CloseGoingAway,
+		websocket.CloseAbnormalClosure,
+	) {
+		return true
+	}
+
+	return errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, net.ErrClosed)
 }

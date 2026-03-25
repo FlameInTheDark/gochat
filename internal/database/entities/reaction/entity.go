@@ -8,10 +8,13 @@ import (
 )
 
 type Reaction interface {
-	GetReactions(ctx context.Context, messageId int64) ([]model.Reaction, error)
-	GetReactionsAfter(ctx context.Context, messageId, userId int64) ([]model.Reaction, error)
-	AddReaction(ctx context.Context, messageId, userId, emoteId int64) error
-	RemoveReaction(ctx context.Context, messageId, userId int64) error
+	GetUserReaction(ctx context.Context, messageId, userId int64, bucketKey string) (model.Reaction, error)
+	GetUserReactions(ctx context.Context, messageId, userId int64) ([]model.Reaction, error)
+	ListBucketReactions(ctx context.Context, messageId int64, bucketKey string, after *int64, limit int) ([]model.Reaction, error)
+	ListMessageSummaries(ctx context.Context, messageId int64) ([]model.ReactionSummary, error)
+	UpsertReaction(ctx context.Context, reaction model.Reaction) error
+	DeleteReaction(ctx context.Context, reaction model.Reaction) error
+	SetSummary(ctx context.Context, summary model.ReactionSummary) error
 }
 
 type Entity struct {

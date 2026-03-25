@@ -13,6 +13,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/cmd/embedder/config"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
+	"github.com/FlameInTheDark/gochat/internal/cache/messagecache"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	messageentity "github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -205,6 +206,10 @@ func (a *App) persistAndPublish(ctx context.Context, request embedmq.MakeEmbedRe
 	}
 	if err := a.msg.UpdateGeneratedEmbeds(ctx, currentMessage.Id, currentMessage.ChannelId, autoEmbedsJSON); err != nil {
 		return err
+	}
+	// Evict the stale cached DTO so the next window fetch returns fresh embed data.
+	if a.cache != nil {
+		_ = a.cache.Delete(ctx, messagecache.MessageKey(currentMessage.ChannelId, currentMessage.Id))
 	}
 
 	author := request.Message.Author

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/attribute"
@@ -249,6 +250,136 @@ func (c *Cache) HGetAll(ctx context.Context, key string) (map[string]string, err
 	}
 	end(nil)
 	return h.Val(), nil
+}
+
+// HGetAllMulti pipelines len(keys) HGETALL commands in a single round-trip.
+func (c *Cache) HGetAllMulti(ctx context.Context, keys []string) ([]map[string]string, error) {
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	ctx, end := c.operation(ctx, "hgetall_multi", keys[0])
+	pipe := c.c.Pipeline()
+	cmds := make([]*redis.MapStringStringCmd, len(keys))
+	for i, key := range keys {
+		cmds[i] = pipe.HGetAll(ctx, key)
+	}
+	_, err := pipe.Exec(ctx)
+	end(err)
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return nil, err
+	}
+	results := make([]map[string]string, len(keys))
+	for i, cmd := range cmds {
+		if cmd.Err() == nil {
+			results[i] = cmd.Val()
+		}
+	}
+	return results, nil
+}
+
+// MGetBytes fetches multiple keys in a single MGET round-trip.
+func (c *Cache) MGetBytes(ctx context.Context, keys ...string) ([][]byte, error) {
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	ctx, end := c.operation(ctx, "mget", keys[0])
+	res := c.c.MGet(ctx, keys...)
+	if err := res.Err(); err != nil {
+		end(err)
+		return nil, err
+	}
+	end(nil)
+	vals := res.Val()
+	out := make([][]byte, len(vals))
+	for i, v := range vals {
+		if v != nil {
+			out[i] = []byte(v.(string))
+		}
+	}
+	return out, nil
+}
+
+// SetTimedJSONBatch pipelines N SETEX commands in a single round-trip.
+func (c *Cache) SetTimedJSONBatch(ctx context.Context, keys []string, vals []interface{}, ttl int64) error {
+	if len(keys) == 0 {
+		return nil
+	}
+	ctx, end := c.operation(ctx, "setex_batch", keys[0])
+	pipe := c.c.Pipeline()
+	dur := time.Duration(ttl) * time.Second
+	for i, key := range keys {
+		b, err := json.Marshal(vals[i])
+		if err != nil {
+			end(err)
+			return err
+		}
+		pipe.Set(ctx, key, string(b), dur)
+	}
+	_, err := pipe.Exec(ctx)
+	end(err)
+	return err
+}
+
+// ZAddBatch adds multiple members to a sorted set in one ZADD command.
+func (c *Cache) ZAddBatch(ctx context.Context, key string, members []cache.ZBatchMember) error {
+	if len(members) == 0 {
+		return nil
+	}
+	ctx, end := c.operation(ctx, "zadd_batch", key)
+	zs := make([]redis.Z, len(members))
+	for i, m := range members {
+		zs[i] = redis.Z{Score: m.Score, Member: m.Member}
+	}
+	err := c.c.ZAdd(ctx, key, zs...).Err()
+	end(err)
+	return err
+}
+
+func (c *Cache) HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error) {
+	ctx, end := c.operation(ctx, "hincrby", key)
+	h := c.c.HIncrBy(ctx, key, field, delta)
+	if h.Err() != nil {
+		err := h.Err()
+		end(err)
+		return 0, err
+	}
+	end(nil)
+	return h.Val(), nil
+}
+
+func (c *Cache) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	ctx, end := c.operation(ctx, "zadd", key)
+	err := c.c.ZAdd(ctx, key, redis.Z{Score: score, Member: member}).Err()
+	end(err)
+	return err
+}
+
+func (c *Cache) ZRem(ctx context.Context, key string, members ...string) error {
+	ctx, end := c.operation(ctx, "zrem", key)
+	args := make([]interface{}, 0, len(members))
+	for _, member := range members {
+		args = append(args, member)
+	}
+	err := c.c.ZRem(ctx, key, args...).Err()
+	end(err)
+	return err
+}
+
+func (c *Cache) ZRevRangeByScore(ctx context.Context, key, max, min string, offset, count int64) ([]string, error) {
+	ctx, end := c.operation(ctx, "zrevrangebyscore", key)
+	res := c.c.ZRevRangeByScore(ctx, key, &redis.ZRangeBy{
+		Max:    max,
+		Min:    min,
+		Offset: offset,
+		Count:  count,
+	})
+	if res.Err() != nil {
+		err := res.Err()
+		finishCacheOperation(ctx, end, err)
+		return nil, err
+	}
+	end(nil)
+	return res.Val(), nil
 }
 
 func (c *Cache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {

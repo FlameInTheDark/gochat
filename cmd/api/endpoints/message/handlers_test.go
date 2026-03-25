@@ -499,7 +499,29 @@ func (f *fakeMessageCache) HDel(ctx context.Context, key, field string) error   
 func (f *fakeMessageCache) HGetAll(ctx context.Context, key string) (map[string]string, error) {
 	return nil, nil
 }
+func (f *fakeMessageCache) HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error) {
+	return 0, nil
+}
+func (f *fakeMessageCache) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	return nil
+}
+func (f *fakeMessageCache) ZRem(ctx context.Context, key string, members ...string) error { return nil }
+func (f *fakeMessageCache) ZRevRangeByScore(ctx context.Context, key, max, min string, offset, count int64) ([]string, error) {
+	return nil, nil
+}
 func (f *fakeMessageCache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
+	return nil
+}
+func (f *fakeMessageCache) HGetAllMulti(_ context.Context, keys []string) ([]map[string]string, error) {
+	return make([]map[string]string, len(keys)), nil
+}
+func (f *fakeMessageCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
+	return make([][]byte, len(keys)), nil
+}
+func (f *fakeMessageCache) SetTimedJSONBatch(_ context.Context, _ []string, _ []interface{}, _ int64) error {
+	return nil
+}
+func (f *fakeMessageCache) ZAddBatch(_ context.Context, _ string, _ []cache.ZBatchMember) error {
 	return nil
 }
 

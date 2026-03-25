@@ -180,7 +180,7 @@ Makefile         bootstrap, migration, client generation, and rebuild commands
 - Go `1.25.1` or newer
 - Docker and Docker Compose
 - GNU Make
-- `migrate` CLI for database migrations (`make tools` installs it)
+- `migrate` CLI when you want to create migration files locally (`make tools` installs it)
 
 ### Fast Path
 
@@ -200,13 +200,45 @@ docker compose exec scylla bash ./init-scylladb.sh
 docker compose -p gochat up --scale citus-worker=3 -d
 ```
 
-Install the migration tool and apply migrations:
+Apply migrations locally with the existing Make targets:
 
 ```bash
-go install -tags "postgres cassandra" github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-migrate -database "postgres://postgres@127.0.0.1/gochat" -path ./db/postgres up
-migrate -database "cassandra://127.0.0.1/gochat?x-multi-statement=true" -path ./db/cassandra up
+make migrate
 ```
+
+Build the versioned migration image locally when you want to test the same packaging used in CI:
+
+```bash
+make build_migration_image
+make migrate_image PG_ADDRESS="postgres://postgres@host.docker.internal/gochat" CASSANDRA_ADDRESS="cassandra://host.docker.internal/gochat?x-multi-statement=true"
+```
+
+When you run the migration image from Docker, the connection strings need container-reachable hosts such as Compose service DNS names or `host.docker.internal`, not host-local `127.0.0.1`.
+
+For deployments, GitHub Actions now publishes `ghcr.io/<owner>/gochat-migrations:<tag>` for releases and `ghcr.io/<owner>/gochat-migrations:dev` from the `dev` branch. The image contains the exact migration files for that version and defaults to applying both migration sets with `up`.
+
+This image applies versioned schema migrations. Database bootstrap that is outside the migration files, such as creating the ScyllaDB keyspace or enabling Citus, still needs to be completed before the container runs.
+
+You can scope it to a single database or change the command:
+
+```bash
+docker run --rm \
+  -e PG_ADDRESS="postgres://postgres@postgres/gochat?sslmode=disable" \
+  -e CASSANDRA_ADDRESS="cassandra://scylla/gochat?x-multi-statement=true" \
+  ghcr.io/<owner>/gochat-migrations:v1.2.3
+
+docker run --rm \
+  -e MIGRATION_SCOPE=postgres \
+  -e PG_ADDRESS="postgres://postgres@postgres/gochat?sslmode=disable" \
+  ghcr.io/<owner>/gochat-migrations:v1.2.3 down 1
+```
+
+The container accepts:
+
+- `PG_ADDRESS` for PostgreSQL migrations
+- `CASSANDRA_ADDRESS` for Cassandra or ScyllaDB migrations
+- `MIGRATION_SCOPE=all|postgres|pg|cassandra|scylla`
+- `MIGRATION_COMMAND` as a default command when you prefer env-driven invocation
 
 Review the example configuration files before running services locally:
 
@@ -244,6 +276,8 @@ Useful Make targets:
 - `make up` to start the Compose stack and initialize ScyllaDB
 - `make down` to stop the stack
 - `make migrate` to apply both database migration sets
+- `make build_migration_image` to build the versioned migration container locally
+- `make migrate_image` to run both migration sets through the container locally
 - `make swag` to rebuild `docs/api/swagger.json`
 - `make client` to regenerate Go and TypeScript clients
 - `make rebuild_all` to rebuild the application containers

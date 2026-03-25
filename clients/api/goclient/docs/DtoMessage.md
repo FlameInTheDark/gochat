@@ -13,6 +13,7 @@ Name | Type | Description | Notes
 **Id** | Pointer to **int32** | Message ID | [optional] 
 **Nonce** | Pointer to **string** | Ephemeral client correlation token echoed only to the author. | [optional] 
 **Position** | Pointer to **int32** | Monotonic channel-local message position used for navigation. | [optional] 
+**Reactions** | Pointer to [**[]DtoMessageReaction**](DtoMessageReaction.md) | Aggregated reactions for this message. | [optional] 
 **Reference** | Pointer to **int32** | Referenced source message id. | [optional] 
 **ReferenceChannelId** | Pointer to **int32** | Channel id of the referenced source message. | [optional] 
 **Thread** | Pointer to [**DtoChannel**](DtoChannel.md) | Thread metadata when the message is linked to a thread. | [optional] 
@@ -263,6 +264,31 @@ SetPosition sets Position field to given value.
 `func (o *DtoMessage) HasPosition() bool`
 
 HasPosition returns a boolean if a field has been set.
+
+### GetReactions
+
+`func (o *DtoMessage) GetReactions() []DtoMessageReaction`
+
+GetReactions returns the Reactions field if non-nil, zero value otherwise.
+
+### GetReactionsOk
+
+`func (o *DtoMessage) GetReactionsOk() (*[]DtoMessageReaction, bool)`
+
+GetReactionsOk returns a tuple with the Reactions field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetReactions
+
+`func (o *DtoMessage) SetReactions(v []DtoMessageReaction)`
+
+SetReactions sets Reactions field to given value.
+
+### HasReactions
+
+`func (o *DtoMessage) HasReactions() bool`
+
+HasReactions returns a boolean if a field has been set.
 
 ### GetReference
 

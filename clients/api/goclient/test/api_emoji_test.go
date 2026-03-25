@@ -35,4 +35,18 @@ func Test_goclient_EmojiAPIService(t *testing.T) {
 
 	})
 
+	t.Run("Test EmojiAPIService InfoEmojiEmojiIdGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var emojiId int32
+
+		resp, httpRes, err := apiClient.EmojiAPI.InfoEmojiEmojiIdGet(context.Background(), emojiId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 }

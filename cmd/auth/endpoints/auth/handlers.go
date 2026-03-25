@@ -26,12 +26,8 @@ import (
 //	@Router		/auth/login [post]
 func (e *entity) Login(c *fiber.Ctx) error {
 	var req LoginRequest
-	err := c.BodyParser(&req)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
-	}
-	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	if err := e.parseAndValidate(c, "login", &req); err != nil {
+		return err
 	}
 	auth, err := e.auth.GetAuthenticationByEmail(c.UserContext(), req.Email)
 	if err := helper.HttpDbError(err, ErrUnableToGetAuthenticationByEmail); err != nil {
@@ -108,14 +104,10 @@ func (e *entity) Registration(c *fiber.Ctx) error {
 	log := observability.LoggerFromFiber(c, e.log)
 
 	var req RegisterRequest
-	err := c.BodyParser(&req)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	if err := e.parseAndValidate(c, "registration", &req); err != nil {
+		return err
 	}
-	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
-	}
-	_, err = e.auth.GetAuthenticationByEmail(c.UserContext(), req.Email)
+	_, err := e.auth.GetAuthenticationByEmail(c.UserContext(), req.Email)
 	if err == nil {
 		return c.SendStatus(fiber.StatusFound)
 	} else if !errors.Is(err, sql.ErrNoRows) {
@@ -177,12 +169,8 @@ func (e *entity) Confirmation(c *fiber.Ctx) error {
 	log := observability.LoggerFromFiber(c, e.log)
 
 	var req ConfirmationRequest
-	err := c.BodyParser(&req)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
-	}
-	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	if err := e.parseAndValidate(c, "confirmation", &req); err != nil {
+		return err
 	}
 	hash, err := HashPassword(req.Password)
 	if err := helper.HttpDbError(err, ErrUnableToGetPasswordHash); err != nil {
@@ -237,12 +225,8 @@ func (e *entity) PasswordRecovery(c *fiber.Ctx) error {
 	log := observability.LoggerFromFiber(c, e.log)
 
 	var req PasswordRecoveryRequest
-	err := c.BodyParser(&req)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
-	}
-	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	if err := e.parseAndValidate(c, "recovery", &req); err != nil {
+		return err
 	}
 
 	// Check if the email exists in the authentication table
@@ -317,12 +301,8 @@ func (e *entity) PasswordReset(c *fiber.Ctx) error {
 	log := observability.LoggerFromFiber(c, e.log)
 
 	var req PasswordResetRequest
-	err := c.BodyParser(&req)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
-	}
-	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	if err := e.parseAndValidate(c, "reset", &req); err != nil {
+		return err
 	}
 
 	// Get the registration record for the user

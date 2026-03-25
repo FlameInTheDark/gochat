@@ -86,6 +86,7 @@ Class | Method | HTTP request | Description
 *AuthAPI* | [**AuthRegistrationPost**](docs/AuthAPI.md#authregistrationpost) | **Post** /auth/registration | Registration
 *AuthAPI* | [**AuthResetPost**](docs/AuthAPI.md#authresetpost) | **Post** /auth/reset | Password Reset
 *EmojiAPI* | [**EmojiEmojiIdGet**](docs/EmojiAPI.md#emojiemojiidget) | **Get** /emoji/{emoji_id} | Redirect to public emoji asset
+*EmojiAPI* | [**InfoEmojiEmojiIdGet**](docs/EmojiAPI.md#infoemojiemojiidget) | **Get** /info/emoji/{emoji_id} | Get emoji info
 *GuildAPI* | [**GuildGuildIdBansGet**](docs/GuildAPI.md#guildguildidbansget) | **Get** /guild/{guild_id}/bans | Get guild bans
 *GuildAPI* | [**GuildGuildIdCategoryCategoryIdDelete**](docs/GuildAPI.md#guildguildidcategorycategoryiddelete) | **Delete** /guild/{guild_id}/category/{category_id} | Delete channel category
 *GuildAPI* | [**GuildGuildIdCategoryPost**](docs/GuildAPI.md#guildguildidcategorypost) | **Post** /guild/{guild_id}/category | Create guild channel category
@@ -141,6 +142,9 @@ Class | Method | HTTP request | Description
 *MessageAPI* | [**MessageChannelChannelIdMessageIdAckPost**](docs/MessageAPI.md#messagechannelchannelidmessageidackpost) | **Post** /message/channel/{channel_id}/{message_id}/ack | Set channel read state for current user
 *MessageAPI* | [**MessageChannelChannelIdMessageIdDelete**](docs/MessageAPI.md#messagechannelchannelidmessageiddelete) | **Delete** /message/channel/{channel_id}/{message_id} | Delete message
 *MessageAPI* | [**MessageChannelChannelIdMessageIdPatch**](docs/MessageAPI.md#messagechannelchannelidmessageidpatch) | **Patch** /message/channel/{channel_id}/{message_id} | Update message
+*MessageAPI* | [**MessageChannelChannelIdMessageIdReactionsReactionNameDelete**](docs/MessageAPI.md#messagechannelchannelidmessageidreactionsreactionnamedelete) | **Delete** /message/channel/{channel_id}/{message_id}/reactions/{reaction_name} | Remove message reaction
+*MessageAPI* | [**MessageChannelChannelIdMessageIdReactionsReactionNameGet**](docs/MessageAPI.md#messagechannelchannelidmessageidreactionsreactionnameget) | **Get** /message/channel/{channel_id}/{message_id}/reactions/{reaction_name} | List users who reacted with a specific reaction
+*MessageAPI* | [**MessageChannelChannelIdMessageIdReactionsReactionNamePut**](docs/MessageAPI.md#messagechannelchannelidmessageidreactionsreactionnameput) | **Put** /message/channel/{channel_id}/{message_id}/reactions/{reaction_name} | Add message reaction
 *MessageAPI* | [**MessageChannelChannelIdMessageIdThreadPost**](docs/MessageAPI.md#messagechannelchannelidmessageidthreadpost) | **Post** /message/channel/{channel_id}/{message_id}/thread | Create thread from message
 *MessageAPI* | [**MessageChannelChannelIdPost**](docs/MessageAPI.md#messagechannelchannelidpost) | **Post** /message/channel/{channel_id} | Send message
 *MessageAPI* | [**MessageChannelChannelIdTypingPost**](docs/MessageAPI.md#messagechannelchannelidtypingpost) | **Post** /message/channel/{channel_id}/typing | Send user typing event in the channel
@@ -194,6 +198,7 @@ Class | Method | HTTP request | Description
  - [DtoAvatarData](docs/DtoAvatarData.md)
  - [DtoAvatarUpload](docs/DtoAvatarUpload.md)
  - [DtoChannel](docs/DtoChannel.md)
+ - [DtoEmojiInfo](docs/DtoEmojiInfo.md)
  - [DtoEmojiRef](docs/DtoEmojiRef.md)
  - [DtoEmojiUpload](docs/DtoEmojiUpload.md)
  - [DtoGuild](docs/DtoGuild.md)
@@ -205,6 +210,9 @@ Class | Method | HTTP request | Description
  - [DtoInvitePreview](docs/DtoInvitePreview.md)
  - [DtoMember](docs/DtoMember.md)
  - [DtoMessage](docs/DtoMessage.md)
+ - [DtoMessageReaction](docs/DtoMessageReaction.md)
+ - [DtoMessageReactionEmoji](docs/DtoMessageReactionEmoji.md)
+ - [DtoMessageReactionUsersPage](docs/DtoMessageReactionUsersPage.md)
  - [DtoRole](docs/DtoRole.md)
  - [DtoThreadMember](docs/DtoThreadMember.md)
  - [DtoUser](docs/DtoUser.md)

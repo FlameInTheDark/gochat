@@ -11,6 +11,7 @@ type PreparedBody struct {
 	Reader      io.Reader
 	Size        int64
 	ContentType string
+	Sniff       []byte
 }
 
 type BufferedBody struct {
@@ -52,6 +53,7 @@ func PrepareBody(reader io.Reader, expectedSize int64) (*PreparedBody, error) {
 		Reader:      &exactSizeReader{reader: io.MultiReader(bytes.NewReader(sniff), reader), remaining: expectedSize},
 		Size:        expectedSize,
 		ContentType: http.DetectContentType(sniff),
+		Sniff:       append([]byte(nil), sniff...),
 	}, nil
 }
 

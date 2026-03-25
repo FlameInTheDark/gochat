@@ -48,6 +48,10 @@ jobs:
             dockerfile: webhook.Dockerfile
             image: gochat-webhook
             cache_scope: webhook-dev
+          - service: migrations
+            dockerfile: migration.Dockerfile
+            image: gochat-migrations
+            cache_scope: migrations-dev
     steps:
       - name: Check out code from dev branch
         uses: actions/checkout@v4

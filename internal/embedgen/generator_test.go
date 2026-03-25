@@ -13,6 +13,8 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"testing"
+
+	"github.com/FlameInTheDark/gochat/internal/cache"
 )
 
 func mustNewGenerator(t *testing.T, cfg Config) *Generator {
@@ -901,7 +903,35 @@ func (m *memoryCache) HGetAll(ctx context.Context, key string) (map[string]strin
 	return map[string]string{}, nil
 }
 
+func (m *memoryCache) HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error) {
+	return 0, nil
+}
+
+func (m *memoryCache) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	return nil
+}
+
+func (m *memoryCache) ZRem(ctx context.Context, key string, members ...string) error {
+	return nil
+}
+
+func (m *memoryCache) ZRevRangeByScore(ctx context.Context, key, max, min string, offset, count int64) ([]string, error) {
+	return nil, nil
+}
+
 func (m *memoryCache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
+	return nil
+}
+func (m *memoryCache) HGetAllMulti(_ context.Context, keys []string) ([]map[string]string, error) {
+	return make([]map[string]string, len(keys)), nil
+}
+func (m *memoryCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
+	return make([][]byte, len(keys)), nil
+}
+func (m *memoryCache) SetTimedJSONBatch(_ context.Context, keys []string, vals []interface{}, _ int64) error {
+	return nil
+}
+func (m *memoryCache) ZAddBatch(_ context.Context, _ string, _ []cache.ZBatchMember) error {
 	return nil
 }
 

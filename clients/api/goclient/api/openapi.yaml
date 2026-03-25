@@ -2680,6 +2680,49 @@ paths:
       tags:
       - Guild
       x-codegen-request-body-name: request
+  /info/emoji/{emoji_id}:
+    get:
+      parameters:
+      - description: Emoji ID
+        in: path
+        name: emoji_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.EmojiInfo'
+          description: Emoji info
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Get emoji info
+      tags:
+      - Emoji
   /message/channel/{channel_id}:
     get:
       description: |-
@@ -3022,6 +3065,179 @@ paths:
                 type: string
           description: Internal server error
       summary: Set channel read state for current user
+      tags:
+      - Message
+  /message/channel/{channel_id}/{message_id}/reactions/{reaction_name}:
+    delete:
+      parameters:
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Message id
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+      - description: Reaction name
+        in: path
+        name: reaction_name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Remove message reaction
+      tags:
+      - Message
+    get:
+      parameters:
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Message id
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+      - description: Reaction name
+        in: path
+        name: reaction_name
+        required: true
+        schema:
+          type: string
+      - description: Reaction ID cursor
+        in: query
+        name: after
+        schema:
+          type: integer
+      - description: Page size
+        in: query
+        name: limit
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.MessageReactionUsersPage'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: List users who reacted with a specific reaction
+      tags:
+      - Message
+    put:
+      parameters:
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Message id
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+      - description: Reaction name
+        in: path
+        name: reaction_name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Add message reaction
       tags:
       - Message
   /message/channel/{channel_id}/{message_id}/thread:
@@ -4816,6 +5032,27 @@ components:
           example: us-east
           type: string
       type: object
+    dto.EmojiInfo:
+      example:
+        server_name: server_name
+        icon:
+          width: 128
+          filesize: 12345
+          id: 2230469276416868352
+          url: https://cdn.example.com/icons/2230/2231.webp
+          height: 128
+        name: name
+        server_private: true
+      properties:
+        icon:
+          $ref: '#/components/schemas/dto.Icon'
+        name:
+          type: string
+        server_name:
+          type: string
+        server_private:
+          type: boolean
+      type: object
     dto.EmojiRef:
       example:
         name: name
@@ -5080,6 +5317,17 @@ components:
         reference: 2230469276416868352
         thread_id: 2230469276416868352
         updated_at: updated_at
+        reactions:
+        - emoji:
+            name: name
+            id: 1
+          count: 6
+          me: true
+        - emoji:
+            name: name
+            id: 1
+          count: 6
+          me: true
         id: 2230469276416868352
         position: 512
         channel_id: 2230469276416868352
@@ -5156,6 +5404,11 @@ components:
           description: Monotonic channel-local message position used for navigation.
           example: 512
           type: integer
+        reactions:
+          description: Aggregated reactions for this message.
+          items:
+            $ref: '#/components/schemas/dto.MessageReaction'
+          type: array
         reference:
           description: Referenced source message id.
           example: 2230469276416868352
@@ -5179,6 +5432,69 @@ components:
         updated_at:
           description: Timestamp of the last message edit
           type: string
+      type: object
+    dto.MessageReaction:
+      example:
+        emoji:
+          name: name
+          id: 1
+        count: 6
+        me: true
+      properties:
+        count:
+          type: integer
+        emoji:
+          $ref: '#/components/schemas/dto.MessageReactionEmoji'
+        me:
+          type: boolean
+      type: object
+    dto.MessageReactionEmoji:
+      example:
+        name: name
+        id: 1
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      type: object
+    dto.MessageReactionUsersPage:
+      example:
+        next_after: 0
+        items:
+        - banner_color: 3447003
+          name: FancyUserName
+          bio: Building gochat one endpoint at a time
+          avatar:
+            content_type: image/webp
+            size: 245678
+            width: 128
+            id: 2230469276416868352
+            url: https://cdn.example.com/avatars/2230/2231.webp
+            height: 128
+          id: 2230469276416868352
+          panel_color: 15158332
+          discriminator: uniquename
+        - banner_color: 3447003
+          name: FancyUserName
+          bio: Building gochat one endpoint at a time
+          avatar:
+            content_type: image/webp
+            size: 245678
+            width: 128
+            id: 2230469276416868352
+            url: https://cdn.example.com/avatars/2230/2231.webp
+            height: 128
+          id: 2230469276416868352
+          panel_color: 15158332
+          discriminator: uniquename
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/dto.User'
+          type: array
+        next_after:
+          type: integer
       type: object
     dto.Role:
       example:
@@ -6002,6 +6318,10 @@ components:
         channel_id: 6
         notifications:
           muted_until: muted_until
+          suppress_everyone_mentions: true
+          suppress_here_mentions: true
+          suppress_role_mentions: true
+          suppress_user_mentions: true
           muted: true
           notifications: 7
       properties:
@@ -6032,11 +6352,19 @@ components:
         - channel_id: 6
           notifications:
             muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
             muted: true
             notifications: 7
         - channel_id: 6
           notifications:
             muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
             muted: true
             notifications: 7
         devices:
@@ -6056,6 +6384,10 @@ components:
           position: 6
           notifications:
             muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
             muted: true
             notifications: 7
         - selected_channel: 1
@@ -6063,6 +6395,10 @@ components:
           position: 6
           notifications:
             muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
             muted: true
             notifications: 7
         language: language
@@ -6089,11 +6425,19 @@ components:
         - user_id: 2
           notifications:
             muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
             muted: true
             notifications: 7
         - user_id: 2
           notifications:
             muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
             muted: true
             notifications: 7
         status:
@@ -6164,6 +6508,10 @@ components:
         position: 6
         notifications:
           muted_until: muted_until
+          suppress_everyone_mentions: true
+          suppress_here_mentions: true
+          suppress_role_mentions: true
+          suppress_user_mentions: true
           muted: true
           notifications: 7
       properties:
@@ -6179,6 +6527,10 @@ components:
     model.UserSettingsNotifications:
       example:
         muted_until: muted_until
+        suppress_everyone_mentions: true
+        suppress_here_mentions: true
+        suppress_role_mentions: true
+        suppress_user_mentions: true
         muted: true
         notifications: 7
       properties:
@@ -6188,12 +6540,24 @@ components:
           type: string
         notifications:
           $ref: '#/components/schemas/model.NotificationsType'
+        suppress_everyone_mentions:
+          type: boolean
+        suppress_here_mentions:
+          type: boolean
+        suppress_role_mentions:
+          type: boolean
+        suppress_user_mentions:
+          type: boolean
       type: object
     model.UserSettingsUsers:
       example:
         user_id: 2
         notifications:
           muted_until: muted_until
+          suppress_everyone_mentions: true
+          suppress_here_mentions: true
+          suppress_role_mentions: true
+          suppress_user_mentions: true
           muted: true
           notifications: 7
       properties:
@@ -6296,6 +6660,17 @@ components:
           reference: 2230469276416868352
           thread_id: 2230469276416868352
           updated_at: updated_at
+          reactions:
+          - emoji:
+              name: name
+              id: 1
+            count: 6
+            me: true
+          - emoji:
+              name: name
+              id: 1
+            count: 6
+            me: true
           id: 2230469276416868352
           position: 512
           channel_id: 2230469276416868352
@@ -6376,6 +6751,17 @@ components:
           reference: 2230469276416868352
           thread_id: 2230469276416868352
           updated_at: updated_at
+          reactions:
+          - emoji:
+              name: name
+              id: 1
+            count: 6
+            me: true
+          - emoji:
+              name: name
+              id: 1
+            count: 6
+            me: true
           id: 2230469276416868352
           position: 512
           channel_id: 2230469276416868352
@@ -6550,11 +6936,19 @@ components:
           - channel_id: 6
             notifications:
               muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
               muted: true
               notifications: 7
           - channel_id: 6
             notifications:
               muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
               muted: true
               notifications: 7
           devices:
@@ -6574,6 +6968,10 @@ components:
             position: 6
             notifications:
               muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
               muted: true
               notifications: 7
           - selected_channel: 1
@@ -6581,6 +6979,10 @@ components:
             position: 6
             notifications:
               muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
               muted: true
               notifications: 7
           language: language
@@ -6607,11 +7009,19 @@ components:
           - user_id: 2
             notifications:
               muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
               muted: true
               notifications: 7
           - user_id: 2
             notifications:
               muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
               muted: true
               notifications: 7
           status:

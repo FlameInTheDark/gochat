@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/FlameInTheDark/gochat/cmd/api/config"
+	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/emoji"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/guild"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/message"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/search"
@@ -21,6 +22,8 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/voice"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
+	reactionrepo "github.com/FlameInTheDark/gochat/internal/database/entities/reaction"
+	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	channelrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/embedmq"
@@ -30,6 +33,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/nats"
 	"github.com/FlameInTheDark/gochat/internal/msgsearch"
+	reactionutil "github.com/FlameInTheDark/gochat/internal/reaction"
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
@@ -49,6 +53,7 @@ type App struct {
 }
 
 const threadMessageCountFlushInterval = 5 * time.Second
+const reactionFlushReadBlock = 2 * time.Second
 
 func startThreadMessageCountFlusher(ctx context.Context, cache *kvs.Cache, repo channelrepo.Channel, logger *slog.Logger) {
 	if cache == nil || repo == nil {
@@ -114,6 +119,84 @@ func startThreadMessageCountFlusher(ctx context.Context, cache *kvs.Cache, repo 
 			return
 		case <-ticker.C:
 			flush()
+		}
+	}
+}
+
+func startReactionFlusher(ctx context.Context, cache *kvs.Cache, repo reactionrepo.Reaction, logger *slog.Logger) {
+	if cache == nil || repo == nil {
+		return
+	}
+
+	lastID := "0-0"
+	for {
+		if ctx.Err() != nil {
+			return
+		}
+
+		streams, err := cache.Client().XRead(ctx, &redis.XReadArgs{
+			Streams: []string{reactionutil.FlushStreamKey, lastID},
+			Count:   128,
+			Block:   reactionFlushReadBlock,
+		}).Result()
+		if err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+			if errors.Is(err, redis.Nil) {
+				continue
+			}
+			if logger != nil {
+				logger.Error("failed to read reaction flush stream", slog.String("error", err.Error()))
+			}
+			continue
+		}
+
+		for _, stream := range streams {
+			for _, message := range stream.Messages {
+				lastID = message.ID
+				raw, ok := message.Values["event"]
+				if !ok {
+					continue
+				}
+				payload, ok := raw.(string)
+				if !ok || payload == "" {
+					continue
+				}
+
+				var event reactionutil.FlushEvent
+				if err := json.Unmarshal([]byte(payload), &event); err != nil {
+					if logger != nil {
+						logger.Error("failed to decode reaction flush event", slog.String("error", err.Error()))
+					}
+					continue
+				}
+
+				switch event.Op {
+				case "add":
+					if err := repo.UpsertReaction(ctx, event.Reaction); err != nil && logger != nil {
+						logger.Error("failed to flush reaction add", slog.String("error", err.Error()))
+					}
+				case "remove":
+					if err := repo.DeleteReaction(ctx, event.Reaction); err != nil && logger != nil {
+						logger.Error("failed to flush reaction remove", slog.String("error", err.Error()))
+					}
+				default:
+					continue
+				}
+
+				summary := model.ReactionSummary{
+					MessageId: event.Reaction.MessageId,
+					BucketKey: event.Reaction.BucketKey,
+					Custom:    event.Reaction.Custom,
+					EmojiId:   event.Reaction.EmojiId,
+					EmojiName: event.Reaction.EmojiName,
+					Count:     event.Count,
+				}
+				if err := repo.SetSummary(ctx, summary); err != nil && logger != nil {
+					logger.Error("failed to flush reaction summary", slog.String("error", err.Error()))
+				}
+			}
 		}
 	}
 }
@@ -184,6 +267,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	threadCountCtx, cancelThreadCount := context.WithCancel(context.Background())
 	shut.UpFunc(cancelThreadCount)
 	go startThreadMessageCountFlusher(threadCountCtx, cache, channelrepo.New(pg.Conn()), logger)
+
+	reactionFlushCtx, cancelReactionFlush := context.WithCancel(context.Background())
+	shut.UpFunc(cancelReactionFlush)
+	go startReactionFlusher(reactionFlushCtx, cache, reactionrepo.New(database), logger)
 
 	logger.Info("Connecting to NATS for SFU occupancy updates")
 	if cfg.NatsConnString != "" {
@@ -261,6 +348,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 
 	s.Register(
 		"/api/v1",
+		emoji.New(database, pg, cache, logger),
 		user.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, contentHosts, logger),
 		message.New(database, pg, qt, imq, emq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
 		guild.New(database, pg, qt, imq, cache, storage, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, extractRegionIDs(cfg.VoiceRegions), logger),

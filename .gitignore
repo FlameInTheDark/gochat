@@ -33,6 +33,7 @@ go.work.sum
 .gocache
 
 my-values.yaml
+research
 
 /clients/api/*/.openapi-generator/
 

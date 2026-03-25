@@ -12,6 +12,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
@@ -150,7 +151,29 @@ func (f *fakeCache) HDel(ctx context.Context, key, field string) error        { 
 func (f *fakeCache) HGetAll(ctx context.Context, key string) (map[string]string, error) {
 	return nil, nil
 }
+func (f *fakeCache) HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error) {
+	return 0, nil
+}
+func (f *fakeCache) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	return nil
+}
+func (f *fakeCache) ZRem(ctx context.Context, key string, members ...string) error { return nil }
+func (f *fakeCache) ZRevRangeByScore(ctx context.Context, key, max, min string, offset, count int64) ([]string, error) {
+	return nil, nil
+}
 func (f *fakeCache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
+	return nil
+}
+func (f *fakeCache) HGetAllMulti(_ context.Context, keys []string) ([]map[string]string, error) {
+	return make([]map[string]string, len(keys)), nil
+}
+func (f *fakeCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
+	return make([][]byte, len(keys)), nil
+}
+func (f *fakeCache) SetTimedJSONBatch(_ context.Context, keys []string, _ []interface{}, _ int64) error {
+	return nil
+}
+func (f *fakeCache) ZAddBatch(_ context.Context, _ string, _ []cache.ZBatchMember) error {
 	return nil
 }
 

@@ -1,7 +1,9 @@
 package guild
 
 import (
+	"encoding/json"
 	"regexp"
+	"strconv"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
@@ -77,19 +79,20 @@ const (
 	ErrRoleNotInGuild       = "role does not belong to this guild"
 
 	// Validation error messages
-	ErrGuildNameRequired   = "guild name is required"
-	ErrGuildNameTooShort   = "guild name must be at least 2 characters"
-	ErrGuildNameTooLong    = "guild name must be less than 100 characters"
-	ErrChannelNameRequired = "channel name is required"
-	ErrChannelNameTooShort = "channel name must be at least 2 characters"
-	ErrChannelNameTooLong  = "channel name must be less than 100 characters"
-	ErrChannelNameInvalid  = "channel name can only contain letters, numbers, hyphens, and underscores"
-	ErrThreadNameTooLong   = "thread name must be 256 characters or fewer"
-	ErrThreadNameRequired  = "thread name is required"
-	ErrChannelTypeInvalid  = "invalid channel type"
-	ErrIconIdInvalid       = "icon ID must be positive"
-	ErrParentIdInvalid     = "parent ID must be positive"
-	ErrPermissionsInvalid  = "permissions must be non-negative"
+	ErrGuildNameRequired     = "guild name is required"
+	ErrGuildNameTooShort     = "guild name must be at least 2 characters"
+	ErrGuildNameTooLong      = "guild name must be less than 100 characters"
+	ErrChannelNameRequired   = "channel name is required"
+	ErrChannelNameTooShort   = "channel name must be at least 2 characters"
+	ErrChannelNameTooLong    = "channel name must be less than 100 characters"
+	ErrChannelNameInvalid    = "channel name can only contain letters, numbers, hyphens, and underscores"
+	ErrThreadNameTooLong     = "thread name must be 256 characters or fewer"
+	ErrThreadNameRequired    = "thread name is required"
+	ErrChannelTypeInvalid    = "invalid channel type"
+	ErrIconIdInvalid         = "icon ID must be positive"
+	ErrParentIdInvalid       = "parent ID must be positive"
+	ErrParentCategoryInvalid = "parent channel must be a category in this guild"
+	ErrPermissionsInvalid    = "permissions must be non-negative"
 	// Roles
 	ErrRoleNameRequired         = "role name is required"
 	ErrRoleNameTooShort         = "role name must be at least 2 characters"
@@ -195,6 +198,53 @@ type CreateGuildChannelRequest struct {
 	ParentId *int64            `json:"parent_id" example:"2230469276416868352"` // Parent channel ID. A Parent channel can only be a category channel.
 	Private  bool              `json:"private" default:"false"`                 // Whether the channel is private. Private channels can only be seen by users with roles assigned to this channel.
 	Position int               `json:"position" default:"0"`                    // Channel position in the list. Should be set as the last position in the channel list, or it will be one of the first in the list.
+}
+
+func (r *CreateGuildChannelRequest) UnmarshalJSON(data []byte) error {
+	type rawCreateGuildChannelRequest struct {
+		Name     string            `json:"name"`
+		Type     model.ChannelType `json:"type"`
+		ParentId json.RawMessage   `json:"parent_id"`
+		Private  bool              `json:"private"`
+		Position int               `json:"position"`
+	}
+
+	var raw rawCreateGuildChannelRequest
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	r.Name = raw.Name
+	r.Type = raw.Type
+	r.Private = raw.Private
+	r.Position = raw.Position
+	r.ParentId = nil
+
+	if len(raw.ParentId) == 0 || string(raw.ParentId) == "null" {
+		return nil
+	}
+
+	parentID, err := unmarshalFlexibleInt64(raw.ParentId)
+	if err != nil {
+		return err
+	}
+	r.ParentId = &parentID
+
+	return nil
+}
+
+func unmarshalFlexibleInt64(data json.RawMessage) (int64, error) {
+	var value int64
+	if err := json.Unmarshal(data, &value); err == nil {
+		return value, nil
+	}
+
+	var text string
+	if err := json.Unmarshal(data, &text); err != nil {
+		return 0, err
+	}
+
+	return strconv.ParseInt(text, 10, 64)
 }
 
 func (r CreateGuildChannelRequest) Validate() error {

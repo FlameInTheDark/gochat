@@ -9,13 +9,15 @@ When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies
 
 ---
 
-## Message Events (100-102)
+## Message Events (100-104)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
 | 100 | Message Create | `channel.{channelId}` | New message posted |
 | 101 | Message Update | `channel.{channelId}` | Message edited |
 | 102 | Message Delete | `channel.{channelId}` | Message removed |
+| 103 | Message Reaction Add | `channel.{channelId}` | Reaction bucket updated after a user adds a reaction |
+| 104 | Message Reaction Remove | `channel.{channelId}` | Reaction bucket updated after a user removes a reaction |
 
 **Payload (t=100, Message Create):**
 ```json
@@ -81,17 +83,56 @@ Notes:
 }
 ```
 
+**Payload (t=103, Message Reaction Add):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel_id": 2226022078341972000,
+  "message_id": 2228801793842741200,
+  "reaction": {
+    "count": 12,
+    "me": true,
+    "emoji": {
+      "id": null,
+      "name": "❤️"
+    }
+  }
+}
+```
+
+**Payload (t=104, Message Reaction Remove):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel_id": 2226022078341972000,
+  "message_id": 2228801793842741200,
+  "reaction": {
+    "count": 11,
+    "me": false,
+    "emoji": {
+      "id": null,
+      "name": "❤️"
+    }
+  }
+}
+```
+
+Notes:
+- Both reaction events are sent on the same `channel.{channelId}` subscription as normal message events.
+- `reaction.me` is personalized by the gateway for each subscribed recipient.
+- No-op add/remove attempts do not emit reaction events.
+
 ---
 
-## Guild Events (103-105)
+## Guild Events (105-107)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
-| 103 | Guild Create | `guild.{guildId}` | New guild created |
-| 104 | Guild Update | `guild.{guildId}` | Guild properties changed |
-| 105 | Guild Delete | `guild.{guildId}` | Guild deleted |
+| 105 | Guild Create | `guild.{guildId}` | New guild created |
+| 106 | Guild Update | `guild.{guildId}` | Guild properties changed |
+| 107 | Guild Delete | `guild.{guildId}` | Guild deleted |
 
-**Payload (t=103, Guild Create):**
+**Payload (t=105, Guild Create):**
 ```json
 {
   "guild": {
@@ -105,7 +146,7 @@ Notes:
 }
 ```
 
-**Payload (t=104, Guild Update):**
+**Payload (t=106, Guild Update):**
 ```json
 {
   "guild": {
@@ -116,7 +157,7 @@ Notes:
 }
 ```
 
-**Payload (t=105, Guild Delete):**
+**Payload (t=107, Guild Delete):**
 ```json
 {
   "guild_id": 2226022078304223200
@@ -125,16 +166,16 @@ Notes:
 
 ---
 
-## Channel Events (106-109)
+## Channel Events (108-111)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
-| 106 | Channel Create | `guild.{guildId}` | Channel created in guild |
-| 107 | Channel Update | `guild.{guildId}` | Channel properties changed |
-| 108 | Channel Order Update | `guild.{guildId}` | Channel ordering/position changed |
-| 109 | Channel Delete | `guild.{guildId}` | Channel deleted |
+| 108 | Channel Create | `guild.{guildId}` | Channel created in guild |
+| 109 | Channel Update | `guild.{guildId}` | Channel properties changed |
+| 110 | Channel Order Update | `guild.{guildId}` | Channel ordering/position changed |
+| 111 | Channel Delete | `guild.{guildId}` | Channel deleted |
 
-**Payload (t=106, Channel Create):**
+**Payload (t=108, Channel Create):**
 ```json
 {
   "guild_id": 2226022078304223200,
@@ -152,7 +193,7 @@ Notes:
 }
 ```
 
-**Payload (t=107, Channel Update):**
+**Payload (t=109, Channel Update):**
 ```json
 {
   "guild_id": 2226022078304223200,
@@ -170,7 +211,7 @@ Notes:
 }
 ```
 
-**Payload (t=108, Channel Order Update):**
+**Payload (t=110, Channel Order Update):**
 ```json
 {
   "guild_id": 2226022078304223200,
@@ -182,7 +223,7 @@ Notes:
 }
 ```
 
-**Payload (t=109, Channel Delete):**
+**Payload (t=111, Channel Delete):**
 ```json
 {
   "guild_id": 2226022078304223200,
@@ -193,15 +234,15 @@ Notes:
 
 ---
 
-## Guild Role Events (110-112)
+## Guild Role Events (112-114)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
-| 110 | Guild Role Create | `guild.{guildId}` | Role created |
-| 111 | Guild Role Update | `guild.{guildId}` | Role permissions/properties changed |
-| 112 | Guild Role Delete | `guild.{guildId}` | Role removed |
+| 112 | Guild Role Create | `guild.{guildId}` | Role created |
+| 113 | Guild Role Update | `guild.{guildId}` | Role permissions/properties changed |
+| 114 | Guild Role Delete | `guild.{guildId}` | Role removed |
 
-**Payload (t=110, Guild Role Create):**
+**Payload (t=112, Guild Role Create):**
 ```json
 {
   "role": {
@@ -214,7 +255,7 @@ Notes:
 }
 ```
 
-**Payload (t=111, Guild Role Update):**
+**Payload (t=113, Guild Role Update):**
 ```json
 {
   "role": {
@@ -227,7 +268,7 @@ Notes:
 }
 ```
 
-**Payload (t=112, Guild Role Delete):**
+**Payload (t=114, Guild Role Delete):**
 ```json
 {
   "guild_id": 2226022078304223200,
@@ -237,15 +278,15 @@ Notes:
 
 ---
 
-## Thread Events (113-115)
+## Thread Events (115-117)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
-| 113 | Thread Create | `guild.{guildId}` | Thread created in guild |
-| 114 | Thread Update | `guild.{guildId}` | Thread properties changed |
-| 115 | Thread Delete | `guild.{guildId}` | Thread deleted |
+| 115 | Thread Create | `guild.{guildId}` | Thread created in guild |
+| 116 | Thread Update | `guild.{guildId}` | Thread properties changed |
+| 117 | Thread Delete | `guild.{guildId}` | Thread deleted |
 
-**Payload (t=113, Thread Create):**
+**Payload (t=115, Thread Create):**
 ```json
 {
   "guild_id": 2226022078304223200,
@@ -264,7 +305,7 @@ Notes:
 }
 ```
 
-**Payload (t=114, Thread Update):**
+**Payload (t=116, Thread Update):**
 ```json
 {
   "guild_id": 2226022078304223200,
@@ -283,7 +324,7 @@ Notes:
 }
 ```
 
-**Payload (t=115, Thread Delete):**
+**Payload (t=117, Thread Delete):**
 ```json
 {
   "guild_id": 2226022078304223200,
@@ -330,15 +371,15 @@ See [Threads](../channels/Threads.md) for the full creation flow and subscriptio
 
 ---
 
-## Guild Emoji Events (116-118)
+## Guild Emoji Events (118-120)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
-| 116 | Guild Emoji Create | `guild.{guildId}` | Emoji upload finalized and ready |
-| 117 | Guild Emoji Update | `guild.{guildId}` | Emoji metadata changed |
-| 118 | Guild Emoji Delete | `guild.{guildId}` | Emoji removed |
+| 118 | Guild Emoji Create | `guild.{guildId}` | Emoji upload finalized and ready |
+| 119 | Guild Emoji Update | `guild.{guildId}` | Emoji metadata changed |
+| 120 | Guild Emoji Delete | `guild.{guildId}` | Emoji removed |
 
-**Payload (t=116, Guild Emoji Create):**
+**Payload (t=118, Guild Emoji Create):**
 ```json
 {
   "emoji": {
@@ -350,7 +391,7 @@ See [Threads](../channels/Threads.md) for the full creation flow and subscriptio
 }
 ```
 
-**Payload (t=117, Guild Emoji Update):**
+**Payload (t=119, Guild Emoji Update):**
 ```json
 {
   "emoji": {
@@ -362,7 +403,7 @@ See [Threads](../channels/Threads.md) for the full creation flow and subscriptio
 }
 ```
 
-**Payload (t=118, Guild Emoji Delete):**
+**Payload (t=120, Guild Emoji Delete):**
 ```json
 {
   "guild_id": "2226022078304223200",

@@ -1,5 +1,7 @@
 PG_ADDRESS=postgres://postgres@127.0.0.1/gochat
 CASSANDRA_ADDRESS=cassandra://127.0.0.1/gochat?x-multi-statement=true
+MIGRATION_IMAGE=gochat-migrations:local
+MIGRATE_VERSION=v4.19.1
 
 up:
 	docker compose up -d
@@ -13,8 +15,59 @@ down:
 	docker compose down
 
 tools:
-	go install -tags "postgres cassandra" github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+	go install -tags "postgres cassandra" github.com/golang-migrate/migrate/v4/cmd/migrate@$(MIGRATE_VERSION)
 	go install github.com/swaggo/swag/v2/cmd/swag@latest
+
+build_migration_image:
+	docker build --build-arg MIGRATE_VERSION=$(MIGRATE_VERSION) -f migration.Dockerfile -t $(MIGRATION_IMAGE) .
+
+migrate_image: build_migration_image
+	docker run --rm \
+		-e PG_ADDRESS="$(PG_ADDRESS)" \
+		-e CASSANDRA_ADDRESS="$(CASSANDRA_ADDRESS)" \
+		$(MIGRATION_IMAGE)
+
+migrate_image_down: build_migration_image
+	docker run --rm \
+		-e PG_ADDRESS="$(PG_ADDRESS)" \
+		-e CASSANDRA_ADDRESS="$(CASSANDRA_ADDRESS)" \
+		$(MIGRATION_IMAGE) down
+
+migrate_image_scylla: build_migration_image
+	docker run --rm \
+		-e MIGRATION_SCOPE=cassandra \
+		-e CASSANDRA_ADDRESS="$(CASSANDRA_ADDRESS)" \
+		$(MIGRATION_IMAGE)
+
+migrate_image_pg: build_migration_image
+	docker run --rm \
+		-e MIGRATION_SCOPE=postgres \
+		-e PG_ADDRESS="$(PG_ADDRESS)" \
+		$(MIGRATION_IMAGE)
+
+migrate_image_scylla_down: build_migration_image
+	docker run --rm \
+		-e MIGRATION_SCOPE=cassandra \
+		-e CASSANDRA_ADDRESS="$(CASSANDRA_ADDRESS)" \
+		$(MIGRATION_IMAGE) down
+
+migrate_image_scylla_rollback: build_migration_image
+	docker run --rm \
+		-e MIGRATION_SCOPE=cassandra \
+		-e CASSANDRA_ADDRESS="$(CASSANDRA_ADDRESS)" \
+		$(MIGRATION_IMAGE) down 1
+
+migrate_image_pg_down: build_migration_image
+	docker run --rm \
+		-e MIGRATION_SCOPE=postgres \
+		-e PG_ADDRESS="$(PG_ADDRESS)" \
+		$(MIGRATION_IMAGE) down
+
+migrate_image_pg_rollback: build_migration_image
+	docker run --rm \
+		-e MIGRATION_SCOPE=postgres \
+		-e PG_ADDRESS="$(PG_ADDRESS)" \
+		$(MIGRATION_IMAGE) down 1
 
 run:
 	go run ./cmd/api
@@ -80,7 +133,7 @@ go_client:
 
 setup: tools up migrate
 
-.PHONY: setup run run_ws run_embedder rebuild_all rebuild_api rebuild_auth rebuild_ws rebuild_indexer rebuild_attachments rebuild_sfu rebuild_webhook rebuild_embedder
+.PHONY: setup tools build_migration_image migrate_image migrate_image_down migrate_image_scylla migrate_image_pg migrate_image_scylla_down migrate_image_scylla_rollback migrate_image_pg_down migrate_image_pg_rollback run run_ws run_embedder rebuild_all rebuild_api rebuild_auth rebuild_ws rebuild_indexer rebuild_attachments rebuild_sfu rebuild_webhook rebuild_embedder
 
 # Dev tools
 rebuild_all: rebuild_api rebuild_auth rebuild_indexer rebuild_embedder rebuild_ws

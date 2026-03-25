@@ -30,6 +30,30 @@ type UserSettingsData struct {
 	UISounds         UserUISounds               `json:"ui_sounds"`
 }
 
+func (s *UserSettingsData) NormalizeCollections() {
+	if s == nil {
+		return
+	}
+	if s.GuildFolders == nil {
+		s.GuildFolders = []UserSettingsGuildFolders{}
+	}
+	if s.Guilds == nil {
+		s.Guilds = []UserSettingsGuilds{}
+	}
+	if s.ChannelsSettings == nil {
+		s.ChannelsSettings = []UserSettingsChannel{}
+	}
+	if s.UsersSettings == nil {
+		s.UsersSettings = []UserSettingsUsers{}
+	}
+	if s.FavoriteGifs == nil {
+		s.FavoriteGifs = []string{}
+	}
+	if s.DMChannels == nil {
+		s.DMChannels = []UserDMChannels{}
+	}
+}
+
 func (s UserSettingsData) Validate() error {
 	return validation.ValidateStruct(&s,
 		validation.Field(&s.Appearance),
@@ -72,10 +96,10 @@ func (s Status) Validate() error {
 }
 
 type UserDMChannels struct {
-	UserId      int64 `json:"user_id"`
-	ChannelId   int64 `json:"channel_id"`
-	Hidden      bool  `json:"hidden"`
-	HiddenAfter int64 `json:"hidden_after"`
+	UserId      helper.StringInt64 `json:"user_id"`
+	ChannelId   helper.StringInt64 `json:"channel_id"`
+	Hidden      bool               `json:"hidden"`
+	HiddenAfter int64              `json:"hidden_after"`
 }
 
 type UserSettingsGuilds struct {
@@ -100,9 +124,13 @@ const (
 )
 
 type UserSettingsNotifications struct {
-	Muted         bool              `json:"muted"`
-	MutedUntil    *time.Time        `json:"muted_until,omitempty"`
-	Notifications NotificationsType `json:"notifications"`
+	Muted                    bool              `json:"muted"`
+	MutedUntil               *time.Time        `json:"muted_until,omitempty"`
+	Notifications            NotificationsType `json:"notifications"`
+	SuppressUserMentions     bool              `json:"suppress_user_mentions"`
+	SuppressRoleMentions     bool              `json:"suppress_role_mentions"`
+	SuppressEveryoneMentions bool              `json:"suppress_everyone_mentions"`
+	SuppressHereMentions     bool              `json:"suppress_here_mentions"`
 }
 
 func (n UserSettingsNotifications) Validate() error {
@@ -134,11 +162,11 @@ type UserSettingsGuildFolders struct {
 }
 
 type UserSettingsChannel struct {
-	ChannelId     int64                     `json:"channel_id"`
+	ChannelId     helper.StringInt64        `json:"channel_id"`
 	Notifications UserSettingsNotifications `json:"notifications"`
 }
 
 type UserSettingsUsers struct {
-	UserId        int64                     `json:"user_id"`
+	UserId        helper.StringInt64        `json:"user_id"`
 	Notifications UserSettingsNotifications `json:"notifications"`
 }

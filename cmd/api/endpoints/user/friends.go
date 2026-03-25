@@ -2,11 +2,13 @@ package user
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 
+	friendrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/friend"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq"
@@ -151,7 +153,18 @@ func (e *entity) CreateFriendRequest(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrBadRequest)
 	}
 
+	areFriends, err := e.fr.IsFriend(c.UserContext(), me.Id, disc.UserId)
+	if err != nil {
+		return helper.HttpDbError(err, ErrUnableToCreateFriendRequest)
+	}
+	if areFriends {
+		return fiber.NewError(fiber.StatusConflict, ErrAlreadyFriends)
+	}
+
 	if err := e.fr.CreateFriendRequest(c.UserContext(), me.Id, disc.UserId); err != nil {
+		if errors.Is(err, friendrepo.ErrFriendRequestAlreadyExists) {
+			return c.SendStatus(fiber.StatusOK)
+		}
 		return helper.HttpDbError(err, ErrUnableToCreateFriendRequest)
 	}
 
@@ -326,6 +339,9 @@ func (e *entity) AcceptFriendRequest(c *fiber.Ctx) error {
 	}
 
 	if err := e.fr.AddFriend(c.UserContext(), me.Id, req.UserId); err != nil {
+		if errors.Is(err, friendrepo.ErrAlreadyFriends) {
+			return fiber.NewError(fiber.StatusConflict, ErrAlreadyFriends)
+		}
 		return helper.HttpDbError(err, ErrUnableToAcceptFriendRequest)
 	}
 

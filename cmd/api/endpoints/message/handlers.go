@@ -3,6 +3,7 @@ package message
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -14,6 +15,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
 
+	icache "github.com/FlameInTheDark/gochat/internal/cache"
+	"github.com/FlameInTheDark/gochat/internal/cache/messagecache"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/embed"
@@ -125,6 +128,15 @@ func (e *entity) Send(c *fiber.Ctx) error {
 	if err := e.rs.SetReadState(c.UserContext(), user.Id, channelId, message.Id); err != nil {
 		reqLog.Error("unable to set read state after message sent", slog.String("error", err.Error()))
 	}
+
+	// Push to window cache. Nonce is stripped — it is author-only and must not
+	// appear for other users fetching the same channel.
+	msgToCache := message
+	msgToCache.Nonce = nil
+	go e.pushMessageToWindowCache(
+		observability.BackgroundFromContext(c.UserContext()),
+		channel.Id, msgToCache,
+	)
 
 	return c.JSON(message)
 }
@@ -1642,7 +1654,12 @@ func cloneMessageNonce(nonce *helper.MessageNonce) *helper.MessageNonce {
 }
 
 func (e *entity) buildStoredMessageResponse(c *fiber.Ctx, channel *model.Channel, guildId *int64, message model.Message) (dto.Message, error) {
-	data, err := e.fetchMessageRelatedData(c, []model.Message{message}, []int64{message.UserId}, guildId)
+	user, _ := helper.GetUser(c)
+	userId := int64(0)
+	if user != nil {
+		userId = user.Id
+	}
+	data, err := e.fetchMessageRelatedData(c, []model.Message{message}, []int64{message.UserId}, guildId, userId)
 	if err != nil {
 		return dto.Message{}, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendMessage)
 	}
@@ -1952,10 +1969,20 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 		return c.JSON([]dto.Message{})
 	}
 
-	// Fetch and build messages
+	// Hot path: latest-window request with no cursor — try cache before hitting the DB.
+	if isLatestWindowRequest(req) {
+		if msgs, ok := e.tryMessagesFromCache(c.UserContext(), channel.Id); ok {
+			return c.JSON(msgs)
+		}
+	}
+
 	messages, err := e.fetchAndBuildMessages(c, req, channel, guildId)
 	if err != nil {
 		return err
+	}
+
+	if isLatestWindowRequest(req) {
+		go e.backfillMessagesCache(context.Background(), channel.Id, messages)
 	}
 
 	return c.JSON(messages)
@@ -2063,8 +2090,13 @@ func (e *entity) fetchAndBuildMessages(c *fiber.Ctx, req *GetMessagesRequest, ch
 		return []dto.Message{}, nil
 	}
 
+	currentUserID := int64(0)
+	if user, err := helper.GetUser(c); err == nil && user != nil {
+		currentUserID = user.Id
+	}
+
 	// Fetch all related data concurrently
-	messageData, err := e.fetchMessageRelatedData(c, rawMessages, userIds, guildId)
+	messageData, err := e.fetchMessageRelatedData(c, rawMessages, userIds, guildId, currentUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -2119,10 +2151,11 @@ type messageRelatedData struct {
 	Attachments map[int64]*model.Attachment
 	AvData      map[int64]*dto.AvatarData
 	Threads     map[int64]dto.Channel
+	Reactions   map[int64][]dto.MessageReaction
 }
 
 // fetchMessageRelatedData fetches users, members, attachments, and thread metadata concurrently
-func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message, userIds []int64, guildId *int64) (*messageRelatedData, error) {
+func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message, userIds []int64, guildId *int64, currentUserId int64) (*messageRelatedData, error) {
 	type usersResult struct {
 		users []model.User
 		err   error
@@ -2141,11 +2174,16 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 		members       []model.ThreadMember
 		err           error
 	}
+	type reactionsResult struct {
+		reactions map[int64][]dto.MessageReaction
+		err       error
+	}
 
 	usersCh := make(chan usersResult, 1)
 	membersCh := make(chan membersResult, 1)
 	attachmentsCh := make(chan attachmentsResult, 1)
 	threadsCh := make(chan threadsResult, 1)
+	reactionsCh := make(chan reactionsResult, 1)
 	ctx := c.UserContext()
 
 	// Fetch users
@@ -2205,11 +2243,17 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 		}
 	}()
 
+	go func() {
+		reactions, err := e.loadAllMessageReactionsBatch(ctx, messages, currentUserId)
+		reactionsCh <- reactionsResult{reactions: reactions, err: err}
+	}()
+
 	// Collect results
 	usersRes := <-usersCh
 	membersRes := <-membersCh
 	attachmentsRes := <-attachmentsCh
 	threadsRes := <-threadsCh
+	reactionsRes := <-reactionsCh
 
 	// Check for errors
 	if usersRes.err != nil {
@@ -2224,6 +2268,9 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 	if threadsRes.err != nil {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to fetch thread metadata")
 	}
+	if reactionsRes.err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to fetch reactions")
+	}
 
 	// Build maps
 	data := &messageRelatedData{
@@ -2232,6 +2279,7 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 		Attachments: make(map[int64]*model.Attachment),
 		AvData:      make(map[int64]*dto.AvatarData),
 		Threads:     make(map[int64]dto.Channel),
+		Reactions:   make(map[int64][]dto.MessageReaction),
 	}
 
 	for i := range usersRes.users {
@@ -2273,6 +2321,11 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 				continue
 			}
 			data.Threads[threadChannel.Id] = e.dtoThreadChannel(&threadChannel, guildChannel.GuildId, guildChannel.Position, nil, threadMemberIDsByThread[threadChannel.Id])
+		}
+	}
+	if reactionsRes.reactions != nil {
+		for messageId, reactions := range reactionsRes.reactions {
+			data.Reactions[messageId] = reactions
 		}
 	}
 
@@ -2358,6 +2411,9 @@ func (e *entity) Update(c *fiber.Ctx) error {
 
 	// Send update event
 	go e.sendUpdateEvent(observability.BackgroundFromContext(c.UserContext()), channelId, guildId, updatedMessage)
+
+	// Refresh the cached DTO so readers see the updated content immediately.
+	go e.refreshMessageInCache(observability.BackgroundFromContext(c.UserContext()), channelId, updatedMessage)
 
 	contentChanged := req.Content != nil && *req.Content != message.Content
 	suppressIsEnabled := model.HasMessageFlag(updatedMessage.Flags, model.MessageFlagSuppressEmbeds)
@@ -2518,6 +2574,11 @@ func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageR
 		responseEmbeds = embed.MergeEmbeds(updatedEmbeds, updatedAutoEmbeds)
 	}
 
+	reactions, err := e.loadMessageReactions(c.UserContext(), message.Id, jwtUser.Id)
+	if err != nil {
+		return dto.Message{}, fiber.NewError(fiber.StatusInternalServerError, "failed to load reactions")
+	}
+
 	return dto.Message{
 		Id:                 message.Id,
 		ChannelId:          message.ChannelId,
@@ -2532,6 +2593,7 @@ func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageR
 		ReferenceChannelId: optionalReferenceChannelID(message.ChannelId, message.ReferenceChannel, message.Reference),
 		ThreadId:           optionalInt64(message.Thread),
 		Thread:             e.lookupThreadMetadata(c.UserContext(), message.Thread),
+		Reactions:          reactions,
 		UpdatedAt:          &updatedAt,
 	}, nil
 }
@@ -2694,6 +2756,13 @@ func (e *entity) Delete(c *fiber.Ctx) error {
 	if err := e.deleteMessageAndNotify(c, message); err != nil {
 		return err
 	}
+
+	// Evict from cache: remove the DTO key and drop the ID from the index.
+	// Next window fetch for this channel will fall back to DB and rebuild.
+	go e.evictMessageFromCache(
+		observability.BackgroundFromContext(c.UserContext()),
+		channelId, messageId,
+	)
 
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -2951,6 +3020,7 @@ func (e *entity) buildMessageDTOsOptimized(ctx context.Context, messages []model
 			ReferenceChannelId: optionalReferenceChannelID(message.ChannelId, message.ReferenceChannel, message.Reference),
 			ThreadId:           optionalInt64(message.Thread),
 			Thread:             e.threadMetadataFromCache(message.Thread, data),
+			Reactions:          data.Reactions[message.Id],
 		}
 	}
 
@@ -3118,4 +3188,145 @@ func (e *entity) Typing(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendTypingEvent)
 	}
 	return c.SendStatus(fiber.StatusOK)
+}
+
+// ── Message window cache helpers ──────────────────────────────────────────────
+//
+// Strategy: two Redis keys per channel.
+//
+//   channel:messages:index:{id}      – sorted set, score=float64(msgID), member=msgID string
+//   channel:message:{id}:{msgID}     – JSON blob of a fully-built dto.Message, TTL 5 min
+//
+// Correctness guarantees:
+//   • Nonce is stripped before caching (it is echoed only to the message author).
+//   • Reactions and embeds evict their DTO key on change, forcing a fresh DB read.
+//   • Deletions remove the ID from the sorted-set index; the next window request
+//     finds len(ids)<WindowSize and falls back to the DB, which rebuilds cleanly.
+//   • Only requests with direction=before and no cursor use the cache; all
+//     paginated/history requests always go to the DB — no stale windows for
+//     different users scrolling through history.
+//   • All cache operations are fire-and-forget; failures are silently ignored so
+//     the DB path always remains the authoritative fallback.
+
+// isLatestWindowRequest returns true for the hot-path "open channel" request:
+// direction=before with no cursor — i.e. fetch the most recent messages.
+func isLatestWindowRequest(req *GetMessagesRequest) bool {
+	return req.Direction != nil &&
+		*req.Direction == DirectionBefore &&
+		req.From == nil
+}
+
+// tryMessagesFromCache attempts to serve the latest-window from Redis.
+// Returns (messages, true) on a full cache hit, (nil, false) on any miss.
+//
+// A "full hit" requires:
+//  1. The sorted-set index contains at least WindowSize entries.
+//  2. Every individual DTO key referenced by the index is present and parseable.
+//
+// Any single miss causes an immediate fallback to the DB — we never serve
+// a partial window from cache.
+func (e *entity) tryMessagesFromCache(ctx context.Context, channelID int64) ([]dto.Message, bool) {
+	if e.cache == nil {
+		return nil, false
+	}
+
+	members, err := e.cache.ZRevRangeByScore(
+		ctx,
+		messagecache.IndexKey(channelID),
+		"+inf", "-inf",
+		0, messagecache.WindowSize,
+	)
+	if err != nil || len(members) < messagecache.WindowSize {
+		return nil, false
+	}
+
+	// Build all message keys, then fetch them in a single MGET round-trip.
+	keys := make([]string, len(members))
+	for i, member := range members {
+		msgID, err := messagecache.MemberToID(member)
+		if err != nil {
+			return nil, false
+		}
+		keys[i] = messagecache.MessageKey(channelID, msgID)
+	}
+	blobs, err := e.cache.MGetBytes(ctx, keys...)
+	if err != nil {
+		return nil, false
+	}
+	msgs := make([]dto.Message, len(members))
+	for i, blob := range blobs {
+		if blob == nil {
+			// Any individual miss invalidates the whole window attempt.
+			return nil, false
+		}
+		if err := json.Unmarshal(blob, &msgs[i]); err != nil {
+			return nil, false
+		}
+	}
+	return msgs, true
+}
+
+// backfillMessagesCache populates the sorted-set index and individual DTO keys
+// from a freshly-built message slice (DB result). Called as a goroutine after a
+// cache miss so it does not add latency to the response.
+func (e *entity) backfillMessagesCache(_ context.Context, channelID int64, msgs []dto.Message) {
+	if e.cache == nil {
+		return
+	}
+	// Use a detached context so backfill spans don't pollute the request trace.
+	ctx := context.Background()
+	keys := make([]string, len(msgs))
+	vals := make([]interface{}, len(msgs))
+	members := make([]icache.ZBatchMember, len(msgs))
+	for i, m := range msgs {
+		m.Nonce = nil // nonce must never be visible to non-authors
+		keys[i] = messagecache.MessageKey(channelID, m.Id)
+		vals[i] = m
+		members[i] = icache.ZBatchMember{Score: float64(m.Id), Member: messagecache.IDToMember(m.Id)}
+	}
+	_ = e.cache.SetTimedJSONBatch(ctx, keys, vals, messagecache.MessageTTLSeconds)
+	_ = e.cache.ZAddBatch(ctx, messagecache.IndexKey(channelID), members)
+	_ = e.cache.SetTTL(ctx, messagecache.IndexKey(channelID), messagecache.IndexTTLSeconds)
+}
+
+// pushMessageToWindowCache adds a newly-sent message to the index and caches its
+// DTO. Must be called with a nonce-stripped copy of the message.
+func (e *entity) pushMessageToWindowCache(ctx context.Context, channelID int64, msg dto.Message) {
+	if e.cache == nil {
+		return
+	}
+	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds)
+	_ = e.cache.ZAdd(ctx, messagecache.IndexKey(channelID), float64(msg.Id), messagecache.IDToMember(msg.Id))
+	_ = e.cache.SetTTL(ctx, messagecache.IndexKey(channelID), messagecache.IndexTTLSeconds)
+}
+
+// refreshMessageInCache overwrites the DTO key for an edited message.
+// The sorted-set index is unchanged — same ID, same score.
+func (e *entity) refreshMessageInCache(ctx context.Context, channelID int64, msg dto.Message) {
+	if e.cache == nil {
+		return
+	}
+	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds)
+}
+
+// evictMessageFromCache removes a deleted message's DTO key and drops its ID from
+// the sorted-set index. The next window request will see len(ids)<WindowSize and
+// fall back to the DB, which returns the correct post-deletion window.
+func (e *entity) evictMessageFromCache(ctx context.Context, channelID, messageID int64) {
+	if e.cache == nil {
+		return
+	}
+	_ = e.cache.Delete(ctx, messagecache.MessageKey(channelID, messageID))
+	_ = e.cache.ZRem(ctx, messagecache.IndexKey(channelID), messagecache.IDToMember(messageID))
+}
+
+// evictMessageDTOFromCache removes only the DTO key, leaving the ID in the index.
+// Used when reactions or embeds change: the message still exists, but its cached
+// representation is stale. The next window request will fail the full-hit check
+// (missing individual key) and fall back to the DB, which rebuilds with fresh data.
+func (e *entity) evictMessageDTOFromCache(ctx context.Context, channelID, messageID int64) {
+	if e.cache == nil {
+		return
+	}
+	_ = e.cache.Delete(ctx, messagecache.MessageKey(channelID, messageID))
 }
