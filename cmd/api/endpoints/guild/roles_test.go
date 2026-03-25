@@ -12,6 +12,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
@@ -168,6 +169,12 @@ func (f *fakeCache) HGetAllMulti(_ context.Context, keys []string) ([]map[string
 }
 func (f *fakeCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
 	return make([][]byte, len(keys)), nil
+}
+func (f *fakeCache) SetTimedJSONBatch(_ context.Context, keys []string, _ []interface{}, _ int64) error {
+	return nil
+}
+func (f *fakeCache) ZAddBatch(_ context.Context, _ string, _ []cache.ZBatchMember) error {
+	return nil
 }
 
 func (f *fakeCache) Delete(ctx context.Context, key string) error {
