@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
 
+	icache "github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/cache/messagecache"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
@@ -1975,18 +1976,13 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 		}
 	}
 
-	// Fetch and build messages
 	messages, err := e.fetchAndBuildMessages(c, req, channel, guildId)
 	if err != nil {
 		return err
 	}
 
-	// Backfill cache so subsequent requests are served from Redis.
 	if isLatestWindowRequest(req) {
-		go e.backfillMessagesCache(
-			observability.BackgroundFromContext(c.UserContext()),
-			channel.Id, messages,
-		)
+		go e.backfillMessagesCache(context.Background(), channel.Id, messages)
 	}
 
 	return c.JSON(messages)
@@ -3273,16 +3269,23 @@ func (e *entity) tryMessagesFromCache(ctx context.Context, channelID int64) ([]d
 // backfillMessagesCache populates the sorted-set index and individual DTO keys
 // from a freshly-built message slice (DB result). Called as a goroutine after a
 // cache miss so it does not add latency to the response.
-func (e *entity) backfillMessagesCache(ctx context.Context, channelID int64, msgs []dto.Message) {
+func (e *entity) backfillMessagesCache(_ context.Context, channelID int64, msgs []dto.Message) {
 	if e.cache == nil {
 		return
 	}
-	for i := range msgs {
-		m := msgs[i]
+	// Use a detached context so backfill spans don't pollute the request trace.
+	ctx := context.Background()
+	keys := make([]string, len(msgs))
+	vals := make([]interface{}, len(msgs))
+	members := make([]icache.ZBatchMember, len(msgs))
+	for i, m := range msgs {
 		m.Nonce = nil // nonce must never be visible to non-authors
-		_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, m.Id), m, messagecache.MessageTTLSeconds)
-		_ = e.cache.ZAdd(ctx, messagecache.IndexKey(channelID), float64(m.Id), messagecache.IDToMember(m.Id))
+		keys[i] = messagecache.MessageKey(channelID, m.Id)
+		vals[i] = m
+		members[i] = icache.ZBatchMember{Score: float64(m.Id), Member: messagecache.IDToMember(m.Id)}
 	}
+	_ = e.cache.SetTimedJSONBatch(ctx, keys, vals, messagecache.MessageTTLSeconds)
+	_ = e.cache.ZAddBatch(ctx, messagecache.IndexKey(channelID), members)
 	_ = e.cache.SetTTL(ctx, messagecache.IndexKey(channelID), messagecache.IndexTTLSeconds)
 }
 

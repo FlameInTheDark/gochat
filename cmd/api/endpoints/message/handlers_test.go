@@ -518,6 +518,12 @@ func (f *fakeMessageCache) HGetAllMulti(_ context.Context, keys []string) ([]map
 func (f *fakeMessageCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
 	return make([][]byte, len(keys)), nil
 }
+func (f *fakeMessageCache) SetTimedJSONBatch(_ context.Context, _ []string, _ []interface{}, _ int64) error {
+	return nil
+}
+func (f *fakeMessageCache) ZAddBatch(_ context.Context, _ string, _ []cache.ZBatchMember) error {
+	return nil
+}
 
 func TestSendMessageCreateEventForThreadTargetsJoinedUsersOnly(t *testing.T) {
 	guildID := int64(77)

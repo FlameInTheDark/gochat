@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/attribute"
@@ -296,6 +297,42 @@ func (c *Cache) MGetBytes(ctx context.Context, keys ...string) ([][]byte, error)
 		}
 	}
 	return out, nil
+}
+
+// SetTimedJSONBatch pipelines N SETEX commands in a single round-trip.
+func (c *Cache) SetTimedJSONBatch(ctx context.Context, keys []string, vals []interface{}, ttl int64) error {
+	if len(keys) == 0 {
+		return nil
+	}
+	ctx, end := c.operation(ctx, "setex_batch", keys[0])
+	pipe := c.c.Pipeline()
+	dur := time.Duration(ttl) * time.Second
+	for i, key := range keys {
+		b, err := json.Marshal(vals[i])
+		if err != nil {
+			end(err)
+			return err
+		}
+		pipe.Set(ctx, key, string(b), dur)
+	}
+	_, err := pipe.Exec(ctx)
+	end(err)
+	return err
+}
+
+// ZAddBatch adds multiple members to a sorted set in one ZADD command.
+func (c *Cache) ZAddBatch(ctx context.Context, key string, members []cache.ZBatchMember) error {
+	if len(members) == 0 {
+		return nil
+	}
+	ctx, end := c.operation(ctx, "zadd_batch", key)
+	zs := make([]redis.Z, len(members))
+	for i, m := range members {
+		zs[i] = redis.Z{Score: m.Score, Member: m.Member}
+	}
+	err := c.c.ZAdd(ctx, key, zs...).Err()
+	end(err)
+	return err
 }
 
 func (c *Cache) HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error) {

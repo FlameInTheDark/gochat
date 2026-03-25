@@ -13,6 +13,8 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"testing"
+
+	"github.com/FlameInTheDark/gochat/internal/cache"
 )
 
 func mustNewGenerator(t *testing.T, cfg Config) *Generator {
@@ -918,6 +920,18 @@ func (m *memoryCache) ZRevRangeByScore(ctx context.Context, key, max, min string
 }
 
 func (m *memoryCache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
+	return nil
+}
+func (m *memoryCache) HGetAllMulti(_ context.Context, keys []string) ([]map[string]string, error) {
+	return make([]map[string]string, len(keys)), nil
+}
+func (m *memoryCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
+	return make([][]byte, len(keys)), nil
+}
+func (m *memoryCache) SetTimedJSONBatch(_ context.Context, keys []string, vals []interface{}, _ int64) error {
+	return nil
+}
+func (m *memoryCache) ZAddBatch(_ context.Context, _ string, _ []cache.ZBatchMember) error {
 	return nil
 }
 

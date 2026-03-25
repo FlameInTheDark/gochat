@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	reactionutil "github.com/FlameInTheDark/gochat/internal/reaction"
@@ -71,6 +72,12 @@ func (f *fakeReactionCache) HGetAllMulti(_ context.Context, keys []string) ([]ma
 }
 func (f *fakeReactionCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
 	return make([][]byte, len(keys)), nil
+}
+func (f *fakeReactionCache) SetTimedJSONBatch(_ context.Context, _ []string, _ []interface{}, _ int64) error {
+	return nil
+}
+func (f *fakeReactionCache) ZAddBatch(_ context.Context, _ string, _ []cache.ZBatchMember) error {
+	return nil
 }
 
 func decodeReactionAdd(t *testing.T, payload []byte) mqmsg.MessageReactionAdd {
