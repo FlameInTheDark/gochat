@@ -141,7 +141,7 @@ func openBackfillDatabases(logger *slog.Logger, cfg *apiconfig.Config) (*db.CQLC
 	}
 
 	pg := pgdb.NewDB(logger)
-	if err := pg.Connect(cfg.PGDSN, cfg.PGRetries); err != nil {
+	if err := pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{MaxRetries: cfg.PGRetries}); err != nil {
 		_ = cql.Close()
 		return nil, nil, err
 	}

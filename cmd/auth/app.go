@@ -37,7 +37,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 
 	pg := pgdb.NewDB(logger)
-	err = pg.Connect(cfg.PGDSN, cfg.PGRetries)
+	err = pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{MaxRetries: cfg.PGRetries})
 	if err != nil {
 		return nil, err
 	}

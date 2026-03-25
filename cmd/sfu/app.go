@@ -949,8 +949,8 @@ func (a *App) authorizeJoin(env rtcJoinEnvelope) (int64, int64, *int64, int64, b
 	if err != nil {
 		return 0, 0, nil, 0, false, fmt.Errorf("unauthorized")
 	}
-	if tokChannel != 0 && tokChannel != env.D.Channel {
+	if tokChannel != 0 && tokChannel != int64(env.D.Channel) {
 		return 0, 0, nil, 0, false, fmt.Errorf("unauthorized")
 	}
-	return uid, env.D.Channel, tokGuild, perms, moved, nil
+	return uid, int64(env.D.Channel), tokGuild, perms, moved, nil
 }

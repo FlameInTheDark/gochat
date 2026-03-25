@@ -47,6 +47,8 @@ func (e *entity) KickMember(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToRemoveMember)
 	}
 
+	e.deleteMemberCache(c.UserContext(), memberId, guildId)
+	e.deleteUserRolesCache(c.UserContext(), memberId, guildId)
 	e.sendGuildMemberRemoved(observability.BackgroundFromContext(c.UserContext()), guildId, memberId, user.Id, mqmsg.GuildMemberModerationKick, nil)
 	return c.SendStatus(fiber.StatusNoContent)
 }
@@ -93,6 +95,8 @@ func (e *entity) BanMember(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToRemoveMember)
 	}
 
+	e.deleteMemberCache(c.UserContext(), memberId, guildId)
+	e.deleteUserRolesCache(c.UserContext(), memberId, guildId)
 	e.sendGuildMemberRemoved(observability.BackgroundFromContext(c.UserContext()), guildId, memberId, user.Id, mqmsg.GuildMemberModerationBan, req.Reason)
 	return c.SendStatus(fiber.StatusNoContent)
 }

@@ -207,6 +207,15 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
+	// In Prefork mode Fiber spawns child processes via os.StartProcess; each child
+	// re-executes main(). Only children should open DB/cache connections.
+	if cfg.Prefork && !fiber.IsChild() {
+		logger.Info("Prefork master process — skipping DB connections")
+		s := server.NewServer(true)
+		shut.Up(s)
+		return &App{server: s, logger: logger, addr: cfg.ServerAddress}, nil
+	}
+
 	logger.Info("Connecting to ScyllaDB")
 	database, err := db.NewCQLCon(cfg.ClusterKeyspace, db.NewDBLogger(logger), cfg.Cluster...)
 	if err != nil {
@@ -216,7 +225,12 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 
 	logger.Info("Connecting to PostgreSQL")
 	pg := pgdb.NewDB(logger)
-	err = pg.Connect(cfg.PGDSN, cfg.PGRetries)
+	err = pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{
+		MaxRetries:   cfg.PGRetries,
+		QueryLog:     cfg.PGQueryLog,
+		MaxOpenConns: cfg.PGMaxOpenConns,
+		MaxIdleConns: cfg.PGMaxIdleConns,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +272,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	shut.Up(emq)
 
 	logger.Info("Connecting to KeyDB")
-	cache, err := kvs.New(cfg.KeyDB)
+	cache, err := kvs.New(cfg.KeyDB, kvs.Options{
+		PoolSize:     cfg.RedisPoolSize,
+		MinIdleConns: cfg.RedisMinIdleConns,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +337,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	idgen.New(0)
 
 	logger.Info("Registering HTTP server")
-	s := server.NewServer()
+	s := server.NewServer(cfg.Prefork)
 	shut.Up(s)
 
 	s.WithCache(cache)
@@ -331,6 +348,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		s.WithLogger(logger)
 	}
 	s.WithCORS()
+	s.WithCompression()
 	s.WithMetrics("gochat-api")
 	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
 	s.AuthMiddleware(cfg.AuthSecret)

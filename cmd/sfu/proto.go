@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/FlameInTheDark/gochat/internal/helper"
 )
 
 const joinHandshakeTimeout = 5 * time.Second
@@ -11,8 +13,8 @@ type rtcJoinEnvelope struct {
 	OP int `json:"op"`
 	T  int `json:"t"`
 	D  struct {
-		Channel int64  `json:"channel,string"`
-		Token   string `json:"token"`
+		Channel helper.StringInt64 `json:"channel"`
+		Token   string             `json:"token"`
 	} `json:"d"`
 }
 
