@@ -1,3 +1,30 @@
+# [1.10.0](https://github.com/FlameInTheDark/gochat/compare/v1.9.0...v1.10.0) (2026-03-25)
+
+
+### Bug Fixes
+
+* added fallback for failed webP preview generation ([f919bba](https://github.com/FlameInTheDark/gochat/commit/f919bba9e3863a7e7cf0fe2127a969bd518faaae))
+* added fallback frame extraction and rendering for failed animated webP preview generation ([19c7b71](https://github.com/FlameInTheDark/gochat/commit/19c7b7174d5cc0dbc9447a0bac686758286f174f))
+* cache and messages optimization ([e873ba8](https://github.com/FlameInTheDark/gochat/commit/e873ba83b4d1472df804ba9b4854dfbb43f45bc5))
+* cache batching optimization ([0a1f9a1](https://github.com/FlameInTheDark/gochat/commit/0a1f9a1a6583140d8ea2245a321e3482007be25c))
+* channels cache fix ([c0a726d](https://github.com/FlameInTheDark/gochat/commit/c0a726da5c98d752e20e4bed508ecbf14ec4118e))
+* fixed auth confirmation parsing and errors observability ([5047986](https://github.com/FlameInTheDark/gochat/commit/5047986349bf75bdd8528fd5ac533412989b5e02))
+* fixed channel creation ([e5aa6bd](https://github.com/FlameInTheDark/gochat/commit/e5aa6bd84e2269e0d387033226ca5c56ea864607))
+* fixed channel id parsing ([25b4e29](https://github.com/FlameInTheDark/gochat/commit/25b4e2924e74eb35c104819fab24322cdcf1e4cc))
+* fixed channel reorder ([85f578f](https://github.com/FlameInTheDark/gochat/commit/85f578f48c628af170aa1ee3f8d7b67d1500eeda))
+* fixed friend request fail on second sending ([69d30c8](https://github.com/FlameInTheDark/gochat/commit/69d30c8a727d8262bc3906507a632ed8bba0eabd))
+* fixed user settings user id parsing ([04f6202](https://github.com/FlameInTheDark/gochat/commit/04f6202b8c8a1be961bc5894986f3cc5eba93476))
+* more cache batching optimization ([dadd369](https://github.com/FlameInTheDark/gochat/commit/dadd369cca1abbad2e46a6556b20363c54608052))
+* websocket close error handling ([951cc88](https://github.com/FlameInTheDark/gochat/commit/951cc88ea7d5dfbe18ac2a95bc5a8720bdc2591e))
+
+
+### Features
+
+* added more notification options in user settings ([b95fc7c](https://github.com/FlameInTheDark/gochat/commit/b95fc7cf8c90a8146d2fa61087824f0f528e05f2))
+* emoji info route for UI tooltips ([6f882fa](https://github.com/FlameInTheDark/gochat/commit/6f882fa72df269b31bca6233328c016b3fc0ca11))
+* message reactions ([79312ab](https://github.com/FlameInTheDark/gochat/commit/79312abed558c477781afb673bb29ba30d2eb24d))
+* migration image for easy database migrations ([6ce96e3](https://github.com/FlameInTheDark/gochat/commit/6ce96e39463b351abf6825c39cf2c84605e76d73))
+
 # [1.9.0](https://github.com/FlameInTheDark/gochat/compare/v1.8.0...v1.9.0) (2026-03-20)
 
 
