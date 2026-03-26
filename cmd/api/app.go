@@ -33,6 +33,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/nats"
 	"github.com/FlameInTheDark/gochat/internal/msgsearch"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	reactionutil "github.com/FlameInTheDark/gochat/internal/reaction"
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
@@ -345,7 +346,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		s.WithSwagger("api")
 	}
 	if cfg.ApiLog {
-		s.WithLogger(logger)
+		s.WithLoggerLevel(logger, observability.ParseLogLevel(cfg.LogLevel))
 	}
 	s.WithCORS()
 	s.WithCompression()

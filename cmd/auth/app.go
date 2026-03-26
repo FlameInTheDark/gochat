@@ -20,6 +20,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/resendp"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/sendpulse"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/smtp"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
@@ -88,7 +89,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		s.WithSwagger("auth")
 	}
 	if cfg.ApiLog {
-		s.WithLogger(logger)
+		s.WithLoggerLevel(logger, observability.ParseLogLevel(cfg.LogLevel))
 	}
 	s.WithCORS()
 	s.WithMetrics("gochat-auth")

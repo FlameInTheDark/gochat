@@ -91,7 +91,10 @@ func Init(serviceName string, attrs ...attribute.KeyValue) (*Runtime, error) {
 			} else {
 				tp := sdktrace.NewTracerProvider(
 					sdktrace.WithResource(res),
-					sdktrace.WithBatcher(traceExporter),
+					sdktrace.WithSpanProcessor(newFilteringSpanProcessor(
+						sdktrace.NewBatchSpanProcessor(traceExporter),
+						ParseLogLevel(os.Getenv("LOG_LEVEL")),
+					)),
 				)
 				otel.SetTracerProvider(tp)
 				rt.traceProvider = tp

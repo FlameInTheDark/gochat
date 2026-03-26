@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	ApiLog                     bool          `yaml:"api_log" env:"API_LOG" env-default:"true"`
+	LogLevel                   string        `yaml:"log_level" env:"LOG_LEVEL" env-default:"warn"`
 	ServerAddress              string        `yaml:"server_address" env:"SERVER_ADDRESS" env-default:":3100"`
 	IdempotencyStorageLifetime int64         `yaml:"idempotency_storage_lifetime" env:"IDEMPOTENCY_STORAGE_LIFETIME" env-default:"10"`
 	RateLimitTime              int           `yaml:"rate_limit_time" env:"RATE_LIMIT_TIME" env-default:"1"`
