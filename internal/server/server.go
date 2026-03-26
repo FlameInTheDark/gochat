@@ -53,6 +53,10 @@ func (s *Server) WithLogger(logger *slog.Logger) {
 	s.app.Use(observability.RequestLogger(logger))
 }
 
+func (s *Server) WithLoggerLevel(logger *slog.Logger, level slog.Level) {
+	s.app.Use(observability.RequestLoggerWithLevel(logger, level))
+}
+
 func (s *Server) WithCORS() {
 	s.app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",

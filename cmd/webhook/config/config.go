@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	Log           bool   `yaml:"api_log" env:"API_LOG" env-default:"true"`
+	LogLevel      string `yaml:"log_level" env:"LOG_LEVEL" env-default:"warn"`
 	ServerAddress string `yaml:"server_address" env-default:":3200"`
 	// Discovery for SFU heartbeats
 	EtcdEndpoints []string `yaml:"etcd_endpoints" env:"ETCD_ENDPOINTS" env-separator:","`
