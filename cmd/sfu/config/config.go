@@ -20,7 +20,7 @@ type Config struct {
 	// SignalHeartbeatIntervalMS is used by the v2 `/signal?v=2` protocol hello.
 	SignalHeartbeatIntervalMS int64 `yaml:"signal_heartbeat_interval_ms" env:"SFU_SIGNAL_HEARTBEAT_INTERVAL_MS" env-default:"15000"`
 
-	// DAVE / E2EE controls for the Discord-style v2 voice gateway.
+	// DAVE / E2EE controls for the v2 voice gateway.
 	DAVEEnabled             bool  `yaml:"dave_enabled" env:"SFU_DAVE_ENABLED" env-default:"true"`
 	DAVERequiredDefault     bool  `yaml:"dave_required_default" env:"SFU_DAVE_REQUIRED_DEFAULT" env-default:"false"`
 	DAVETransitionTimeoutMS int64 `yaml:"dave_transition_timeout_ms" env:"SFU_DAVE_TRANSITION_TIMEOUT_MS" env-default:"2000"`

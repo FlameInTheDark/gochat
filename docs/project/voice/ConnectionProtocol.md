@@ -18,7 +18,7 @@ The REST join contract stays unchanged. The API still returns:
 The client then chooses a signaling version:
 
 - `v=1`: legacy bootstrap, selected by `/signal` or `/signal?v=1`
-- `v=2`: Discord-style voice gateway, selected by `/signal?v=2`
+- `v=2`: voice gateway signaling, selected by `/signal?v=2`
 
 If the client later reconnects because of move, rebind, or transient failure, it should keep using the same signaling version it already negotiated.
 
@@ -196,5 +196,5 @@ In practice, the SFU still uses the same channel revision and sender-sync engine
 ## Scope Notes
 
 - `v=1` remains unchanged and default.
-- `v=2` carries the Discord-style gateway order and DAVE opcode surface for GoChat clients.
+- `v=2` carries the voice-gateway order and DAVE opcode surface for GoChat clients.
 - Persistent identity verification UX is intentionally out of scope for this rollout.

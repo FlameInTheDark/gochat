@@ -484,7 +484,7 @@ func TestSignalWSV1DefaultAndExplicitVersionStillUseLegacyJoinFlow(t *testing.T)
 	}
 }
 
-func TestSignalWSV2HandshakeUsesDiscordStyleOrder(t *testing.T) {
+func TestSignalWSV2HandshakeUsesVoiceGatewayOrder(t *testing.T) {
 	h := newSignalTestHarness(t, 15000)
 	client, sessionDesc := establishV2Participant(t, h, 201, 42, true)
 	defer client.conn.Close()

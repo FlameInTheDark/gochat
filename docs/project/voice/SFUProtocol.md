@@ -9,7 +9,7 @@ This document describes the signaling contract exposed by the SFU `/signal` WebS
 - Connect to `wss://<sfu>/signal`.
 - If `v` is absent, the SFU uses legacy signaling `v=1`.
 - `?v=1` explicitly selects the legacy flow.
-- `?v=2` selects the Discord-style voice gateway flow.
+- `?v=2` selects the v2 voice gateway flow.
 - Any other explicit `v` value is rejected with HTTP `400` before the WebSocket upgrade.
 - Reconnects caused by move, rebind, or transient failure should reuse the same signaling version that was already in use.
 
@@ -52,7 +52,7 @@ This document describes the signaling contract exposed by the SFU `/signal` WebS
 
 ## `v=2` Voice Gateway
 
-`v=2` does not use the `op=7,t=*` RTC envelope for the public bootstrap path. It uses Discord-style voice gateway opcodes instead.
+`v=2` does not use the `op=7,t=*` RTC envelope for the public bootstrap path. It uses dedicated voice gateway opcodes instead.
 
 ### Text JSON Opcodes
 
@@ -89,7 +89,7 @@ This document describes the signaling contract exposed by the SFU `/signal` WebS
 
 ## `v=2` Bootstrap Order
 
-The connection order matches the GoChat Discord-style gateway flow:
+The connection order matches the GoChat v2 voice gateway flow:
 
 1. Client connects to `/signal?v=2`.
 2. Client sends `Identify (0)`.

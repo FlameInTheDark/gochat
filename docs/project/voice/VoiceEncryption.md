@@ -4,7 +4,7 @@
 
 This document describes the current GoChat voice E2EE direction for `/signal?v=2`.
 
-GoChat now uses a Discord-style DAVE control plane:
+GoChat now uses a DAVE control plane on the v2 voice gateway:
 
 - JSON voice gateway opcodes for bootstrap, membership, and transitions
 - binary DAVE opcodes `25-30` for MLS-related payload delivery
@@ -29,6 +29,11 @@ GoChat now uses a Discord-style DAVE control plane:
 - the current MLS validation layer is structural, not a full RFC 9420 cryptographic verifier
 - the gateway validates transition phase, required payload presence, and wire shape, then relays opaque MLS payload bytes
 - persistent identity upload, verification UI, and out-of-band trust UX remain phase 2
+
+GoChat clients may still expose a session verification code in the first rollout, but that code should be documented honestly:
+
+- if it is derived from ephemeral session identity only, it proves that participants are in the same encrypted DAVE session and epoch
+- it does not yet provide the stronger "same long-term identity as last time" guarantee that stable identity keys and explicit trust verification would provide
 
 That means the wire and transition behavior are in place for GoChat clients, while full MLS cryptographic inspection can be tightened incrementally behind the same server interfaces.
 
@@ -121,7 +126,7 @@ GoChat DAVE-capable clients should:
 
 This rollout does not yet promise:
 
-- Discord service interoperability
+- third-party service interoperability
 - full MLS cryptographic validation inside the gateway
 - persistent identity verification UI
 - AV1 DAVE support by default

@@ -16,7 +16,7 @@ service_id: ""
 # Clients should heartbeat at this cadence over op=2 once connected to /signal?v=2.
 signal_heartbeat_interval_ms: 15000
 
-# Discord-style DAVE / E2EE support for /signal?v=2
+# DAVE / E2EE support for /signal?v=2
 dave_enabled: true
 dave_required_default: false
 dave_transition_timeout_ms: 2000
