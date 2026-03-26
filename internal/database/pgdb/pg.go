@@ -70,19 +70,24 @@ func (db *DB) Connect(dsn string, opts ConnectOptions) error {
 		return fmt.Errorf("failed to open postgres driver: %w", err)
 	}
 
-	// Wrap with query logger — debug level only when explicitly enabled
-	logLevel := sqldblogger.LevelError
+	// Wrap with query logger.
+	// WithQueryerLevel/ExecerLevel/PreparerLevel set the level for SUCCESSFUL calls.
+	// WithMinimumLevel is the actual filter — only events >= minLevel reach the logger.
+	//   QueryLog=false (default): suppress successful queries, only surface SQL errors.
+	//   QueryLog=true:            log everything at Debug for troubleshooting.
+	minLevel := sqldblogger.LevelError
 	if opts.QueryLog {
-		logLevel = sqldblogger.LevelDebug
+		minLevel = sqldblogger.LevelDebug
 	}
 	customLogger := &SlogLogger{logger: db.logger}
 	wrapped := sqldblogger.OpenDriver(
 		dsn,
 		base.Driver(),
 		customLogger,
-		sqldblogger.WithExecerLevel(logLevel),
-		sqldblogger.WithQueryerLevel(logLevel),
-		sqldblogger.WithPreparerLevel(logLevel),
+		sqldblogger.WithMinimumLevel(minLevel),
+		sqldblogger.WithExecerLevel(sqldblogger.LevelDebug),
+		sqldblogger.WithQueryerLevel(sqldblogger.LevelDebug),
+		sqldblogger.WithPreparerLevel(sqldblogger.LevelDebug),
 	)
 	// base handle is no longer needed after wrapping
 	_ = base.Close()
