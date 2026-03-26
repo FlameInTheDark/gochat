@@ -17,6 +17,16 @@ type Config struct {
 	WebhookToken string `yaml:"webhook_token" env:"WEBHOOK_TOKEN" env-required:"true"`
 	ServiceID    string `yaml:"service_id" env:"SFU_SERVICE_ID" env-required:"true"`
 
+	// SignalHeartbeatIntervalMS is used by the v2 `/signal?v=2` protocol hello.
+	SignalHeartbeatIntervalMS int64 `yaml:"signal_heartbeat_interval_ms" env:"SFU_SIGNAL_HEARTBEAT_INTERVAL_MS" env-default:"15000"`
+
+	// DAVE / E2EE controls for the Discord-style v2 voice gateway.
+	DAVEEnabled             bool  `yaml:"dave_enabled" env:"SFU_DAVE_ENABLED" env-default:"true"`
+	DAVERequiredDefault     bool  `yaml:"dave_required_default" env:"SFU_DAVE_REQUIRED_DEFAULT" env-default:"false"`
+	DAVETransitionTimeoutMS int64 `yaml:"dave_transition_timeout_ms" env:"SFU_DAVE_TRANSITION_TIMEOUT_MS" env-default:"2000"`
+	DAVEOldRatchetWindowMS  int64 `yaml:"dave_old_ratchet_window_ms" env:"SFU_DAVE_OLD_RATCHET_WINDOW_MS" env-default:"10000"`
+	DAVEAllowAV1            bool  `yaml:"dave_allow_av1" env:"SFU_DAVE_ALLOW_AV1" env-default:"false"`
+
 	// Media limits
 	// MaxAudioBitrateKbps, when > 0, injects SDP constraints to cap OPUS
 	// encoder average bitrate on clients and advertises bandwidth limits per

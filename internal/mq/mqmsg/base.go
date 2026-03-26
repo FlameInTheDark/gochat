@@ -120,6 +120,18 @@ const (
 	EventTypeRTCSpeaking
 )
 
+// RTC v2 signaling event types (client <-> SFU via WS, query parameter v=2)
+const (
+	EventTypeRTCIdentify EventType = 530 + iota
+	EventTypeRTCReady
+	EventTypeRTCSelectProtocol
+	EventTypeRTCSessionDescription
+)
+
+const (
+	EventTypeRTCError EventType = 539
+)
+
 type Message struct {
 	Operation OPCodeType      `json:"op"`
 	Data      json.RawMessage `json:"d"`

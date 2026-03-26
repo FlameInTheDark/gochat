@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"log/slog"
+	"strings"
 	"testing"
 
 	"github.com/pion/webrtc/v4"
@@ -190,5 +191,92 @@ func TestDoSignalPeerConnections_NewPeerGetsInitialOfferForExistingTracks(t *tes
 	}
 	if state.offeredRevision != 1 {
 		t.Fatalf("expected initial offer revision 1, got %d", state.offeredRevision)
+	}
+}
+
+func TestPreparePeerInitialSync_InitialAnswerContainsExistingTracks(t *testing.T) {
+	ch := newTestChannelState()
+	pc := newTestPeerConnection(t)
+	state := &peerConnectionState{
+		peerConnection: pc,
+		websocket:      &threadSafeWriter{},
+		userID:         2,
+	}
+
+	track := newTestTrack(t, "1-video", "u:1")
+	ch.trackLocals[track.ID()] = trackLocalEntry{track: track, owner: 1, kind: webrtc.RTPCodecTypeVideo.String()}
+
+	offerPC := newTestPeerConnection(t)
+	offer, err := offerPC.CreateOffer(nil)
+	if err != nil {
+		t.Fatalf("create offer: %v", err)
+	}
+	if err := offerPC.SetLocalDescription(offer); err != nil {
+		t.Fatalf("set offer local description: %v", err)
+	}
+	if err := pc.SetRemoteDescription(offer); err != nil {
+		t.Fatalf("set remote description: %v", err)
+	}
+
+	_ = ch.preparePeerInitialSync(state)
+
+	answer, err := pc.CreateAnswer(nil)
+	if err != nil {
+		t.Fatalf("create answer: %v", err)
+	}
+	if err := pc.SetLocalDescription(answer); err != nil {
+		t.Fatalf("set local description: %v", err)
+	}
+
+	foundSender := false
+	for _, sender := range pc.GetSenders() {
+		if sender.Track() == nil {
+			continue
+		}
+		if sender.Track().ID() == track.ID() {
+			foundSender = true
+			break
+		}
+	}
+	if !foundSender {
+		t.Fatal("expected initial sync to add existing track sender before answering")
+	}
+	if !strings.Contains(answer.SDP, "u:1") {
+		t.Fatalf("expected answer SDP to reference existing stream id, got:\n%s", answer.SDP)
+	}
+}
+
+func TestDoSignalPeerConnections_V2BootstrappedPeerRenegotiatesOnTopologyChange(t *testing.T) {
+	ch := newTestChannelState()
+	pc := newTestPeerConnection(t)
+
+	state := &peerConnectionState{
+		peerConnection:  pc,
+		websocket:       &threadSafeWriter{},
+		userID:          2,
+		negotiated:      true,
+		offeredRevision: 1,
+		appliedRevision: 1,
+	}
+	ch.peers = []*peerConnectionState{state}
+	ch.topologyRevision = 1
+
+	ch.doSignalPeerConnections()
+
+	if pc.LocalDescription() != nil {
+		t.Fatal("did not expect immediate renegotiation without a topology change")
+	}
+
+	track := newTestTrack(t, "1-video", "u:1")
+	ch.trackLocals[track.ID()] = trackLocalEntry{track: track, owner: 1, kind: webrtc.RTPCodecTypeVideo.String()}
+	ch.topologyRevision = 2
+
+	ch.doSignalPeerConnections()
+
+	if pc.LocalDescription() == nil {
+		t.Fatal("expected renegotiation offer after topology changed for a v2-bootstrapped peer")
+	}
+	if state.offeredRevision != 2 {
+		t.Fatalf("expected offered revision 2, got %d", state.offeredRevision)
 	}
 }

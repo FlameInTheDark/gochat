@@ -7,6 +7,7 @@ import (
 type HeartbeatInterval struct {
 	HeartbeatInterval int64  `json:"heartbeat_interval"`
 	SessionID         string `json:"session_id,omitempty"`
+	ProtocolVersion   int    `json:"protocol_version,omitempty"`
 }
 
 func (m *HeartbeatInterval) EventType() *EventType {

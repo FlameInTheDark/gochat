@@ -12,6 +12,17 @@ webhook_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 # Should match service_id from the token
 service_id: ""
 
+# Heartbeat interval for the v2 SFU signaling protocol hello payload.
+# Clients should heartbeat at this cadence over op=2 once connected to /signal?v=2.
+signal_heartbeat_interval_ms: 15000
+
+# Discord-style DAVE / E2EE support for /signal?v=2
+dave_enabled: true
+dave_required_default: false
+dave_transition_timeout_ms: 2000
+dave_old_ratchet_window_ms: 10000
+dave_allow_av1: false
+
 # Optional: cap maximum audio bitrate (per sender) via SDP constraints
 # 0 disables capping. Common values: 64, 96, 128 (in kbps)
 # This sets Opus fmtp maxaveragebitrate and b=AS/TIAS for audio m-lines.
