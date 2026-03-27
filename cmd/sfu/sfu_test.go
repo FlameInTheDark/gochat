@@ -25,7 +25,7 @@ func newTestChannelState() *channelState {
 func newTestPeerConnection(t *testing.T) *webrtc.PeerConnection {
 	t.Helper()
 
-	api := buildWebRTCAPI(newTestLogger())
+	api := buildWebRTCAPI(newTestLogger(), false)
 	pc, err := api.NewPeerConnection(webrtc.Configuration{})
 	if err != nil {
 		t.Fatalf("create peer connection: %v", err)
@@ -278,5 +278,67 @@ func TestDoSignalPeerConnections_V2BootstrappedPeerRenegotiatesOnTopologyChange(
 	}
 	if state.offeredRevision != 2 {
 		t.Fatalf("expected offered revision 2, got %d", state.offeredRevision)
+	}
+}
+
+func TestBuildWebRTCAPIAdvertisesVideoFeedbackAndRTX(t *testing.T) {
+	pc := newTestPeerConnection(t)
+
+	offer, err := pc.CreateOffer(nil)
+	if err != nil {
+		t.Fatalf("create offer: %v", err)
+	}
+	if err := pc.SetLocalDescription(offer); err != nil {
+		t.Fatalf("set local description: %v", err)
+	}
+
+	sdp := pc.LocalDescription().SDP
+	for _, want := range []string{
+		"a=rtpmap:102 H264/90000",
+		"a=rtpmap:97 rtx/90000",
+		"a=rtpmap:103 rtx/90000",
+		"a=rtcp-fb:96 nack pli",
+		"a=rtcp-fb:96 transport-cc",
+		"a=rtcp-fb:102 nack pli",
+	} {
+		if !strings.Contains(sdp, want) {
+			t.Fatalf("expected offer SDP to contain %q, got:\n%s", want, sdp)
+		}
+	}
+}
+
+func TestSupportedVoiceGatewayCodecsMatchNegotiatedPayloadTypes(t *testing.T) {
+	codecs := supportedVoiceGatewayCodecs(true)
+	byName := make(map[string]struct {
+		payload uint8
+		rtx     uint8
+	})
+	for _, codec := range codecs {
+		byName[codec.Name] = struct {
+			payload uint8
+			rtx     uint8
+		}{
+			payload: codec.PayloadType,
+			rtx:     codec.RTXPayloadType,
+		}
+	}
+
+	for name, want := range map[string]struct {
+		payload uint8
+		rtx     uint8
+	}{
+		"opus": {payload: 111},
+		"H264": {payload: 102, rtx: 103},
+		"VP8":  {payload: 96, rtx: 97},
+		"VP9":  {payload: 98, rtx: 99},
+		"AV1":  {payload: 45, rtx: 46},
+	} {
+		got, ok := byName[name]
+		if !ok {
+			t.Fatalf("expected codec %q to be advertised", name)
+		}
+		if got.payload != want.payload || got.rtx != want.rtx {
+			t.Fatalf("codec %q payloads = (%d, %d), want (%d, %d)", name, got.payload, got.rtx, want.payload, want.rtx)
+		}
 	}
 }

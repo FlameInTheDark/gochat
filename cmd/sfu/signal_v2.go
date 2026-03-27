@@ -541,6 +541,7 @@ func (a *App) handleSignalV2SelectProtocol(session *signalV2Session, raw json.Ra
 		if err := a.dave.Connect(a.buildDAVEParticipant(session)); err != nil {
 			return a.closeSignalV2Session(session, websocket.ClosePolicyViolation, err.Error())
 		}
+		a.sfu.RequestKeyFrame(session.channelID)
 
 		if currentRevision := a.sfu.ChannelRevision(session.channelID); currentRevision > session.state.appliedRevision {
 			a.sfu.SignalPeer(session.ctx, session.channelID, session.pc)

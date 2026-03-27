@@ -398,6 +398,127 @@ async function createInitialOffer(
 }
 ```
 
+### Webcam Capture Target: 720p30
+
+If the product goal is "webcam should look at least like 720p at 30fps", the React publisher has to ask for that explicitly. The SFU now negotiates the codec/feedback path needed for it, but it still forwards what the browser captures and encodes.
+
+Recommended browser capture constraints:
+
+```ts
+const stream = await navigator.mediaDevices.getUserMedia({
+  audio: true,
+  video: {
+    width: { ideal: 1280, min: 960 },
+    height: { ideal: 720, min: 540 },
+    frameRate: { ideal: 30, max: 30 },
+    facingMode: "user",
+  },
+});
+```
+
+After adding the video track to the peer connection, keep the sender encodings aligned with that target instead of silently inheriting a very low publish budget:
+
+```ts
+async function tuneCameraSender(sender: RTCRtpSender) {
+  const params = sender.getParameters();
+  const encodings = params.encodings?.length ? [...params.encodings] : [{}];
+
+  encodings[0] = {
+    ...encodings[0],
+    maxBitrate: 2_500_000,
+    maxFramerate: 30,
+    scaleResolutionDownBy: 1,
+  };
+
+  await sender.setParameters({
+    ...params,
+    degradationPreference: "balanced",
+    encodings,
+  });
+}
+```
+
+Practical guidance:
+
+- avoid setting webcam `maxBitrate` to a few hundred kbps unless you intentionally want soft video
+- do not set `scaleResolutionDownBy` above `1` for the main camera sender if 720p is the target
+- verify the browser is really publishing what you expect via `getStats()`
+- use runtime fallbacks when bandwidth stays poor instead of freezing on one profile
+
+### Recommended Adaptive Fallback Ladder
+
+For now, assume single-stream adaptive publishing on web clients. The SFU forwards the published stream as-is, so the publisher should move between a small set of explicit quality profiles when outbound stats show sustained network pressure.
+
+Recommended ladder:
+
+- `720p`: `1280x720`, `30fps`, `maxBitrate: 2_500_000`, `scaleResolutionDownBy: 1`
+- `360p`: `640x360`, `20-30fps`, `maxBitrate: 900_000`, `scaleResolutionDownBy: 2`
+- `240p`: `426x240`, `15-20fps`, `maxBitrate: 350_000`, `scaleResolutionDownBy: 3`
+
+Example helper:
+
+```ts
+type CameraProfile = "720p" | "360p" | "240p";
+
+const cameraProfiles: Record<CameraProfile, {
+  maxBitrate: number;
+  maxFramerate: number;
+  scaleResolutionDownBy: number;
+}> = {
+  "720p": { maxBitrate: 2_500_000, maxFramerate: 30, scaleResolutionDownBy: 1 },
+  "360p": { maxBitrate: 900_000, maxFramerate: 24, scaleResolutionDownBy: 2 },
+  "240p": { maxBitrate: 350_000, maxFramerate: 20, scaleResolutionDownBy: 3 },
+};
+
+async function applyCameraProfile(
+  sender: RTCRtpSender,
+  profile: CameraProfile,
+) {
+  const params = sender.getParameters();
+  const encodings = params.encodings?.length ? [...params.encodings] : [{}];
+  const next = cameraProfiles[profile];
+
+  encodings[0] = {
+    ...encodings[0],
+    maxBitrate: next.maxBitrate,
+    maxFramerate: next.maxFramerate,
+    scaleResolutionDownBy: next.scaleResolutionDownBy,
+  };
+
+  await sender.setParameters({
+    ...params,
+    degradationPreference: "balanced",
+    encodings,
+  });
+}
+```
+
+Reasonable downgrade triggers:
+
+- `qualityLimitationReason === "bandwidth"` for several consecutive samples
+- outbound `framesPerSecond` staying far below target
+- repeated retransmissions and rising packet loss
+
+Reasonable upgrade triggers:
+
+- bandwidth limitation clears for a sustained window
+- actual sent resolution and fps recover
+- retransmissions and packet loss settle back down
+
+If the frontend later adds proper simulcast, keep the same ladder semantics and map them to layered encodings instead of a single adaptive encoding.
+
+The most useful outbound stats to log are:
+
+- `frameWidth`
+- `frameHeight`
+- `framesPerSecond`
+- `qualityLimitationReason`
+- `qualityLimitationDurations`
+- `retransmittedPacketsSent`
+- `nackCount`
+
+If those stats show the browser is only sending `640x360` or `15fps`, that is a frontend capture/encoding issue, not an SFU forwarding limit.
+
 ## Step 8: Handle `Session Description (4)` For Both Bootstrap And Renegotiation
 
 On `v=2`, `Session Description (4)` is used in two situations:

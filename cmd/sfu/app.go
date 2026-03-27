@@ -66,7 +66,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger, cfg *config.Config) *App {
 	}
 
 	iceCfg := buildICEConfig(cfg.STUNServers)
-	api := buildWebRTCAPI(logger)
+	api := buildWebRTCAPI(logger, cfg.DAVEAllowAV1)
 
 	fiberApp := fiber.New(fiber.Config{DisableStartupMessage: true})
 	fiberApp.Use(observability.RequestContextMiddleware())
@@ -169,59 +169,6 @@ func buildICEConfig(stunServers []string) webrtc.Configuration {
 		iceCfg.ICEServers = []webrtc.ICEServer{{URLs: []string{"stun:stun.l.google.com:19302"}}}
 	}
 	return iceCfg
-}
-
-// buildWebRTCAPI creates a webrtc.API with a restricted MediaEngine (Opus + VP8 + VP9 only)
-// and TWCC header extensions registered for bandwidth estimation.
-// Uses minimal interceptors to avoid crashes in the RTCP receiver report interceptor.
-func buildWebRTCAPI(logger *slog.Logger) *webrtc.API {
-	me := &webrtc.MediaEngine{}
-
-	// Audio: Opus only (48kHz, 2ch)
-	if err := me.RegisterCodec(webrtc.RTPCodecParameters{
-		RTPCodecCapability: webrtc.RTPCodecCapability{
-			MimeType:    webrtc.MimeTypeOpus,
-			ClockRate:   48000,
-			Channels:    2,
-			SDPFmtpLine: "minptime=10;useinbandfec=1",
-		},
-		PayloadType: 111,
-	}, webrtc.RTPCodecTypeAudio); err != nil {
-		logger.Error("failed to register Opus codec", slog.String("error", err.Error()))
-	}
-
-	// Video: VP8 (widely supported, low complexity)
-	if err := me.RegisterCodec(webrtc.RTPCodecParameters{
-		RTPCodecCapability: webrtc.RTPCodecCapability{
-			MimeType:  webrtc.MimeTypeVP8,
-			ClockRate: 90000,
-		},
-		PayloadType: 96,
-	}, webrtc.RTPCodecTypeVideo); err != nil {
-		logger.Error("failed to register VP8 codec", slog.String("error", err.Error()))
-	}
-
-	// Video: VP9 (better quality at same bitrate, optional)
-	if err := me.RegisterCodec(webrtc.RTPCodecParameters{
-		RTPCodecCapability: webrtc.RTPCodecCapability{
-			MimeType:  webrtc.MimeTypeVP9,
-			ClockRate: 90000,
-		},
-		PayloadType: 98,
-	}, webrtc.RTPCodecTypeVideo); err != nil {
-		logger.Error("failed to register VP9 codec", slog.String("error", err.Error()))
-	}
-
-	// Register TWCC header extension for bandwidth estimation
-	twccURI := "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
-	if err := me.RegisterHeaderExtension(webrtc.RTPHeaderExtensionCapability{URI: twccURI}, webrtc.RTPCodecTypeVideo); err != nil {
-		logger.Warn("failed to register TWCC extension for video", slog.String("error", err.Error()))
-	}
-	if err := me.RegisterHeaderExtension(webrtc.RTPHeaderExtensionCapability{URI: twccURI}, webrtc.RTPCodecTypeAudio); err != nil {
-		logger.Warn("failed to register TWCC extension for audio", slog.String("error", err.Error()))
-	}
-
-	return webrtc.NewAPI(webrtc.WithMediaEngine(me))
 }
 
 // ---------------------------------------------------------------------------

@@ -52,11 +52,12 @@ func encodeVoiceGatewayICEServers(servers []webrtc.ICEServer) []voicev2.ICEServe
 func supportedVoiceGatewayCodecs(allowAV1 bool) []voicev2.Codec {
 	codecs := []voicev2.Codec{
 		{Name: "opus", Type: "audio", PayloadType: 111, Priority: 1000},
+		{Name: "H264", Type: "video", PayloadType: 102, RTXPayloadType: 103, Priority: 1500},
 		{Name: "VP8", Type: "video", PayloadType: 96, RTXPayloadType: 97, Priority: 2000},
 		{Name: "VP9", Type: "video", PayloadType: 98, RTXPayloadType: 99, Priority: 3000},
 	}
 	if allowAV1 {
-		codecs = append(codecs, voicev2.Codec{Name: "AV1", Type: "video", PayloadType: 100, Priority: 4000})
+		codecs = append(codecs, voicev2.Codec{Name: "AV1", Type: "video", PayloadType: 45, RTXPayloadType: 46, Priority: 4000})
 	}
 	return codecs
 }

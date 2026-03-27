@@ -22,6 +22,8 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
 
+const periodicKeyFrameInterval = 10 * time.Second
+
 // ---------------------------------------------------------------------------
 // threadSafeWriter wraps a websocket.Conn with a mutex for concurrent writes.
 // ---------------------------------------------------------------------------
@@ -580,11 +582,12 @@ func (c *channelState) dispatchKeyFrame() {
 
 	for _, p := range peers {
 		for _, receiver := range p.peerConnection.GetReceivers() {
-			if receiver.Track() == nil {
+			track := receiver.Track()
+			if track == nil || track.Kind() != webrtc.RTPCodecTypeVideo {
 				continue
 			}
 			_ = p.peerConnection.WriteRTCP([]rtcp.Packet{
-				&rtcp.PictureLossIndication{MediaSSRC: uint32(receiver.Track().SSRC())},
+				&rtcp.PictureLossIndication{MediaSSRC: uint32(track.SSRC())},
 			})
 		}
 	}
@@ -953,13 +956,27 @@ func (s *SFU) ApplyAnswer(ctx context.Context, channelID int64, pc *webrtc.PeerC
 		return
 	}
 	needsSignal, found := ch.applyPeerAnswer(pc)
-	if !found || !needsSignal {
+	if !found {
+		return
+	}
+	ch.dispatchKeyFrame()
+	if !needsSignal {
 		return
 	}
 	if s.telemetry != nil {
 		s.telemetry.Renegotiation(ctx, attribute.Int64("voice.channel_id", channelID))
 	}
 	ch.signalPeerConnections()
+}
+
+func (s *SFU) RequestKeyFrame(channelID int64) {
+	s.mu.RLock()
+	ch := s.channels[channelID]
+	s.mu.RUnlock()
+	if ch == nil {
+		return
+	}
+	ch.dispatchKeyFrame()
 }
 
 func (s *SFU) dispatchKeyFrameAll() {
@@ -989,7 +1006,7 @@ func (s *SFU) BroadcastSpeaking(_ context.Context, channelID int64, fromUser int
 // RunKeyFrameTicker periodically requests key frames from all peers.
 // Stops when the SFU's done channel is closed.
 func (s *SFU) RunKeyFrameTicker() {
-	ticker := time.NewTicker(3 * time.Second)
+	ticker := time.NewTicker(periodicKeyFrameInterval)
 	defer ticker.Stop()
 	for {
 		select {
