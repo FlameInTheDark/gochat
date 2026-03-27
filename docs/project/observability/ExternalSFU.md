@@ -27,6 +27,14 @@ Authentication:
 
 - `WEBHOOK_TOKEN`
 
+## YAML config equivalents
+
+If you provision the SFU with `config.yaml`, you can set the same OTLP values there instead of exporting them separately:
+
+- `telemetry_otlp_endpoint`
+- `telemetry_otlp_headers`
+- `telemetry_otlp_protocol`
+
 ## Endpoint format
 
 - Use the shared OTLP base URL for the telemetry gateway:
@@ -56,6 +64,16 @@ $env:WEBHOOK_TOKEN = "<jwt-with-typ-sfu-id-sfu-eu-1>"
 $env:OTEL_EXPORTER_OTLP_ENDPOINT = "https://telemetry.example.com"
 $env:OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf"
 $env:OTEL_EXPORTER_OTLP_HEADERS = "Authorization=Bearer $($env:WEBHOOK_TOKEN)"
+```
+
+Equivalent `config.yaml` snippet:
+
+```yaml
+webhook_token: "<same-jwt>"
+service_id: "sfu-eu-1"
+telemetry_otlp_endpoint: "https://telemetry.example.com"
+telemetry_otlp_headers: "Authorization=Bearer <same-jwt>"
+telemetry_otlp_protocol: "http/protobuf"
 ```
 
 ## Runtime behavior

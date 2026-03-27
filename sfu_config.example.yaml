@@ -12,6 +12,11 @@ webhook_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 # Should match service_id from the token
 service_id: ""
 
+# External telemetry gateway. Reuse the same JWT as webhook_token.
+telemetry_otlp_endpoint: "https://telemetry.example.com"
+telemetry_otlp_headers: "Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+telemetry_otlp_protocol: "http/protobuf"
+
 # Heartbeat interval for the v2 SFU signaling protocol hello payload.
 # Clients should heartbeat at this cadence over op=2 once connected to /signal?v=2.
 signal_heartbeat_interval_ms: 15000

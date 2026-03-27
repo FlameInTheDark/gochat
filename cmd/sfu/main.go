@@ -16,6 +16,10 @@ func main() {
 		slog.Error("unable to load config", "error", err)
 		os.Exit(1)
 	}
+	if err := cfg.ApplyObservabilityEnv(); err != nil {
+		slog.Error("unable to apply telemetry config", "error", err)
+		os.Exit(1)
+	}
 
 	obs, err := observability.Init("gochat-sfu",
 		attribute.String("voice.region", cfg.Region),

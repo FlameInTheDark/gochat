@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strings"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -16,6 +17,11 @@ type Config struct {
 	WebhookURL   string `yaml:"webhook_url" env:"WEBHOOK_URL" env-required:"true"`
 	WebhookToken string `yaml:"webhook_token" env:"WEBHOOK_TOKEN" env-required:"true"`
 	ServiceID    string `yaml:"service_id" env:"SFU_SERVICE_ID" env-required:"true"`
+	// Telemetry configuration for the external OTLP gateway. These values are
+	// projected back into the standard OTEL env vars before observability init.
+	TelemetryOTLPEndpoint string `yaml:"telemetry_otlp_endpoint" env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
+	TelemetryOTLPHeaders  string `yaml:"telemetry_otlp_headers" env:"OTEL_EXPORTER_OTLP_HEADERS"`
+	TelemetryOTLPProtocol string `yaml:"telemetry_otlp_protocol" env:"OTEL_EXPORTER_OTLP_PROTOCOL" env-default:"http/protobuf"`
 
 	// SignalHeartbeatIntervalMS is used by the v2 `/signal?v=2` protocol hello.
 	SignalHeartbeatIntervalMS int64 `yaml:"signal_heartbeat_interval_ms" env:"SFU_SIGNAL_HEARTBEAT_INTERVAL_MS" env-default:"15000"`
@@ -57,4 +63,37 @@ func LoadConfig() (*Config, error) {
 		return nil, rerr
 	}
 	return &cfg, nil
+}
+
+func (c *Config) ApplyObservabilityEnv() error {
+	if c == nil {
+		return nil
+	}
+
+	if err := setEnvIfMissing("OTEL_EXPORTER_OTLP_ENDPOINT", c.TelemetryOTLPEndpoint); err != nil {
+		return err
+	}
+	if err := setEnvIfMissing("OTEL_EXPORTER_OTLP_HEADERS", c.TelemetryOTLPHeaders); err != nil {
+		return err
+	}
+	if err := setEnvIfMissing("OTEL_EXPORTER_OTLP_PROTOCOL", c.TelemetryOTLPProtocol); err != nil {
+		return err
+	}
+	if strings.TrimSpace(c.TelemetryOTLPEndpoint) != "" {
+		if err := setEnvIfMissing("OTEL_LOGS_EXPORTER", "otlp"); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func setEnvIfMissing(key, value string) error {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	if _, exists := os.LookupEnv(key); exists {
+		return nil
+	}
+	return os.Setenv(key, value)
 }
