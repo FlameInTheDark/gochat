@@ -237,7 +237,7 @@ type channelState struct {
 	telemetry          *observability.SFUTelemetry
 }
 
-func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToken string, log *slog.Logger, maxAudioBitrateBps uint64, telemetry *observability.SFUTelemetry) *channelState {
+func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToken, routeID, routeURL, routeRegion string, log *slog.Logger, maxAudioBitrateBps uint64, telemetry *observability.SFUTelemetry) *channelState {
 	t := time.NewTicker(time.Minute)
 	stop := make(chan struct{})
 	go func(channelId int64, ch chan struct{}) {
@@ -250,6 +250,9 @@ func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToke
 					SetBody(ChannelAliveNotify{
 						GuildId:   nil,
 						ChannelId: channelId,
+						RouteID:   routeID,
+						RouteURL:  routeURL,
+						Region:    routeRegion,
 					}).
 					Post(webhookUrl + "/api/v1/webhook/sfu/channel/alive")
 				if err != nil {
@@ -748,6 +751,9 @@ type SFU struct {
 
 	webhookUrl   string
 	webhookToken string
+	routeID      string
+	routeURL     string
+	routeRegion  string
 	httpClient   *resty.Client // Shared HTTP client for all webhook calls
 
 	maxAudioBitrateBps    uint64
@@ -759,12 +765,15 @@ type SFU struct {
 	done chan struct{}
 }
 
-func NewSFU(webhookUrl, webhookToken string, log *slog.Logger, maxAudioBitrateBps uint64, enforceAudioBitrate bool, audioBitrateMarginPct int, telemetry *observability.SFUTelemetry) *SFU {
+func NewSFU(webhookUrl, webhookToken, routeID, routeURL, routeRegion string, log *slog.Logger, maxAudioBitrateBps uint64, enforceAudioBitrate bool, audioBitrateMarginPct int, telemetry *observability.SFUTelemetry) *SFU {
 	return &SFU{
 		log:                   log,
 		channels:              make(map[int64]*channelState),
 		webhookUrl:            webhookUrl,
 		webhookToken:          webhookToken,
+		routeID:               routeID,
+		routeURL:              routeURL,
+		routeRegion:           routeRegion,
 		httpClient:            resty.New().SetTransport(observability.NewHTTPTransport("gochat-sfu-webhook", http.DefaultTransport)).SetTimeout(5 * time.Second),
 		maxAudioBitrateBps:    maxAudioBitrateBps,
 		enforceAudioBitrate:   enforceAudioBitrate,
@@ -805,7 +814,7 @@ func (s *SFU) getOrCreateChannel(channelID int64) (*channelState, bool) {
 	ch, ok = s.channels[channelID]
 	created := false
 	if !ok {
-		ch = newChannelState(channelID, s.httpClient, s.webhookUrl, s.webhookToken, s.log, s.maxAudioBitrateBps, s.telemetry)
+		ch = newChannelState(channelID, s.httpClient, s.webhookUrl, s.webhookToken, s.routeID, s.routeURL, s.routeRegion, s.log, s.maxAudioBitrateBps, s.telemetry)
 		s.channels[channelID] = ch
 		created = true
 	}

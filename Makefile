@@ -133,7 +133,7 @@ go_client:
 
 setup: tools up migrate
 
-.PHONY: setup tools build_migration_image migrate_image migrate_image_down migrate_image_scylla migrate_image_pg migrate_image_scylla_down migrate_image_scylla_rollback migrate_image_pg_down migrate_image_pg_rollback run run_ws run_embedder rebuild_all rebuild_api rebuild_auth rebuild_ws rebuild_indexer rebuild_attachments rebuild_sfu rebuild_webhook rebuild_embedder
+.PHONY: setup tools build_migration_image migrate_image migrate_image_down migrate_image_scylla migrate_image_pg migrate_image_scylla_down migrate_image_scylla_rollback migrate_image_pg_down migrate_image_pg_rollback run run_ws run_embedder rebuild_all rebuild_api rebuild_auth rebuild_ws rebuild_indexer rebuild_attachments rebuild_sfu rebuild_webhook rebuild_embedder rebuild_telemetry_gateway
 
 # Dev tools
 rebuild_all: rebuild_api rebuild_auth rebuild_indexer rebuild_embedder rebuild_ws
@@ -169,3 +169,7 @@ rebuild_webhook:
 rebuild_embedder:
 	docker compose down embedder
 	docker compose up -d --no-deps --build embedder
+
+rebuild_telemetry_gateway:
+	docker compose down telemetry-gateway
+	docker compose up -d --no-deps --build telemetry-gateway

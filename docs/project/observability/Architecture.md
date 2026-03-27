@@ -15,6 +15,7 @@ flowchart LR
     subgraph local["Local Services"]
         api["API / Auth / WS / Attachments / Webhook / Workers"]
     end
+    gateway["Telemetry Gateway"]
     collector["OpenTelemetry Collector"]
     oo["OpenObserve"]
     subgraph sfu["External SFU Node"]
@@ -27,7 +28,8 @@ flowchart LR
     collector --> oo
 
     clients --> sfuapp
-    sfuapp --> oo
+    sfuapp --> gateway
+    gateway --> collector
     stdout --> sfuapp
 ```
 
@@ -39,9 +41,10 @@ flowchart LR
 
 ## External SFU
 
-- Traces go directly from the SFU process to the OTLP HTTP traces endpoint.
-- Metrics go directly from the SFU process to the OTLP HTTP metrics endpoint.
-- Logs stay on stdout and are also mirrored to OpenObserve through a built-in async HTTP exporter.
+- Traces, metrics, and logs all go from the SFU process to the public OTLP HTTP telemetry gateway.
+- The telemetry gateway accepts only `/v1/traces`, `/v1/metrics`, and `/v1/logs`, validates the SFU JWT, rate-limits by `service.instance.id`, and forwards valid requests to the private collector.
+- The collector stays private and exports the accepted signals to OpenObserve.
+- Logs still stay on stdout locally and are also mirrored through the built-in async OTLP log exporter.
 - The log exporter is best-effort by design: it uses a bounded queue, batching, retry/backoff, and dropped-log accounting so media flow is never blocked by observability.
 
 ## Identity model

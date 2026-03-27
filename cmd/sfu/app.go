@@ -90,7 +90,8 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger, cfg *config.Config) *App {
 		attribute.String("voice.region", cfg.Region),
 		attribute.String("service.instance.id", cfg.ServiceID),
 	)
-	sfu := NewSFU(cfg.WebhookURL, cfg.WebhookToken, logger, maxAudioBps, cfg.EnforceAudioBitrate, marginPct, telemetry)
+	signalURL := buildSignalURL(cfg.PublicBaseURL)
+	sfu := NewSFU(cfg.WebhookURL, cfg.WebhookToken, cfg.ServiceID, signalURL, cfg.Region, logger, maxAudioBps, cfg.EnforceAudioBitrate, marginPct, telemetry)
 
 	a := &App{
 		app:              fiberApp,
@@ -183,7 +184,14 @@ func (a *App) notifyUserJoin(ctx context.Context, uid, channelID int64, guildID 
 			SetContext(reqCtx).
 			SetHeader("Content-Type", "application/json").
 			SetHeader("X-Webhook-Token", a.cfg.WebhookToken).
-			SetBody(UserJoinNotify{UserId: uid, ChannelId: channelID, GuildId: guildID}).
+			SetBody(UserJoinNotify{
+				UserId:    uid,
+				ChannelId: channelID,
+				GuildId:   guildID,
+				RouteID:   a.cfg.ServiceID,
+				RouteURL:  buildSignalURL(a.cfg.PublicBaseURL),
+				Region:    a.cfg.Region,
+			}).
 			Post(a.cfg.WebhookURL + "/api/v1/webhook/sfu/voice/join")
 		if err != nil {
 			a.log.Error("user join notify failed", slog.String("error", err.Error()))

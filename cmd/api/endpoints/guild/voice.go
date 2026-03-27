@@ -176,40 +176,12 @@ func (e *entity) JoinVoice(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	// Try per-channel route in cache: if exists, reuse its URL.
-	// Key format: voice:route:<channelId> with JSON {"id":"...","url":"...","region":"..."}
-	var chosen voiceRouteBinding
-	if e.cache != nil {
-		_ = e.cache.GetJSON(c.UserContext(), bindingKey(channelId), &chosen)
+	chosen, err := e.channelBindingForJoin(c.UserContext(), channelId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadGateway, "voice discovery unavailable")
 	}
-
-	// If no binding, pick from discovery registry and bind to channel via SetNX to prevent races.
 	if chosen.URL == "" {
-		region := e.defaultVoiceRegion
-		if dbreg, err := e.ch.GetChannelVoiceRegion(c.UserContext(), channelId); err == nil && dbreg != nil && *dbreg != "" {
-			region = *dbreg
-		}
-		if e.disco != nil {
-			if list, err := e.disco.List(c.UserContext(), region); err == nil && len(list) > 0 {
-				pickedID, pickedURL := pickSFU(list)
-				if pickedURL != "" {
-					chosen = voiceRouteBinding{ID: pickedID, URL: pickedURL, Region: region}
-					if e.cache != nil {
-						// SetNX: only write if key absent; if lost the race, re-read the winner.
-						set, _ := e.cache.SetTimedJSONNX(c.UserContext(), bindingKey(channelId), chosen, 60)
-						if !set {
-							var winner voiceRouteBinding
-							if err := e.cache.GetJSON(c.UserContext(), bindingKey(channelId), &winner); err == nil && winner.URL != "" {
-								chosen = winner
-							}
-						}
-					}
-				}
-			}
-		}
-		if chosen.URL == "" {
-			return fiber.NewError(fiber.StatusServiceUnavailable, ErrNoSFUAvailableInRegion)
-		}
+		return fiber.NewError(fiber.StatusServiceUnavailable, ErrNoSFUAvailableInRegion)
 	}
 
 	// Issue a short-lived SFU token. Extend to 5 minutes during an active region migration.
@@ -356,16 +328,15 @@ func (e *entity) MoveMember(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "unable to issue token")
 	}
 
-	// Select SFU URL for target channel via weighted random selection
+	// Select SFU URL for target channel. Reuse the active channel binding when present
+	// so moves land on the same SFU as the rest of the channel.
 	var pickedURL string
 	if e.disco != nil {
-		region := e.defaultVoiceRegion
-		if dbreg, err := e.ch.GetChannelVoiceRegion(c.UserContext(), body.ChannelID); err == nil && dbreg != nil && *dbreg != "" {
-			region = *dbreg
+		targetBinding, err := e.channelBindingForJoin(c.UserContext(), body.ChannelID)
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadGateway, "voice discovery unavailable")
 		}
-		if list, err := e.disco.List(c.UserContext(), region); err == nil && len(list) > 0 {
-			_, pickedURL = pickSFU(list)
-		}
+		pickedURL = targetBinding.URL
 		if pickedURL == "" {
 			return fiber.NewError(fiber.StatusServiceUnavailable, "no sfu available in region")
 		}
@@ -379,23 +350,14 @@ func (e *entity) MoveMember(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to send move notice")
 	}
 
-	// Resolve source SFU URL from cache, falling back to discovery
-	var fromURL string
-	if e.cache != nil {
-		var b voiceRouteBinding
-		_ = e.cache.GetJSON(c.UserContext(), bindingKey(body.From), &b)
-		fromURL = b.URL
-	}
+	// Resolve source SFU URL from cache, falling back to discovery when the cache is cold.
+	fromURL := e.cachedChannelBinding(c.UserContext(), body.From).URL
 	if fromURL == "" {
-		region := e.defaultVoiceRegion
-		if dbreg, err := e.ch.GetChannelVoiceRegion(c.UserContext(), body.From); err == nil && dbreg != nil && *dbreg != "" {
-			region = *dbreg
+		sourceBinding, err := e.selectSFUBinding(c.UserContext(), body.From, e.preferredVoiceRegion(c.UserContext(), body.From), true)
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadGateway, "voice discovery unavailable")
 		}
-		if e.disco != nil {
-			if list, err := e.disco.List(c.UserContext(), region); err == nil && len(list) > 0 {
-				_, fromURL = pickSFU(list)
-			}
-		}
+		fromURL = sourceBinding.URL
 		if fromURL == "" {
 			return fiber.NewError(fiber.StatusServiceUnavailable, "no sfu available for source channel")
 		}
@@ -501,7 +463,7 @@ func (e *entity) SetVoiceRegion(c *fiber.Ctx) error {
 		}
 		// I2: Validate that live SFU instances exist in the requested region before writing DB
 		if e.disco != nil {
-			instances, err := e.disco.List(c.UserContext(), reg)
+			instances, err := e.cachedRegionInstances(c.UserContext(), reg)
 			if err != nil || len(instances) == 0 {
 				return fiber.NewError(fiber.StatusUnprocessableEntity, "no SFU instances in requested region")
 			}
@@ -510,8 +472,7 @@ func (e *entity) SetVoiceRegion(c *fiber.Ctx) error {
 
 	// I9: Skip DB write and rebind if the region hasn't changed
 	if e.cache != nil && reg != "" {
-		var prev voiceRouteBinding
-		_ = e.cache.GetJSON(c.UserContext(), bindingKey(channelId), &prev)
+		prev := e.cachedChannelBinding(c.UserContext(), channelId)
 		if prev.Region == reg {
 			return c.JSON(SetVoiceRegionResponse{GuildID: guildId, ChannelID: channelId, Region: reg})
 		}
@@ -526,8 +487,7 @@ func (e *entity) SetVoiceRegion(c *fiber.Ctx) error {
 
 	// Read existing route binding and active sessions to decide whether to rebind
 	if e.cache != nil && e.disco != nil {
-		var prev voiceRouteBinding
-		_ = e.cache.GetJSON(c.UserContext(), bindingKey(channelId), &prev)
+		prev := e.cachedChannelBinding(c.UserContext(), channelId)
 		oldURL := prev.URL // capture before any potential overwrite
 
 		// I1: Use session hash as authoritative activity signal (maintained by webhook handlers)
@@ -543,47 +503,45 @@ func (e *entity) SetVoiceRegion(c *fiber.Ctx) error {
 			}
 
 			// Discover a new SFU instance for the updated region
-			list, err := e.disco.List(c.UserContext(), newRegion)
-			if err != nil || len(list) == 0 {
+			newBinding, err := e.selectSFUBinding(c.UserContext(), channelId, newRegion, false)
+			if err != nil || newBinding.URL == "" {
 				// No instance available; clear binding so next join rediscovers
 				_ = e.cache.Delete(c.UserContext(), bindingKey(channelId))
 			} else {
-				chosenID, chosenURL := pickSFU(list)
-				if chosenURL == "" {
-					_ = e.cache.Delete(c.UserContext(), bindingKey(channelId))
-				} else {
-					newBinding := voiceRouteBinding{ID: chosenID, URL: chosenURL, Region: newRegion}
+				// Mark the intended target before clients start reconnecting so stale
+				// /voice/join and /channel/alive updates from the old SFU cannot
+				// overwrite the migration target.
+				_ = e.cache.SetTimedJSON(c.UserContext(), rebindMarkerKey(channelId), newBinding, 300)
 
-					// I7: Pre-notify guild members so clients can prepare for the reconnect
-					_ = mq.SendGuildUpdate(c.UserContext(), e.mqt, guildId, &mqmsg.VoiceRegionChanging{
-						ChannelId: channelId,
-						Region:    newRegion,
-						DelayMs:   3000,
-					})
+				// I7: Pre-notify guild members so clients can prepare for the reconnect
+				_ = mq.SendGuildUpdate(c.UserContext(), e.mqt, guildId, &mqmsg.VoiceRegionChanging{
+					ChannelId: channelId,
+					Region:    newRegion,
+					DelayMs:   3000,
+				})
 
-					// Capture values for the background goroutine
-					cache := e.cache
-					mqt := e.mqt
-					authSecret := e.authSecret
-					asyncCtx := observability.BackgroundFromContext(c.UserContext())
-					log := observability.LoggerWithContext(asyncCtx, e.log)
+				// Capture values for the background goroutine
+				cache := e.cache
+				mqt := e.mqt
+				authSecret := e.authSecret
+				asyncCtx := observability.BackgroundFromContext(c.UserContext())
+				log := observability.LoggerWithContext(asyncCtx, e.log)
 
-					// Background goroutine: sleep 3s → update cache → publish VoiceRebind → close old SFU
-					go func() {
-						time.Sleep(3 * time.Second)
+				// Background goroutine: sleep 3s → update cache → publish VoiceRebind → close old SFU
+				go func() {
+					time.Sleep(3 * time.Second)
 
-						// I9: Write new binding with region
-						_ = cache.SetTimedJSON(asyncCtx, bindingKey(channelId), newBinding, 60)
-						// I6: Mark active migration so JoinVoice issues extended JWT
-						_ = cache.SetTimed(asyncCtx, rebindMarkerKey(channelId), "1", 300)
-						// I4: Notify clients to reconnect with jitter to spread thundering herd
-						_ = mq.SendChannelMessage(asyncCtx, mqt, channelId, &mqmsg.VoiceRebind{Channel: channelId, JitterMs: 3000})
-						// I5: Tell old SFU to close all sessions
-						if oldURL != "" {
-							notifyOldSFUClose(asyncCtx, oldURL, channelId, authSecret, log)
-						}
-					}()
-				}
+					// I9: Write new binding with region
+					_ = cache.SetTimedJSON(asyncCtx, bindingKey(channelId), newBinding, voiceRouteInitialTTLSeconds)
+					// I6: Mark active migration so JoinVoice issues extended JWT
+					_ = cache.SetTimedJSON(asyncCtx, rebindMarkerKey(channelId), newBinding, 300)
+					// I4: Notify clients to reconnect with jitter to spread thundering herd
+					_ = mq.SendChannelMessage(asyncCtx, mqt, channelId, &mqmsg.VoiceRebind{Channel: channelId, JitterMs: 3000})
+					// I5: Tell old SFU to close all sessions
+					if oldURL != "" {
+						notifyOldSFUClose(asyncCtx, oldURL, channelId, authSecret, log)
+					}
+				}()
 			}
 		} else {
 			// No active sessions; just clear the stale binding

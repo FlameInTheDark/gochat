@@ -48,6 +48,10 @@ jobs:
             dockerfile: webhook.Dockerfile
             image: gochat-webhook
             cache_scope: webhook-dev
+          - service: telemetry-gateway
+            dockerfile: telemetry-gateway.Dockerfile
+            image: gochat-telemetry-gateway
+            cache_scope: telemetry-gateway-dev
           - service: migrations
             dockerfile: migration.Dockerfile
             image: gochat-migrations

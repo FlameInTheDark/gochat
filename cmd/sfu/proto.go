@@ -130,6 +130,9 @@ type UserJoinNotify struct {
 	UserId    int64  `json:"user_id"`
 	ChannelId int64  `json:"channel_id"`
 	GuildId   *int64 `json:"guild_id"`
+	RouteID   string `json:"route_id,omitempty"`
+	RouteURL  string `json:"route_url,omitempty"`
+	Region    string `json:"region,omitempty"`
 }
 
 type UserLeaveNotify struct {
@@ -141,6 +144,9 @@ type UserLeaveNotify struct {
 type ChannelAliveNotify struct {
 	GuildId   *int64 `json:"guild_id"`
 	ChannelId int64  `json:"channel_id"`
+	RouteID   string `json:"route_id,omitempty"`
+	RouteURL  string `json:"route_url,omitempty"`
+	Region    string `json:"region,omitempty"`
 }
 
 // speakingEvent is sent to clients in the same channel to indicate

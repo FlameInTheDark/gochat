@@ -76,7 +76,12 @@ service:
       processors: [memory_limiter, batch]
       exporters: [otlphttp/openobserve_metrics]
 
-    logs:
+    logs/docker:
       receivers: [fluentforward/docker]
       processors: [memory_limiter, transform/logs, batch]
+      exporters: [otlphttp/openobserve_logs]
+
+    logs/otlp:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
       exporters: [otlphttp/openobserve_logs]

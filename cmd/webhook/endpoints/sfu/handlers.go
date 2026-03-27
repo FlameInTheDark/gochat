@@ -1,11 +1,14 @@
 package sfu
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/observability"
@@ -14,8 +17,33 @@ import (
 )
 
 const (
-	hdrToken = "X-Webhook-Token"
+	hdrToken                   = "X-Webhook-Token"
+	voiceRouteActiveTTLSeconds = 180
+	voiceClientsTTLSeconds     = 120
 )
+
+type voiceRouteBinding struct {
+	ID     string `json:"id"`
+	URL    string `json:"url"`
+	Region string `json:"region,omitempty"`
+}
+
+func refreshVoiceRoute(ctx context.Context, cache cache.Cache, channelID int64, routeID, routeURL, region string) error {
+	if cache == nil || channelID == 0 || routeID == "" || routeURL == "" {
+		return nil
+	}
+	if raw, err := cache.Get(ctx, fmt.Sprintf("voice:rebind:%d", channelID)); err == nil && raw != "" {
+		var marker voiceRouteBinding
+		if json.Unmarshal([]byte(raw), &marker) == nil && marker.ID != "" && marker.ID != routeID {
+			return nil
+		}
+	}
+	return cache.SetTimedJSON(ctx, fmt.Sprintf("voice:route:%d", channelID), voiceRouteBinding{
+		ID:     routeID,
+		URL:    routeURL,
+		Region: region,
+	}, voiceRouteActiveTTLSeconds)
+}
 
 // Heartbeat
 //
@@ -106,7 +134,12 @@ func (e *entity) ChannelUserJoin(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "unable to update channel state")
 	}
-	ttlErr := e.cache.SetTTL(c.UserContext(), fmt.Sprintf("voice:clients:%d", req.ChannelId), 120)
+	if err := refreshVoiceRoute(c.UserContext(), e.cache, req.ChannelId, req.RouteID, req.RouteURL, req.Region); err != nil {
+		log.Error("unable to refresh voice route",
+			slog.Int64("channel_id", req.ChannelId),
+			slog.String("error", err.Error()))
+	}
+	ttlErr := e.cache.SetTTL(c.UserContext(), fmt.Sprintf("voice:clients:%d", req.ChannelId), voiceClientsTTLSeconds)
 	if ttlErr != nil {
 		log.Error("unable to set ttl for voice clients",
 			slog.Int64("channel_id", req.ChannelId),
@@ -165,7 +198,7 @@ func (e *entity) ChannelUserLeave(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "unable to update channel state")
 	}
-	ttlErr := e.cache.SetTTL(c.UserContext(), fmt.Sprintf("voice:clients:%d", req.ChannelId), 120)
+	ttlErr := e.cache.SetTTL(c.UserContext(), fmt.Sprintf("voice:clients:%d", req.ChannelId), voiceClientsTTLSeconds)
 	if ttlErr != nil {
 		log.Error("unable to set ttl for voice clients",
 			slog.Int64("channel_id", req.ChannelId),
@@ -218,15 +251,15 @@ func (e *entity) ChannelAlive(c *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
-	ttlErr := e.cache.SetTTL(c.UserContext(), fmt.Sprintf("voice:clients:%d", req.ChannelId), 120)
+	if err := refreshVoiceRoute(c.UserContext(), e.cache, req.ChannelId, req.RouteID, req.RouteURL, req.Region); err != nil {
+		log.Error("unable to refresh voice route",
+			slog.Int64("channel_id", req.ChannelId),
+			slog.String("error", err.Error()))
+	}
+
+	ttlErr := e.cache.SetTTL(c.UserContext(), fmt.Sprintf("voice:clients:%d", req.ChannelId), voiceClientsTTLSeconds)
 	if ttlErr != nil {
 		log.Error("unable to set ttl for channel users",
-			slog.Int64("channel_id", req.ChannelId),
-			slog.String("error", ttlErr.Error()))
-	}
-	ttlErr = e.cache.SetTTL(c.UserContext(), fmt.Sprintf("voice:route:%d", req.ChannelId), 120)
-	if ttlErr != nil {
-		log.Error("unable to set ttl for voice route",
 			slog.Int64("channel_id", req.ChannelId),
 			slog.String("error", ttlErr.Error()))
 	}
