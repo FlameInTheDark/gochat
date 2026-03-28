@@ -40,7 +40,7 @@ type Runtime struct {
 
 	traceProvider *sdktrace.TracerProvider
 	meterProvider *sdkmetric.MeterProvider
-	logExporter   *openObserveLogExporter
+	logExporter   interface{ Close() error }
 }
 
 type metricViewSpec struct {
@@ -119,7 +119,29 @@ func Init(serviceName string, attrs ...attribute.KeyValue) (*Runtime, error) {
 		}
 	}
 
-	if cfg, enabled, err := loadOpenObserveLogExporterConfigFromEnv(); err != nil {
+	if cfg, enabled, err := loadOTLPLogExporterConfigFromEnv(rt.serviceName, resourceAttrs); err != nil {
+		errs = append(errs, err)
+		logger.Warn("unable to initialize OTLP log exporter", slog.String("error", err.Error()))
+	} else if enabled {
+		exporter, exportErr := newOTLPLogExporter(rt.serviceName, cfg)
+		if exportErr != nil {
+			errs = append(errs, exportErr)
+			logger.Warn("unable to initialize OTLP log exporter", slog.String("error", exportErr.Error()))
+		} else {
+			rt.logExporter = exporter
+			handlers := []slog.Handler{
+				stdoutHandler,
+				newOTLPLogHandler(exporter),
+			}
+			rt.logger = slog.New(&contextualHandler{
+				next:               &fanoutHandler{handlers: handlers},
+				serviceName:        serviceName,
+				deploymentEnvValue: deploymentEnv(),
+				fixedAttrs:         logAttrs,
+			})
+			setDefaultLogger(rt.logger)
+		}
+	} else if cfg, enabled, err := loadOpenObserveLogExporterConfigFromEnv(); err != nil {
 		errs = append(errs, err)
 		logger.Warn("unable to initialize OpenObserve log exporter", slog.String("error", err.Error()))
 	} else if enabled {

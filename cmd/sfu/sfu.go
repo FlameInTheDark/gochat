@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -15,10 +16,13 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"resty.dev/v3"
 
+	voicev2 "github.com/FlameInTheDark/gochat/cmd/sfu/signaling/v2"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
+
+const periodicKeyFrameInterval = 10 * time.Second
 
 // ---------------------------------------------------------------------------
 // threadSafeWriter wraps a websocket.Conn with a mutex for concurrent writes.
@@ -31,19 +35,39 @@ type threadSafeWriter struct {
 }
 
 func (t *threadSafeWriter) WriteJSON(v any) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	if t.closed.Load() {
 		return fmt.Errorf("websocket closed")
 	}
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	if t.conn == nil {
 		return fmt.Errorf("websocket closed")
 	}
 	return t.conn.WriteJSON(v)
 }
 
+func (t *threadSafeWriter) WriteMessage(messageType int, payload []byte) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.closed.Load() {
+		return fmt.Errorf("websocket closed")
+	}
+	if t.conn == nil {
+		return fmt.Errorf("websocket closed")
+	}
+	return t.conn.WriteMessage(messageType, payload)
+}
+
 func (t *threadSafeWriter) SendEnvelope(env OutEnvelope) error {
 	return t.WriteJSON(env)
+}
+
+func (t *threadSafeWriter) SendVoiceGatewayPacket(op int, payload any) error {
+	return t.WriteJSON(voicev2.Packet{Op: op, D: payload})
+}
+
+func (t *threadSafeWriter) SendBinaryPacket(payload []byte) error {
+	return t.WriteMessage(websocket.BinaryMessage, payload)
 }
 
 func (t *threadSafeWriter) SendRTCOffer(desc webrtc.SessionDescription) error {
@@ -62,8 +86,36 @@ func (t *threadSafeWriter) SendRTCCandidate(c *webrtc.ICECandidate) error {
 	return t.SendEnvelope(env)
 }
 
+func (t *threadSafeWriter) SendClose(code int, text string) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.closed.Load() {
+		return fmt.Errorf("websocket closed")
+	}
+	if t.conn == nil {
+		return fmt.Errorf("websocket closed")
+	}
+	return t.conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(code, text), time.Now().Add(time.Second))
+}
+
+func (t *threadSafeWriter) ReplaceConn(conn *websocket.Conn) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.closed.Load() {
+		return
+	}
+	t.conn = conn
+}
+
+func (t *threadSafeWriter) Detach() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.conn = nil
+}
+
 // Close marks the writer as closed. Subsequent writes return immediately.
 func (t *threadSafeWriter) Close() {
+	t.Detach()
 	t.closed.Store(true)
 }
 
@@ -76,12 +128,72 @@ type peerConnectionState struct {
 	websocket       *threadSafeWriter
 	userID          int64
 	perms           int64 // voice permission bitmask from JWT
-	serverMuted     bool  // server-wide mute (admin action)
-	serverDeafened  bool  // server-wide deafen (admin action)
-	negotiated      bool  // true after the peer has answered at least one offer
-	forceOffer      bool  // explicit renegotiation request for this peer
+	signalVersion   int
+	rtcConnectionID string
+	mediaSessionID  string
+	daveProtocol    int
+	daveEpoch       uint64
+	serverMuted     bool // server-wide mute (admin action)
+	serverDeafened  bool // server-wide deafen (admin action)
+	negotiated      bool // true after the peer has answered at least one offer
+	forceOffer      bool // explicit renegotiation request for this peer
 	offeredRevision uint64
 	appliedRevision uint64
+}
+
+func (p *peerConnectionState) sendDescription(desc webrtc.SessionDescription) error {
+	if p.signalVersion == signalProtocolVersion2 {
+		audioCodec, videoCodec := detectNegotiatedCodecs(desc.SDP)
+		return p.websocket.SendVoiceGatewayPacket(voicev2.OpSessionDescription, voicev2.SessionDescription{
+			Type:                desc.Type.String(),
+			SDP:                 desc.SDP,
+			RTCConnectionID:     p.rtcConnectionID,
+			MediaSessionID:      p.mediaSessionID,
+			AudioCodec:          audioCodec,
+			VideoCodec:          videoCodec,
+			DAVEProtocolVersion: p.daveProtocol,
+			DAVEEpoch:           p.daveEpoch,
+		})
+	}
+	return p.websocket.SendRTCOffer(desc)
+}
+
+func (p *peerConnectionState) sendSpeaking(fromUser int64, speaking int) error {
+	if p.signalVersion == signalProtocolVersion2 {
+		return p.websocket.SendVoiceGatewayPacket(voicev2.OpSpeaking, voicev2.Speaking{
+			UserID:   strconv.FormatInt(fromUser, 10),
+			Speaking: speaking,
+		})
+	}
+	return p.websocket.SendEnvelope(OutEnvelope{
+		OP: int(mqmsg.OPCodeRTC),
+		T:  int(mqmsg.EventTypeRTCSpeaking),
+		D:  speakingEvent{UserId: fromUser, Speaking: speaking},
+	})
+}
+
+func (p *peerConnectionState) sendMuteState(userID int64, muted bool) error {
+	return p.websocket.SendEnvelope(OutEnvelope{
+		OP: int(mqmsg.OPCodeRTC),
+		T:  int(mqmsg.EventTypeRTCServerMuteUser),
+		D:  muteEvent{UserId: userID, Muted: muted},
+	})
+}
+
+func (p *peerConnectionState) sendDeafenState(userID int64, deafened bool) error {
+	return p.websocket.SendEnvelope(OutEnvelope{
+		OP: int(mqmsg.OPCodeRTC),
+		T:  int(mqmsg.EventTypeRTCServerDeafenUser),
+		D:  deafenEvent{UserId: userID, Deafened: deafened},
+	})
+}
+
+func (p *peerConnectionState) sendKick(targetUserID int64) error {
+	return p.websocket.SendEnvelope(OutEnvelope{
+		OP: int(mqmsg.OPCodeRTC),
+		T:  int(mqmsg.EventTypeRTCServerKickUser),
+		D:  kickEvent{UserId: targetUserID},
+	})
 }
 
 // ---------------------------------------------------------------------------
@@ -125,7 +237,7 @@ type channelState struct {
 	telemetry          *observability.SFUTelemetry
 }
 
-func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToken string, log *slog.Logger, maxAudioBitrateBps uint64, telemetry *observability.SFUTelemetry) *channelState {
+func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToken, routeID, routeURL, routeRegion string, log *slog.Logger, maxAudioBitrateBps uint64, telemetry *observability.SFUTelemetry) *channelState {
 	t := time.NewTicker(time.Minute)
 	stop := make(chan struct{})
 	go func(channelId int64, ch chan struct{}) {
@@ -138,6 +250,9 @@ func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToke
 					SetBody(ChannelAliveNotify{
 						GuildId:   nil,
 						ChannelId: channelId,
+						RouteID:   routeID,
+						RouteURL:  routeURL,
+						Region:    routeRegion,
 					}).
 					Post(webhookUrl + "/api/v1/webhook/sfu/channel/alive")
 				if err != nil {
@@ -238,11 +353,7 @@ func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removed bool, empt
 }
 
 func (c *channelState) addTrack(userID int64, t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
-	// Use streamID to carry the sender's user ID so receivers can map tracks to users.
-	// Keep the original track ID for uniqueness.
-	streamID := fmt.Sprintf("u:%d", userID)
-	// Ensure unique Track ID per user to avoid collisions across peers (e.g. "video")
-	trackID := fmt.Sprintf("%d-%s", userID, t.ID())
+	streamID, trackID := forwardedTrackIdentifiers(userID, t.ID())
 	trackLocal, err := webrtc.NewTrackLocalStaticRTP(t.Codec().RTPCodecCapability, trackID, streamID)
 	if err != nil {
 		c.log.Warn("failed to create local track", slog.Int64("channel", c.id), slog.Int64("user", userID), slog.String("track", trackID), slog.String("error", err.Error()))
@@ -277,6 +388,15 @@ func (c *channelState) removeTrack(track *webrtc.TrackLocalStaticRTP) (kind stri
 	return kind, removed, empty
 }
 
+func forwardedTrackIdentifiers(userID int64, remoteTrackID string) (streamID string, trackID string) {
+	// Use streamID to carry the sender's raw user ID so browser clients can map
+	// remote tracks directly to application users via event.streams[0].id.
+	streamID = fmt.Sprintf("%d", userID)
+	// Ensure unique Track ID per user to avoid collisions across peers (e.g. "video").
+	trackID = fmt.Sprintf("%d-%s", userID, remoteTrackID)
+	return streamID, trackID
+}
+
 func (c *channelState) bumpTopologyRevisionLocked() uint64 {
 	c.topologyRevision++
 	return c.topologyRevision
@@ -309,6 +429,13 @@ func (c *channelState) applyPeerAnswer(pc *webrtc.PeerConnection) (needsSignal b
 		return needsSignal, true
 	}
 	return false, false
+}
+
+func (c *channelState) preparePeerInitialSync(state *peerConnectionState) uint64 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.syncPeerSenders(state)
+	return c.topologyRevision
 }
 
 // signalPeerConnections enqueues a signal request to the dedicated goroutine.
@@ -380,23 +507,30 @@ func (c *channelState) doSignalPeerConnections() {
 			c.log.Warn("failed to create offer", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 			continue
 		}
-		if c.maxAudioBitrateBps > 0 {
-			offer.SDP = limitAudioBitrateInSDP(offer.SDP, c.maxAudioBitrateBps)
-		}
 		if err = state.peerConnection.SetLocalDescription(offer); err != nil {
 			c.log.Warn("failed to set local description", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 			continue
 		}
 
+		offerToSend := offer
+		// Keep Pion's local description pristine and only munge the copy sent over
+		// the wire. Re-marshaled SDP can be rejected by SetLocalDescription.
+		if c.maxAudioBitrateBps > 0 {
+			offerToSend.SDP = limitAudioBitrateInSDP(offerToSend.SDP, c.maxAudioBitrateBps)
+		}
+		// Strip any m-lines carrying the receiver's own forwarded track — sending
+		// a user's own audio/video back wastes bandwidth and confuses DAVE E2EE.
+		offerToSend.SDP = stripSelfTracksFromSDP(offerToSend.SDP, state.userID)
+
 		state.offeredRevision = currentRevision
 		state.forceOffer = false
-		work = append(work, peerWork{state: state, offer: offer})
+		work = append(work, peerWork{state: state, offer: offerToSend})
 	}
 	c.mu.Unlock()
 
 	// Step 3: Send offers outside the lock
 	for _, w := range work {
-		if err := w.state.websocket.SendRTCOffer(w.offer); err != nil {
+		if err := w.state.sendDescription(w.offer); err != nil {
 			c.log.Warn("failed to send offer", slog.Int64("channel", c.id), slog.String("error", err.Error()))
 			continue
 		}
@@ -459,11 +593,12 @@ func (c *channelState) dispatchKeyFrame() {
 
 	for _, p := range peers {
 		for _, receiver := range p.peerConnection.GetReceivers() {
-			if receiver.Track() == nil {
+			track := receiver.Track()
+			if track == nil || track.Kind() != webrtc.RTPCodecTypeVideo {
 				continue
 			}
 			_ = p.peerConnection.WriteRTCP([]rtcp.Packet{
-				&rtcp.PictureLossIndication{MediaSSRC: uint32(receiver.Track().SSRC())},
+				&rtcp.PictureLossIndication{MediaSSRC: uint32(track.SSRC())},
 			})
 		}
 	}
@@ -495,30 +630,25 @@ func (c *channelState) snapshotPeers() []*peerConnectionState {
 // broadcastSpeaking relays speaking state to all peers in the channel except the origin.
 func (c *channelState) broadcastSpeaking(fromUser int64, speaking int) {
 	peers := c.snapshotPeers()
-	payload := speakingEvent{UserId: fromUser, Speaking: speaking}
-	env := OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCSpeaking), D: payload}
-
 	for _, p := range peers {
 		if p.userID == fromUser {
 			continue
 		}
-		_ = p.websocket.SendEnvelope(env)
+		_ = p.sendSpeaking(fromUser, speaking)
 	}
 }
 
 func (c *channelState) broadcastMuteState(userID int64, muted bool) {
 	peers := c.snapshotPeers()
-	env := OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCServerMuteUser), D: muteEvent{UserId: userID, Muted: muted}}
 	for _, p := range peers {
-		_ = p.websocket.SendEnvelope(env)
+		_ = p.sendMuteState(userID, muted)
 	}
 }
 
 func (c *channelState) broadcastDeafenState(userID int64, deafened bool) {
 	peers := c.snapshotPeers()
-	env := OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCServerDeafenUser), D: deafenEvent{UserId: userID, Deafened: deafened}}
 	for _, p := range peers {
-		_ = p.websocket.SendEnvelope(env)
+		_ = p.sendDeafenState(userID, deafened)
 	}
 }
 
@@ -598,7 +728,7 @@ func (c *channelState) kickUser(targetUserID int64) {
 	}
 	c.log.Info("kicking user", slog.Int64("channel", c.id), slog.Int64("user", targetUserID))
 	// Notify the target they are being kicked
-	_ = target.websocket.SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCServerKickUser), D: kickEvent{UserId: targetUserID}})
+	_ = target.sendKick(targetUserID)
 	// Close their peer connection (triggers cleanup via OnConnectionStateChange)
 	_ = target.peerConnection.Close()
 }
@@ -629,6 +759,9 @@ type SFU struct {
 
 	webhookUrl   string
 	webhookToken string
+	routeID      string
+	routeURL     string
+	routeRegion  string
 	httpClient   *resty.Client // Shared HTTP client for all webhook calls
 
 	maxAudioBitrateBps    uint64
@@ -640,12 +773,15 @@ type SFU struct {
 	done chan struct{}
 }
 
-func NewSFU(webhookUrl, webhookToken string, log *slog.Logger, maxAudioBitrateBps uint64, enforceAudioBitrate bool, audioBitrateMarginPct int, telemetry *observability.SFUTelemetry) *SFU {
+func NewSFU(webhookUrl, webhookToken, routeID, routeURL, routeRegion string, log *slog.Logger, maxAudioBitrateBps uint64, enforceAudioBitrate bool, audioBitrateMarginPct int, telemetry *observability.SFUTelemetry) *SFU {
 	return &SFU{
 		log:                   log,
 		channels:              make(map[int64]*channelState),
 		webhookUrl:            webhookUrl,
 		webhookToken:          webhookToken,
+		routeID:               routeID,
+		routeURL:              routeURL,
+		routeRegion:           routeRegion,
 		httpClient:            resty.New().SetTransport(observability.NewHTTPTransport("gochat-sfu-webhook", http.DefaultTransport)).SetTimeout(5 * time.Second),
 		maxAudioBitrateBps:    maxAudioBitrateBps,
 		enforceAudioBitrate:   enforceAudioBitrate,
@@ -686,7 +822,7 @@ func (s *SFU) getOrCreateChannel(channelID int64) (*channelState, bool) {
 	ch, ok = s.channels[channelID]
 	created := false
 	if !ok {
-		ch = newChannelState(channelID, s.httpClient, s.webhookUrl, s.webhookToken, s.log, s.maxAudioBitrateBps, s.telemetry)
+		ch = newChannelState(channelID, s.httpClient, s.webhookUrl, s.webhookToken, s.routeID, s.routeURL, s.routeRegion, s.log, s.maxAudioBitrateBps, s.telemetry)
 		s.channels[channelID] = ch
 		created = true
 	}
@@ -728,6 +864,26 @@ func (s *SFU) RemovePeer(ctx context.Context, channelID int64, pc *webrtc.PeerCo
 	if empty {
 		s.cleanupChannel(ctx, channelID, ch)
 	}
+}
+
+func (s *SFU) GetChannel(channelID int64) *channelState {
+	s.mu.RLock()
+	ch := s.channels[channelID]
+	s.mu.RUnlock()
+	return ch
+}
+
+func (s *SFU) ChannelRevision(channelID int64) uint64 {
+	s.mu.RLock()
+	ch := s.channels[channelID]
+	s.mu.RUnlock()
+	if ch == nil {
+		return 0
+	}
+	ch.mu.RLock()
+	rev := ch.topologyRevision
+	ch.mu.RUnlock()
+	return rev
 }
 
 func (s *SFU) AddTrack(ctx context.Context, channelID int64, userID int64, t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
@@ -817,13 +973,27 @@ func (s *SFU) ApplyAnswer(ctx context.Context, channelID int64, pc *webrtc.PeerC
 		return
 	}
 	needsSignal, found := ch.applyPeerAnswer(pc)
-	if !found || !needsSignal {
+	if !found {
+		return
+	}
+	ch.dispatchKeyFrame()
+	if !needsSignal {
 		return
 	}
 	if s.telemetry != nil {
 		s.telemetry.Renegotiation(ctx, attribute.Int64("voice.channel_id", channelID))
 	}
 	ch.signalPeerConnections()
+}
+
+func (s *SFU) RequestKeyFrame(channelID int64) {
+	s.mu.RLock()
+	ch := s.channels[channelID]
+	s.mu.RUnlock()
+	if ch == nil {
+		return
+	}
+	ch.dispatchKeyFrame()
 }
 
 func (s *SFU) dispatchKeyFrameAll() {
@@ -853,7 +1023,7 @@ func (s *SFU) BroadcastSpeaking(_ context.Context, channelID int64, fromUser int
 // RunKeyFrameTicker periodically requests key frames from all peers.
 // Stops when the SFU's done channel is closed.
 func (s *SFU) RunKeyFrameTicker() {
-	ticker := time.NewTicker(3 * time.Second)
+	ticker := time.NewTicker(periodicKeyFrameInterval)
 	defer ticker.Stop()
 	for {
 		select {
@@ -935,7 +1105,7 @@ func (s *SFU) KickAll(_ context.Context, channelID int64) {
 	}
 	peers := ch.snapshotPeers()
 	for _, p := range peers {
-		_ = p.websocket.SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCServerKickUser), D: kickEvent{UserId: p.userID}})
+		_ = p.sendKick(p.userID)
 		_ = p.peerConnection.Close()
 	}
 }

@@ -2,6 +2,7 @@ package guild
 
 import (
 	"log/slog"
+	"sort"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -130,6 +131,8 @@ type entity struct {
 	defaultVoiceRegion string
 	disco              discovery.Manager
 	allowedRegions     map[string]struct{}
+	allowedRegionIDs   []string
+	voiceSelector      *voiceSelector
 }
 
 func (e *entity) Name() string {
@@ -138,12 +141,18 @@ func (e *entity) Name() string {
 
 func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.IndexMQ, cache cache.Cache, storage *s3.Client, attachTTLSeconds int64, authSecret string, defaultVoiceRegion string, disco discovery.Manager, allowedRegions []string, log *slog.Logger) server.Entity {
 	ar := make(map[string]struct{}, len(allowedRegions))
+	regionIDs := make([]string, 0, len(allowedRegions))
 	for _, r := range allowedRegions {
 		if r == "" {
 			continue
 		}
+		if _, exists := ar[r]; exists {
+			continue
+		}
 		ar[r] = struct{}{}
+		regionIDs = append(regionIDs, r)
 	}
+	sort.Strings(regionIDs)
 	return &entity{
 		name:               entityName,
 		log:                log,
@@ -175,5 +184,7 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.Ind
 		defaultVoiceRegion: defaultVoiceRegion,
 		disco:              disco,
 		allowedRegions:     ar,
+		allowedRegionIDs:   regionIDs,
+		voiceSelector:      newVoiceSelector(log),
 	}
 }

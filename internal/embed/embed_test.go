@@ -2,7 +2,7 @@ package embed
 
 import "testing"
 
-func TestValidateEmbedsAcceptsDiscordVideoPayload(t *testing.T) {
+func TestValidateEmbedsAcceptsVideoEmbedPayload(t *testing.T) {
 	color := 16711680
 	width := int64(1280)
 	height := int64(720)
@@ -25,7 +25,7 @@ func TestValidateEmbedsAcceptsDiscordVideoPayload(t *testing.T) {
 		},
 		Thumbnail: &EmbedMedia{
 			URL:                "https://i.ytimg.com/vi/OgfdyH4iaps/maxresdefault.jpg",
-			ProxyURL:           "https://images-ext-1.discordapp.net/external/jm6iBEsldkSfkcx2xcYp6-x-dShUdNSMiWSY3ejdkME/https/i.ytimg.com/vi/OgfdyH4iaps/maxresdefault.jpg",
+			ProxyURL:           "https://cdn.example.com/proxy/https/i.ytimg.com/vi/OgfdyH4iaps/maxresdefault.jpg",
 			Width:              &width,
 			Height:             &height,
 			ContentType:        "image/jpeg",

@@ -16,7 +16,7 @@ This section documents how telemetry works across the project today.
 - `api`, `auth`, `attachments`, `ws`, `webhook`, `indexer`, and `embedder` send traces and metrics to the local OpenTelemetry Collector, and their logs reach OpenObserve through the local collector path.
 - `api`, `auth`, `attachments`, and `ws` also emit native PostgreSQL coordinator probe metrics from the same DSN they use for application traffic.
 - `sfu` is deployed outside local Compose and does not require any sidecar or adjacent collector binary.
-- The SFU sends traces and metrics directly over OTLP HTTP and ships logs directly to OpenObserve with a best-effort async exporter while still keeping JSON logs on stdout.
+- External SFU nodes push traces, metrics, and logs over OTLP HTTP to the public telemetry gateway, which validates SFU JWTs and forwards the requests to the in-cluster collector while the SFU keeps JSON logs on stdout.
 
 ## Canonical streams
 

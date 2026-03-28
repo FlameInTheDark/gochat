@@ -8,5 +8,6 @@
 - [SFU Event Payloads](SFUEventPayloads.md) - Complete event payload reference with examples
 - [SFU Permissions (Bitmasks)](SFUPermissions.md) - Permission definitions
 - [Regions Configuration](VoiceRegions.md) - Voice region configuration
-- [React Frontend Integration](SFUReactIntegration.md) - Frontend integration guide
+- [React Frontend Integration](SFUReactIntegration.md) - Practical React guide for SFU `v=2` and DAVE
+- [Voice End-to-End Encryption](VoiceEncryption.md) - DAVE model, transitions, and server-side scope
 - [Observability](../observability/ExternalSFU.md) - External deployment and telemetry model for SFU nodes

@@ -31,7 +31,7 @@ var allowedEmbedTypes = map[string]struct{}{
 	"link":    {},
 }
 
-// Embed is a Discord-like message embed object.
+// Embed is a rich message embed object.
 type Embed struct {
 	Title       string         `json:"title,omitempty" example:"GoChat 1.0"`                                     // Embed title.
 	Type        string         `json:"type,omitempty" example:"rich" enums:"rich,image,video,gifv,article,link"` // Embed type.

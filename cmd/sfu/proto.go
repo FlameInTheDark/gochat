@@ -9,6 +9,8 @@ import (
 
 const joinHandshakeTimeout = 5 * time.Second
 
+var signalHeartbeatGrace = 10 * time.Second
+
 type rtcJoinEnvelope struct {
 	OP int `json:"op"`
 	T  int `json:"t"`
@@ -38,6 +40,64 @@ type rtcCandidate struct {
 	Candidate     string  `json:"candidate"`
 	SDPMid        *string `json:"sdpMid,omitempty"`
 	SDPMLineIndex *uint16 `json:"sdpMLineIndex,omitempty"`
+}
+
+type rtcStream struct {
+	Type    string `json:"type,omitempty"`
+	RID     string `json:"rid,omitempty"`
+	Quality int    `json:"quality,omitempty"`
+}
+
+type rtcCodec struct {
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	PayloadType uint8  `json:"payload_type,omitempty"`
+}
+
+type rtcICEServer struct {
+	URLs       []string `json:"urls"`
+	Username   string   `json:"username,omitempty"`
+	Credential string   `json:"credential,omitempty"`
+}
+
+type rtcIdentify struct {
+	Channel helper.StringInt64 `json:"channel"`
+	Token   string             `json:"token"`
+	Video   bool               `json:"video,omitempty"`
+	Streams []rtcStream        `json:"streams,omitempty"`
+}
+
+type rtcReady struct {
+	ICEServers          []rtcICEServer `json:"ice_servers"`
+	SupportedCodecs     []rtcCodec     `json:"supported_codecs"`
+	CanPublishAudio     bool           `json:"can_publish_audio"`
+	CanPublishVideo     bool           `json:"can_publish_video"`
+	MaxAudioBitrateKbps int            `json:"max_audio_bitrate_kbps"`
+	Experiments         []string       `json:"experiments"`
+}
+
+type rtcSelectProtocol struct {
+	Protocol        string      `json:"protocol"`
+	SDP             string      `json:"sdp"`
+	RTCConnectionID string      `json:"rtc_connection_id"`
+	Codecs          []rtcCodec  `json:"codecs,omitempty"`
+	Streams         []rtcStream `json:"streams,omitempty"`
+}
+
+type rtcSessionDescription struct {
+	Type            string `json:"type"`
+	SDP             string `json:"sdp"`
+	RTCConnectionID string `json:"rtc_connection_id"`
+	MediaSessionID  string `json:"media_session_id"`
+	AudioCodec      string `json:"audio_codec,omitempty"`
+	VideoCodec      string `json:"video_codec,omitempty"`
+}
+
+type rtcProtocolError struct {
+	Code      string `json:"code"`
+	Message   string `json:"message"`
+	Fatal     bool   `json:"fatal"`
+	Retryable bool   `json:"retryable"`
 }
 
 type heartbeatData struct {
@@ -70,6 +130,9 @@ type UserJoinNotify struct {
 	UserId    int64  `json:"user_id"`
 	ChannelId int64  `json:"channel_id"`
 	GuildId   *int64 `json:"guild_id"`
+	RouteID   string `json:"route_id,omitempty"`
+	RouteURL  string `json:"route_url,omitempty"`
+	Region    string `json:"region,omitempty"`
 }
 
 type UserLeaveNotify struct {
@@ -81,6 +144,9 @@ type UserLeaveNotify struct {
 type ChannelAliveNotify struct {
 	GuildId   *int64 `json:"guild_id"`
 	ChannelId int64  `json:"channel_id"`
+	RouteID   string `json:"route_id,omitempty"`
+	RouteURL  string `json:"route_url,omitempty"`
+	Region    string `json:"region,omitempty"`
 }
 
 // speakingEvent is sent to clients in the same channel to indicate

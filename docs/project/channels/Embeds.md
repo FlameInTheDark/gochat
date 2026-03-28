@@ -1,7 +1,7 @@
 [<- Channels](README.md)
 # Message Embeds
 
-GoChat supports Discord-like message embeds. A message can contain multiple embeds, and each embed follows the same high-level shape as a Discord embed object.
+GoChat supports rich message embeds. A message can contain multiple embeds, and each embed follows the same high-level shape as the GoChat embed schema.
 
 ## Overview
 
@@ -93,7 +93,7 @@ Embed URLs accept:
 
 - `http`
 - `https`
-- `attachment` for fields where Discord-style attachment URLs make sense
+- `attachment` for fields where attachment URLs make sense
 
 ## Supported Structure
 
@@ -113,7 +113,7 @@ Each embed may contain:
 - `author`
 - `fields`
 
-Nested objects follow Discord naming closely:
+Nested objects follow the API field names directly:
 
 - `footer`: `text`, `icon_url`, `proxy_icon_url`
 - `author`: `name`, `url`, `icon_url`, `proxy_icon_url`

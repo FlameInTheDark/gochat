@@ -274,6 +274,20 @@ services:
     ports:
       - "5080:5080"
 
+  telemetry-gateway:
+    image: gochat/telemetry-gateway
+    build:
+      dockerfile: telemetry-gateway.Dockerfile
+    restart: always
+    environment: *otel-app-env
+    depends_on:
+      otel-collector:
+        condition: service_started
+    volumes:
+      - ./telemetry_gateway_config.yaml:/dist/config.yaml
+    ports:
+      - "4318:4318"
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     restart: always
@@ -293,8 +307,6 @@ services:
     ports:
       - "13133:13133"
       - "24224:24224"
-      - "4317:4317"
-      - "4318:4318"
 
   citus-master:
     container_name: "${COMPOSE_PROJECT_NAME:-citus}_master"

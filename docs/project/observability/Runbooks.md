@@ -5,25 +5,25 @@
 ## SFU logs missing from OpenObserve
 
 1. Confirm stdout still shows structured JSON logs from `gochat-sfu`.
-2. Confirm `OPENOBSERVE_LOGS_ENABLED=true`.
-3. Confirm `OPENOBSERVE_LOGS_ENDPOINT` points to the org base URL, not the OTLP endpoint.
-4. Confirm `OPENOBSERVE_LOGS_AUTH` is a full `Authorization` header value.
+2. Confirm `OTEL_EXPORTER_OTLP_ENDPOINT` points to the telemetry gateway base URL.
+3. Confirm `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf`.
+4. Confirm `OTEL_EXPORTER_OTLP_HEADERS` includes `Authorization=Bearer <jwt>`.
 5. Query exporter health metrics:
    - `gochat_logs_exporter_send_failure`
    - `gochat_logs_exporter_dropped`
    - `gochat_logs_exporter_last_success_unix`
-6. If failures rise and `last_success_unix` is stale, verify outbound connectivity to the OpenObserve log ingestion endpoint.
+6. If failures rise and `last_success_unix` is stale, verify outbound connectivity to the telemetry gateway and confirm the JWT still validates.
 
 ## SFU traces missing
 
-1. Confirm `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` points to `/api/<org>/v1/traces`.
-2. Confirm `OTEL_EXPORTER_OTLP_TRACES_HEADERS` includes `Authorization=...`.
+1. Confirm `OTEL_EXPORTER_OTLP_ENDPOINT` points to the telemetry gateway base URL.
+2. Confirm `OTEL_EXPORTER_OTLP_HEADERS` includes `Authorization=Bearer <jwt>`.
 3. Check whether logs still contain `trace_id`; if they do, the app is creating spans and the issue is export or auth.
 
 ## SFU metrics missing
 
-1. Confirm `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` points to `/api/<org>/v1/metrics`.
-2. Confirm `OTEL_EXPORTER_OTLP_METRICS_HEADERS` includes `Authorization=...`.
+1. Confirm `OTEL_EXPORTER_OTLP_ENDPOINT` points to the telemetry gateway base URL.
+2. Confirm `OTEL_EXPORTER_OTLP_HEADERS` includes `Authorization=Bearer <jwt>`.
 3. Query one SFU metric stream directly, for example `gochat_sfu_peers_active`.
 4. If traces work but metrics do not, treat it as a metrics endpoint or auth problem first.
 

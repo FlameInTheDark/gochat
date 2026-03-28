@@ -47,14 +47,11 @@ OpenObserve event totals in local development are usually dominated by metrics, 
 
 ## Local standalone SFU testing
 
-If you want to test the SFU locally, run it outside Compose and configure direct endpoints:
+If you want to test the SFU locally, run it outside Compose and configure the local telemetry gateway endpoint:
 
-- `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`
-- `OTEL_EXPORTER_OTLP_TRACES_HEADERS`
-- `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`
-- `OTEL_EXPORTER_OTLP_METRICS_HEADERS`
-- `OPENOBSERVE_LOGS_ENABLED=true`
-- `OPENOBSERVE_LOGS_ENDPOINT`
-- `OPENOBSERVE_LOGS_AUTH`
+- `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`
+- `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf`
+- `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <jwt>`
+- `WEBHOOK_TOKEN=<same-jwt>`
 
 See [External SFU](ExternalSFU.md) for the full example.

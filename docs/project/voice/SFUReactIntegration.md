@@ -1,1081 +1,1121 @@
 [<- Documentation](../README.md) - [Voice](README.md)
 
-# SFU React Frontend Integration
+# SFU v2 + DAVE React Frontend Guide
 
-This document describes how to integrate the gochat SFU (Selective Forwarding Unit) voice service with a React frontend.
+This guide is for React clients that connect to GoChat voice through `/signal?v=2`.
 
-## Overview
+It focuses on the frontend implementation shape:
 
-The SFU handles real-time voice and video communication using WebRTC. It acts as a media relay server that:
-- Receives audio/video streams from clients
-- Forwards streams to other participants in the same voice channel
-- Broadcasts speaking indicators
-- Enforces server-side mute/deafen
+- how to join voice and open the socket
+- how to run the `v=2` gateway state machine
+- how to handle WebRTC bootstrap and later renegotiation
+- how to wire DAVE encoded transforms without coupling the whole app to MLS details
 
-## Architecture
+For the full wire contract, also read [Connection Protocol](ConnectionProtocol.md), [SFU WebSocket Protocol](SFUProtocol.md), and [Voice End-to-End Encryption](VoiceEncryption.md).
 
-```mermaid
-graph TB
-    subgraph Client["React Client"]
-        UI["Voice UI Components"]
-        Hooks["useVoiceChannel Hook"]
-        PC["RTCPeerConnection"]
-    end
+## Use `v=2` For New React Clients
 
-    subgraph Signaling["Signaling Layer"]
-        WS["WebSocket<br/>Port 3300"]
-    end
+Use signaling `v=2` unless you are maintaining an older client that still depends on the legacy server-offer bootstrap.
 
-    subgraph Media["Media Layer"]
-        SFU["SFU Server"]
-        Router["Media Router"]
-    end
+Why `v=2` is the right frontend target:
 
-    subgraph Others["Other Clients"]
-        Peer1["User B"]
-        Peer2["User C"]
-    end
+- the client owns the initial SDP offer
+- the websocket has a stable voice-gateway contract
+- reconnect and resume use the same socket model
+- membership changes have dedicated events
+- DAVE upgrade and downgrade are explicit instead of being mixed into generic RTC signaling
 
-    UI --> Hooks
-    Hooks -->|ontrack| PC
-    Hooks <-->|WebSocket| WS
-    WS -->|RTC Events| SFU
-    PC <-->|RTP/RTCP| Router
-    SFU --> Router
-    Router -->|RTP| Peer1
-    Router -->|RTP| Peer2
+`v=1` should be treated as compatibility mode, not the default design target for new UI work.
+
+## Recommended Frontend Structure
+
+Keep the protocol engine out of React components. A good split is:
+
+```text
+src/voice/
+  joinVoice.ts              // REST call that returns sfu_url and sfu_token
+  buildSignalUrl.ts         // adds ?v=2
+  gatewayTypes.ts           // JSON packet types and op constants
+  gatewayClient.ts          // websocket lifecycle, heartbeat, resume, speaking
+  rtcPeer.ts                // RTCPeerConnection, local tracks, renegotiation
+  participants.ts           // user/session/media mapping for UI state
+  dave/
+    daveController.ts       // transition state machine and browser feature detection
+    daveWorker.ts           // MLS and binary opcode handling off the main thread
+    encodedTransform.ts     // sender/receiver transform adapters
+  useVoiceConnection.ts     // React hook that glues everything together
 ```
 
-## Connection Flow
+Recommended ownership:
+
+- `gatewayClient.ts` knows websocket opcodes and phases, but not React state
+- `rtcPeer.ts` knows SDP and media tracks, but not DAVE group logic
+- `daveController.ts` knows DAVE transitions and worker calls, but not socket retry policy
+- `useVoiceConnection.ts` coordinates them and exposes a simple UI-facing model
+
+That separation keeps the app maintainable when we add screen share, device switching, or stricter MLS validation later.
+
+## End-To-End Flow
 
 ```mermaid
 sequenceDiagram
-    participant React as React Client
-    participant API as GoChat API
-    participant SFU as SFU Server
-    participant Peer as Other Peers
+    participant React as React App
+    participant API as REST API
+    participant WS as SFU Gateway
+    participant PC as RTCPeerConnection
+    participant DAVE as DAVE Controller
 
-    React->>API: POST /guild/{id}/voice
+    React->>API: POST JoinVoice
     API-->>React: { sfu_url, sfu_token }
-
-    React->>SFU: WebSocket Connect
-    React->>SFU: RTCJoin { channel, token }
-    SFU-->>React: Join Ack { ok: true }
-
-    SFU->>React: RTCOffer { sdp }
-    React->>React: setRemoteDescription(offer)
-    React->>React: createAnswer()
-    React->>SFU: RTCAnswer { sdp }
-
-    par ICE Exchange
-        React->>SFU: RTCCandidate
-        SFU->>React: RTCCandidate
-    end
-
-    SFU->>React: ontrack (remote streams)
-    SFU->>Peer: Broadcast streams
-
-    Note over React,Peer: Media flowing
-
-    React->>SFU: Speaking Event { speaking: 1 }
-    SFU->>Peer: RTCSpeaking { user_id, speaking }
+    React->>WS: connect /signal?v=2
+    React->>WS: Identify (0)
+    WS-->>React: Hello (8)
+    WS-->>React: Ready (2)
+    React->>DAVE: install encoded transforms in passthrough mode
+    React->>PC: add local tracks
+    React->>PC: createOffer + wait for ICE gathering
+    React->>WS: Select Protocol (1, offer)
+    WS-->>React: Session Description (4, answer)
+    React->>PC: setRemoteDescription(answer)
+    Note over React,WS: later renegotiation uses 4 from server and 1 from client
+    Note over React,WS: DAVE transitions use 21-31 and binary 25-30
 ```
 
-### Connection Steps
+## Step 1: Join Voice
 
-1. **Join Voice Channel** → Call API `POST /guild/{id}/voice` to get SFU token and URL
-2. **Connect WebSocket** → Connect to SFU WebSocket (`wss://sfu.gochat.io/signal`)
-3. **Send RTCJoin** → Authenticate with the short-lived token
-4. **Handle Server Offer** → SFU sends SDP offer immediately after join
-5. **Send Answer** → Create and send SDP answer
-6. **Exchange ICE** → Exchange ICE candidates
-7. **Media Flow** → Audio/video tracks are now flowing
-
-## Getting User ID from Track
-
-When a remote peer publishes audio/video, the SFU forwards it with metadata encoded in the stream ID. This allows you to identify which user each track belongs to.
-
-### Stream ID Format
-
-- **Stream ID**: `"u:<user_id>"` (e.g., `"u:2230469276416868352"`)
-- **Track ID**: `"<user_id>-<original_track_id>"` (e.g., `"2230469276416868352-audio"`)
-
-```mermaid
-graph LR
-    subgraph "SFU Track Forwarding"
-        direction TB
-        UserA["User A<br/>ID: 2230469276416868352"]
-        SFU["SFU Server"]
-        UserB["User B (Receiver)"]
-    end
-
-    UserA -->|Publish audio track| SFU
-    SFU -->|stream.id = u:2230469276416868352| UserB
-
-    subgraph "Stream Parsing"
-        direction TB
-        Stream["stream.id: 'u:2230469276416868352'"]
-        Regex["Regex: /^u:(\d+)$/"]
-        Result["userId = 2230469276416868352"]
-    end
-
-    UserB -.->|Parse| Stream
-    Stream --> Regex
-    Regex --> Result
-```
-
-### React Hook Example
-
-```typescript
-import { useEffect, useRef, useCallback } from 'react';
-
-interface RemotePeer {
-  userId: number;
-  stream: MediaStream;
-  audioElement?: HTMLAudioElement;
-  isSpeaking: boolean;
-}
-
-export function useVoiceChannel(
-  channelId: number,
-  sfuUrl: string,
-  token: string,
-  localStream: MediaStream | null
-) {
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const [remotePeers, setRemotePeers] = useState<Map<number, RemotePeer>>(new Map());
-
-  // Parse userId from stream
-  const getUserIdFromStream = useCallback((stream: MediaStream): number | null => {
-    // stream.id format: "u:2230469276416868352"
-    const match = stream.id.match(/^u:(\d+)$/);
-    if (match) {
-      return parseInt(match[1], 10);
-    }
-    return null;
-  }, []);
-
-  // Handle incoming track
-  const handleTrack = useCallback((event: RTCTrackEvent) => {
-    const stream = event.streams[0];
-    const userId = getUserIdFromStream(stream);
-
-    if (!userId) {
-      console.warn('Could not parse userId from stream:', stream.id);
-      return;
-    }
-
-    console.log(`Received track from user ${userId}, kind: ${event.track.kind}`);
-
-    setRemotePeers(prev => {
-      const next = new Map(prev);
-      const existing = next.get(userId);
-
-      if (existing) {
-        // Update existing peer's stream
-        existing.stream = stream;
-      } else {
-        // Create new peer entry
-        next.set(userId, {
-          userId,
-          stream,
-          isSpeaking: false,
-        });
-      }
-
-      return next;
-    });
-  }, [getUserIdFromStream]);
-
-  // Create and configure peer connection
-  const createPeerConnection = useCallback(() => {
-    const pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        // Add your TURN servers for NAT traversal
-      ],
-    });
-
-    pc.ontrack = handleTrack;
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate && wsRef.current) {
-        wsRef.current.send(JSON.stringify({
-          op: 7,
-          t: 503, // RTCCandidate
-          d: {
-            candidate: event.candidate.candidate,
-            sdpMid: event.candidate.sdpMid,
-            sdpMLineIndex: event.candidate.sdpMLineIndex,
-          }
-        }));
-      }
-    };
-
-    // Add local tracks
-    if (localStream) {
-      localStream.getTracks().forEach(track => {
-        pc.addTrack(track, localStream);
-      });
-    }
-
-    return pc;
-  }, [handleTrack, localStream]);
-
-  // Connect to SFU
-  useEffect(() => {
-    if (!sfuUrl || !token) return;
-
-    const ws = new WebSocket(sfuUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      // Send RTCJoin
-      ws.send(JSON.stringify({
-        op: 7,
-        t: 500, // RTCJoin
-        d: {
-          channel: channelId,
-          token: token,
-        }
-      }));
-    };
-
-    ws.onmessage = async (event) => {
-      const msg = JSON.parse(event.data);
-
-      switch (msg.t) {
-        case 500: // Join Ack
-          console.log('Joined voice channel successfully');
-          break;
-
-        case 501: // RTCOffer (from server)
-          if (!pcRef.current) {
-            pcRef.current = createPeerConnection();
-          }
-          await pcRef.current.setRemoteDescription({
-            type: 'offer',
-            sdp: msg.d.sdp,
-          });
-          const answer = await pcRef.current.createAnswer();
-          await pcRef.current.setLocalDescription(answer);
-          ws.send(JSON.stringify({
-            op: 7,
-            t: 502, // RTCAnswer
-            d: { sdp: answer.sdp }
-          }));
-          break;
-
-        case 503: // RTCCandidate
-          if (pcRef.current && msg.d.candidate) {
-            await pcRef.current.addIceCandidate({
-              candidate: msg.d.candidate,
-              sdpMid: msg.d.sdpMid,
-              sdpMLineIndex: msg.d.sdpMLineIndex,
-            });
-          }
-          break;
-
-        case 514: // RTCSpeaking
-          // Handle speaking indicator - see next section
-          handleSpeakingEvent(msg.d);
-          break;
-      }
-    };
-
-    return () => {
-      ws.close();
-      pcRef.current?.close();
-    };
-  }, [channelId, sfuUrl, token, createPeerConnection]);
-
-  return { remotePeers };
-}
-```
-
-## Speaking Events
-
-The SFU broadcasts speaking indicators to all clients when a user starts or stops speaking.
-
-```mermaid
-sequenceDiagram
-    participant UserA as User A (Speaking)
-    participant SFU as SFU Server
-    participant UserB as User B
-    participant UserC as User C
-
-    Note over UserA: Audio Analysis detects speech
-    UserA->>SFU: speaking { data: "1" }
-
-    par Broadcast to all peers
-        SFU->>UserB: RTCSpeaking { user_id: A, speaking: 1 }
-        SFU->>UserC: RTCSpeaking { user_id: A, speaking: 1 }
-    end
-
-    Note over UserB,UserC: Update UI: Show speaking indicator
-
-    Note over UserA: Silence detected
-    UserA->>SFU: speaking { data: "0" }
-
-    par Broadcast stop
-        SFU->>UserB: RTCSpeaking { user_id: A, speaking: 0 }
-        SFU->>UserC: RTCSpeaking { user_id: A, speaking: 0 }
-    end
-```
-
-### Event Format
+The REST contract does not change for `v=2`. The client still receives:
 
 ```json
 {
-  "op": 7,
-  "t": 514,
-  "d": {
-    "user_id": 2230469276416868352,
-    "speaking": 1
+  "sfu_url": "wss://.../signal",
+  "sfu_token": "<jwt>"
+}
+```
+
+Build the socket URL like this:
+
+```ts
+export function buildSignalUrl(baseUrl: string, version: 1 | 2 = 2) {
+  const url = new URL(baseUrl);
+  if (version === 2) {
+    url.searchParams.set("v", "2");
   }
+  return url.toString();
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `user_id` | int64 | The user who is speaking |
-| `speaking` | int | `1` = speaking, `0` = not speaking |
+Rules:
 
-### Sending Speaking Indicator
+- `/signal` and `/signal?v=1` use the legacy flow
+- `/signal?v=2` uses the voice-gateway flow described here
+- if the client reconnects after move, rebind, or transient network loss, keep using the same signaling version
 
-To notify others when you're speaking, send:
+## Step 2: Detect DAVE Capability Before Connecting
 
-```typescript
-// Simple format (recommended)
-ws.send(JSON.stringify({
-  event: 'speaking',
-  data: '1'  // or '0' to indicate stopped speaking
-}));
+The `Identify (0)` packet should reflect real browser capability.
 
-// Alternative: Full envelope format
-ws.send(JSON.stringify({
-  op: 7,
-  t: 514,
-  d: { speaking: 1 }
-}));
-```
+Recommended rule:
 
-> [!NOTE]
-> The SFU does not automatically detect speaking. Your client must analyze audio levels and send speaking events.
+- if encoded transforms are supported, send `supports_encoded_transforms: true` and `max_dave_protocol_version: 1`
+- otherwise send `supports_encoded_transforms: false` and `max_dave_protocol_version: 0`
 
-### Speaking Detection Flow
+Example feature detection:
 
-```mermaid
-graph LR
-    subgraph "Audio Analysis Pipeline"
-        direction TB
-        Stream["Local MediaStream"]
-        Source["MediaStreamSource"]
-        Analyser["AnalyserNode"]
-        Data["Frequency Data"]
-        Calc["Calculate dB Level"]
-        Threshold["Threshold Check"]
-        State["Update isSpeaking"]
-    end
-
-    subgraph "SFU Notification"
-        WS[WebSocket]
-        Broadcast[Broadcast to Peers]
-    end
-
-    Stream --> Source
-    Source --> Analyser
-    Analyser -->|getByteFrequencyData| Data
-    Data --> Calc
-    Calc -->|db > threshold| Threshold
-    Threshold -->|State Change| State
-    State -->|Send Event| WS
-    WS -->|speaking: 1/0| Broadcast
-
-    style Analyser fill:#f9f,stroke:#333
-    style WS fill:#bbf,stroke:#333
-```
-
-### React Speaking Detection Hook
-
-```typescript
-import { useEffect, useRef, useState, useCallback } from 'react';
-
-export function useSpeakingDetector(
-  localStream: MediaStream | null,
-  ws: WebSocket | null,
-  threshold: number = -50 // dB
-) {
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const lastSpeakingRef = useRef<boolean>(false);
-
-  const detectSpeaking = useCallback(() => {
-    if (!analyserRef.current || !ws) return;
-
-    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-    analyserRef.current.getByteFrequencyData(dataArray);
-
-    // Calculate average volume
-    const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-    const db = 20 * Math.log10(average / 255);
-
-    const currentlySpeaking = db > threshold;
-
-    if (currentlySpeaking !== lastSpeakingRef.current) {
-      lastSpeakingRef.current = currentlySpeaking;
-      setIsSpeaking(currentlySpeaking);
-
-      // Send speaking event to SFU
-      ws.send(JSON.stringify({
-        event: 'speaking',
-        data: currentlySpeaking ? '1' : '0'
-      }));
-    }
-  }, [ws, threshold]);
-
-  useEffect(() => {
-    if (!localStream) return;
-
-    const audioTrack = localStream.getAudioTracks()[0];
-    if (!audioTrack) return;
-
-    const audioContext = new AudioContext();
-    const source = audioContext.createMediaStreamSource(localStream);
-    const analyser = audioContext.createAnalyser();
-
-    analyser.fftSize = 256;
-    analyser.smoothingTimeConstant = 0.8;
-    source.connect(analyser);
-
-    analyserRef.current = analyser;
-
-    // Check speaking state every 100ms
-    intervalRef.current = setInterval(detectSpeaking, 100);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-      audioContext.close();
-    };
-  }, [localStream, detectSpeaking]);
-
-  return isSpeaking;
-}
-```
-
-### Receiving Speaking Events
-
-```typescript
-const handleSpeakingEvent = useCallback((data: { user_id: number; speaking: number }) => {
-  const { user_id, speaking } = data;
-  const isSpeaking = speaking === 1;
-
-  setRemotePeers(prev => {
-    const next = new Map(prev);
-    const peer = next.get(user_id);
-    if (peer) {
-      peer.isSpeaking = isSpeaking;
-    }
-    return next;
-  });
-}, []);
-```
-
-## React Component Architecture
-
-```mermaid
-graph TB
-    subgraph "React Component Tree"
-        VC[VoiceChannel Component]
-        CP[Controls Panel]
-        RP[RemotePeers List]
-        LP[LocalPreview]
-    end
-
-    subgraph "Custom Hooks"
-        UV[useVoiceChannel]
-        US[useSpeakingDetector]
-        US2[useLocalStream]
-    end
-
-    subgraph "Web APIs"
-        WebRTC[RTCPeerConnection]
-        WS[WebSocket]
-        Audio[Web Audio API]
-        GetUserMedia[getUserMedia]
-    end
-
-    subgraph "SFU Server"
-        SFU[SFU Server]
-    end
-
-    VC --> CP
-    VC --> RP
-    VC --> LP
-
-    VC --> UV
-    UV --> WebRTC
-    UV --> WS
-    UV -->|remotePeers| RP
-
-    VC --> US
-    US --> Audio
-    US -->|isSpeaking| CP
-
-    VC --> US2
-    US2 -->|localStream| LP
-    US2 --> GetUserMedia
-
-    WebRTC <-->|RTP| SFU
-    WS <-->|Signaling| SFU
-```
-
-## Complete React Component Example
-
-```tsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-
-interface VoiceChannelProps {
-  channelId: number;
-  guildId: number;
-  apiToken: string;
-}
-
-export const VoiceChannel: React.FC<VoiceChannelProps> = ({ channelId, guildId, apiToken }) => {
-  const [connectionState, setConnectionState] = useState<'idle' | 'connecting' | 'connected'>('idle');
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remotePeers, setRemotePeers] = useState<Map<number, RemotePeer>>(new Map());
-  const [muted, setMuted] = useState(false);
-  const [deafened, setDeafened] = useState(false);
-
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const localAudioRef = useRef<HTMLAudioElement>(null);
-
-  // Parse userId from stream
-  const getUserIdFromStream = useCallback((stream: MediaStream): number | null => {
-    const match = stream.id.match(/^u:(\d+)$/);
-    return match ? parseInt(match[1], 10) : null;
-  }, []);
-
-  // Handle speaking events
-  const handleSpeakingEvent = useCallback((data: { user_id: number; speaking: number }) => {
-    setRemotePeers(prev => {
-      const next = new Map(prev);
-      const peer = next.get(data.user_id);
-      if (peer) {
-        peer.isSpeaking = data.speaking === 1;
-      }
-      return next;
-    });
-  }, []);
-
-  // Join voice channel
-  const joinChannel = useCallback(async () => {
-    setConnectionState('connecting');
-
-    try {
-      // 1. Get media permissions
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false, // Set to true for video
-      });
-      setLocalStream(stream);
-
-      // 2. Call API to get SFU token
-      const response = await fetch(`/api/guild/${guildId}/voice`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiToken}`,
-        },
-        body: JSON.stringify({ channel_id: channelId }),
-      });
-      const { sfu_url, sfu_token } = await response.json();
-
-      // 3. Connect to SFU WebSocket
-      const ws = new WebSocket(sfu_url);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        ws.send(JSON.stringify({
-          op: 7,
-          t: 500,
-          d: { channel: channelId, token: sfu_token }
-        }));
-      };
-
-      ws.onmessage = async (event) => {
-        const msg = JSON.parse(event.data);
-
-        switch (msg.t) {
-          case 500: // Join Ack
-            console.log('Joined voice channel');
-            setConnectionState('connected');
-            break;
-
-          case 501: // RTCOffer
-            if (!pcRef.current) {
-              pcRef.current = createPeerConnection(stream, ws);
-            }
-            await pcRef.current.setRemoteDescription({
-              type: 'offer',
-              sdp: msg.d.sdp,
-            });
-            const answer = await pcRef.current.createAnswer();
-            await pcRef.current.setLocalDescription(answer);
-            ws.send(JSON.stringify({
-              op: 7,
-              t: 502,
-              d: { sdp: answer.sdp }
-            }));
-            break;
-
-          case 503: // RTCCandidate
-            if (pcRef.current && msg.d.candidate) {
-              await pcRef.current.addIceCandidate(msg.d);
-            }
-            break;
-
-          case 505: // Server mute notification
-            setMuted(msg.d.muted);
-            break;
-
-          case 506: // Server deafen notification
-            setDeafened(msg.d.deafened);
-            break;
-
-          case 514: // Speaking event
-            handleSpeakingEvent(msg.d);
-            break;
-        }
-      };
-
-    } catch (error) {
-      console.error('Failed to join voice channel:', error);
-      setConnectionState('idle');
-    }
-  }, [channelId, guildId, apiToken, handleSpeakingEvent]);
-
-  // Create peer connection
-  const createPeerConnection = (stream: MediaStream, ws: WebSocket) => {
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-    });
-
-    // Add local tracks
-    stream.getTracks().forEach(track => {
-      pc.addTrack(track, stream);
-    });
-
-    // Handle remote tracks
-    pc.ontrack = (event) => {
-      const stream = event.streams[0];
-      const userId = getUserIdFromStream(stream);
-
-      if (userId) {
-        setRemotePeers(prev => {
-          const next = new Map(prev);
-          next.set(userId, {
-            userId,
-            stream,
-            isSpeaking: false,
-          });
-          return next;
-        });
-      }
-    };
-
-    // Send ICE candidates
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        ws.send(JSON.stringify({
-          op: 7,
-          t: 503,
-          d: {
-            candidate: event.candidate.candidate,
-            sdpMid: event.candidate.sdpMid,
-            sdpMLineIndex: event.candidate.sdpMLineIndex,
-          }
-        }));
-      }
-    };
-
-    return pc;
+```ts
+export function supportsEncodedTransforms() {
+  const anyWindow = window as typeof window & {
+    RTCRtpScriptTransform?: unknown;
   };
 
-  // Toggle mute
-  const toggleMute = useCallback(() => {
-    if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setMuted(!audioTrack.enabled);
+  const senderProto = RTCRtpSender.prototype as RTCRtpSender & {
+    createEncodedStreams?: () => unknown;
+  };
+  const receiverProto = RTCRtpReceiver.prototype as RTCRtpReceiver & {
+    createEncodedStreams?: () => unknown;
+  };
 
-        // Notify SFU
-        wsRef.current?.send(JSON.stringify({
-          op: 7,
-          t: 505,
-          d: { muted: !audioTrack.enabled }
-        }));
-      }
-    }
-  }, [localStream]);
-
-  // Leave channel
-  const leaveChannel = useCallback(() => {
-    wsRef.current?.send(JSON.stringify({ op: 7, t: 504, d: {} }));
-    wsRef.current?.close();
-    pcRef.current?.close();
-    localStream?.getTracks().forEach(track => track.stop());
-    setLocalStream(null);
-    setRemotePeers(new Map());
-    setConnectionState('idle');
-  }, [localStream]);
-
-  return (
-    <div className="voice-channel">
-      <div className="controls">
-        {connectionState === 'idle' ? (
-          <button onClick={joinChannel}>Join Voice</button>
-        ) : (
-          <>
-            <button onClick={toggleMute}>
-              {muted ? 'Unmute' : 'Mute'}
-            </button>
-            <button onClick={leaveChannel}>Disconnect</button>
-          </>
-        )}
-      </div>
-
-      {/* Local audio (for monitoring, usually muted) */}
-      {localStream && (
-        <audio
-          ref={localAudioRef}
-          srcObject={localStream}
-          muted
-          autoPlay
-        />
-      )}
-
-      {/* Remote peers */}
-      <div className="remote-peers">
-        {Array.from(remotePeers.values()).map(peer => (
-          <div
-            key={peer.userId}
-            className={`peer ${peer.isSpeaking ? 'speaking' : ''}`}
-          >
-            <span>User {peer.userId}</span>
-            {peer.isSpeaking && <span className="speaking-indicator">🎤</span>}
-            <audio
-              srcObject={peer.stream}
-              autoPlay
-              playsInline
-            />
-          </div>
-        ))}
-      </div>
-    </div>
+  return Boolean(
+    anyWindow.RTCRtpScriptTransform ||
+      (senderProto.createEncodedStreams && receiverProto.createEncodedStreams),
   );
+}
+```
+
+The server also sends DAVE policy in `Ready (2)`:
+
+- `dave_enabled`
+- `dave_required`
+- `allow_av1_under_dave`
+
+Frontend guidance:
+
+- if `dave_required` is `true` and the browser does not support encoded transforms, stop early and surface a clear UI error
+- if `allow_av1_under_dave` is `false`, do not prefer AV1 in your local codec selection while DAVE is active
+
+## Step 3: Define The `v=2` Gateway Types
+
+Keep packet types in a dedicated module so React code can stay mostly UI-focused.
+
+```ts
+export const GatewayOp = {
+  Identify: 0,
+  SelectProtocol: 1,
+  Ready: 2,
+  Heartbeat: 3,
+  SessionDescription: 4,
+  Speaking: 5,
+  HeartbeatAck: 6,
+  Resume: 7,
+  Hello: 8,
+  Resumed: 9,
+  ClientsConnect: 11,
+  ClientDisconnect: 13,
+  DavePrepareTransition: 21,
+  DaveExecuteTransition: 22,
+  DaveTransitionReady: 23,
+  DavePrepareEpoch: 24,
+  DaveInvalidCommitWelcome: 31,
+} as const;
+
+export type GatewayPacket<T = unknown> = {
+  op: number;
+  d?: T;
+  seq?: number;
+};
+
+export type HelloPayload = {
+  v: number;
+  heartbeat_interval: number;
+  session_id: string;
+};
+
+export type ReadyPayload = {
+  ice_servers: RTCIceServer[];
+  supported_codecs: Array<{
+    name: string;
+    type: "audio" | "video";
+    payload_type?: number;
+    rtx_payload_type?: number;
+    priority?: number;
+  }>;
+  can_publish_audio: boolean;
+  can_publish_video: boolean;
+  max_audio_bitrate_kbps: number;
+  experiments: string[];
+  dave_enabled: boolean;
+  dave_required: boolean;
+  allow_av1_under_dave: boolean;
+};
+
+export type SessionDescriptionPayload = {
+  type: "offer" | "answer";
+  sdp: string;
+  rtc_connection_id: string;
+  media_session_id: string;
+  audio_codec?: string;
+  video_codec?: string;
+  dave_protocol_version: 0 | 1;
+  dave_epoch?: number;
 };
 ```
 
-## Connection State Machine
+## Step 4: Model The Connection State Machine Explicitly
 
-```mermaid
-stateDiagram-v2
-    [*] --> Idle: Initialize
-    Idle --> Connecting: joinChannel()
+Do not drive the voice session from a loose collection of boolean flags. A small state machine makes reconnect and DAVE transitions much easier to reason about.
 
-    Connecting --> Connected: Join Ack received
-    Connecting --> Idle: Connection failed
+Recommended phases:
 
-    Connected --> Reconnecting: Connection lost
-    Reconnected --> Connected: Reconnected successfully
-
-    Connected --> Idle: leaveChannel()
-    Reconnecting --> Idle: Max retries exceeded
-
-    state Connected {
-        [*] --> Signaling
-        Signaling --> Stable: SDP exchange complete
-        Stable --> MediaFlowing: ICE connected
-        MediaFlowing --> [*]: ontrack received
-    }
+```ts
+export type VoicePhase =
+  | "idle"
+  | "joining"
+  | "socket_connecting"
+  | "identifying"
+  | "ready"
+  | "negotiating"
+  | "connected"
+  | "resuming"
+  | "reconnecting"
+  | "failed"
+  | "closed";
 ```
 
-## Data Flow: Track to User Mapping
+Useful persistent refs:
 
-```mermaid
-sequenceDiagram
-    participant UserA as User A (ID: 100)
-    participant SFU as SFU Server
-    participant UserB as User B
-    participant React as React Component
-
-    Note over UserA: Publishes local audio
-    UserA->>SFU: addTrack(localStream)
-
-    Note over SFU: Creates forward track<br/>stream.id = u:100
-
-    SFU->>UserB: ontrack event
-    UserB->>React: handleTrack(event)
-
-    Note over React: Parse stream.id
-    React->>React: stream.id.match(/^u:(\d+)$/)
-    React->>React: userId = 100
-
-    Note over React: Update state
-    React->>React: setRemotePeers({ 100: { stream, userId: 100 }})
+```ts
+type VoiceSessionRefs = {
+  sessionId: string | null;
+  rtcConnectionId: string;
+  channelId: number;
+  token: string;
+  signalVersion: 2;
+};
 ```
 
-## Voice State / Presence Integration
+What to persist for resume:
 
-To let other users know when you're muted or deafened, you need to update your presence via the **Gateway WebSocket** (`/subscribe`), not the SFU WebSocket. The SFU handles audio routing, while presence handles visibility of your voice state to others.
+- `sessionId` from `Hello (8)`
+- `channelId`
+- current join `token`
+- a stable `rtcConnectionId` for the active connection
 
-### Updating Mute/Deafen Status
+## Step 5: Open The Socket And Send `Identify (0)`
 
-Send an **OP 3 Presence Update** to the Gateway WebSocket:
+Important nuance: on `v=2`, the client speaks first. Do not wait for a server hello before sending `Identify`.
 
-```typescript
-// Gateway WebSocket (port 3100) - NOT the SFU WebSocket
-gatewayWs.send(JSON.stringify({
-  op: 3,
-  d: {
-    status: 'online',              // Your current status
-    voice_channel_id: channelId,   // Current voice channel
-    mute: true,                    // true = muted, false = unmuted
-    deafen: false                  // true = deafened, false = undeafened
-  }
-}));
+```ts
+function connectGateway({
+  sfuUrl,
+  channelId,
+  token,
+  daveSupported,
+}: {
+  sfuUrl: string;
+  channelId: number;
+  token: string;
+  daveSupported: boolean;
+}) {
+  const ws = new WebSocket(buildSignalUrl(sfuUrl, 2));
+  ws.binaryType = "arraybuffer";
+
+  ws.addEventListener("open", () => {
+    const identify = {
+      op: GatewayOp.Identify,
+      d: {
+        channel_id: channelId,
+        token,
+        max_dave_protocol_version: daveSupported ? 1 : 0,
+        supports_encoded_transforms: daveSupported,
+        dave_supported: daveSupported,
+      },
+    };
+    ws.send(JSON.stringify(identify));
+  });
+
+  return ws;
+}
 ```
 
-**Important:** Only send `mute` and `deafen` fields when you're in a voice channel (`voice_channel_id` is set).
+Notes:
 
-### What Other Users Receive
+- `dave_supported` is optional, but it is reasonable to keep it aligned with `supports_encoded_transforms`
+- send `video` and `streams` if your UI already knows it is publishing camera video
+- identity-key metadata is optional for now
 
-When you update your voice state, other users receive:
+## Step 6: Start Heartbeats Only After `Hello (8)`
 
-1. **Presence Update (OP 3)** — Sent to users who subscribed to your presence:
+The server returns:
+
 ```json
 {
-  "op": 3,
+  "op": 8,
   "d": {
-    "user_id": 2226021950625415200,
-    "status": "online",
-    "since": 1700000000,
-    "voice_channel_id": 2230469276416868352,
-    "mute": true,
-    "deafen": false
+    "v": 2,
+    "heartbeat_interval": 15000,
+    "session_id": "..."
   }
 }
 ```
 
-2. **Voice State Update (t=209)** — Broadcast to all guild members:
-```json
-{
-  "op": 0,
-  "t": 209,
-  "d": {
-    "guild_id": 2226022078304223200,
-    "user_id": 2226021950625415200,
-    "channel_id": 2230469276416868352,
-    "mute": true,
-    "deafen": false
-  }
+The frontend should:
+
+- store `session_id`
+- start a repeating heartbeat loop using `heartbeat_interval`
+- stop the heartbeat loop on socket close or reconnect
+
+Recommended implementation:
+
+```ts
+function startHeartbeat(ws: WebSocket, intervalMs: number) {
+  const id = window.setInterval(() => {
+    ws.send(JSON.stringify({
+      op: GatewayOp.Heartbeat,
+      d: { t: Date.now() },
+    }));
+  }, intervalMs);
+
+  return () => window.clearInterval(id);
 }
 ```
 
-### React Hook Example
+The server answers with `Heartbeat ACK (6)`. You usually only need that for metrics and debugging.
 
-```typescript
-import { useCallback } from 'react';
+## Step 7: Build The Peer Connection From `Ready (2)`
 
-export function useVoiceState(
-  gatewayWs: WebSocket | null,
-  channelId: number | null
+`Ready (2)` is the point where the client has enough information to build the peer connection.
+
+Use:
+
+- `ice_servers` for `RTCPeerConnection`
+- `can_publish_audio` and `can_publish_video` to gate local capture UI
+- `supported_codecs` and `allow_av1_under_dave` to drive codec preferences
+
+One important `v=2` rule:
+
+- do not send separate candidate packets
+- wait for ICE gathering to complete, then send the full SDP in `Select Protocol (1)`
+
+Recommended helpers:
+
+```ts
+export function waitForIceGatheringComplete(pc: RTCPeerConnection) {
+  if (pc.iceGatheringState === "complete") {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve) => {
+    const onStateChange = () => {
+      if (pc.iceGatheringState === "complete") {
+        pc.removeEventListener("icegatheringstatechange", onStateChange);
+        resolve();
+      }
+    };
+
+    pc.addEventListener("icegatheringstatechange", onStateChange);
+  });
+}
+```
+
+```ts
+async function createInitialOffer(
+  pc: RTCPeerConnection,
+  rtcConnectionId: string,
+  send: (packet: GatewayPacket) => void,
 ) {
-  const setMute = useCallback((muted: boolean) => {
-    if (!gatewayWs || !channelId) return;
-    
-    gatewayWs.send(JSON.stringify({
-      op: 3,
-      d: {
-        status: 'online',
-        voice_channel_id: channelId,
-        mute: muted
-      }
-    }));
-  }, [gatewayWs, channelId]);
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await waitForIceGatheringComplete(pc);
 
-  const setDeafen = useCallback((deafened: boolean) => {
-    if (!gatewayWs || !channelId) return;
-    
-    gatewayWs.send(JSON.stringify({
-      op: 3,
-      d: {
-        status: 'online',
-        voice_channel_id: channelId,
-        deafen: deafened
-      }
-    }));
-  }, [gatewayWs, channelId]);
-
-  return { setMute, setDeafen };
+  send({
+    op: GatewayOp.SelectProtocol,
+    d: {
+      protocol: "webrtc",
+      type: "offer",
+      sdp: pc.localDescription?.sdp,
+      rtc_connection_id: rtcConnectionId,
+    },
+  });
 }
 ```
 
-### Architecture Flow
+### Webcam Capture Target: 720p30
+
+If the product goal is "webcam should look at least like 720p at 30fps", the React publisher has to ask for that explicitly. The SFU now negotiates the codec/feedback path needed for it, but it still forwards what the browser captures and encodes.
+
+Recommended browser capture constraints:
+
+```ts
+const stream = await navigator.mediaDevices.getUserMedia({
+  audio: true,
+  video: {
+    width: { ideal: 1280, min: 960 },
+    height: { ideal: 720, min: 540 },
+    frameRate: { ideal: 30, max: 30 },
+    facingMode: "user",
+  },
+});
+```
+
+After adding the video track to the peer connection, keep the sender encodings aligned with that target instead of silently inheriting a very low publish budget:
+
+```ts
+async function tuneCameraSender(sender: RTCRtpSender) {
+  const params = sender.getParameters();
+  const encodings = params.encodings?.length ? [...params.encodings] : [{}];
+
+  encodings[0] = {
+    ...encodings[0],
+    maxBitrate: 2_500_000,
+    maxFramerate: 30,
+    scaleResolutionDownBy: 1,
+  };
+
+  await sender.setParameters({
+    ...params,
+    degradationPreference: "balanced",
+    encodings,
+  });
+}
+```
+
+Practical guidance:
+
+- avoid setting webcam `maxBitrate` to a few hundred kbps unless you intentionally want soft video
+- do not set `scaleResolutionDownBy` above `1` for the main camera sender if 720p is the target
+- verify the browser is really publishing what you expect via `getStats()`
+- use runtime fallbacks when bandwidth stays poor instead of freezing on one profile
+
+### Recommended Adaptive Fallback Ladder
+
+For now, assume single-stream adaptive publishing on web clients. The SFU forwards the published stream as-is, so the publisher should move between a small set of explicit quality profiles when outbound stats show sustained network pressure.
+
+Recommended ladder:
+
+- `720p`: `1280x720`, `30fps`, `maxBitrate: 2_500_000`, `scaleResolutionDownBy: 1`
+- `360p`: `640x360`, `20-30fps`, `maxBitrate: 900_000`, `scaleResolutionDownBy: 2`
+- `240p`: `426x240`, `15-20fps`, `maxBitrate: 350_000`, `scaleResolutionDownBy: 3`
+
+Example helper:
+
+```ts
+type CameraProfile = "720p" | "360p" | "240p";
+
+const cameraProfiles: Record<CameraProfile, {
+  maxBitrate: number;
+  maxFramerate: number;
+  scaleResolutionDownBy: number;
+}> = {
+  "720p": { maxBitrate: 2_500_000, maxFramerate: 30, scaleResolutionDownBy: 1 },
+  "360p": { maxBitrate: 900_000, maxFramerate: 24, scaleResolutionDownBy: 2 },
+  "240p": { maxBitrate: 350_000, maxFramerate: 20, scaleResolutionDownBy: 3 },
+};
+
+async function applyCameraProfile(
+  sender: RTCRtpSender,
+  profile: CameraProfile,
+) {
+  const params = sender.getParameters();
+  const encodings = params.encodings?.length ? [...params.encodings] : [{}];
+  const next = cameraProfiles[profile];
+
+  encodings[0] = {
+    ...encodings[0],
+    maxBitrate: next.maxBitrate,
+    maxFramerate: next.maxFramerate,
+    scaleResolutionDownBy: next.scaleResolutionDownBy,
+  };
+
+  await sender.setParameters({
+    ...params,
+    degradationPreference: "balanced",
+    encodings,
+  });
+}
+```
+
+Reasonable downgrade triggers:
+
+- `qualityLimitationReason === "bandwidth"` for several consecutive samples
+- outbound `framesPerSecond` staying far below target
+- repeated retransmissions and rising packet loss
+
+Reasonable upgrade triggers:
+
+- bandwidth limitation clears for a sustained window
+- actual sent resolution and fps recover
+- retransmissions and packet loss settle back down
+
+If the frontend later adds proper simulcast, keep the same ladder semantics and map them to layered encodings instead of a single adaptive encoding.
+
+The most useful outbound stats to log are:
+
+- `frameWidth`
+- `frameHeight`
+- `framesPerSecond`
+- `qualityLimitationReason`
+- `qualityLimitationDurations`
+- `retransmittedPacketsSent`
+- `nackCount`
+
+If those stats show the browser is only sending `640x360` or `15fps`, that is a frontend capture/encoding issue, not an SFU forwarding limit.
+
+## Step 8: Handle `Session Description (4)` For Both Bootstrap And Renegotiation
+
+On `v=2`, `Session Description (4)` is used in two situations:
+
+- the initial answer from the server
+- later server-driven offers when channel topology changes
+
+That means the frontend must handle both `answer` and `offer`.
+
+Recommended handler:
+
+```ts
+async function handleSessionDescription(
+  pc: RTCPeerConnection,
+  payload: SessionDescriptionPayload,
+  send: (packet: GatewayPacket) => void,
+) {
+  await pc.setRemoteDescription({
+    type: payload.type,
+    sdp: payload.sdp,
+  });
+
+  if (payload.type !== "offer") {
+    return;
+  }
+
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  await waitForIceGatheringComplete(pc);
+
+  send({
+    op: GatewayOp.SelectProtocol,
+    d: {
+      protocol: "webrtc",
+      type: "answer",
+      sdp: pc.localDescription?.sdp,
+      rtc_connection_id: payload.rtc_connection_id,
+    },
+  });
+}
+```
+
+Do not use legacy `501/502/503` behavior on `v=2`.
+
+## Recommended React Hook Shape
+
+Your hook should expose UI-level state, not raw websocket details.
+
+Suggested model:
+
+```ts
+export type RemoteParticipant = {
+  userId: string;
+  stream: MediaStream | null;
+  speaking: boolean;
+  connected: boolean;
+};
+
+export type UseVoiceConnectionResult = {
+  phase: VoicePhase;
+  participants: Map<string, RemoteParticipant>;
+  connect: () => Promise<void>;
+  disconnect: () => void;
+  setLocalStream: (stream: MediaStream | null) => Promise<void>;
+  setSpeaking: (speaking: boolean) => void;
+  lastError: string | null;
+};
+```
+
+Keep websocket objects, peer connections, heartbeat timers, and DAVE state inside refs or dedicated controller instances. React state should only mirror what the UI needs to render.
+
+## Membership, Streams, And Speaking
+
+`v=2` gives you three different kinds of user presence signals:
+
+- `Clients Connect (11)` tells you who is currently in the channel
+- `Client Disconnect (13)` tells you who left
+- `Speaking (5)` tells you who is actively talking
+
+Remote media attachment still comes from `RTCPeerConnection.ontrack`.
+
+The SFU encodes the sender identity into the stream id:
+
+- `stream.id = "u:<user_id>"`
+- `track.id = "<user_id>-<original_track_id>"`
+
+Use the stream id, not the track id, for UI mapping:
+
+```ts
+export function getUserIdFromStream(stream: MediaStream): string | null {
+  const match = stream.id.match(/^u:(\d+)$/);
+  return match ? match[1] : null;
+}
+```
+
+Recommended UI behavior:
+
+- create placeholder participant rows from `11`
+- attach real `MediaStream` objects when `ontrack` fires
+- keep `speaking` separate from `connected`, because users can be connected and silent
+
+Outgoing speaking updates are simple:
+
+```ts
+function setSpeaking(ws: WebSocket, speaking: boolean) {
+  ws.send(JSON.stringify({
+    op: GatewayOp.Speaking,
+    d: { speaking: speaking ? 1 : 0 },
+  }));
+}
+```
+
+## DAVE Integration Strategy For React
+
+The best React integration is to treat DAVE as a controller behind a narrow interface, not as ad-hoc websocket conditionals inside the hook.
+
+Recommended DAVE controller responsibilities:
+
+- feature detection
+- sender and receiver encoded-transform attachment
+- passthrough vs encrypted mode switching
+- current `protocol_version`, `epoch`, and `transition_id`
+- forwarding MLS-related binary payloads to a worker
+- emitting `Key Package (26)`, `Commit Welcome (28)`, `Transition Ready (23)`, and `Invalid Commit Welcome (31)` when needed
+
+Recommended worker responsibilities:
+
+- parse binary opcodes `25-30`
+- maintain MLS group state
+- produce raw bytes for `26` and `28`
+- prepare receiver state before `23`
+- activate sender state only after `22`
+
+### DAVE Client Rules That Matter Most
+
+1. Attach encoded transforms from the start.
+2. Start in passthrough mode, even if you expect DAVE later.
+3. Do not switch sender-side encryption on just because `Session Description (4)` says `dave_protocol_version = 1`.
+4. Only switch protocol mode when the transition flow reaches `Execute Transition (22)`.
+5. Keep receive-side preparation ahead of send-side activation.
+
+That last rule is the most important transition invariant.
+
+## DAVE Event Handling
+
+### JSON DAVE Events
+
+| Opcode | Direction | Meaning | Frontend action |
+|--------|-----------|---------|-----------------|
+| `21` | server -> client | Prepare Transition | Prepare downgrade to transport-only, make receivers ready for passthrough, then send `23` |
+| `22` | server -> client | Execute Transition | Commit the pending mode switch on sender and receiver pipelines |
+| `23` | client -> server | Transition Ready | Send this after local receiver state is prepared |
+| `24` | server -> client | Prepare Epoch | Start an upgrade or group-recreation flow for protocol version `1` |
+| `31` | client -> server | Invalid Commit Welcome | Send this if MLS import fails and the client needs the server to recreate the group |
+
+### Binary DAVE Events
+
+| Opcode | Direction | Meaning |
+|--------|-----------|---------|
+| `25` | server -> client | External sender package |
+| `26` | client -> server | Key package |
+| `27` | server -> client | Proposal batch |
+| `28` | client -> server | Commit and optional welcome |
+| `29` | server -> client | Announce commit transition |
+| `30` | server -> client | Welcome for pending members |
+
+### Practical Frontend Flow
+
+When the gateway upgrades or recreates a DAVE group, React clients should behave like this:
+
+1. Receive `Prepare Epoch (24)`.
+2. Receive binary `25`.
+3. Ask the DAVE worker to generate a key package.
+4. Send binary `26`.
+5. Wait for binary `27`.
+6. If this client is the elected committer, generate commit and welcome and send binary `28`.
+7. Existing members process binary `29`.
+8. Pending members import binary `30`.
+9. Once receive-side decryptors are ready, send `Transition Ready (23)`.
+10. After `Execute Transition (22)`, switch sender transforms out of passthrough mode.
+
+### Committer Election
+
+The current gateway accepts `Commit Welcome (28)` from any DAVE-capable participant. It does not currently nominate the committer for you.
+
+React clients should therefore elect one deterministically. Recommended rule:
+
+- the DAVE-capable participant with the lowest numeric `user_id` sends binary `28`
+
+That rule is simple, stable across reconnects, and can be derived from `Clients Connect (11)` plus the local user id.
+
+## DAVE State To Keep In The Frontend
+
+Keep this state outside React render loops unless the UI actually needs it:
+
+```ts
+type DaveMode = "passthrough" | "pending_upgrade" | "encrypted" | "pending_downgrade";
+
+type DaveState = {
+  supported: boolean;
+  protocolVersion: 0 | 1;
+  epoch: number;
+  mode: DaveMode;
+  transitionId: number | null;
+  externalSenderReady: boolean;
+};
+```
+
+React usually only needs a small projection of that state, for example:
+
+- whether DAVE is available
+- whether DAVE is currently active
+- whether a transition is in progress
+- whether the browser is blocked because DAVE is required but unsupported
+
+## Verification UX For Real User Trust
+
+If you want users to confirm that the call is really end-to-end encrypted, expose a short verification code in the voice UI and let participants compare it out of band.
+
+Good UX pattern:
+
+- show the code only when `dave_protocol_version = 1`
+- hide it or mark it unavailable while a DAVE transition is still in progress
+- regenerate it whenever the DAVE epoch changes or the verified member set changes
+- let users tap to reveal it, copy it, and read it aloud to each other
+
+Recommended user-facing copy:
+
+- "Compare this code with the other people in the call."
+- "If everyone sees the same code, you are in the same encrypted voice session."
+
+### What The Verification Code Should Mean
+
+The code should be derived from the DAVE group state, not from random UI state and not from transport-only WebRTC values.
+
+Best input material:
+
+- the active DAVE `protocol_version`
+- the active DAVE `epoch`
+- the MLS group identifier or epoch authenticator if your worker exposes it
+- the sorted list of member identity fingerprints in the current encrypted group
+
+If every participant sees the same code, that means they all derived the same cryptographic session view.
+
+Important caveat:
+
+- with stable long-lived identity keys, matching codes are a strong authenticity check
+- with purely ephemeral session identities, matching codes still prove that everyone is on the same encrypted session and same epoch, but they do not by themselves prove long-term identity across calls
+
+That is still worth showing in the UI. It gives users a practical way to detect mismatched group state or a broken encrypted-session setup.
+
+### Recommended Derivation
+
+Keep the derivation deterministic and easy to reimplement on web and native clients.
+
+One practical approach:
+
+1. Build a canonical JSON object from the current DAVE state.
+2. Hash it with `SHA-256`.
+3. Convert the first few bytes into a short human-readable code.
+
+Example:
+
+```ts
+type VerificationMaterial = {
+  protocolVersion: 1;
+  epoch: number;
+  groupIDHex?: string;
+  epochAuthenticatorHex?: string;
+  memberFingerprints: string[];
+};
+
+export async function deriveVoiceVerificationCode(
+  material: VerificationMaterial,
+) {
+  const canonical = JSON.stringify({
+    protocol_version: material.protocolVersion,
+    epoch: material.epoch,
+    group_id: material.groupIDHex ?? "",
+    epoch_authenticator: material.epochAuthenticatorHex ?? "",
+    members: [...material.memberFingerprints].sort(),
+  });
+
+  const bytes = new TextEncoder().encode(canonical);
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+
+  const chunks = [];
+  for (let i = 0; i < 4; i += 1) {
+    const value = ((digest[i * 2] << 8) | digest[i * 2 + 1]) % 10000;
+    chunks.push(value.toString().padStart(4, "0"));
+  }
+
+  return chunks.join("-");
+}
+```
+
+Example output:
+
+```text
+1834-5521-0926-4410
+```
+
+This format is short enough to read aloud, but long enough to make accidental collisions unlikely in normal use.
+
+### Where To Get The Input Data
+
+The cleanest place to compute the code is the DAVE worker or DAVE controller, because that layer already sees the cryptographic group state.
+
+Recommended data flow:
+
+- the DAVE worker exports the current epoch, group identifier, and member identity fingerprints
+- the DAVE controller derives the short code
+- the React hook exposes only the finished string and a boolean like `verificationAvailable`
+
+Suggested frontend shape:
+
+```ts
+type VoiceSecurityState = {
+  encrypted: boolean;
+  verificationAvailable: boolean;
+  verificationCode: string | null;
+  verificationMeaning:
+    | "transport_only"
+    | "session_verified"
+    | "identity_verified";
+};
+```
+
+Use `verificationMeaning = "session_verified"` when the code is based on ephemeral session identity only, and upgrade that to `"identity_verified"` once the product supports stable identity keys and out-of-band trust.
+
+### When To Recompute The Code
+
+Recompute the code when any of these change:
+
+- `Execute Transition (22)` activates a new protocol mode
+- `Prepare Epoch (24)` eventually leads to a new DAVE epoch
+- a member joins or leaves the encrypted group
+- the worker detects that identity fingerprints changed after an MLS import
+
+Do not keep showing an old code after the group changes.
+
+### How To Present It In The UI
+
+A simple pattern works well:
+
+- show a lock badge only when DAVE is active
+- open a "Verify encryption" dialog from that badge
+- show the short code and the current participant list in that dialog
+- explain whether the code is session-only or identity-backed
+
+Suggested copy for the first rollout:
+
+- "This call is end-to-end encrypted."
+- "Compare this code with the other people in the call."
+- "If it matches for everyone, you are in the same encrypted session."
+- "This first rollout uses session keys, so the code confirms the live encrypted call state, not long-term identity history."
+
+## Resume And Reconnect
+
+Use `Resume (7)` only for short websocket interruptions where you still want to keep the existing peer connection alive.
+
+Resume flow:
 
 ```mermaid
 sequenceDiagram
-    participant UserA as User A
-    participant Gateway as Gateway WS
-    participant Presence as Presence Service
-    participant NATS as NATS
-    participant UserB as User B
-    participant UserC as User C
+    participant Client
+    participant SFU
 
-    Note over UserA: User clicks mute button
-    UserA->>Gateway: OP 3 (mute: true)
-    Gateway->>Presence: Update session voice state
-    Presence->>Presence: Aggregate presence
-    
-    par Broadcast to subscribers
-        Presence->>NATS: presence.user.{id}
-        NATS->>UserB: OP 3 Presence Update
-    and Broadcast to guild
-        Presence->>NATS: guild.{guildId}
-        NATS->>UserB: t=209 Voice State Update
-        NATS->>UserC: t=209 Voice State Update
-    end
-
-    Note over UserB,UserC: UI updates to show User A is muted
+    Client->>SFU: connect /signal?v=2
+    Client->>SFU: Resume (7)
+    SFU-->>Client: Hello (8)
+    SFU-->>Client: Resumed (9)
 ```
 
-### Differences: SFU Mute vs Presence Mute
+What to do on resume:
 
-| Aspect | SFU Mute (t=505) | Presence Mute (OP 3) |
-|--------|------------------|---------------------|
-| **WebSocket** | SFU (`/signal`) | Gateway (`/subscribe`) |
-| **Effect** | Stops sending audio RTP | Shows mute icon to others |
-| **Required?** | Yes, for actual mute | Yes, for UI indication |
-| **Permissions** | None (self) | None (self) |
+- reopen the websocket
+- send `session_id`, `channel_id`, and the current join token
+- restart heartbeats after the new `Hello (8)`
+- keep the same peer connection if it is still healthy
+- keep the DAVE controller alive if local sender and receiver transforms are still attached
 
-**Best Practice:** Update both when user mutes themselves:
-1. Send to SFU to stop audio transmission (immediate)
-2. Send OP 3 to update presence (for UI)
+When to abandon resume and do a full reconnect:
 
-## Event Reference
+- close code `4016` session expired
+- close code `4003` unauthorized
+- the peer connection is already failed or closed
+- the local capture graph changed enough that you need a fresh offer anyway
 
-### Client → SFU Events
+## Error And Close-Code Handling
 
-| t | Name | Payload | Description |
-|---|------|---------|-------------|
-| 500 | RTCJoin | `{ channel, token }` | Join a voice channel |
-| 502 | RTCAnswer | `{ sdp }` | SDP answer |
-| 503 | RTCCandidate | `{ candidate, sdpMid, sdpMLineIndex }` | ICE candidate |
-| 504 | RTCLeave | `{}` | Leave channel |
-| 505 | RTCMuteSelf | `{ muted }` | Toggle self-mute |
-| 506 | RTCMuteUser | `{ user, muted }` | Locally mute a user |
+Recommended mapping for `v=2`:
 
-### SFU → Client Events
+| Code | Meaning | Frontend response |
+|------|---------|-------------------|
+| `4001` | Unknown opcode | bug in client, stop and log |
+| `4002` | Invalid payload | bug in client, stop and log |
+| `4003` | Unauthorized or blocked | refresh join state or surface permission error |
+| `4009` | Heartbeat timeout | reconnect |
+| `4016` | Resume session expired | do a full reconnect |
+| `4017` | DAVE required | show unsupported-browser or unsupported-device error |
+| `4020` | Wrong phase | bug in client state machine |
+| `4021` | Unsupported protocol | bug in client signaling implementation |
 
-| t | Name | Payload | Description |
-|---|------|---------|-------------|
-| 500 | RTCJoin Ack | `{ ok }` | Join confirmed |
-| 501 | RTCOffer | `{ sdp }` | SDP offer from server |
-| 503 | RTCCandidate | `{ candidate, ... }` | ICE candidate |
-| 505 | RTCServerMuteUser | `{ user_id, muted }` | Server muted user |
-| 506 | RTCServerDeafenUser | `{ user_id, deafened }` | Server deafened user |
-| 507 | RTCServerKickUser | `{ user_id }` | User was kicked |
-| 512 | RTCMoved | `{ channel }` | User moved to new channel |
-| 514 | RTCSpeaking | `{ user_id, speaking }` | Speaking indicator |
+## Things React Clients Should Not Do
 
-### Event Flow Diagram
+Avoid these common mistakes:
 
-```mermaid
-sequenceDiagram
-    participant Client as React Client
-    participant SFU as SFU Server
-    participant Peer as Other Peer
+1. Do not wait for `Hello (8)` before sending `Identify (0)`.
+2. Do not send legacy custom `op=7, t=...` packets on `v=2`.
+3. Do not send `RTCCandidate (503)`-style trickle candidates on `v=2`.
+4. Do not hard-code STUN servers instead of using `Ready.ice_servers`.
+5. Do not attach encoded transforms only when the first DAVE upgrade starts.
+6. Do not switch sender encryption before `Execute Transition (22)`.
+7. Do not key remote participants by `track.id`; use `stream.id`.
 
-    Note over Client,Peer: === Join Phase ===
-    Client->>SFU: RTCJoin (t=500)
-    SFU-->>Client: Join Ack (t=500)
-    SFU-->>Client: RTCOffer (t=501)
-    Client->>SFU: RTCAnswer (t=502)
+## Minimal Hook Skeleton
 
-    Note over Client,Peer: === ICE Exchange ===
-    Client->>SFU: RTCCandidate (t=503)
-    SFU-->>Client: RTCCandidate (t=503)
+This is intentionally incomplete, but it shows the shape that works well in React:
 
-    Note over Client,Peer: === Media Flow ===
-    SFU-->>Client: ontrack (with stream.id)
+```ts
+import { useEffect, useRef, useState } from "react";
 
-    Note over Client,Peer: === Control Events ===
-    Client->>SFU: RTCMuteSelf (t=505)
-    SFU-->>Peer: RTCServerMuteUser (t=505)
+export function useVoiceConnection({
+  channelId,
+  sfuUrl,
+  sfuToken,
+  localStream,
+}: {
+  channelId: number;
+  sfuUrl: string;
+  sfuToken: string;
+  localStream: MediaStream | null;
+}) {
+  const wsRef = useRef<WebSocket | null>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const cleanupHeartbeatRef = useRef<(() => void) | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  const rtcConnectionIdRef = useRef(crypto.randomUUID());
+  const [phase, setPhase] = useState<VoicePhase>("idle");
+  const [participants, setParticipants] = useState<Map<string, RemoteParticipant>>(new Map());
 
-    Client->>SFU: speaking (event)
-    SFU-->>Peer: RTCSpeaking (t=514)
+  useEffect(() => {
+    if (!sfuUrl || !sfuToken) {
+      return;
+    }
+
+    const daveSupported = supportsEncodedTransforms();
+    const ws = connectGateway({ sfuUrl, channelId, token: sfuToken, daveSupported });
+    wsRef.current = ws;
+    setPhase("identifying");
+
+    const send = (packet: GatewayPacket) => {
+      ws.send(JSON.stringify(packet));
+    };
+
+    ws.onmessage = async (event) => {
+      if (typeof event.data !== "string") {
+        await daveController.handleBinary(event.data as ArrayBuffer);
+        return;
+      }
+
+      const packet = JSON.parse(event.data) as GatewayPacket;
+
+      switch (packet.op) {
+        case GatewayOp.Hello: {
+          const hello = packet.d as HelloPayload;
+          sessionIdRef.current = hello.session_id;
+          cleanupHeartbeatRef.current?.();
+          cleanupHeartbeatRef.current = startHeartbeat(ws, hello.heartbeat_interval);
+          break;
+        }
+
+        case GatewayOp.Ready: {
+          const ready = packet.d as ReadyPayload;
+          const pc = await ensurePeer({
+            localStream,
+            iceServers: ready.ice_servers,
+            onTrack(stream) {
+              const userId = getUserIdFromStream(stream);
+              if (!userId) {
+                return;
+              }
+              setParticipants((prev) => {
+                const next = new Map(prev);
+                next.set(userId, {
+                  userId,
+                  stream,
+                  speaking: next.get(userId)?.speaking ?? false,
+                  connected: true,
+                });
+                return next;
+              });
+            },
+          });
+
+          await daveController.attachToPeer(pc, ready);
+          await createInitialOffer(pc, rtcConnectionIdRef.current, send);
+          setPhase("negotiating");
+          break;
+        }
+
+        case GatewayOp.SessionDescription: {
+          await handleSessionDescription(
+            pcRef.current!,
+            packet.d as SessionDescriptionPayload,
+            send,
+          );
+          setPhase("connected");
+          break;
+        }
+
+        case GatewayOp.ClientsConnect: {
+          const { user_ids } = packet.d as { user_ids: string[] };
+          setParticipants((prev) => {
+            const next = new Map(prev);
+            for (const userId of user_ids) {
+              if (!next.has(userId)) {
+                next.set(userId, {
+                  userId,
+                  stream: null,
+                  speaking: false,
+                  connected: true,
+                });
+              }
+            }
+            return next;
+          });
+          break;
+        }
+
+        case GatewayOp.ClientDisconnect: {
+          const { user_id } = packet.d as { user_id: string };
+          setParticipants((prev) => {
+            const next = new Map(prev);
+            next.delete(user_id);
+            return next;
+          });
+          break;
+        }
+
+        case GatewayOp.Speaking: {
+          const { user_id, speaking } = packet.d as { user_id: string; speaking: number };
+          setParticipants((prev) => {
+            const next = new Map(prev);
+            const current = next.get(user_id);
+            if (!current) {
+              return next;
+            }
+            next.set(user_id, { ...current, speaking: speaking !== 0 });
+            return next;
+          });
+          break;
+        }
+
+        case GatewayOp.DavePrepareEpoch:
+        case GatewayOp.DavePrepareTransition:
+        case GatewayOp.DaveExecuteTransition: {
+          await daveController.handleJson(packet);
+          break;
+        }
+      }
+    };
+
+    return () => {
+      cleanupHeartbeatRef.current?.();
+      ws.close();
+      pcRef.current?.close();
+      pcRef.current = null;
+      setPhase("closed");
+    };
+  }, [channelId, localStream, sfuToken, sfuUrl]);
+
+  return { phase, participants };
+}
 ```
 
-## Error Handling
+## Frontend Test Checklist
 
-```mermaid
-flowchart TD
-    Start[Connection Attempt] --> Join{API Join}
-    Join -->|Success| ConnectWS[Connect WebSocket]
-    Join -->|401/403| AuthError[Authentication Error]
+Before shipping a React client, verify these scenarios:
 
-    ConnectWS -->|Success| SendJoin[Send RTCJoin]
-    ConnectWS -->|Failed| WSError[WebSocket Error]
+1. First `v=2` join with one DAVE-capable client establishes media in transport-only mode.
+2. Second DAVE-capable client joining the same channel triggers `24/25/26/27/28/29/30/23/22`.
+3. A non-DAVE client joining a DAVE channel triggers downgrade through `21/23/22`.
+4. A later server `Session Description (4, offer)` renegotiation is answered correctly.
+5. Socket resume works without rebuilding the whole voice session.
+6. A failed resume falls back to a full reconnect.
+7. `stream.id = "u:<user_id>"` always maps media to the right participant row.
+8. Speaking indicators update from `op=5`.
 
-    SendJoin -->|ok: true| PeerConn[Create PeerConnection]
-    SendJoin -->|invalid token| TokenError[Token Expired]
-    SendJoin -->|blocked| BlockedError[User Blocked]
-    SendJoin -->|no permission| PermError[Permission Denied]
+## `v=1` Fallback
 
-    PeerConn -->|ontrack| TrackSuccess[Stream Received]
-    PeerConn -->|ICE failed| ICEError[ICE Connection Failed]
+Only keep `v=1` support if you still have legacy clients. The frontend behavior is different enough that it should usually live behind a separate adapter:
 
-    AuthError --> Retry[Retry with Fresh Token]
-    TokenError --> Retry
-    WSError --> Reconnect[Attempt Reconnect]
-    ICEError --> Reconnect
+- `v=1` connects to `/signal` or `/signal?v=1`
+- the server creates the initial SDP offer
+- later renegotiation uses `501/502/503`
+- older simple JSON compatibility messages are still part of that flow
 
-    Retry --> Join
-    Reconnect -->|Max retries?| GiveUp[Show Error UI]
-    Reconnect -->|Retry < 3| ConnectWS
-
-    TrackSuccess --> Active[Active Call]
-    Active -->|RTCMoved| Reconnect
-    Active -->|Connection lost| Reconnect
-
-    BlockedError --> ErrorUI1[Show: Request Access]
-    PermError --> ErrorUI2[Show: Check Permissions]
-    GiveUp --> ErrorUI3[Show: Connection Failed]
-```
-
-Common errors and their solutions:
-
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `invalid token` | Token expired or malformed | Re-call API to get fresh token |
-| `blocked` | User is blocked from channel | Request unblock from moderator |
-| `no PermVoiceConnect` | Missing permission | Check guild permissions |
-| `rejecting audio track` | Server muted or no speak permission | Unmute or request permissions |
-
-## Best Practices
-
-1. **Always use the stream ID** to map tracks to users, not track IDs
-2. **Implement speaking detection** using Web Audio API for better UX
-3. **Handle reconnection** - SFU may send `t=512` (moved) requiring reconnect
-4. **Clean up resources** - Close WebSocket and PeerConnection on unmount
-5. **Use TURN servers** for users behind restrictive NATs
-6. **Debounce speaking events** - Don't send more than 10 events per second
+If the app is greenfield, build only `v=2`.

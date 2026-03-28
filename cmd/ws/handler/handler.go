@@ -315,32 +315,16 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			return
 		}
 
-		var voicePtr *int64
-		if m.VoiceChannelID != nil && *m.VoiceChannelID > 0 {
-			v := *m.VoiceChannelID
-			voicePtr = &v
+		existingSession, ok, err := h.pstore.GetSession(opCtx, h.user.Id, h.sessionID)
+		if err != nil {
+			log.Warn("Error loading existing session presence", "error", err)
+			return
+		}
+		if !ok {
+			existingSession = presence.SessionPresence{}
 		}
 
-		sp := presence.SessionPresence{SessionID: h.sessionID, Status: m.Status, Platform: m.Platform, Since: now, UpdatedAt: now, ExpiresAt: now + ttl, CustomStatusText: m.CustomStatusText, VoiceChannelID: voicePtr}
-
-		// Handle voice state updates (mute/deafen)
-		if m.Mute != nil || m.Deafen != nil {
-			mute := false
-			deafen := false
-			if m.Mute != nil {
-				mute = *m.Mute
-			}
-			if m.Deafen != nil {
-				deafen = *m.Deafen
-			}
-			sp.Mute = mute
-			sp.Deafen = deafen
-
-			// Update voice state in store
-			if err := h.pstore.SetSessionVoiceState(opCtx, h.user.Id, h.sessionID, mute, deafen, ttl); err != nil {
-				log.Warn("Error setting session voice state", "error", err)
-			}
-		}
+		sp := mergePresenceUpdate(existingSession, h.sessionID, m, now, ttl)
 
 		if err := h.pstore.UpsertSession(opCtx, h.user.Id, h.sessionID, sp, ttl); err != nil {
 			log.Warn("Error upserting session presence", "error", err)
@@ -355,6 +339,34 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 	default:
 		log.Warn("Unknown operation", "operation", e.Operation)
 	}
+}
+
+func mergePresenceUpdate(existing presence.SessionPresence, sessionID string, update mqmsg.PresenceUpdateRequest, now, ttl int64) presence.SessionPresence {
+	sp := existing
+	sp.SessionID = sessionID
+	sp.Status = update.Status
+	sp.Platform = update.Platform
+	sp.Since = now
+	sp.UpdatedAt = now
+	sp.ExpiresAt = now + ttl
+	sp.CustomStatusText = update.CustomStatusText
+
+	if update.VoiceChannelID != nil {
+		if *update.VoiceChannelID > 0 {
+			voiceID := *update.VoiceChannelID
+			sp.VoiceChannelID = &voiceID
+		} else {
+			sp.VoiceChannelID = nil
+		}
+	}
+	if update.Mute != nil {
+		sp.Mute = *update.Mute
+	}
+	if update.Deafen != nil {
+		sp.Deafen = *update.Deafen
+	}
+
+	return sp
 }
 
 func resolveRequestedChannels(m mqmsg.Subscribe) ([]int64, bool) {

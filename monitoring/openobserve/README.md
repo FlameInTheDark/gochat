@@ -26,8 +26,9 @@ Files:
 
 Local Compose does not run the SFU service anymore. Voice/SFU dashboards and
 alerts remain in OpenObserve for externally deployed SFU nodes. In this stage
-the SFU ships traces, metrics, and best-effort logs directly to OpenObserve and
-does not require a sidecar, daemon, or collector process on the host.
+the SFU ships traces, metrics, and best-effort logs through the telemetry
+gateway and does not require a sidecar, daemon, or collector process on the
+host.
 
 See `docs/project/observability/ExternalSFU.md` for the standalone SFU
 environment contract and `docs/project/observability/README.md` for the full
@@ -51,17 +52,16 @@ If OpenObserve shows a very large event count in local development, it is usuall
 ## Environment
 
 - OTLP ingress for app services: `http://otel-collector:4318`
+- Public OTLP ingress for standalone SFU testing in local Compose: `http://localhost:4318`
 - Deployment environment override: `GOCHAT_DEPLOYMENT_ENV`
 - OpenObserve org env in compose: `OPENOBSERVE_ORG`
 - Collector health endpoint: `http://localhost:13133/`
-- Standalone SFU direct logs env: `OPENOBSERVE_LOGS_ENABLED`,
-  `OPENOBSERVE_LOGS_ENDPOINT`, `OPENOBSERVE_LOGS_AUTH`,
-  `OPENOBSERVE_LOGS_STREAM`
-- Standalone SFU direct OTLP env:
-  `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`,
-  `OTEL_EXPORTER_OTLP_TRACES_HEADERS`,
-  `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`,
-  `OTEL_EXPORTER_OTLP_METRICS_HEADERS`
+- Standalone SFU OTLP env:
+  `OTEL_EXPORTER_OTLP_ENDPOINT`,
+  `OTEL_EXPORTER_OTLP_HEADERS`,
+  `OTEL_EXPORTER_OTLP_PROTOCOL`
+- Standalone SFU auth env:
+  `WEBHOOK_TOKEN`
 
 ## Windows / Docker Desktop note
 
