@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -45,6 +46,11 @@ type Config struct {
 	// during enforcement to account for headers/Jitter/overhead. E.g. 15 means
 	// 15% over the configured cap is tolerated before disconnect. Range 0..100.
 	AudioBitrateMarginPercent int `yaml:"audio_bitrate_margin_percent" env:"SFU_AUDIO_BITRATE_MARGIN_PERCENT" env-default:"15"`
+
+	// Optional UDP port range for WebRTC transports. Leave both as 0 to keep the
+	// current OS-managed ephemeral port behavior unchanged.
+	UDPPortRangeStart int `yaml:"udp_port_range_start" env:"SFU_UDP_PORT_RANGE_START" env-default:"0"`
+	UDPPortRangeEnd   int `yaml:"udp_port_range_end" env:"SFU_UDP_PORT_RANGE_END" env-default:"0"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -57,12 +63,39 @@ func LoadConfig() (*Config, error) {
 		if rerr := cleanenv.ReadConfig(path, &cfg); rerr != nil {
 			return nil, rerr
 		}
+		if verr := cfg.Validate(); verr != nil {
+			return nil, verr
+		}
 		return &cfg, nil
 	}
 	if rerr := cleanenv.ReadEnv(&cfg); rerr != nil {
 		return nil, rerr
 	}
+	if verr := cfg.Validate(); verr != nil {
+		return nil, verr
+	}
 	return &cfg, nil
+}
+
+func (c *Config) Validate() error {
+	if c == nil {
+		return nil
+	}
+
+	start, end := c.UDPPortRangeStart, c.UDPPortRangeEnd
+	if start == 0 && end == 0 {
+		return nil
+	}
+	if start == 0 || end == 0 {
+		return fmt.Errorf("udp_port_range_start and udp_port_range_end must both be set")
+	}
+	if start < 1 || start > 65535 || end < 1 || end > 65535 {
+		return fmt.Errorf("udp port range must be within 1..65535")
+	}
+	if start > end {
+		return fmt.Errorf("udp_port_range_start must be less than or equal to udp_port_range_end")
+	}
+	return nil
 }
 
 func (c *Config) ApplyObservabilityEnv() error {

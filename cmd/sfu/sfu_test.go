@@ -25,7 +25,10 @@ func newTestChannelState() *channelState {
 func newTestPeerConnection(t *testing.T) *webrtc.PeerConnection {
 	t.Helper()
 
-	api := buildWebRTCAPI(newTestLogger(), false)
+	api, err := buildWebRTCAPI(newTestLogger(), false, 0, 0)
+	if err != nil {
+		t.Fatalf("build webrtc api: %v", err)
+	}
 	pc, err := api.NewPeerConnection(webrtc.Configuration{})
 	if err != nil {
 		t.Fatalf("create peer connection: %v", err)
@@ -314,6 +317,16 @@ func TestBuildWebRTCAPIAdvertisesVideoFeedbackAndRTX(t *testing.T) {
 		if !strings.Contains(sdp, want) {
 			t.Fatalf("expected offer SDP to contain %q, got:\n%s", want, sdp)
 		}
+	}
+}
+
+func TestBuildWebRTCAPIAcceptsConfiguredUDPPortRange(t *testing.T) {
+	api, err := buildWebRTCAPI(newTestLogger(), false, 40000, 40100)
+	if err != nil {
+		t.Fatalf("build webrtc api with udp port range: %v", err)
+	}
+	if _, err := api.NewPeerConnection(webrtc.Configuration{}); err != nil {
+		t.Fatalf("create peer connection: %v", err)
 	}
 }
 

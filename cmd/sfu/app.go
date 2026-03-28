@@ -66,7 +66,11 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger, cfg *config.Config) *App {
 	}
 
 	iceCfg := buildICEConfig(cfg.STUNServers)
-	api := buildWebRTCAPI(logger, cfg.DAVEAllowAV1)
+	api, err := buildWebRTCAPI(logger, cfg.DAVEAllowAV1, cfg.UDPPortRangeStart, cfg.UDPPortRangeEnd)
+	if err != nil {
+		logger.Error("unable to configure webrtc api", slog.String("error", err.Error()))
+		panic(err)
+	}
 
 	fiberApp := fiber.New(fiber.Config{DisableStartupMessage: true})
 	fiberApp.Use(observability.RequestContextMiddleware())

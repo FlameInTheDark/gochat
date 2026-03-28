@@ -62,6 +62,27 @@ func TestApplyObservabilityEnvPreservesExplicitEnv(t *testing.T) {
 	}
 }
 
+func TestValidateAcceptsDefaultUDPPortRange(t *testing.T) {
+	cfg := &Config{}
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+}
+
+func TestValidateRejectsPartialUDPPortRange(t *testing.T) {
+	cfg := &Config{UDPPortRangeStart: 40000}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected partial udp port range to fail validation")
+	}
+}
+
+func TestValidateRejectsReversedUDPPortRange(t *testing.T) {
+	cfg := &Config{UDPPortRangeStart: 40100, UDPPortRangeEnd: 40000}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected reversed udp port range to fail validation")
+	}
+}
+
 func getenvOrEmpty(key string) string {
 	return os.Getenv(key)
 }

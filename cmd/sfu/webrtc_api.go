@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 
 	"github.com/pion/interceptor"
@@ -18,7 +19,7 @@ var videoRTCPFeedback = []webrtc.RTCPFeedback{
 // We keep the codec list explicit so signaling can advertise the same payload
 // types, while still enabling RTX, NACK/PLI, TWCC and the rest of Pion's
 // default interceptor stack that browsers rely on for stable 720p30 delivery.
-func buildWebRTCAPI(logger *slog.Logger, allowAV1 bool) *webrtc.API {
+func buildWebRTCAPI(logger *slog.Logger, allowAV1 bool, udpPortRangeStart, udpPortRangeEnd int) (*webrtc.API, error) {
 	me := &webrtc.MediaEngine{}
 	registerSFUCodecs(logger, me, allowAV1)
 
@@ -27,10 +28,25 @@ func buildWebRTCAPI(logger *slog.Logger, allowAV1 bool) *webrtc.API {
 		logger.Error("failed to register default webrtc interceptors", slog.String("error", err.Error()))
 	}
 
+	settingEngine := webrtc.SettingEngine{}
+	if udpPortRangeStart != 0 || udpPortRangeEnd != 0 {
+		if udpPortRangeStart == 0 || udpPortRangeEnd == 0 {
+			return nil, fmt.Errorf("udp port range must set both start and end")
+		}
+		if err := settingEngine.SetEphemeralUDPPortRange(uint16(udpPortRangeStart), uint16(udpPortRangeEnd)); err != nil {
+			return nil, fmt.Errorf("set udp port range: %w", err)
+		}
+		logger.Info("configured webrtc udp port range",
+			slog.Int("start", udpPortRangeStart),
+			slog.Int("end", udpPortRangeEnd),
+		)
+	}
+
 	return webrtc.NewAPI(
 		webrtc.WithMediaEngine(me),
 		webrtc.WithInterceptorRegistry(ir),
-	)
+		webrtc.WithSettingEngine(settingEngine),
+	), nil
 }
 
 func registerSFUCodecs(logger *slog.Logger, me *webrtc.MediaEngine, allowAV1 bool) {

@@ -5,6 +5,11 @@ stun_servers:
 region: "eu-central"
 public_base_url: "https://sfu-eu.example.com"
 
+# Optional: restrict WebRTC UDP sockets to a fixed port range.
+# Leave both as 0 to preserve the current OS-managed ephemeral port behavior.
+udp_port_range_start: 0
+udp_port_range_end: 0
+
 # Webhook discovery
 webhook_url: "http://webhook:3200/api/v1/webhook/sfu/heartbeat"
 # Pre-generated JWT token for webhook authentication (typ=sfu, id=<service_id>)
