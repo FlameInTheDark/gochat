@@ -112,7 +112,7 @@ func EncodeProposals(msg Proposals) ([]byte, error) {
 	)
 	switch msg.OperationType {
 	case ProposalsAppend:
-		payload, err = encodeOpaqueVectorList(msg.ProposalMessages)
+		payload, err = encodeMLSMessageVector(msg.ProposalMessages)
 	case ProposalsRevoke:
 		payload, err = encodeOpaqueVectorList(msg.ProposalRefs)
 	default:
@@ -245,15 +245,30 @@ func Decode(raw []byte) (*DecodedMessage, error) {
 			return nil, fmt.Errorf("proposals message too short")
 		}
 		msg.OperationType = ProposalsOperationType(raw[3])
-		payloads, n, err := decodeOpaqueVectorList(raw[4:])
-		if err != nil {
-			return nil, err
+		switch msg.OperationType {
+		case ProposalsAppend:
+			payload, n, err := readOpaqueVec(raw[4:])
+			if err != nil {
+				return nil, err
+			}
+			if 4+n != len(raw) {
+				return nil, fmt.Errorf("proposals append contains trailing bytes")
+			}
+			msg.Payloads = [][]byte{payload}
+			return msg, nil
+		case ProposalsRevoke:
+			payloads, n, err := decodeOpaqueVectorList(raw[4:])
+			if err != nil {
+				return nil, err
+			}
+			if 4+n != len(raw) {
+				return nil, fmt.Errorf("proposals revoke contains trailing bytes")
+			}
+			msg.Payloads = payloads
+			return msg, nil
+		default:
+			return nil, fmt.Errorf("unknown proposals operation type %d", msg.OperationType)
 		}
-		if 4+n != len(raw) {
-			return nil, fmt.Errorf("proposals message contains trailing bytes")
-		}
-		msg.Payloads = payloads
-		return msg, nil
 	case OpcodeAnnounceCommitTransition:
 		if len(raw) < 5 {
 			return nil, fmt.Errorf("announce commit transition too short")
@@ -295,6 +310,14 @@ func encodeOpaqueVectorList(values [][]byte) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+	return writeOpaqueVec(nil, body)
+}
+
+func encodeMLSMessageVector(values [][]byte) ([]byte, error) {
+	body := make([]byte, 0, 64)
+	for _, value := range values {
+		body = append(body, value...)
 	}
 	return writeOpaqueVec(nil, body)
 }

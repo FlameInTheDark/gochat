@@ -2,6 +2,8 @@ package main
 
 import (
 	"time"
+
+	voicev2 "github.com/FlameInTheDark/gochat/cmd/sfu/signaling/v2"
 )
 
 const signalV2ResumeWindow = 30 * time.Second
@@ -11,7 +13,38 @@ func (a *App) SendJSON(sessionID string, op int, payload any) error {
 	if session == nil {
 		return nil
 	}
-	return session.writer.SendVoiceGatewayPacket(op, payload)
+	if err := session.writer.SendVoiceGatewayPacket(op, payload); err != nil {
+		return err
+	}
+
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	switch op {
+	case voicev2.OpDAVEPrepareEpoch:
+		if msg, ok := payload.(voicev2.PrepareEpoch); ok {
+			session.davePendingProtocol = msg.ProtocolVersion
+			session.davePendingEpoch = msg.Epoch
+		}
+	case voicev2.OpDAVEPrepareTransition:
+		if msg, ok := payload.(voicev2.PrepareTransition); ok {
+			session.davePendingProtocol = msg.ProtocolVersion
+			if msg.ProtocolVersion == 0 {
+				session.davePendingEpoch = 0
+			}
+		}
+	case voicev2.OpDAVEExecuteTransition:
+		if _, ok := payload.(voicev2.ExecuteTransition); ok {
+			session.daveProtocolVersion = session.davePendingProtocol
+			session.daveEpoch = session.davePendingEpoch
+			if session.state != nil {
+				session.state.daveProtocol = session.daveProtocolVersion
+				session.state.daveEpoch = session.daveEpoch
+			}
+		}
+	}
+
+	return nil
 }
 
 func (a *App) SendBinary(sessionID string, payload []byte) error {

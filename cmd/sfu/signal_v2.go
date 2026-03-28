@@ -64,6 +64,8 @@ type signalV2Session struct {
 	identityKey               *voicev2.IdentityKey
 	daveProtocolVersion       int
 	daveEpoch                 uint64
+	davePendingProtocol       int
+	davePendingEpoch          uint64
 
 	explicitClose bool
 	finalized     bool
@@ -111,7 +113,7 @@ func (a *App) handleSignalWSV2(c *websocket.Conn) {
 	for {
 		mt, raw, err := c.ReadMessage()
 		if err != nil {
-			if session != nil && session.phase == signalV2PhaseEstablished && !session.explicitClose {
+			if session != nil && session.phase == signalV2PhaseEstablished && !session.explicitClose && shouldDetachSignalV2Session(err) {
 				a.detachSignalV2Session(session)
 				finalize = false
 				return
@@ -221,6 +223,7 @@ func (a *App) handleSignalV2Identify(conn *websocket.Conn, signalCtx context.Con
 		_ = (&threadSafeWriter{conn: conn.Conn}).SendClose(voicev2.CloseCodeInvalidPayload, "invalid identify payload")
 		return nil, err
 	}
+	normalizeSignalV2IdentifyDAVE(&identify)
 
 	uid, channelID, guildID, perms, moved, err := a.authorizeJoinFields(identify.ChannelID, identify.Token)
 	if err != nil {
@@ -268,7 +271,6 @@ func (a *App) handleSignalV2Identify(conn *websocket.Conn, signalCtx context.Con
 		supportsEncodedTransforms: identify.SupportsEncodedTransforms,
 		maxDAVEProtocolVersion:    identify.MaxDAVEProtocolVersion,
 		identityKey:               identify.IdentityKey,
-		daveProtocolVersion:       a.dave.PreviewProtocolVersion(channelID, supportsDAVE),
 	}
 	session.state = &peerConnectionState{
 		peerConnection: pc,
@@ -276,8 +278,6 @@ func (a *App) handleSignalV2Identify(conn *websocket.Conn, signalCtx context.Con
 		userID:         uid,
 		perms:          perms,
 		signalVersion:  signalProtocolVersion2,
-		daveProtocol:   session.daveProtocolVersion,
-		daveEpoch:      a.dave.Snapshot(channelID).Epoch,
 	}
 	a.registerPeerCallbacks(session.ctx, pc, writer, session.state, uid, channelID, perms)
 	a.registerSignalV2Session(session)
@@ -294,6 +294,25 @@ func (a *App) handleSignalV2Identify(conn *websocket.Conn, signalCtx context.Con
 	}
 
 	return session, nil
+}
+
+func normalizeSignalV2IdentifyDAVE(identify *voicev2.Identify) {
+	if identify == nil {
+		return
+	}
+
+	if identify.MaxDAVEProtocolVersion > voicev2.MaxDAVEProtocol {
+		identify.MaxDAVEProtocolVersion = voicev2.MaxDAVEProtocol
+	}
+	if identify.MaxDAVEProtocolVersion > 0 {
+		identify.SupportsEncodedTransforms = true
+	}
+	if identify.DAVESupported && !identify.SupportsEncodedTransforms {
+		identify.SupportsEncodedTransforms = true
+	}
+	if identify.MaxDAVEProtocolVersion == 0 && identify.SupportsEncodedTransforms {
+		identify.MaxDAVEProtocolVersion = voicev2.MaxDAVEProtocol
+	}
 }
 
 func (a *App) handleSignalV2Resume(conn *websocket.Conn, packet *voicev2.IncomingPacket) (*signalV2Session, error) {
@@ -319,6 +338,8 @@ func (a *App) handleSignalV2Resume(conn *websocket.Conn, packet *voicev2.Incomin
 	session.mu.Lock()
 	session.daveProtocolVersion = snapshot.ProtocolVersion
 	session.daveEpoch = snapshot.Epoch
+	session.davePendingProtocol = snapshot.ProtocolVersion
+	session.davePendingEpoch = snapshot.Epoch
 	if session.state != nil {
 		session.state.daveProtocol = snapshot.ProtocolVersion
 		session.state.daveEpoch = snapshot.Epoch
@@ -503,13 +524,10 @@ func (a *App) handleSignalV2SelectProtocol(session *signalV2Session, raw json.Ra
 			answerToSend.SDP = limitAudioBitrateInSDP(answerToSend.SDP, a.sfu.maxAudioBitrateBps)
 		}
 
-		sessionSnapshot := a.dave.Snapshot(session.channelID)
-		session.daveProtocolVersion = a.dave.PreviewProtocolVersion(session.channelID, session.supportsDAVE)
-		if session.daveProtocolVersion == 0 {
-			session.daveEpoch = 0
-		} else {
-			session.daveEpoch = sessionSnapshot.Epoch
-		}
+		session.daveProtocolVersion = 0
+		session.daveEpoch = 0
+		session.davePendingProtocol = 0
+		session.davePendingEpoch = 0
 		session.state.daveProtocol = session.daveProtocolVersion
 		session.state.daveEpoch = session.daveEpoch
 

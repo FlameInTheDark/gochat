@@ -122,7 +122,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger, cfg *config.Config) *App {
 		}
 		return fiber.ErrUpgradeRequired
 	})
-	fiberApp.Get("/signal", websocket.New(a.handleSignalWS, websocket.Config{}))
+	fiberApp.Get("/signal", websocket.New(a.handleSignalWS, websocket.Config{
+		ReadBufferSize:  32768, // 32KB — large enough for video SDP renegotiations
+		WriteBufferSize: 32768,
+	}))
 	fiberApp.Post("/admin/channel/close", a.handleAdminCloseChannel)
 	go sfu.RunKeyFrameTicker()
 

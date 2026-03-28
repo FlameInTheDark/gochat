@@ -65,6 +65,11 @@ func (a *App) handleSignalWSV1(c *websocket.Conn) {
 		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: "blocked"}})
 		return
 	}
+	if a.cfg.DAVERequiredDefault {
+		log.Warn("legacy signal protocol rejected because dave is required", slog.Int64("user", uid), slog.Int64("channel", channelID))
+		_ = (&threadSafeWriter{conn: c.Conn}).SendEnvelope(OutEnvelope{OP: int(mqmsg.OPCodeRTC), T: int(mqmsg.EventTypeRTCJoin), D: ErrorResponse{Error: "dave is required; use signal v2"}})
+		return
+	}
 
 	// Phase 2: Setup - create PeerConnection and register it.
 	a.notifyUserJoin(sessionCtx, uid, channelID, guildID)

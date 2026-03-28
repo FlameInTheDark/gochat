@@ -143,7 +143,7 @@ func TestApplyPeerAnswer_ResignalsWhenTopologyAdvancedWhilePeerWasBehind(t *test
 	}
 	ch.peers = []*peerConnectionState{state}
 	ch.topologyRevision = 2
-	track := newTestTrack(t, "1-video", "u:1")
+	track := newTestTrack(t, "1-video", "1")
 	ch.trackLocals[track.ID()] = trackLocalEntry{track: track, owner: 1, kind: webrtc.RTPCodecTypeVideo.String()}
 
 	needsSignal, ok := ch.applyPeerAnswer(pc)
@@ -181,7 +181,7 @@ func TestDoSignalPeerConnections_NewPeerGetsInitialOfferForExistingTracks(t *tes
 	}
 	ch.peers = []*peerConnectionState{state}
 	ch.topologyRevision = 1
-	track := newTestTrack(t, "1-video", "u:1")
+	track := newTestTrack(t, "1-video", "1")
 	ch.trackLocals[track.ID()] = trackLocalEntry{track: track, owner: 1, kind: webrtc.RTPCodecTypeVideo.String()}
 
 	ch.doSignalPeerConnections()
@@ -203,7 +203,7 @@ func TestPreparePeerInitialSync_InitialAnswerContainsExistingTracks(t *testing.T
 		userID:         2,
 	}
 
-	track := newTestTrack(t, "1-video", "u:1")
+	track := newTestTrack(t, "1-video", "1")
 	ch.trackLocals[track.ID()] = trackLocalEntry{track: track, owner: 1, kind: webrtc.RTPCodecTypeVideo.String()}
 
 	offerPC := newTestPeerConnection(t)
@@ -241,7 +241,7 @@ func TestPreparePeerInitialSync_InitialAnswerContainsExistingTracks(t *testing.T
 	if !foundSender {
 		t.Fatal("expected initial sync to add existing track sender before answering")
 	}
-	if !strings.Contains(answer.SDP, "u:1") {
+	if !strings.Contains(answer.SDP, "a=msid:1 1-video") {
 		t.Fatalf("expected answer SDP to reference existing stream id, got:\n%s", answer.SDP)
 	}
 }
@@ -267,7 +267,7 @@ func TestDoSignalPeerConnections_V2BootstrappedPeerRenegotiatesOnTopologyChange(
 		t.Fatal("did not expect immediate renegotiation without a topology change")
 	}
 
-	track := newTestTrack(t, "1-video", "u:1")
+	track := newTestTrack(t, "1-video", "1")
 	ch.trackLocals[track.ID()] = trackLocalEntry{track: track, owner: 1, kind: webrtc.RTPCodecTypeVideo.String()}
 	ch.topologyRevision = 2
 
@@ -278,6 +278,16 @@ func TestDoSignalPeerConnections_V2BootstrappedPeerRenegotiatesOnTopologyChange(
 	}
 	if state.offeredRevision != 2 {
 		t.Fatalf("expected offered revision 2, got %d", state.offeredRevision)
+	}
+}
+
+func TestForwardedTrackIdentifiersUseRawOwnerUserID(t *testing.T) {
+	streamID, trackID := forwardedTrackIdentifiers(42, "video")
+	if streamID != "42" {
+		t.Fatalf("stream id = %q, want %q", streamID, "42")
+	}
+	if trackID != "42-video" {
+		t.Fatalf("track id = %q, want %q", trackID, "42-video")
 	}
 }
 

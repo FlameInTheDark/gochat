@@ -293,3 +293,15 @@ func isExpectedWSReadError(err error) bool {
 
 	return errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, net.ErrClosed)
 }
+
+func shouldDetachSignalV2Session(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+		return true
+	}
+
+	return errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, net.ErrClosed)
+}

@@ -7,6 +7,65 @@ import (
 	"github.com/pion/sdp/v3"
 )
 
+// stripSelfTracksFromSDP sets any sendonly/sendrecv m-lines whose MSID stream
+// ID matches ownerUserID to inactive. This prevents the SFU from accidentally
+// sending a user's own forwarded track back to themselves in the offer SDP.
+// The forwarded stream ID format is Sprintf("%d", userID) (see forwardedTrackIdentifiers).
+// If parsing fails, returns the original SDP unchanged.
+func stripSelfTracksFromSDP(sdpIn string, ownerUserID int64) string {
+	selfStreamID := strconv.FormatInt(ownerUserID, 10)
+
+	var desc sdp.SessionDescription
+	if err := desc.UnmarshalString(sdpIn); err != nil {
+		return sdpIn
+	}
+
+	changed := false
+	for _, md := range desc.MediaDescriptions {
+		if md == nil {
+			continue
+		}
+		// Check for a=msid:<selfStreamID> ... in this m-line.
+		hasSelfMSID := false
+		for _, a := range md.Attributes {
+			if !strings.EqualFold(a.Key, "msid") {
+				continue
+			}
+			// msid value: "<streamId>" or "<streamId> <trackId>"
+			parts := strings.Fields(a.Value)
+			if len(parts) >= 1 && parts[0] == selfStreamID {
+				hasSelfMSID = true
+				break
+			}
+		}
+		if !hasSelfMSID {
+			continue
+		}
+
+		// Rewrite this m-line: remove sendonly/sendrecv/msid, add inactive.
+		filtered := md.Attributes[:0:0]
+		for _, a := range md.Attributes {
+			switch strings.ToLower(a.Key) {
+			case "sendonly", "sendrecv", "msid":
+				// drop — the track is not going to this peer
+			default:
+				filtered = append(filtered, a)
+			}
+		}
+		filtered = append(filtered, sdp.NewAttribute("inactive", ""))
+		md.Attributes = filtered
+		changed = true
+	}
+
+	if !changed {
+		return sdpIn
+	}
+	if out, err := desc.Marshal(); err == nil {
+		return string(out)
+	}
+	return sdpIn
+}
+
 // limitAudioBitrateInSDP injects bandwidth limits and OPUS fmtp maxaveragebitrate
 // into all audio media sections. If parsing fails, returns the original SDP.
 // maxBps must be > 0.

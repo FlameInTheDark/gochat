@@ -353,11 +353,7 @@ func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removed bool, empt
 }
 
 func (c *channelState) addTrack(userID int64, t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
-	// Use streamID to carry the sender's user ID so receivers can map tracks to users.
-	// Keep the original track ID for uniqueness.
-	streamID := fmt.Sprintf("u:%d", userID)
-	// Ensure unique Track ID per user to avoid collisions across peers (e.g. "video")
-	trackID := fmt.Sprintf("%d-%s", userID, t.ID())
+	streamID, trackID := forwardedTrackIdentifiers(userID, t.ID())
 	trackLocal, err := webrtc.NewTrackLocalStaticRTP(t.Codec().RTPCodecCapability, trackID, streamID)
 	if err != nil {
 		c.log.Warn("failed to create local track", slog.Int64("channel", c.id), slog.Int64("user", userID), slog.String("track", trackID), slog.String("error", err.Error()))
@@ -390,6 +386,15 @@ func (c *channelState) removeTrack(track *webrtc.TrackLocalStaticRTP) (kind stri
 		c.log.Debug("track removed", slog.Int64("channel", c.id), slog.String("track", track.ID()), slog.Uint64("revision", rev))
 	}
 	return kind, removed, empty
+}
+
+func forwardedTrackIdentifiers(userID int64, remoteTrackID string) (streamID string, trackID string) {
+	// Use streamID to carry the sender's raw user ID so browser clients can map
+	// remote tracks directly to application users via event.streams[0].id.
+	streamID = fmt.Sprintf("%d", userID)
+	// Ensure unique Track ID per user to avoid collisions across peers (e.g. "video").
+	trackID = fmt.Sprintf("%d-%s", userID, remoteTrackID)
+	return streamID, trackID
 }
 
 func (c *channelState) bumpTopologyRevisionLocked() uint64 {
@@ -513,6 +518,9 @@ func (c *channelState) doSignalPeerConnections() {
 		if c.maxAudioBitrateBps > 0 {
 			offerToSend.SDP = limitAudioBitrateInSDP(offerToSend.SDP, c.maxAudioBitrateBps)
 		}
+		// Strip any m-lines carrying the receiver's own forwarded track — sending
+		// a user's own audio/video back wastes bandwidth and confuses DAVE E2EE.
+		offerToSend.SDP = stripSelfTracksFromSDP(offerToSend.SDP, state.userID)
 
 		state.offeredRevision = currentRevision
 		state.forceOffer = false

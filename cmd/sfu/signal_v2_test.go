@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -43,6 +44,29 @@ type v2Client struct {
 	userID    int64
 	channelID int64
 	token     string
+}
+
+var daveKeyPackageFixtures = map[int64]string{
+	501: "AAEAAkBBBBoSujDDF1qzYBAnD2jJ2hecTzbOleqEGvvlnPPjJMlb/FMXz9LmD7g4xEeot6IC8N74fhfpN2yGdAPK45esd2tAQQSYZLJhQdGPOfVUtEycQjVRAoq25NBxzaWtqngwkhEthAsFKpIGDX6DAvVS2VUj0O7GtEvuDoMiHcM4YmIRvZfgQEEEQWD9v0QUlBKHzjrNhqX5JduWo7BvOS74KMGD5lCdfH7BYhDQxZum4F2qPO2CTUUAl2b/EOCcdaVZ/lM16RsVpgABCAAAAAAAAAH1AgABAgACAAACAAEBAAAAAAAAAAD//////////wBARzBFAiEA6BtADgVSJ3kr/LwXt4fFVZcBqabPSfqmnA4JqWQz+E0CICnwze3Cserp1dEYe8awDnfTJjqzQeaJlFNJhPJe2qWfAEBHMEUCIQCL2i+ux9W9mrV2KHYvQrf6iFu1sEGi2cf2iqKSf634tQIgNeLXtd1a+szYhtWJXTRTcd+hBxWLAOqn03r9OY4WA4A=",
+	502: "AAEAAkBBBDMqRkt2euRV4MrR7y0sWgQNqDfk3NLcK9O/ukaDOkykA1xeWp0r23XQutI9Usy4etMYk/uWWWuRX67nrh6nZPRAQQR3Uln1qePIdu6H4/BhHY1YZAiEdTyKWr0FjM92kjDinkuxemPStmZL5j/qTvd0U+KHlFNWF6rymTCuDt+4n9HrQEEEk7fWAbDxho33M5YHDfzMtxvVInGFW+K6KrD8AJpNOmaA6i9i8TjP6aqNs2v8XQzkVKpAds4Rsbk1rgOR2HXvSAABCAAAAAAAAAH2AgABAgACAAACAAEBAAAAAAAAAAD//////////wBARzBFAiAjcpoWuZiQoVWGNmUVc9thxuNIUzsd5l7QkY9QbRf+KQIhAKAY6Cgv5ACUZ4Mu2ofgsnYVR8KKmkdCgybIXuzTBILYAEBGMEQCIE/2omCFfGN3m2xAaFLkA7bK/UYpH+63jQNyVOU/2remAiAy8V1jYa88NFdE2HoTFCfRDcDhcP7TzKTptfDT/PDsnw==",
+	503: "AAEAAkBBBKl+dlrLvNQGPFv6NLwKaTolQpteBzHK6PufVOUhO56P0GttI5QCtjB4jLd0BNL/fYlOlbh34Am/phm7k1CZLvJAQQTb7YceyDEa4uknCPCzKMkqA+XoWQCofDXp/wV7edRRcJhm8+hqe+Ux6gRt8TGIa2FuLLoNgEOzcpVwzhmDEWJQQEEEPcZ0cOJabcQeti08fko3nC1XPmMqIC1LECf6PGnPcGti5Ojtlhw0ONnc7NhtY9LCZoG7xPWVAR2klNHqMbILlAABCAAAAAAAAAH3AgABAgACAAACAAEBAAAAAAAAAAD//////////wBARzBFAiEAzHtWAwhYGPDzdAVY+Kg0YEMNBlX3y1xOKpajWQT8D/cCIGiTR+4MlNkTKGPtvGtpxgX86lmu6eHQWjFnJ6SI/CJVAEBHMEUCIC7sUySxNyMNxrDQKP3gdapJwvnt4QhL4uQxB6yfiNQyAiEA7CDS79o4xF0DGe6b1L2pjVx0XvjOGi0FGnm0sKQj5jI=",
+	504: "AAEAAkBBBJFvkKJpG4P7FM/xmqqc+yBD1J39x9oP0d1RRR0JRtx/LSe2CYFV1OLdtYEcHFE+9GgfhD8CIimOd+hzvbfd+apAQQT4duBuDbVZIam4FvsDCtsTmGCk9ctVRrIK3+5pB//IU+r1jk1U6p5xEVShYMnSjdemM0GQhvlHZ0JcAWrA1PqJQEEE8+I9IizpjzYE0OjONzFjIQbye9Grpu7aefSpyAwFq7iZKbiWjXza0vZIlVs9nKASt8xbkJrq7cHom4bJ6LflcQABCAAAAAAAAAH4AgABAgACAAACAAEBAAAAAAAAAAD//////////wBARjBEAiAZuUHGECZlPMK91JSyRiUx9IzxTMru7p6RtTfN20gLkQIgaRvrVf/mkfA3arQClRo9xtBEzCXGlWJufznWWTh1DdYAQEYwRAIgOmWFCZFZ0Ok4kWKYcuOAQIOSZr6vHnxu2itQmoXMTiACIG6oY7yYMN9UmBRzlTvAHOPB3Q7JcUKZ1AldLkuEwdPv",
+	801: "AAEAAkBBBFJg5bqn+GCIvXJMOpj9BHmPhEorqPGR/6H+XBpLprFWVpoMQFhpwVKaiyX5Fy+9nORzl0CYf7ZANYMeWVDf+cpAQQQPEuH03FHseRlZPH5qN/OJzyl8Zx4O4z+IuDlPiSc/NgrWHEfn4nWaCo7pwWwgpytQKvLCGyg2JuYvFOf0VEBnQEEEeUJM1L0ytvTl0iWkmdoYLFenn4Hzu4vpGCSzxSAWlC4ppsm/6FargqM2CjLdM1N8fkoMfjR2av/sCtMzz8sj3QABCAAAAAAAAAMhAgABAgACAAACAAEBAAAAAAAAAAD//////////wBARzBFAiEArrXZHzorJ+WYNdXHPEyeDyxcPi4HuNvKQnS2tJzSBzECIC4HXumL1LOp4izaXZbXVSJElj73Qkq9XT7RSypJPB7NAEBHMEUCIQCr4J8QobkRyC1Pksvqzwt6vUDFG8xIfIgCb4FaPlJ56QIgUW1RuWLKopjhL3NF9SE9/3xUi8h4sUApBkCoT76n8VM=",
+	802: "AAEAAkBBBCtsCRG1e20d4Ifb+N2dQg1tbxJxXx7i5Pc4StfVz3CJC1Helm8i9y2EGJDX4Sy6jBLEuCyD2JPdV25dd2I9q6ZAQQQaoPB1c4AkgnzZd28UqWlOQ/cOKD2w9F4u1b899QSo/2i8ZfeOQcVgrX+J2JnQkzb6/UiMVKBU98lvlUHxyDKQQEEE0ToVUkXS3LgolrOJv5ARVdLwichW4OcbEOlaKILHkJyKAmeCKmgC1UvoCDn9tKryycsf5Bs4cn3WDWEOpVrgxwABCAAAAAAAAAMiAgABAgACAAACAAEBAAAAAAAAAAD//////////wBASDBGAiEAs3YPp9hBWo7tq7cPNphFST4XBl/aMfgPPp2+ZgYqQBgCIQDe1pOlf5CEjhfNMfXvvI3moj+ZDFzlIS5nOExym/kFSgBARjBEAiBubLVGPoQqGLmzYJPsP+5R9tNrDVJhhv5Aug48fGJ5ogIgHlWmjpgI7i0aNnPTXvJ8ZrTAADDwELgQnGAt+/rEUy0=",
+}
+
+func mustFixtureKeyPackage(t *testing.T, userID int64) []byte {
+	t.Helper()
+
+	raw, ok := daveKeyPackageFixtures[userID]
+	if !ok {
+		t.Fatalf("missing DAVE key package fixture for user %d", userID)
+	}
+	decoded, err := base64.StdEncoding.DecodeString(raw)
+	if err != nil {
+		t.Fatalf("decode key package fixture: %v", err)
+	}
+	return decoded
 }
 
 func newSignalTestHarness(t *testing.T, heartbeatIntervalMS int64) *signalTestHarness {
@@ -202,6 +226,17 @@ func waitForBinaryOpcode(t *testing.T, conn *ws.Conn, timeout time.Duration, wan
 	}
 }
 
+func readNextBinaryDecoded(t *testing.T, conn *ws.Conn, timeout time.Duration) *wire.DecodedMessage {
+	t.Helper()
+
+	payload := readBinaryMessageWithTimeout(t, conn, timeout)
+	decoded, err := wire.Decode(payload)
+	if err != nil {
+		t.Fatalf("decode binary packet: %v", err)
+	}
+	return decoded
+}
+
 func writeJSONMessage(t *testing.T, conn *ws.Conn, v any) {
 	t.Helper()
 	_ = conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
@@ -291,17 +326,23 @@ func newClientOffer(t *testing.T) (string, *webrtc.PeerConnection) {
 func establishV2Participant(t *testing.T, h *signalTestHarness, userID, channelID int64, daveCapable bool) (*v2Client, voicev2.SessionDescription) {
 	t.Helper()
 
-	perms := int64(permissions.PermVoiceConnect | permissions.PermVoiceSpeak | permissions.PermVoiceVideo)
-	token := issueTestJoinToken(t, h.app.cfg.AuthSecret, userID, channelID, perms)
-	conn := h.dial(t, "?v=2")
-
-	writeGatewayMessage(t, conn, voicev2.OpIdentify, voicev2.Identify{
-		ChannelID:                 helper.StringInt64(channelID),
-		Token:                     token,
+	return establishV2ParticipantWithIdentify(t, h, userID, channelID, voicev2.Identify{
 		MaxDAVEProtocolVersion:    map[bool]int{true: 1, false: 0}[daveCapable],
 		SupportsEncodedTransforms: daveCapable,
 		DAVESupported:             daveCapable,
 	})
+}
+
+func establishV2ParticipantWithIdentify(t *testing.T, h *signalTestHarness, userID, channelID int64, identify voicev2.Identify) (*v2Client, voicev2.SessionDescription) {
+	t.Helper()
+
+	perms := int64(permissions.PermVoiceConnect | permissions.PermVoiceSpeak | permissions.PermVoiceVideo)
+	token := issueTestJoinToken(t, h.app.cfg.AuthSecret, userID, channelID, perms)
+	conn := h.dial(t, "?v=2")
+
+	identify.ChannelID = helper.StringInt64(channelID)
+	identify.Token = token
+	writeGatewayMessage(t, conn, voicev2.OpIdentify, identify)
 
 	hello := waitForGatewayOp(t, conn, 5*time.Second, voicev2.OpHello)
 	var helloPayload voicev2.Hello
@@ -345,6 +386,42 @@ func establishV2Participant(t *testing.T, h *signalTestHarness, userID, channelI
 	}, sessionDesc
 }
 
+func TestSignalWSV2MissingMaxDAVEProtocolVersionStillStartsDAVEHandshake(t *testing.T) {
+	h := newSignalTestHarness(t, 15000)
+
+	c1, desc1 := establishV2ParticipantWithIdentify(t, h, 801, 140, voicev2.Identify{
+		SupportsEncodedTransforms: true,
+		DAVESupported:             true,
+	})
+	defer c1.conn.Close()
+	c2, desc2 := establishV2ParticipantWithIdentify(t, h, 802, 140, voicev2.Identify{
+		SupportsEncodedTransforms: true,
+		DAVESupported:             true,
+	})
+	defer c2.conn.Close()
+
+	if desc1.DAVEProtocolVersion != 0 || desc2.DAVEProtocolVersion != 0 {
+		t.Fatalf("expected transport-only bootstrap before upgrade, got %d and %d", desc1.DAVEProtocolVersion, desc2.DAVEProtocolVersion)
+	}
+
+	_ = waitForGatewayOp(t, c1.conn, 5*time.Second, voicev2.OpClientsConnect)
+	_ = waitForGatewayOp(t, c2.conn, 5*time.Second, voicev2.OpClientsConnect)
+
+	prepare1 := waitForGatewayOp(t, c1.conn, 5*time.Second, voicev2.OpDAVEPrepareEpoch)
+	prepare2 := waitForGatewayOp(t, c2.conn, 5*time.Second, voicev2.OpDAVEPrepareEpoch)
+	var payload1 voicev2.PrepareEpoch
+	var payload2 voicev2.PrepareEpoch
+	if err := json.Unmarshal(prepare1.D, &payload1); err != nil {
+		t.Fatalf("unmarshal prepare epoch 1: %v", err)
+	}
+	if err := json.Unmarshal(prepare2.D, &payload2); err != nil {
+		t.Fatalf("unmarshal prepare epoch 2: %v", err)
+	}
+	if payload1.ProtocolVersion != voicev2.MaxDAVEProtocol || payload2.ProtocolVersion != voicev2.MaxDAVEProtocol {
+		t.Fatalf("expected dave prepare epoch protocol %d, got %d and %d", voicev2.MaxDAVEProtocol, payload1.ProtocolVersion, payload2.ProtocolVersion)
+	}
+}
+
 func completeDAVEUpgrade(t *testing.T, c1, c2 *v2Client) uint16 {
 	t.Helper()
 
@@ -364,15 +441,18 @@ func completeDAVEUpgrade(t *testing.T, c1, c2 *v2Client) uint16 {
 		t.Fatal("expected external sender packages")
 	}
 
-	keyPackage1, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: []byte{1, 2, 3, 4, 5}})
-	keyPackage2, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: []byte{6, 7, 8, 9, 10}})
+	keyPackage1, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: mustFixtureKeyPackage(t, c1.userID)})
+	keyPackage2, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: mustFixtureKeyPackage(t, c2.userID)})
 	writeBinaryMessage(t, c1.conn, keyPackage1)
 	writeBinaryMessage(t, c2.conn, keyPackage2)
 
 	props1 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeProposals)
 	props2 := waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeProposals)
-	if len(props1.Payloads) != 2 || len(props2.Payloads) != 2 {
-		t.Fatalf("expected two proposal payloads, got %d and %d", len(props1.Payloads), len(props2.Payloads))
+	if len(props1.Payloads) != 1 || len(props2.Payloads) != 1 {
+		t.Fatalf("expected one proposals blob per recipient, got %d and %d", len(props1.Payloads), len(props2.Payloads))
+	}
+	if len(props1.Payloads[0]) == 0 || len(props2.Payloads[0]) == 0 {
+		t.Fatal("expected non-empty proposals payloads")
 	}
 
 	commit, _ := wire.EncodeCommitWelcome(wire.CommitWelcome{
@@ -382,15 +462,16 @@ func completeDAVEUpgrade(t *testing.T, c1, c2 *v2Client) uint16 {
 	writeBinaryMessage(t, c1.conn, commit)
 
 	announce1 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeAnnounceCommitTransition)
-	announce2 := waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeAnnounceCommitTransition)
-	if announce1.TransitionID == 0 || announce2.TransitionID == 0 {
+	welcome2 := readNextBinaryDecoded(t, c2.conn, 5*time.Second)
+	if announce1.TransitionID == 0 || welcome2.TransitionID == 0 {
 		t.Fatal("expected non-zero transition id")
 	}
-	if announce1.TransitionID != announce2.TransitionID {
-		t.Fatalf("expected same transition id, got %d and %d", announce1.TransitionID, announce2.TransitionID)
+	if welcome2.Opcode != wire.OpcodeWelcome {
+		t.Fatalf("expected welcome for non-committer, got opcode %d", welcome2.Opcode)
 	}
-
-	_ = waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeWelcome)
+	if announce1.TransitionID != welcome2.TransitionID {
+		t.Fatalf("expected same transition id, got %d and %d", announce1.TransitionID, welcome2.TransitionID)
+	}
 
 	writeGatewayMessage(t, c1.conn, voicev2.OpDAVETransitionReady, voicev2.TransitionReady{TransitionID: announce1.TransitionID})
 	writeGatewayMessage(t, c2.conn, voicev2.OpDAVETransitionReady, voicev2.TransitionReady{TransitionID: announce1.TransitionID})
@@ -482,6 +563,65 @@ func TestSignalWSV1DefaultAndExplicitVersionStillUseLegacyJoinFlow(t *testing.T)
 			}
 		})
 	}
+}
+
+func TestSignalWSV1RejectsLegacyJoinWhenDAVEIsRequired(t *testing.T) {
+	h := newSignalTestHarness(t, 15000)
+	h.app.cfg.DAVERequiredDefault = true
+
+	perms := int64(permissions.PermVoiceConnect | permissions.PermVoiceSpeak | permissions.PermVoiceVideo)
+	conn := h.dial(t, "?v=1")
+	defer conn.Close()
+
+	writeJSONMessage(t, conn, rtcJoinEnvelope{
+		OP: int(mqmsg.OPCodeRTC),
+		T:  int(mqmsg.EventTypeRTCJoin),
+		D: struct {
+			Channel helper.StringInt64 `json:"channel"`
+			Token   string             `json:"token"`
+		}{
+			Channel: 42,
+			Token:   issueTestJoinToken(t, h.app.cfg.AuthSecret, 101, 42, perms),
+		},
+	})
+
+	resp := readEnvelopeWithTimeout(t, conn, 5*time.Second)
+	if resp.OP != int(mqmsg.OPCodeRTC) || resp.T != int(mqmsg.EventTypeRTCJoin) {
+		t.Fatalf("unexpected response envelope: %+v", resp)
+	}
+
+	var errResp ErrorResponse
+	if err := json.Unmarshal(resp.D, &errResp); err != nil {
+		t.Fatalf("unmarshal error response: %v", err)
+	}
+	if errResp.Error != "dave is required; use signal v2" {
+		t.Fatalf("error response = %q, want %q", errResp.Error, "dave is required; use signal v2")
+	}
+}
+
+func TestSignalWSV2NormalCloseFinalizesSessionInsteadOfDetaching(t *testing.T) {
+	h := newSignalTestHarness(t, 15000)
+
+	client, _ := establishV2Participant(t, h, 901, 190, true)
+	if session := h.app.getSignalV2Session(client.sessionID); session == nil {
+		t.Fatalf("expected registered session %q", client.sessionID)
+	}
+
+	_ = client.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	if err := client.conn.WriteMessage(ws.CloseMessage, ws.FormatCloseMessage(ws.CloseNormalClosure, "")); err != nil {
+		t.Fatalf("write close frame: %v", err)
+	}
+	_ = client.conn.Close()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if h.app.getSignalV2Session(client.sessionID) == nil {
+			return
+		}
+		time.Sleep(25 * time.Millisecond)
+	}
+
+	t.Fatalf("session %q still registered after normal close", client.sessionID)
 }
 
 func TestSignalWSV2HandshakeUsesVoiceGatewayOrder(t *testing.T) {
@@ -672,30 +812,48 @@ func TestSignalWSV2DAVEUpgradeLateJoinResumeAndDowngrade(t *testing.T) {
 
 	c3, desc3 := establishV2Participant(t, h, 503, 100, true)
 	defer c3.conn.Close()
-	if desc3.DAVEProtocolVersion != 1 {
-		t.Fatalf("late dave join should see protocol version 1, got %d", desc3.DAVEProtocolVersion)
+	if desc3.DAVEProtocolVersion != 0 {
+		t.Fatalf("late dave join should bootstrap in transport mode, got %d", desc3.DAVEProtocolVersion)
 	}
 
 	_ = waitForGatewayOp(t, c1.conn, 5*time.Second, voicev2.OpClientsConnect)
 	_ = waitForGatewayOp(t, c2.conn, 5*time.Second, voicev2.OpClientsConnect)
 	_ = waitForGatewayOp(t, c3.conn, 5*time.Second, voicev2.OpClientsConnect)
-	_ = waitForGatewayOp(t, c1.conn, 5*time.Second, voicev2.OpDAVEPrepareEpoch)
-	_ = waitForGatewayOp(t, c2.conn, 5*time.Second, voicev2.OpDAVEPrepareEpoch)
-	_ = waitForGatewayOp(t, c3.conn, 5*time.Second, voicev2.OpDAVEPrepareEpoch)
+	prepare1 := waitForGatewayOp(t, c1.conn, 5*time.Second, voicev2.OpDAVEPrepareEpoch)
+	prepare2 := waitForGatewayOp(t, c2.conn, 5*time.Second, voicev2.OpDAVEPrepareEpoch)
+	prepare3 := waitForGatewayOp(t, c3.conn, 5*time.Second, voicev2.OpDAVEPrepareEpoch)
+	var epoch1 voicev2.PrepareEpoch
+	var epoch2 voicev2.PrepareEpoch
+	var epoch3 voicev2.PrepareEpoch
+	_ = json.Unmarshal(prepare1.D, &epoch1)
+	_ = json.Unmarshal(prepare2.D, &epoch2)
+	_ = json.Unmarshal(prepare3.D, &epoch3)
+	if epoch1.ProtocolVersion != 1 || epoch2.ProtocolVersion != 1 || epoch3.ProtocolVersion != 1 {
+		t.Fatalf("expected recreate protocol version 1, got %+v %+v %+v", epoch1, epoch2, epoch3)
+	}
+	if epoch1.Epoch != 2 || epoch2.Epoch != 2 || epoch3.Epoch != 2 {
+		t.Fatalf("expected recreate epoch 2, got %+v %+v %+v", epoch1, epoch2, epoch3)
+	}
 	_ = waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeExternalSenderPackage)
 	_ = waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeExternalSenderPackage)
 	_ = waitForBinaryOpcode(t, c3.conn, 5*time.Second, wire.OpcodeExternalSenderPackage)
 
-	keyPackage1, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: []byte{31, 32, 33, 34, 35}})
-	keyPackage2, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: []byte{41, 42, 43, 44, 45}})
-	keyPackage3, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: []byte{51, 52, 53, 54, 55}})
+	keyPackage1, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: mustFixtureKeyPackage(t, c1.userID)})
+	keyPackage2, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: mustFixtureKeyPackage(t, c2.userID)})
+	keyPackage3, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: mustFixtureKeyPackage(t, c3.userID)})
 	writeBinaryMessage(t, c1.conn, keyPackage1)
 	writeBinaryMessage(t, c2.conn, keyPackage2)
 	writeBinaryMessage(t, c3.conn, keyPackage3)
 
-	_ = waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeProposals)
-	_ = waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeProposals)
-	_ = waitForBinaryOpcode(t, c3.conn, 5*time.Second, wire.OpcodeProposals)
+	props1 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeProposals)
+	props2 := waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeProposals)
+	props3 := waitForBinaryOpcode(t, c3.conn, 5*time.Second, wire.OpcodeProposals)
+	if len(props1.Payloads) != 1 || len(props2.Payloads) != 1 || len(props3.Payloads) != 1 {
+		t.Fatalf("expected one proposals blob per recipient, got %d, %d, %d", len(props1.Payloads), len(props2.Payloads), len(props3.Payloads))
+	}
+	if len(props1.Payloads[0]) == 0 || len(props2.Payloads[0]) == 0 || len(props3.Payloads[0]) == 0 {
+		t.Fatal("expected non-empty proposals payloads for late join upgrade")
+	}
 
 	commit3, _ := wire.EncodeCommitWelcome(wire.CommitWelcome{
 		Commit:  []byte{61, 62, 63, 64, 65},
@@ -704,10 +862,14 @@ func TestSignalWSV2DAVEUpgradeLateJoinResumeAndDowngrade(t *testing.T) {
 	writeBinaryMessage(t, c1.conn, commit3)
 
 	announce3 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeAnnounceCommitTransition)
-	_ = waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeAnnounceCommitTransition)
-	_ = waitForBinaryOpcode(t, c3.conn, 5*time.Second, wire.OpcodeAnnounceCommitTransition)
-	_ = waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeWelcome)
-	_ = waitForBinaryOpcode(t, c3.conn, 5*time.Second, wire.OpcodeWelcome)
+	welcomeC2 := readNextBinaryDecoded(t, c2.conn, 5*time.Second)
+	welcomeC3 := readNextBinaryDecoded(t, c3.conn, 5*time.Second)
+	if welcomeC2.Opcode != wire.OpcodeWelcome || welcomeC3.Opcode != wire.OpcodeWelcome {
+		t.Fatalf("expected welcome for recreate recipients, got opcodes %d and %d", welcomeC2.Opcode, welcomeC3.Opcode)
+	}
+	if welcomeC2.TransitionID != announce3.TransitionID || welcomeC3.TransitionID != announce3.TransitionID {
+		t.Fatalf("expected matching transition ids, got %d, %d, %d", announce3.TransitionID, welcomeC2.TransitionID, welcomeC3.TransitionID)
+	}
 	writeGatewayMessage(t, c1.conn, voicev2.OpDAVETransitionReady, voicev2.TransitionReady{TransitionID: announce3.TransitionID})
 	writeGatewayMessage(t, c2.conn, voicev2.OpDAVETransitionReady, voicev2.TransitionReady{TransitionID: announce3.TransitionID})
 	writeGatewayMessage(t, c3.conn, voicev2.OpDAVETransitionReady, voicev2.TransitionReady{TransitionID: announce3.TransitionID})

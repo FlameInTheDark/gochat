@@ -44,7 +44,7 @@ func TestBinaryCodecs_GoldenBytes(t *testing.T) {
 					ProposalMessages: [][]byte{{0x01}, {0x02, 0x03}},
 				})
 			}),
-			want: "00021b00050101020203",
+			want: "00021b0003010203",
 		},
 		{
 			name: "commit welcome",

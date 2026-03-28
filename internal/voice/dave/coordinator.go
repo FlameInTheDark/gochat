@@ -2,7 +2,6 @@ package dave
 
 import (
 	crand "crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"sort"
@@ -80,7 +79,7 @@ type channelState struct {
 	id int64
 
 	participants map[string]*Participant
-	keyPackages  map[string][]byte
+	keyPackages  map[string]*mls.KeyPackage
 
 	currentProtocolVersion int
 	currentEpoch           uint64
@@ -89,7 +88,7 @@ type channelState struct {
 	nextTransitionID uint16
 	nextSequence     uint16
 
-	externalSender *wire.ExternalSender
+	externalSender *mls.ExternalSender
 	active         *transitionState
 }
 
@@ -275,10 +274,6 @@ func (c *Coordinator) Disconnect(sessionID string) error {
 }
 
 func (c *Coordinator) HandleKeyPackage(sessionID string, payload []byte) error {
-	if err := mls.ValidateKeyPackage(payload); err != nil {
-		return err
-	}
-
 	actions := make([]outboundAction, 0)
 
 	c.mu.Lock()
@@ -291,7 +286,12 @@ func (c *Coordinator) HandleKeyPackage(sessionID string, payload []byte) error {
 		c.mu.Unlock()
 		return fmt.Errorf("session does not support dave")
 	}
-	ch.keyPackages[sessionID] = append([]byte(nil), payload...)
+	keyPackage, err := mls.ParseAndValidateKeyPackage(payload, participant.UserID)
+	if err != nil {
+		c.mu.Unlock()
+		return err
+	}
+	ch.keyPackages[sessionID] = keyPackage
 
 	if ch.active == nil || ch.active.targetProtocol != voicev2.MaxDAVEProtocol {
 		c.mu.Unlock()
@@ -345,23 +345,21 @@ func (c *Coordinator) HandleCommitWelcome(sessionID string, commit []byte, welco
 		ch.active.expectedReady[target] = false
 	}
 
-	announceBytes, err := wire.EncodeAnnounceCommitTransition(wire.AnnounceCommitTransition{
-		SequenceNumber: ch.nextSequenceLocked(),
-		TransitionID:   ch.active.id,
-		Commit:         commit,
-	})
-	if err != nil {
-		c.mu.Unlock()
-		return err
-	}
-	for _, target := range ch.daveSessionIDsLocked() {
-		actions = append(actions, outboundAction{sessionID: target, binary: announceBytes})
-	}
-
 	if len(welcome) > 0 {
+		announceBytes, err := wire.EncodeAnnounceCommitTransition(wire.AnnounceCommitTransition{
+			SequenceNumber: ch.nextSequenceLocked(),
+			TransitionID:   ch.active.id,
+			Commit:         commit,
+		})
+		if err != nil {
+			c.mu.Unlock()
+			return err
+		}
+		actions = append(actions, outboundAction{sessionID: sessionID, binary: announceBytes})
+
 		welcomeTargets := ch.daveSessionIDsLocked()
 		for _, target := range welcomeTargets {
-			if target == sessionID && len(welcomeTargets) > 1 {
+			if target == sessionID {
 				continue
 			}
 			payload, err := wire.EncodeWelcome(wire.Welcome{
@@ -374,6 +372,19 @@ func (c *Coordinator) HandleCommitWelcome(sessionID string, commit []byte, welco
 				return err
 			}
 			actions = append(actions, outboundAction{sessionID: target, binary: payload})
+		}
+	} else {
+		announceBytes, err := wire.EncodeAnnounceCommitTransition(wire.AnnounceCommitTransition{
+			SequenceNumber: ch.nextSequenceLocked(),
+			TransitionID:   ch.active.id,
+			Commit:         commit,
+		})
+		if err != nil {
+			c.mu.Unlock()
+			return err
+		}
+		for _, target := range ch.daveSessionIDsLocked() {
+			actions = append(actions, outboundAction{sessionID: target, binary: announceBytes})
 		}
 	}
 
@@ -492,14 +503,18 @@ func (c *Coordinator) beginGroupRecreationLocked(ch *channelState, kind transiti
 
 	c.stopTransitionLocked(ch)
 	if ch.externalSender == nil {
-		ch.externalSender = c.newExternalSenderLocked(ch.id)
+		externalSender, err := c.newExternalSenderLocked()
+		if err != nil {
+			return nil
+		}
+		ch.externalSender = externalSender
 	}
 
 	ch.active = &transitionState{
 		id:                  ch.nextTransitionIDLocked(),
 		kind:                kind,
 		targetProtocol:      voicev2.MaxDAVEProtocol,
-		targetEpoch:         1,
+		targetEpoch:         max(ch.currentEpoch+1, 1),
 		stage:               transitionStageAwaitKeyPackages,
 		expectedKeyPackages: make(map[string]bool),
 	}
@@ -518,7 +533,11 @@ func (c *Coordinator) beginGroupRecreationLocked(ch *channelState, kind transiti
 
 	externalSenderBytes, err := wire.EncodeExternalSenderPackage(wire.ExternalSenderPackage{
 		SequenceNumber: ch.nextSequenceLocked(),
-		ExternalSender: *ch.externalSender,
+		ExternalSender: wire.ExternalSender{
+			SignatureKey:   append([]byte(nil), ch.externalSender.PublicKey...),
+			CredentialType: wire.CredentialTypeBasic,
+			Identity:       append([]byte(nil), ch.externalSender.Identity...),
+		},
 	})
 	if err == nil {
 		for _, target := range sessions {
@@ -574,28 +593,36 @@ func (c *Coordinator) broadcastProposalsLocked(ch *channelState) []outboundActio
 		return nil
 	}
 
-	payloads := make([][]byte, 0, len(ch.active.expectedKeyPackages))
-	for _, sessionID := range sortedKeys(ch.active.expectedKeyPackages) {
-		if blob := ch.keyPackages[sessionID]; len(blob) > 0 {
-			payloads = append(payloads, append([]byte(nil), blob...))
-		}
-	}
-	if err := mls.ValidateProposalPayloads(payloads); err != nil {
-		return nil
-	}
-
-	proposalsBytes, err := wire.EncodeProposals(wire.Proposals{
-		SequenceNumber:   ch.nextSequenceLocked(),
-		OperationType:    wire.ProposalsAppend,
-		ProposalMessages: payloads,
-	})
-	if err != nil {
-		return nil
-	}
-
 	ch.active.stage = transitionStageAwaitCommit
-	actions := make([]outboundAction, 0, len(ch.daveSessionIDsLocked()))
-	for _, target := range ch.daveSessionIDsLocked() {
+	targets := ch.daveSessionIDsLocked()
+	actions := make([]outboundAction, 0, len(targets))
+	for _, target := range targets {
+		payloads := make([][]byte, 0, len(targets)-1)
+		for _, sessionID := range sortedKeys(ch.active.expectedKeyPackages) {
+			if sessionID == target {
+				continue
+			}
+			keyPackage := ch.keyPackages[sessionID]
+			if keyPackage == nil {
+				continue
+			}
+			proposal, _, err := mls.BuildExternalAddProposal(ch.id, 0, 0, ch.externalSender, keyPackage)
+			if err != nil {
+				return nil
+			}
+			payloads = append(payloads, proposal)
+		}
+		if len(payloads) == 0 {
+			continue
+		}
+		proposalsBytes, err := wire.EncodeProposals(wire.Proposals{
+			SequenceNumber:   ch.nextSequenceLocked(),
+			OperationType:    wire.ProposalsAppend,
+			ProposalMessages: payloads,
+		})
+		if err != nil {
+			return nil
+		}
 		actions = append(actions, outboundAction{sessionID: target, binary: proposalsBytes})
 	}
 	return actions
@@ -652,7 +679,7 @@ func (c *Coordinator) getOrCreateChannelLocked(channelID int64) *channelState {
 	ch := &channelState{
 		id:                     channelID,
 		participants:           make(map[string]*Participant),
-		keyPackages:            make(map[string][]byte),
+		keyPackages:            make(map[string]*mls.KeyPackage),
 		currentProtocolVersion: 0,
 	}
 	c.channels[channelID] = ch
@@ -672,15 +699,8 @@ func (c *Coordinator) lookupParticipantLocked(sessionID string) (*channelState, 
 	return ch, participant, ok
 }
 
-func (c *Coordinator) newExternalSenderLocked(channelID int64) *wire.ExternalSender {
-	signatureKey := make([]byte, 32)
-	_, _ = io.ReadFull(c.rng, signatureKey)
-	identity := []byte(fmt.Sprintf("gochat-sfu:%d", channelID))
-	return &wire.ExternalSender{
-		SignatureKey:   signatureKey,
-		CredentialType: wire.CredentialTypeBasic,
-		Identity:       []byte(base64.RawStdEncoding.EncodeToString(identity)),
-	}
+func (c *Coordinator) newExternalSenderLocked() (*mls.ExternalSender, error) {
+	return mls.NewExternalSender([]byte("gochat-sfu"))
 }
 
 func (c *Coordinator) stopTransitionLocked(ch *channelState) {
@@ -775,7 +795,7 @@ func (c *channelState) haveAllKeyPackagesLocked() bool {
 		return false
 	}
 	for sessionID := range c.active.expectedKeyPackages {
-		if len(c.keyPackages[sessionID]) == 0 {
+		if c.keyPackages[sessionID] == nil {
 			return false
 		}
 	}

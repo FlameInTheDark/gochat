@@ -19,6 +19,23 @@ func sessionsKey(userID int64) string { return fmt.Sprintf("presence:sessions:%d
 func aggKey(userID int64) string      { return fmt.Sprintf("presence:agg:%d", userID) }
 func overrideKey(userID int64) string { return fmt.Sprintf("presence:override:%d", userID) }
 
+// GetSession returns a single session presence record if it exists.
+func (s *Store) GetSession(ctx context.Context, userID int64, sessionID string) (SessionPresence, bool, error) {
+	val, err := s.c.HGet(ctx, sessionsKey(userID), sessionID)
+	if err != nil {
+		return SessionPresence{}, false, err
+	}
+	if val == "" {
+		return SessionPresence{}, false, nil
+	}
+
+	var sp SessionPresence
+	if err := json.Unmarshal([]byte(val), &sp); err != nil {
+		return SessionPresence{}, false, err
+	}
+	return sp, true, nil
+}
+
 // UpsertSession creates or updates a session presence and refreshes TTLs.
 func (s *Store) UpsertSession(ctx context.Context, userID int64, sessionID string, p SessionPresence, ttlSeconds int64) error {
 	b, err := json.Marshal(p)
