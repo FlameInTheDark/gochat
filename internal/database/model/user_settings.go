@@ -31,6 +31,8 @@ type UserSettingsData struct {
 	Devices          Devices                    `json:"devices"`
 	DevicesByKey     map[string]Devices         `json:"devices_by_key,omitempty"`
 	UISounds         UserUISounds               `json:"ui_sounds"`
+
+	deviceUsageOrder []string
 }
 
 func (s *UserSettingsData) NormalizeCollections() {
@@ -100,6 +102,28 @@ func (s *UserSettingsData) SetDevicesForKey(deviceKey string, devices Devices) {
 		s.DevicesByKey = make(map[string]Devices)
 	}
 	s.DevicesByKey[deviceKey] = devices
+}
+
+func (s UserSettingsData) DeviceUsageOrder() []string {
+	if len(s.deviceUsageOrder) == 0 {
+		return nil
+	}
+
+	order := make([]string, len(s.deviceUsageOrder))
+	copy(order, s.deviceUsageOrder)
+	return order
+}
+
+func (s *UserSettingsData) SetDeviceUsageOrder(order []string) {
+	if s == nil {
+		return
+	}
+	if len(order) == 0 {
+		s.deviceUsageOrder = nil
+		return
+	}
+
+	s.deviceUsageOrder = append([]string(nil), order...)
 }
 
 type Devices struct {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -42,7 +43,7 @@ func (m *userSettingsRepoMock) SetUserSettings(_ context.Context, userId int64, 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	data, err := json.Marshal(settings)
+	data, err := model.MarshalStoredUserSettingsData(settings)
 	if err != nil {
 		return err
 	}
@@ -589,5 +590,71 @@ func TestLegacySettingsUpdateKeepsStoredDeviceBuckets(t *testing.T) {
 	}
 	if got.Settings.Devices.AudioInputDevice != "phone-mic" {
 		t.Fatalf("expected stored phone device bucket to survive legacy update, got %#v", got.Settings.Devices)
+	}
+}
+
+func TestUserSettingsEvictsLeastRecentlyUpdatedDeviceBuckets(t *testing.T) {
+	repo := newUserSettingsRepoMock()
+	app := newSettingsTestApp(newSettingsTestEntity(repo))
+
+	postSettings := func(deviceKey, audioInput string) {
+		t.Helper()
+
+		req := httptest.NewRequest(http.MethodPost, "/user/me/settings", strings.NewReader(`{
+			"status":{"status":"online"},
+			"devices":{"audio_input_device":"`+audioInput+`"}
+		}`))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set(userSettingsDeviceKeyHeader, deviceKey)
+
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			t.Fatalf("expected POST request for %s to complete, got %v", deviceKey, err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != fiber.StatusOK {
+			t.Fatalf("expected POST status %d for %s, got %d", fiber.StatusOK, deviceKey, resp.StatusCode)
+		}
+	}
+
+	for i := 1; i <= maxStoredDeviceSettingsBuckets; i++ {
+		postSettings("device-"+strconv.Itoa(i), "mic-"+strconv.Itoa(i))
+	}
+
+	// Touch device-2 again so it stays newer than device-1 when the next bucket arrives.
+	postSettings("device-2", "mic-2-refresh")
+	postSettings("device-17", "mic-17")
+
+	stored, err := model.UnmarshalStoredUserSettingsData(repo.settings[1].Settings)
+	if err != nil {
+		t.Fatalf("expected stored settings to unmarshal, got %v", err)
+	}
+
+	if len(stored.DevicesByKey) != maxStoredDeviceSettingsBuckets {
+		t.Fatalf("expected %d stored device buckets, got %d", maxStoredDeviceSettingsBuckets, len(stored.DevicesByKey))
+	}
+	if _, ok := stored.DevicesByKey["device-1"]; ok {
+		t.Fatalf("expected oldest device bucket to be evicted, got %#v", stored.DevicesByKey)
+	}
+	if _, ok := stored.DevicesByKey["device-2"]; !ok {
+		t.Fatalf("expected refreshed device bucket to remain, got %#v", stored.DevicesByKey)
+	}
+	if stored.DevicesByKey["device-2"].AudioInputDevice != "mic-2-refresh" {
+		t.Fatalf("expected refreshed device settings to persist, got %#v", stored.DevicesByKey["device-2"])
+	}
+	if _, ok := stored.DevicesByKey["device-17"]; !ok {
+		t.Fatalf("expected newest device bucket to be stored, got %#v", stored.DevicesByKey)
+	}
+
+	order := stored.DeviceUsageOrder()
+	if len(order) != maxStoredDeviceSettingsBuckets {
+		t.Fatalf("expected usage order to track %d buckets, got %#v", maxStoredDeviceSettingsBuckets, order)
+	}
+	if order[0] != "device-3" {
+		t.Fatalf("expected device-3 to become the oldest retained bucket, got %#v", order)
+	}
+	if order[len(order)-1] != "device-17" {
+		t.Fatalf("expected newest bucket to be last in usage order, got %#v", order)
 	}
 }
