@@ -7733,6 +7733,15 @@
                 },
                 "guild_id": {
                     "type": "integer"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "route_id": {
+                    "type": "string"
+                },
+                "route_url": {
+                    "type": "string"
                 }
             }
         },
@@ -7744,6 +7753,15 @@
                 },
                 "guild_id": {
                     "type": "integer"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "route_id": {
+                    "type": "string"
+                },
+                "route_url": {
+                    "type": "string"
                 },
                 "user_id": {
                     "type": "integer"

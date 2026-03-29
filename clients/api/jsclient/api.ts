@@ -2697,6 +2697,24 @@ export interface SfuChannelAlive {
      * @memberof SfuChannelAlive
      */
     'guild_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SfuChannelAlive
+     */
+    'region'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SfuChannelAlive
+     */
+    'route_id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SfuChannelAlive
+     */
+    'route_url'?: string;
 }
 /**
  * 
@@ -2716,6 +2734,24 @@ export interface SfuChannelUserJoin {
      * @memberof SfuChannelUserJoin
      */
     'guild_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SfuChannelUserJoin
+     */
+    'region'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SfuChannelUserJoin
+     */
+    'route_id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SfuChannelUserJoin
+     */
+    'route_url'?: string;
     /**
      * 
      * @type {number}

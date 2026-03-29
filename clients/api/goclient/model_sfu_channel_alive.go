@@ -20,8 +20,11 @@ var _ MappedNullable = &SfuChannelAlive{}
 
 // SfuChannelAlive struct for SfuChannelAlive
 type SfuChannelAlive struct {
-	ChannelId *int32 `json:"channel_id,omitempty"`
-	GuildId   *int32 `json:"guild_id,omitempty"`
+	ChannelId *int32  `json:"channel_id,omitempty"`
+	GuildId   *int32  `json:"guild_id,omitempty"`
+	Region    *string `json:"region,omitempty"`
+	RouteId   *string `json:"route_id,omitempty"`
+	RouteUrl  *string `json:"route_url,omitempty"`
 }
 
 // NewSfuChannelAlive instantiates a new SfuChannelAlive object
@@ -105,6 +108,102 @@ func (o *SfuChannelAlive) SetGuildId(v int32) {
 	o.GuildId = &v
 }
 
+// GetRegion returns the Region field value if set, zero value otherwise.
+func (o *SfuChannelAlive) GetRegion() string {
+	if o == nil || IsNil(o.Region) {
+		var ret string
+		return ret
+	}
+	return *o.Region
+}
+
+// GetRegionOk returns a tuple with the Region field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *SfuChannelAlive) GetRegionOk() (*string, bool) {
+	if o == nil || IsNil(o.Region) {
+		return nil, false
+	}
+	return o.Region, true
+}
+
+// HasRegion returns a boolean if a field has been set.
+func (o *SfuChannelAlive) HasRegion() bool {
+	if o != nil && !IsNil(o.Region) {
+		return true
+	}
+
+	return false
+}
+
+// SetRegion gets a reference to the given string and assigns it to the Region field.
+func (o *SfuChannelAlive) SetRegion(v string) {
+	o.Region = &v
+}
+
+// GetRouteId returns the RouteId field value if set, zero value otherwise.
+func (o *SfuChannelAlive) GetRouteId() string {
+	if o == nil || IsNil(o.RouteId) {
+		var ret string
+		return ret
+	}
+	return *o.RouteId
+}
+
+// GetRouteIdOk returns a tuple with the RouteId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *SfuChannelAlive) GetRouteIdOk() (*string, bool) {
+	if o == nil || IsNil(o.RouteId) {
+		return nil, false
+	}
+	return o.RouteId, true
+}
+
+// HasRouteId returns a boolean if a field has been set.
+func (o *SfuChannelAlive) HasRouteId() bool {
+	if o != nil && !IsNil(o.RouteId) {
+		return true
+	}
+
+	return false
+}
+
+// SetRouteId gets a reference to the given string and assigns it to the RouteId field.
+func (o *SfuChannelAlive) SetRouteId(v string) {
+	o.RouteId = &v
+}
+
+// GetRouteUrl returns the RouteUrl field value if set, zero value otherwise.
+func (o *SfuChannelAlive) GetRouteUrl() string {
+	if o == nil || IsNil(o.RouteUrl) {
+		var ret string
+		return ret
+	}
+	return *o.RouteUrl
+}
+
+// GetRouteUrlOk returns a tuple with the RouteUrl field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *SfuChannelAlive) GetRouteUrlOk() (*string, bool) {
+	if o == nil || IsNil(o.RouteUrl) {
+		return nil, false
+	}
+	return o.RouteUrl, true
+}
+
+// HasRouteUrl returns a boolean if a field has been set.
+func (o *SfuChannelAlive) HasRouteUrl() bool {
+	if o != nil && !IsNil(o.RouteUrl) {
+		return true
+	}
+
+	return false
+}
+
+// SetRouteUrl gets a reference to the given string and assigns it to the RouteUrl field.
+func (o *SfuChannelAlive) SetRouteUrl(v string) {
+	o.RouteUrl = &v
+}
+
 func (o SfuChannelAlive) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -120,6 +219,15 @@ func (o SfuChannelAlive) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.GuildId) {
 		toSerialize["guild_id"] = o.GuildId
+	}
+	if !IsNil(o.Region) {
+		toSerialize["region"] = o.Region
+	}
+	if !IsNil(o.RouteId) {
+		toSerialize["route_id"] = o.RouteId
+	}
+	if !IsNil(o.RouteUrl) {
+		toSerialize["route_url"] = o.RouteUrl
 	}
 	return toSerialize, nil
 }

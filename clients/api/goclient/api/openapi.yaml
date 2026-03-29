@@ -4314,6 +4314,11 @@ paths:
         name: version
         schema:
           type: integer
+      - description: Stable per-device key for device-scoped media settings
+        in: header
+        name: X-Device-Key
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -4343,6 +4348,12 @@ paths:
       tags:
       - User
     post:
+      parameters:
+      - description: Stable per-device key for device-scoped media settings
+        in: header
+        name: X-Device-Key
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -6344,29 +6355,6 @@ components:
           user_id: 6
           hidden_after: 9
           channel_id: 9
-        appearance:
-          chat_font_scale: 1.0246457001441578
-          color_scheme: color_scheme
-          chat_spacing: 1.4894159098541704
-        channels:
-        - channel_id: 6
-          notifications:
-            muted_until: muted_until
-            suppress_everyone_mentions: true
-            suppress_here_mentions: true
-            suppress_role_mentions: true
-            suppress_user_mentions: true
-            muted: true
-            notifications: 7
-        - channel_id: 6
-          notifications:
-            muted_until: muted_until
-            suppress_everyone_mentions: true
-            suppress_here_mentions: true
-            suppress_role_mentions: true
-            suppress_user_mentions: true
-            muted: true
-            notifications: 7
         devices:
           audio_input_level: 1.1730742509559433
           auto_gain_control: true
@@ -6402,20 +6390,18 @@ components:
             muted: true
             notifications: 7
         language: language
-        forced_presence: forced_presence
-        guild_folders:
-        - color: 8
-          guilds:
-          - 9
-          - 9
-          name: name
-          position: 6
-        - color: 8
-          guilds:
-          - 9
-          - 9
-          name: name
-          position: 6
+        devices_by_key:
+          key:
+            audio_input_level: 1.1730742509559433
+            auto_gain_control: true
+            audio_output_device: audio_output_device
+            audio_output_level: 5.025004791520295
+            audio_input_threshold: 4.965218492984954
+            echo_cancellation: true
+            video_device: video_device
+            noise_suppression: true
+            denoiser_type: denoiser_type
+            audio_input_device: audio_input_device
         ui_sounds:
           notification: true
           mute: true
@@ -6440,6 +6426,43 @@ components:
             suppress_user_mentions: true
             muted: true
             notifications: 7
+        appearance:
+          chat_font_scale: 1.0246457001441578
+          color_scheme: color_scheme
+          chat_spacing: 1.4894159098541704
+        channels:
+        - channel_id: 6
+          notifications:
+            muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
+            muted: true
+            notifications: 7
+        - channel_id: 6
+          notifications:
+            muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
+            muted: true
+            notifications: 7
+        forced_presence: forced_presence
+        guild_folders:
+        - color: 8
+          guilds:
+          - 9
+          - 9
+          name: name
+          position: 6
+        - color: 8
+          guilds:
+          - 9
+          - 9
+          name: name
+          position: 6
         status:
           custom_status_text: custom_status_text
           status: status
@@ -6452,6 +6475,10 @@ components:
           type: array
         devices:
           $ref: '#/components/schemas/model.Devices'
+        devices_by_key:
+          additionalProperties:
+            $ref: '#/components/schemas/model.Devices'
+          type: object
         dm_channels:
           items:
             $ref: '#/components/schemas/model.UserDMChannels'
@@ -6820,6 +6847,12 @@ components:
           type: integer
         guild_id:
           type: integer
+        region:
+          type: string
+        route_id:
+          type: string
+        route_url:
+          type: string
       type: object
     sfu.ChannelUserJoin:
       properties:
@@ -6827,6 +6860,12 @@ components:
           type: integer
         guild_id:
           type: integer
+        region:
+          type: string
+        route_id:
+          type: string
+        route_url:
+          type: string
         user_id:
           type: integer
       type: object
@@ -6928,29 +6967,6 @@ components:
             user_id: 6
             hidden_after: 9
             channel_id: 9
-          appearance:
-            chat_font_scale: 1.0246457001441578
-            color_scheme: color_scheme
-            chat_spacing: 1.4894159098541704
-          channels:
-          - channel_id: 6
-            notifications:
-              muted_until: muted_until
-              suppress_everyone_mentions: true
-              suppress_here_mentions: true
-              suppress_role_mentions: true
-              suppress_user_mentions: true
-              muted: true
-              notifications: 7
-          - channel_id: 6
-            notifications:
-              muted_until: muted_until
-              suppress_everyone_mentions: true
-              suppress_here_mentions: true
-              suppress_role_mentions: true
-              suppress_user_mentions: true
-              muted: true
-              notifications: 7
           devices:
             audio_input_level: 1.1730742509559433
             auto_gain_control: true
@@ -6986,20 +7002,18 @@ components:
               muted: true
               notifications: 7
           language: language
-          forced_presence: forced_presence
-          guild_folders:
-          - color: 8
-            guilds:
-            - 9
-            - 9
-            name: name
-            position: 6
-          - color: 8
-            guilds:
-            - 9
-            - 9
-            name: name
-            position: 6
+          devices_by_key:
+            key:
+              audio_input_level: 1.1730742509559433
+              auto_gain_control: true
+              audio_output_device: audio_output_device
+              audio_output_level: 5.025004791520295
+              audio_input_threshold: 4.965218492984954
+              echo_cancellation: true
+              video_device: video_device
+              noise_suppression: true
+              denoiser_type: denoiser_type
+              audio_input_device: audio_input_device
           ui_sounds:
             notification: true
             mute: true
@@ -7024,6 +7038,43 @@ components:
               suppress_user_mentions: true
               muted: true
               notifications: 7
+          appearance:
+            chat_font_scale: 1.0246457001441578
+            color_scheme: color_scheme
+            chat_spacing: 1.4894159098541704
+          channels:
+          - channel_id: 6
+            notifications:
+              muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
+              muted: true
+              notifications: 7
+          - channel_id: 6
+            notifications:
+              muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
+              muted: true
+              notifications: 7
+          forced_presence: forced_presence
+          guild_folders:
+          - color: 8
+            guilds:
+            - 9
+            - 9
+            name: name
+            position: 6
+          - color: 8
+            guilds:
+            - 9
+            - 9
+            name: name
+            position: 6
           status:
             custom_status_text: custom_status_text
             status: status
