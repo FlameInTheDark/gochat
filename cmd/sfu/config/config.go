@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/netip"
 	"os"
 	"strings"
 
@@ -14,6 +15,7 @@ type Config struct {
 	STUNServers   []string `yaml:"stun_servers" env:"STUN_SERVERS" env-separator:"," env-default:"stun:stun.l.google.com:19302"`
 	Region        string   `yaml:"region" env:"SFU_REGION" env-default:"global"`
 	PublicBaseURL string   `yaml:"public_base_url" env:"SFU_PUBLIC_BASE_URL" env-required:"true"`
+	ICEPublicIP   string   `yaml:"ice_public_ip" env:"SFU_ICE_PUBLIC_IP"`
 	// Discovery
 	WebhookURL   string `yaml:"webhook_url" env:"WEBHOOK_URL" env-required:"true"`
 	WebhookToken string `yaml:"webhook_token" env:"WEBHOOK_TOKEN" env-required:"true"`
@@ -80,6 +82,11 @@ func LoadConfig() (*Config, error) {
 func (c *Config) Validate() error {
 	if c == nil {
 		return nil
+	}
+	if ip := strings.TrimSpace(c.ICEPublicIP); ip != "" {
+		if _, err := netip.ParseAddr(ip); err != nil {
+			return fmt.Errorf("ice_public_ip must be a valid IP address")
+		}
 	}
 
 	start, end := c.UDPPortRangeStart, c.UDPPortRangeEnd

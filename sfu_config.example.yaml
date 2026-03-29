@@ -4,6 +4,9 @@ stun_servers:
   - "stun:stun.l.google.com:19302"
 region: "eu-central"
 public_base_url: "https://sfu-eu.example.com"
+# Optional: advertise the router/public IP in ICE candidates when the SFU
+# runs behind 1:1 NAT or static UDP port forwarding.
+ice_public_ip: ""
 
 # Optional: restrict WebRTC UDP sockets to a fixed port range.
 # Leave both as 0 to preserve the current OS-managed ephemeral port behavior.
