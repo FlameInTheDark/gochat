@@ -6,6 +6,9 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **ChannelId** | Pointer to **int32** |  | [optional] 
 **GuildId** | Pointer to **int32** |  | [optional] 
+**Region** | Pointer to **string** |  | [optional] 
+**RouteId** | Pointer to **string** |  | [optional] 
+**RouteUrl** | Pointer to **string** |  | [optional] 
 
 ## Methods
 
@@ -75,6 +78,81 @@ SetGuildId sets GuildId field to given value.
 `func (o *SfuChannelAlive) HasGuildId() bool`
 
 HasGuildId returns a boolean if a field has been set.
+
+### GetRegion
+
+`func (o *SfuChannelAlive) GetRegion() string`
+
+GetRegion returns the Region field if non-nil, zero value otherwise.
+
+### GetRegionOk
+
+`func (o *SfuChannelAlive) GetRegionOk() (*string, bool)`
+
+GetRegionOk returns a tuple with the Region field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRegion
+
+`func (o *SfuChannelAlive) SetRegion(v string)`
+
+SetRegion sets Region field to given value.
+
+### HasRegion
+
+`func (o *SfuChannelAlive) HasRegion() bool`
+
+HasRegion returns a boolean if a field has been set.
+
+### GetRouteId
+
+`func (o *SfuChannelAlive) GetRouteId() string`
+
+GetRouteId returns the RouteId field if non-nil, zero value otherwise.
+
+### GetRouteIdOk
+
+`func (o *SfuChannelAlive) GetRouteIdOk() (*string, bool)`
+
+GetRouteIdOk returns a tuple with the RouteId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRouteId
+
+`func (o *SfuChannelAlive) SetRouteId(v string)`
+
+SetRouteId sets RouteId field to given value.
+
+### HasRouteId
+
+`func (o *SfuChannelAlive) HasRouteId() bool`
+
+HasRouteId returns a boolean if a field has been set.
+
+### GetRouteUrl
+
+`func (o *SfuChannelAlive) GetRouteUrl() string`
+
+GetRouteUrl returns the RouteUrl field if non-nil, zero value otherwise.
+
+### GetRouteUrlOk
+
+`func (o *SfuChannelAlive) GetRouteUrlOk() (*string, bool)`
+
+GetRouteUrlOk returns a tuple with the RouteUrl field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRouteUrl
+
+`func (o *SfuChannelAlive) SetRouteUrl(v string)`
+
+SetRouteUrl sets RouteUrl field to given value.
+
+### HasRouteUrl
+
+`func (o *SfuChannelAlive) HasRouteUrl() bool`
+
+HasRouteUrl returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **Appearance** | Pointer to [**ModelUserSettingsAppearance**](ModelUserSettingsAppearance.md) |  | [optional] 
 **Channels** | Pointer to [**[]ModelUserSettingsChannel**](ModelUserSettingsChannel.md) |  | [optional] 
 **Devices** | Pointer to [**ModelDevices**](ModelDevices.md) |  | [optional] 
+**DevicesByKey** | Pointer to [**map[string]ModelDevices**](ModelDevices.md) |  | [optional] 
 **DmChannels** | Pointer to [**[]ModelUserDMChannels**](ModelUserDMChannels.md) |  | [optional] 
 **FavoriteGifs** | Pointer to **[]string** |  | [optional] 
 **ForcedPresence** | Pointer to **string** |  | [optional] 
@@ -110,6 +111,31 @@ SetDevices sets Devices field to given value.
 `func (o *ModelUserSettingsData) HasDevices() bool`
 
 HasDevices returns a boolean if a field has been set.
+
+### GetDevicesByKey
+
+`func (o *ModelUserSettingsData) GetDevicesByKey() map[string]ModelDevices`
+
+GetDevicesByKey returns the DevicesByKey field if non-nil, zero value otherwise.
+
+### GetDevicesByKeyOk
+
+`func (o *ModelUserSettingsData) GetDevicesByKeyOk() (*map[string]ModelDevices, bool)`
+
+GetDevicesByKeyOk returns a tuple with the DevicesByKey field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDevicesByKey
+
+`func (o *ModelUserSettingsData) SetDevicesByKey(v map[string]ModelDevices)`
+
+SetDevicesByKey sets DevicesByKey field to given value.
+
+### HasDevicesByKey
+
+`func (o *ModelUserSettingsData) HasDevicesByKey() bool`
+
+HasDevicesByKey returns a boolean if a field has been set.
 
 ### GetDmChannels
 

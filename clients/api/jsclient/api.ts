@@ -2385,6 +2385,12 @@ export interface ModelUserSettingsData {
     'devices'?: ModelDevices;
     /**
      * 
+     * @type {{ [key: string]: ModelDevices; }}
+     * @memberof ModelUserSettingsData
+     */
+    'devices_by_key'?: { [key: string]: ModelDevices; };
+    /**
+     * 
      * @type {Array<ModelUserDMChannels>}
      * @memberof ModelUserSettingsData
      */
@@ -2691,6 +2697,24 @@ export interface SfuChannelAlive {
      * @memberof SfuChannelAlive
      */
     'guild_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SfuChannelAlive
+     */
+    'region'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SfuChannelAlive
+     */
+    'route_id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SfuChannelAlive
+     */
+    'route_url'?: string;
 }
 /**
  * 
@@ -2710,6 +2734,24 @@ export interface SfuChannelUserJoin {
      * @memberof SfuChannelUserJoin
      */
     'guild_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SfuChannelUserJoin
+     */
+    'region'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SfuChannelUserJoin
+     */
+    'route_id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SfuChannelUserJoin
+     */
+    'route_url'?: string;
     /**
      * 
      * @type {number}
@@ -11984,10 +12026,11 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
          * 
          * @summary Get current user settings (optional version gating)
          * @param {number} [version] Client known version
+         * @param {string} [xDeviceKey] Stable per-device key for device-scoped media settings
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeSettingsGet: async (version?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        userMeSettingsGet: async (version?: number, xDeviceKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/user/me/settings`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -12006,6 +12049,9 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
 
 
     
+            if (xDeviceKey != null) {
+                localVarHeaderParameter['X-Device-Key'] = String(xDeviceKey);
+            }
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -12019,10 +12065,11 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
          * 
          * @summary Update current user settings (replaces and bumps version)
          * @param {ModelUserSettingsData} request User settings
+         * @param {string} [xDeviceKey] Stable per-device key for device-scoped media settings
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        userMeSettingsPost: async (request: ModelUserSettingsData, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        userMeSettingsPost: async (request: ModelUserSettingsData, xDeviceKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'request' is not null or undefined
             assertParamExists('userMeSettingsPost', 'request', request)
             const localVarPath = `/user/me/settings`;
@@ -12041,6 +12088,9 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
     
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+            if (xDeviceKey != null) {
+                localVarHeaderParameter['X-Device-Key'] = String(xDeviceKey);
+            }
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -12315,11 +12365,12 @@ export const UserApiFp = function(configuration?: Configuration) {
          * 
          * @summary Get current user settings (optional version gating)
          * @param {number} [version] Client known version
+         * @param {string} [xDeviceKey] Stable per-device key for device-scoped media settings
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeSettingsGet(version?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserUserSettingsResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeSettingsGet(version, options);
+        async userMeSettingsGet(version?: number, xDeviceKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserUserSettingsResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeSettingsGet(version, xDeviceKey, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeSettingsGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -12328,11 +12379,12 @@ export const UserApiFp = function(configuration?: Configuration) {
          * 
          * @summary Update current user settings (replaces and bumps version)
          * @param {ModelUserSettingsData} request User settings
+         * @param {string} [xDeviceKey] Stable per-device key for device-scoped media settings
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async userMeSettingsPost(request: ModelUserSettingsData, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeSettingsPost(request, options);
+        async userMeSettingsPost(request: ModelUserSettingsData, xDeviceKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeSettingsPost(request, xDeviceKey, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeSettingsPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -12533,7 +12585,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         userMeSettingsGet(requestParameters: UserApiUserMeSettingsGetRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<UserUserSettingsResponse> {
-            return localVarFp.userMeSettingsGet(requestParameters.version, options).then((request) => request(axios, basePath));
+            return localVarFp.userMeSettingsGet(requestParameters.version, requestParameters.xDeviceKey, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -12543,7 +12595,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @throws {RequiredError}
          */
         userMeSettingsPost(requestParameters: UserApiUserMeSettingsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.userMeSettingsPost(requestParameters.request, options).then((request) => request(axios, basePath));
+            return localVarFp.userMeSettingsPost(requestParameters.request, requestParameters.xDeviceKey, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -12941,6 +12993,13 @@ export interface UserApiUserMeSettingsGetRequest {
      * @memberof UserApiUserMeSettingsGet
      */
     readonly version?: number
+
+    /**
+     * Stable per-device key for device-scoped media settings
+     * @type {string}
+     * @memberof UserApiUserMeSettingsGet
+     */
+    readonly xDeviceKey?: string
 }
 
 /**
@@ -12955,6 +13014,13 @@ export interface UserApiUserMeSettingsPostRequest {
      * @memberof UserApiUserMeSettingsPost
      */
     readonly request: ModelUserSettingsData
+
+    /**
+     * Stable per-device key for device-scoped media settings
+     * @type {string}
+     * @memberof UserApiUserMeSettingsPost
+     */
+    readonly xDeviceKey?: string
 }
 
 /**
@@ -13186,7 +13252,7 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      * @memberof UserApi
      */
     public userMeSettingsGet(requestParameters: UserApiUserMeSettingsGetRequest = {}, options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).userMeSettingsGet(requestParameters.version, options).then((request) => request(this.axios, this.basePath));
+        return UserApiFp(this.configuration).userMeSettingsGet(requestParameters.version, requestParameters.xDeviceKey, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -13198,7 +13264,7 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      * @memberof UserApi
      */
     public userMeSettingsPost(requestParameters: UserApiUserMeSettingsPostRequest, options?: RawAxiosRequestConfig) {
-        return UserApiFp(this.configuration).userMeSettingsPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+        return UserApiFp(this.configuration).userMeSettingsPost(requestParameters.request, requestParameters.xDeviceKey, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
