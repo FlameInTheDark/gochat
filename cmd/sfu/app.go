@@ -66,7 +66,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger, cfg *config.Config) *App {
 	}
 
 	iceCfg := buildICEConfig(cfg.STUNServers)
-	api, err := buildWebRTCAPI(logger, cfg.DAVEAllowAV1, cfg.UDPPortRangeStart, cfg.UDPPortRangeEnd)
+	api, err := buildWebRTCAPI(logger, cfg.DAVEAllowAV1, cfg.ICEPublicIP, cfg.UDPPortRangeStart, cfg.UDPPortRangeEnd)
 	if err != nil {
 		logger.Error("unable to configure webrtc api", slog.String("error", err.Error()))
 		panic(err)

@@ -25,7 +25,7 @@ func newTestChannelState() *channelState {
 func newTestPeerConnection(t *testing.T) *webrtc.PeerConnection {
 	t.Helper()
 
-	api, err := buildWebRTCAPI(newTestLogger(), false, 0, 0)
+	api, err := buildWebRTCAPI(newTestLogger(), false, "", 0, 0)
 	if err != nil {
 		t.Fatalf("build webrtc api: %v", err)
 	}
@@ -321,12 +321,46 @@ func TestBuildWebRTCAPIAdvertisesVideoFeedbackAndRTX(t *testing.T) {
 }
 
 func TestBuildWebRTCAPIAcceptsConfiguredUDPPortRange(t *testing.T) {
-	api, err := buildWebRTCAPI(newTestLogger(), false, 40000, 40100)
+	api, err := buildWebRTCAPI(newTestLogger(), false, "", 40000, 40100)
 	if err != nil {
 		t.Fatalf("build webrtc api with udp port range: %v", err)
 	}
 	if _, err := api.NewPeerConnection(webrtc.Configuration{}); err != nil {
 		t.Fatalf("create peer connection: %v", err)
+	}
+}
+
+func TestBuildWebRTCAPIAdvertisesConfiguredPublicICEIP(t *testing.T) {
+	api, err := buildWebRTCAPI(newTestLogger(), false, "203.0.113.10", 0, 0)
+	if err != nil {
+		t.Fatalf("build webrtc api with public ip: %v", err)
+	}
+
+	pc, err := api.NewPeerConnection(webrtc.Configuration{})
+	if err != nil {
+		t.Fatalf("create peer connection: %v", err)
+	}
+	defer func() { _ = pc.Close() }()
+
+	for _, typ := range []webrtc.RTPCodecType{webrtc.RTPCodecTypeVideo, webrtc.RTPCodecTypeAudio} {
+		if _, err := pc.AddTransceiverFromKind(typ, webrtc.RTPTransceiverInit{
+			Direction: webrtc.RTPTransceiverDirectionSendrecv,
+		}); err != nil {
+			t.Fatalf("add transceiver %s: %v", typ, err)
+		}
+	}
+
+	offer, err := pc.CreateOffer(nil)
+	if err != nil {
+		t.Fatalf("create offer: %v", err)
+	}
+	if err := pc.SetLocalDescription(offer); err != nil {
+		t.Fatalf("set local description: %v", err)
+	}
+
+	local := waitForGatheredLocalDescription(pc, offer)
+	if !strings.Contains(local.SDP, "203.0.113.10") {
+		t.Fatalf("expected local description to advertise configured public ip, got:\n%s", local.SDP)
 	}
 }
 

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/pion/interceptor"
 	"github.com/pion/webrtc/v4"
@@ -19,7 +20,7 @@ var videoRTCPFeedback = []webrtc.RTCPFeedback{
 // We keep the codec list explicit so signaling can advertise the same payload
 // types, while still enabling RTX, NACK/PLI, TWCC and the rest of Pion's
 // default interceptor stack that browsers rely on for stable 720p30 delivery.
-func buildWebRTCAPI(logger *slog.Logger, allowAV1 bool, udpPortRangeStart, udpPortRangeEnd int) (*webrtc.API, error) {
+func buildWebRTCAPI(logger *slog.Logger, allowAV1 bool, icePublicIP string, udpPortRangeStart, udpPortRangeEnd int) (*webrtc.API, error) {
 	me := &webrtc.MediaEngine{}
 	registerSFUCodecs(logger, me, allowAV1)
 
@@ -39,6 +40,13 @@ func buildWebRTCAPI(logger *slog.Logger, allowAV1 bool, udpPortRangeStart, udpPo
 		logger.Info("configured webrtc udp port range",
 			slog.Int("start", udpPortRangeStart),
 			slog.Int("end", udpPortRangeEnd),
+		)
+	}
+	if publicIP := strings.TrimSpace(icePublicIP); publicIP != "" {
+		settingEngine.SetNAT1To1IPs([]string{publicIP}, webrtc.ICECandidateTypeHost)
+		logger.Info("configured webrtc public ice ip",
+			slog.String("public_ip", publicIP),
+			slog.String("candidate_type", webrtc.ICECandidateTypeHost.String()),
 		)
 	}
 

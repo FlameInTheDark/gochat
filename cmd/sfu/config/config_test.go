@@ -83,6 +83,20 @@ func TestValidateRejectsReversedUDPPortRange(t *testing.T) {
 	}
 }
 
+func TestValidateAcceptsICEPublicIP(t *testing.T) {
+	cfg := &Config{ICEPublicIP: "203.0.113.10"}
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+}
+
+func TestValidateRejectsInvalidICEPublicIP(t *testing.T) {
+	cfg := &Config{ICEPublicIP: "not-an-ip"}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected invalid ice public ip to fail validation")
+	}
+}
+
 func getenvOrEmpty(key string) string {
 	return os.Getenv(key)
 }
