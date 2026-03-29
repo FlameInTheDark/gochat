@@ -5275,6 +5275,12 @@
                         "description": "Client known version",
                         "name": "version",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Stable per-device key for device-scoped media settings",
+                        "name": "X-Device-Key",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -5316,6 +5322,12 @@
                 ],
                 "summary": "Update current user settings (replaces and bumps version)",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Stable per-device key for device-scoped media settings",
+                        "name": "X-Device-Key",
+                        "in": "header"
+                    },
                     {
                         "description": "User settings",
                         "name": "request",
@@ -7507,6 +7519,12 @@
                 },
                 "devices": {
                     "$ref": "#/definitions/model.Devices"
+                },
+                "devices_by_key": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/model.Devices"
+                    }
                 },
                 "dm_channels": {
                     "type": "array",

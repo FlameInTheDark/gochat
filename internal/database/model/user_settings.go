@@ -2,6 +2,8 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/helper"
@@ -27,6 +29,7 @@ type UserSettingsData struct {
 	Status           Status                     `json:"status"`
 	DMChannels       []UserDMChannels           `json:"dm_channels"`
 	Devices          Devices                    `json:"devices"`
+	DevicesByKey     map[string]Devices         `json:"devices_by_key,omitempty"`
 	UISounds         UserUISounds               `json:"ui_sounds"`
 }
 
@@ -55,12 +58,48 @@ func (s *UserSettingsData) NormalizeCollections() {
 }
 
 func (s UserSettingsData) Validate() error {
-	return validation.ValidateStruct(&s,
+	if err := validation.ValidateStruct(&s,
 		validation.Field(&s.Appearance),
 		validation.Field(&s.Status),
 		validation.Field(&s.Devices),
 		validation.Field(&s.FavoriteGifs, validation.Each(is.URL)),
-	)
+	); err != nil {
+		return err
+	}
+
+	for key, devices := range s.DevicesByKey {
+		if strings.TrimSpace(key) == "" {
+			return validation.NewError("VALIDATION_DEVICE_KEY_REQUIRED", "devices_by_key contains an empty key")
+		}
+		if len(key) > 128 {
+			return validation.NewError("VALIDATION_DEVICE_KEY_TOO_LONG", fmt.Sprintf("devices_by_key[%q] is too long", key))
+		}
+		if err := devices.Validate(); err != nil {
+			return fmt.Errorf("devices_by_key[%q]: %w", key, err)
+		}
+	}
+
+	return nil
+}
+
+func (s UserSettingsData) DevicesForKey(deviceKey string) Devices {
+	if deviceKey == "" {
+		return s.Devices
+	}
+	if devices, ok := s.DevicesByKey[deviceKey]; ok {
+		return devices
+	}
+	return s.Devices
+}
+
+func (s *UserSettingsData) SetDevicesForKey(deviceKey string, devices Devices) {
+	if s == nil || deviceKey == "" {
+		return
+	}
+	if s.DevicesByKey == nil {
+		s.DevicesByKey = make(map[string]Devices)
+	}
+	s.DevicesByKey[deviceKey] = devices
 }
 
 type Devices struct {

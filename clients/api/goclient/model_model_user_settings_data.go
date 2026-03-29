@@ -23,6 +23,7 @@ type ModelUserSettingsData struct {
 	Appearance     *ModelUserSettingsAppearance    `json:"appearance,omitempty"`
 	Channels       []ModelUserSettingsChannel      `json:"channels,omitempty"`
 	Devices        *ModelDevices                   `json:"devices,omitempty"`
+	DevicesByKey   *map[string]ModelDevices        `json:"devices_by_key,omitempty"`
 	DmChannels     []ModelUserDMChannels           `json:"dm_channels,omitempty"`
 	FavoriteGifs   []string                        `json:"favorite_gifs,omitempty"`
 	ForcedPresence *string                         `json:"forced_presence,omitempty"`
@@ -145,6 +146,38 @@ func (o *ModelUserSettingsData) HasDevices() bool {
 // SetDevices gets a reference to the given ModelDevices and assigns it to the Devices field.
 func (o *ModelUserSettingsData) SetDevices(v ModelDevices) {
 	o.Devices = &v
+}
+
+// GetDevicesByKey returns the DevicesByKey field value if set, zero value otherwise.
+func (o *ModelUserSettingsData) GetDevicesByKey() map[string]ModelDevices {
+	if o == nil || IsNil(o.DevicesByKey) {
+		var ret map[string]ModelDevices
+		return ret
+	}
+	return *o.DevicesByKey
+}
+
+// GetDevicesByKeyOk returns a tuple with the DevicesByKey field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsData) GetDevicesByKeyOk() (*map[string]ModelDevices, bool) {
+	if o == nil || IsNil(o.DevicesByKey) {
+		return nil, false
+	}
+	return o.DevicesByKey, true
+}
+
+// HasDevicesByKey returns a boolean if a field has been set.
+func (o *ModelUserSettingsData) HasDevicesByKey() bool {
+	if o != nil && !IsNil(o.DevicesByKey) {
+		return true
+	}
+
+	return false
+}
+
+// SetDevicesByKey gets a reference to the given map[string]ModelDevices and assigns it to the DevicesByKey field.
+func (o *ModelUserSettingsData) SetDevicesByKey(v map[string]ModelDevices) {
+	o.DevicesByKey = &v
 }
 
 // GetDmChannels returns the DmChannels field value if set, zero value otherwise.
@@ -453,6 +486,9 @@ func (o ModelUserSettingsData) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Devices) {
 		toSerialize["devices"] = o.Devices
+	}
+	if !IsNil(o.DevicesByKey) {
+		toSerialize["devices_by_key"] = o.DevicesByKey
 	}
 	if !IsNil(o.DmChannels) {
 		toSerialize["dm_channels"] = o.DmChannels

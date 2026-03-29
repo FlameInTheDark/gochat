@@ -1112,7 +1112,7 @@ No authorization required
 
 ## UserMeSettingsGet
 
-> UserUserSettingsResponse UserMeSettingsGet(ctx).Version(version).Execute()
+> UserUserSettingsResponse UserMeSettingsGet(ctx).Version(version).XDeviceKey(xDeviceKey).Execute()
 
 Get current user settings (optional version gating)
 
@@ -1130,10 +1130,11 @@ import (
 
 func main() {
 	version := int32(56) // int32 | Client known version (optional)
+	xDeviceKey := "xDeviceKey_example" // string | Stable per-device key for device-scoped media settings (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UserAPI.UserMeSettingsGet(context.Background()).Version(version).Execute()
+	resp, r, err := apiClient.UserAPI.UserMeSettingsGet(context.Background()).Version(version).XDeviceKey(xDeviceKey).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeSettingsGet``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -1155,6 +1156,7 @@ Other parameters are passed through a pointer to a apiUserMeSettingsGetRequest s
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **version** | **int32** | Client known version | 
+ **xDeviceKey** | **string** | Stable per-device key for device-scoped media settings | 
 
 ### Return type
 
@@ -1176,7 +1178,7 @@ No authorization required
 
 ## UserMeSettingsPost
 
-> string UserMeSettingsPost(ctx).Request(request).Execute()
+> string UserMeSettingsPost(ctx).Request(request).XDeviceKey(xDeviceKey).Execute()
 
 Update current user settings (replaces and bumps version)
 
@@ -1194,10 +1196,11 @@ import (
 
 func main() {
 	request := *openapiclient.NewModelUserSettingsData() // ModelUserSettingsData | User settings
+	xDeviceKey := "xDeviceKey_example" // string | Stable per-device key for device-scoped media settings (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.UserAPI.UserMeSettingsPost(context.Background()).Request(request).Execute()
+	resp, r, err := apiClient.UserAPI.UserMeSettingsPost(context.Background()).Request(request).XDeviceKey(xDeviceKey).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeSettingsPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -1219,6 +1222,7 @@ Other parameters are passed through a pointer to a apiUserMeSettingsPostRequest 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **request** | [**ModelUserSettingsData**](ModelUserSettingsData.md) | User settings | 
+ **xDeviceKey** | **string** | Stable per-device key for device-scoped media settings | 
 
 ### Return type
 
