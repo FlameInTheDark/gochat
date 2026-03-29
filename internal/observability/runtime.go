@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -22,7 +23,8 @@ import (
 )
 
 const (
-	RequestIDHeader = "X-Request-ID"
+	RequestIDHeader          = "X-Request-ID"
+	defaultMetricExportEvery = 60 * time.Second
 )
 
 var (
@@ -104,9 +106,10 @@ func Init(serviceName string, attrs ...attribute.KeyValue) (*Runtime, error) {
 			if metricErr != nil {
 				logger.Warn("unable to initialize OTLP metric exporter", slog.String("error", metricErr.Error()))
 			} else {
+				metricInterval := metricExportInterval()
 				mp := sdkmetric.NewMeterProvider(
 					sdkmetric.WithResource(res),
-					sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter, sdkmetric.WithInterval(15*time.Second))),
+					sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter, sdkmetric.WithInterval(metricInterval))),
 					sdkmetric.WithView(metricViews()...),
 				)
 				otel.SetMeterProvider(mp)
@@ -243,6 +246,29 @@ func shouldEnableOTLP() bool {
 		}
 	}
 	return false
+}
+
+func metricExportInterval() time.Duration {
+	raw := strings.TrimSpace(os.Getenv("OTEL_METRIC_EXPORT_INTERVAL"))
+	if raw == "" {
+		return defaultMetricExportEvery
+	}
+
+	if millis, err := strconv.ParseInt(raw, 10, 64); err == nil {
+		if millis <= 0 {
+			return defaultMetricExportEvery
+		}
+		return time.Duration(millis) * time.Millisecond
+	}
+
+	if parsed, err := time.ParseDuration(raw); err == nil {
+		if parsed <= 0 {
+			return defaultMetricExportEvery
+		}
+		return parsed
+	}
+
+	return defaultMetricExportEvery
 }
 
 func normalizeScope(serviceName, scope string) string {

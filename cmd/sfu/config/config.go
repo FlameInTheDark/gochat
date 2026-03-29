@@ -22,9 +22,10 @@ type Config struct {
 	ServiceID    string `yaml:"service_id" env:"SFU_SERVICE_ID" env-required:"true"`
 	// Telemetry configuration for the external OTLP gateway. These values are
 	// projected back into the standard OTEL env vars before observability init.
-	TelemetryOTLPEndpoint string `yaml:"telemetry_otlp_endpoint" env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
-	TelemetryOTLPHeaders  string `yaml:"telemetry_otlp_headers" env:"OTEL_EXPORTER_OTLP_HEADERS"`
-	TelemetryOTLPProtocol string `yaml:"telemetry_otlp_protocol" env:"OTEL_EXPORTER_OTLP_PROTOCOL" env-default:"http/protobuf"`
+	TelemetryOTLPEndpoint         string `yaml:"telemetry_otlp_endpoint" env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
+	TelemetryOTLPHeaders          string `yaml:"telemetry_otlp_headers" env:"OTEL_EXPORTER_OTLP_HEADERS"`
+	TelemetryOTLPProtocol         string `yaml:"telemetry_otlp_protocol" env:"OTEL_EXPORTER_OTLP_PROTOCOL" env-default:"http/protobuf"`
+	TelemetryMetricExportInterval string `yaml:"telemetry_metric_export_interval" env:"OTEL_METRIC_EXPORT_INTERVAL"`
 
 	// SignalHeartbeatIntervalMS is used by the v2 `/signal?v=2` protocol hello.
 	SignalHeartbeatIntervalMS int64 `yaml:"signal_heartbeat_interval_ms" env:"SFU_SIGNAL_HEARTBEAT_INTERVAL_MS" env-default:"15000"`
@@ -117,6 +118,9 @@ func (c *Config) ApplyObservabilityEnv() error {
 		return err
 	}
 	if err := setEnvIfMissing("OTEL_EXPORTER_OTLP_PROTOCOL", c.TelemetryOTLPProtocol); err != nil {
+		return err
+	}
+	if err := setEnvIfMissing("OTEL_METRIC_EXPORT_INTERVAL", c.TelemetryMetricExportInterval); err != nil {
 		return err
 	}
 	if strings.TrimSpace(c.TelemetryOTLPEndpoint) != "" {

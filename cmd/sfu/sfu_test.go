@@ -294,6 +294,67 @@ func TestForwardedTrackIdentifiersUseRawOwnerUserID(t *testing.T) {
 	}
 }
 
+func TestRemovePeerReturnsRemovedUserAndDanglingTracks(t *testing.T) {
+	ch := newTestChannelState()
+	pc := newTestPeerConnection(t)
+	state := &peerConnectionState{
+		peerConnection: pc,
+		userID:         42,
+	}
+	ch.peers = []*peerConnectionState{state}
+
+	track := newTestTrack(t, "42-audio", "42")
+	ch.trackLocals[track.ID()] = trackLocalEntry{
+		track: track,
+		owner: 42,
+		kind:  webrtc.RTPCodecTypeAudio.String(),
+	}
+
+	removedUser, removedTracks, removed, empty := ch.removePeer(pc)
+	if !removed {
+		t.Fatal("expected peer removal to succeed")
+	}
+	if removedUser != 42 {
+		t.Fatalf("removed user = %d, want 42", removedUser)
+	}
+	if !empty {
+		t.Fatal("expected channel to become empty after removing last peer and dangling track")
+	}
+	if len(removedTracks) != 1 {
+		t.Fatalf("removed tracks = %d, want 1", len(removedTracks))
+	}
+	if removedTracks[0].owner != 42 {
+		t.Fatalf("removed track owner = %d, want 42", removedTracks[0].owner)
+	}
+	if removedTracks[0].kind != webrtc.RTPCodecTypeAudio.String() {
+		t.Fatalf("removed track kind = %q, want %q", removedTracks[0].kind, webrtc.RTPCodecTypeAudio.String())
+	}
+}
+
+func TestRemoveTrackReturnsRemovedOwner(t *testing.T) {
+	ch := newTestChannelState()
+	track := newTestTrack(t, "42-video", "42")
+	ch.trackLocals[track.ID()] = trackLocalEntry{
+		track: track,
+		owner: 42,
+		kind:  webrtc.RTPCodecTypeVideo.String(),
+	}
+
+	kind, owner, removed, empty := ch.removeTrack(track)
+	if !removed {
+		t.Fatal("expected track removal to succeed")
+	}
+	if kind != webrtc.RTPCodecTypeVideo.String() {
+		t.Fatalf("removed track kind = %q, want %q", kind, webrtc.RTPCodecTypeVideo.String())
+	}
+	if owner != 42 {
+		t.Fatalf("removed track owner = %d, want 42", owner)
+	}
+	if !empty {
+		t.Fatal("expected channel to be empty after removing its only track")
+	}
+}
+
 func TestBuildWebRTCAPIAdvertisesVideoFeedbackAndRTX(t *testing.T) {
 	pc := newTestPeerConnection(t)
 

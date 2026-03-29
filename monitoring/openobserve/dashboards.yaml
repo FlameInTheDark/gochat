@@ -62,38 +62,35 @@ dashboards:
         group_by: [topic]
 
   - name: Voice/SFU
-    description: Externally deployed SFU node health, signaling traffic, peer lifecycle, heartbeat quality, and admin-close drilldown.
+    description: Externally deployed SFU fleet health, signaling traffic, peer lifecycle, heartbeat quality, and admin-close drilldown with fleet totals by default.
     panels:
-      - title: SFU active topology by node
+      - title: SFU active topology totals
         signal: metrics
         metric: gochat.sfu.peers.active
-        group_by: [voice_region, service_instance_id]
-      - title: SFU join and leave rate by node
+      - title: SFU join and leave rate
         signal: metrics
         metric: gochat.sfu.joins / gochat.sfu.leaves
-        group_by: [voice_region, service_instance_id]
-      - title: SFU heartbeat latency p95 by node
+      - title: SFU heartbeat latency p95 by status
         signal: metrics
         metric: gochat.sfu.heartbeat.duration
         aggregation: p95
-        group_by: [status, voice_region, service_instance_id]
-      - title: SFU connection states by node
+        group_by: [status]
+      - title: SFU connection states
         signal: metrics
         metric: gochat.sfu.connection_state_changes
-        group_by: [state, voice_region, service_instance_id]
+        group_by: [state]
       - title: SFU signaling counters
         signal: metrics
         metric: gochat.sfu.offers / gochat.sfu.answers / gochat.sfu.candidates
-        group_by: [direction, voice_region, service_instance_id]
+        group_by: [direction]
       - title: SFU bitrate disconnects
         signal: metrics
         metric: gochat.sfu.bitrate_disconnects
-        group_by: [voice_region, service_instance_id]
-      - title: SFU admin-close latency
+      - title: SFU admin-close latency by status
         signal: metrics
         metric: gochat.sfu.admin_close.duration
         aggregation: p95
-        group_by: [status, voice_region, service_instance_id]
+        group_by: [status]
 
   - name: Async Workers
     description: Indexer and embedder throughput, latency, decode failures, and recent successful work split by subject and operation.

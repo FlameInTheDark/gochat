@@ -24,6 +24,7 @@ service_id: ""
 telemetry_otlp_endpoint: "https://telemetry.example.com"
 telemetry_otlp_headers: "Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 telemetry_otlp_protocol: "http/protobuf"
+telemetry_metric_export_interval: "60000"
 
 # Heartbeat interval for the v2 SFU signaling protocol hello payload.
 # Clients should heartbeat at this cadence over op=2 once connected to /signal?v=2.

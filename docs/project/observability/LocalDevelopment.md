@@ -38,6 +38,7 @@ OpenObserve event totals in local development are usually dominated by metrics, 
 - Histogram bucket streams can produce large document counts quickly.
 - Old local stacks may still contain stale exporter-era streams from removed Prometheus bridges.
 - Use `go run ./cmd/tools observability cleanup ...` in dry-run mode before assuming there is active log spam.
+- The shared Go telemetry runtime now defaults metric export to once per `60s`. Set `OTEL_METRIC_EXPORT_INTERVAL` only when you need temporarily denser metric resolution.
 
 ## Windows and Docker Desktop notes
 
@@ -52,6 +53,7 @@ If you want to test the SFU locally, run it outside Compose and configure the lo
 - `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`
 - `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf`
 - `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <jwt>`
+- `OTEL_METRIC_EXPORT_INTERVAL=60000`
 - `WEBHOOK_TOKEN=<same-jwt>`
 
 See [External SFU](ExternalSFU.md) for the full example.

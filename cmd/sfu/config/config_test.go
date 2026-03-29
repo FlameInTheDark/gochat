@@ -10,13 +10,15 @@ func TestApplyObservabilityEnvSetsOTLPVarsFromConfig(t *testing.T) {
 		"OTEL_EXPORTER_OTLP_ENDPOINT",
 		"OTEL_EXPORTER_OTLP_HEADERS",
 		"OTEL_EXPORTER_OTLP_PROTOCOL",
+		"OTEL_METRIC_EXPORT_INTERVAL",
 		"OTEL_LOGS_EXPORTER",
 	)
 
 	cfg := &Config{
-		TelemetryOTLPEndpoint: "https://telemetry.example.com",
-		TelemetryOTLPHeaders:  "Authorization=Bearer example",
-		TelemetryOTLPProtocol: "http/protobuf",
+		TelemetryOTLPEndpoint:         "https://telemetry.example.com",
+		TelemetryOTLPHeaders:          "Authorization=Bearer example",
+		TelemetryOTLPProtocol:         "http/protobuf",
+		TelemetryMetricExportInterval: "60000",
 	}
 	if err := cfg.ApplyObservabilityEnv(); err != nil {
 		t.Fatalf("ApplyObservabilityEnv: %v", err)
@@ -31,6 +33,9 @@ func TestApplyObservabilityEnvSetsOTLPVarsFromConfig(t *testing.T) {
 	if got := getenvOrEmpty("OTEL_EXPORTER_OTLP_PROTOCOL"); got != "http/protobuf" {
 		t.Fatalf("OTEL_EXPORTER_OTLP_PROTOCOL = %q", got)
 	}
+	if got := getenvOrEmpty("OTEL_METRIC_EXPORT_INTERVAL"); got != "60000" {
+		t.Fatalf("OTEL_METRIC_EXPORT_INTERVAL = %q", got)
+	}
 	if got := getenvOrEmpty("OTEL_LOGS_EXPORTER"); got != "otlp" {
 		t.Fatalf("OTEL_LOGS_EXPORTER = %q", got)
 	}
@@ -40,12 +45,14 @@ func TestApplyObservabilityEnvPreservesExplicitEnv(t *testing.T) {
 	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "https://override.example.com")
 	t.Setenv("OTEL_EXPORTER_OTLP_HEADERS", "Authorization=Bearer override")
 	t.Setenv("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf")
+	t.Setenv("OTEL_METRIC_EXPORT_INTERVAL", "30000")
 	t.Setenv("OTEL_LOGS_EXPORTER", "none")
 
 	cfg := &Config{
-		TelemetryOTLPEndpoint: "https://telemetry.example.com",
-		TelemetryOTLPHeaders:  "Authorization=Bearer example",
-		TelemetryOTLPProtocol: "http/protobuf",
+		TelemetryOTLPEndpoint:         "https://telemetry.example.com",
+		TelemetryOTLPHeaders:          "Authorization=Bearer example",
+		TelemetryOTLPProtocol:         "http/protobuf",
+		TelemetryMetricExportInterval: "60000",
 	}
 	if err := cfg.ApplyObservabilityEnv(); err != nil {
 		t.Fatalf("ApplyObservabilityEnv: %v", err)
@@ -56,6 +63,9 @@ func TestApplyObservabilityEnvPreservesExplicitEnv(t *testing.T) {
 	}
 	if got := getenvOrEmpty("OTEL_EXPORTER_OTLP_HEADERS"); got != "Authorization=Bearer override" {
 		t.Fatalf("OTEL_EXPORTER_OTLP_HEADERS = %q", got)
+	}
+	if got := getenvOrEmpty("OTEL_METRIC_EXPORT_INTERVAL"); got != "30000" {
+		t.Fatalf("OTEL_METRIC_EXPORT_INTERVAL = %q", got)
 	}
 	if got := getenvOrEmpty("OTEL_LOGS_EXPORTER"); got != "none" {
 		t.Fatalf("OTEL_LOGS_EXPORTER = %q", got)

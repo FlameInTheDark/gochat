@@ -323,8 +323,7 @@ func (c *channelState) addPeer(state *peerConnectionState) {
 	c.log.Debug("peer added", slog.Int64("channel", c.id), slog.Int64("user", state.userID), slog.Int("total_peers", n), slog.Uint64("revision", rev))
 }
 
-func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removed bool, empty bool) {
-	var removedUser int64
+func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removedUser int64, removedTracks []trackLocalEntry, removed bool, empty bool) {
 	var rev uint64
 	c.mu.Lock()
 	for i := range c.peers {
@@ -341,6 +340,10 @@ func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removed bool, empt
 		}
 	}
 	if removed && len(c.peers) == 0 && len(c.trackLocals) > 0 {
+		removedTracks = make([]trackLocalEntry, 0, len(c.trackLocals))
+		for _, entry := range c.trackLocals {
+			removedTracks = append(removedTracks, entry)
+		}
 		c.trackLocals = make(map[string]trackLocalEntry)
 	}
 	empty = len(c.peers) == 0 && len(c.trackLocals) == 0
@@ -349,7 +352,7 @@ func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removed bool, empt
 	if removed {
 		c.log.Debug("peer removed", slog.Int64("channel", c.id), slog.Int64("user", removedUser), slog.Int("total_peers", n), slog.Uint64("revision", rev))
 	}
-	return removed, empty
+	return removedUser, removedTracks, removed, empty
 }
 
 func (c *channelState) addTrack(userID int64, t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
@@ -368,15 +371,16 @@ func (c *channelState) addTrack(userID int64, t *webrtc.TrackRemote) *webrtc.Tra
 	return trackLocal
 }
 
-func (c *channelState) removeTrack(track *webrtc.TrackLocalStaticRTP) (kind string, removed bool, empty bool) {
+func (c *channelState) removeTrack(track *webrtc.TrackLocalStaticRTP) (kind string, owner int64, removed bool, empty bool) {
 	if track == nil {
-		return "", false, false
+		return "", 0, false, false
 	}
 	var rev uint64
 	c.mu.Lock()
 	if entry, ok := c.trackLocals[track.ID()]; ok {
 		delete(c.trackLocals, track.ID())
 		kind = entry.kind
+		owner = entry.owner
 		removed = true
 		rev = c.bumpTopologyRevisionLocked()
 	}
@@ -385,7 +389,7 @@ func (c *channelState) removeTrack(track *webrtc.TrackLocalStaticRTP) (kind stri
 	if removed {
 		c.log.Debug("track removed", slog.Int64("channel", c.id), slog.String("track", track.ID()), slog.Uint64("revision", rev))
 	}
-	return kind, removed, empty
+	return kind, owner, removed, empty
 }
 
 func forwardedTrackIdentifiers(userID int64, remoteTrackID string) (streamID string, trackID string) {
@@ -854,10 +858,19 @@ func (s *SFU) RemovePeer(ctx context.Context, channelID int64, pc *webrtc.PeerCo
 		return
 	}
 
-	removed, empty := ch.removePeer(pc)
+	removedUser, removedTracks, removed, empty := ch.removePeer(pc)
 	if removed {
 		if s.telemetry != nil {
-			s.telemetry.PeerDelta(ctx, -1, attribute.Int64("voice.channel_id", channelID))
+			s.telemetry.PeerDelta(ctx, -1,
+				attribute.Int64("voice.channel_id", channelID),
+				attribute.Int64("user.id", removedUser),
+			)
+			for _, entry := range removedTracks {
+				s.telemetry.TrackDelta(ctx, entry.kind, -1,
+					attribute.Int64("voice.channel_id", channelID),
+					attribute.Int64("user.id", entry.owner),
+				)
+			}
 		}
 		ch.signalPeerConnections()
 	}
@@ -908,10 +921,13 @@ func (s *SFU) RemoveTrack(ctx context.Context, channelID int64, track *webrtc.Tr
 	if !ok {
 		return
 	}
-	kind, removed, empty := ch.removeTrack(track)
+	kind, owner, removed, empty := ch.removeTrack(track)
 	if removed {
 		if s.telemetry != nil {
-			s.telemetry.TrackDelta(ctx, kind, -1, attribute.Int64("voice.channel_id", channelID))
+			s.telemetry.TrackDelta(ctx, kind, -1,
+				attribute.Int64("voice.channel_id", channelID),
+				attribute.Int64("user.id", owner),
+			)
 		}
 		ch.signalPeerConnections()
 	}

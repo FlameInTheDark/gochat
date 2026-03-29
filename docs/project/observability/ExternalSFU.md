@@ -22,6 +22,7 @@ Identity:
 - `OTEL_EXPORTER_OTLP_ENDPOINT`
 - `OTEL_EXPORTER_OTLP_HEADERS`
 - `OTEL_EXPORTER_OTLP_PROTOCOL`
+- `OTEL_METRIC_EXPORT_INTERVAL`
 
 Authentication:
 
@@ -34,6 +35,7 @@ If you provision the SFU with `config.yaml`, you can set the same OTLP values th
 - `telemetry_otlp_endpoint`
 - `telemetry_otlp_headers`
 - `telemetry_otlp_protocol`
+- `telemetry_metric_export_interval`
 
 ## Endpoint format
 
@@ -64,6 +66,7 @@ $env:WEBHOOK_TOKEN = "<jwt-with-typ-sfu-id-sfu-eu-1>"
 $env:OTEL_EXPORTER_OTLP_ENDPOINT = "https://telemetry.example.com"
 $env:OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf"
 $env:OTEL_EXPORTER_OTLP_HEADERS = "Authorization=Bearer $($env:WEBHOOK_TOKEN)"
+$env:OTEL_METRIC_EXPORT_INTERVAL = "60000"
 ```
 
 Equivalent `config.yaml` snippet:
@@ -74,6 +77,7 @@ service_id: "sfu-eu-1"
 telemetry_otlp_endpoint: "https://telemetry.example.com"
 telemetry_otlp_headers: "Authorization=Bearer <same-jwt>"
 telemetry_otlp_protocol: "http/protobuf"
+telemetry_metric_export_interval: "60000"
 ```
 
 ## Runtime behavior

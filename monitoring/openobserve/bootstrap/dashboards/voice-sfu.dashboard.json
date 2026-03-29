@@ -2,7 +2,7 @@
   "version": 8,
   "dashboardId": "7416801000000000004",
   "title": "Voice/SFU",
-  "description": "Externally deployed SFU node topology, signaling traffic, heartbeat quality, bitrate disconnects, and peer lifecycle by region and instance.",
+  "description": "Externally deployed SFU fleet topology, signaling traffic, heartbeat quality, bitrate disconnects, and peer lifecycle with fleet totals by default and optional drilldown via filters.",
   "role": "",
   "owner": "",
   "created": "2026-03-19T00:00:00Z",
@@ -13,9 +13,9 @@
       "panels": [
         {
           "id": "Panel_SFU_TOPOLOGY_001",
-          "type": "bar",
-          "title": "Active topology by region and instance",
-          "description": "Current channels, peers, and tracks across the SFU fleet.",
+          "type": "line",
+          "title": "Active topology totals",
+          "description": "Current channels, peers, and tracks across the SFU fleet. Use filters to drill into one region or instance.",
           "config": {
             "show_legends": true,
             "legends_position": "bottom",
@@ -34,7 +34,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (voice_region, service_instance_id) (gochat_sfu_channels_active)",
+              "query": "sum(gochat_sfu_channels_active)",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -51,11 +51,11 @@
                 }
               },
               "config": {
-                "promql_legend": "channels {voice_region} {service_instance_id}"
+                "promql_legend": "channels"
               }
             },
             {
-              "query": "sum by (voice_region, service_instance_id) (gochat_sfu_peers_active)",
+              "query": "sum(gochat_sfu_peers_active)",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -72,11 +72,11 @@
                 }
               },
               "config": {
-                "promql_legend": "peers {voice_region} {service_instance_id}"
+                "promql_legend": "peers"
               }
             },
             {
-              "query": "sum by (voice_region, service_instance_id) (gochat_sfu_tracks_active)",
+              "query": "sum(gochat_sfu_tracks_active)",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -93,7 +93,7 @@
                 }
               },
               "config": {
-                "promql_legend": "tracks {voice_region} {service_instance_id}"
+                "promql_legend": "tracks"
               }
             }
           ],
@@ -110,8 +110,8 @@
         {
           "id": "Panel_SFU_TOPOLOGY_002",
           "type": "line",
-          "title": "Joins vs leaves by node",
-          "description": "Join and leave rate by region and instance.",
+          "title": "Join vs leave rate",
+          "description": "Fleet-wide join and leave rate. Use filters to isolate one region or instance.",
           "config": {
             "show_legends": true,
             "legends_position": "bottom",
@@ -130,7 +130,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (voice_region, service_instance_id) (rate(gochat_sfu_joins_total[5m]))",
+              "query": "sum(rate(gochat_sfu_joins_total[5m]))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -147,11 +147,11 @@
                 }
               },
               "config": {
-                "promql_legend": "joins {voice_region} {service_instance_id}"
+                "promql_legend": "joins"
               }
             },
             {
-              "query": "sum by (voice_region, service_instance_id) (rate(gochat_sfu_leaves_total[5m]))",
+              "query": "sum(rate(gochat_sfu_leaves_total[5m]))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -168,7 +168,7 @@
                 }
               },
               "config": {
-                "promql_legend": "leaves {voice_region} {service_instance_id}"
+                "promql_legend": "leaves"
               }
             }
           ],
@@ -190,9 +190,9 @@
       "panels": [
         {
           "id": "Panel_SFU_SIGNAL_001",
-          "type": "bar",
-          "title": "Renegotiations by node",
-          "description": "Renegotiation events over the last 15 minutes.",
+          "type": "line",
+          "title": "Renegotiations",
+          "description": "Fleet-wide renegotiation events over the last 15 minutes.",
           "config": {
             "show_legends": true,
             "legends_position": "bottom",
@@ -211,7 +211,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (voice_region, service_instance_id) (increase(gochat_sfu_renegotiations_total[15m]))",
+              "query": "sum(increase(gochat_sfu_renegotiations_total[15m]))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -228,7 +228,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{voice_region} {service_instance_id}"
+                "promql_legend": "renegotiations"
               }
             }
           ],
@@ -246,7 +246,7 @@
           "id": "Panel_SFU_SIGNAL_002",
           "type": "line",
           "title": "Offers, answers, and candidates by direction",
-          "description": "Signaling message rates grouped by direction, region, and instance.",
+          "description": "Fleet-wide signaling message rates grouped only by direction.",
           "config": {
             "show_legends": true,
             "legends_position": "bottom",
@@ -265,7 +265,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (direction, voice_region, service_instance_id) (rate(gochat_sfu_offers_total[5m]))",
+              "query": "sum by (direction) (rate(gochat_sfu_offers_total[5m]))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -282,11 +282,11 @@
                 }
               },
               "config": {
-                "promql_legend": "offers {direction} {voice_region} {service_instance_id}"
+                "promql_legend": "offers {direction}"
               }
             },
             {
-              "query": "sum by (direction, voice_region, service_instance_id) (rate(gochat_sfu_answers_total[5m]))",
+              "query": "sum by (direction) (rate(gochat_sfu_answers_total[5m]))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -303,11 +303,11 @@
                 }
               },
               "config": {
-                "promql_legend": "answers {direction} {voice_region} {service_instance_id}"
+                "promql_legend": "answers {direction}"
               }
             },
             {
-              "query": "sum by (direction, voice_region, service_instance_id) (rate(gochat_sfu_candidates_total[5m]))",
+              "query": "sum by (direction) (rate(gochat_sfu_candidates_total[5m]))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -324,7 +324,7 @@
                 }
               },
               "config": {
-                "promql_legend": "candidates {direction} {voice_region} {service_instance_id}"
+                "promql_legend": "candidates {direction}"
               }
             }
           ],
@@ -347,8 +347,8 @@
         {
           "id": "Panel_SFU_HEART_001",
           "type": "line",
-          "title": "Heartbeat latency p95 by node",
-          "description": "95th percentile discovery heartbeat duration by status, region, and instance.",
+          "title": "Heartbeat latency p95 by status",
+          "description": "95th percentile discovery heartbeat duration grouped by status across the fleet.",
           "config": {
             "show_legends": true,
             "legends_position": "bottom",
@@ -367,7 +367,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "1000 * histogram_quantile(0.95, sum by (le, status, voice_region, service_instance_id) (rate(gochat_sfu_heartbeat_duration_bucket[5m])))",
+              "query": "1000 * histogram_quantile(0.95, sum by (le, status) (rate(gochat_sfu_heartbeat_duration_bucket[5m])))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -384,7 +384,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{status} {voice_region} {service_instance_id}"
+                "promql_legend": "{status}"
               }
             }
           ],
@@ -401,8 +401,8 @@
         {
           "id": "Panel_SFU_HEART_002",
           "type": "line",
-          "title": "Admin-close latency p95 by node",
-          "description": "95th percentile admin-close latency by status, region, and instance.",
+          "title": "Admin-close latency p95 by status",
+          "description": "95th percentile admin-close latency grouped by status across the fleet.",
           "config": {
             "show_legends": true,
             "legends_position": "bottom",
@@ -421,7 +421,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "1000 * histogram_quantile(0.95, sum by (le, status, voice_region, service_instance_id) (rate(gochat_sfu_admin_close_duration_bucket[5m])))",
+              "query": "1000 * histogram_quantile(0.95, sum by (le, status) (rate(gochat_sfu_admin_close_duration_bucket[5m])))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -438,7 +438,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{status} {voice_region} {service_instance_id}"
+                "promql_legend": "{status}"
               }
             }
           ],
@@ -454,9 +454,9 @@
         },
         {
           "id": "Panel_SFU_HEART_003",
-          "type": "bar",
-          "title": "Bitrate disconnects by node",
-          "description": "Bitrate-enforcement disconnects over the last 15 minutes.",
+          "type": "line",
+          "title": "Bitrate disconnects",
+          "description": "Fleet-wide bitrate-enforcement disconnects over the last 15 minutes.",
           "config": {
             "show_legends": true,
             "legends_position": "bottom",
@@ -475,7 +475,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (voice_region, service_instance_id) (increase(gochat_sfu_bitrate_disconnects_total[15m]))",
+              "query": "sum(increase(gochat_sfu_bitrate_disconnects_total[15m]))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -492,7 +492,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{voice_region} {service_instance_id}"
+                "promql_legend": "disconnects"
               }
             }
           ],
@@ -514,9 +514,9 @@
       "panels": [
         {
           "id": "Panel_SFU_PEER_001",
-          "type": "bar",
-          "title": "Connection state changes by node",
-          "description": "Connection state transitions over the last 15 minutes.",
+          "type": "line",
+          "title": "Connection state changes",
+          "description": "Fleet-wide connection state transitions over the last 15 minutes, grouped by state.",
           "config": {
             "show_legends": true,
             "legends_position": "bottom",
@@ -535,7 +535,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum by (state, voice_region, service_instance_id) (increase(gochat_sfu_connection_state_changes_total[15m]))",
+              "query": "sum by (state) (increase(gochat_sfu_connection_state_changes_total[15m]))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -552,7 +552,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{state} {voice_region} {service_instance_id}"
+                "promql_legend": "{state}"
               }
             }
           ],
@@ -569,8 +569,8 @@
         {
           "id": "Panel_SFU_PEER_002",
           "type": "line",
-          "title": "Peer duration p95 by node",
-          "description": "95th percentile peer session lifetime by region and instance.",
+          "title": "Peer duration p95",
+          "description": "95th percentile peer session lifetime across the fleet.",
           "config": {
             "show_legends": true,
             "legends_position": "bottom",
@@ -589,7 +589,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "histogram_quantile(0.95, sum by (le, voice_region, service_instance_id) (rate(gochat_sfu_peer_duration_bucket[5m])))",
+              "query": "histogram_quantile(0.95, sum by (le) (rate(gochat_sfu_peer_duration_bucket[5m])))",
               "vrlFunctionQuery": "",
               "customQuery": true,
               "fields": {
@@ -606,7 +606,7 @@
                 }
               },
               "config": {
-                "promql_legend": "{voice_region} {service_instance_id}"
+                "promql_legend": "p95"
               }
             }
           ],

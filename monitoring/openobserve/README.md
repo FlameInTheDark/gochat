@@ -48,6 +48,7 @@ If OpenObserve shows a very large event count in local development, it is usuall
 - The hottest live streams are typically histogram bucket streams such as `gochat_dependency_duration_bucket` and `gochat_http_server_duration_bucket`.
 - Older local stacks may also still contain stale exporter-era metric families such as `pg_*`, `scrape_*`, `promhttp_*`, `postgres_exporter_*`, `citus_*`, `go_*`, `process_*`, `http_client_*`, and `up`.
 - Use `go run ./cmd/tools observability cleanup ...` first in dry-run mode to confirm how much of the volume is historical.
+- The shared Go runtime now defaults metric export to `60s` instead of `15s`. Override it with `OTEL_METRIC_EXPORT_INTERVAL` only when you need denser short-term debugging.
 
 ## Environment
 
@@ -59,7 +60,8 @@ If OpenObserve shows a very large event count in local development, it is usuall
 - Standalone SFU OTLP env:
   `OTEL_EXPORTER_OTLP_ENDPOINT`,
   `OTEL_EXPORTER_OTLP_HEADERS`,
-  `OTEL_EXPORTER_OTLP_PROTOCOL`
+  `OTEL_EXPORTER_OTLP_PROTOCOL`,
+  `OTEL_METRIC_EXPORT_INTERVAL`
 - Standalone SFU auth env:
   `WEBHOOK_TOKEN`
 

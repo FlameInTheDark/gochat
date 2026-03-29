@@ -35,7 +35,7 @@ go run ./cmd/tools observability cleanup --url http://localhost:5080 --org defau
 - `Async Workers`
 - `Data Stores`
 
-The `Voice/SFU` dashboard is intended for externally deployed nodes and groups metrics by `voice_region` and `service_instance_id`.
+The `Voice/SFU` dashboard is intended for externally deployed nodes, but the default charts now show fleet totals to keep the graphs readable. Use OpenObserve filters to drill into one `voice_region` or `service_instance_id` when needed.
 
 Each dashboard is intentionally multi-tab now:
 
@@ -99,6 +99,12 @@ Active peers by region and instance:
 
 ```promql
 sum by (voice_region, service_instance_id) (gochat_sfu_peers_active)
+```
+
+Active peers fleet total:
+
+```promql
+sum(gochat_sfu_peers_active)
 ```
 
 Postgres probe status by service:
