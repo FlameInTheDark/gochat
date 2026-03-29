@@ -1,7 +1,6 @@
 package user
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -150,13 +149,10 @@ type UserSettingsResponse struct {
 }
 
 func modelToSettings(m *model.UserSettings, guilds []dto.Guild, guildEmojis map[int64][]dto.EmojiRef, rs map[int64]int64, glms map[int64]map[int64]int64) (UserSettingsResponse, error) {
-	var settings model.UserSettingsData
-	if len(m.Settings) > 0 {
-		if err := json.Unmarshal(m.Settings, &settings); err != nil {
-			return UserSettingsResponse{ReadStates: rs}, err
-		}
+	settings, err := model.UnmarshalStoredUserSettingsData(m.Settings)
+	if err != nil {
+		return UserSettingsResponse{ReadStates: rs}, err
 	}
-	settings.NormalizeCollections()
 	return UserSettingsResponse{
 		Version:             m.Version,
 		Settings:            &settings,

@@ -38,7 +38,7 @@ func (e *Entity) GetUserSettings(ctx context.Context, userId, version int64) (mo
 }
 
 func (e *Entity) SetUserSettings(ctx context.Context, userId int64, settings model.UserSettingsData) error {
-	data, err := json.Marshal(settings)
+	data, err := model.MarshalStoredUserSettingsData(settings)
 	if err != nil {
 		return err
 	}

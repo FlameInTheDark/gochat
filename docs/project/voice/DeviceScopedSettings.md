@@ -10,6 +10,7 @@
 - The header value should be a stable opaque key for the current installation or browser profile.
 - When the header is present, the backend stores the current `settings.devices` payload into `settings.devices_by_key[deviceKey]`.
 - When the header is present on reads, the backend resolves `settings.devices` from `settings.devices_by_key[deviceKey]` and falls back to the legacy top-level `settings.devices` field if no bucket exists yet.
+- The backend keeps at most 16 device-specific buckets per user and evicts the least recently updated bucket when a new device key exceeds that limit.
 - Existing clients that do not send `X-Device-Key` continue to work and still use the legacy shared `settings.devices` value.
 
 ## What the frontend needs to do
