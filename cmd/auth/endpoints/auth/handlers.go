@@ -15,18 +15,25 @@ import (
 
 // Login
 //
-//	@Summary	Authentication
-//	@Produce	json
-//	@Tags		Auth
-//	@Param		request	body		LoginRequest	true	"Login data"
-//	@Success	200		{object}	LoginResponse
-//	@failure	400		{string}	string	"Incorrect request body"
-//	@failure	401		{string}	string	"Unauthorized"
-//	@failure	500		{string}	string	"Something bad happened"
-//	@Router		/auth/login [post]
+//	@Summary		Authentication
+//	@Description	Validates email and password. Returns tokens immediately when two-factor auth is disabled, or a login challenge when a second factor is required.
+//	@Accept			json
+//	@Produce		json
+//	@Tags			Auth
+//	@Param			request	body		LoginRequest			true	"Login data"
+//	@Success		200		{object}	LoginResponse			"Authenticated without second factor"
+//	@Success		202		{object}	LoginChallengeResponse	"Second-factor challenge created"
+//	@failure		400		{string}	string					"Incorrect request body"
+//	@failure		401		{string}	string					"Unauthorized"
+//	@failure		429		{string}	string					"Too many authentication attempts"
+//	@failure		500		{string}	string					"Something bad happened"
+//	@Router			/auth/login [post]
 func (e *entity) Login(c *fiber.Ctx) error {
 	var req LoginRequest
 	if err := e.parseAndValidate(c, "login", &req); err != nil {
+		return err
+	}
+	if err := e.loginRateLimit(c.UserContext(), req.Email, c.IP()); err != nil {
 		return err
 	}
 	auth, err := e.auth.GetAuthenticationByEmail(c.UserContext(), req.Email)
@@ -47,7 +54,19 @@ func (e *entity) Login(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnauthorized, ErrUserIsBanned)
 	}
 
-	t, rt, err := helper.IssueTokens(user.Id, e.secret)
+	factor, _, err := e.loadActiveFactorBundle(c.UserContext(), user.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetActiveFactor)
+	}
+	if factor != nil {
+		challenge, err := e.createLoginChallenge(c.UserContext(), auth, *factor)
+		if err != nil {
+			return err
+		}
+		return c.Status(fiber.StatusAccepted).JSON(challenge)
+	}
+
+	t, rt, err := helper.IssueTokens(user.Id, auth.SessionVersion, e.secret)
 	if err != nil {
 		return err
 	}
@@ -80,7 +99,12 @@ func (e *entity) RefreshToken(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnauthorized, ErrUserIsBanned)
 	}
 
-	t, rt, err := helper.IssueTokens(u.Id, e.secret)
+	auth, err := e.auth.GetAuthenticationByUserId(c.UserContext(), u.Id)
+	if err := helper.HttpDbError(err, ErrUnableToGetAuthenticationByUserId); err != nil {
+		return err
+	}
+
+	t, rt, err := helper.IssueTokens(u.Id, auth.SessionVersion, e.secret)
 	if err != nil {
 		return err
 	}
@@ -322,17 +346,33 @@ func (e *entity) PasswordReset(c *fiber.Ctx) error {
 		return err
 	}
 
+	tx, err := e.db.BeginTxx(c.UserContext(), nil)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetPasswordHash)
+	}
+	defer func() { _ = tx.Rollback() }()
+
 	// Update the password hash in the authentication table
-	err = e.auth.SetPasswordHash(c.UserContext(), req.Id, hash)
+	err = e.auth.SetPasswordHashTx(c.UserContext(), tx, req.Id, hash)
 	if err != nil {
 		log.Error("unable to set password hash", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetPasswordHash)
 	}
+	version, err := e.auth.BumpSessionVersionTx(c.UserContext(), tx, req.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToBumpSessionVersion)
+	}
 
 	// Remove the registration record
-	err = e.auth.RemoveRecovery(c.UserContext(), req.Id)
+	err = e.auth.RemoveRecoveryTx(c.UserContext(), tx, req.Id)
 	if err := helper.HttpDbError(err, ErrUnableToRemoveRegistration); err != nil {
 		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetPasswordHash)
+	}
+	if err := e.completeSessionMutation(c.UserContext(), req.Id, version); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToValidateSession)
 	}
 
 	return c.SendStatus(fiber.StatusOK)

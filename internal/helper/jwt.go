@@ -13,7 +13,8 @@ import (
 )
 
 type JWTUser struct {
-	Id int64
+	Id             int64
+	SessionVersion int64
 }
 
 func GetUser(c *fiber.Ctx) (*JWTUser, error) {
@@ -30,12 +31,13 @@ func GetUserFromToken(token *jwt.Token) (*JWTUser, error) {
 		return nil, fmt.Errorf("could not get claims")
 	}
 
-	return &JWTUser{Id: claims.UserID}, nil
+	return &JWTUser{Id: claims.UserID, SessionVersion: claims.SessionVersion}, nil
 }
 
 type Claims struct {
-	UserID    int64  `json:"user_id"`
-	TokenType string `json:"typ"`
+	UserID         int64  `json:"user_id"`
+	SessionVersion int64  `json:"sv"`
+	TokenType      string `json:"typ"`
 	jwt.RegisteredClaims
 }
 
@@ -45,12 +47,13 @@ func generateJTI() string {
 	return hex.EncodeToString(b)
 }
 
-func IssueTokens(userID int64, secret string) (access, refresh string, err error) {
+func IssueTokens(userID, sessionVersion int64, secret string) (access, refresh string, err error) {
 	now := time.Now()
 
 	accessTok := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
-		UserID:    userID,
-		TokenType: "access",
+		UserID:         userID,
+		SessionVersion: sessionVersion,
+		TokenType:      "access",
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "gochat",
 			Audience:  []string{"api"},
@@ -63,8 +66,9 @@ func IssueTokens(userID int64, secret string) (access, refresh string, err error
 	}
 
 	refreshTok := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
-		UserID:    userID,
-		TokenType: "refresh",
+		UserID:         userID,
+		SessionVersion: sessionVersion,
+		TokenType:      "refresh",
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "gochat",
 			Audience:  []string{"refresh"},

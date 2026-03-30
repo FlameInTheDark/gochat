@@ -130,6 +130,107 @@ export interface AuthConfirmationRequest {
 /**
  * 
  * @export
+ * @interface AuthDisableTwoFactorRequest
+ */
+export interface AuthDisableTwoFactorRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthDisableTwoFactorRequest
+     */
+    'code'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthDisableTwoFactorRequest
+     */
+    'code_type'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthDisableTwoFactorRequest
+     */
+    'current_password'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface AuthLoginChallengeResponse
+ */
+export interface AuthLoginChallengeResponse {
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthLoginChallengeResponse
+     */
+    'challenge_id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthLoginChallengeResponse
+     */
+    'expires_at'?: string;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof AuthLoginChallengeResponse
+     */
+    'methods'?: Array<string>;
+}
+/**
+ * 
+ * @export
+ * @interface AuthLoginEmailStartRequest
+ */
+export interface AuthLoginEmailStartRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthLoginEmailStartRequest
+     */
+    'challenge_id'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface AuthLoginEmailVerifyRequest
+ */
+export interface AuthLoginEmailVerifyRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthLoginEmailVerifyRequest
+     */
+    'challenge_id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthLoginEmailVerifyRequest
+     */
+    'code'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface AuthLoginRecoveryCodeRequest
+ */
+export interface AuthLoginRecoveryCodeRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthLoginRecoveryCodeRequest
+     */
+    'challenge_id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthLoginRecoveryCodeRequest
+     */
+    'code'?: string;
+}
+/**
+ * 
+ * @export
  * @interface AuthLoginRequest
  */
 export interface AuthLoginRequest {
@@ -164,6 +265,56 @@ export interface AuthLoginResponse {
      * @memberof AuthLoginResponse
      */
     'token'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface AuthLoginTOTPRequest
+ */
+export interface AuthLoginTOTPRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthLoginTOTPRequest
+     */
+    'challenge_id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthLoginTOTPRequest
+     */
+    'code'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface AuthPasswordChangeRequest
+ */
+export interface AuthPasswordChangeRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthPasswordChangeRequest
+     */
+    'code'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthPasswordChangeRequest
+     */
+    'code_type'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthPasswordChangeRequest
+     */
+    'current_password'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthPasswordChangeRequest
+     */
+    'new_password'?: string;
 }
 /**
  * 
@@ -206,6 +357,56 @@ export interface AuthPasswordResetRequest {
 /**
  * 
  * @export
+ * @interface AuthRecoveryCodesRegenerateRequest
+ */
+export interface AuthRecoveryCodesRegenerateRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthRecoveryCodesRegenerateRequest
+     */
+    'code'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthRecoveryCodesRegenerateRequest
+     */
+    'code_type'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthRecoveryCodesRegenerateRequest
+     */
+    'current_password'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface AuthRecoveryCodesResponse
+ */
+export interface AuthRecoveryCodesResponse {
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof AuthRecoveryCodesResponse
+     */
+    'recovery_codes'?: Array<string>;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthRecoveryCodesResponse
+     */
+    'refresh_token'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthRecoveryCodesResponse
+     */
+    'token'?: string;
+}
+/**
+ * 
+ * @export
  * @interface AuthRefreshTokenResponse
  */
 export interface AuthRefreshTokenResponse {
@@ -234,6 +435,106 @@ export interface AuthRegisterRequest {
      * @memberof AuthRegisterRequest
      */
     'email'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface AuthTOTPConfirmRequest
+ */
+export interface AuthTOTPConfirmRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthTOTPConfirmRequest
+     */
+    'code'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthTOTPConfirmRequest
+     */
+    'setup_id'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface AuthTOTPSetupRequest
+ */
+export interface AuthTOTPSetupRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthTOTPSetupRequest
+     */
+    'current_password'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface AuthTOTPSetupResponse
+ */
+export interface AuthTOTPSetupResponse {
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthTOTPSetupResponse
+     */
+    'account_name'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthTOTPSetupResponse
+     */
+    'expires_at'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthTOTPSetupResponse
+     */
+    'issuer'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthTOTPSetupResponse
+     */
+    'manual_key'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthTOTPSetupResponse
+     */
+    'otpauth_uri'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthTOTPSetupResponse
+     */
+    'setup_id'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface AuthTwoFactorStatusResponse
+ */
+export interface AuthTwoFactorStatusResponse {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof AuthTwoFactorStatusResponse
+     */
+    'enabled'?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthTwoFactorStatusResponse
+     */
+    'factor_type'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof AuthTwoFactorStatusResponse
+     */
+    'recovery_codes_remaining'?: number;
 }
 /**
  * 
@@ -3055,6 +3356,180 @@ export interface VoiceVoiceRegionsResponse {
 export const AuthApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
+         * Requires the current password and a valid TOTP or recovery code, disables the active factor, deletes recovery codes, rotates the session version, and returns fresh tokens.
+         * @summary Disable two-factor auth
+         * @param {AuthDisableTwoFactorRequest} request Disable two-factor auth request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        auth2faDelete: async (request: AuthDisableTwoFactorRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('auth2faDelete', 'request', request)
+            const localVarPath = `/auth/2fa`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Returns whether TOTP two-factor auth is enabled for the authenticated user and how many unused recovery codes remain.
+         * @summary Get two-factor auth status
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        auth2faGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/auth/2fa`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Requires the current password and an active second factor verification, replaces all recovery codes, rotates the session version, and returns the new codes once.
+         * @summary Regenerate recovery codes
+         * @param {AuthRecoveryCodesRegenerateRequest} request Recovery code regeneration request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        auth2faRecoveryCodesRegeneratePost: async (request: AuthRecoveryCodesRegenerateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('auth2faRecoveryCodesRegeneratePost', 'request', request)
+            const localVarPath = `/auth/2fa/recovery-codes/regenerate`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Validates the authenticator code for a pending TOTP setup, enables two-factor auth, rotates the session version, and returns new tokens plus recovery codes.
+         * @summary Confirm TOTP setup
+         * @param {AuthTOTPConfirmRequest} request Pending setup ID and authenticator code
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        auth2faTotpConfirmPost: async (request: AuthTOTPConfirmRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('auth2faTotpConfirmPost', 'request', request)
+            const localVarPath = `/auth/2fa/totp/confirm`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Verifies the current password and returns a short-lived TOTP provisioning payload. The client should render the QR code locally from the returned otpauth URI.
+         * @summary Start TOTP setup
+         * @param {AuthTOTPSetupRequest} request Current password for TOTP setup
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        auth2faTotpSetupPost: async (request: AuthTOTPSetupRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('auth2faTotpSetupPost', 'request', request)
+            const localVarPath = `/auth/2fa/totp/setup`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * 
          * @summary Confirmation
          * @param {AuthConfirmationRequest} request Login data
@@ -3091,7 +3566,151 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * 
+         * Sends a short-lived email recovery code for a pending login challenge. This flow is intended only for completing login when the authenticator device is unavailable.
+         * @summary Send email recovery code for login
+         * @param {AuthLoginEmailStartRequest} request Login challenge ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authLogin2faEmailStartPost: async (request: AuthLoginEmailStartRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('authLogin2faEmailStartPost', 'request', request)
+            const localVarPath = `/auth/login/2fa/email/start`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Verifies the short-lived email recovery code for a pending login challenge and returns access and refresh tokens.
+         * @summary Complete login with email recovery code
+         * @param {AuthLoginEmailVerifyRequest} request Login challenge ID and email recovery code
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authLogin2faEmailVerifyPost: async (request: AuthLoginEmailVerifyRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('authLogin2faEmailVerifyPost', 'request', request)
+            const localVarPath = `/auth/login/2fa/email/verify`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Consumes a pending login challenge and verifies a recovery code. Recovery codes are single use and are invalid after successful consumption.
+         * @summary Complete login with recovery code
+         * @param {AuthLoginRecoveryCodeRequest} request Login challenge ID and recovery code
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authLogin2faRecoveryCodePost: async (request: AuthLoginRecoveryCodeRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('authLogin2faRecoveryCodePost', 'request', request)
+            const localVarPath = `/auth/login/2fa/recovery-code`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Consumes a pending login challenge and verifies the authenticator code. On success the challenge is removed and access and refresh tokens are returned.
+         * @summary Complete login with TOTP
+         * @param {AuthLoginTOTPRequest} request Login challenge ID and TOTP code
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authLogin2faTotpPost: async (request: AuthLoginTOTPRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('authLogin2faTotpPost', 'request', request)
+            const localVarPath = `/auth/login/2fa/totp`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Validates email and password. Returns tokens immediately when two-factor auth is disabled, or a login challenge when a second factor is required.
          * @summary Authentication
          * @param {AuthLoginRequest} request Login data
          * @param {*} [options] Override http request option.
@@ -3101,6 +3720,42 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
             // verify required parameter 'request' is not null or undefined
             assertParamExists('authLoginPost', 'request', request)
             const localVarPath = `/auth/login`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Changes the current password. When two-factor auth is enabled, the request must also include either a TOTP code or a recovery code. Successful changes rotate the session version and return fresh tokens.
+         * @summary Change password
+         * @param {AuthPasswordChangeRequest} request Password change request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authPasswordChangePost: async (request: AuthPasswordChangeRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('authPasswordChangePost', 'request', request)
+            const localVarPath = `/auth/password/change`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -3281,6 +3936,70 @@ export const AuthApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = AuthApiAxiosParamCreator(configuration)
     return {
         /**
+         * Requires the current password and a valid TOTP or recovery code, disables the active factor, deletes recovery codes, rotates the session version, and returns fresh tokens.
+         * @summary Disable two-factor auth
+         * @param {AuthDisableTwoFactorRequest} request Disable two-factor auth request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async auth2faDelete(request: AuthDisableTwoFactorRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthLoginResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.auth2faDelete(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthApi.auth2faDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Returns whether TOTP two-factor auth is enabled for the authenticated user and how many unused recovery codes remain.
+         * @summary Get two-factor auth status
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async auth2faGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthTwoFactorStatusResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.auth2faGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthApi.auth2faGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Requires the current password and an active second factor verification, replaces all recovery codes, rotates the session version, and returns the new codes once.
+         * @summary Regenerate recovery codes
+         * @param {AuthRecoveryCodesRegenerateRequest} request Recovery code regeneration request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async auth2faRecoveryCodesRegeneratePost(request: AuthRecoveryCodesRegenerateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthRecoveryCodesResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.auth2faRecoveryCodesRegeneratePost(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthApi.auth2faRecoveryCodesRegeneratePost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Validates the authenticator code for a pending TOTP setup, enables two-factor auth, rotates the session version, and returns new tokens plus recovery codes.
+         * @summary Confirm TOTP setup
+         * @param {AuthTOTPConfirmRequest} request Pending setup ID and authenticator code
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async auth2faTotpConfirmPost(request: AuthTOTPConfirmRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthRecoveryCodesResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.auth2faTotpConfirmPost(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthApi.auth2faTotpConfirmPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Verifies the current password and returns a short-lived TOTP provisioning payload. The client should render the QR code locally from the returned otpauth URI.
+         * @summary Start TOTP setup
+         * @param {AuthTOTPSetupRequest} request Current password for TOTP setup
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async auth2faTotpSetupPost(request: AuthTOTPSetupRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthTOTPSetupResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.auth2faTotpSetupPost(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthApi.auth2faTotpSetupPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * 
          * @summary Confirmation
          * @param {AuthConfirmationRequest} request Login data
@@ -3294,7 +4013,59 @@ export const AuthApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         * Sends a short-lived email recovery code for a pending login challenge. This flow is intended only for completing login when the authenticator device is unavailable.
+         * @summary Send email recovery code for login
+         * @param {AuthLoginEmailStartRequest} request Login challenge ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authLogin2faEmailStartPost(request: AuthLoginEmailStartRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authLogin2faEmailStartPost(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthApi.authLogin2faEmailStartPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Verifies the short-lived email recovery code for a pending login challenge and returns access and refresh tokens.
+         * @summary Complete login with email recovery code
+         * @param {AuthLoginEmailVerifyRequest} request Login challenge ID and email recovery code
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authLogin2faEmailVerifyPost(request: AuthLoginEmailVerifyRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthLoginResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authLogin2faEmailVerifyPost(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthApi.authLogin2faEmailVerifyPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Consumes a pending login challenge and verifies a recovery code. Recovery codes are single use and are invalid after successful consumption.
+         * @summary Complete login with recovery code
+         * @param {AuthLoginRecoveryCodeRequest} request Login challenge ID and recovery code
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authLogin2faRecoveryCodePost(request: AuthLoginRecoveryCodeRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthLoginResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authLogin2faRecoveryCodePost(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthApi.authLogin2faRecoveryCodePost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Consumes a pending login challenge and verifies the authenticator code. On success the challenge is removed and access and refresh tokens are returned.
+         * @summary Complete login with TOTP
+         * @param {AuthLoginTOTPRequest} request Login challenge ID and TOTP code
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authLogin2faTotpPost(request: AuthLoginTOTPRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthLoginResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authLogin2faTotpPost(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthApi.authLogin2faTotpPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Validates email and password. Returns tokens immediately when two-factor auth is disabled, or a login challenge when a second factor is required.
          * @summary Authentication
          * @param {AuthLoginRequest} request Login data
          * @param {*} [options] Override http request option.
@@ -3304,6 +4075,19 @@ export const AuthApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.authLoginPost(request, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AuthApi.authLoginPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Changes the current password. When two-factor auth is enabled, the request must also include either a TOTP code or a recovery code. Successful changes rotate the session version and return fresh tokens.
+         * @summary Change password
+         * @param {AuthPasswordChangeRequest} request Password change request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authPasswordChangePost(request: AuthPasswordChangeRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthLoginResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authPasswordChangePost(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthApi.authPasswordChangePost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -3369,6 +4153,55 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
     const localVarFp = AuthApiFp(configuration)
     return {
         /**
+         * Requires the current password and a valid TOTP or recovery code, disables the active factor, deletes recovery codes, rotates the session version, and returns fresh tokens.
+         * @summary Disable two-factor auth
+         * @param {AuthApiAuth2faDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        auth2faDelete(requestParameters: AuthApiAuth2faDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse> {
+            return localVarFp.auth2faDelete(requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Returns whether TOTP two-factor auth is enabled for the authenticated user and how many unused recovery codes remain.
+         * @summary Get two-factor auth status
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        auth2faGet(options?: RawAxiosRequestConfig): AxiosPromise<AuthTwoFactorStatusResponse> {
+            return localVarFp.auth2faGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Requires the current password and an active second factor verification, replaces all recovery codes, rotates the session version, and returns the new codes once.
+         * @summary Regenerate recovery codes
+         * @param {AuthApiAuth2faRecoveryCodesRegeneratePostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        auth2faRecoveryCodesRegeneratePost(requestParameters: AuthApiAuth2faRecoveryCodesRegeneratePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthRecoveryCodesResponse> {
+            return localVarFp.auth2faRecoveryCodesRegeneratePost(requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Validates the authenticator code for a pending TOTP setup, enables two-factor auth, rotates the session version, and returns new tokens plus recovery codes.
+         * @summary Confirm TOTP setup
+         * @param {AuthApiAuth2faTotpConfirmPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        auth2faTotpConfirmPost(requestParameters: AuthApiAuth2faTotpConfirmPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthRecoveryCodesResponse> {
+            return localVarFp.auth2faTotpConfirmPost(requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Verifies the current password and returns a short-lived TOTP provisioning payload. The client should render the QR code locally from the returned otpauth URI.
+         * @summary Start TOTP setup
+         * @param {AuthApiAuth2faTotpSetupPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        auth2faTotpSetupPost(requestParameters: AuthApiAuth2faTotpSetupPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthTOTPSetupResponse> {
+            return localVarFp.auth2faTotpSetupPost(requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
          * 
          * @summary Confirmation
          * @param {AuthApiAuthConfirmationPostRequest} requestParameters Request parameters.
@@ -3379,7 +4212,47 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
             return localVarFp.authConfirmationPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         * Sends a short-lived email recovery code for a pending login challenge. This flow is intended only for completing login when the authenticator device is unavailable.
+         * @summary Send email recovery code for login
+         * @param {AuthApiAuthLogin2faEmailStartPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authLogin2faEmailStartPost(requestParameters: AuthApiAuthLogin2faEmailStartPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.authLogin2faEmailStartPost(requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Verifies the short-lived email recovery code for a pending login challenge and returns access and refresh tokens.
+         * @summary Complete login with email recovery code
+         * @param {AuthApiAuthLogin2faEmailVerifyPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authLogin2faEmailVerifyPost(requestParameters: AuthApiAuthLogin2faEmailVerifyPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse> {
+            return localVarFp.authLogin2faEmailVerifyPost(requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Consumes a pending login challenge and verifies a recovery code. Recovery codes are single use and are invalid after successful consumption.
+         * @summary Complete login with recovery code
+         * @param {AuthApiAuthLogin2faRecoveryCodePostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authLogin2faRecoveryCodePost(requestParameters: AuthApiAuthLogin2faRecoveryCodePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse> {
+            return localVarFp.authLogin2faRecoveryCodePost(requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Consumes a pending login challenge and verifies the authenticator code. On success the challenge is removed and access and refresh tokens are returned.
+         * @summary Complete login with TOTP
+         * @param {AuthApiAuthLogin2faTotpPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authLogin2faTotpPost(requestParameters: AuthApiAuthLogin2faTotpPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse> {
+            return localVarFp.authLogin2faTotpPost(requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Validates email and password. Returns tokens immediately when two-factor auth is disabled, or a login challenge when a second factor is required.
          * @summary Authentication
          * @param {AuthApiAuthLoginPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -3387,6 +4260,16 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
          */
         authLoginPost(requestParameters: AuthApiAuthLoginPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse> {
             return localVarFp.authLoginPost(requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Changes the current password. When two-factor auth is enabled, the request must also include either a TOTP code or a recovery code. Successful changes rotate the session version and return fresh tokens.
+         * @summary Change password
+         * @param {AuthApiAuthPasswordChangePostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authPasswordChangePost(requestParameters: AuthApiAuthPasswordChangePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse> {
+            return localVarFp.authPasswordChangePost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -3438,6 +4321,55 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
  */
 export interface AuthApiInterface {
     /**
+     * Requires the current password and a valid TOTP or recovery code, disables the active factor, deletes recovery codes, rotates the session version, and returns fresh tokens.
+     * @summary Disable two-factor auth
+     * @param {AuthApiAuth2faDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApiInterface
+     */
+    auth2faDelete(requestParameters: AuthApiAuth2faDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse>;
+
+    /**
+     * Returns whether TOTP two-factor auth is enabled for the authenticated user and how many unused recovery codes remain.
+     * @summary Get two-factor auth status
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApiInterface
+     */
+    auth2faGet(options?: RawAxiosRequestConfig): AxiosPromise<AuthTwoFactorStatusResponse>;
+
+    /**
+     * Requires the current password and an active second factor verification, replaces all recovery codes, rotates the session version, and returns the new codes once.
+     * @summary Regenerate recovery codes
+     * @param {AuthApiAuth2faRecoveryCodesRegeneratePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApiInterface
+     */
+    auth2faRecoveryCodesRegeneratePost(requestParameters: AuthApiAuth2faRecoveryCodesRegeneratePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthRecoveryCodesResponse>;
+
+    /**
+     * Validates the authenticator code for a pending TOTP setup, enables two-factor auth, rotates the session version, and returns new tokens plus recovery codes.
+     * @summary Confirm TOTP setup
+     * @param {AuthApiAuth2faTotpConfirmPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApiInterface
+     */
+    auth2faTotpConfirmPost(requestParameters: AuthApiAuth2faTotpConfirmPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthRecoveryCodesResponse>;
+
+    /**
+     * Verifies the current password and returns a short-lived TOTP provisioning payload. The client should render the QR code locally from the returned otpauth URI.
+     * @summary Start TOTP setup
+     * @param {AuthApiAuth2faTotpSetupPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApiInterface
+     */
+    auth2faTotpSetupPost(requestParameters: AuthApiAuth2faTotpSetupPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthTOTPSetupResponse>;
+
+    /**
      * 
      * @summary Confirmation
      * @param {AuthApiAuthConfirmationPostRequest} requestParameters Request parameters.
@@ -3448,7 +4380,47 @@ export interface AuthApiInterface {
     authConfirmationPost(requestParameters: AuthApiAuthConfirmationPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
-     * 
+     * Sends a short-lived email recovery code for a pending login challenge. This flow is intended only for completing login when the authenticator device is unavailable.
+     * @summary Send email recovery code for login
+     * @param {AuthApiAuthLogin2faEmailStartPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApiInterface
+     */
+    authLogin2faEmailStartPost(requestParameters: AuthApiAuthLogin2faEmailStartPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * Verifies the short-lived email recovery code for a pending login challenge and returns access and refresh tokens.
+     * @summary Complete login with email recovery code
+     * @param {AuthApiAuthLogin2faEmailVerifyPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApiInterface
+     */
+    authLogin2faEmailVerifyPost(requestParameters: AuthApiAuthLogin2faEmailVerifyPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse>;
+
+    /**
+     * Consumes a pending login challenge and verifies a recovery code. Recovery codes are single use and are invalid after successful consumption.
+     * @summary Complete login with recovery code
+     * @param {AuthApiAuthLogin2faRecoveryCodePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApiInterface
+     */
+    authLogin2faRecoveryCodePost(requestParameters: AuthApiAuthLogin2faRecoveryCodePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse>;
+
+    /**
+     * Consumes a pending login challenge and verifies the authenticator code. On success the challenge is removed and access and refresh tokens are returned.
+     * @summary Complete login with TOTP
+     * @param {AuthApiAuthLogin2faTotpPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApiInterface
+     */
+    authLogin2faTotpPost(requestParameters: AuthApiAuthLogin2faTotpPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse>;
+
+    /**
+     * Validates email and password. Returns tokens immediately when two-factor auth is disabled, or a login challenge when a second factor is required.
      * @summary Authentication
      * @param {AuthApiAuthLoginPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -3456,6 +4428,16 @@ export interface AuthApiInterface {
      * @memberof AuthApiInterface
      */
     authLoginPost(requestParameters: AuthApiAuthLoginPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse>;
+
+    /**
+     * Changes the current password. When two-factor auth is enabled, the request must also include either a TOTP code or a recovery code. Successful changes rotate the session version and return fresh tokens.
+     * @summary Change password
+     * @param {AuthApiAuthPasswordChangePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApiInterface
+     */
+    authPasswordChangePost(requestParameters: AuthApiAuthPasswordChangePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLoginResponse>;
 
     /**
      * 
@@ -3500,6 +4482,62 @@ export interface AuthApiInterface {
 }
 
 /**
+ * Request parameters for auth2faDelete operation in AuthApi.
+ * @export
+ * @interface AuthApiAuth2faDeleteRequest
+ */
+export interface AuthApiAuth2faDeleteRequest {
+    /**
+     * Disable two-factor auth request
+     * @type {AuthDisableTwoFactorRequest}
+     * @memberof AuthApiAuth2faDelete
+     */
+    readonly request: AuthDisableTwoFactorRequest
+}
+
+/**
+ * Request parameters for auth2faRecoveryCodesRegeneratePost operation in AuthApi.
+ * @export
+ * @interface AuthApiAuth2faRecoveryCodesRegeneratePostRequest
+ */
+export interface AuthApiAuth2faRecoveryCodesRegeneratePostRequest {
+    /**
+     * Recovery code regeneration request
+     * @type {AuthRecoveryCodesRegenerateRequest}
+     * @memberof AuthApiAuth2faRecoveryCodesRegeneratePost
+     */
+    readonly request: AuthRecoveryCodesRegenerateRequest
+}
+
+/**
+ * Request parameters for auth2faTotpConfirmPost operation in AuthApi.
+ * @export
+ * @interface AuthApiAuth2faTotpConfirmPostRequest
+ */
+export interface AuthApiAuth2faTotpConfirmPostRequest {
+    /**
+     * Pending setup ID and authenticator code
+     * @type {AuthTOTPConfirmRequest}
+     * @memberof AuthApiAuth2faTotpConfirmPost
+     */
+    readonly request: AuthTOTPConfirmRequest
+}
+
+/**
+ * Request parameters for auth2faTotpSetupPost operation in AuthApi.
+ * @export
+ * @interface AuthApiAuth2faTotpSetupPostRequest
+ */
+export interface AuthApiAuth2faTotpSetupPostRequest {
+    /**
+     * Current password for TOTP setup
+     * @type {AuthTOTPSetupRequest}
+     * @memberof AuthApiAuth2faTotpSetupPost
+     */
+    readonly request: AuthTOTPSetupRequest
+}
+
+/**
  * Request parameters for authConfirmationPost operation in AuthApi.
  * @export
  * @interface AuthApiAuthConfirmationPostRequest
@@ -3514,6 +4552,62 @@ export interface AuthApiAuthConfirmationPostRequest {
 }
 
 /**
+ * Request parameters for authLogin2faEmailStartPost operation in AuthApi.
+ * @export
+ * @interface AuthApiAuthLogin2faEmailStartPostRequest
+ */
+export interface AuthApiAuthLogin2faEmailStartPostRequest {
+    /**
+     * Login challenge ID
+     * @type {AuthLoginEmailStartRequest}
+     * @memberof AuthApiAuthLogin2faEmailStartPost
+     */
+    readonly request: AuthLoginEmailStartRequest
+}
+
+/**
+ * Request parameters for authLogin2faEmailVerifyPost operation in AuthApi.
+ * @export
+ * @interface AuthApiAuthLogin2faEmailVerifyPostRequest
+ */
+export interface AuthApiAuthLogin2faEmailVerifyPostRequest {
+    /**
+     * Login challenge ID and email recovery code
+     * @type {AuthLoginEmailVerifyRequest}
+     * @memberof AuthApiAuthLogin2faEmailVerifyPost
+     */
+    readonly request: AuthLoginEmailVerifyRequest
+}
+
+/**
+ * Request parameters for authLogin2faRecoveryCodePost operation in AuthApi.
+ * @export
+ * @interface AuthApiAuthLogin2faRecoveryCodePostRequest
+ */
+export interface AuthApiAuthLogin2faRecoveryCodePostRequest {
+    /**
+     * Login challenge ID and recovery code
+     * @type {AuthLoginRecoveryCodeRequest}
+     * @memberof AuthApiAuthLogin2faRecoveryCodePost
+     */
+    readonly request: AuthLoginRecoveryCodeRequest
+}
+
+/**
+ * Request parameters for authLogin2faTotpPost operation in AuthApi.
+ * @export
+ * @interface AuthApiAuthLogin2faTotpPostRequest
+ */
+export interface AuthApiAuthLogin2faTotpPostRequest {
+    /**
+     * Login challenge ID and TOTP code
+     * @type {AuthLoginTOTPRequest}
+     * @memberof AuthApiAuthLogin2faTotpPost
+     */
+    readonly request: AuthLoginTOTPRequest
+}
+
+/**
  * Request parameters for authLoginPost operation in AuthApi.
  * @export
  * @interface AuthApiAuthLoginPostRequest
@@ -3525,6 +4619,20 @@ export interface AuthApiAuthLoginPostRequest {
      * @memberof AuthApiAuthLoginPost
      */
     readonly request: AuthLoginRequest
+}
+
+/**
+ * Request parameters for authPasswordChangePost operation in AuthApi.
+ * @export
+ * @interface AuthApiAuthPasswordChangePostRequest
+ */
+export interface AuthApiAuthPasswordChangePostRequest {
+    /**
+     * Password change request
+     * @type {AuthPasswordChangeRequest}
+     * @memberof AuthApiAuthPasswordChangePost
+     */
+    readonly request: AuthPasswordChangeRequest
 }
 
 /**
@@ -3591,6 +4699,65 @@ export interface AuthApiAuthResetPostRequest {
  */
 export class AuthApi extends BaseAPI implements AuthApiInterface {
     /**
+     * Requires the current password and a valid TOTP or recovery code, disables the active factor, deletes recovery codes, rotates the session version, and returns fresh tokens.
+     * @summary Disable two-factor auth
+     * @param {AuthApiAuth2faDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public auth2faDelete(requestParameters: AuthApiAuth2faDeleteRequest, options?: RawAxiosRequestConfig) {
+        return AuthApiFp(this.configuration).auth2faDelete(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Returns whether TOTP two-factor auth is enabled for the authenticated user and how many unused recovery codes remain.
+     * @summary Get two-factor auth status
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public auth2faGet(options?: RawAxiosRequestConfig) {
+        return AuthApiFp(this.configuration).auth2faGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Requires the current password and an active second factor verification, replaces all recovery codes, rotates the session version, and returns the new codes once.
+     * @summary Regenerate recovery codes
+     * @param {AuthApiAuth2faRecoveryCodesRegeneratePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public auth2faRecoveryCodesRegeneratePost(requestParameters: AuthApiAuth2faRecoveryCodesRegeneratePostRequest, options?: RawAxiosRequestConfig) {
+        return AuthApiFp(this.configuration).auth2faRecoveryCodesRegeneratePost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Validates the authenticator code for a pending TOTP setup, enables two-factor auth, rotates the session version, and returns new tokens plus recovery codes.
+     * @summary Confirm TOTP setup
+     * @param {AuthApiAuth2faTotpConfirmPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public auth2faTotpConfirmPost(requestParameters: AuthApiAuth2faTotpConfirmPostRequest, options?: RawAxiosRequestConfig) {
+        return AuthApiFp(this.configuration).auth2faTotpConfirmPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Verifies the current password and returns a short-lived TOTP provisioning payload. The client should render the QR code locally from the returned otpauth URI.
+     * @summary Start TOTP setup
+     * @param {AuthApiAuth2faTotpSetupPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public auth2faTotpSetupPost(requestParameters: AuthApiAuth2faTotpSetupPostRequest, options?: RawAxiosRequestConfig) {
+        return AuthApiFp(this.configuration).auth2faTotpSetupPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * 
      * @summary Confirmation
      * @param {AuthApiAuthConfirmationPostRequest} requestParameters Request parameters.
@@ -3603,7 +4770,55 @@ export class AuthApi extends BaseAPI implements AuthApiInterface {
     }
 
     /**
-     * 
+     * Sends a short-lived email recovery code for a pending login challenge. This flow is intended only for completing login when the authenticator device is unavailable.
+     * @summary Send email recovery code for login
+     * @param {AuthApiAuthLogin2faEmailStartPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public authLogin2faEmailStartPost(requestParameters: AuthApiAuthLogin2faEmailStartPostRequest, options?: RawAxiosRequestConfig) {
+        return AuthApiFp(this.configuration).authLogin2faEmailStartPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Verifies the short-lived email recovery code for a pending login challenge and returns access and refresh tokens.
+     * @summary Complete login with email recovery code
+     * @param {AuthApiAuthLogin2faEmailVerifyPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public authLogin2faEmailVerifyPost(requestParameters: AuthApiAuthLogin2faEmailVerifyPostRequest, options?: RawAxiosRequestConfig) {
+        return AuthApiFp(this.configuration).authLogin2faEmailVerifyPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Consumes a pending login challenge and verifies a recovery code. Recovery codes are single use and are invalid after successful consumption.
+     * @summary Complete login with recovery code
+     * @param {AuthApiAuthLogin2faRecoveryCodePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public authLogin2faRecoveryCodePost(requestParameters: AuthApiAuthLogin2faRecoveryCodePostRequest, options?: RawAxiosRequestConfig) {
+        return AuthApiFp(this.configuration).authLogin2faRecoveryCodePost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Consumes a pending login challenge and verifies the authenticator code. On success the challenge is removed and access and refresh tokens are returned.
+     * @summary Complete login with TOTP
+     * @param {AuthApiAuthLogin2faTotpPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public authLogin2faTotpPost(requestParameters: AuthApiAuthLogin2faTotpPostRequest, options?: RawAxiosRequestConfig) {
+        return AuthApiFp(this.configuration).authLogin2faTotpPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Validates email and password. Returns tokens immediately when two-factor auth is disabled, or a login challenge when a second factor is required.
      * @summary Authentication
      * @param {AuthApiAuthLoginPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -3612,6 +4827,18 @@ export class AuthApi extends BaseAPI implements AuthApiInterface {
      */
     public authLoginPost(requestParameters: AuthApiAuthLoginPostRequest, options?: RawAxiosRequestConfig) {
         return AuthApiFp(this.configuration).authLoginPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Changes the current password. When two-factor auth is enabled, the request must also include either a TOTP code or a recovery code. Successful changes rotate the session version and return fresh tokens.
+     * @summary Change password
+     * @param {AuthApiAuthPasswordChangePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApi
+     */
+    public authPasswordChangePost(requestParameters: AuthApiAuthPasswordChangePostRequest, options?: RawAxiosRequestConfig) {
+        return AuthApiFp(this.configuration).authPasswordChangePost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

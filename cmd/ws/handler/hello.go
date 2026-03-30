@@ -26,7 +26,7 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 		log.Error("Error unmarshalling hello message", "error", err)
 		return
 	}
-	token, err := h.jwt.ParseAccess(m.Token)
+	token, err := h.jwt.ParseAccess(ctx, m.Token)
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()

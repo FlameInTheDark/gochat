@@ -25,6 +25,7 @@ import (
 	reactionrepo "github.com/FlameInTheDark/gochat/internal/database/entities/reaction"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	authenticationrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/authentication"
 	channelrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/embedmq"
 	"github.com/FlameInTheDark/gochat/internal/helper"
@@ -353,6 +354,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.WithMetrics("gochat-api")
 	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
 	s.AuthMiddleware(cfg.AuthSecret)
+	s.Use(helper.RequireSessionVersion(helper.NewSessionVersionChecker(authenticationrepo.New(pg.Conn()), cache)))
 	s.RateLimitPipedMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 	s.Use(helper.RequireTokenType("access", "api"))
 	s.Use(func(c *fiber.Ctx) error {

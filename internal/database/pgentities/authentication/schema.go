@@ -7,7 +7,13 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/Masterminds/squirrel"
+	"github.com/jmoiron/sqlx"
 )
+
+type execQuerierContext interface {
+	sqlx.ExtContext
+	sqlx.QueryerContext
+}
 
 func (e *Entity) CreateAuthentication(ctx context.Context, userId int64, email, passwordHash string) error {
 	q := squirrel.Insert("authentications").
@@ -77,6 +83,14 @@ func (e *Entity) GetAuthenticationByUserId(ctx context.Context, userId int64) (m
 }
 
 func (e *Entity) SetPasswordHash(ctx context.Context, userId int64, hash string) error {
+	return e.setPasswordHash(ctx, e.c, userId, hash)
+}
+
+func (e *Entity) SetPasswordHashTx(ctx context.Context, tx *sqlx.Tx, userId int64, hash string) error {
+	return e.setPasswordHash(ctx, tx, userId, hash)
+}
+
+func (e *Entity) setPasswordHash(ctx context.Context, runner execQuerierContext, userId int64, hash string) error {
 	q := squirrel.Update("authentications").
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{"user_id": userId}).
@@ -85,11 +99,45 @@ func (e *Entity) SetPasswordHash(ctx context.Context, userId int64, hash string)
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = e.c.ExecContext(ctx, sql, args...)
+	_, err = runner.ExecContext(ctx, sql, args...)
 	if err != nil {
 		return fmt.Errorf("unable to set password hash: %w", err)
 	}
 	return nil
+}
+
+func (e *Entity) GetSessionVersion(ctx context.Context, userId int64) (int64, error) {
+	var version int64
+	q := squirrel.Select("session_version").
+		PlaceholderFormat(squirrel.Dollar).
+		From("authentications").
+		Where(squirrel.Eq{"user_id": userId}).
+		Limit(1)
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	if err := e.c.GetContext(ctx, &version, sql, args...); err != nil {
+		return 0, fmt.Errorf("unable to get session version: %w", err)
+	}
+	return version, nil
+}
+
+func (e *Entity) BumpSessionVersionTx(ctx context.Context, tx *sqlx.Tx, userId int64) (int64, error) {
+	var version int64
+	q := squirrel.Update("authentications").
+		PlaceholderFormat(squirrel.Dollar).
+		Set("session_version", squirrel.Expr("session_version + 1")).
+		Where(squirrel.Eq{"user_id": userId}).
+		Suffix("RETURNING session_version")
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	if err := tx.GetContext(ctx, &version, sql, args...); err != nil {
+		return 0, fmt.Errorf("unable to bump session version: %w", err)
+	}
+	return version, nil
 }
 
 func (e *Entity) CreateRecovery(ctx context.Context, userId int64, token string, expires time.Time) error {
@@ -109,6 +157,14 @@ func (e *Entity) CreateRecovery(ctx context.Context, userId int64, token string,
 }
 
 func (e *Entity) RemoveRecovery(ctx context.Context, userId int64) error {
+	return e.removeRecovery(ctx, e.c, userId)
+}
+
+func (e *Entity) RemoveRecoveryTx(ctx context.Context, tx *sqlx.Tx, userId int64) error {
+	return e.removeRecovery(ctx, tx, userId)
+}
+
+func (e *Entity) removeRecovery(ctx context.Context, runner execQuerierContext, userId int64) error {
 	q := squirrel.Delete("recoveries").
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{"user_id": userId})
@@ -116,7 +172,7 @@ func (e *Entity) RemoveRecovery(ctx context.Context, userId int64) error {
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)
 	}
-	_, err = e.c.ExecContext(ctx, sql, args...)
+	_, err = runner.ExecContext(ctx, sql, args...)
 	if err != nil {
 		return fmt.Errorf("unable to remove recovery: %w", err)
 	}

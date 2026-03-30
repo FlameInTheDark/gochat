@@ -14,9 +14,11 @@ This project is composed of several services located under the `cmd/` directory.
 ## Auth (`cmd/auth`)
 - Purpose: Authentication and account lifecycle.
 - Key features:
-  - Login, registration, token refresh (access/refresh), password reset flows.
+  - Login, registration, token refresh (access/refresh), password reset, password change, and TOTP-based two-factor authentication flows.
+  - Login challenges backed by Redis/KeyDB for second-step verification, recovery codes, and email recovery fallback.
+  - Session-versioned JWT issuance so password and 2FA mutations revoke older access, refresh, and WebSocket sessions.
   - Email delivery via pluggable providers (SMTP, SendPulse, Resend, or log-only).
-- Dependencies: PostgreSQL, Redis/KeyDB (cache).
+- Dependencies: PostgreSQL, Redis/KeyDB (cache and MFA state), NATS (session revocation fan-out).
 
 ## WebSocket Gateway (`cmd/ws`)
 - Purpose: Persistent WebSocket gateway for client real‑time updates.

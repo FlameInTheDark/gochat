@@ -13,9 +13,13 @@ type Authentication interface {
 	RemoveAuthentication(ctx context.Context, userId int64) error
 	GetAuthenticationByEmail(ctx context.Context, email string) (model.Authentication, error)
 	GetAuthenticationByUserId(ctx context.Context, userId int64) (model.Authentication, error)
+	GetSessionVersion(ctx context.Context, userId int64) (int64, error)
 	SetPasswordHash(ctx context.Context, userId int64, hash string) error
+	SetPasswordHashTx(ctx context.Context, tx *sqlx.Tx, userId int64, hash string) error
+	BumpSessionVersionTx(ctx context.Context, tx *sqlx.Tx, userId int64) (int64, error)
 	CreateRecovery(ctx context.Context, userId int64, token string, expires time.Time) error
 	RemoveRecovery(ctx context.Context, userId int64) error
+	RemoveRecoveryTx(ctx context.Context, tx *sqlx.Tx, userId int64) error
 	GetRecoveryByUserId(ctx context.Context, userId int64) (model.Recovery, error)
 	GetRecovery(ctx context.Context, userId int64, token string) (model.Recovery, error)
 }
