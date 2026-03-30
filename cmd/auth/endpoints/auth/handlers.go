@@ -282,7 +282,7 @@ func (e *entity) PasswordRecovery(c *fiber.Ctx) error {
 	if err == nil {
 		// If recovery exists and was created less than a minute ago, return error
 		if rec.CreatedAt.Add(time.Minute).After(time.Now()) {
-			return fiber.NewError(fiber.StatusNotAcceptable, ErrRecoveryEmailAlreadySent)
+			return fiber.NewError(fiber.StatusConflict, ErrRecoveryEmailAlreadySent)
 		}
 		// Remove the existing recovery
 		err = e.auth.RemoveRecovery(c.UserContext(), auth.UserId)
@@ -329,10 +329,16 @@ func (e *entity) PasswordReset(c *fiber.Ctx) error {
 		return err
 	}
 
-	// Get the registration record for the user
+	// Get the recovery record for the user
 	rec, err := e.auth.GetRecoveryByUserId(c.UserContext(), req.Id)
 	if err := helper.HttpDbError(err, ErrUnableToGetRegistrationById); err != nil {
 		return err
+	}
+	if time.Now().After(rec.ExpiresAt) {
+		if err := e.auth.RemoveRecovery(c.UserContext(), req.Id); err != nil {
+			log.Warn("unable to remove expired recovery", slog.String("error", err.Error()))
+		}
+		return fiber.NewError(fiber.StatusUnauthorized, ErrRecoveryExpired)
 	}
 
 	// Verify the token

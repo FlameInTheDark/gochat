@@ -36,6 +36,7 @@ const (
 	ErrEmailNotFound                    = "email not found"
 	ErrUnableToSetPasswordHash          = "unable to set password hash"
 	ErrRecoveryEmailAlreadySent         = "recovery email already sent"
+	ErrRecoveryExpired                  = "recovery is expired or invalid"
 
 	// Validation error messages
 	ErrNameRequired               = "name is required"
