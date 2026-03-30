@@ -3,8 +3,8 @@ package auth
 import (
 	"encoding/json"
 	"regexp"
-	"strconv"
 
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
@@ -113,11 +113,11 @@ type ConfirmationRequest struct {
 
 func (r *ConfirmationRequest) UnmarshalJSON(data []byte) error {
 	type confirmationRequestAlias struct {
-		Id            json.RawMessage `json:"id"`
-		Token         string          `json:"token"`
-		Name          string          `json:"name"`
-		Discriminator string          `json:"discriminator"`
-		Password      string          `json:"password"`
+		Id            helper.StringInt64 `json:"id"`
+		Token         string             `json:"token"`
+		Name          string             `json:"name"`
+		Discriminator string             `json:"discriminator"`
+		Password      string             `json:"password"`
 	}
 
 	var aux confirmationRequestAlias
@@ -125,12 +125,7 @@ func (r *ConfirmationRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	id, err := parseFlexibleInt64(aux.Id)
-	if err != nil {
-		return err
-	}
-
-	r.Id = id
+	r.Id = int64(aux.Id)
 	r.Token = aux.Token
 	r.Name = aux.Name
 	r.Discriminator = aux.Discriminator
@@ -189,9 +184,9 @@ type PasswordResetRequest struct {
 
 func (r *PasswordResetRequest) UnmarshalJSON(data []byte) error {
 	type passwordResetRequestAlias struct {
-		Id       json.RawMessage `json:"id"`
-		Token    string          `json:"token"`
-		Password string          `json:"password"`
+		Id       helper.StringInt64 `json:"id"`
+		Token    string             `json:"token"`
+		Password string             `json:"password"`
 	}
 
 	var aux passwordResetRequestAlias
@@ -199,12 +194,7 @@ func (r *PasswordResetRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	id, err := parseFlexibleInt64(aux.Id)
-	if err != nil {
-		return err
-	}
-
-	r.Id = id
+	r.Id = int64(aux.Id)
 	r.Token = aux.Token
 	r.Password = aux.Password
 
@@ -227,25 +217,4 @@ func (r PasswordResetRequest) Validate() error {
 			validation.Min(int64(1)).Error(ErrIdInvalid),
 		),
 	)
-}
-
-func parseFlexibleInt64(raw json.RawMessage) (int64, error) {
-	if len(raw) == 0 || string(raw) == "null" {
-		return 0, nil
-	}
-
-	var id int64
-	if err := json.Unmarshal(raw, &id); err == nil {
-		return id, nil
-	}
-
-	var str string
-	if err := json.Unmarshal(raw, &str); err != nil {
-		return 0, err
-	}
-	if str == "" {
-		return 0, nil
-	}
-
-	return strconv.ParseInt(str, 10, 64)
 }
