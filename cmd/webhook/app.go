@@ -3,7 +3,6 @@ package main
 import (
 	"log/slog"
 
-	"github.com/FlameInTheDark/gochat/cmd/webhook/auth"
 	cfgpkg "github.com/FlameInTheDark/gochat/cmd/webhook/config"
 	attentity "github.com/FlameInTheDark/gochat/cmd/webhook/endpoints/attachments"
 	sfuentity "github.com/FlameInTheDark/gochat/cmd/webhook/endpoints/sfu"
@@ -12,7 +11,9 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/nats"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/server"
+	"github.com/FlameInTheDark/gochat/internal/serviceauth"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
 )
@@ -30,7 +31,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 
 	// Dependencies
-	tokens := auth.NewTokenManager(cfg.JWTSecret)
+	tokens := serviceauth.NewTokenManager(cfg.JWTSecret)
 	disco, err := discovery.NewManager(cfg.EtcdEndpoints, cfg.EtcdPrefix, cfg.EtcdUsername, cfg.EtcdPassword)
 	if err != nil {
 		// If discovery is core to this service, fail fast
@@ -66,7 +67,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	shut.Up(s)
 
 	if cfg.Log {
-		s.WithLogger(logger)
+		s.WithLoggerLevel(logger, observability.ParseLogLevel(cfg.LogLevel))
 	}
 	s.WithCORS()
 	s.WithMetrics("gochat-webhook")

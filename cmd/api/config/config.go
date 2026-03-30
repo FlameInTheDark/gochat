@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	ApiLog                     bool          `yaml:"api_log" env:"API_LOG" env-default:"true"`
+	LogLevel                   string        `yaml:"log_level" env:"LOG_LEVEL" env-default:"warn"`
 	ServerAddress              string        `yaml:"server_address" env:"SERVER_ADDRESS" env-default:":3100"`
 	IdempotencyStorageLifetime int64         `yaml:"idempotency_storage_lifetime" env:"IDEMPOTENCY_STORAGE_LIFETIME" env-default:"10"`
 	RateLimitTime              int           `yaml:"rate_limit_time" env:"RATE_LIMIT_TIME" env-default:"1"`
@@ -28,6 +29,12 @@ type Config struct {
 	IndexerNatsConnString      string        `yaml:"indexer_nats_conn_string" env:"INDEX_NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`
 	PGDSN                      string        `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
 	PGRetries                  int           `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
+	PGQueryLog                 bool          `yaml:"pg_query_log" env:"PG_QUERY_LOG" env-default:"false"`
+	PGMaxOpenConns             int           `yaml:"pg_max_open_conns" env:"PG_MAX_OPEN_CONNS" env-default:"50"`
+	PGMaxIdleConns             int           `yaml:"pg_max_idle_conns" env:"PG_MAX_IDLE_CONNS" env-default:"25"`
+	RedisPoolSize              int           `yaml:"redis_pool_size" env:"REDIS_POOL_SIZE" env-default:"100"`
+	RedisMinIdleConns          int           `yaml:"redis_min_idle_conns" env:"REDIS_MIN_IDLE_CONNS" env-default:"20"`
+	Prefork                    bool          `yaml:"prefork" env:"PREFORK" env-default:"false"`
 	S3Endpoint                 string        `yaml:"s3_endpoint" env:"S3_ENDPOINT" env-default:""`
 	S3AccessKeyID              string        `yaml:"s3_access_key_id" env:"S3_ACCESS_KEY_ID" env-default:""`
 	S3SecretAccessKey          string        `yaml:"s3_secret_access_key" env:"S3_SECRET_ACCESS_KEY" env-default:""`

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
@@ -17,10 +18,14 @@ type Server struct {
 	cache *kvs.Cache
 }
 
-func NewServer() *Server {
+func NewServer(prefork ...bool) *Server {
+	pf := len(prefork) > 0 && prefork[0]
 	app := fiber.New(fiber.Config{
+		Prefork:               pf,
 		DisableStartupMessage: true,
 		BodyLimit:             100 * 1024 * 1024, // 100MB
+		ReadBufferSize:        8192,
+		WriteBufferSize:       8192,
 	})
 	rc := recover.ConfigDefault
 	rc.EnableStackTrace = true
@@ -48,13 +53,19 @@ func (s *Server) WithLogger(logger *slog.Logger) {
 	s.app.Use(observability.RequestLogger(logger))
 }
 
-func (s *Server) WithCORS() {
-	// Initialize default config
-	s.app.Use(cors.New())
+func (s *Server) WithLoggerLevel(logger *slog.Logger, level slog.Level) {
+	s.app.Use(observability.RequestLoggerWithLevel(logger, level))
+}
 
-	// Or extend your config for customization
+func (s *Server) WithCORS() {
 	s.app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
+	}))
+}
+
+func (s *Server) WithCompression() {
+	s.app.Use(compress.New(compress.Config{
+		Level: compress.LevelBestSpeed,
 	}))
 }
 

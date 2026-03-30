@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -42,7 +43,7 @@ func (m *userSettingsRepoMock) SetUserSettings(_ context.Context, userId int64, 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	data, err := json.Marshal(settings)
+	data, err := model.MarshalStoredUserSettingsData(settings)
 	if err != nil {
 		return err
 	}
@@ -441,5 +442,219 @@ func TestGetUserSettingsReturnsNoContentWhenVersionIsCurrent(t *testing.T) {
 
 	if resp.StatusCode != fiber.StatusNoContent {
 		t.Fatalf("expected GET status %d, got %d", fiber.StatusNoContent, resp.StatusCode)
+	}
+}
+
+func TestUserSettingsResolvesDevicesPerKey(t *testing.T) {
+	app := newSettingsTestApp(newSettingsTestEntity(newUserSettingsRepoMock()))
+
+	desktopReq := httptest.NewRequest(http.MethodPost, "/user/me/settings", strings.NewReader(`{
+		"status":{"status":"online"},
+		"devices":{
+			"audio_input_device":"desk-mic",
+			"audio_output_device":"desk-speakers",
+			"video_device":"desk-cam",
+			"noise_suppression":true,
+			"echo_cancellation":true,
+			"audio_input_level":100,
+			"audio_output_level":75
+		}
+	}`))
+	desktopReq.Header.Set("Content-Type", "application/json")
+	desktopReq.Header.Set(userSettingsDeviceKeyHeader, "desktop-browser")
+
+	desktopResp, err := app.Test(desktopReq, -1)
+	if err != nil {
+		t.Fatalf("expected desktop POST request to complete, got %v", err)
+	}
+	defer desktopResp.Body.Close()
+
+	if desktopResp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected desktop POST status %d, got %d", fiber.StatusOK, desktopResp.StatusCode)
+	}
+
+	phoneReq := httptest.NewRequest(http.MethodPost, "/user/me/settings", strings.NewReader(`{
+		"status":{"status":"online"},
+		"devices":{
+			"audio_input_device":"phone-mic",
+			"audio_output_device":"phone-speaker",
+			"video_device":"phone-cam",
+			"noise_suppression":false,
+			"echo_cancellation":false,
+			"audio_input_level":85,
+			"audio_output_level":60
+		}
+	}`))
+	phoneReq.Header.Set("Content-Type", "application/json")
+	phoneReq.Header.Set(userSettingsDeviceKeyHeader, "phone-web")
+
+	phoneResp, err := app.Test(phoneReq, -1)
+	if err != nil {
+		t.Fatalf("expected phone POST request to complete, got %v", err)
+	}
+	defer phoneResp.Body.Close()
+
+	if phoneResp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected phone POST status %d, got %d", fiber.StatusOK, phoneResp.StatusCode)
+	}
+
+	getDesktopReq := httptest.NewRequest(http.MethodGet, "/user/me/settings", nil)
+	getDesktopReq.Header.Set(userSettingsDeviceKeyHeader, "desktop-browser")
+	getDesktopResp, err := app.Test(getDesktopReq, -1)
+	if err != nil {
+		t.Fatalf("expected desktop GET request to complete, got %v", err)
+	}
+	defer getDesktopResp.Body.Close()
+
+	var desktopSettings UserSettingsResponse
+	if err := json.NewDecoder(getDesktopResp.Body).Decode(&desktopSettings); err != nil {
+		t.Fatalf("expected valid desktop JSON response, got %v", err)
+	}
+	if desktopSettings.Settings == nil {
+		t.Fatal("expected desktop settings payload")
+	}
+	if desktopSettings.Settings.Devices.AudioInputDevice != "desk-mic" {
+		t.Fatalf("expected desktop device settings, got %#v", desktopSettings.Settings.Devices)
+	}
+	if desktopSettings.Settings.DevicesByKey["phone-web"].AudioInputDevice != "phone-mic" {
+		t.Fatalf("expected phone bucket to remain stored, got %#v", desktopSettings.Settings.DevicesByKey)
+	}
+
+	getPhoneReq := httptest.NewRequest(http.MethodGet, "/user/me/settings", nil)
+	getPhoneReq.Header.Set(userSettingsDeviceKeyHeader, "phone-web")
+	getPhoneResp, err := app.Test(getPhoneReq, -1)
+	if err != nil {
+		t.Fatalf("expected phone GET request to complete, got %v", err)
+	}
+	defer getPhoneResp.Body.Close()
+
+	var phoneSettings UserSettingsResponse
+	if err := json.NewDecoder(getPhoneResp.Body).Decode(&phoneSettings); err != nil {
+		t.Fatalf("expected valid phone JSON response, got %v", err)
+	}
+	if phoneSettings.Settings == nil {
+		t.Fatal("expected phone settings payload")
+	}
+	if phoneSettings.Settings.Devices.AudioInputDevice != "phone-mic" {
+		t.Fatalf("expected phone device settings, got %#v", phoneSettings.Settings.Devices)
+	}
+}
+
+func TestLegacySettingsUpdateKeepsStoredDeviceBuckets(t *testing.T) {
+	repo := newUserSettingsRepoMock()
+	repo.settings[1] = model.UserSettings{
+		UserId: 1,
+		Settings: json.RawMessage(`{
+			"status":{"status":"online"},
+			"devices":{"audio_input_device":"legacy-mic"},
+			"devices_by_key":{
+				"desktop-browser":{"audio_input_device":"desk-mic"},
+				"phone-web":{"audio_input_device":"phone-mic"}
+			}
+		}`),
+		Version: 1,
+	}
+
+	app := newSettingsTestApp(newSettingsTestEntity(repo))
+
+	postReq := httptest.NewRequest(http.MethodPost, "/user/me/settings", strings.NewReader(`{
+		"status":{"status":"idle"},
+		"devices":{"audio_input_device":"legacy-mic-updated"}
+	}`))
+	postReq.Header.Set("Content-Type", "application/json")
+
+	postResp, err := app.Test(postReq, -1)
+	if err != nil {
+		t.Fatalf("expected legacy POST request to complete, got %v", err)
+	}
+	defer postResp.Body.Close()
+
+	if postResp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected legacy POST status %d, got %d", fiber.StatusOK, postResp.StatusCode)
+	}
+
+	getReq := httptest.NewRequest(http.MethodGet, "/user/me/settings", nil)
+	getReq.Header.Set(userSettingsDeviceKeyHeader, "phone-web")
+	getResp, err := app.Test(getReq, -1)
+	if err != nil {
+		t.Fatalf("expected GET request to complete, got %v", err)
+	}
+	defer getResp.Body.Close()
+
+	var got UserSettingsResponse
+	if err := json.NewDecoder(getResp.Body).Decode(&got); err != nil {
+		t.Fatalf("expected valid JSON response, got %v", err)
+	}
+	if got.Settings == nil {
+		t.Fatal("expected settings payload in GET response")
+	}
+	if got.Settings.Devices.AudioInputDevice != "phone-mic" {
+		t.Fatalf("expected stored phone device bucket to survive legacy update, got %#v", got.Settings.Devices)
+	}
+}
+
+func TestUserSettingsEvictsLeastRecentlyUpdatedDeviceBuckets(t *testing.T) {
+	repo := newUserSettingsRepoMock()
+	app := newSettingsTestApp(newSettingsTestEntity(repo))
+
+	postSettings := func(deviceKey, audioInput string) {
+		t.Helper()
+
+		req := httptest.NewRequest(http.MethodPost, "/user/me/settings", strings.NewReader(`{
+			"status":{"status":"online"},
+			"devices":{"audio_input_device":"`+audioInput+`"}
+		}`))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set(userSettingsDeviceKeyHeader, deviceKey)
+
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			t.Fatalf("expected POST request for %s to complete, got %v", deviceKey, err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != fiber.StatusOK {
+			t.Fatalf("expected POST status %d for %s, got %d", fiber.StatusOK, deviceKey, resp.StatusCode)
+		}
+	}
+
+	for i := 1; i <= maxStoredDeviceSettingsBuckets; i++ {
+		postSettings("device-"+strconv.Itoa(i), "mic-"+strconv.Itoa(i))
+	}
+
+	// Touch device-2 again so it stays newer than device-1 when the next bucket arrives.
+	postSettings("device-2", "mic-2-refresh")
+	postSettings("device-17", "mic-17")
+
+	stored, err := model.UnmarshalStoredUserSettingsData(repo.settings[1].Settings)
+	if err != nil {
+		t.Fatalf("expected stored settings to unmarshal, got %v", err)
+	}
+
+	if len(stored.DevicesByKey) != maxStoredDeviceSettingsBuckets {
+		t.Fatalf("expected %d stored device buckets, got %d", maxStoredDeviceSettingsBuckets, len(stored.DevicesByKey))
+	}
+	if _, ok := stored.DevicesByKey["device-1"]; ok {
+		t.Fatalf("expected oldest device bucket to be evicted, got %#v", stored.DevicesByKey)
+	}
+	if _, ok := stored.DevicesByKey["device-2"]; !ok {
+		t.Fatalf("expected refreshed device bucket to remain, got %#v", stored.DevicesByKey)
+	}
+	if stored.DevicesByKey["device-2"].AudioInputDevice != "mic-2-refresh" {
+		t.Fatalf("expected refreshed device settings to persist, got %#v", stored.DevicesByKey["device-2"])
+	}
+	if _, ok := stored.DevicesByKey["device-17"]; !ok {
+		t.Fatalf("expected newest device bucket to be stored, got %#v", stored.DevicesByKey)
+	}
+
+	order := stored.DeviceUsageOrder()
+	if len(order) != maxStoredDeviceSettingsBuckets {
+		t.Fatalf("expected usage order to track %d buckets, got %#v", maxStoredDeviceSettingsBuckets, order)
+	}
+	if order[0] != "device-3" {
+		t.Fatalf("expected device-3 to become the oldest retained bucket, got %#v", order)
+	}
+	if order[len(order)-1] != "device-17" {
+		t.Fatalf("expected newest bucket to be last in usage order, got %#v", order)
 	}
 }

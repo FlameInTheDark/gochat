@@ -779,11 +779,12 @@ func (e *entity) channelToDTO(channel *model.Channel) dto.Channel {
 //	@Summary	Get current user settings (optional version gating)
 //	@Produce	json
 //	@Tags		User
-//	@Param		version	query		int						false	"Client known version"
-//	@Success	200		{object}	UserSettingsResponse	"User settings and version"
-//	@Success	204		{string}	string					"No changes"
-//	@failure	400		{string}	string					"Bad request"
-//	@failure	500		{string}	string					"Internal server error"
+//	@Param		version			query		int						false	"Client known version"
+//	@Param		X-Device-Key	header		string					false	"Stable per-device key for device-scoped media settings"
+//	@Success	200				{object}	UserSettingsResponse	"User settings and version"
+//	@Success	204				{string}	string					"No changes"
+//	@failure	400				{string}	string					"Bad request"
+//	@failure	500				{string}	string					"Internal server error"
 //	@Router		/user/me/settings [get]
 func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	log := observability.LoggerFromFiber(c, e.log)
@@ -791,6 +792,10 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	user, err := helper.GetUser(c)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+	deviceKey, err := getUserSettingsDeviceKey(c)
+	if err != nil {
+		return err
 	}
 
 	// Parse optional version filter; default 0
@@ -960,6 +965,7 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUnmarshalUserSettings)
 	}
+	applyDeviceScopedSettings(settings.Settings, deviceKey)
 	settings.ContentHosts = append([]string(nil), e.contentHosts...)
 	settings.ThreadsLastMessages = threadsLastMessages
 	settings.JoinedThreads = joinedThreads
@@ -974,10 +980,11 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 //	@Accept		json
 //	@Produce	json
 //	@Tags		User
-//	@Param		request	body		model.UserSettingsData	true	"User settings"
-//	@Success	200		{string}	string					"ok"
-//	@failure	400		{string}	string					"Bad request"
-//	@failure	500		{string}	string					"Internal server error"
+//	@Param		X-Device-Key	header		string					false	"Stable per-device key for device-scoped media settings"
+//	@Param		request			body		model.UserSettingsData	true	"User settings"
+//	@Success	200				{string}	string					"ok"
+//	@failure	400				{string}	string					"Bad request"
+//	@failure	500				{string}	string					"Internal server error"
 //	@Router		/user/me/settings [post]
 func (e *entity) SetUserSettings(c *fiber.Ctx) error {
 	reqLog := observability.LoggerFromFiber(c, e.log)
@@ -996,6 +1003,15 @@ func (e *entity) SetUserSettings(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
+	deviceKey, err := getUserSettingsDeviceKey(c)
+	if err != nil {
+		return err
+	}
+	current, err := e.loadStoredUserSettings(c.UserContext(), user.Id)
+	if err != nil {
+		return helper.HttpDbError(err, ErrUnableToGetUserSettings)
+	}
+	req = mergeStoredDeviceSettings(current, req, deviceKey)
 
 	if err := e.uset.SetUserSettings(c.UserContext(), user.Id, req); err != nil {
 		return helper.HttpDbError(err, ErrUnableToSetUserSettings)

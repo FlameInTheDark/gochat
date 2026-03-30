@@ -1,0 +1,9 @@
+server_address: ":4318"
+api_log: false
+log_level: "info"
+jwt_secret: "supersecret-webhook-jwt"
+upstream_endpoint: "http://otel-collector:4318"
+body_limit_bytes: 10485760
+request_timeout_ms: 5000
+rate_limit_per_second: 20
+rate_limit_burst: 40

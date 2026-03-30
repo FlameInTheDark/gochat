@@ -4,6 +4,14 @@ stun_servers:
   - "stun:stun.l.google.com:19302"
 region: "eu-central"
 public_base_url: "https://sfu-eu.example.com"
+# Optional: advertise the router/public IP in ICE candidates when the SFU
+# runs behind 1:1 NAT or static UDP port forwarding.
+ice_public_ip: ""
+
+# Optional: restrict WebRTC UDP sockets to a fixed port range.
+# Leave both as 0 to preserve the current OS-managed ephemeral port behavior.
+udp_port_range_start: 0
+udp_port_range_end: 0
 
 # Webhook discovery
 webhook_url: "http://webhook:3200/api/v1/webhook/sfu/heartbeat"
@@ -11,6 +19,23 @@ webhook_url: "http://webhook:3200/api/v1/webhook/sfu/heartbeat"
 webhook_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 # Should match service_id from the token
 service_id: ""
+
+# External telemetry gateway. Reuse the same JWT as webhook_token.
+telemetry_otlp_endpoint: "https://telemetry.example.com"
+telemetry_otlp_headers: "Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+telemetry_otlp_protocol: "http/protobuf"
+telemetry_metric_export_interval: "60000"
+
+# Heartbeat interval for the v2 SFU signaling protocol hello payload.
+# Clients should heartbeat at this cadence over op=2 once connected to /signal?v=2.
+signal_heartbeat_interval_ms: 15000
+
+# DAVE / E2EE support for /signal?v=2
+dave_enabled: true
+dave_required_default: false
+dave_transition_timeout_ms: 2000
+dave_old_ratchet_window_ms: 10000
+dave_allow_av1: false
 
 # Optional: cap maximum audio bitrate (per sender) via SDP constraints
 # 0 disables capping. Common values: 64, 96, 128 (in kbps)

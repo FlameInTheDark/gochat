@@ -2244,11 +2244,18 @@ type ApiUserMeSettingsGetRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
 	version    *int32
+	xDeviceKey *string
 }
 
 // Client known version
 func (r ApiUserMeSettingsGetRequest) Version(version int32) ApiUserMeSettingsGetRequest {
 	r.version = &version
+	return r
+}
+
+// Stable per-device key for device-scoped media settings
+func (r ApiUserMeSettingsGetRequest) XDeviceKey(xDeviceKey string) ApiUserMeSettingsGetRequest {
+	r.xDeviceKey = &xDeviceKey
 	return r
 }
 
@@ -2310,6 +2317,9 @@ func (a *UserAPIService) UserMeSettingsGetExecute(r ApiUserMeSettingsGetRequest)
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.xDeviceKey != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Device-Key", r.xDeviceKey, "", "")
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
@@ -2373,11 +2383,18 @@ type ApiUserMeSettingsPostRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
 	request    *ModelUserSettingsData
+	xDeviceKey *string
 }
 
 // User settings
 func (r ApiUserMeSettingsPostRequest) Request(request ModelUserSettingsData) ApiUserMeSettingsPostRequest {
 	r.request = &request
+	return r
+}
+
+// Stable per-device key for device-scoped media settings
+func (r ApiUserMeSettingsPostRequest) XDeviceKey(xDeviceKey string) ApiUserMeSettingsPostRequest {
+	r.xDeviceKey = &xDeviceKey
 	return r
 }
 
@@ -2439,6 +2456,9 @@ func (a *UserAPIService) UserMeSettingsPostExecute(r ApiUserMeSettingsPostReques
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.xDeviceKey != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Device-Key", r.xDeviceKey, "", "")
 	}
 	// body params
 	localVarPostBody = r.request

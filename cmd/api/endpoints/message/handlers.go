@@ -34,6 +34,11 @@ import (
 const MaxBatchSize = 50
 
 const (
+	userCacheTTLSeconds          = int64(300)  // 5 min
+	discriminatorCacheTTLSeconds = int64(1800) // 30 min
+)
+
+const (
 	messageNonceTTLSeconds        = 5 * 60
 	messageNonceLockTTLSeconds    = 15
 	messageNonceLookupAttempts    = 20
@@ -1902,6 +1907,90 @@ func (e *entity) sendMentionUserUpdate(ctx context.Context, userID int64, guildI
 	}
 }
 
+func (e *entity) getCachedUser(ctx context.Context, userId int64) (model.User, error) {
+	if e.cache != nil {
+		var u model.User
+		if err := e.cache.GetJSON(ctx, fmt.Sprintf("user:%d", userId), &u); err == nil {
+			return u, nil
+		}
+	}
+	u, err := e.user.GetUserById(ctx, userId)
+	if err != nil {
+		return u, err
+	}
+	if e.cache != nil {
+		_ = e.cache.SetTimedJSON(ctx, fmt.Sprintf("user:%d", userId), u, userCacheTTLSeconds)
+	}
+	return u, nil
+}
+
+func (e *entity) getCachedDiscriminator(ctx context.Context, userId int64) (model.Discriminator, error) {
+	if e.cache != nil {
+		var d model.Discriminator
+		if err := e.cache.GetJSON(ctx, fmt.Sprintf("discriminator:%d", userId), &d); err == nil {
+			return d, nil
+		}
+	}
+	d, err := e.disc.GetDiscriminatorByUserId(ctx, userId)
+	if err != nil {
+		return d, err
+	}
+	if e.cache != nil {
+		_ = e.cache.SetTimedJSON(ctx, fmt.Sprintf("discriminator:%d", userId), d, discriminatorCacheTTLSeconds)
+	}
+	return d, nil
+}
+
+func (e *entity) batchFetchAvatars(ctx context.Context, data *messageRelatedData) {
+	type req struct {
+		userId   int64
+		avatarId int64
+		key      string
+	}
+	var reqs []req
+	for _, u := range data.Users {
+		if u.Avatar != nil {
+			reqs = append(reqs, req{u.Id, *u.Avatar, fmt.Sprintf("avatars:%d:%d", u.Id, *u.Avatar)})
+		}
+	}
+	if len(reqs) == 0 {
+		return
+	}
+	if e.cache == nil {
+		for _, r := range reqs {
+			if ad, err := e.getAvatarDataCached(ctx, r.userId, r.avatarId); err == nil && ad != nil {
+				data.AvData[r.userId] = ad
+			}
+		}
+		return
+	}
+	keys := make([]string, len(reqs))
+	for i, r := range reqs {
+		keys[i] = r.key
+	}
+	results, err := e.cache.MGetBytes(ctx, keys...)
+	if err != nil {
+		for _, r := range reqs {
+			if ad, err := e.getAvatarDataCached(ctx, r.userId, r.avatarId); err == nil && ad != nil {
+				data.AvData[r.userId] = ad
+			}
+		}
+		return
+	}
+	for i, raw := range results {
+		if raw != nil {
+			var ad dto.AvatarData
+			if json.Unmarshal(raw, &ad) == nil && ad.URL != "" {
+				data.AvData[reqs[i].userId] = &ad
+				continue
+			}
+		}
+		if ad, err := e.getAvatarDataCached(ctx, reqs[i].userId, reqs[i].avatarId); err == nil && ad != nil {
+			data.AvData[reqs[i].userId] = ad
+		}
+	}
+}
+
 const avatarCacheTTLSeconds = 3600 // 1 hour
 
 func (e *entity) getAvatarDataCached(ctx context.Context, userId, avatarId int64) (*dto.AvatarData, error) {
@@ -2285,12 +2374,8 @@ func (e *entity) fetchMessageRelatedData(c *fiber.Ctx, messages []model.Message,
 	for i := range usersRes.users {
 		u := usersRes.users[i]
 		data.Users[u.Id] = &u
-		if u.Avatar != nil {
-			if ad, err := e.getAvatarDataCached(c.UserContext(), u.Id, *u.Avatar); err == nil && ad != nil {
-				data.AvData[u.Id] = ad
-			}
-		}
 	}
+	e.batchFetchAvatars(c.UserContext(), data)
 
 	if membersRes.members != nil {
 		for i := range membersRes.members {
@@ -2626,15 +2711,15 @@ func (e *entity) fetchUserDataForUpdate(c *fiber.Ctx, userId int64, guildId *int
 	memberCh := make(chan memberResult, 1)
 	ctx := c.UserContext()
 
-	// Fetch user data
+	// Fetch user data (cache-backed)
 	go func() {
-		user, err := e.user.GetUserById(ctx, userId)
+		user, err := e.getCachedUser(ctx, userId)
 		userCh <- userResult{&user, err}
 	}()
 
-	// Fetch discriminator
+	// Fetch discriminator (cache-backed)
 	go func() {
-		disc, err := e.disc.GetDiscriminatorByUserId(ctx, userId)
+		disc, err := e.getCachedDiscriminator(ctx, userId)
 		discCh <- discResult{&disc, err}
 	}()
 

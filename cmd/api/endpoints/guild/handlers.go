@@ -75,6 +75,99 @@ func (e *entity) parseRoleID(c *fiber.Ctx) (int64, error) {
 	return roleId, nil
 }
 
+const (
+	guildCacheTTL     = int64(300) // 5 min
+	memberCacheTTL    = int64(120) // 2 min
+	userRolesCacheTTL = int64(120) // 2 min
+)
+
+func (e *entity) cachedGuild(ctx context.Context, guildId int64) (model.Guild, error) {
+	if e.cache != nil {
+		var g model.Guild
+		if err := e.cache.GetJSON(ctx, fmt.Sprintf("guild:%d", guildId), &g); err == nil {
+			return g, nil
+		}
+	}
+	g, err := e.g.GetGuildById(ctx, guildId)
+	if err != nil {
+		return g, err
+	}
+	if e.cache != nil {
+		_ = e.cache.SetTimedJSON(ctx, fmt.Sprintf("guild:%d", guildId), g, guildCacheTTL)
+	}
+	return g, nil
+}
+
+func (e *entity) cachedMember(ctx context.Context, userId, guildId int64) (model.Member, error) {
+	if e.cache != nil {
+		var m model.Member
+		if err := e.cache.GetJSON(ctx, fmt.Sprintf("member:%d:%d", userId, guildId), &m); err == nil {
+			return m, nil
+		}
+	}
+	m, err := e.memb.GetMember(ctx, userId, guildId)
+	if err != nil {
+		return m, err
+	}
+	if e.cache != nil {
+		_ = e.cache.SetTimedJSON(ctx, fmt.Sprintf("member:%d:%d", userId, guildId), m, memberCacheTTL)
+	}
+	return m, nil
+}
+
+func (e *entity) deleteMemberCache(ctx context.Context, userId, guildId int64) {
+	if e.cache != nil {
+		_ = e.cache.Delete(ctx, fmt.Sprintf("member:%d:%d", userId, guildId))
+	}
+}
+
+func (e *entity) cachedUserRoles(ctx context.Context, guildId, userId int64) (map[int64]*model.Role, error) {
+	type userRolesCache struct {
+		Roles []model.Role `json:"roles"`
+	}
+	if e.cache != nil {
+		var cached userRolesCache
+		if err := e.cache.GetJSON(ctx, fmt.Sprintf("userroles:%d:%d", userId, guildId), &cached); err == nil {
+			roleMap := make(map[int64]*model.Role, len(cached.Roles))
+			for i := range cached.Roles {
+				roleMap[cached.Roles[i].Id] = &cached.Roles[i]
+			}
+			return roleMap, nil
+		}
+	}
+	userRoles, err := e.ur.GetUserRoles(ctx, guildId, userId)
+	if err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	var roleIds []int64
+	for _, ur := range userRoles {
+		roleIds = append(roleIds, ur.RoleId)
+	}
+	roles, err := e.role.GetRolesBulk(ctx, guildId, roleIds)
+	if err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	roleMap := make(map[int64]*model.Role, len(roles))
+	for i := range roles {
+		roleMap[roles[i].Id] = &roles[i]
+	}
+	if e.cache != nil && len(roles) > 0 {
+		rolesSlice := make([]model.Role, 0, len(roleMap))
+		for _, r := range roleMap {
+			rolesSlice = append(rolesSlice, *r)
+		}
+		_ = e.cache.SetTimedJSON(ctx, fmt.Sprintf("userroles:%d:%d", userId, guildId),
+			userRolesCache{Roles: rolesSlice}, userRolesCacheTTL)
+	}
+	return roleMap, nil
+}
+
+func (e *entity) deleteUserRolesCache(ctx context.Context, userId, guildId int64) {
+	if e.cache != nil {
+		_ = e.cache.Delete(ctx, fmt.Sprintf("userroles:%d:%d", userId, guildId))
+	}
+}
+
 // validateGuildAccess validates user access to guild and returns guild context
 func (e *entity) validateGuildAccess(c *fiber.Ctx, guildId int64) (*guildContext, error) {
 	user, err := helper.GetUser(c)
@@ -82,7 +175,7 @@ func (e *entity) validateGuildAccess(c *fiber.Ctx, guildId int64) (*guildContext
 		return nil, fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	member, err := e.memb.GetMember(c.UserContext(), user.Id, guildId)
+	member, err := e.cachedMember(c.UserContext(), user.Id, guildId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fiber.NewError(fiber.StatusForbidden, ErrNotAMember)
@@ -90,7 +183,7 @@ func (e *entity) validateGuildAccess(c *fiber.Ctx, guildId int64) (*guildContext
 		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
 	}
 
-	guild, err := e.g.GetGuildById(c.UserContext(), member.GuildId)
+	guild, err := e.cachedGuild(c.UserContext(), member.GuildId)
 	if err != nil {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -102,29 +195,9 @@ func (e *entity) validateGuildAccess(c *fiber.Ctx, guildId int64) (*guildContext
 	}, nil
 }
 
-// getUserRoles fetches user roles for a guild
+// getUserRoles fetches user roles for a guild (cache-backed)
 func (e *entity) getUserRoles(c *fiber.Ctx, guildId, userId int64) (map[int64]*model.Role, error) {
-	userRoles, err := e.ur.GetUserRoles(c.UserContext(), guildId, userId)
-	if err != nil {
-		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-
-	var roleIds []int64
-	for _, ur := range userRoles {
-		roleIds = append(roleIds, ur.RoleId)
-	}
-
-	roles, err := e.role.GetRolesBulk(c.UserContext(), guildId, roleIds)
-	if err != nil {
-		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-
-	roleMap := make(map[int64]*model.Role)
-	for i, role := range roles {
-		roleMap[role.Id] = &roles[i]
-	}
-
-	return roleMap, nil
+	return e.cachedUserRoles(c.UserContext(), guildId, userId)
 }
 
 func buildThreadMemberDTO(member *model.ThreadMember) *dto.ThreadMember {

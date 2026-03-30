@@ -20,9 +20,12 @@ var _ MappedNullable = &SfuChannelUserJoin{}
 
 // SfuChannelUserJoin struct for SfuChannelUserJoin
 type SfuChannelUserJoin struct {
-	ChannelId *int32 `json:"channel_id,omitempty"`
-	GuildId   *int32 `json:"guild_id,omitempty"`
-	UserId    *int32 `json:"user_id,omitempty"`
+	ChannelId *int32  `json:"channel_id,omitempty"`
+	GuildId   *int32  `json:"guild_id,omitempty"`
+	Region    *string `json:"region,omitempty"`
+	RouteId   *string `json:"route_id,omitempty"`
+	RouteUrl  *string `json:"route_url,omitempty"`
+	UserId    *int32  `json:"user_id,omitempty"`
 }
 
 // NewSfuChannelUserJoin instantiates a new SfuChannelUserJoin object
@@ -106,6 +109,102 @@ func (o *SfuChannelUserJoin) SetGuildId(v int32) {
 	o.GuildId = &v
 }
 
+// GetRegion returns the Region field value if set, zero value otherwise.
+func (o *SfuChannelUserJoin) GetRegion() string {
+	if o == nil || IsNil(o.Region) {
+		var ret string
+		return ret
+	}
+	return *o.Region
+}
+
+// GetRegionOk returns a tuple with the Region field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *SfuChannelUserJoin) GetRegionOk() (*string, bool) {
+	if o == nil || IsNil(o.Region) {
+		return nil, false
+	}
+	return o.Region, true
+}
+
+// HasRegion returns a boolean if a field has been set.
+func (o *SfuChannelUserJoin) HasRegion() bool {
+	if o != nil && !IsNil(o.Region) {
+		return true
+	}
+
+	return false
+}
+
+// SetRegion gets a reference to the given string and assigns it to the Region field.
+func (o *SfuChannelUserJoin) SetRegion(v string) {
+	o.Region = &v
+}
+
+// GetRouteId returns the RouteId field value if set, zero value otherwise.
+func (o *SfuChannelUserJoin) GetRouteId() string {
+	if o == nil || IsNil(o.RouteId) {
+		var ret string
+		return ret
+	}
+	return *o.RouteId
+}
+
+// GetRouteIdOk returns a tuple with the RouteId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *SfuChannelUserJoin) GetRouteIdOk() (*string, bool) {
+	if o == nil || IsNil(o.RouteId) {
+		return nil, false
+	}
+	return o.RouteId, true
+}
+
+// HasRouteId returns a boolean if a field has been set.
+func (o *SfuChannelUserJoin) HasRouteId() bool {
+	if o != nil && !IsNil(o.RouteId) {
+		return true
+	}
+
+	return false
+}
+
+// SetRouteId gets a reference to the given string and assigns it to the RouteId field.
+func (o *SfuChannelUserJoin) SetRouteId(v string) {
+	o.RouteId = &v
+}
+
+// GetRouteUrl returns the RouteUrl field value if set, zero value otherwise.
+func (o *SfuChannelUserJoin) GetRouteUrl() string {
+	if o == nil || IsNil(o.RouteUrl) {
+		var ret string
+		return ret
+	}
+	return *o.RouteUrl
+}
+
+// GetRouteUrlOk returns a tuple with the RouteUrl field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *SfuChannelUserJoin) GetRouteUrlOk() (*string, bool) {
+	if o == nil || IsNil(o.RouteUrl) {
+		return nil, false
+	}
+	return o.RouteUrl, true
+}
+
+// HasRouteUrl returns a boolean if a field has been set.
+func (o *SfuChannelUserJoin) HasRouteUrl() bool {
+	if o != nil && !IsNil(o.RouteUrl) {
+		return true
+	}
+
+	return false
+}
+
+// SetRouteUrl gets a reference to the given string and assigns it to the RouteUrl field.
+func (o *SfuChannelUserJoin) SetRouteUrl(v string) {
+	o.RouteUrl = &v
+}
+
 // GetUserId returns the UserId field value if set, zero value otherwise.
 func (o *SfuChannelUserJoin) GetUserId() int32 {
 	if o == nil || IsNil(o.UserId) {
@@ -153,6 +252,15 @@ func (o SfuChannelUserJoin) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.GuildId) {
 		toSerialize["guild_id"] = o.GuildId
+	}
+	if !IsNil(o.Region) {
+		toSerialize["region"] = o.Region
+	}
+	if !IsNil(o.RouteId) {
+		toSerialize["route_id"] = o.RouteId
+	}
+	if !IsNil(o.RouteUrl) {
+		toSerialize["route_url"] = o.RouteUrl
 	}
 	if !IsNil(o.UserId) {
 		toSerialize["user_id"] = o.UserId

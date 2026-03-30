@@ -2,6 +2,7 @@ x-otel-app-env: &otel-app-env
   GOCHAT_DEPLOYMENT_ENV: docker-compose
   OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
   OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  OTEL_METRIC_EXPORT_INTERVAL: "60000"
 
 x-go-service-logging: &go-service-logging
   driver: fluentd
@@ -25,6 +26,7 @@ services:
       - ./auth_config.yaml:/dist/config.yaml
       - ./email_notify.tmpl:/dist/email_notify.tmpl
       - ./password_reset.tmpl:/dist/password_reset.tmpl
+      - ./mfa_recovery.tmpl:/dist/mfa_recovery.tmpl
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.auth.rule=PathPrefix(`/api/v1/auth`)"
@@ -35,6 +37,8 @@ services:
       keydb:
         condition: service_started
       citus-master:
+        condition: service_started
+      nats:
         condition: service_started
     networks:
       - traefik
@@ -274,6 +278,20 @@ services:
     ports:
       - "5080:5080"
 
+  telemetry-gateway:
+    image: gochat/telemetry-gateway
+    build:
+      dockerfile: telemetry-gateway.Dockerfile
+    restart: always
+    environment: *otel-app-env
+    depends_on:
+      otel-collector:
+        condition: service_started
+    volumes:
+      - ./telemetry_gateway_config.yaml:/dist/config.yaml
+    ports:
+      - "4318:4318"
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     restart: always
@@ -293,8 +311,6 @@ services:
     ports:
       - "13133:13133"
       - "24224:24224"
-      - "4317:4317"
-      - "4318:4318"
 
   citus-master:
     container_name: "${COMPOSE_PROJECT_NAME:-citus}_master"

@@ -19,6 +19,8 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	authenticationrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/authentication"
+	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
@@ -60,7 +62,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	shut.Up(dbcon)
 
 	pg := pgdb.NewDB(logger)
-	err = pg.Connect(cfg.PGDSN, cfg.PGRetries)
+	err = pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{MaxRetries: cfg.PGRetries})
 	if err != nil {
 		logger.Error("unable to connect to pg", slog.String("error", err.Error()))
 		os.Exit(1)
@@ -70,8 +72,6 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	shut.UpFunc(cancelPostgresProbe)
 	go pg.StartProbeLoop(postgresProbeCtx, 30*time.Second)
 
-	jwtauth := auth.New(cfg.AuthSecret, "gochat", "api")
-
 	// Cache (Redis)
 	kv, err := kvs.New(cfg.CacheAddr)
 	if err != nil {
@@ -79,6 +79,9 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 		os.Exit(1)
 	}
 	shut.Up(kv)
+
+	sessionChecker := helper.NewSessionVersionChecker(authenticationrepo.New(pg.Conn()), kv)
+	jwtauth := auth.New(cfg.AuthSecret, "gochat", "api", sessionChecker)
 
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
 	app.Use(observability.RequestContextMiddleware())

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -22,7 +23,8 @@ import (
 )
 
 const (
-	RequestIDHeader = "X-Request-ID"
+	RequestIDHeader          = "X-Request-ID"
+	defaultMetricExportEvery = 60 * time.Second
 )
 
 var (
@@ -40,7 +42,7 @@ type Runtime struct {
 
 	traceProvider *sdktrace.TracerProvider
 	meterProvider *sdkmetric.MeterProvider
-	logExporter   *openObserveLogExporter
+	logExporter   interface{ Close() error }
 }
 
 type metricViewSpec struct {
@@ -91,7 +93,10 @@ func Init(serviceName string, attrs ...attribute.KeyValue) (*Runtime, error) {
 			} else {
 				tp := sdktrace.NewTracerProvider(
 					sdktrace.WithResource(res),
-					sdktrace.WithBatcher(traceExporter),
+					sdktrace.WithSpanProcessor(newFilteringSpanProcessor(
+						sdktrace.NewBatchSpanProcessor(traceExporter),
+						ParseLogLevel(os.Getenv("LOG_LEVEL")),
+					)),
 				)
 				otel.SetTracerProvider(tp)
 				rt.traceProvider = tp
@@ -101,9 +106,10 @@ func Init(serviceName string, attrs ...attribute.KeyValue) (*Runtime, error) {
 			if metricErr != nil {
 				logger.Warn("unable to initialize OTLP metric exporter", slog.String("error", metricErr.Error()))
 			} else {
+				metricInterval := metricExportInterval()
 				mp := sdkmetric.NewMeterProvider(
 					sdkmetric.WithResource(res),
-					sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter, sdkmetric.WithInterval(15*time.Second))),
+					sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter, sdkmetric.WithInterval(metricInterval))),
 					sdkmetric.WithView(metricViews()...),
 				)
 				otel.SetMeterProvider(mp)
@@ -116,7 +122,29 @@ func Init(serviceName string, attrs ...attribute.KeyValue) (*Runtime, error) {
 		}
 	}
 
-	if cfg, enabled, err := loadOpenObserveLogExporterConfigFromEnv(); err != nil {
+	if cfg, enabled, err := loadOTLPLogExporterConfigFromEnv(rt.serviceName, resourceAttrs); err != nil {
+		errs = append(errs, err)
+		logger.Warn("unable to initialize OTLP log exporter", slog.String("error", err.Error()))
+	} else if enabled {
+		exporter, exportErr := newOTLPLogExporter(rt.serviceName, cfg)
+		if exportErr != nil {
+			errs = append(errs, exportErr)
+			logger.Warn("unable to initialize OTLP log exporter", slog.String("error", exportErr.Error()))
+		} else {
+			rt.logExporter = exporter
+			handlers := []slog.Handler{
+				stdoutHandler,
+				newOTLPLogHandler(exporter),
+			}
+			rt.logger = slog.New(&contextualHandler{
+				next:               &fanoutHandler{handlers: handlers},
+				serviceName:        serviceName,
+				deploymentEnvValue: deploymentEnv(),
+				fixedAttrs:         logAttrs,
+			})
+			setDefaultLogger(rt.logger)
+		}
+	} else if cfg, enabled, err := loadOpenObserveLogExporterConfigFromEnv(); err != nil {
 		errs = append(errs, err)
 		logger.Warn("unable to initialize OpenObserve log exporter", slog.String("error", err.Error()))
 	} else if enabled {
@@ -218,6 +246,29 @@ func shouldEnableOTLP() bool {
 		}
 	}
 	return false
+}
+
+func metricExportInterval() time.Duration {
+	raw := strings.TrimSpace(os.Getenv("OTEL_METRIC_EXPORT_INTERVAL"))
+	if raw == "" {
+		return defaultMetricExportEvery
+	}
+
+	if millis, err := strconv.ParseInt(raw, 10, 64); err == nil {
+		if millis <= 0 {
+			return defaultMetricExportEvery
+		}
+		return time.Duration(millis) * time.Millisecond
+	}
+
+	if parsed, err := time.ParseDuration(raw); err == nil {
+		if parsed <= 0 {
+			return defaultMetricExportEvery
+		}
+		return parsed
+	}
+
+	return defaultMetricExportEvery
 }
 
 func normalizeScope(serviceName, scope string) string {

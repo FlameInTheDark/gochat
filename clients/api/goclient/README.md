@@ -79,8 +79,18 @@ All URIs are relative to *http://localhost/api/v1*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*AuthAPI* | [**Auth2faDelete**](docs/AuthAPI.md#auth2fadelete) | **Delete** /auth/2fa | Disable two-factor auth
+*AuthAPI* | [**Auth2faGet**](docs/AuthAPI.md#auth2faget) | **Get** /auth/2fa | Get two-factor auth status
+*AuthAPI* | [**Auth2faRecoveryCodesRegeneratePost**](docs/AuthAPI.md#auth2farecoverycodesregeneratepost) | **Post** /auth/2fa/recovery-codes/regenerate | Regenerate recovery codes
+*AuthAPI* | [**Auth2faTotpConfirmPost**](docs/AuthAPI.md#auth2fatotpconfirmpost) | **Post** /auth/2fa/totp/confirm | Confirm TOTP setup
+*AuthAPI* | [**Auth2faTotpSetupPost**](docs/AuthAPI.md#auth2fatotpsetuppost) | **Post** /auth/2fa/totp/setup | Start TOTP setup
 *AuthAPI* | [**AuthConfirmationPost**](docs/AuthAPI.md#authconfirmationpost) | **Post** /auth/confirmation | Confirmation
+*AuthAPI* | [**AuthLogin2faEmailStartPost**](docs/AuthAPI.md#authlogin2faemailstartpost) | **Post** /auth/login/2fa/email/start | Send email recovery code for login
+*AuthAPI* | [**AuthLogin2faEmailVerifyPost**](docs/AuthAPI.md#authlogin2faemailverifypost) | **Post** /auth/login/2fa/email/verify | Complete login with email recovery code
+*AuthAPI* | [**AuthLogin2faRecoveryCodePost**](docs/AuthAPI.md#authlogin2farecoverycodepost) | **Post** /auth/login/2fa/recovery-code | Complete login with recovery code
+*AuthAPI* | [**AuthLogin2faTotpPost**](docs/AuthAPI.md#authlogin2fatotppost) | **Post** /auth/login/2fa/totp | Complete login with TOTP
 *AuthAPI* | [**AuthLoginPost**](docs/AuthAPI.md#authloginpost) | **Post** /auth/login | Authentication
+*AuthAPI* | [**AuthPasswordChangePost**](docs/AuthAPI.md#authpasswordchangepost) | **Post** /auth/password/change | Change password
 *AuthAPI* | [**AuthRecoveryPost**](docs/AuthAPI.md#authrecoverypost) | **Post** /auth/recovery | Password Recovery
 *AuthAPI* | [**AuthRefreshGet**](docs/AuthAPI.md#authrefreshget) | **Get** /auth/refresh | Refresh authentication token
 *AuthAPI* | [**AuthRegistrationPost**](docs/AuthAPI.md#authregistrationpost) | **Post** /auth/registration | Registration
@@ -186,12 +196,25 @@ Class | Method | HTTP request | Description
 
  - [AttachmentsFinalizeRequest](docs/AttachmentsFinalizeRequest.md)
  - [AuthConfirmationRequest](docs/AuthConfirmationRequest.md)
+ - [AuthDisableTwoFactorRequest](docs/AuthDisableTwoFactorRequest.md)
+ - [AuthLoginChallengeResponse](docs/AuthLoginChallengeResponse.md)
+ - [AuthLoginEmailStartRequest](docs/AuthLoginEmailStartRequest.md)
+ - [AuthLoginEmailVerifyRequest](docs/AuthLoginEmailVerifyRequest.md)
+ - [AuthLoginRecoveryCodeRequest](docs/AuthLoginRecoveryCodeRequest.md)
  - [AuthLoginRequest](docs/AuthLoginRequest.md)
  - [AuthLoginResponse](docs/AuthLoginResponse.md)
+ - [AuthLoginTOTPRequest](docs/AuthLoginTOTPRequest.md)
+ - [AuthPasswordChangeRequest](docs/AuthPasswordChangeRequest.md)
  - [AuthPasswordRecoveryRequest](docs/AuthPasswordRecoveryRequest.md)
  - [AuthPasswordResetRequest](docs/AuthPasswordResetRequest.md)
+ - [AuthRecoveryCodesRegenerateRequest](docs/AuthRecoveryCodesRegenerateRequest.md)
+ - [AuthRecoveryCodesResponse](docs/AuthRecoveryCodesResponse.md)
  - [AuthRefreshTokenResponse](docs/AuthRefreshTokenResponse.md)
  - [AuthRegisterRequest](docs/AuthRegisterRequest.md)
+ - [AuthTOTPConfirmRequest](docs/AuthTOTPConfirmRequest.md)
+ - [AuthTOTPSetupRequest](docs/AuthTOTPSetupRequest.md)
+ - [AuthTOTPSetupResponse](docs/AuthTOTPSetupResponse.md)
+ - [AuthTwoFactorStatusResponse](docs/AuthTwoFactorStatusResponse.md)
  - [DtoAttachment](docs/DtoAttachment.md)
  - [DtoAttachmentUpload](docs/DtoAttachmentUpload.md)
  - [DtoAvatar](docs/DtoAvatar.md)

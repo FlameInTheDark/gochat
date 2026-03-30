@@ -25,6 +25,7 @@ import (
 	reactionrepo "github.com/FlameInTheDark/gochat/internal/database/entities/reaction"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	authenticationrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/authentication"
 	channelrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/embedmq"
 	"github.com/FlameInTheDark/gochat/internal/helper"
@@ -33,6 +34,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/nats"
 	"github.com/FlameInTheDark/gochat/internal/msgsearch"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	reactionutil "github.com/FlameInTheDark/gochat/internal/reaction"
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
@@ -207,6 +209,15 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
+	// In Prefork mode Fiber spawns child processes via os.StartProcess; each child
+	// re-executes main(). Only children should open DB/cache connections.
+	if cfg.Prefork && !fiber.IsChild() {
+		logger.Info("Prefork master process — skipping DB connections")
+		s := server.NewServer(true)
+		shut.Up(s)
+		return &App{server: s, logger: logger, addr: cfg.ServerAddress}, nil
+	}
+
 	logger.Info("Connecting to ScyllaDB")
 	database, err := db.NewCQLCon(cfg.ClusterKeyspace, db.NewDBLogger(logger), cfg.Cluster...)
 	if err != nil {
@@ -216,7 +227,12 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 
 	logger.Info("Connecting to PostgreSQL")
 	pg := pgdb.NewDB(logger)
-	err = pg.Connect(cfg.PGDSN, cfg.PGRetries)
+	err = pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{
+		MaxRetries:   cfg.PGRetries,
+		QueryLog:     cfg.PGQueryLog,
+		MaxOpenConns: cfg.PGMaxOpenConns,
+		MaxIdleConns: cfg.PGMaxIdleConns,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +274,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	shut.Up(emq)
 
 	logger.Info("Connecting to KeyDB")
-	cache, err := kvs.New(cfg.KeyDB)
+	cache, err := kvs.New(cfg.KeyDB, kvs.Options{
+		PoolSize:     cfg.RedisPoolSize,
+		MinIdleConns: cfg.RedisMinIdleConns,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +339,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	idgen.New(0)
 
 	logger.Info("Registering HTTP server")
-	s := server.NewServer()
+	s := server.NewServer(cfg.Prefork)
 	shut.Up(s)
 
 	s.WithCache(cache)
@@ -328,12 +347,14 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		s.WithSwagger("api")
 	}
 	if cfg.ApiLog {
-		s.WithLogger(logger)
+		s.WithLoggerLevel(logger, observability.ParseLogLevel(cfg.LogLevel))
 	}
 	s.WithCORS()
+	s.WithCompression()
 	s.WithMetrics("gochat-api")
 	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
 	s.AuthMiddleware(cfg.AuthSecret)
+	s.Use(helper.RequireSessionVersion(helper.NewSessionVersionChecker(authenticationrepo.New(pg.Conn()), cache)))
 	s.RateLimitPipedMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 	s.Use(helper.RequireTokenType("access", "api"))
 	s.Use(func(c *fiber.Ctx) error {

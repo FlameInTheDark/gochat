@@ -23,12 +23,21 @@ type ChannelUserJoin struct {
 	ChannelId int64  `json:"channel_id"`
 	UserId    int64  `json:"user_id"`
 	GuildId   *int64 `json:"guild_id,omitempty"`
+	RouteID   string `json:"route_id,omitempty"`
+	RouteURL  string `json:"route_url,omitempty"`
+	Region    string `json:"region,omitempty"`
 }
 
 func (r ChannelUserJoin) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.ChannelId, validation.Required),
 		validation.Field(&r.UserId, validation.Required),
+		validation.Field(&r.RouteID,
+			validation.When(r.RouteID != "" || r.RouteURL != "" || r.Region != "", validation.Required),
+		),
+		validation.Field(&r.RouteURL,
+			validation.When(r.RouteID != "" || r.RouteURL != "" || r.Region != "", validation.Required),
+		),
 	)
 }
 
@@ -48,10 +57,19 @@ func (r ChannelUserLeave) Validate() error {
 type ChannelAlive struct {
 	ChannelId int64  `json:"channel_id"`
 	GuildId   *int64 `json:"guild_id,omitempty"`
+	RouteID   string `json:"route_id,omitempty"`
+	RouteURL  string `json:"route_url,omitempty"`
+	Region    string `json:"region,omitempty"`
 }
 
 func (r ChannelAlive) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.ChannelId, validation.Required),
+		validation.Field(&r.RouteID,
+			validation.When(r.RouteID != "" || r.RouteURL != "" || r.Region != "", validation.Required),
+		),
+		validation.Field(&r.RouteURL,
+			validation.When(r.RouteID != "" || r.RouteURL != "" || r.Region != "", validation.Required),
+		),
 	)
 }

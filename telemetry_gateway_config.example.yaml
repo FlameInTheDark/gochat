@@ -1,0 +1,16 @@
+server_address: ":4318"
+api_log: true
+log_level: "info"
+
+# Shared HS256 secret used to validate SFU service JWTs (typ=sfu, id=<service_id>).
+jwt_secret: "supersecret-webhook-jwt"
+
+# Internal collector OTLP HTTP endpoint. Keep the collector private and expose
+# only this telemetry gateway publicly.
+upstream_endpoint: "http://otel-collector:4318"
+
+# Guardrails for external telemetry pushes.
+body_limit_bytes: 10485760
+request_timeout_ms: 5000
+rate_limit_per_second: 20
+rate_limit_burst: 40

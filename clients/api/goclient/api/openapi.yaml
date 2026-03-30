@@ -14,6 +14,229 @@ servers:
 - url: http://localhost/api/v1
 - url: https://localhost/api/v1
 paths:
+  /auth/2fa:
+    delete:
+      description: "Requires the current password and a valid TOTP or recovery code,\
+        \ disables the active factor, deletes recovery codes, rotates the session\
+        \ version, and returns fresh tokens."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.DisableTwoFactorRequest'
+        description: Disable two-factor auth request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth.LoginResponse'
+          description: Two-factor auth disabled and new tokens issued
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Two-factor auth is not enabled
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      security:
+      - BearerAuth: []
+      summary: Disable two-factor auth
+      tags:
+      - Auth
+      x-codegen-request-body-name: request
+    get:
+      description: Returns whether TOTP two-factor auth is enabled for the authenticated
+        user and how many unused recovery codes remain.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth.TwoFactorStatusResponse'
+          description: Current two-factor auth status
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      security:
+      - BearerAuth: []
+      summary: Get two-factor auth status
+      tags:
+      - Auth
+  /auth/2fa/recovery-codes/regenerate:
+    post:
+      description: "Requires the current password and an active second factor verification,\
+        \ replaces all recovery codes, rotates the session version, and returns the\
+        \ new codes once."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.RecoveryCodesRegenerateRequest'
+        description: Recovery code regeneration request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth.RecoveryCodesResponse'
+          description: New recovery codes issued
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Two-factor auth is not enabled
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      security:
+      - BearerAuth: []
+      summary: Regenerate recovery codes
+      tags:
+      - Auth
+      x-codegen-request-body-name: request
+  /auth/2fa/totp/confirm:
+    post:
+      description: "Validates the authenticator code for a pending TOTP setup, enables\
+        \ two-factor auth, rotates the session version, and returns new tokens plus\
+        \ recovery codes."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.TOTPConfirmRequest'
+        description: Pending setup ID and authenticator code
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth.RecoveryCodesResponse'
+          description: TOTP enabled and recovery codes issued
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Two-factor auth is already enabled
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      security:
+      - BearerAuth: []
+      summary: Confirm TOTP setup
+      tags:
+      - Auth
+      x-codegen-request-body-name: request
+  /auth/2fa/totp/setup:
+    post:
+      description: Verifies the current password and returns a short-lived TOTP provisioning
+        payload. The client should render the QR code locally from the returned otpauth
+        URI.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.TOTPSetupRequest'
+        description: Current password for TOTP setup
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth.TOTPSetupResponse'
+          description: TOTP setup payload
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Two-factor auth is already enabled
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      security:
+      - BearerAuth: []
+      summary: Start TOTP setup
+      tags:
+      - Auth
+      x-codegen-request-body-name: request
   /auth/confirmation:
     post:
       requestBody:
@@ -60,9 +283,12 @@ paths:
       x-codegen-request-body-name: request
   /auth/login:
     post:
+      description: "Validates email and password. Returns tokens immediately when\
+        \ two-factor auth is disabled, or a login challenge when a second factor is\
+        \ required."
       requestBody:
         content:
-          '*/*':
+          application/json:
             schema:
               $ref: '#/components/schemas/auth.LoginRequest'
         description: Login data
@@ -73,7 +299,246 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/auth.LoginResponse'
-          description: OK
+          description: Authenticated without second factor
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth.LoginChallengeResponse'
+          description: Second-factor challenge created
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "429":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Too many authentication attempts
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Authentication
+      tags:
+      - Auth
+      x-codegen-request-body-name: request
+  /auth/login/2fa/email/start:
+    post:
+      description: Sends a short-lived email recovery code for a pending login challenge.
+        This flow is intended only for completing login when the authenticator device
+        is unavailable.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.LoginEmailStartRequest'
+        description: Login challenge ID
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Recovery code email sent
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "429":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Too many authentication attempts
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Send email recovery code for login
+      tags:
+      - Auth
+      x-codegen-request-body-name: request
+  /auth/login/2fa/email/verify:
+    post:
+      description: Verifies the short-lived email recovery code for a pending login
+        challenge and returns access and refresh tokens.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.LoginEmailVerifyRequest'
+        description: Login challenge ID and email recovery code
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth.LoginResponse'
+          description: Authenticated after email recovery verification
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "429":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Too many authentication attempts
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Complete login with email recovery code
+      tags:
+      - Auth
+      x-codegen-request-body-name: request
+  /auth/login/2fa/recovery-code:
+    post:
+      description: Consumes a pending login challenge and verifies a recovery code.
+        Recovery codes are single use and are invalid after successful consumption.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.LoginRecoveryCodeRequest'
+        description: Login challenge ID and recovery code
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth.LoginResponse'
+          description: Authenticated after recovery code verification
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "429":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Too many authentication attempts
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Complete login with recovery code
+      tags:
+      - Auth
+      x-codegen-request-body-name: request
+  /auth/login/2fa/totp:
+    post:
+      description: Consumes a pending login challenge and verifies the authenticator
+        code. On success the challenge is removed and access and refresh tokens are
+        returned.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.LoginTOTPRequest'
+        description: Login challenge ID and TOTP code
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth.LoginResponse'
+          description: Authenticated after TOTP verification
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Incorrect request body
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "429":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Too many authentication attempts
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Something bad happened
+      summary: Complete login with TOTP
+      tags:
+      - Auth
+      x-codegen-request-body-name: request
+  /auth/password/change:
+    post:
+      description: "Changes the current password. When two-factor auth is enabled,\
+        \ the request must also include either a TOTP code or a recovery code. Successful\
+        \ changes rotate the session version and return fresh tokens."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth.PasswordChangeRequest'
+        description: Password change request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth.LoginResponse'
+          description: Password changed and new tokens issued
         "400":
           content:
             application/json:
@@ -92,7 +557,9 @@ paths:
               schema:
                 type: string
           description: Something bad happened
-      summary: Authentication
+      security:
+      - BearerAuth: []
+      summary: Change password
       tags:
       - Auth
       x-codegen-request-body-name: request
@@ -4314,6 +4781,11 @@ paths:
         name: version
         schema:
           type: integer
+      - description: Stable per-device key for device-scoped media settings
+        in: header
+        name: X-Device-Key
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -4343,6 +4815,12 @@ paths:
       tags:
       - User
     post:
+      parameters:
+      - description: Stable per-device key for device-scoped media settings
+        in: header
+        name: X-Device-Key
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -4733,6 +5211,65 @@ components:
           example: just_a_randomly_generated_text
           type: string
       type: object
+    auth.DisableTwoFactorRequest:
+      properties:
+        code:
+          example: "123456"
+          type: string
+        code_type:
+          example: totp
+          type: string
+        current_password:
+          example: VerYstR0NgP@66WoR6
+          type: string
+      type: object
+    auth.LoginChallengeResponse:
+      example:
+        expires_at: expires_at
+        challenge_id: e2ec6cc32bcc5b37d2d3b99d6f450c086f8b54c9
+        methods:
+        - totp
+        - recovery_code
+        - email_recovery
+      properties:
+        challenge_id:
+          example: e2ec6cc32bcc5b37d2d3b99d6f450c086f8b54c9
+          type: string
+        expires_at:
+          type: string
+        methods:
+          example:
+          - totp
+          - recovery_code
+          - email_recovery
+          items:
+            type: string
+          type: array
+      type: object
+    auth.LoginEmailStartRequest:
+      properties:
+        challenge_id:
+          example: e2ec6cc32bcc5b37d2d3b99d6f450c086f8b54c9
+          type: string
+      type: object
+    auth.LoginEmailVerifyRequest:
+      properties:
+        challenge_id:
+          example: e2ec6cc32bcc5b37d2d3b99d6f450c086f8b54c9
+          type: string
+        code:
+          example: "123456"
+          type: string
+      type: object
+    auth.LoginRecoveryCodeRequest:
+      properties:
+        challenge_id:
+          example: e2ec6cc32bcc5b37d2d3b99d6f450c086f8b54c9
+          type: string
+        code:
+          example: AB12CD34EF56
+          type: string
+      type: object
     auth.LoginRequest:
       properties:
         email:
@@ -4754,6 +5291,30 @@ components:
           type: string
         token:
           description: Authentication token
+          type: string
+      type: object
+    auth.LoginTOTPRequest:
+      properties:
+        challenge_id:
+          example: e2ec6cc32bcc5b37d2d3b99d6f450c086f8b54c9
+          type: string
+        code:
+          example: "123456"
+          type: string
+      type: object
+    auth.PasswordChangeRequest:
+      properties:
+        code:
+          example: "123456"
+          type: string
+        code_type:
+          example: totp
+          type: string
+        current_password:
+          example: OldP@ssw0rd123
+          type: string
+        new_password:
+          example: NewP@ssw0rd123
           type: string
       type: object
     auth.PasswordRecoveryRequest:
@@ -4778,6 +5339,40 @@ components:
           example: just_a_random_text_from_email
           type: string
       type: object
+    auth.RecoveryCodesRegenerateRequest:
+      properties:
+        code:
+          example: "123456"
+          type: string
+        code_type:
+          example: totp
+          type: string
+        current_password:
+          example: VerYstR0NgP@66WoR6
+          type: string
+      type: object
+    auth.RecoveryCodesResponse:
+      example:
+        refresh_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+        recovery_codes:
+        - AB12CD34EF56
+        - GH78JK90LM12
+        token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+      properties:
+        recovery_codes:
+          example:
+          - AB12CD34EF56
+          - GH78JK90LM12
+          items:
+            type: string
+          type: array
+        refresh_token:
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+          type: string
+        token:
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+          type: string
+      type: object
     auth.RefreshTokenResponse:
       example:
         refresh_token: refresh_token
@@ -4796,6 +5391,64 @@ components:
           description: User Email
           example: user@example.com
           type: string
+      type: object
+    auth.TOTPConfirmRequest:
+      properties:
+        code:
+          example: "123456"
+          type: string
+        setup_id:
+          example: b7af1b0bf9f0d78d913cb1fa746785a86f98b1ad
+          type: string
+      type: object
+    auth.TOTPSetupRequest:
+      properties:
+        current_password:
+          example: VerYstR0NgP@66WoR6
+          type: string
+      type: object
+    auth.TOTPSetupResponse:
+      example:
+        expires_at: expires_at
+        manual_key: JBSWY3DPEHPK3PXP
+        otpauth_uri: otpauth://totp/GoChat:user@example.com?algorithm=SHA1&digits=6&issuer=GoChat&period=30&secret=JBSWY3DPEHPK3PXP
+        account_name: user@example.com
+        issuer: GoChat
+        setup_id: b7af1b0bf9f0d78d913cb1fa746785a86f98b1ad
+      properties:
+        account_name:
+          example: user@example.com
+          type: string
+        expires_at:
+          type: string
+        issuer:
+          example: GoChat
+          type: string
+        manual_key:
+          example: JBSWY3DPEHPK3PXP
+          type: string
+        otpauth_uri:
+          example: otpauth://totp/GoChat:user@example.com?algorithm=SHA1&digits=6&issuer=GoChat&period=30&secret=JBSWY3DPEHPK3PXP
+          type: string
+        setup_id:
+          example: b7af1b0bf9f0d78d913cb1fa746785a86f98b1ad
+          type: string
+      type: object
+    auth.TwoFactorStatusResponse:
+      example:
+        factor_type: totp
+        recovery_codes_remaining: 10
+        enabled: true
+      properties:
+        enabled:
+          example: true
+          type: boolean
+        factor_type:
+          example: totp
+          type: string
+        recovery_codes_remaining:
+          example: 10
+          type: integer
       type: object
     dto.Attachment:
       example:
@@ -6344,29 +6997,6 @@ components:
           user_id: 6
           hidden_after: 9
           channel_id: 9
-        appearance:
-          chat_font_scale: 1.0246457001441578
-          color_scheme: color_scheme
-          chat_spacing: 1.4894159098541704
-        channels:
-        - channel_id: 6
-          notifications:
-            muted_until: muted_until
-            suppress_everyone_mentions: true
-            suppress_here_mentions: true
-            suppress_role_mentions: true
-            suppress_user_mentions: true
-            muted: true
-            notifications: 7
-        - channel_id: 6
-          notifications:
-            muted_until: muted_until
-            suppress_everyone_mentions: true
-            suppress_here_mentions: true
-            suppress_role_mentions: true
-            suppress_user_mentions: true
-            muted: true
-            notifications: 7
         devices:
           audio_input_level: 1.1730742509559433
           auto_gain_control: true
@@ -6402,20 +7032,18 @@ components:
             muted: true
             notifications: 7
         language: language
-        forced_presence: forced_presence
-        guild_folders:
-        - color: 8
-          guilds:
-          - 9
-          - 9
-          name: name
-          position: 6
-        - color: 8
-          guilds:
-          - 9
-          - 9
-          name: name
-          position: 6
+        devices_by_key:
+          key:
+            audio_input_level: 1.1730742509559433
+            auto_gain_control: true
+            audio_output_device: audio_output_device
+            audio_output_level: 5.025004791520295
+            audio_input_threshold: 4.965218492984954
+            echo_cancellation: true
+            video_device: video_device
+            noise_suppression: true
+            denoiser_type: denoiser_type
+            audio_input_device: audio_input_device
         ui_sounds:
           notification: true
           mute: true
@@ -6440,6 +7068,43 @@ components:
             suppress_user_mentions: true
             muted: true
             notifications: 7
+        appearance:
+          chat_font_scale: 1.0246457001441578
+          color_scheme: color_scheme
+          chat_spacing: 1.4894159098541704
+        channels:
+        - channel_id: 6
+          notifications:
+            muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
+            muted: true
+            notifications: 7
+        - channel_id: 6
+          notifications:
+            muted_until: muted_until
+            suppress_everyone_mentions: true
+            suppress_here_mentions: true
+            suppress_role_mentions: true
+            suppress_user_mentions: true
+            muted: true
+            notifications: 7
+        forced_presence: forced_presence
+        guild_folders:
+        - color: 8
+          guilds:
+          - 9
+          - 9
+          name: name
+          position: 6
+        - color: 8
+          guilds:
+          - 9
+          - 9
+          name: name
+          position: 6
         status:
           custom_status_text: custom_status_text
           status: status
@@ -6452,6 +7117,10 @@ components:
           type: array
         devices:
           $ref: '#/components/schemas/model.Devices'
+        devices_by_key:
+          additionalProperties:
+            $ref: '#/components/schemas/model.Devices'
+          type: object
         dm_channels:
           items:
             $ref: '#/components/schemas/model.UserDMChannels'
@@ -6820,6 +7489,12 @@ components:
           type: integer
         guild_id:
           type: integer
+        region:
+          type: string
+        route_id:
+          type: string
+        route_url:
+          type: string
       type: object
     sfu.ChannelUserJoin:
       properties:
@@ -6827,6 +7502,12 @@ components:
           type: integer
         guild_id:
           type: integer
+        region:
+          type: string
+        route_id:
+          type: string
+        route_url:
+          type: string
         user_id:
           type: integer
       type: object
@@ -6928,29 +7609,6 @@ components:
             user_id: 6
             hidden_after: 9
             channel_id: 9
-          appearance:
-            chat_font_scale: 1.0246457001441578
-            color_scheme: color_scheme
-            chat_spacing: 1.4894159098541704
-          channels:
-          - channel_id: 6
-            notifications:
-              muted_until: muted_until
-              suppress_everyone_mentions: true
-              suppress_here_mentions: true
-              suppress_role_mentions: true
-              suppress_user_mentions: true
-              muted: true
-              notifications: 7
-          - channel_id: 6
-            notifications:
-              muted_until: muted_until
-              suppress_everyone_mentions: true
-              suppress_here_mentions: true
-              suppress_role_mentions: true
-              suppress_user_mentions: true
-              muted: true
-              notifications: 7
           devices:
             audio_input_level: 1.1730742509559433
             auto_gain_control: true
@@ -6986,20 +7644,18 @@ components:
               muted: true
               notifications: 7
           language: language
-          forced_presence: forced_presence
-          guild_folders:
-          - color: 8
-            guilds:
-            - 9
-            - 9
-            name: name
-            position: 6
-          - color: 8
-            guilds:
-            - 9
-            - 9
-            name: name
-            position: 6
+          devices_by_key:
+            key:
+              audio_input_level: 1.1730742509559433
+              auto_gain_control: true
+              audio_output_device: audio_output_device
+              audio_output_level: 5.025004791520295
+              audio_input_threshold: 4.965218492984954
+              echo_cancellation: true
+              video_device: video_device
+              noise_suppression: true
+              denoiser_type: denoiser_type
+              audio_input_device: audio_input_device
           ui_sounds:
             notification: true
             mute: true
@@ -7024,6 +7680,43 @@ components:
               suppress_user_mentions: true
               muted: true
               notifications: 7
+          appearance:
+            chat_font_scale: 1.0246457001441578
+            color_scheme: color_scheme
+            chat_spacing: 1.4894159098541704
+          channels:
+          - channel_id: 6
+            notifications:
+              muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
+              muted: true
+              notifications: 7
+          - channel_id: 6
+            notifications:
+              muted_until: muted_until
+              suppress_everyone_mentions: true
+              suppress_here_mentions: true
+              suppress_role_mentions: true
+              suppress_user_mentions: true
+              muted: true
+              notifications: 7
+          forced_presence: forced_presence
+          guild_folders:
+          - color: 8
+            guilds:
+            - 9
+            - 9
+            name: name
+            position: 6
+          - color: 8
+            guilds:
+            - 9
+            - 9
+            name: name
+            position: 6
           status:
             custom_status_text: custom_status_text
             status: status

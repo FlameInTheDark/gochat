@@ -48,7 +48,15 @@ func NewDB(logger *slog.Logger) *DB {
 	return &DB{logger: logger}
 }
 
-func (db *DB) Connect(dsn string, maxRetries int) error {
+// ConnectOptions configures the PostgreSQL connection. Zero values use defaults.
+type ConnectOptions struct {
+	MaxRetries   int  // 0 → unlimited retries
+	QueryLog     bool // emit individual queries at debug level
+	MaxOpenConns int  // default 50  — set lower when running many replicas
+	MaxIdleConns int  // default 25
+}
+
+func (db *DB) Connect(dsn string, opts ConnectOptions) error {
 	connectCtx, finishConnect := observability.StartDependencySpan(context.Background(), "postgres", "connect", "primary")
 	var connectErr error
 	defer func() {
@@ -62,12 +70,21 @@ func (db *DB) Connect(dsn string, maxRetries int) error {
 		return fmt.Errorf("failed to open postgres driver: %w", err)
 	}
 
-	// Wrap with query logger
+	// Wrap with query logger.
+	// WithQueryerLevel/ExecerLevel/PreparerLevel set the level for SUCCESSFUL calls.
+	// WithMinimumLevel is the actual filter — only events >= minLevel reach the logger.
+	//   QueryLog=false (default): suppress successful queries, only surface SQL errors.
+	//   QueryLog=true:            log everything at Debug for troubleshooting.
+	minLevel := sqldblogger.LevelError
+	if opts.QueryLog {
+		minLevel = sqldblogger.LevelDebug
+	}
 	customLogger := &SlogLogger{logger: db.logger}
 	wrapped := sqldblogger.OpenDriver(
 		dsn,
 		base.Driver(),
 		customLogger,
+		sqldblogger.WithMinimumLevel(minLevel),
 		sqldblogger.WithExecerLevel(sqldblogger.LevelDebug),
 		sqldblogger.WithQueryerLevel(sqldblogger.LevelDebug),
 		sqldblogger.WithPreparerLevel(sqldblogger.LevelDebug),
@@ -81,9 +98,18 @@ func (db *DB) Connect(dsn string, maxRetries int) error {
 		return connectErr
 	}
 
-	// Connection pool settings – tuned for Citus fan-out queries
-	db.conn.SetMaxOpenConns(50)
-	db.conn.SetMaxIdleConns(25)
+	// Connection pool settings. Defaults are conservative for multi-replica deployments;
+	// set PG_MAX_OPEN_CONNS = floor(pg_max_connections / replica_count).
+	maxOpen := opts.MaxOpenConns
+	if maxOpen <= 0 {
+		maxOpen = 50
+	}
+	maxIdle := opts.MaxIdleConns
+	if maxIdle <= 0 {
+		maxIdle = 25
+	}
+	db.conn.SetMaxOpenConns(maxOpen)
+	db.conn.SetMaxIdleConns(maxIdle)
 	db.conn.SetConnMaxLifetime(30 * time.Minute)
 	db.conn.SetConnMaxIdleTime(5 * time.Minute)
 
@@ -107,7 +133,7 @@ func (db *DB) Connect(dsn string, maxRetries int) error {
 			slog.Int("attempt", attempt),
 			slog.String("error", err.Error()),
 		)
-		if maxRetries > 0 && attempt >= maxRetries {
+		if opts.MaxRetries > 0 && attempt >= opts.MaxRetries {
 			connectErr = err
 			return fmt.Errorf("failed to connect to DB after %d attempts: %w", attempt, err)
 		}

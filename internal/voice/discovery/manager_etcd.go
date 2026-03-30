@@ -46,7 +46,7 @@ func (m *EtcdManager) Register(ctx context.Context, region string, inst Instance
 func (m *EtcdManager) List(ctx context.Context, region string) ([]Instance, error) {
 	ctx, end := observability.StartDependencySpan(ctx, "etcd", "list", m.prefix, attribute.String("region", region))
 	key := fmt.Sprintf("%s/%s/", m.prefix, region)
-	resp, err := m.cli.Get(ctx, key, clientv3.WithPrefix())
+	resp, err := m.cli.Get(ctx, key, clientv3.WithPrefix(), clientv3.WithSerializable())
 	if err != nil {
 		end(err)
 		return nil, err
@@ -81,7 +81,7 @@ func (m *EtcdManager) Regions(ctx context.Context) ([]string, error) {
 	}
 	ctx, end := observability.StartDependencySpan(ctx, "etcd", "regions", m.prefix)
 	// List all keys under prefix and extract the region segment: <prefix>/<region>/<id>
-	resp, err := m.cli.Get(ctx, m.prefix+"/", clientv3.WithPrefix(), clientv3.WithKeysOnly())
+	resp, err := m.cli.Get(ctx, m.prefix+"/", clientv3.WithPrefix(), clientv3.WithKeysOnly(), clientv3.WithSerializable())
 	if err != nil {
 		end(err)
 		return nil, err

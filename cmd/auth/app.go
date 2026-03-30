@@ -12,6 +12,7 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/auth/endpoints/auth"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	authenticationrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/authentication"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/mailer"
@@ -20,6 +21,8 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/resendp"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/sendpulse"
 	"github.com/FlameInTheDark/gochat/internal/mailer/providers/smtp"
+	"github.com/FlameInTheDark/gochat/internal/mq/nats"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
@@ -37,7 +40,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 
 	pg := pgdb.NewDB(logger)
-	err = pg.Connect(cfg.PGDSN, cfg.PGRetries)
+	err = pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{MaxRetries: cfg.PGRetries})
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +60,9 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := tmpl.AddTemplate("mfa_recovery", cfg.MFARecoveryTemplate); err != nil {
+		return nil, err
+	}
 	var provider mailer.Provider
 	switch cfg.EmailProvider {
 	case "log":
@@ -74,6 +80,17 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 	m := mailer.NewMailer(provider, tmpl, mailer.User{Email: cfg.EmailSource, Name: cfg.EmailName})
 
+	secretBox, err := helper.NewSecretBoxFromBase64(cfg.MFAEncryptionKey)
+	if err != nil {
+		return nil, err
+	}
+
+	mqt, err := nats.New(cfg.NatsConnString)
+	if err != nil {
+		return nil, err
+	}
+	shut.Up(mqt)
+
 	// ID generator setup
 	idgen.New(0)
 
@@ -88,18 +105,32 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		s.WithSwagger("auth")
 	}
 	if cfg.ApiLog {
-		s.WithLogger(logger)
+		s.WithLoggerLevel(logger, observability.ParseLogLevel(cfg.LogLevel))
 	}
 	s.WithCORS()
 	s.WithMetrics("gochat-auth")
 	s.WithIdempotency(cache.Client(), cfg.IdempotencyStorageLifetime)
 	s.RateLimitMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 	s.AuthMiddleware(cfg.AuthSecret)
+	sessionChecker := helper.NewSessionVersionChecker(authenticationrepo.New(pg.Conn()), cache)
+	s.Use(helper.RequireSessionVersion(sessionChecker))
 
 	// HTTP Router
 	s.Register(
 		"/api/v1",
-		auth.New(pg, m, cfg.AuthSecret, logger, helper.RequireTokenType("refresh", "refresh")),
+		auth.New(
+			pg,
+			cache,
+			m,
+			mqt,
+			cfg.AppName,
+			cfg.AuthSecret,
+			secretBox,
+			sessionChecker,
+			logger,
+			helper.RequireTokenType("access", "api"),
+			helper.RequireTokenType("refresh", "refresh"),
+		),
 	)
 
 	return &App{

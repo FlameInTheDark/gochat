@@ -14,7 +14,9 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/FlameInTheDark/gochat/internal/helper"
 )
@@ -76,7 +78,31 @@ func RequestContextMiddleware() fiber.Handler {
 	}
 }
 
+// ParseLogLevel maps a string ("debug","info","warn","error") to slog.Level.
+// Defaults to slog.LevelWarn for unknown values.
+func ParseLogLevel(s string) slog.Level {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "error":
+		return slog.LevelError
+	default: // "warn", "warning", or unrecognised
+		return slog.LevelWarn
+	}
+}
+
+// RequestLogger logs all requests (minLevel = Info).
 func RequestLogger(logger *slog.Logger) fiber.Handler {
+	return RequestLoggerWithLevel(logger, slog.LevelInfo)
+}
+
+// RequestLoggerWithLevel logs requests whose natural log level is >= minLevel:
+//   - 2xx/3xx → Info
+//   - 4xx      → Warn
+//   - 5xx / error → Error
+func RequestLoggerWithLevel(logger *slog.Logger, minLevel slog.Level) fiber.Handler {
 	if logger == nil {
 		logger = Logger()
 	}
@@ -94,22 +120,45 @@ func RequestLogger(logger *slog.Logger) fiber.Handler {
 			return err
 		}
 
-		attrs := []any{
-			slog.String("method", c.Method()),
-			slog.String("route", route),
-			slog.Int("status", responseStatusCode(c, err)),
-			slog.Duration("duration", time.Since(start)),
-			slog.String("ip", c.IP()),
+		status := responseStatusCode(c, err)
+
+		spanErrored := false
+		if sp := trace.SpanFromContext(ctx); sp != nil {
+			if ros, ok := sp.(sdktrace.ReadOnlySpan); ok {
+				spanErrored = ros.Status().Code == codes.Error
+			}
 		}
 
-		if err != nil {
-			attrs = append(attrs, slog.String("error", err.Error()))
-			logger.ErrorContext(ctx, "request failed", attrs...)
+		var level slog.Level
+		var msg string
+		switch {
+		case status >= fiber.StatusInternalServerError || err != nil || spanErrored:
+			level = slog.LevelError
+			msg = "request failed"
+		case status >= fiber.StatusBadRequest:
+			level = slog.LevelWarn
+			msg = "request failed"
+		default:
+			level = slog.LevelInfo
+			msg = "request completed"
+		}
+
+		if level < minLevel {
 			return err
 		}
 
-		logger.InfoContext(ctx, "request completed", attrs...)
-		return nil
+		attrs := []any{
+			slog.String("method", c.Method()),
+			slog.String("route", route),
+			slog.Int("status", status),
+			slog.Duration("duration", time.Since(start)),
+			slog.String("ip", c.IP()),
+		}
+		if err != nil {
+			attrs = append(attrs, slog.String("error", err.Error()))
+		}
+		logger.Log(ctx, level, msg, attrs...)
+		return err
 	}
 }
 

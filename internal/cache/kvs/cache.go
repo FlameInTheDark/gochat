@@ -19,11 +19,51 @@ type Cache struct {
 	c *redis.Client
 }
 
-func New(addr string) (*Cache, error) {
+// Options configures the Redis connection pool. Zero values use defaults.
+type Options struct {
+	PoolSize     int           // default 256
+	MinIdleConns int           // default 32
+	DialTimeout  time.Duration // default 200ms
+	ReadTimeout  time.Duration // default 200ms
+	WriteTimeout time.Duration // default 200ms
+}
+
+func New(addr string, opts ...Options) (*Cache, error) {
 	addr = normalizeAddr(addr)
 
+	opt := Options{
+		PoolSize:     256,
+		MinIdleConns: 32,
+		DialTimeout:  200 * time.Millisecond,
+		ReadTimeout:  200 * time.Millisecond,
+		WriteTimeout: 200 * time.Millisecond,
+	}
+	if len(opts) > 0 {
+		o := opts[0]
+		if o.PoolSize > 0 {
+			opt.PoolSize = o.PoolSize
+		}
+		if o.MinIdleConns > 0 {
+			opt.MinIdleConns = o.MinIdleConns
+		}
+		if o.DialTimeout > 0 {
+			opt.DialTimeout = o.DialTimeout
+		}
+		if o.ReadTimeout > 0 {
+			opt.ReadTimeout = o.ReadTimeout
+		}
+		if o.WriteTimeout > 0 {
+			opt.WriteTimeout = o.WriteTimeout
+		}
+	}
+
 	client := redis.NewClient(&redis.Options{
-		Addr: addr,
+		Addr:         addr,
+		PoolSize:     opt.PoolSize,
+		MinIdleConns: opt.MinIdleConns,
+		DialTimeout:  opt.DialTimeout,
+		ReadTimeout:  opt.ReadTimeout,
+		WriteTimeout: opt.WriteTimeout,
 	})
 
 	ctx, end := observability.StartDependencySpan(context.Background(), "redis", "ping", addr)
