@@ -2,10 +2,14 @@ package kvs
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net"
+	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/cache"
@@ -16,7 +20,50 @@ import (
 )
 
 type Cache struct {
-	c *redis.Client
+	c                *redis.Client
+	pendingRefreshes sync.Map
+}
+
+const releaseRefreshLockScript = `
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+	return redis.call("DEL", KEYS[1])
+end
+return 0
+`
+
+const setTimedJSONNXScript = `
+if redis.call("SET", KEYS[1], ARGV[1], "EX", ARGV[2], "NX") then
+	redis.call("SET", KEYS[2], ARGV[3], "EX", ARGV[2])
+	return 1
+end
+return 0
+`
+
+const (
+	refreshAheadPercent = 5
+	refreshWindowFloor  = time.Second
+)
+
+type timedJSONMetadata struct {
+	OriginalTTLSeconds int64 `json:"original_ttl_seconds"`
+	Proactive          bool  `json:"proactive"`
+}
+
+type jsonLookupState struct {
+	Meta     cache.LookupMeta
+	Raw      []byte
+	Timed    timedJSONMetadata
+	HasTimed bool
+}
+
+type refreshReservationKey struct {
+	ContextPtr uintptr
+	Key        string
+}
+
+type refreshReservation struct {
+	LockKey string
+	Token   string
 }
 
 // Options configures the Redis connection pool. Zero values use defaults.
@@ -123,10 +170,26 @@ func (c *Cache) Get(ctx context.Context, key string) (string, error) {
 	return res.String(), err
 }
 
+func (c *Cache) GetWithTTL(ctx context.Context, key string) (string, cache.LookupMeta, error) {
+	ctx, end := c.operation(ctx, "get_ttl", key)
+	meta, val, err := c.getValueWithTTL(ctx, key)
+	if errors.Is(err, redis.Nil) {
+		finishCacheOperation(ctx, end, err)
+		return "", cache.LookupMeta{}, nil
+	}
+	if err != nil {
+		finishCacheOperation(ctx, end, err)
+		return "", cache.LookupMeta{}, err
+	}
+	finishCacheOperation(ctx, end, nil)
+	return string(val), meta, nil
+}
+
 // Delete key
 func (c *Cache) Delete(ctx context.Context, key string) error {
 	ctx, end := c.operation(ctx, "delete", key)
-	err := c.c.Del(ctx, key).Err()
+	err := c.c.Del(ctx, key, timedJSONMetadataKey(key), timedJSONRefreshLockKey(key)).Err()
+	c.clearPendingRefreshReservation(ctx, key)
 	end(err)
 	return err
 }
@@ -196,30 +259,101 @@ func (c *Cache) SetJSON(ctx context.Context, key string, val interface{}) error 
 		return err
 	}
 	ctx, end := c.operation(ctx, "set_json", key)
-	err = c.c.Set(ctx, key, string(msg), 0).Err()
+	pipe := c.c.Pipeline()
+	pipe.Set(ctx, key, string(msg), 0)
+	pipe.Del(ctx, timedJSONMetadataKey(key), timedJSONRefreshLockKey(key))
+	_, err = pipe.Exec(ctx)
+	c.clearPendingRefreshReservation(ctx, key)
 	end(err)
 	return err
 }
 
-func (c *Cache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64) error {
+func (c *Cache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64, opts ...cache.TimedOption) error {
 	msg, err := json.Marshal(val)
 	if err != nil {
 		return err
 	}
+	meta, err := marshalTimedJSONMetadata(ttl, cache.ResolveTimedOptions(opts...))
+	if err != nil {
+		return err
+	}
 	ctx, end := c.operation(ctx, "set_timed_json", key)
-	err = c.c.Set(ctx, key, string(msg), time.Duration(ttl)*time.Second).Err()
+	dur := time.Duration(ttl) * time.Second
+	pipe := c.c.Pipeline()
+	pipe.Set(ctx, key, string(msg), dur)
+	pipe.Set(ctx, timedJSONMetadataKey(key), meta, dur)
+	_, err = pipe.Exec(ctx)
+	if err == nil {
+		c.releasePendingRefreshReservation(ctx, key)
+	}
 	end(err)
 	return err
 }
 
-func (c *Cache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64) (bool, error) {
+func (c *Cache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64, opts ...cache.TimedOption) (bool, error) {
 	msg, err := json.Marshal(val)
 	if err != nil {
 		return false, err
 	}
+	meta, err := marshalTimedJSONMetadata(ttl, cache.ResolveTimedOptions(opts...))
+	if err != nil {
+		return false, err
+	}
 	ctx, end := c.operation(ctx, "set_timed_json_nx", key)
-	res := c.c.SetArgs(ctx, key, string(msg), redis.SetArgs{
-		TTL:  time.Duration(ttl) * time.Second,
+	res := c.c.Eval(ctx, setTimedJSONNXScript, []string{key, timedJSONMetadataKey(key)}, string(msg), ttl, meta)
+	if err := res.Err(); err != nil {
+		end(err)
+		return false, err
+	}
+	end(nil)
+	if res.Val() == int64(1) {
+		c.releasePendingRefreshReservation(ctx, key)
+		return true, nil
+	}
+	return false, nil
+}
+
+// GetJSON unmarshal json into v
+func (c *Cache) GetJSON(ctx context.Context, key string, v interface{}) error {
+	ctx, end := c.operation(ctx, "get_json", key)
+	state, err := c.getJSONLookupState(ctx, key)
+	if err != nil {
+		finishCacheOperation(ctx, end, err)
+		return err
+	}
+	err = json.Unmarshal(state.Raw, v)
+	if err == nil && c.shouldProactivelyRefresh(state) {
+		if acquired, lockErr := c.acquirePendingRefresh(ctx, key, state.Meta.TTL); lockErr == nil && acquired {
+			err = redis.Nil
+		}
+	}
+	finishCacheOperation(ctx, end, err)
+	return err
+}
+
+func (c *Cache) GetJSONWithTTL(ctx context.Context, key string, v interface{}) (cache.LookupMeta, error) {
+	ctx, end := c.operation(ctx, "get_json_ttl", key)
+	meta, raw, err := c.getValueWithTTL(ctx, key)
+	if errors.Is(err, redis.Nil) {
+		finishCacheOperation(ctx, end, err)
+		return cache.LookupMeta{}, nil
+	}
+	if err != nil {
+		finishCacheOperation(ctx, end, err)
+		return cache.LookupMeta{}, err
+	}
+	err = json.Unmarshal(raw, v)
+	finishCacheOperation(ctx, end, err)
+	return meta, err
+}
+
+func (c *Cache) TryAcquireRefreshLock(ctx context.Context, key, token string, ttl time.Duration) (bool, error) {
+	if ttl <= 0 {
+		return false, nil
+	}
+	ctx, end := c.operation(ctx, "refresh_lock_acquire", key)
+	res := c.c.SetArgs(ctx, key, token, redis.SetArgs{
+		TTL:  ttl,
 		Mode: "NX",
 	})
 	if err := res.Err(); err != nil && err != redis.Nil {
@@ -230,22 +364,10 @@ func (c *Cache) SetTimedJSONNX(ctx context.Context, key string, val interface{},
 	return res.Val() == "OK", nil
 }
 
-// GetJSON unmarshal json into v
-func (c *Cache) GetJSON(ctx context.Context, key string, v interface{}) error {
-	ctx, end := c.operation(ctx, "get_json", key)
-	res := c.c.Get(ctx, key)
-	if res.Err() != nil {
-		err := res.Err()
-		finishCacheOperation(ctx, end, err)
-		return err
-	}
-	b, err := res.Bytes()
-	if err != nil {
-		finishCacheOperation(ctx, end, err)
-		return err
-	}
-	err = json.Unmarshal(b, v)
-	finishCacheOperation(ctx, end, err)
+func (c *Cache) ReleaseRefreshLock(ctx context.Context, key, token string) error {
+	ctx, end := c.operation(ctx, "refresh_lock_release", key)
+	err := c.c.Eval(ctx, releaseRefreshLockScript, []string{key}, token).Err()
+	end(err)
 	return err
 }
 
@@ -340,13 +462,18 @@ func (c *Cache) MGetBytes(ctx context.Context, keys ...string) ([][]byte, error)
 }
 
 // SetTimedJSONBatch pipelines N SETEX commands in a single round-trip.
-func (c *Cache) SetTimedJSONBatch(ctx context.Context, keys []string, vals []interface{}, ttl int64) error {
+func (c *Cache) SetTimedJSONBatch(ctx context.Context, keys []string, vals []interface{}, ttl int64, opts ...cache.TimedOption) error {
 	if len(keys) == 0 {
 		return nil
 	}
 	ctx, end := c.operation(ctx, "setex_batch", keys[0])
 	pipe := c.c.Pipeline()
 	dur := time.Duration(ttl) * time.Second
+	meta, err := marshalTimedJSONMetadata(ttl, cache.ResolveTimedOptions(opts...))
+	if err != nil {
+		end(err)
+		return err
+	}
 	for i, key := range keys {
 		b, err := json.Marshal(vals[i])
 		if err != nil {
@@ -354,8 +481,14 @@ func (c *Cache) SetTimedJSONBatch(ctx context.Context, keys []string, vals []int
 			return err
 		}
 		pipe.Set(ctx, key, string(b), dur)
+		pipe.Set(ctx, timedJSONMetadataKey(key), meta, dur)
 	}
-	_, err := pipe.Exec(ctx)
+	_, err = pipe.Exec(ctx)
+	if err == nil {
+		for _, key := range keys {
+			c.releasePendingRefreshReservation(ctx, key)
+		}
+	}
 	end(err)
 	return err
 }
@@ -441,6 +574,186 @@ func (c *Cache) XAdd(ctx context.Context, stream string, maxLen int64, approx bo
 
 func (c *Cache) operation(ctx context.Context, operation, key string) (context.Context, func(error)) {
 	return observability.StartDependencySpan(ctx, "redis", operation, cacheTarget(key))
+}
+
+func (c *Cache) getValueWithTTL(ctx context.Context, key string) (cache.LookupMeta, []byte, error) {
+	pipe := c.c.Pipeline()
+	getCmd := pipe.Get(ctx, key)
+	ttlCmd := pipe.PTTL(ctx, key)
+	_, execErr := pipe.Exec(ctx)
+	if execErr != nil && !errors.Is(execErr, redis.Nil) {
+		return cache.LookupMeta{}, nil, execErr
+	}
+	if err := getCmd.Err(); err != nil {
+		return cache.LookupMeta{}, nil, err
+	}
+	raw, err := getCmd.Bytes()
+	if err != nil {
+		return cache.LookupMeta{}, nil, err
+	}
+	meta := cache.LookupMeta{Hit: true}
+	ttl := ttlCmd.Val()
+	switch {
+	case ttl > 0:
+		meta.TTL = ttl
+		meta.HasTTL = true
+	case ttl == -1:
+		meta.TTL = 0
+		meta.HasTTL = false
+	default:
+		meta.TTL = 0
+		meta.HasTTL = false
+	}
+	return meta, raw, nil
+}
+
+func (c *Cache) getJSONLookupState(ctx context.Context, key string) (jsonLookupState, error) {
+	pipe := c.c.Pipeline()
+	getCmd := pipe.Get(ctx, key)
+	ttlCmd := pipe.PTTL(ctx, key)
+	metaCmd := pipe.Get(ctx, timedJSONMetadataKey(key))
+	_, execErr := pipe.Exec(ctx)
+	if execErr != nil && !errors.Is(execErr, redis.Nil) {
+		return jsonLookupState{}, execErr
+	}
+	if err := getCmd.Err(); err != nil {
+		return jsonLookupState{}, err
+	}
+	raw, err := getCmd.Bytes()
+	if err != nil {
+		return jsonLookupState{}, err
+	}
+
+	state := jsonLookupState{
+		Meta: cache.LookupMeta{Hit: true},
+		Raw:  raw,
+	}
+	ttl := ttlCmd.Val()
+	switch {
+	case ttl > 0:
+		state.Meta.TTL = ttl
+		state.Meta.HasTTL = true
+	case ttl == -1:
+		state.Meta.TTL = 0
+		state.Meta.HasTTL = false
+	default:
+		state.Meta.TTL = 0
+		state.Meta.HasTTL = false
+	}
+
+	if metaErr := metaCmd.Err(); metaErr == nil {
+		if err := json.Unmarshal([]byte(metaCmd.Val()), &state.Timed); err == nil {
+			state.HasTimed = true
+		}
+	}
+
+	return state, nil
+}
+
+func (c *Cache) shouldProactivelyRefresh(state jsonLookupState) bool {
+	if !state.Meta.Hit || !state.Meta.HasTTL || state.Meta.TTL <= 0 {
+		return false
+	}
+	if !state.HasTimed || !state.Timed.Proactive || state.Timed.OriginalTTLSeconds <= 0 {
+		return false
+	}
+	window := time.Duration(state.Timed.OriginalTTLSeconds) * time.Second * refreshAheadPercent / 100
+	if window < refreshWindowFloor {
+		window = refreshWindowFloor
+	}
+	return state.Meta.TTL <= window
+}
+
+func (c *Cache) acquirePendingRefresh(ctx context.Context, key string, ttl time.Duration) (bool, error) {
+	if ttl <= 0 {
+		return false, nil
+	}
+	token, err := randomRefreshToken()
+	if err != nil {
+		return false, err
+	}
+	lockKey := timedJSONRefreshLockKey(key)
+	acquired, err := c.TryAcquireRefreshLock(ctx, lockKey, token, ttl)
+	if err != nil || !acquired {
+		return acquired, err
+	}
+	if reservationKey, ok := makeRefreshReservationKey(ctx, key); ok {
+		c.pendingRefreshes.Store(reservationKey, refreshReservation{LockKey: lockKey, Token: token})
+		time.AfterFunc(ttl+time.Second, func() {
+			c.pendingRefreshes.Delete(reservationKey)
+		})
+	}
+	return true, nil
+}
+
+func (c *Cache) releasePendingRefreshReservation(ctx context.Context, key string) {
+	reservationKey, ok := makeRefreshReservationKey(ctx, key)
+	if !ok {
+		return
+	}
+	value, found := c.pendingRefreshes.LoadAndDelete(reservationKey)
+	if !found {
+		return
+	}
+	reservation, ok := value.(refreshReservation)
+	if !ok {
+		return
+	}
+	_ = c.ReleaseRefreshLock(ctx, reservation.LockKey, reservation.Token)
+}
+
+func (c *Cache) clearPendingRefreshReservation(ctx context.Context, key string) {
+	reservationKey, ok := makeRefreshReservationKey(ctx, key)
+	if ok {
+		c.pendingRefreshes.Delete(reservationKey)
+	}
+}
+
+func timedJSONMetadataKey(key string) string {
+	return "cache:timed-json:meta:" + key
+}
+
+func timedJSONRefreshLockKey(key string) string {
+	return "cache:timed-json:refresh-lock:" + key
+}
+
+func marshalTimedJSONMetadata(ttl int64, opts cache.TimedOptions) (string, error) {
+	meta := timedJSONMetadata{
+		OriginalTTLSeconds: ttl,
+		Proactive:          opts.Proactive,
+	}
+	raw, err := json.Marshal(meta)
+	if err != nil {
+		return "", err
+	}
+	return string(raw), nil
+}
+
+func makeRefreshReservationKey(ctx context.Context, key string) (refreshReservationKey, bool) {
+	if ctx == nil || key == "" {
+		return refreshReservationKey{}, false
+	}
+	value := reflect.ValueOf(ctx)
+	if !value.IsValid() {
+		return refreshReservationKey{}, false
+	}
+	switch value.Kind() {
+	case reflect.Pointer, reflect.UnsafePointer:
+		if value.IsNil() {
+			return refreshReservationKey{}, false
+		}
+		return refreshReservationKey{ContextPtr: value.Pointer(), Key: key}, true
+	default:
+		return refreshReservationKey{}, false
+	}
+}
+
+func randomRefreshToken() (string, error) {
+	buf := make([]byte, 16)
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(buf), nil
 }
 
 func cacheTarget(key string) string {

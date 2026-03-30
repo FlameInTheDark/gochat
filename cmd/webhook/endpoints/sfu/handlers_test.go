@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"testing"
+	"time"
 
 	cachepkg "github.com/FlameInTheDark/gochat/internal/cache"
 )
@@ -26,6 +27,13 @@ func (f *fakeRouteCache) Get(ctx context.Context, key string) (string, error) {
 		return "", errors.New("cache miss")
 	}
 	return string(raw), nil
+}
+func (f *fakeRouteCache) GetWithTTL(ctx context.Context, key string) (string, cachepkg.LookupMeta, error) {
+	raw, ok := f.jsonValues[key]
+	if !ok {
+		return "", cachepkg.LookupMeta{}, nil
+	}
+	return string(raw), cachepkg.LookupMeta{Hit: true, TTL: time.Hour, HasTTL: true}, nil
 }
 func (f *fakeRouteCache) Delete(ctx context.Context, key string) error { return nil }
 func (f *fakeRouteCache) GetBytes(ctx context.Context, key string) ([]byte, error) {
@@ -52,10 +60,10 @@ func (f *fakeRouteCache) SetJSON(ctx context.Context, key string, val interface{
 	f.jsonValues[key] = raw
 	return nil
 }
-func (f *fakeRouteCache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64) error {
+func (f *fakeRouteCache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64, _ ...cachepkg.TimedOption) error {
 	return f.SetJSON(ctx, key, val)
 }
-func (f *fakeRouteCache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64) (bool, error) {
+func (f *fakeRouteCache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64, _ ...cachepkg.TimedOption) (bool, error) {
 	if _, ok := f.jsonValues[key]; ok {
 		return false, nil
 	}
@@ -68,9 +76,23 @@ func (f *fakeRouteCache) GetJSON(ctx context.Context, key string, v interface{})
 	}
 	return json.Unmarshal(raw, v)
 }
-func (f *fakeRouteCache) HGet(ctx context.Context, key, field string) (string, error) { return "", nil }
-func (f *fakeRouteCache) HSet(ctx context.Context, key, field, value string) error    { return nil }
-func (f *fakeRouteCache) HDel(ctx context.Context, key, field string) error           { return nil }
+func (f *fakeRouteCache) GetJSONWithTTL(ctx context.Context, key string, v interface{}) (cachepkg.LookupMeta, error) {
+	raw, ok := f.jsonValues[key]
+	if !ok {
+		return cachepkg.LookupMeta{}, nil
+	}
+	if err := json.Unmarshal(raw, v); err != nil {
+		return cachepkg.LookupMeta{}, err
+	}
+	return cachepkg.LookupMeta{Hit: true, TTL: time.Hour, HasTTL: true}, nil
+}
+func (f *fakeRouteCache) TryAcquireRefreshLock(ctx context.Context, key, token string, ttl time.Duration) (bool, error) {
+	return true, nil
+}
+func (f *fakeRouteCache) ReleaseRefreshLock(ctx context.Context, key, token string) error { return nil }
+func (f *fakeRouteCache) HGet(ctx context.Context, key, field string) (string, error)     { return "", nil }
+func (f *fakeRouteCache) HSet(ctx context.Context, key, field, value string) error        { return nil }
+func (f *fakeRouteCache) HDel(ctx context.Context, key, field string) error               { return nil }
 func (f *fakeRouteCache) HGetAll(ctx context.Context, key string) (map[string]string, error) {
 	return nil, nil
 }
@@ -83,7 +105,7 @@ func (f *fakeRouteCache) MGetBytes(_ context.Context, keys ...string) ([][]byte,
 func (f *fakeRouteCache) HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error) {
 	return 0, nil
 }
-func (f *fakeRouteCache) SetTimedJSONBatch(_ context.Context, keys []string, _ []interface{}, _ int64) error {
+func (f *fakeRouteCache) SetTimedJSONBatch(_ context.Context, keys []string, _ []interface{}, _ int64, _ ...cachepkg.TimedOption) error {
 	return nil
 }
 func (f *fakeRouteCache) ZAddBatch(_ context.Context, _ string, _ []cachepkg.ZBatchMember) error {

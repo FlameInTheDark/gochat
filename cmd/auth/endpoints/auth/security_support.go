@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
@@ -315,7 +316,7 @@ func (e *entity) saveLoginChallenge(ctx context.Context, state loginChallengeSta
 	if err := e.requireCache(); err != nil {
 		return err
 	}
-	return e.cache.SetTimedJSON(ctx, loginChallengeKey(state.ChallengeID), state, ttlSeconds(state.ExpiresAt))
+	return e.cache.SetTimedJSON(ctx, loginChallengeKey(state.ChallengeID), state, ttlSeconds(state.ExpiresAt), cache.NoneProactive())
 }
 
 func (e *entity) loadLoginChallenge(ctx context.Context, challengeID string) (loginChallengeState, error) {
@@ -340,7 +341,7 @@ func (e *entity) savePendingTOTPSetup(ctx context.Context, state pendingTOTPSetu
 	if err := e.requireCache(); err != nil {
 		return err
 	}
-	return e.cache.SetTimedJSON(ctx, pendingTOTPSetupKey(state.SetupID), state, ttlSeconds(state.ExpiresAt))
+	return e.cache.SetTimedJSON(ctx, pendingTOTPSetupKey(state.SetupID), state, ttlSeconds(state.ExpiresAt), cache.NoneProactive())
 }
 
 func (e *entity) loadPendingTOTPSetup(ctx context.Context, setupID string) (pendingTOTPSetup, error) {

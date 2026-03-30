@@ -132,6 +132,9 @@ func (f *fakeCache) Set(ctx context.Context, key, val string) error { return nil
 func (f *fakeCache) Get(ctx context.Context, key string) (string, error) {
 	return "", errors.New("not implemented")
 }
+func (f *fakeCache) GetWithTTL(ctx context.Context, key string) (string, cache.LookupMeta, error) {
+	return "", cache.LookupMeta{}, nil
+}
 func (f *fakeCache) GetBytes(ctx context.Context, key string) ([]byte, error) {
 	return nil, errors.New("not implemented")
 }
@@ -170,7 +173,7 @@ func (f *fakeCache) HGetAllMulti(_ context.Context, keys []string) ([]map[string
 func (f *fakeCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
 	return make([][]byte, len(keys)), nil
 }
-func (f *fakeCache) SetTimedJSONBatch(_ context.Context, keys []string, _ []interface{}, _ int64) error {
+func (f *fakeCache) SetTimedJSONBatch(_ context.Context, keys []string, _ []interface{}, _ int64, _ ...cache.TimedOption) error {
 	return nil
 }
 func (f *fakeCache) ZAddBatch(_ context.Context, _ string, _ []cache.ZBatchMember) error {
@@ -200,11 +203,11 @@ func (f *fakeCache) SetJSON(ctx context.Context, key string, val interface{}) er
 	return nil
 }
 
-func (f *fakeCache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64) error {
+func (f *fakeCache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64, _ ...cache.TimedOption) error {
 	return f.SetJSON(ctx, key, val)
 }
 
-func (f *fakeCache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64) (bool, error) {
+func (f *fakeCache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64, _ ...cache.TimedOption) (bool, error) {
 	if _, ok := f.jsonValues[key]; ok {
 		return false, nil
 	}
@@ -218,6 +221,20 @@ func (f *fakeCache) GetJSON(ctx context.Context, key string, v interface{}) erro
 	}
 	return json.Unmarshal(raw, v)
 }
+func (f *fakeCache) GetJSONWithTTL(ctx context.Context, key string, v interface{}) (cache.LookupMeta, error) {
+	raw, ok := f.jsonValues[key]
+	if !ok {
+		return cache.LookupMeta{}, nil
+	}
+	if err := json.Unmarshal(raw, v); err != nil {
+		return cache.LookupMeta{}, err
+	}
+	return cache.LookupMeta{Hit: true, TTL: time.Hour, HasTTL: true}, nil
+}
+func (f *fakeCache) TryAcquireRefreshLock(ctx context.Context, key, token string, ttl time.Duration) (bool, error) {
+	return true, nil
+}
+func (f *fakeCache) ReleaseRefreshLock(ctx context.Context, key, token string) error { return nil }
 
 type fakeRoleTransport struct {
 	roleUpdates chan *mqmsg.UpdateGuildRole

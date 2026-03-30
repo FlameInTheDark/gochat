@@ -354,7 +354,7 @@ func (e *entity) beginEnforcedNonce(ctx context.Context, userID, channelID int64
 	}
 
 	lockKey := key + ":lock"
-	acquired, err := e.cache.SetTimedJSONNX(ctx, lockKey, map[string]int64{"user_id": userID}, messageNonceLockTTLSeconds)
+	acquired, err := e.cache.SetTimedJSONNX(ctx, lockKey, map[string]int64{"user_id": userID}, messageNonceLockTTLSeconds, icache.NoneProactive())
 	if err != nil {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendMessage)
 	}
@@ -415,7 +415,7 @@ func (e *entity) persistEnforcedNonce(ctx context.Context, reservation *enforced
 		return nil
 	}
 	record := enforcedNonceRecord{ChannelID: channelID, MessageID: messageID}
-	if err := e.cache.SetTimedJSON(ctx, reservation.key, record, messageNonceTTLSeconds); err != nil {
+	if err := e.cache.SetTimedJSON(ctx, reservation.key, record, messageNonceTTLSeconds, icache.NoneProactive()); err != nil {
 		return err
 	}
 	e.releaseEnforcedNonce(ctx, reservation)
@@ -3369,7 +3369,7 @@ func (e *entity) backfillMessagesCache(_ context.Context, channelID int64, msgs 
 		vals[i] = m
 		members[i] = icache.ZBatchMember{Score: float64(m.Id), Member: messagecache.IDToMember(m.Id)}
 	}
-	_ = e.cache.SetTimedJSONBatch(ctx, keys, vals, messagecache.MessageTTLSeconds)
+	_ = e.cache.SetTimedJSONBatch(ctx, keys, vals, messagecache.MessageTTLSeconds, icache.NoneProactive())
 	_ = e.cache.ZAddBatch(ctx, messagecache.IndexKey(channelID), members)
 	_ = e.cache.SetTTL(ctx, messagecache.IndexKey(channelID), messagecache.IndexTTLSeconds)
 }
@@ -3380,7 +3380,7 @@ func (e *entity) pushMessageToWindowCache(ctx context.Context, channelID int64, 
 	if e.cache == nil {
 		return
 	}
-	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds)
+	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds, icache.NoneProactive())
 	_ = e.cache.ZAdd(ctx, messagecache.IndexKey(channelID), float64(msg.Id), messagecache.IDToMember(msg.Id))
 	_ = e.cache.SetTTL(ctx, messagecache.IndexKey(channelID), messagecache.IndexTTLSeconds)
 }
@@ -3391,7 +3391,7 @@ func (e *entity) refreshMessageInCache(ctx context.Context, channelID int64, msg
 	if e.cache == nil {
 		return
 	}
-	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds)
+	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds, icache.NoneProactive())
 }
 
 // evictMessageFromCache removes a deleted message's DTO key and drops its ID from

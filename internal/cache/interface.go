@@ -1,6 +1,9 @@
 package cache
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // ZBatchMember is a (score, member) pair for ZAddBatch.
 type ZBatchMember struct {
@@ -8,9 +11,17 @@ type ZBatchMember struct {
 	Member string
 }
 
+// LookupMeta describes a cache lookup result.
+type LookupMeta struct {
+	Hit    bool
+	TTL    time.Duration
+	HasTTL bool
+}
+
 type Cache interface {
 	Set(ctx context.Context, key, val string) error
 	Get(ctx context.Context, key string) (string, error)
+	GetWithTTL(ctx context.Context, key string) (string, LookupMeta, error)
 	Delete(ctx context.Context, key string) error
 	GetBytes(ctx context.Context, key string) ([]byte, error)
 	SetTimed(ctx context.Context, key, val string, ttl int64) error
@@ -20,11 +31,14 @@ type Cache interface {
 	Incr(ctx context.Context, key string) (int64, error)
 	GetInt64(ctx context.Context, key string) (int64, error)
 	SetJSON(ctx context.Context, key string, val interface{}) error
-	SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64) error
+	SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64, opts ...TimedOption) error
 	// SetTimedJSONNX marshals val and sets it only if the key does not already exist (SET NX).
 	// Returns true if the key was set, false if it already existed.
-	SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64) (bool, error)
+	SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64, opts ...TimedOption) (bool, error)
 	GetJSON(ctx context.Context, key string, v interface{}) error
+	GetJSONWithTTL(ctx context.Context, key string, v interface{}) (LookupMeta, error)
+	TryAcquireRefreshLock(ctx context.Context, key, token string, ttl time.Duration) (bool, error)
+	ReleaseRefreshLock(ctx context.Context, key, token string) error
 	HGet(ctx context.Context, key, field string) (string, error)
 	HSet(ctx context.Context, key, field, value string) error
 	HDel(ctx context.Context, key, field string) error
@@ -38,7 +52,7 @@ type Cache interface {
 	HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error)
 	// SetTimedJSONBatch pipelines multiple timed JSON SET commands in one round-trip.
 	// keys[i] is the Redis key for vals[i].
-	SetTimedJSONBatch(ctx context.Context, keys []string, vals []interface{}, ttl int64) error
+	SetTimedJSONBatch(ctx context.Context, keys []string, vals []interface{}, ttl int64, opts ...TimedOption) error
 	// ZAddBatch adds multiple members to a sorted set in a single ZADD command.
 	ZAddBatch(ctx context.Context, key string, members []ZBatchMember) error
 	ZAdd(ctx context.Context, key string, score float64, member string) error

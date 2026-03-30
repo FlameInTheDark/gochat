@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/cache"
 )
@@ -822,6 +823,14 @@ func (m *memoryCache) Get(ctx context.Context, key string) (string, error) {
 	return string(value), nil
 }
 
+func (m *memoryCache) GetWithTTL(ctx context.Context, key string) (string, cache.LookupMeta, error) {
+	value, ok := m.values[key]
+	if !ok {
+		return "", cache.LookupMeta{}, nil
+	}
+	return string(value), cache.LookupMeta{Hit: true, TTL: time.Hour, HasTTL: true}, nil
+}
+
 func (m *memoryCache) Delete(ctx context.Context, key string) error {
 	delete(m.values, key)
 	return nil
@@ -868,11 +877,11 @@ func (m *memoryCache) SetJSON(ctx context.Context, key string, val interface{}) 
 	return nil
 }
 
-func (m *memoryCache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64) error {
+func (m *memoryCache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64, _ ...cache.TimedOption) error {
 	return m.SetJSON(ctx, key, val)
 }
 
-func (m *memoryCache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64) (bool, error) {
+func (m *memoryCache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64, _ ...cache.TimedOption) (bool, error) {
 	if _, ok := m.values[key]; ok {
 		return false, nil
 	}
@@ -885,6 +894,25 @@ func (m *memoryCache) GetJSON(ctx context.Context, key string, v interface{}) er
 		return errors.New("missing key")
 	}
 	return json.Unmarshal(value, v)
+}
+
+func (m *memoryCache) GetJSONWithTTL(ctx context.Context, key string, v interface{}) (cache.LookupMeta, error) {
+	value, ok := m.values[key]
+	if !ok {
+		return cache.LookupMeta{}, nil
+	}
+	if err := json.Unmarshal(value, v); err != nil {
+		return cache.LookupMeta{}, err
+	}
+	return cache.LookupMeta{Hit: true, TTL: time.Hour, HasTTL: true}, nil
+}
+
+func (m *memoryCache) TryAcquireRefreshLock(ctx context.Context, key, token string, ttl time.Duration) (bool, error) {
+	return true, nil
+}
+
+func (m *memoryCache) ReleaseRefreshLock(ctx context.Context, key, token string) error {
+	return nil
 }
 
 func (m *memoryCache) HGet(ctx context.Context, key, field string) (string, error) {
@@ -928,7 +956,7 @@ func (m *memoryCache) HGetAllMulti(_ context.Context, keys []string) ([]map[stri
 func (m *memoryCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
 	return make([][]byte, len(keys)), nil
 }
-func (m *memoryCache) SetTimedJSONBatch(_ context.Context, keys []string, vals []interface{}, _ int64) error {
+func (m *memoryCache) SetTimedJSONBatch(_ context.Context, keys []string, vals []interface{}, _ int64, _ ...cache.TimedOption) error {
 	return nil
 }
 func (m *memoryCache) ZAddBatch(_ context.Context, _ string, _ []cache.ZBatchMember) error {

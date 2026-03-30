@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
 )
 
@@ -76,7 +77,7 @@ func (e *entity) bindChannelRoute(ctx context.Context, channelID int64, binding 
 		return binding
 	}
 
-	set, err := e.cache.SetTimedJSONNX(ctx, bindingKey(channelID), binding, voiceRouteInitialTTLSeconds)
+	set, err := e.cache.SetTimedJSONNX(ctx, bindingKey(channelID), binding, voiceRouteInitialTTLSeconds, cache.NoneProactive())
 	if err == nil && set {
 		return binding
 	}

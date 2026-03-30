@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/dto"
@@ -17,7 +18,10 @@ type fakeReactionCache struct {
 
 func (f *fakeReactionCache) Set(ctx context.Context, key, val string) error      { return nil }
 func (f *fakeReactionCache) Get(ctx context.Context, key string) (string, error) { return "", nil }
-func (f *fakeReactionCache) Delete(ctx context.Context, key string) error        { return nil }
+func (f *fakeReactionCache) GetWithTTL(ctx context.Context, key string) (string, cache.LookupMeta, error) {
+	return "", cache.LookupMeta{}, nil
+}
+func (f *fakeReactionCache) Delete(ctx context.Context, key string) error { return nil }
 func (f *fakeReactionCache) GetBytes(ctx context.Context, key string) ([]byte, error) {
 	return nil, nil
 }
@@ -34,13 +38,22 @@ func (f *fakeReactionCache) GetInt64(ctx context.Context, key string) (int64, er
 func (f *fakeReactionCache) SetJSON(ctx context.Context, key string, val interface{}) error {
 	return nil
 }
-func (f *fakeReactionCache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64) error {
+func (f *fakeReactionCache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64, _ ...cache.TimedOption) error {
 	return nil
 }
-func (f *fakeReactionCache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64) (bool, error) {
+func (f *fakeReactionCache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64, _ ...cache.TimedOption) (bool, error) {
 	return true, nil
 }
 func (f *fakeReactionCache) GetJSON(ctx context.Context, key string, v interface{}) error { return nil }
+func (f *fakeReactionCache) GetJSONWithTTL(ctx context.Context, key string, v interface{}) (cache.LookupMeta, error) {
+	return cache.LookupMeta{}, nil
+}
+func (f *fakeReactionCache) TryAcquireRefreshLock(ctx context.Context, key, token string, ttl time.Duration) (bool, error) {
+	return true, nil
+}
+func (f *fakeReactionCache) ReleaseRefreshLock(ctx context.Context, key, token string) error {
+	return nil
+}
 func (f *fakeReactionCache) HGet(ctx context.Context, key, field string) (string, error) {
 	if f.values[key] == nil {
 		return "", nil
@@ -73,7 +86,7 @@ func (f *fakeReactionCache) HGetAllMulti(_ context.Context, keys []string) ([]ma
 func (f *fakeReactionCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
 	return make([][]byte, len(keys)), nil
 }
-func (f *fakeReactionCache) SetTimedJSONBatch(_ context.Context, _ []string, _ []interface{}, _ int64) error {
+func (f *fakeReactionCache) SetTimedJSONBatch(_ context.Context, _ []string, _ []interface{}, _ int64, _ ...cache.TimedOption) error {
 	return nil
 }
 func (f *fakeReactionCache) ZAddBatch(_ context.Context, _ string, _ []cache.ZBatchMember) error {
