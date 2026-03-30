@@ -1,3 +1,31 @@
+# [1.11.0](https://github.com/FlameInTheDark/gochat/compare/v1.10.0...v1.11.0) (2026-03-30)
+
+
+### Bug Fixes
+
+* log levels for traces, prevent event spam with info messages ([a80097e](https://github.com/FlameInTheDark/gochat/commit/a80097e46f58e6a7a1729f6e31ceb44ea6172e31))
+* log levels, prevent event spam with info messages ([3705a5a](https://github.com/FlameInTheDark/gochat/commit/3705a5a5846d8733f2ee9453653e458aeb2b7652))
+* logging all as error fix ([cef47c6](https://github.com/FlameInTheDark/gochat/commit/cef47c66abad63d45b56c8fbc24bf6e23edebb11))
+* optimization and fixes ([0d0d1c6](https://github.com/FlameInTheDark/gochat/commit/0d0d1c6a0656fcec8f9de3064dcaeaf2d409ec75))
+* reduced metrics spam ([33fbf04](https://github.com/FlameInTheDark/gochat/commit/33fbf04f35ffc8f16cc6a5e9840e79398c9a2ec3))
+* SFU config update for otlp ([797cd06](https://github.com/FlameInTheDark/gochat/commit/797cd06b74655237a40f61dd86879e51a37cdaab))
+* SFU flow optimization ([3c5b0a4](https://github.com/FlameInTheDark/gochat/commit/3c5b0a4c868ffd0b752a04121cdf0a27db4e60ed))
+* SFU public ip for NAT 1to1 support ([2630f98](https://github.com/FlameInTheDark/gochat/commit/2630f98d4b7b71783b117d43682ba6da74d9443c))
+* SFU video quality fix ([67f0e18](https://github.com/FlameInTheDark/gochat/commit/67f0e18a7b22b1dd05059933e6126d6dbbc6fb10))
+
+
+### Features
+
+* client rebuild ([ae24b44](https://github.com/FlameInTheDark/gochat/commit/ae24b4404c7059def0bca7ddf7ad26ec4a571823))
+* device aware settings ([fe8f3bf](https://github.com/FlameInTheDark/gochat/commit/fe8f3bfb1fcd4fb57762df7e1abd1e51f65a72df))
+* E2EE and fixes ([dd2c72e](https://github.com/FlameInTheDark/gochat/commit/dd2c72e03db1d0167ce1ab5a2743b008df68e313))
+* limit for device settings list ([47d6d38](https://github.com/FlameInTheDark/gochat/commit/47d6d38120c0606123a60d5b7cd3156e3be4e57e))
+* new clients with totp ([1402455](https://github.com/FlameInTheDark/gochat/commit/14024557b9dbda99172c5a5646c8e88169656ae6))
+* SFU port range configuration ([44e0c55](https://github.com/FlameInTheDark/gochat/commit/44e0c55adb14579df39084ac300a7b19a46cc5bf))
+* SFU v2 and DAVE integration documentation ([055f991](https://github.com/FlameInTheDark/gochat/commit/055f9917d24a0dc23c02550de6daf94333a4b13f))
+* SFU v2 protocol with DAVE ([41cd390](https://github.com/FlameInTheDark/gochat/commit/41cd390ca522c2a561a3520e7784f8ee29585bf1))
+* TOPT authentication security ([32a296c](https://github.com/FlameInTheDark/gochat/commit/32a296ce02d8b95df270dc28f212b02f5af3deaf))
+
 # [1.10.0](https://github.com/FlameInTheDark/gochat/compare/v1.9.0...v1.10.0) (2026-03-25)
 
 
