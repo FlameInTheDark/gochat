@@ -23,7 +23,17 @@ func (s *Server) AuthMiddleware(secret string) {
 		Filter: func(c *fiber.Ctx) bool {
 			path := c.Path()
 			switch path {
-			case "/docs/swagger", "/api/v1/auth/login", "/api/v1/auth/registration", "/api/v1/auth/confirmation", "/api/v1/auth/recovery", "/api/v1/auth/reset", "/healthz":
+			case "/docs/swagger",
+				"/api/v1/auth/login",
+				"/api/v1/auth/login/2fa/totp",
+				"/api/v1/auth/login/2fa/recovery-code",
+				"/api/v1/auth/login/2fa/email/start",
+				"/api/v1/auth/login/2fa/email/verify",
+				"/api/v1/auth/registration",
+				"/api/v1/auth/confirmation",
+				"/api/v1/auth/recovery",
+				"/api/v1/auth/reset",
+				"/healthz":
 				return true
 			}
 			return strings.HasPrefix(path, "/emoji/")
@@ -45,6 +55,14 @@ func (s *Server) RateLimitMiddleware(limit, exp int) {
 		Next: func(c *fiber.Ctx) bool {
 			switch string(c.Request().RequestURI()) {
 			case "/api/v1/auth/login", "/auth/login":
+				return true
+			case "/api/v1/auth/login/2fa/totp", "/auth/login/2fa/totp":
+				return true
+			case "/api/v1/auth/login/2fa/recovery-code", "/auth/login/2fa/recovery-code":
+				return true
+			case "/api/v1/auth/login/2fa/email/start", "/auth/login/2fa/email/start":
+				return true
+			case "/api/v1/auth/login/2fa/email/verify", "/auth/login/2fa/email/verify":
 				return true
 			case "/api/v1/auth/registration", "/auth/registration":
 				return true
@@ -113,6 +131,10 @@ func (s *Server) RateLimitPipedMiddleware(limit, exp int) {
 		Next: func(c *fiber.Ctx) bool {
 			switch string(c.Request().RequestURI()) {
 			case "/api/v1/auth/login", "/auth/login",
+				"/api/v1/auth/login/2fa/totp", "/auth/login/2fa/totp",
+				"/api/v1/auth/login/2fa/recovery-code", "/auth/login/2fa/recovery-code",
+				"/api/v1/auth/login/2fa/email/start", "/auth/login/2fa/email/start",
+				"/api/v1/auth/login/2fa/email/verify", "/auth/login/2fa/email/verify",
 				"/api/v1/auth/registration", "/auth/registration",
 				"/api/v1/auth/confirmation", "/auth/confirmation",
 				"/api/v1/auth/recovery", "/auth/recovery",

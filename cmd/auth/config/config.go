@@ -21,6 +21,7 @@ type Config struct {
 	EmailName                  string `yaml:"email_name" env:"EMAIL_NAME" env-default:"no-reply"`
 	EmailTemplate              string `yaml:"email_template" env:"EMAIL_TEMPLATE" env-default:"./email_notify.tmpl"`
 	PasswordResetTemplate      string `yaml:"password_reset_template" env:"PASSWORD_RESET_TEMPLATE" env-default:"./password_reset.tmpl"`
+	MFARecoveryTemplate        string `yaml:"mfa_recovery_template" env:"MFA_RECOVERY_TEMPLATE" env-default:"./mfa_recovery.tmpl"`
 	EmailProvider              string `yaml:"email_provider" env:"EMAIL_PROVIDER" env-default:"log"`
 	SMTPHost                   string `yaml:"smtp_host" env:"SMTP_HOST" env-default:"localhost"`
 	SMTPPort                   int    `yaml:"smtp_port" env:"SMTP_PORT" env-default:"25"`
@@ -32,10 +33,12 @@ type Config struct {
 	ResendAPIKey               string `yaml:"resend_api_key" env:"RESEND_API_KEY" env-default:""`
 	DashaMailAPIKey            string `yaml:"dashamail_api_key" env:"DASHAMAIL_API_KEY" env-default:""`
 	AuthSecret                 string `yaml:"auth_secret" env:"AUTH_SECRET" env-default:"change_me_before_use_it_in_production"`
+	MFAEncryptionKey           string `yaml:"mfa_encryption_key" env:"MFA_ENCRYPTION_KEY" env-default:""`
 	Swagger                    bool   `yaml:"swagger" env:"SWAGGER" env-default:"false"`
 	KeyDB                      string `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
 	PGDSN                      string `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
 	PGRetries                  int    `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
+	NatsConnString             string `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {

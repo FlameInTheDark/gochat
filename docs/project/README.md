@@ -14,6 +14,7 @@ Here goes the project documentation.
 - [Observability](observability/README.md)
 
 - [Services Overview](Services.md)
+- [Auth Security](AuthSecurity.md)
 - [Presence System](Presence.md)
 - [Tools CLI](Tools.md)
 

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Recovery Code</title>
+    <style>
+        body {
+            font-family: Inter, system-ui, sans-serif;
+            background: #101418;
+            color: #f5f7fa;
+            margin: 0;
+            padding: 32px 16px;
+        }
+        .card {
+            max-width: 560px;
+            margin: 0 auto;
+            background: #17202a;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 32px;
+        }
+        .code {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 8px;
+            margin: 24px 0;
+            text-align: center;
+        }
+        .muted {
+            color: rgba(245, 247, 250, 0.68);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>{{.AppName}} login recovery code</h1>
+    <p class="muted">Use this one-time code to finish signing in. It expires in {{.ExpiresMinutes}} minutes.</p>
+    <div class="code">{{.Code}}</div>
+    <p class="muted">If you did not try to sign in, you can ignore this email. Your password was still required before this code was issued.</p>
+</div>
+</body>
+</html>

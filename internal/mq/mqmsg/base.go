@@ -85,6 +85,7 @@ const (
 	EventTypeUserFriendRemoved
 	EventTypeUserDMMessage
 	EventTypeUserUpdate
+	EventTypeUserAuthRevoked
 )
 
 // RTC signaling event types (client <-> SFU via WS)

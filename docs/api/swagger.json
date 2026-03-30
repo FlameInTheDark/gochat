@@ -21,6 +21,293 @@
     "host": "localhost",
     "basePath": "/api/v1",
     "paths": {
+        "/auth/2fa": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns whether TOTP two-factor auth is enabled for the authenticated user and how many unused recovery codes remain.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get two-factor auth status",
+                "responses": {
+                    "200": {
+                        "description": "Current two-factor auth status",
+                        "schema": {
+                            "$ref": "#/definitions/auth.TwoFactorStatusResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Requires the current password and a valid TOTP or recovery code, disables the active factor, deletes recovery codes, rotates the session version, and returns fresh tokens.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Disable two-factor auth",
+                "parameters": [
+                    {
+                        "description": "Disable two-factor auth request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.DisableTwoFactorRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Two-factor auth disabled and new tokens issued",
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Two-factor auth is not enabled",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/2fa/recovery-codes/regenerate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Requires the current password and an active second factor verification, replaces all recovery codes, rotates the session version, and returns the new codes once.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Regenerate recovery codes",
+                "parameters": [
+                    {
+                        "description": "Recovery code regeneration request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.RecoveryCodesRegenerateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "New recovery codes issued",
+                        "schema": {
+                            "$ref": "#/definitions/auth.RecoveryCodesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Two-factor auth is not enabled",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/2fa/totp/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Validates the authenticator code for a pending TOTP setup, enables two-factor auth, rotates the session version, and returns new tokens plus recovery codes.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Confirm TOTP setup",
+                "parameters": [
+                    {
+                        "description": "Pending setup ID and authenticator code",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.TOTPConfirmRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "TOTP enabled and recovery codes issued",
+                        "schema": {
+                            "$ref": "#/definitions/auth.RecoveryCodesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Two-factor auth is already enabled",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/2fa/totp/setup": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Verifies the current password and returns a short-lived TOTP provisioning payload. The client should render the QR code locally from the returned otpauth URI.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Start TOTP setup",
+                "parameters": [
+                    {
+                        "description": "Current password for TOTP setup",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.TOTPSetupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "TOTP setup payload",
+                        "schema": {
+                            "$ref": "#/definitions/auth.TOTPSetupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Two-factor auth is already enabled",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/confirmation": {
             "post": {
                 "produces": [
@@ -77,6 +364,10 @@
         },
         "/auth/login": {
             "post": {
+                "description": "Validates email and password. Returns tokens immediately when two-factor auth is disabled, or a login challenge when a second factor is required.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -97,7 +388,308 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Authenticated without second factor",
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginResponse"
+                        }
+                    },
+                    "202": {
+                        "description": "Second-factor challenge created",
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginChallengeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "429": {
+                        "description": "Too many authentication attempts",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login/2fa/email/start": {
+            "post": {
+                "description": "Sends a short-lived email recovery code for a pending login challenge. This flow is intended only for completing login when the authenticator device is unavailable.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Send email recovery code for login",
+                "parameters": [
+                    {
+                        "description": "Login challenge ID",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginEmailStartRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Recovery code email sent",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "429": {
+                        "description": "Too many authentication attempts",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login/2fa/email/verify": {
+            "post": {
+                "description": "Verifies the short-lived email recovery code for a pending login challenge and returns access and refresh tokens.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Complete login with email recovery code",
+                "parameters": [
+                    {
+                        "description": "Login challenge ID and email recovery code",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginEmailVerifyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authenticated after email recovery verification",
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "429": {
+                        "description": "Too many authentication attempts",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login/2fa/recovery-code": {
+            "post": {
+                "description": "Consumes a pending login challenge and verifies a recovery code. Recovery codes are single use and are invalid after successful consumption.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Complete login with recovery code",
+                "parameters": [
+                    {
+                        "description": "Login challenge ID and recovery code",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginRecoveryCodeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authenticated after recovery code verification",
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "429": {
+                        "description": "Too many authentication attempts",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login/2fa/totp": {
+            "post": {
+                "description": "Consumes a pending login challenge and verifies the authenticator code. On success the challenge is removed and access and refresh tokens are returned.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Complete login with TOTP",
+                "parameters": [
+                    {
+                        "description": "Login challenge ID and TOTP code",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginTOTPRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authenticated after TOTP verification",
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Incorrect request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "429": {
+                        "description": "Too many authentication attempts",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/password/change": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Changes the current password. When two-factor auth is enabled, the request must also include either a TOTP code or a recovery code. Successful changes rotate the session version and return fresh tokens.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Change password",
+                "parameters": [
+                    {
+                        "description": "Password change request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.PasswordChangeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password changed and new tokens issued",
                         "schema": {
                             "$ref": "#/definitions/auth.LoginResponse"
                         }
@@ -5820,6 +6412,81 @@
                 }
             }
         },
+        "auth.DisableTwoFactorRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "123456"
+                },
+                "code_type": {
+                    "type": "string",
+                    "example": "totp"
+                },
+                "current_password": {
+                    "type": "string",
+                    "example": "VerYstR0NgP@66WoR6"
+                }
+            }
+        },
+        "auth.LoginChallengeResponse": {
+            "type": "object",
+            "properties": {
+                "challenge_id": {
+                    "type": "string",
+                    "example": "e2ec6cc32bcc5b37d2d3b99d6f450c086f8b54c9"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "methods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "totp",
+                        "recovery_code",
+                        "email_recovery"
+                    ]
+                }
+            }
+        },
+        "auth.LoginEmailStartRequest": {
+            "type": "object",
+            "properties": {
+                "challenge_id": {
+                    "type": "string",
+                    "example": "e2ec6cc32bcc5b37d2d3b99d6f450c086f8b54c9"
+                }
+            }
+        },
+        "auth.LoginEmailVerifyRequest": {
+            "type": "object",
+            "properties": {
+                "challenge_id": {
+                    "type": "string",
+                    "example": "e2ec6cc32bcc5b37d2d3b99d6f450c086f8b54c9"
+                },
+                "code": {
+                    "type": "string",
+                    "example": "123456"
+                }
+            }
+        },
+        "auth.LoginRecoveryCodeRequest": {
+            "type": "object",
+            "properties": {
+                "challenge_id": {
+                    "type": "string",
+                    "example": "e2ec6cc32bcc5b37d2d3b99d6f450c086f8b54c9"
+                },
+                "code": {
+                    "type": "string",
+                    "example": "AB12CD34EF56"
+                }
+            }
+        },
         "auth.LoginRequest": {
             "type": "object",
             "properties": {
@@ -5845,6 +6512,40 @@
                 "token": {
                     "description": "Authentication token",
                     "type": "string"
+                }
+            }
+        },
+        "auth.LoginTOTPRequest": {
+            "type": "object",
+            "properties": {
+                "challenge_id": {
+                    "type": "string",
+                    "example": "e2ec6cc32bcc5b37d2d3b99d6f450c086f8b54c9"
+                },
+                "code": {
+                    "type": "string",
+                    "example": "123456"
+                }
+            }
+        },
+        "auth.PasswordChangeRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "123456"
+                },
+                "code_type": {
+                    "type": "string",
+                    "example": "totp"
+                },
+                "current_password": {
+                    "type": "string",
+                    "example": "OldP@ssw0rd123"
+                },
+                "new_password": {
+                    "type": "string",
+                    "example": "NewP@ssw0rd123"
                 }
             }
         },
@@ -5878,6 +6579,46 @@
                 }
             }
         },
+        "auth.RecoveryCodesRegenerateRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "123456"
+                },
+                "code_type": {
+                    "type": "string",
+                    "example": "totp"
+                },
+                "current_password": {
+                    "type": "string",
+                    "example": "VerYstR0NgP@66WoR6"
+                }
+            }
+        },
+        "auth.RecoveryCodesResponse": {
+            "type": "object",
+            "properties": {
+                "recovery_codes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "AB12CD34EF56",
+                        "GH78JK90LM12"
+                    ]
+                },
+                "refresh_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+                },
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+                }
+            }
+        },
         "auth.RefreshTokenResponse": {
             "type": "object",
             "properties": {
@@ -5898,6 +6639,73 @@
                     "description": "User Email",
                     "type": "string",
                     "example": "user@example.com"
+                }
+            }
+        },
+        "auth.TOTPConfirmRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "123456"
+                },
+                "setup_id": {
+                    "type": "string",
+                    "example": "b7af1b0bf9f0d78d913cb1fa746785a86f98b1ad"
+                }
+            }
+        },
+        "auth.TOTPSetupRequest": {
+            "type": "object",
+            "properties": {
+                "current_password": {
+                    "type": "string",
+                    "example": "VerYstR0NgP@66WoR6"
+                }
+            }
+        },
+        "auth.TOTPSetupResponse": {
+            "type": "object",
+            "properties": {
+                "account_name": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "issuer": {
+                    "type": "string",
+                    "example": "GoChat"
+                },
+                "manual_key": {
+                    "type": "string",
+                    "example": "JBSWY3DPEHPK3PXP"
+                },
+                "otpauth_uri": {
+                    "type": "string",
+                    "example": "otpauth://totp/GoChat:user@example.com?algorithm=SHA1\u0026digits=6\u0026issuer=GoChat\u0026period=30\u0026secret=JBSWY3DPEHPK3PXP"
+                },
+                "setup_id": {
+                    "type": "string",
+                    "example": "b7af1b0bf9f0d78d913cb1fa746785a86f98b1ad"
+                }
+            }
+        },
+        "auth.TwoFactorStatusResponse": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "factor_type": {
+                    "type": "string",
+                    "example": "totp"
+                },
+                "recovery_codes_remaining": {
+                    "type": "integer",
+                    "example": 10
                 }
             }
         },

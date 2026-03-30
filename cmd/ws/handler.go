@@ -39,9 +39,16 @@ type wsConn struct {
 	userID    int64
 	telemetry *observability.WSTelemetry
 	cache     cachei.Cache
+	close     func(reason string)
 }
 
 func (w *wsConn) Send(delivery hub.Delivery) {
+	if isAuthRevokedEvent(delivery.Data) {
+		if w.close != nil {
+			w.close("Auth revoked")
+		}
+		return
+	}
 	payload := personalizeMessageForRecipientWithCache(w.cache, delivery.Topic, atomic.LoadInt64(&w.userID), delivery.Data)
 	// Non-blocking: drop the message if the connection's buffer is full.
 	select {
@@ -137,6 +144,14 @@ func cloneWSMessage(data []byte) []byte {
 	cp := make([]byte, len(data))
 	copy(cp, data)
 	return cp
+}
+
+func isAuthRevokedEvent(data []byte) bool {
+	var envelope mqmsg.Message
+	if err := json.Unmarshal(data, &envelope); err != nil || envelope.EventType == nil {
+		return false
+	}
+	return *envelope.EventType == mqmsg.EventTypeUserAuthRevoked
 }
 
 // outMsg is an internal message sent through the writer pump channel.
@@ -306,7 +321,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 		}
 	}()
 
-	conn := &wsConn{id: c.RemoteAddr().String(), out: out, telemetry: a.wsm, cache: a.cache}
+	conn := &wsConn{id: c.RemoteAddr().String(), out: out, telemetry: a.wsm, cache: a.cache, close: sendClose}
 	subs := subscriber.New(a.hub, conn, a.wsm, func() context.Context { return connCtx })
 	defer func() {
 		cerr := subs.Close()

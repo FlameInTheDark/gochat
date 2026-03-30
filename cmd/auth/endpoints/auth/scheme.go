@@ -58,6 +58,7 @@ const (
 var (
 	emailRegex         = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 	discriminatorRegex = regexp.MustCompile(`^[a-z0-9._-]+$`)
+	otpRegex           = regexp.MustCompile(`^[0-9]{6}$`)
 )
 
 type LoginRequest struct {

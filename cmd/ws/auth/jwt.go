@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -15,18 +16,20 @@ type Auth struct {
 	Issuer       string // e.g. "gochat"
 	Audience     string // e.g. "api" (or "ws" if you prefer)
 	Leeway       time.Duration
+	Sessions     *helper.SessionVersionChecker
 }
 
-func New(accessSecret, issuer, audience string) *Auth {
+func New(accessSecret, issuer, audience string, sessions *helper.SessionVersionChecker) *Auth {
 	return &Auth{
 		AccessSecret: []byte(accessSecret),
 		Issuer:       issuer,
 		Audience:     audience,
 		Leeway:       2 * time.Second,
+		Sessions:     sessions,
 	}
 }
 
-func (a *Auth) ParseAccess(token string) (*helper.Claims, error) {
+func (a *Auth) ParseAccess(ctx context.Context, token string) (*helper.Claims, error) {
 	tok := strings.TrimSpace(token)
 	if strings.HasPrefix(strings.ToLower(tok), "bearer ") {
 		tok = strings.TrimSpace(tok[7:])
@@ -53,6 +56,11 @@ func (a *Auth) ParseAccess(token string) (*helper.Claims, error) {
 	}
 	if claims.TokenType != "access" { // or compare claims.TokenType if you named it that way
 		return nil, errors.New("wrong token type for websocket")
+	}
+	if a.Sessions != nil {
+		if err := a.Sessions.ValidateClaims(ctx, claims); err != nil {
+			return nil, err
+		}
 	}
 	return claims, nil
 }
