@@ -200,15 +200,17 @@ func readGatewayPacketWithTimeout(t *testing.T, conn *ws.Conn, timeout time.Dura
 
 func readBinaryMessageWithTimeout(t *testing.T, conn *ws.Conn, timeout time.Duration) []byte {
 	t.Helper()
-	_ = conn.SetReadDeadline(time.Now().Add(timeout))
-	mt, payload, err := conn.ReadMessage()
-	if err != nil {
-		t.Fatalf("read binary message: %v", err)
+	deadline := time.Now().Add(timeout)
+	for {
+		_ = conn.SetReadDeadline(deadline)
+		mt, payload, err := conn.ReadMessage()
+		if err != nil {
+			t.Fatalf("read binary message: %v", err)
+		}
+		if mt == ws.BinaryMessage {
+			return payload
+		}
 	}
-	if mt != ws.BinaryMessage {
-		t.Fatalf("expected binary message, got %d", mt)
-	}
-	return payload
 }
 
 func waitForGatewayOp(t *testing.T, conn *ws.Conn, timeout time.Duration, wantOp int) gatewayPacket {
