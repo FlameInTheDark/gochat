@@ -88,7 +88,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.AuthMiddleware(cfg.AuthSecret)
 	s.Use(helper.RequireTokenType("access", "api"))
 
-	nt, err := nats.New(cfg.NatsConnString)
+	nt, err := nats.New(cfg.NATSConnString)
 	if err != nil {
 		return nil, err
 	}

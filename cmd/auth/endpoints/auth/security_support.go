@@ -14,7 +14,6 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/helper"
-	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/mailer"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
@@ -81,13 +80,6 @@ func normalizeEmail(email string) string {
 func hashKeyPart(value string) string {
 	sum := sha256.Sum256([]byte(strings.TrimSpace(value)))
 	return hex.EncodeToString(sum[:])
-}
-
-func (e *entity) requireCache() error {
-	if e.cache == nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "cache is not configured")
-	}
-	return nil
 }
 
 func (e *entity) issueTokensForAuthentication(auth model.Authentication) (LoginResponse, error) {
@@ -173,7 +165,7 @@ func (e *entity) generateRecoveryCodes() ([]string, []model.AuthRecoveryCode, er
 		}
 		codes[i] = code
 		stored[i] = model.AuthRecoveryCode{
-			CodeID:    idgenNext(),
+			CodeID:    e.idGenerator(),
 			CodeHash:  hash,
 			CreatedAt: now,
 		}
@@ -313,16 +305,10 @@ func ttlSeconds(expiresAt time.Time) int64 {
 }
 
 func (e *entity) saveLoginChallenge(ctx context.Context, state loginChallengeState) error {
-	if err := e.requireCache(); err != nil {
-		return err
-	}
 	return e.cache.SetTimedJSON(ctx, loginChallengeKey(state.ChallengeID), state, ttlSeconds(state.ExpiresAt), cache.NoneProactive())
 }
 
 func (e *entity) loadLoginChallenge(ctx context.Context, challengeID string) (loginChallengeState, error) {
-	if err := e.requireCache(); err != nil {
-		return loginChallengeState{}, err
-	}
 	var state loginChallengeState
 	if err := e.cache.GetJSON(ctx, loginChallengeKey(challengeID), &state); err != nil {
 		return loginChallengeState{}, err
@@ -331,23 +317,14 @@ func (e *entity) loadLoginChallenge(ctx context.Context, challengeID string) (lo
 }
 
 func (e *entity) deleteLoginChallenge(ctx context.Context, challengeID string) error {
-	if err := e.requireCache(); err != nil {
-		return err
-	}
 	return e.cache.Delete(ctx, loginChallengeKey(challengeID))
 }
 
 func (e *entity) savePendingTOTPSetup(ctx context.Context, state pendingTOTPSetup) error {
-	if err := e.requireCache(); err != nil {
-		return err
-	}
 	return e.cache.SetTimedJSON(ctx, pendingTOTPSetupKey(state.SetupID), state, ttlSeconds(state.ExpiresAt), cache.NoneProactive())
 }
 
 func (e *entity) loadPendingTOTPSetup(ctx context.Context, setupID string) (pendingTOTPSetup, error) {
-	if err := e.requireCache(); err != nil {
-		return pendingTOTPSetup{}, err
-	}
 	var state pendingTOTPSetup
 	if err := e.cache.GetJSON(ctx, pendingTOTPSetupKey(setupID), &state); err != nil {
 		return pendingTOTPSetup{}, err
@@ -356,9 +333,6 @@ func (e *entity) loadPendingTOTPSetup(ctx context.Context, setupID string) (pend
 }
 
 func (e *entity) deletePendingTOTPSetup(ctx context.Context, setupID string) error {
-	if err := e.requireCache(); err != nil {
-		return err
-	}
 	return e.cache.Delete(ctx, pendingTOTPSetupKey(setupID))
 }
 
@@ -401,8 +375,4 @@ func (e *entity) sendEmailRecoveryCode(ctx context.Context, email, code string) 
 		Code:           code,
 		ExpiresMinutes: int(emailRecoveryCodeTTL / time.Minute),
 	})
-}
-
-func idgenNext() int64 {
-	return idgen.Next()
 }

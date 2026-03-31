@@ -219,6 +219,11 @@ type cachedEmbedResult struct {
 	Embed *embed.Embed `json:"embed,omitempty"`
 }
 
+type cacheResult struct {
+	Embed *embed.Embed
+	Hit   bool
+}
+
 func New(cfg Config) (*Generator, error) {
 	fetchTimeout := cfg.FetchTimeout
 	if fetchTimeout <= 0 {
@@ -380,8 +385,9 @@ func (g *Generator) GenerateURL(ctx context.Context, rawURL string) (*embed.Embe
 		return nil, skipEmbedError("excluded embed URL %s", normalizedURL)
 	}
 
-	if cached, cachedErr, ok := g.loadCachedResult(ctx, normalizedURL); ok {
-		return cached, cachedErr
+	cached, cachedErr := g.loadCachedResult(ctx, normalizedURL)
+	if cached.Hit {
+		return cached.Embed, cachedErr
 	}
 	if hasTwitterRef {
 		if result, err := g.generateTwitterStatusEmbed(ctx, parsedURL.String(), twitterRef); err == nil && result != nil {
@@ -690,27 +696,27 @@ func (g *Generator) shouldExcludeURL(rawURL, normalizedURL string) bool {
 	return false
 }
 
-func (g *Generator) loadCachedResult(ctx context.Context, rawURL string) (*embed.Embed, error, bool) {
+func (g *Generator) loadCachedResult(ctx context.Context, rawURL string) (cacheResult, error) {
 	if g.cache == nil || rawURL == "" {
-		return nil, nil, false
+		return cacheResult{Embed: nil, Hit: false}, nil
 	}
 
 	var cached cachedEmbedResult
 	if err := g.cache.GetJSON(ctx, embedCacheKey(rawURL), &cached); err != nil {
-		return nil, nil, false
+		return cacheResult{Embed: nil, Hit: false}, nil
 	}
 	if cached.Skip {
-		return nil, skipEmbedError("cached skip for %s", rawURL), true
+		return cacheResult{Embed: nil, Hit: true}, skipEmbedError("cached skip for %s", rawURL)
 	}
 	if cached.Embed == nil {
 		_ = g.cache.Delete(ctx, embedCacheKey(rawURL))
-		return nil, nil, false
+		return cacheResult{Embed: nil, Hit: false}, nil
 	}
 	if err := embed.ValidateEmbeds([]embed.Embed{*cached.Embed}); err != nil {
 		_ = g.cache.Delete(ctx, embedCacheKey(rawURL))
-		return nil, nil, false
+		return cacheResult{Embed: nil, Hit: false}, nil
 	}
-	return cached.Embed, nil, true
+	return cacheResult{Embed: cached.Embed, Hit: true}, nil
 }
 
 func (g *Generator) storeEmbedResult(ctx context.Context, rawURL string, result *embed.Embed) {

@@ -42,7 +42,7 @@ func (e *entity) CreateEmoji(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	guildId, err := e.parseGuildID(c)
@@ -165,7 +165,7 @@ func (e *entity) UpdateEmoji(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	guildId, err := e.parseGuildID(c)

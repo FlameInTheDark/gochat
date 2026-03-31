@@ -138,7 +138,7 @@ func (e *entity) ModifyUser(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	user, err := helper.GetUser(c)
@@ -517,7 +517,7 @@ func (e *entity) parseDMRequest(c *fiber.Ctx) (*CreateDMRequest, *helper.JWTUser
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, badRequestValidationError(err)
 	}
 
 	user, err := helper.GetUser(c)
@@ -648,7 +648,7 @@ func (e *entity) parseGroupDMRequest(c *fiber.Ctx) (*CreateDMManyRequest, *helpe
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, badRequestValidationError(err)
 	}
 
 	user, err := helper.GetUser(c)
@@ -992,11 +992,11 @@ func (e *entity) SetUserSettings(c *fiber.Ctx) error {
 	var req model.UserSettingsData
 	if err := json.Unmarshal(c.Body(), &req); err != nil {
 		reqLog.Error("failed to parse request body", slog.String("error", err.Error()))
-		return fiber.NewError(fiber.StatusBadRequest, "parse error: "+err.Error())
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
 	}
 	req.NormalizeCollections()
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	user, err := helper.GetUser(c)

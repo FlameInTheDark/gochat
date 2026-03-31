@@ -365,7 +365,7 @@ func (a *App) handleSignalV2Resume(conn *websocket.Conn, packet *voicev2.Incomin
 }
 
 func (a *App) runSignalV2Heartbeat(session *signalV2Session, reset <-chan struct{}, done <-chan struct{}) {
-	timeout := time.Duration(a.cfg.SignalHeartbeatIntervalMS)*time.Millisecond + signalHeartbeatGrace
+	timeout := time.Duration(a.cfg.SignalHeartbeatIntervalMS)*time.Millisecond + a.signalHeartbeatGrace
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 

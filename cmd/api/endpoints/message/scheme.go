@@ -30,6 +30,7 @@ const (
 	ErrUnableToSetReadState         = "unable to set read state"
 	ErrUnableToSendTypingEvent      = "unable to send typing event"
 	ErrInvalidAttachments           = "invalid attachments"
+	ErrInvalidEmbeds                = "invalid embeds"
 	ErrUnableToCreateThread         = "unable to create thread"
 	ErrThreadClosed                 = "thread is closed"
 	ErrThreadSourceInvalid          = "threads can only be created from guild text channel messages"
@@ -41,6 +42,7 @@ const (
 	ErrReferenceIdInvalid           = "reference ID must be positive"
 	ErrIncorrectReactionName        = "incorrect reaction name"
 	ErrAfterIdInvalid               = "after ID must be positive"
+	ErrUnableToParseQuery           = "unable to parse query"
 
 	// Validation error messages
 	ErrMessagePayloadRequired = "message content, attachments, or embeds are required"

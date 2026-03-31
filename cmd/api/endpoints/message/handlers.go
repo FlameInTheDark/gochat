@@ -216,7 +216,7 @@ func (e *entity) parseSendMessageRequest(c *fiber.Ctx) (*SendMessageRequest, *he
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, 0, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, 0, badRequestValidationError(err)
 	}
 
 	channelIdStr := c.Params("channel_id")
@@ -240,7 +240,7 @@ func (e *entity) parseThreadRequest(c *fiber.Ctx) (*CreateThreadRequest, *helper
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, 0, 0, badRequestValidationError(err)
 	}
 
 	channelIdStr := c.Params("channel_id")
@@ -589,7 +589,7 @@ func (e *entity) createThreadFromMessage(c *fiber.Ctx, req *CreateThreadRequest,
 	manualEmbedsJSON, err := embed.MarshalEmbeds(req.Embeds)
 	if err != nil {
 		cleanupThread()
-		return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, badRequestEmbedError(err)
 	}
 
 	initialMessagePosition, err := e.allocateMessagePosition(c.UserContext(), threadID)
@@ -1505,11 +1505,11 @@ type messageUserData struct {
 func (e *entity) createMessageWithCleanup(c *fiber.Ctx, messageId, channelId, userId, position int64, req *SendMessageRequest) error {
 	manualEmbedsJSON, err := embed.MarshalEmbeds(req.Embeds)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestEmbedError(err)
 	}
 	autoEmbedsJSON, err := embed.MarshalEmbeds(nil)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestEmbedError(err)
 	}
 
 	referenceID := requestedReferenceID(req)
@@ -2081,11 +2081,11 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 func (e *entity) parseGetMessagesRequest(c *fiber.Ctx) (*GetMessagesRequest, *helper.JWTUser, int64, error) {
 	var req GetMessagesRequest
 	if err := c.QueryParser(&req); err != nil {
-		return nil, nil, 0, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, 0, badRequestQueryParseError()
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, 0, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, 0, badRequestValidationError(err)
 	}
 
 	// Set defaults
@@ -2518,7 +2518,7 @@ func (e *entity) parseUpdateMessageRequest(c *fiber.Ctx) (*UpdateMessageRequest,
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, 0, 0, badRequestValidationError(err)
 	}
 
 	channelIdStr := c.Params("channel_id")
@@ -2615,11 +2615,11 @@ func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageR
 
 	embedsJSON, err := embed.MarshalEmbeds(updatedEmbeds)
 	if err != nil {
-		return dto.Message{}, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return dto.Message{}, badRequestEmbedError(err)
 	}
 	autoEmbedsJSON, err := embed.MarshalEmbeds(updatedAutoEmbeds)
 	if err != nil {
-		return dto.Message{}, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return dto.Message{}, badRequestEmbedError(err)
 	}
 
 	// Update the message
@@ -2988,7 +2988,7 @@ func (e *entity) parseAttachmentRequest(c *fiber.Ctx) (*UploadAttachmentRequest,
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, 0, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, 0, badRequestValidationError(err)
 	}
 
 	user, err := helper.GetUser(c)

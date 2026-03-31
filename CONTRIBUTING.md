@@ -74,14 +74,14 @@ Each service reads its configuration from a `*_config.yaml` file at the **reposi
 
 ```bash
 cp api_config.example.yaml api_config.yaml
-# edit api_config.yaml — at minimum set auth_secret to a random 32+ char string
+# edit api_config.yaml — for non-local environments, set auth_secret to a random 32+ char string
 ```
 
 All config example files follow the pattern `<service>_config.example.yaml`:
 `api`, `auth`, `ws`, `sfu`, `webhook`, `attachments`, `embedder`, `indexer`, `telemetry_gateway`.
 
-**Required secrets that must not use defaults:**
-- `auth_secret` — JWT signing secret, minimum 32 characters
+**Auth secret guidance:**
+- `auth_secret` — required; use a random 32+ character value outside local development
 
 ### 3.3 Run a service
 
@@ -137,7 +137,7 @@ gochat/
 │   ├── permissions/            # Permission bitmask helpers
 │   └── helper/                 # JWT, HTTP helpers
 │
-├── db/
+├── migration/
 │   ├── postgres/               # PostgreSQL migration files (.sql)
 │   └── cassandra/              # ScyllaDB migration files (.cql)
 │
@@ -242,7 +242,7 @@ Read **[`docs/CODESTYLE.md`](docs/CODESTYLE.md)** in full before writing code. T
 - Internal errors always wrap with `fmt.Errorf("verb noun: %w", err)`.
 - Goroutines inside handlers use `observability.BackgroundFromContext(c.UserContext())`.
 - Handler structs are named `handler` (unexported) with an exported `New(...)` constructor.
-- Config fields that are secrets must fail startup if left at their default value.
+- Required secrets must fail startup if empty, and weak/local placeholder values should emit warnings.
 - All initialisms are ALL_CAPS: `URL`, `ID`, `HTTP`, `NATS`, `JWT`.
 
 ### Linting
@@ -348,7 +348,7 @@ make add_migration_postgres name=add_user_display_name
 make add_migration_cassandra name=add_reaction_index
 ```
 
-This creates sequentially numbered files in `db/postgres/` or `db/cassandra/`.
+This creates sequentially numbered files in `migration/postgres/` or `migration/cassandra/`.
 
 ### 8.2 Rules for migrations
 

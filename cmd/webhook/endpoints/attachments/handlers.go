@@ -44,7 +44,7 @@ func (e *entity) Finalize(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.UserContext(), reqTO)

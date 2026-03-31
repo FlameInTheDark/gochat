@@ -68,7 +68,7 @@ func (e *entity) Heartbeat(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	if !e.tokens.Validate("sfu", req.ID, c.Get(hdrToken)) {
@@ -116,7 +116,7 @@ func (e *entity) ChannelUserJoin(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	log.Info("voice join received",
@@ -185,7 +185,7 @@ func (e *entity) ChannelUserLeave(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	if !e.tokens.Validate("sfu", "", c.Get(hdrToken)) {
@@ -244,7 +244,7 @@ func (e *entity) ChannelAlive(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	if !e.tokens.Validate("sfu", "", c.Get(hdrToken)) {

@@ -13,6 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/FlameInTheDark/gochat/internal/cache"
+	"github.com/FlameInTheDark/gochat/internal/cache/testutil"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
@@ -123,61 +124,10 @@ func (f *fakeRoleRepo) rolesForGuild(guildId int64) []model.Role {
 }
 
 type fakeCache struct {
+	testutil.Noop
 	jsonValues map[string][]byte
 	deleted    []string
 	deleteCh   chan string
-}
-
-func (f *fakeCache) Set(ctx context.Context, key, val string) error { return nil }
-func (f *fakeCache) Get(ctx context.Context, key string) (string, error) {
-	return "", errors.New("not implemented")
-}
-func (f *fakeCache) GetWithTTL(ctx context.Context, key string) (string, cache.LookupMeta, error) {
-	return "", cache.LookupMeta{}, nil
-}
-func (f *fakeCache) GetBytes(ctx context.Context, key string) ([]byte, error) {
-	return nil, errors.New("not implemented")
-}
-func (f *fakeCache) SetTimed(ctx context.Context, key, val string, ttl int64) error { return nil }
-func (f *fakeCache) SetTimedInt64(ctx context.Context, key string, val int64, ttl int64) error {
-	return nil
-}
-func (f *fakeCache) SetInt64(ctx context.Context, key string, val int64) error { return nil }
-func (f *fakeCache) SetTTL(ctx context.Context, key string, ttl int64) error   { return nil }
-func (f *fakeCache) Incr(ctx context.Context, key string) (int64, error)       { return 0, nil }
-func (f *fakeCache) GetInt64(ctx context.Context, key string) (int64, error)   { return 0, nil }
-func (f *fakeCache) HGet(ctx context.Context, key, field string) (string, error) {
-	return "", nil
-}
-func (f *fakeCache) HSet(ctx context.Context, key, field, value string) error { return nil }
-func (f *fakeCache) HDel(ctx context.Context, key, field string) error        { return nil }
-func (f *fakeCache) HGetAll(ctx context.Context, key string) (map[string]string, error) {
-	return nil, nil
-}
-func (f *fakeCache) HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error) {
-	return 0, nil
-}
-func (f *fakeCache) ZAdd(ctx context.Context, key string, score float64, member string) error {
-	return nil
-}
-func (f *fakeCache) ZRem(ctx context.Context, key string, members ...string) error { return nil }
-func (f *fakeCache) ZRevRangeByScore(ctx context.Context, key, max, min string, offset, count int64) ([]string, error) {
-	return nil, nil
-}
-func (f *fakeCache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
-	return nil
-}
-func (f *fakeCache) HGetAllMulti(_ context.Context, keys []string) ([]map[string]string, error) {
-	return make([]map[string]string, len(keys)), nil
-}
-func (f *fakeCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
-	return make([][]byte, len(keys)), nil
-}
-func (f *fakeCache) SetTimedJSONBatch(_ context.Context, keys []string, _ []interface{}, _ int64, _ ...cache.TimedOption) error {
-	return nil
-}
-func (f *fakeCache) ZAddBatch(_ context.Context, _ string, _ []cache.ZBatchMember) error {
-	return nil
 }
 
 func (f *fakeCache) Delete(ctx context.Context, key string) error {
@@ -221,20 +171,6 @@ func (f *fakeCache) GetJSON(ctx context.Context, key string, v interface{}) erro
 	}
 	return json.Unmarshal(raw, v)
 }
-func (f *fakeCache) GetJSONWithTTL(ctx context.Context, key string, v interface{}) (cache.LookupMeta, error) {
-	raw, ok := f.jsonValues[key]
-	if !ok {
-		return cache.LookupMeta{}, nil
-	}
-	if err := json.Unmarshal(raw, v); err != nil {
-		return cache.LookupMeta{}, err
-	}
-	return cache.LookupMeta{Hit: true, TTL: time.Hour, HasTTL: true}, nil
-}
-func (f *fakeCache) TryAcquireRefreshLock(ctx context.Context, key, token string, ttl time.Duration) (bool, error) {
-	return true, nil
-}
-func (f *fakeCache) ReleaseRefreshLock(ctx context.Context, key, token string) error { return nil }
 
 type fakeRoleTransport struct {
 	roleUpdates chan *mqmsg.UpdateGuildRole

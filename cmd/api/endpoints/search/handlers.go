@@ -82,7 +82,7 @@ func (e *entity) parseSearchRequest(c *fiber.Ctx) (*MessageSearchRequest, *helpe
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, badRequestValidationError(err)
 	}
 
 	user, err := helper.GetUser(c)

@@ -56,7 +56,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	shut.Up(cache)
 
 	// Email notifier
-	tmpl, err := mailer.NewEmailTemplate(cfg.EmailTemplate, cfg.PasswordResetTemplate, cfg.BaseUrl, cfg.AppName, time.Now().Year())
+	tmpl, err := mailer.NewEmailTemplate(cfg.EmailTemplate, cfg.PasswordResetTemplate, cfg.BaseURL, cfg.AppName, time.Now().Year())
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	case "log":
 		provider = logmailer.New(logger)
 	case "sendpulse":
-		provider = sendpulse.New(cfg.SendpulseUserId, cfg.SendpulseSecret)
+		provider = sendpulse.New(cfg.SendpulseUserID, cfg.SendpulseSecret)
 	case "smtp":
 		provider = smtp.New(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPUseTLS)
 	case "resend":
@@ -85,7 +85,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
-	mqt, err := nats.New(cfg.NatsConnString)
+	mqt, err := nats.New(cfg.NATSConnString)
 	if err != nil {
 		return nil, err
 	}
@@ -127,6 +127,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 			cfg.AuthSecret,
 			secretBox,
 			sessionChecker,
+			idgen.Next,
 			logger,
 			helper.RequireTokenType("access", "api"),
 			helper.RequireTokenType("refresh", "refresh"),

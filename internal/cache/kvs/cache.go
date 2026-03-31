@@ -149,6 +149,13 @@ func (c *Cache) Client() *redis.Client {
 	return c.c
 }
 
+func (c *Cache) Ping(ctx context.Context) error {
+	if ctx == nil {
+		return errors.New("nil context")
+	}
+	return c.c.Ping(ctx).Err()
+}
+
 func (c *Cache) Close() error {
 	return c.c.Close()
 }

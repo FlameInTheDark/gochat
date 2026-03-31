@@ -2,8 +2,10 @@ package auth
 
 import (
 	"log/slog"
+	"strings"
 
 	"github.com/FlameInTheDark/gochat/internal/observability"
+	"github.com/FlameInTheDark/gochat/internal/validationutil"
 	"github.com/gofiber/fiber/v2"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -17,14 +19,31 @@ func (e *entity) parseAndValidate(c *fiber.Ctx, operation string, req validatabl
 	log := observability.LoggerFromFiber(c, e.log)
 
 	if err := c.BodyParser(req); err != nil {
-		return rejectBadRequest(c, log, operation, "parse", ErrUnableToParseBody+": "+err.Error(), err)
+		return rejectBadRequest(c, log, operation, "parse", parseBodyPublicMessage(err), err)
 	}
 
 	if err := req.Validate(); err != nil {
-		return rejectBadRequest(c, log, operation, "validation", err.Error(), err)
+		publicMessage := validationutil.PublicMessage(err)
+		if publicMessage == "" {
+			publicMessage = ErrUnableToParseBody
+		}
+		return rejectBadRequest(c, log, operation, "validation", publicMessage, err)
 	}
 
 	return nil
+}
+
+func parseBodyPublicMessage(err error) string {
+	if err == nil {
+		return ErrUnableToParseBody
+	}
+
+	message := strings.TrimSpace(err.Error())
+	if message == "" {
+		return ErrUnableToParseBody
+	}
+
+	return ErrUnableToParseBody + ": " + message
 }
 
 func rejectBadRequest(c *fiber.Ctx, log *slog.Logger, operation, stage, publicMessage string, err error) error {
