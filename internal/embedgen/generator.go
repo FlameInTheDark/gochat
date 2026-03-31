@@ -723,14 +723,14 @@ func (g *Generator) storeEmbedResult(ctx context.Context, rawURL string, result 
 	if g.cache == nil || rawURL == "" || result == nil || g.cacheTTL <= 0 {
 		return
 	}
-	_ = g.cache.SetTimedJSON(ctx, embedCacheKey(rawURL), cachedEmbedResult{Embed: result}, int64(g.cacheTTL/time.Second), cache.NoneProactive())
+	_ = g.cache.SetTimedJSON(ctx, embedCacheKey(rawURL), cachedEmbedResult{Skip: false, Embed: result}, int64(g.cacheTTL/time.Second), cache.NoneProactive())
 }
 
 func (g *Generator) storeSkippedResult(ctx context.Context, rawURL string) {
 	if g.cache == nil || rawURL == "" || g.negativeCacheTTL <= 0 {
 		return
 	}
-	_ = g.cache.SetTimedJSON(ctx, embedCacheKey(rawURL), cachedEmbedResult{Skip: true}, int64(g.negativeCacheTTL/time.Second), cache.NoneProactive())
+	_ = g.cache.SetTimedJSON(ctx, embedCacheKey(rawURL), cachedEmbedResult{Skip: true, Embed: nil}, int64(g.negativeCacheTTL/time.Second), cache.NoneProactive())
 }
 
 func embedCacheKey(rawURL string) string {

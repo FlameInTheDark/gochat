@@ -131,7 +131,7 @@ func (e *entity) loadActiveFactorBundle(ctx context.Context, userID int64) (*mod
 
 func (e *entity) decryptTOTPSecret(totpFactor model.AuthTOTPFactor) (string, error) {
 	if e.secretBox == nil {
-		return "", fmt.Errorf(ErrUnableToDecryptSecret)
+		return "", errors.New(ErrUnableToDecryptSecret)
 	}
 	secret, err := e.secretBox.Decrypt(helper.EncryptedValue{
 		Nonce:      totpFactor.SecretNonce,

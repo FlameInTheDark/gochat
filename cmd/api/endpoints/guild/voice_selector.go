@@ -53,7 +53,10 @@ func newVoiceSelector(log *slog.Logger) *voiceSelector {
 }
 
 func (e *entity) preferredVoiceRegion(ctx context.Context, channelID int64) string {
-	region := e.defaultVoiceRegion
+	var region string
+	if e != nil {
+		region = e.defaultVoiceRegion
+	}
 	if e == nil || e.ch == nil {
 		return region
 	}

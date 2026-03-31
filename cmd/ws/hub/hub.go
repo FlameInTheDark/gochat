@@ -22,18 +22,18 @@ type Conn interface {
 }
 
 type Delivery struct {
+	Context context.Context
+	Headers nats.Header
 	Topic   string
 	Data    []byte
-	Headers nats.Header
-	Context context.Context
 }
 
 // topicEntry tracks a shared NATS subscription and all local connections
 // interested in this topic.
 type topicEntry struct {
-	mu    sync.RWMutex
 	sub   *nats.Subscription
 	conns map[Conn]struct{}
+	mu    sync.RWMutex
 }
 
 // Hub manages shared NATS subscriptions and fans messages out to local
@@ -42,9 +42,9 @@ type topicEntry struct {
 // and delivers received messages to every registered local connection in-memory.
 type Hub struct {
 	nc     *nats.Conn
-	mu     sync.RWMutex
 	topics map[string]*topicEntry
 	log    *slog.Logger
+	mu     sync.RWMutex
 }
 
 // New creates a new Hub backed by the given NATS connection.

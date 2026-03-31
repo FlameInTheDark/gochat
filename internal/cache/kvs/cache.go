@@ -182,11 +182,11 @@ func (c *Cache) GetWithTTL(ctx context.Context, key string) (string, cache.Looku
 	meta, val, err := c.getValueWithTTL(ctx, key)
 	if errors.Is(err, redis.Nil) {
 		finishCacheOperation(ctx, end, err)
-		return "", cache.LookupMeta{}, nil
+		return "", cache.LookupMeta{Hit: false, TTL: 0, HasTTL: false}, nil
 	}
 	if err != nil {
 		finishCacheOperation(ctx, end, err)
-		return "", cache.LookupMeta{}, err
+		return "", cache.LookupMeta{Hit: false, TTL: 0, HasTTL: false}, err
 	}
 	finishCacheOperation(ctx, end, nil)
 	return string(val), meta, nil
@@ -343,11 +343,11 @@ func (c *Cache) GetJSONWithTTL(ctx context.Context, key string, v interface{}) (
 	meta, raw, err := c.getValueWithTTL(ctx, key)
 	if errors.Is(err, redis.Nil) {
 		finishCacheOperation(ctx, end, err)
-		return cache.LookupMeta{}, nil
+		return cache.LookupMeta{Hit: false, TTL: 0, HasTTL: false}, nil
 	}
 	if err != nil {
 		finishCacheOperation(ctx, end, err)
-		return cache.LookupMeta{}, err
+		return cache.LookupMeta{Hit: false, TTL: 0, HasTTL: false}, err
 	}
 	err = json.Unmarshal(raw, v)
 	finishCacheOperation(ctx, end, err)
@@ -360,8 +360,11 @@ func (c *Cache) TryAcquireRefreshLock(ctx context.Context, key, token string, tt
 	}
 	ctx, end := c.operation(ctx, "refresh_lock_acquire", key)
 	res := c.c.SetArgs(ctx, key, token, redis.SetArgs{
-		TTL:  ttl,
-		Mode: "NX",
+		Mode:     "NX",
+		TTL:      ttl,
+		ExpireAt: time.Time{},
+		Get:      false,
+		KeepTTL:  false,
 	})
 	if err := res.Err(); err != nil && err != redis.Nil {
 		end(err)
@@ -589,16 +592,16 @@ func (c *Cache) getValueWithTTL(ctx context.Context, key string) (cache.LookupMe
 	ttlCmd := pipe.PTTL(ctx, key)
 	_, execErr := pipe.Exec(ctx)
 	if execErr != nil && !errors.Is(execErr, redis.Nil) {
-		return cache.LookupMeta{}, nil, execErr
+		return cache.LookupMeta{Hit: false, TTL: 0, HasTTL: false}, nil, execErr
 	}
 	if err := getCmd.Err(); err != nil {
-		return cache.LookupMeta{}, nil, err
+		return cache.LookupMeta{Hit: false, TTL: 0, HasTTL: false}, nil, err
 	}
 	raw, err := getCmd.Bytes()
 	if err != nil {
-		return cache.LookupMeta{}, nil, err
+		return cache.LookupMeta{Hit: false, TTL: 0, HasTTL: false}, nil, err
 	}
-	meta := cache.LookupMeta{Hit: true}
+	meta := cache.LookupMeta{Hit: true, TTL: 0, HasTTL: false}
 	ttl := ttlCmd.Val()
 	switch {
 	case ttl > 0:
@@ -632,8 +635,10 @@ func (c *Cache) getJSONLookupState(ctx context.Context, key string) (jsonLookupS
 	}
 
 	state := jsonLookupState{
-		Meta: cache.LookupMeta{Hit: true},
-		Raw:  raw,
+		Meta:     cache.LookupMeta{Hit: true, TTL: 0, HasTTL: false},
+		Raw:      raw,
+		Timed:    timedJSONMetadata{OriginalTTLSeconds: 0, Proactive: false},
+		HasTimed: false,
 	}
 	ttl := ttlCmd.Val()
 	switch {
@@ -738,20 +743,20 @@ func marshalTimedJSONMetadata(ttl int64, opts cache.TimedOptions) (string, error
 
 func makeRefreshReservationKey(ctx context.Context, key string) (refreshReservationKey, bool) {
 	if ctx == nil || key == "" {
-		return refreshReservationKey{}, false
+		return refreshReservationKey{ContextPtr: 0, Key: ""}, false
 	}
 	value := reflect.ValueOf(ctx)
 	if !value.IsValid() {
-		return refreshReservationKey{}, false
+		return refreshReservationKey{ContextPtr: 0, Key: ""}, false
 	}
 	switch value.Kind() {
 	case reflect.Pointer, reflect.UnsafePointer:
 		if value.IsNil() {
-			return refreshReservationKey{}, false
+			return refreshReservationKey{ContextPtr: 0, Key: ""}, false
 		}
 		return refreshReservationKey{ContextPtr: value.Pointer(), Key: key}, true
 	default:
-		return refreshReservationKey{}, false
+		return refreshReservationKey{ContextPtr: 0, Key: ""}, false
 	}
 }
 

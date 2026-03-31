@@ -37,19 +37,18 @@ var (
 )
 
 type Runtime struct {
-	serviceName string
-	logger      *slog.Logger
-
+	logExporter   interface{ Close() error }
+	logger        *slog.Logger
 	traceProvider *sdktrace.TracerProvider
 	meterProvider *sdkmetric.MeterProvider
-	logExporter   interface{ Close() error }
+	serviceName   string
 }
 
 type metricViewSpec struct {
 	namePattern       string
-	kind              sdkmetric.InstrumentKind
 	boundaries        []float64
 	allowedAttributes []attribute.Key
+	kind              sdkmetric.InstrumentKind
 }
 
 func Init(serviceName string, attrs ...attribute.KeyValue) (*Runtime, error) {

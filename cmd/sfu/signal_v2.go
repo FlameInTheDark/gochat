@@ -33,43 +33,35 @@ const (
 )
 
 type signalV2Session struct {
-	mu sync.Mutex
-
-	ctx    context.Context
-	log    *slog.Logger
-	writer *threadSafeWriter
-
-	sessionID string
-	phase     signalV2Phase
-	startedAt time.Time
-
-	userID    int64
-	channelID int64
-	guildID   *int64
-	perms     int64
-	moved     bool
-
-	pc    *webrtc.PeerConnection
-	state *peerConnectionState
-
-	joinNotified bool
-	peerAdded    bool
-
-	rtcConnectionID string
-	mediaSessionID  string
-
+	ctx                       context.Context
+	sessionID                 string
+	guildID                   *int64
+	log                       *slog.Logger
+	writer                    *threadSafeWriter
+	pc                        *webrtc.PeerConnection
+	state                     *peerConnectionState
+	rtcConnectionID           string
+	mediaSessionID            string
+	identityKey               *voicev2.IdentityKey
+	resumeTimer               *time.Timer
+	startedAt                 time.Time
+	daveEpoch                 uint64
+	davePendingEpoch          uint64
+	userID                    int64
+	channelID                 int64
+	perms                     int64
+	mu                        sync.Mutex
+	maxDAVEProtocolVersion    int
+	daveProtocolVersion       int
+	davePendingProtocol       int
+	phase                     signalV2Phase
 	supportsDAVE              bool
 	supportsEncodedTransforms bool
-	maxDAVEProtocolVersion    int
-	identityKey               *voicev2.IdentityKey
-	daveProtocolVersion       int
-	daveEpoch                 uint64
-	davePendingProtocol       int
-	davePendingEpoch          uint64
-
-	explicitClose bool
-	finalized     bool
-	resumeTimer   *time.Timer
+	explicitClose             bool
+	finalized                 bool
+	moved                     bool
+	joinNotified              bool
+	peerAdded                 bool
 }
 
 func (s *signalV2Session) setSessionDescriptionIDs(rtcConnectionID, mediaSessionID string) {

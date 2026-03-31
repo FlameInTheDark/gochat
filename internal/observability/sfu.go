@@ -10,7 +10,6 @@ import (
 )
 
 type SFUTelemetry struct {
-	baseAttrs          []attribute.KeyValue
 	activeChannels     metric.Int64UpDownCounter
 	activePeers        metric.Int64UpDownCounter
 	activeTracks       metric.Int64UpDownCounter
@@ -26,6 +25,7 @@ type SFUTelemetry struct {
 	adminCloseLatency  metric.Float64Histogram
 	connectionStates   metric.Int64Counter
 	peerDuration       metric.Float64Histogram
+	baseAttrs          []attribute.KeyValue
 }
 
 func NewSFUTelemetry(serviceName string, attrs ...attribute.KeyValue) *SFUTelemetry {

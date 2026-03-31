@@ -2071,7 +2071,7 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 	}
 
 	if isLatestWindowRequest(req) {
-		go e.backfillMessagesCache(context.Background(), channel.Id, messages)
+		go e.backfillMessagesCache(observability.BackgroundFromContext(c.UserContext()), channel.Id, messages)
 	}
 
 	return c.JSON(messages)
@@ -3354,12 +3354,12 @@ func (e *entity) tryMessagesFromCache(ctx context.Context, channelID int64) ([]d
 // backfillMessagesCache populates the sorted-set index and individual DTO keys
 // from a freshly-built message slice (DB result). Called as a goroutine after a
 // cache miss so it does not add latency to the response.
-func (e *entity) backfillMessagesCache(_ context.Context, channelID int64, msgs []dto.Message) {
+func (e *entity) backfillMessagesCache(ctx context.Context, channelID int64, msgs []dto.Message) {
 	if e.cache == nil {
 		return
 	}
 	// Use a detached context so backfill spans don't pollute the request trace.
-	ctx := context.Background()
+	ctx = observability.BackgroundFromContext(ctx)
 	keys := make([]string, len(msgs))
 	vals := make([]interface{}, len(msgs))
 	members := make([]icache.ZBatchMember, len(msgs))

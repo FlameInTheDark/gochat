@@ -39,10 +39,7 @@ func (q *Queue) MakeEmbedContext(ctx context.Context, msg MakeEmbedRequest) erro
 		return err
 	}
 
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	ctx, finish := observability.StartNATSPublishSpan(ctx, MakeEmbedSubject)
+	ctx, finish := observability.StartNATSPublishSpan(observability.BackgroundFromContext(ctx), MakeEmbedSubject)
 	defer func() {
 		finish(err)
 	}()

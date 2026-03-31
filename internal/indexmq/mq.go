@@ -67,10 +67,7 @@ func (i *IndexMQ) UpdateMessageContext(ctx context.Context, msg dto.IndexMessage
 }
 
 func (i *IndexMQ) publish(ctx context.Context, subject string, data []byte) (err error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	ctx, finish := observability.StartNATSPublishSpan(ctx, subject)
+	ctx, finish := observability.StartNATSPublishSpan(observability.BackgroundFromContext(ctx), subject)
 	defer func() {
 		finish(err)
 	}()

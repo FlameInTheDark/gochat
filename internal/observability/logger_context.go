@@ -21,7 +21,7 @@ func LoggerWithContext(ctx context.Context, logger *slog.Logger) *slog.Logger {
 
 func LoggerFromFiber(c *fiber.Ctx, logger *slog.Logger) *slog.Logger {
 	if c == nil {
-		return LoggerWithContext(nil, logger)
+		return LoggerWithContext(context.TODO(), logger)
 	}
 	return LoggerWithContext(c.UserContext(), logger)
 }

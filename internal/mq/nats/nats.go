@@ -77,10 +77,7 @@ func (q *NatsQueue) publish(ctx context.Context, subject string, msg mqmsg.Messa
 		return fmt.Errorf("unable to marshal message body: %w", err)
 	}
 
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	ctx, finish := observability.StartNATSPublishSpan(ctx, subject)
+	ctx, finish := observability.StartNATSPublishSpan(observability.BackgroundFromContext(ctx), subject)
 	defer func() {
 		finish(err)
 	}()

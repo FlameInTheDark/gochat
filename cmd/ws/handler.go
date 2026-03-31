@@ -33,12 +33,12 @@ import (
 // It wraps the writer pump's outbound channel so the hub can deliver
 // messages without blocking.
 type wsConn struct {
-	id        string
-	out       chan<- outMsg
-	userID    int64
-	telemetry *observability.WSTelemetry
 	cache     cachei.Cache
+	out       chan<- outMsg
+	telemetry *observability.WSTelemetry
 	close     func(reason string)
+	id        string
+	userID    int64
 }
 
 func (w *wsConn) Send(delivery hub.Delivery) {
@@ -75,16 +75,16 @@ func isAuthRevokedEvent(data []byte) bool {
 
 // outMsg is an internal message sent through the writer pump channel.
 type outMsg struct {
-	kind  int
-	data  []byte
 	v     any
-	done  chan error
-	topic string
 	ctx   context.Context
+	topic string
+	done  chan error
+	data  []byte
+	kind  int
 }
 
 func (a *App) wsHandler(c *websocket.Conn) {
-	requestCtx := context.Background()
+	requestCtx := context.TODO()
 	if raw := c.Locals("request_context"); raw != nil {
 		if current, ok := raw.(context.Context); ok && current != nil {
 			requestCtx = observability.BackgroundFromContext(current)
