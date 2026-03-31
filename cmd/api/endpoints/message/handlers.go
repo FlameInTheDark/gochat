@@ -216,7 +216,7 @@ func (e *entity) parseSendMessageRequest(c *fiber.Ctx) (*SendMessageRequest, *he
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, 0, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, 0, badRequestValidationError(err)
 	}
 
 	channelIdStr := c.Params("channel_id")
@@ -240,7 +240,7 @@ func (e *entity) parseThreadRequest(c *fiber.Ctx) (*CreateThreadRequest, *helper
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, 0, 0, badRequestValidationError(err)
 	}
 
 	channelIdStr := c.Params("channel_id")
@@ -354,7 +354,7 @@ func (e *entity) beginEnforcedNonce(ctx context.Context, userID, channelID int64
 	}
 
 	lockKey := key + ":lock"
-	acquired, err := e.cache.SetTimedJSONNX(ctx, lockKey, map[string]int64{"user_id": userID}, messageNonceLockTTLSeconds)
+	acquired, err := e.cache.SetTimedJSONNX(ctx, lockKey, map[string]int64{"user_id": userID}, messageNonceLockTTLSeconds, icache.NoneProactive())
 	if err != nil {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSendMessage)
 	}
@@ -415,7 +415,7 @@ func (e *entity) persistEnforcedNonce(ctx context.Context, reservation *enforced
 		return nil
 	}
 	record := enforcedNonceRecord{ChannelID: channelID, MessageID: messageID}
-	if err := e.cache.SetTimedJSON(ctx, reservation.key, record, messageNonceTTLSeconds); err != nil {
+	if err := e.cache.SetTimedJSON(ctx, reservation.key, record, messageNonceTTLSeconds, icache.NoneProactive()); err != nil {
 		return err
 	}
 	e.releaseEnforcedNonce(ctx, reservation)
@@ -589,7 +589,7 @@ func (e *entity) createThreadFromMessage(c *fiber.Ctx, req *CreateThreadRequest,
 	manualEmbedsJSON, err := embed.MarshalEmbeds(req.Embeds)
 	if err != nil {
 		cleanupThread()
-		return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, badRequestEmbedError(err)
 	}
 
 	initialMessagePosition, err := e.allocateMessagePosition(c.UserContext(), threadID)
@@ -1505,11 +1505,11 @@ type messageUserData struct {
 func (e *entity) createMessageWithCleanup(c *fiber.Ctx, messageId, channelId, userId, position int64, req *SendMessageRequest) error {
 	manualEmbedsJSON, err := embed.MarshalEmbeds(req.Embeds)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestEmbedError(err)
 	}
 	autoEmbedsJSON, err := embed.MarshalEmbeds(nil)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestEmbedError(err)
 	}
 
 	referenceID := requestedReferenceID(req)
@@ -2071,7 +2071,7 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 	}
 
 	if isLatestWindowRequest(req) {
-		go e.backfillMessagesCache(context.Background(), channel.Id, messages)
+		go e.backfillMessagesCache(observability.BackgroundFromContext(c.UserContext()), channel.Id, messages)
 	}
 
 	return c.JSON(messages)
@@ -2081,11 +2081,11 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 func (e *entity) parseGetMessagesRequest(c *fiber.Ctx) (*GetMessagesRequest, *helper.JWTUser, int64, error) {
 	var req GetMessagesRequest
 	if err := c.QueryParser(&req); err != nil {
-		return nil, nil, 0, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, 0, badRequestQueryParseError()
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, 0, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, 0, badRequestValidationError(err)
 	}
 
 	// Set defaults
@@ -2518,7 +2518,7 @@ func (e *entity) parseUpdateMessageRequest(c *fiber.Ctx) (*UpdateMessageRequest,
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, 0, 0, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, 0, 0, badRequestValidationError(err)
 	}
 
 	channelIdStr := c.Params("channel_id")
@@ -2615,11 +2615,11 @@ func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageR
 
 	embedsJSON, err := embed.MarshalEmbeds(updatedEmbeds)
 	if err != nil {
-		return dto.Message{}, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return dto.Message{}, badRequestEmbedError(err)
 	}
 	autoEmbedsJSON, err := embed.MarshalEmbeds(updatedAutoEmbeds)
 	if err != nil {
-		return dto.Message{}, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return dto.Message{}, badRequestEmbedError(err)
 	}
 
 	// Update the message
@@ -2988,7 +2988,7 @@ func (e *entity) parseAttachmentRequest(c *fiber.Ctx) (*UploadAttachmentRequest,
 	}
 
 	if err := req.Validate(); err != nil {
-		return nil, nil, 0, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, nil, 0, badRequestValidationError(err)
 	}
 
 	user, err := helper.GetUser(c)
@@ -3354,12 +3354,12 @@ func (e *entity) tryMessagesFromCache(ctx context.Context, channelID int64) ([]d
 // backfillMessagesCache populates the sorted-set index and individual DTO keys
 // from a freshly-built message slice (DB result). Called as a goroutine after a
 // cache miss so it does not add latency to the response.
-func (e *entity) backfillMessagesCache(_ context.Context, channelID int64, msgs []dto.Message) {
+func (e *entity) backfillMessagesCache(ctx context.Context, channelID int64, msgs []dto.Message) {
 	if e.cache == nil {
 		return
 	}
 	// Use a detached context so backfill spans don't pollute the request trace.
-	ctx := context.Background()
+	ctx = observability.BackgroundFromContext(ctx)
 	keys := make([]string, len(msgs))
 	vals := make([]interface{}, len(msgs))
 	members := make([]icache.ZBatchMember, len(msgs))
@@ -3369,7 +3369,7 @@ func (e *entity) backfillMessagesCache(_ context.Context, channelID int64, msgs 
 		vals[i] = m
 		members[i] = icache.ZBatchMember{Score: float64(m.Id), Member: messagecache.IDToMember(m.Id)}
 	}
-	_ = e.cache.SetTimedJSONBatch(ctx, keys, vals, messagecache.MessageTTLSeconds)
+	_ = e.cache.SetTimedJSONBatch(ctx, keys, vals, messagecache.MessageTTLSeconds, icache.NoneProactive())
 	_ = e.cache.ZAddBatch(ctx, messagecache.IndexKey(channelID), members)
 	_ = e.cache.SetTTL(ctx, messagecache.IndexKey(channelID), messagecache.IndexTTLSeconds)
 }
@@ -3380,7 +3380,7 @@ func (e *entity) pushMessageToWindowCache(ctx context.Context, channelID int64, 
 	if e.cache == nil {
 		return
 	}
-	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds)
+	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds, icache.NoneProactive())
 	_ = e.cache.ZAdd(ctx, messagecache.IndexKey(channelID), float64(msg.Id), messagecache.IDToMember(msg.Id))
 	_ = e.cache.SetTTL(ctx, messagecache.IndexKey(channelID), messagecache.IndexTTLSeconds)
 }
@@ -3391,7 +3391,7 @@ func (e *entity) refreshMessageInCache(ctx context.Context, channelID int64, msg
 	if e.cache == nil {
 		return
 	}
-	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds)
+	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds, icache.NoneProactive())
 }
 
 // evictMessageFromCache removes a deleted message's DTO key and drops its ID from

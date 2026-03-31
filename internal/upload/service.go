@@ -16,6 +16,7 @@ import (
 	attachmentrepo "github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	avatarrepo "github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
 	iconrepo "github.com/FlameInTheDark/gochat/internal/database/entities/icon"
+	"github.com/FlameInTheDark/gochat/internal/observability"
 )
 
 const (
@@ -148,7 +149,7 @@ func (s *AttachmentService) Upload(ctx context.Context, actorID, channelID, atta
 				if previewErr != nil {
 					extra = append(extra, "error", previewErr.Error())
 				}
-				s.logAttachmentPreviewFallback(slog.LevelWarn, "animated webp preview fallback to original asset",
+				s.logAttachmentPreviewFallback(ctx, slog.LevelWarn, "animated webp preview fallback to original asset",
 					channelID, attachmentID, placeholder.Name, prepared.ContentType, actualDimensions(widthPtr, heightPtr), reason, extra...)
 			}
 		} else {
@@ -183,7 +184,7 @@ func (s *AttachmentService) Upload(ctx context.Context, actorID, channelID, atta
 					reason = "preview_generation_failed"
 					extra = append(extra, "error", previewErr.Error())
 				}
-				s.logAttachmentPreviewFallback(slog.LevelWarn, "webp preview fallback to original asset",
+				s.logAttachmentPreviewFallback(ctx, slog.LevelWarn, "webp preview fallback to original asset",
 					channelID, attachmentID, placeholder.Name, prepared.ContentType, actualDimensions(widthPtr, heightPtr), reason, extra...)
 			case previewErr != nil:
 				return nil, previewErr
@@ -251,7 +252,7 @@ func actualDimensions(widthPtr, heightPtr *int64) string {
 	return fmt.Sprintf("%dx%d", *widthPtr, *heightPtr)
 }
 
-func (s *AttachmentService) logAttachmentPreviewFallback(level slog.Level, msg string, channelID, attachmentID int64, fileName, contentType, dimensions, reason string, extra ...any) {
+func (s *AttachmentService) logAttachmentPreviewFallback(ctx context.Context, level slog.Level, msg string, channelID, attachmentID int64, fileName, contentType, dimensions, reason string, extra ...any) {
 	if s.log == nil {
 		return
 	}
@@ -272,7 +273,7 @@ func (s *AttachmentService) logAttachmentPreviewFallback(level slog.Level, msg s
 	if len(extra) > 0 {
 		attrs = append(attrs, extra...)
 	}
-	s.log.Log(context.Background(), level, msg, attrs...)
+	s.log.Log(observability.BackgroundFromContext(ctx), level, msg, attrs...)
 }
 
 type AvatarResult struct {

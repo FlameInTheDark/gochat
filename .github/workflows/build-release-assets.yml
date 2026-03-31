@@ -11,235 +11,92 @@ permissions:
 
 jobs:
   build-images:
-    name: Build and Push Container Images
+    name: Build and Push ${{ matrix.service }} Release Image
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: api
+            dockerfile: api.Dockerfile
+            image: gochat-api
+            cache_scope: api-release
+          - service: ws
+            dockerfile: ws.Dockerfile
+            image: gochat-ws
+            cache_scope: ws-release
+          - service: auth
+            dockerfile: auth.Dockerfile
+            image: gochat-auth
+            cache_scope: auth-release
+          - service: indexer
+            dockerfile: indexer.Dockerfile
+            image: gochat-indexer
+            cache_scope: indexer-release
+          - service: embedder
+            dockerfile: embedder.Dockerfile
+            image: gochat-embedder
+            cache_scope: embedder-release
+          - service: attachments
+            dockerfile: attachments.Dockerfile
+            image: gochat-attachments
+            cache_scope: attachments-release
+          - service: webhook
+            dockerfile: webhook.Dockerfile
+            image: gochat-webhook
+            cache_scope: webhook-release
+          - service: telemetry-gateway
+            dockerfile: telemetry-gateway.Dockerfile
+            image: gochat-telemetry-gateway
+            cache_scope: telemetry-gateway-release
+          - service: sfu
+            dockerfile: sfu.Dockerfile
+            image: gochat-sfu
+            cache_scope: sfu-release
+          - service: migrations
+            dockerfile: migration.Dockerfile
+            image: gochat-migrations
+            cache_scope: migrations-release
     steps:
       # Checkout the specific tag associated with the release
       - name: Check out code at specific tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # github.ref is the tag name for release events (e.g., refs/tags/v1.0.0)
           ref: ${{ github.ref }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }} # Uses the workflow's GITHUB_TOKEN
 
-      - name: Extract metadata for API image
-        id: meta_api
-        uses: docker/metadata-action@v5
+      - name: Extract metadata for ${{ matrix.service }} image
+        id: meta_release
+        uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/${{ github.repository_owner }}/gochat-api
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
           tags: |
             type=ref,event=tag
             # Always tag as latest on release
             type=raw,value=latest,enable=true
 
-      - name: Build and push API image
-        uses: docker/build-push-action@v5
+      - name: Build and push ${{ matrix.service }} image
+        uses: docker/build-push-action@v7
         with:
           context: . # Build context is the repository root
-          file: ./api.Dockerfile # Dockerfile is in the root
+          file: ./${{ matrix.dockerfile }} # Dockerfile is in the root
           push: true
-          tags: ${{ steps.meta_api.outputs.tags }}
-          labels: ${{ steps.meta_api.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract metadata for WS image
-        id: meta_ws
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/gochat-ws
-          tags: |
-            type=ref,event=tag
-            # Always tag as latest on release
-            type=raw,value=latest,enable=true
-
-      - name: Build and push WS image
-        uses: docker/build-push-action@v5
-        with:
-          context: . # Build context is the repository root
-          file: ./ws.Dockerfile # Dockerfile is in the root
-          push: true
-          tags: ${{ steps.meta_ws.outputs.tags }}
-          labels: ${{ steps.meta_ws.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract metadata for AUTH image
-        id: meta_auth
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/gochat-auth
-          tags: |
-            type=ref,event=tag
-            # Always tag as latest on release
-            type=raw,value=latest,enable=true
-
-      - name: Build and push AUTH image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./auth.Dockerfile
-          push: true
-          tags: ${{ steps.meta_auth.outputs.tags }}
-          labels: ${{ steps.meta_auth.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract metadata for INDEXER image
-        id: meta_indexer
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/gochat-indexer
-          tags: |
-            type=ref,event=tag
-            # Always tag as latest on release
-            type=raw,value=latest,enable=true
-
-      - name: Build and push INDEXER image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./indexer.Dockerfile
-          push: true
-          tags: ${{ steps.meta_indexer.outputs.tags }}
-          labels: ${{ steps.meta_indexer.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract metadata for EMBEDDER image
-        id: meta_embedder
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/gochat-embedder
-          tags: |
-            type=ref,event=tag
-            # Always tag as latest on release
-            type=raw,value=latest,enable=true
-
-      - name: Build and push EMBEDDER image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./embedder.Dockerfile
-          push: true
-          tags: ${{ steps.meta_embedder.outputs.tags }}
-          labels: ${{ steps.meta_embedder.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract metadata for ATTACHMENTS image
-        id: meta_attachments
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/gochat-attachments
-          tags: |
-            type=ref,event=tag
-            # Always tag as latest on release
-            type=raw,value=latest,enable=true
-
-      - name: Build and push ATTACHMENTS image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./attachments.Dockerfile
-          push: true
-          tags: ${{ steps.meta_attachments.outputs.tags }}
-          labels: ${{ steps.meta_attachments.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract metadata for WEBHOOK image
-        id: meta_webhook
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/gochat-webhook
-          tags: |
-            type=ref,event=tag
-            # Always tag as latest on release
-            type=raw,value=latest,enable=true
-
-      - name: Build and push WEBHOOK image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./webhook.Dockerfile
-          push: true
-          tags: ${{ steps.meta_webhook.outputs.tags }}
-          labels: ${{ steps.meta_webhook.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract metadata for TELEMETRY GATEWAY image
-        id: meta_telemetry_gateway
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/gochat-telemetry-gateway
-          tags: |
-            type=ref,event=tag
-            type=raw,value=latest,enable=true
-
-      - name: Build and push TELEMETRY GATEWAY image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./telemetry-gateway.Dockerfile
-          push: true
-          tags: ${{ steps.meta_telemetry_gateway.outputs.tags }}
-          labels: ${{ steps.meta_telemetry_gateway.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract metadata for SFU image
-        id: meta_sfu
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/gochat-sfu
-          tags: |
-            type=ref,event=tag
-            type=raw,value=latest,enable=true
-
-      - name: Build and push SFU image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./sfu.Dockerfile
-          push: true
-          tags: ${{ steps.meta_sfu.outputs.tags }}
-          labels: ${{ steps.meta_sfu.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract metadata for MIGRATIONS image
-        id: meta_migrations
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/gochat-migrations
-          tags: |
-            type=ref,event=tag
-            type=raw,value=latest,enable=true
-
-      - name: Build and push MIGRATIONS image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./migration.Dockerfile
-          push: true
-          tags: ${{ steps.meta_migrations.outputs.tags }}
-          labels: ${{ steps.meta_migrations.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta_release.outputs.tags }}
+          labels: ${{ steps.meta_release.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.cache_scope }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.cache_scope }}
 
   build-binaries:
     name: Build and Upload Release Binaries
@@ -247,14 +104,14 @@ jobs:
     needs: build-images
     steps:
       - name: Check out code at tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.ref }}
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
-          go-version: '1.22.x'
+          go-version-file: go.mod
 
       - name: Build SFU and Tools binaries (linux/amd64)
         env:

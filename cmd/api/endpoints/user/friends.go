@@ -136,7 +136,7 @@ func (e *entity) CreateFriendRequest(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	me, err := helper.GetUser(c)
@@ -207,7 +207,7 @@ func (e *entity) Unfriend(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	me, err := helper.GetUser(c)
@@ -327,7 +327,7 @@ func (e *entity) AcceptFriendRequest(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	me, err := helper.GetUser(c)
@@ -399,7 +399,7 @@ func (e *entity) DeclineFriendRequest(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	me, err := helper.GetUser(c)

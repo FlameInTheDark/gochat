@@ -126,36 +126,70 @@ func (t *threadSafeWriter) Close() {
 type peerConnectionState struct {
 	peerConnection  *webrtc.PeerConnection
 	websocket       *threadSafeWriter
-	userID          int64
-	perms           int64 // voice permission bitmask from JWT
-	signalVersion   int
 	rtcConnectionID string
 	mediaSessionID  string
+	metaMu          sync.RWMutex
+	userID          int64
+	perms           int64 // voice permission bitmask from JWT
+	offeredRevision uint64
+	appliedRevision uint64
+	signalVersion   int
 	daveProtocol    int
 	daveEpoch       uint64
 	serverMuted     bool // server-wide mute (admin action)
 	serverDeafened  bool // server-wide deafen (admin action)
 	negotiated      bool // true after the peer has answered at least one offer
 	forceOffer      bool // explicit renegotiation request for this peer
-	offeredRevision uint64
-	appliedRevision uint64
 }
 
 func (p *peerConnectionState) sendDescription(desc webrtc.SessionDescription) error {
 	if p.signalVersion == signalProtocolVersion2 {
+		rtcConnectionID, mediaSessionID, daveProtocol, daveEpoch := p.sessionDescriptionMetadata()
 		audioCodec, videoCodec := detectNegotiatedCodecs(desc.SDP)
 		return p.websocket.SendVoiceGatewayPacket(voicev2.OpSessionDescription, voicev2.SessionDescription{
 			Type:                desc.Type.String(),
 			SDP:                 desc.SDP,
-			RTCConnectionID:     p.rtcConnectionID,
-			MediaSessionID:      p.mediaSessionID,
+			RTCConnectionID:     rtcConnectionID,
+			MediaSessionID:      mediaSessionID,
 			AudioCodec:          audioCodec,
 			VideoCodec:          videoCodec,
-			DAVEProtocolVersion: p.daveProtocol,
-			DAVEEpoch:           p.daveEpoch,
+			DAVEProtocolVersion: daveProtocol,
+			DAVEEpoch:           daveEpoch,
 		})
 	}
 	return p.websocket.SendRTCOffer(desc)
+}
+
+func (p *peerConnectionState) sessionDescriptionMetadata() (rtcConnectionID, mediaSessionID string, daveProtocol int, daveEpoch uint64) {
+	p.metaMu.RLock()
+	defer p.metaMu.RUnlock()
+
+	return p.rtcConnectionID, p.mediaSessionID, p.daveProtocol, p.daveEpoch
+}
+
+func (p *peerConnectionState) setSessionDescriptionMetadata(rtcConnectionID, mediaSessionID string, daveProtocol int, daveEpoch uint64) {
+	p.metaMu.Lock()
+	defer p.metaMu.Unlock()
+
+	p.rtcConnectionID = rtcConnectionID
+	p.mediaSessionID = mediaSessionID
+	p.daveProtocol = daveProtocol
+	p.daveEpoch = daveEpoch
+}
+
+func (p *peerConnectionState) setDAVEState(daveProtocol int, daveEpoch uint64) {
+	p.metaMu.Lock()
+	defer p.metaMu.Unlock()
+
+	p.daveProtocol = daveProtocol
+	p.daveEpoch = daveEpoch
+}
+
+func (p *peerConnectionState) daveState() (int, uint64) {
+	p.metaMu.RLock()
+	defer p.metaMu.RUnlock()
+
+	return p.daveProtocol, p.daveEpoch
 }
 
 func (p *peerConnectionState) sendSpeaking(fromUser int64, speaking int) error {
@@ -202,8 +236,8 @@ func (p *peerConnectionState) sendKick(targetUserID int64) error {
 
 type trackLocalEntry struct {
 	track *webrtc.TrackLocalStaticRTP
-	owner int64
 	kind  string
+	owner int64
 }
 
 // ---------------------------------------------------------------------------
@@ -212,14 +246,7 @@ type trackLocalEntry struct {
 // ---------------------------------------------------------------------------
 
 type channelState struct {
-	id  int64
-	log *slog.Logger
-
-	mu               sync.RWMutex
-	peers            []*peerConnectionState
-	trackLocals      map[string]trackLocalEntry
-	topologyRevision uint64
-
+	log         *slog.Logger
 	ttlTicker   *time.Ticker
 	ttlStopChan chan struct{}
 
@@ -227,14 +254,20 @@ type channelState struct {
 	// A dedicated goroutine reads from it with debounce.
 	signalCh   chan struct{}
 	signalStop chan struct{}
-	stopped    atomic.Bool
 
 	// Per-channel blocked users set
 	blockedUsers map[int64]bool
 
+	telemetry   *observability.SFUTelemetry
+	trackLocals map[string]trackLocalEntry
+	peers       []*peerConnectionState
+
+	id               int64
+	topologyRevision uint64
 	// Configured limits
 	maxAudioBitrateBps uint64
-	telemetry          *observability.SFUTelemetry
+	mu                 sync.RWMutex
+	stopped            atomic.Bool
 }
 
 func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToken, routeID, routeURL, routeRegion string, log *slog.Logger, maxAudioBitrateBps uint64, telemetry *observability.SFUTelemetry) *channelState {
@@ -757,24 +790,22 @@ func (c *channelState) blockUser(targetUserID int64, block bool) {
 // ---------------------------------------------------------------------------
 
 type SFU struct {
-	log      *slog.Logger
-	mu       sync.RWMutex
-	channels map[int64]*channelState
-
+	log        *slog.Logger
+	httpClient *resty.Client // Shared HTTP client for all webhook calls
+	channels   map[int64]*channelState
+	telemetry  *observability.SFUTelemetry
+	// Graceful shutdown
+	done         chan struct{}
 	webhookUrl   string
 	webhookToken string
 	routeID      string
 	routeURL     string
 	routeRegion  string
-	httpClient   *resty.Client // Shared HTTP client for all webhook calls
 
 	maxAudioBitrateBps    uint64
-	enforceAudioBitrate   bool
+	mu                    sync.RWMutex
 	audioBitrateMarginPct int
-	telemetry             *observability.SFUTelemetry
-
-	// Graceful shutdown
-	done chan struct{}
+	enforceAudioBitrate   bool
 }
 
 func NewSFU(webhookUrl, webhookToken, routeID, routeURL, routeRegion string, log *slog.Logger, maxAudioBitrateBps uint64, enforceAudioBitrate bool, audioBitrateMarginPct int, telemetry *observability.SFUTelemetry) *SFU {

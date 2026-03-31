@@ -22,7 +22,7 @@ jobs:
     steps:
       # 1. Checkout code using PAT for push permissions
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }} # Use PAT - VERIFY THIS SECRET NAME
           fetch-depth: 0
@@ -30,7 +30,7 @@ jobs:
 
       # 2. Setup Node.js
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
 

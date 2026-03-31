@@ -12,7 +12,7 @@ import (
 type Config struct {
 	Cluster               []string      `yaml:"cluster" env:"CLUSTER" env-default:""`
 	ClusterKeyspace       string        `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
-	NatsConnString        string        `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
+	NATSConnString        string        `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 	KeyDB                 string        `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
 	CacheTTL              time.Duration `yaml:"cache_ttl" env:"CACHE_TTL" env-default:"6h"`
 	NegativeCacheTTL      time.Duration `yaml:"negative_cache_ttl" env:"NEGATIVE_CACHE_TTL" env-default:"30m"`

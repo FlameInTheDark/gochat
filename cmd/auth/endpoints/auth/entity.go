@@ -21,6 +21,11 @@ import (
 
 const entityName = "auth"
 
+type authCache interface {
+	cache.KV
+	cache.JSON
+}
+
 func (e *entity) Init(router fiber.Router) {
 	router.Post("/login", e.Login)
 	router.Post("/login/2fa/totp", e.LoginTOTP)
@@ -52,10 +57,11 @@ type entity struct {
 
 	// Services
 	log            *slog.Logger
-	cache          cache.Cache
+	cache          authCache
 	mqt            mq.SendTransporter
 	secretBox      *helper.SecretBox
 	sessionChecker *helper.SessionVersionChecker
+	idGenerator    func() int64
 
 	// DB entities
 	auth              authentication.Authentication
@@ -72,7 +78,14 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(pg *pgdb.DB, cache cache.Cache, m *mailer.Mailer, transporter mq.SendTransporter, appName, secret string, secretBox *helper.SecretBox, sessionChecker *helper.SessionVersionChecker, log *slog.Logger, accessMiddleware, refreshMiddleware fiber.Handler) server.Entity {
+func New(pg *pgdb.DB, cache authCache, m *mailer.Mailer, transporter mq.SendTransporter, appName, secret string, secretBox *helper.SecretBox, sessionChecker *helper.SessionVersionChecker, idGenerator func() int64, log *slog.Logger, accessMiddleware, refreshMiddleware fiber.Handler) server.Entity {
+	if cache == nil {
+		panic("auth cache is required")
+	}
+	if idGenerator == nil {
+		panic("auth id generator is required")
+	}
+
 	return &entity{
 		name:              entityName,
 		appName:           appName,
@@ -83,6 +96,7 @@ func New(pg *pgdb.DB, cache cache.Cache, m *mailer.Mailer, transporter mq.SendTr
 		mqt:               transporter,
 		secretBox:         secretBox,
 		sessionChecker:    sessionChecker,
+		idGenerator:       idGenerator,
 		auth:              authentication.New(pg.Conn()),
 		factor:            authfactor.New(pg.Conn()),
 		user:              user.New(pg.Conn()),

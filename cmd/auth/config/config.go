@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/configutil"
 	"github.com/go-playground/validator/v10"
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -16,7 +17,7 @@ type Config struct {
 	RateLimitTime              int    `yaml:"rate_limit_time" env:"RATE_LIMIT_TIME" env-default:"1"`
 	RateLimitRequests          int    `yaml:"rate_limit_requests" env:"RATE_LIMIT_REQUESTS" env-default:"20"`
 	AppName                    string `yaml:"app_name" env:"APP_NAME" env-default:"GoChat"`
-	BaseUrl                    string `yaml:"base_url" env:"BASE_URL" env-default:"http://example.com" validation:"http_url"`
+	BaseURL                    string `yaml:"base_url" env:"BASE_URL" env-default:"http://example.com" validation:"http_url"`
 	EmailSource                string `yaml:"email_source" env:"EMAIL_SOURCE" env-default:"no-reply@example.com" validation:"email"`
 	EmailName                  string `yaml:"email_name" env:"EMAIL_NAME" env-default:"no-reply"`
 	EmailTemplate              string `yaml:"email_template" env:"EMAIL_TEMPLATE" env-default:"./email_notify.tmpl"`
@@ -28,17 +29,17 @@ type Config struct {
 	SMTPUsername               string `yaml:"smtp_username" env:"SMTP_USERNAME" env-default:""`
 	SMTPPassword               string `yaml:"smtp_password" env:"SMTP_PASSWORD" env-default:""`
 	SMTPUseTLS                 bool   `yaml:"smtp_use_tls" env:"SMTP_USE_TLS" env-default:"false"`
-	SendpulseUserId            string `yaml:"sendpulse_user_id" env:"SENDPULSE_USER_ID" env-default:""`
+	SendpulseUserID            string `yaml:"sendpulse_user_id" env:"SENDPULSE_USER_ID" env-default:""`
 	SendpulseSecret            string `yaml:"sendpulse_secret" env:"SENDPULSE_SECRET" env-default:""`
 	ResendAPIKey               string `yaml:"resend_api_key" env:"RESEND_API_KEY" env-default:""`
 	DashaMailAPIKey            string `yaml:"dashamail_api_key" env:"DASHAMAIL_API_KEY" env-default:""`
-	AuthSecret                 string `yaml:"auth_secret" env:"AUTH_SECRET" env-default:"change_me_before_use_it_in_production"`
+	AuthSecret                 string `yaml:"auth_secret" env:"AUTH_SECRET"`
 	MFAEncryptionKey           string `yaml:"mfa_encryption_key" env:"MFA_ENCRYPTION_KEY" env-default:""`
 	Swagger                    bool   `yaml:"swagger" env:"SWAGGER" env-default:"false"`
 	KeyDB                      string `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
 	PGDSN                      string `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
 	PGRetries                  int    `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
-	NatsConnString             string `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
+	NATSConnString             string `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {
@@ -51,5 +52,12 @@ func LoadConfig(logger *slog.Logger) (*Config, error) {
 			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
 	}
-	return &config, validator.New().Struct(&config)
+	if err := validator.New().Struct(&config); err != nil {
+		return nil, err
+	}
+	if err := configutil.ValidateAuthSecret(config.AuthSecret); err != nil {
+		return nil, err
+	}
+	configutil.WarnWeakAuthSecret(logger, config.AuthSecret, "auth")
+	return &config, nil
 }

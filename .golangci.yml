@@ -1,0 +1,42 @@
+version: "2"
+
+run:
+  tests: true
+
+linters:
+  default: none
+  enable:
+    - contextcheck
+    - errcheck
+    - govet
+    - noctx
+    - staticcheck
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - errcheck
+          - noctx
+        path: _test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: true
+
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

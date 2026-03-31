@@ -150,7 +150,7 @@ flowchart LR
 
 ## Stack
 
-- Go `1.25.1`
+- Go `1.25.8`
 - Fiber, Fiber WebSocket, and Pion WebRTC
 - Citus/PostgreSQL for relational data
 - ScyllaDB for message timelines and attachment-heavy data
@@ -166,7 +166,7 @@ flowchart LR
 ```text
 cmd/             runnable services and operational tools
 internal/        shared packages for transport, storage, search, mail, presence, and server wiring
-db/              PostgreSQL and ScyllaDB migrations
+migration/       PostgreSQL and ScyllaDB migrations
 docs/            project docs and generated OpenAPI output
 clients/api/     generated Go and TypeScript API clients
 compose.yaml     reference local development stack
@@ -177,7 +177,7 @@ Makefile         bootstrap, migration, client generation, and rebuild commands
 
 ### Prerequisites
 
-- Go `1.25.1` or newer
+- Go `1.25.8` or newer
 - Docker and Docker Compose
 - GNU Make
 - `migrate` CLI when you want to create migration files locally (`make tools` installs it)

@@ -41,24 +41,23 @@ type openObserveLogExporterConfig struct {
 }
 
 type openObserveLogExporter struct {
-	client        *http.Client
-	config        openObserveLogExporterConfig
-	queue         chan []byte
-	done          chan struct{}
-	cancel        context.CancelFunc
-	registration  metric.Registration
-	shutdownOnce  sync.Once
-	enqueuedTotal atomic.Int64
-	successTotal  atomic.Int64
-	failureTotal  atomic.Int64
-	droppedTotal  atomic.Int64
-	lastSuccess   atomic.Int64
-
+	config         openObserveLogExporterConfig
+	registration   metric.Registration
 	enqueueCounter metric.Int64Counter
 	successCounter metric.Int64Counter
 	failureCounter metric.Int64Counter
 	droppedCounter metric.Int64Counter
 	batchLatency   metric.Float64Histogram
+	client         *http.Client
+	queue          chan []byte
+	done           chan struct{}
+	cancel         context.CancelFunc
+	enqueuedTotal  atomic.Int64
+	successTotal   atomic.Int64
+	failureTotal   atomic.Int64
+	droppedTotal   atomic.Int64
+	lastSuccess    atomic.Int64
+	shutdownOnce   sync.Once
 }
 
 func loadOpenObserveLogExporterConfigFromEnv() (openObserveLogExporterConfig, bool, error) {
@@ -159,14 +158,18 @@ func (e *openObserveLogExporter) Close() error {
 		return nil
 	}
 
+	var closeErr error
 	e.shutdownOnce.Do(func() {
 		e.cancel()
 		<-e.done
 		if e.registration != nil {
-			e.registration.Unregister()
+			closeErr = e.registration.Unregister()
 		}
 	})
-	return nil
+	if closeErr != nil {
+		Logger().Warn("unable to unregister OpenObserve log exporter metrics", "error", closeErr.Error())
+	}
+	return closeErr
 }
 
 func (e *openObserveLogExporter) run(ctx context.Context) {
@@ -192,7 +195,7 @@ func (e *openObserveLogExporter) run(ctx context.Context) {
 				case entry := <-e.queue:
 					batch = append(batch, entry)
 				default:
-					flush(context.Background())
+					flush(BackgroundFromContext(ctx))
 					return
 				}
 			}
@@ -235,8 +238,9 @@ func (e *openObserveLogExporter) flushBatch(ctx context.Context, batch [][]byte)
 	for attempt := 1; attempt <= e.config.maxAttempts; attempt++ {
 		err := e.sendBatch(ctx, body)
 		if err == nil {
-			e.recordSuccess(int64(len(batch)))
-			e.batchLatency.Record(context.Background(), time.Since(started).Seconds())
+			recordCtx := BackgroundFromContext(ctx)
+			e.recordSuccess(recordCtx, int64(len(batch)))
+			e.batchLatency.Record(recordCtx, time.Since(started).Seconds())
 			e.lastSuccess.Store(time.Now().Unix())
 			return nil
 		}
@@ -248,13 +252,13 @@ func (e *openObserveLogExporter) flushBatch(ctx context.Context, batch [][]byte)
 		select {
 		case <-ctx.Done():
 			lastErr = ctx.Err()
-			e.recordFailure(int64(len(batch)))
+			e.recordFailure(ctx, int64(len(batch)))
 			return lastErr
 		case <-time.After(time.Duration(attempt) * e.config.retryBackoff):
 		}
 	}
 
-	e.recordFailure(int64(len(batch)))
+	e.recordFailure(ctx, int64(len(batch)))
 	return lastErr
 }
 
@@ -292,17 +296,17 @@ func (e *openObserveLogExporter) recordEnqueued(delta int64) {
 	}
 }
 
-func (e *openObserveLogExporter) recordSuccess(delta int64) {
+func (e *openObserveLogExporter) recordSuccess(ctx context.Context, delta int64) {
 	e.successTotal.Add(delta)
 	if e.successCounter != nil {
-		e.successCounter.Add(context.Background(), delta)
+		e.successCounter.Add(BackgroundFromContext(ctx), delta)
 	}
 }
 
-func (e *openObserveLogExporter) recordFailure(delta int64) {
+func (e *openObserveLogExporter) recordFailure(ctx context.Context, delta int64) {
 	e.failureTotal.Add(delta)
 	if e.failureCounter != nil {
-		e.failureCounter.Add(context.Background(), delta)
+		e.failureCounter.Add(BackgroundFromContext(ctx), delta)
 	}
 }
 
@@ -315,8 +319,8 @@ func (e *openObserveLogExporter) recordDropped(delta int64) {
 
 type jsonLineWriter struct {
 	exporter *openObserveLogExporter
-	mu       sync.Mutex
 	pending  []byte
+	mu       sync.Mutex
 }
 
 func (w *jsonLineWriter) Write(p []byte) (int, error) {
@@ -344,8 +348,8 @@ func (w *jsonLineWriter) Write(p []byte) (int, error) {
 }
 
 type openObserveSendError struct {
-	statusCode int
 	message    string
+	statusCode int
 }
 
 func (e openObserveSendError) Error() string {

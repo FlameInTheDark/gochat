@@ -7,9 +7,11 @@ import (
 	"testing"
 
 	cachepkg "github.com/FlameInTheDark/gochat/internal/cache"
+	"github.com/FlameInTheDark/gochat/internal/cache/testutil"
 )
 
 type fakeRouteCache struct {
+	testutil.Noop
 	jsonValues map[string][]byte
 }
 
@@ -27,22 +29,6 @@ func (f *fakeRouteCache) Get(ctx context.Context, key string) (string, error) {
 	}
 	return string(raw), nil
 }
-func (f *fakeRouteCache) Delete(ctx context.Context, key string) error { return nil }
-func (f *fakeRouteCache) GetBytes(ctx context.Context, key string) ([]byte, error) {
-	raw, ok := f.jsonValues[key]
-	if !ok {
-		return nil, errors.New("cache miss")
-	}
-	return append([]byte(nil), raw...), nil
-}
-func (f *fakeRouteCache) SetTimed(ctx context.Context, key, val string, ttl int64) error { return nil }
-func (f *fakeRouteCache) SetTimedInt64(ctx context.Context, key string, val int64, ttl int64) error {
-	return nil
-}
-func (f *fakeRouteCache) SetInt64(ctx context.Context, key string, val int64) error { return nil }
-func (f *fakeRouteCache) SetTTL(ctx context.Context, key string, ttl int64) error   { return nil }
-func (f *fakeRouteCache) Incr(ctx context.Context, key string) (int64, error)       { return 0, nil }
-func (f *fakeRouteCache) GetInt64(ctx context.Context, key string) (int64, error)   { return 0, nil }
 func (f *fakeRouteCache) SetJSON(ctx context.Context, key string, val interface{}) error {
 	f.ensure()
 	raw, err := json.Marshal(val)
@@ -52,10 +38,10 @@ func (f *fakeRouteCache) SetJSON(ctx context.Context, key string, val interface{
 	f.jsonValues[key] = raw
 	return nil
 }
-func (f *fakeRouteCache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64) error {
+func (f *fakeRouteCache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64, _ ...cachepkg.TimedOption) error {
 	return f.SetJSON(ctx, key, val)
 }
-func (f *fakeRouteCache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64) (bool, error) {
+func (f *fakeRouteCache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64, _ ...cachepkg.TimedOption) (bool, error) {
 	if _, ok := f.jsonValues[key]; ok {
 		return false, nil
 	}
@@ -67,37 +53,6 @@ func (f *fakeRouteCache) GetJSON(ctx context.Context, key string, v interface{})
 		return errors.New("cache miss")
 	}
 	return json.Unmarshal(raw, v)
-}
-func (f *fakeRouteCache) HGet(ctx context.Context, key, field string) (string, error) { return "", nil }
-func (f *fakeRouteCache) HSet(ctx context.Context, key, field, value string) error    { return nil }
-func (f *fakeRouteCache) HDel(ctx context.Context, key, field string) error           { return nil }
-func (f *fakeRouteCache) HGetAll(ctx context.Context, key string) (map[string]string, error) {
-	return nil, nil
-}
-func (f *fakeRouteCache) HGetAllMulti(_ context.Context, keys []string) ([]map[string]string, error) {
-	return make([]map[string]string, len(keys)), nil
-}
-func (f *fakeRouteCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
-	return make([][]byte, len(keys)), nil
-}
-func (f *fakeRouteCache) HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error) {
-	return 0, nil
-}
-func (f *fakeRouteCache) SetTimedJSONBatch(_ context.Context, keys []string, _ []interface{}, _ int64) error {
-	return nil
-}
-func (f *fakeRouteCache) ZAddBatch(_ context.Context, _ string, _ []cachepkg.ZBatchMember) error {
-	return nil
-}
-func (f *fakeRouteCache) ZAdd(ctx context.Context, key string, score float64, member string) error {
-	return nil
-}
-func (f *fakeRouteCache) ZRem(ctx context.Context, key string, members ...string) error { return nil }
-func (f *fakeRouteCache) ZRevRangeByScore(ctx context.Context, key, max, min string, offset, count int64) ([]string, error) {
-	return nil, nil
-}
-func (f *fakeRouteCache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
-	return nil
 }
 
 func TestRefreshVoiceRouteWritesBinding(t *testing.T) {

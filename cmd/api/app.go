@@ -56,6 +56,69 @@ type App struct {
 
 const threadMessageCountFlushInterval = 5 * time.Second
 const reactionFlushReadBlock = 2 * time.Second
+const startupProbeTimeout = 3 * time.Second
+const startupProbeMaxDelay = 5 * time.Second
+
+func retryStartupProbe(ctx context.Context, logger *slog.Logger, dependency string, maxRetries int, probe func(context.Context) error) error {
+	if ctx == nil {
+		return fmt.Errorf("probe %s: nil context", dependency)
+	}
+
+	delay := time.Second
+	for attempt := 1; ; attempt++ {
+		probeCtx, cancel := context.WithTimeout(ctx, startupProbeTimeout)
+		err := probe(probeCtx)
+		cancel()
+		if err == nil {
+			return nil
+		}
+
+		if logger != nil {
+			logger.Warn(
+				"startup dependency probe failed; retrying",
+				slog.String("dependency", dependency),
+				slog.Int("attempt", attempt),
+				slog.String("error", err.Error()),
+			)
+		}
+		if maxRetries > 0 && attempt >= maxRetries {
+			return fmt.Errorf("probe %s after %d attempts: %w", dependency, attempt, err)
+		}
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("probe %s canceled: %w", dependency, ctx.Err())
+		case <-time.After(delay):
+		}
+
+		delay *= 2
+		if delay > startupProbeMaxDelay {
+			delay = startupProbeMaxDelay
+		}
+	}
+}
+
+func verifyAPIInfrastructure(logger *slog.Logger, retries int, pg *pgdb.DB, database *db.CQLCon, cache *kvs.Cache, natsQueue *nats.NatsQueue, indexMQ *indexmq.IndexMQ, embedMQ *embedmq.Queue) error {
+	baseCtx := context.Background()
+	if err := retryStartupProbe(baseCtx, logger, "postgres", retries, func(ctx context.Context) error {
+		return pg.Conn().PingContext(ctx)
+	}); err != nil {
+		return err
+	}
+	if err := retryStartupProbe(baseCtx, logger, "scylla", retries, database.Ping); err != nil {
+		return err
+	}
+	if err := retryStartupProbe(baseCtx, logger, "redis", retries, cache.Ping); err != nil {
+		return err
+	}
+	if err := retryStartupProbe(baseCtx, logger, "nats", retries, natsQueue.Ping); err != nil {
+		return err
+	}
+	if err := retryStartupProbe(baseCtx, logger, "indexer_nats", retries, indexMQ.Ping); err != nil {
+		return err
+	}
+	return retryStartupProbe(baseCtx, logger, "embedder_nats", retries, embedMQ.Ping)
+}
 
 func startThreadMessageCountFlusher(ctx context.Context, cache *kvs.Cache, repo channelrepo.Channel, logger *slog.Logger) {
 	if cache == nil || repo == nil {
@@ -252,7 +315,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 
 	logger.Info("Connecting to NATS")
 	var qt mq.SendTransporter
-	nt, err := nats.New(cfg.NatsConnString)
+	nt, err := nats.New(cfg.NATSConnString)
 	if err != nil {
 		return nil, err
 	}
@@ -260,14 +323,14 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	qt = nt
 
 	logger.Info("Connecting to Indexer NATS")
-	imq, err := indexmq.NewIndexMQ(cfg.IndexerNatsConnString)
+	imq, err := indexmq.NewIndexMQ(cfg.IndexerNATSConnString)
 	if err != nil {
 		return nil, err
 	}
 	shut.Up(imq)
 
 	logger.Info("Connecting to Embedder NATS")
-	emq, err := embedmq.New(cfg.NatsConnString)
+	emq, err := embedmq.New(cfg.NATSConnString)
 	if err != nil {
 		return nil, err
 	}
@@ -283,6 +346,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 	shut.Up(cache)
 
+	if err := verifyAPIInfrastructure(logger, cfg.PGRetries, pg, database, cache, nt, imq, emq); err != nil {
+		return nil, err
+	}
+
 	threadCountCtx, cancelThreadCount := context.WithCancel(context.Background())
 	shut.UpFunc(cancelThreadCount)
 	go startThreadMessageCountFlusher(threadCountCtx, cache, channelrepo.New(pg.Conn()), logger)
@@ -292,8 +359,8 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	go startReactionFlusher(reactionFlushCtx, cache, reactionrepo.New(database), logger)
 
 	logger.Info("Connecting to NATS for SFU occupancy updates")
-	if cfg.NatsConnString != "" {
-		if occNc, err := natsio.Connect(cfg.NatsConnString, natsio.Compression(true)); err == nil {
+	if cfg.NATSConnString != "" {
+		if occNc, err := natsio.Connect(cfg.NATSConnString, natsio.Compression(true)); err == nil {
 			shut.UpFunc(func() { _ = occNc.Drain() })
 			_, _ = occNc.Subscribe("voice.occ", func(m *natsio.Msg) {
 				type occ struct {
@@ -358,7 +425,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.RateLimitPipedMiddleware(cfg.RateLimitRequests, cfg.RateLimitTime)
 	s.Use(helper.RequireTokenType("access", "api"))
 	s.Use(func(c *fiber.Ctx) error {
-		c.Locals("base_url", cfg.BaseUrl)
+		c.Locals("base_url", cfg.BaseURL)
 		return c.Next()
 	})
 

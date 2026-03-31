@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	NatsConnString       string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`
+	NATSConnString       string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`
 	OSInsecureSkipVerify bool     `yaml:"os_insecure_skip_verify" env:"OS_INSECURE_SKIP_VERIFY"`
 	OSAddresses          []string `yaml:"os_addresses" env:"OS_ADDRESSES"`
 	OSUsername           string   `yaml:"os_username" env:"OS_USERNAME"`

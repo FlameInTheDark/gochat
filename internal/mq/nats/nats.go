@@ -28,6 +28,13 @@ func (q *NatsQueue) Close() error {
 	return nil
 }
 
+func (q *NatsQueue) Ping(ctx context.Context) error {
+	if ctx == nil {
+		return context.Canceled
+	}
+	return q.conn.FlushWithContext(ctx)
+}
+
 func (q *NatsQueue) SendChannelMessage(channelId int64, message mqmsg.EventDataMessage) error {
 	return q.SendChannelMessageContext(context.Background(), channelId, message)
 }
@@ -70,10 +77,7 @@ func (q *NatsQueue) publish(ctx context.Context, subject string, msg mqmsg.Messa
 		return fmt.Errorf("unable to marshal message body: %w", err)
 	}
 
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	ctx, finish := observability.StartNATSPublishSpan(ctx, subject)
+	ctx, finish := observability.StartNATSPublishSpan(observability.BackgroundFromContext(ctx), subject)
 	defer func() {
 		finish(err)
 	}()

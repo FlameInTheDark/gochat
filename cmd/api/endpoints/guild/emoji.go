@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -42,7 +41,7 @@ func (e *entity) CreateEmoji(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	guildId, err := e.parseGuildID(c)
@@ -165,7 +164,7 @@ func (e *entity) UpdateEmoji(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	guildId, err := e.parseGuildID(c)
@@ -301,7 +300,7 @@ func (e *entity) invalidateEmojiCache(ctx context.Context, guildId, emojiId int6
 
 func (e *entity) removeEmojiObjects(ctx context.Context, emojiId int64) error {
 	if e.storage == nil {
-		return fmt.Errorf(ErrEmojiStorageUnavailable)
+		return errors.New(ErrEmojiStorageUnavailable)
 	}
 	for _, key := range []string{upload.EmojiMasterKey(emojiId), upload.EmojiSizedKey(emojiId, 96), upload.EmojiSizedKey(emojiId, 44)} {
 		if err := e.storage.RemoveAttachment(ctx, key); err != nil {

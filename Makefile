@@ -18,6 +18,9 @@ tools:
 	go install -tags "postgres cassandra" github.com/golang-migrate/migrate/v4/cmd/migrate@$(MIGRATE_VERSION)
 	go install github.com/swaggo/swag/v2/cmd/swag@latest
 
+lint:
+	golangci-lint run --timeout 5m
+
 build_migration_image:
 	docker build --build-arg MIGRATE_VERSION=$(MIGRATE_VERSION) -f migration.Dockerfile -t $(MIGRATION_IMAGE) .
 
@@ -86,28 +89,28 @@ migrate: migrate_pg migrate_scylla
 migrate_down: migrate_pg_down migrate_scylla_down
 
 migrate_scylla:
-	migrate -database $(CASSANDRA_ADDRESS) -path ./db/cassandra up
+	migrate -database $(CASSANDRA_ADDRESS) -path ./migration/cassandra up
 
 migrate_pg:
-	migrate -database $(PG_ADDRESS) -path ./db/postgres up
+	migrate -database $(PG_ADDRESS) -path ./migration/postgres up
 
 migrate_scylla_down:
-	migrate -database $(CASSANDRA_ADDRESS) -path ./db/cassandra down
+	migrate -database $(CASSANDRA_ADDRESS) -path ./migration/cassandra down
 
 migrate_scylla_rollback:
-	migrate -database $(CASSANDRA_ADDRESS) -path ./db/cassandra down 1
+	migrate -database $(CASSANDRA_ADDRESS) -path ./migration/cassandra down 1
 
 migrate_pg_down:
-	migrate -database $(PG_ADDRESS) -path ./db/postgres down
+	migrate -database $(PG_ADDRESS) -path ./migration/postgres down
 
 migrate_pg_rollback:
-	migrate -database $(PG_ADDRESS) -path ./db/postgres down 1
+	migrate -database $(PG_ADDRESS) -path ./migration/postgres down 1
 
 add_migration_postgres:
-	migrate create -ext sql -dir db/postgres -seq $(name)
+	migrate create -ext sql -dir migration/postgres -seq $(name)
 
 add_migration_cassandra:
-	migrate create -ext cql -dir db/cassandra -seq $(name)
+	migrate create -ext cql -dir migration/cassandra -seq $(name)
 
 swag:
 	swag fmt
@@ -133,7 +136,7 @@ go_client:
 
 setup: tools up migrate
 
-.PHONY: setup tools build_migration_image migrate_image migrate_image_down migrate_image_scylla migrate_image_pg migrate_image_scylla_down migrate_image_scylla_rollback migrate_image_pg_down migrate_image_pg_rollback run run_ws run_embedder rebuild_all rebuild_api rebuild_auth rebuild_ws rebuild_indexer rebuild_attachments rebuild_sfu rebuild_webhook rebuild_embedder rebuild_telemetry_gateway
+.PHONY: setup tools lint build_migration_image migrate_image migrate_image_down migrate_image_scylla migrate_image_pg migrate_image_scylla_down migrate_image_scylla_rollback migrate_image_pg_down migrate_image_pg_rollback run run_ws run_embedder rebuild_all rebuild_api rebuild_auth rebuild_ws rebuild_indexer rebuild_attachments rebuild_sfu rebuild_webhook rebuild_embedder rebuild_telemetry_gateway
 
 # Dev tools
 rebuild_all: rebuild_api rebuild_auth rebuild_indexer rebuild_embedder rebuild_ws

@@ -46,7 +46,7 @@ func NewApp(logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
-	c, err := nq.Connect(cfg.NatsConnString, nq.Compression(true))
+	c, err := nq.Connect(cfg.NATSConnString, nq.Compression(true))
 	if err != nil {
 		return nil, err
 	}
