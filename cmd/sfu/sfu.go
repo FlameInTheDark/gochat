@@ -124,6 +124,8 @@ func (t *threadSafeWriter) Close() {
 // ---------------------------------------------------------------------------
 
 type peerConnectionState struct {
+	metaMu sync.RWMutex
+
 	peerConnection  *webrtc.PeerConnection
 	websocket       *threadSafeWriter
 	userID          int64
@@ -143,19 +145,52 @@ type peerConnectionState struct {
 
 func (p *peerConnectionState) sendDescription(desc webrtc.SessionDescription) error {
 	if p.signalVersion == signalProtocolVersion2 {
+		rtcConnectionID, mediaSessionID, daveProtocol, daveEpoch := p.sessionDescriptionMetadata()
 		audioCodec, videoCodec := detectNegotiatedCodecs(desc.SDP)
 		return p.websocket.SendVoiceGatewayPacket(voicev2.OpSessionDescription, voicev2.SessionDescription{
 			Type:                desc.Type.String(),
 			SDP:                 desc.SDP,
-			RTCConnectionID:     p.rtcConnectionID,
-			MediaSessionID:      p.mediaSessionID,
+			RTCConnectionID:     rtcConnectionID,
+			MediaSessionID:      mediaSessionID,
 			AudioCodec:          audioCodec,
 			VideoCodec:          videoCodec,
-			DAVEProtocolVersion: p.daveProtocol,
-			DAVEEpoch:           p.daveEpoch,
+			DAVEProtocolVersion: daveProtocol,
+			DAVEEpoch:           daveEpoch,
 		})
 	}
 	return p.websocket.SendRTCOffer(desc)
+}
+
+func (p *peerConnectionState) sessionDescriptionMetadata() (rtcConnectionID, mediaSessionID string, daveProtocol int, daveEpoch uint64) {
+	p.metaMu.RLock()
+	defer p.metaMu.RUnlock()
+
+	return p.rtcConnectionID, p.mediaSessionID, p.daveProtocol, p.daveEpoch
+}
+
+func (p *peerConnectionState) setSessionDescriptionMetadata(rtcConnectionID, mediaSessionID string, daveProtocol int, daveEpoch uint64) {
+	p.metaMu.Lock()
+	defer p.metaMu.Unlock()
+
+	p.rtcConnectionID = rtcConnectionID
+	p.mediaSessionID = mediaSessionID
+	p.daveProtocol = daveProtocol
+	p.daveEpoch = daveEpoch
+}
+
+func (p *peerConnectionState) setDAVEState(daveProtocol int, daveEpoch uint64) {
+	p.metaMu.Lock()
+	defer p.metaMu.Unlock()
+
+	p.daveProtocol = daveProtocol
+	p.daveEpoch = daveEpoch
+}
+
+func (p *peerConnectionState) daveState() (int, uint64) {
+	p.metaMu.RLock()
+	defer p.metaMu.RUnlock()
+
+	return p.daveProtocol, p.daveEpoch
 }
 
 func (p *peerConnectionState) sendSpeaking(fromUser int64, speaking int) error {

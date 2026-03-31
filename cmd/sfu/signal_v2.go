@@ -72,6 +72,83 @@ type signalV2Session struct {
 	resumeTimer   *time.Timer
 }
 
+func (s *signalV2Session) setSessionDescriptionIDs(rtcConnectionID, mediaSessionID string) {
+	s.mu.Lock()
+	s.rtcConnectionID = rtcConnectionID
+	s.mediaSessionID = mediaSessionID
+	state := s.state
+	daveProtocol := s.daveProtocolVersion
+	daveEpoch := s.daveEpoch
+	s.mu.Unlock()
+
+	if state != nil {
+		state.setSessionDescriptionMetadata(rtcConnectionID, mediaSessionID, daveProtocol, daveEpoch)
+	}
+}
+
+func (s *signalV2Session) setDAVEState(protocol int, epoch uint64) {
+	s.mu.Lock()
+	s.daveProtocolVersion = protocol
+	s.daveEpoch = epoch
+	state := s.state
+	s.mu.Unlock()
+
+	if state != nil {
+		state.setDAVEState(protocol, epoch)
+	}
+}
+
+func (s *signalV2Session) setDAVEStateAndPending(protocol int, epoch uint64) {
+	s.mu.Lock()
+	s.daveProtocolVersion = protocol
+	s.daveEpoch = epoch
+	s.davePendingProtocol = protocol
+	s.davePendingEpoch = epoch
+	state := s.state
+	s.mu.Unlock()
+
+	if state != nil {
+		state.setDAVEState(protocol, epoch)
+	}
+}
+
+func (s *signalV2Session) setDAVEPending(protocol int, epoch uint64) {
+	s.mu.Lock()
+	s.davePendingProtocol = protocol
+	s.davePendingEpoch = epoch
+	s.mu.Unlock()
+}
+
+func (s *signalV2Session) setDAVEPendingProtocol(protocol int) {
+	s.mu.Lock()
+	s.davePendingProtocol = protocol
+	if protocol == 0 {
+		s.davePendingEpoch = 0
+	}
+	s.mu.Unlock()
+}
+
+func (s *signalV2Session) applyPendingDAVEState() {
+	s.mu.Lock()
+	s.daveProtocolVersion = s.davePendingProtocol
+	s.daveEpoch = s.davePendingEpoch
+	protocol := s.daveProtocolVersion
+	epoch := s.daveEpoch
+	state := s.state
+	s.mu.Unlock()
+
+	if state != nil {
+		state.setDAVEState(protocol, epoch)
+	}
+}
+
+func (s *signalV2Session) sessionDescriptionSnapshot() (rtcConnectionID, mediaSessionID string, daveProtocol int, daveEpoch uint64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.rtcConnectionID, s.mediaSessionID, s.daveProtocolVersion, s.daveEpoch
+}
+
 func parseSignalProtocolVersion(raw string) (int, bool) {
 	switch strings.TrimSpace(raw) {
 	case "", "1":
@@ -335,16 +412,7 @@ func (a *App) handleSignalV2Resume(conn *websocket.Conn, packet *voicev2.Incomin
 
 	a.bindSignalV2Session(session, conn)
 	snapshot := a.dave.Snapshot(session.channelID)
-	session.mu.Lock()
-	session.daveProtocolVersion = snapshot.ProtocolVersion
-	session.daveEpoch = snapshot.Epoch
-	session.davePendingProtocol = snapshot.ProtocolVersion
-	session.davePendingEpoch = snapshot.Epoch
-	if session.state != nil {
-		session.state.daveProtocol = snapshot.ProtocolVersion
-		session.state.daveEpoch = snapshot.Epoch
-	}
-	session.mu.Unlock()
+	session.setDAVEStateAndPending(snapshot.ProtocolVersion, snapshot.Epoch)
 
 	if err := session.writer.SendVoiceGatewayPacket(voicev2.OpHello, voicev2.Hello{
 		V:                 voicev2.ProtocolVersion,
@@ -489,12 +557,7 @@ func (a *App) handleSignalV2SelectProtocol(session *signalV2Session, raw json.Ra
 	}
 
 	descType := parseVoiceGatewaySDPType(selectProtocol.Type, webrtc.SDPTypeOffer)
-	session.rtcConnectionID = selectProtocol.RTCConnectionID
-	session.mediaSessionID = newSignalSessionID()
-	session.state.rtcConnectionID = session.rtcConnectionID
-	session.state.mediaSessionID = session.mediaSessionID
-	session.state.daveProtocol = session.daveProtocolVersion
-	session.state.daveEpoch = session.daveEpoch
+	session.setSessionDescriptionIDs(selectProtocol.RTCConnectionID, newSignalSessionID())
 
 	switch session.phase {
 	case signalV2PhaseAwaitSelectProtocol:
@@ -524,23 +587,19 @@ func (a *App) handleSignalV2SelectProtocol(session *signalV2Session, raw json.Ra
 			answerToSend.SDP = limitAudioBitrateInSDP(answerToSend.SDP, a.sfu.maxAudioBitrateBps)
 		}
 
-		session.daveProtocolVersion = 0
-		session.daveEpoch = 0
-		session.davePendingProtocol = 0
-		session.davePendingEpoch = 0
-		session.state.daveProtocol = session.daveProtocolVersion
-		session.state.daveEpoch = session.daveEpoch
+		session.setDAVEStateAndPending(0, 0)
+		rtcConnectionID, mediaSessionID, daveProtocol, daveEpoch := session.sessionDescriptionSnapshot()
 
 		audioCodec, videoCodec := detectNegotiatedCodecs(answerToSend.SDP)
 		if err := session.writer.SendVoiceGatewayPacket(voicev2.OpSessionDescription, voicev2.SessionDescription{
 			Type:                answerToSend.Type.String(),
 			SDP:                 answerToSend.SDP,
-			RTCConnectionID:     session.rtcConnectionID,
-			MediaSessionID:      session.mediaSessionID,
+			RTCConnectionID:     rtcConnectionID,
+			MediaSessionID:      mediaSessionID,
 			AudioCodec:          audioCodec,
 			VideoCodec:          videoCodec,
-			DAVEProtocolVersion: session.daveProtocolVersion,
-			DAVEEpoch:           session.daveEpoch,
+			DAVEProtocolVersion: daveProtocol,
+			DAVEEpoch:           daveEpoch,
 		}); err != nil {
 			return err
 		}
@@ -593,16 +652,17 @@ func (a *App) handleSignalV2SelectProtocol(session *signalV2Session, raw json.Ra
 		if a.sfu.maxAudioBitrateBps > 0 {
 			answerToSend.SDP = limitAudioBitrateInSDP(answerToSend.SDP, a.sfu.maxAudioBitrateBps)
 		}
+		rtcConnectionID, mediaSessionID, daveProtocol, daveEpoch := session.sessionDescriptionSnapshot()
 		audioCodec, videoCodec := detectNegotiatedCodecs(answerToSend.SDP)
 		return session.writer.SendVoiceGatewayPacket(voicev2.OpSessionDescription, voicev2.SessionDescription{
 			Type:                answerToSend.Type.String(),
 			SDP:                 answerToSend.SDP,
-			RTCConnectionID:     session.rtcConnectionID,
-			MediaSessionID:      session.mediaSessionID,
+			RTCConnectionID:     rtcConnectionID,
+			MediaSessionID:      mediaSessionID,
 			AudioCodec:          audioCodec,
 			VideoCodec:          videoCodec,
-			DAVEProtocolVersion: session.state.daveProtocol,
-			DAVEEpoch:           session.state.daveEpoch,
+			DAVEProtocolVersion: daveProtocol,
+			DAVEEpoch:           daveEpoch,
 		})
 
 	default:
