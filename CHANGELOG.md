@@ -1,3 +1,21 @@
+# [1.12.0](https://github.com/FlameInTheDark/gochat/compare/v1.11.0...v1.12.0) (2026-03-31)
+
+
+### Bug Fixes
+
+* 500 error on expired invites fix ([957c7b6](https://github.com/FlameInTheDark/gochat/commit/957c7b6571271e130366eb3de3e4c56fab69f60f))
+* fixed broken test ([7702485](https://github.com/FlameInTheDark/gochat/commit/77024857bcc7707ac890e59cb2ce9855054e83c9))
+* lint fixes ([a68d8e4](https://github.com/FlameInTheDark/gochat/commit/a68d8e4580c042a3fa5f5b73ae4bb4dfd550bf7e))
+* password recovery fix ([de84874](https://github.com/FlameInTheDark/gochat/commit/de8487444b3fe3a29d399ae5e3144ddd21f110ea))
+* password recovery id fix ([bfede73](https://github.com/FlameInTheDark/gochat/commit/bfede734fc6efe99021fe24f5a9c44cda1fbc0cb))
+* race condition and CI fixes ([d480ce6](https://github.com/FlameInTheDark/gochat/commit/d480ce6f9b61f646e782aa6ebd19aeb714c5d64f))
+
+
+### Features
+
+* proactive cache ([7a65f3f](https://github.com/FlameInTheDark/gochat/commit/7a65f3f03c9fc16dc9c7975988e110bc5eda0903))
+* refactoring and minor issues fix ([8541923](https://github.com/FlameInTheDark/gochat/commit/85419230c96c6b2e972317b5c171456fe75df48f))
+
 # [1.11.0](https://github.com/FlameInTheDark/gochat/compare/v1.10.0...v1.11.0) (2026-03-30)
 
 
