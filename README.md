@@ -1,259 +1,143 @@
-# GoChat
+<div align="center">
 
-<p align="center">
-  <strong>Distributed real-time chat and voice backend written in Go.</strong><br />
-  REST API, WebSocket delivery, file uploads, search indexing, generated embeds, and SFU-based voice.
-</p>
+<img src="docs/assets/banner.svg" alt="GoChat" width="100%" />
 
-<p align="center">
-  <a href="docs/project/README.md"><img alt="Docs" src="https://img.shields.io/badge/Docs-Project%20Guide-0f172a?style=for-the-badge" /></a>
-  <a href="docs/api/swagger.json"><img alt="API" src="https://img.shields.io/badge/API-Swagger-f59e0b?style=for-the-badge" /></a>
-  <a href="https://github.com/FlameInTheDark/gochat-react"><img alt="UI" src="https://img.shields.io/badge/UI-gochat--react-2563eb?style=for-the-badge" /></a>
-<a href="https://github.com/FlameInTheDark/gochat-electron"><img alt="UI" src="https://img.shields.io/badge/DESKTOP-gochat--electron-2563eb?style=for-the-badge" /></a>
-  <a href="https://github.com/FlameInTheDark/gochat-deployment"><img alt="Deployment" src="https://img.shields.io/badge/Deployment-gochat--deployment-059669?style=for-the-badge" /></a>
-</p>
+<br/>
 
-<p align="center">
-  <a href="CHANGELOG.md">Changelog</a>
-  |
-  <a href="clients/api/goclient/">Go client</a>
-  |
-  <a href="clients/api/jsclient/">TypeScript client</a>
-  |
-  <a href="LICENSE">License</a>
-</p>
+[![Docs](https://img.shields.io/badge/Docs-Project%20Guide-0f172a?style=for-the-badge)](docs/project/README.md)
+[![API](https://img.shields.io/badge/API-Swagger-f59e0b?style=for-the-badge)](docs/api/swagger.json)
+[![UI](https://img.shields.io/badge/UI-gochat--react-818cf8?style=for-the-badge)](https://github.com/FlameInTheDark/gochat-react)
+[![Desktop](https://img.shields.io/badge/Desktop-gochat--electron-818cf8?style=for-the-badge)](https://github.com/FlameInTheDark/gochat-electron)
+[![Deployment](https://img.shields.io/badge/Deployment-gochat--deployment-059669?style=for-the-badge)](https://github.com/FlameInTheDark/gochat-deployment)
 
-## Overview
+<br/>
 
-GoChat is a service-oriented messaging platform built around focused Go services. This repository contains the backend services, local development stack, generated API clients, and project documentation for messaging, presence, uploads, search, webhooks, and voice.
+**Distributed real-time chat and voice backend written in Go.**
 
-## Quick Links
+REST API · WebSocket delivery · File uploads · Full-text search · Link-preview embeds · WebRTC voice
 
-- [Project documentation](docs/project/README.md)
-- [Services overview](docs/project/Services.md)
-- [Observability docs](docs/project/observability/README.md)
-- [WebSocket docs](docs/project/ws/README.md)
-- [Voice docs](docs/project/voice/README.md)
-- [Presence system](docs/project/Presence.md)
-- [Tools CLI](docs/project/Tools.md)
-- [OpenAPI schema](docs/api/swagger.json)
-- [Go API client](clients/api/goclient/)
-- [TypeScript API client](clients/api/jsclient/)
+<br/>
 
-## What Ships Here
+[Changelog](CHANGELOG.md) &nbsp;·&nbsp; [Go client](clients/api/goclient/) &nbsp;·&nbsp; [TypeScript client](clients/api/jsclient/) &nbsp;·&nbsp; [License](LICENSE)
 
-| Area | What it covers |
-| --- | --- |
-| Core services | API, auth, WebSocket gateway, attachments, webhook, indexer, embedder, and SFU |
-| Data layer | Citus/PostgreSQL for relational state and ScyllaDB for message-heavy workloads |
-| Messaging | NATS-backed event flow for real-time delivery and background workers |
-| Media | S3-compatible object storage for uploads, avatars, icons, and attachment assets |
-| Search | OpenSearch indexing pipeline driven by the `indexer` service |
-| Discovery | etcd-backed voice service discovery through the `webhook` service |
-| Clients | Generated Go and TypeScript API clients under `clients/api/` |
-| Operations | Docker Compose stack, OpenObserve assets, OTEL collector wiring, and helper CLI tooling |
+</div>
 
-## Architecture
+---
 
-```mermaid
-flowchart LR
-    Client[Client Applications]
-    Traefik[Traefik Edge]
+## ![](docs/assets/icons/layout-dashboard.svg) Architecture
 
-    subgraph App[Application Services]
-        API[API]
-        Auth[Auth]
-        WS[WebSocket Gateway]
-        Attachments[Attachments]
-        Webhook[Webhook]
-        Indexer[Indexer]
-        Embedder[Embedder]
-    end
+GoChat is service-oriented — each binary has a single focused responsibility. Services communicate through NATS for async events and share PostgreSQL, ScyllaDB, and KeyDB for state.
 
-    subgraph Voice[External Voice Plane]
-        SFU[SFU]
-    end
+→ [Full diagram, data-store reference, and voice flow walkthrough](docs/project/Architecture.md)
 
-    subgraph Data[State and Infra]
-        PG[Citus / PostgreSQL]
-        Scylla[ScyllaDB]
-        KeyDB[KeyDB]
-        NATS[NATS]
-        Search[OpenSearch]
-        S3[S3-compatible Storage]
-        Etcd[etcd]
-    end
+---
 
-    Client --> Traefik
-    Traefik --> API
-    Traefik --> Auth
-    Traefik --> WS
-    Traefik --> Attachments
-    Traefik --> Webhook
-
-    API --> PG
-    API --> Scylla
-    API --> KeyDB
-    API --> NATS
-    API --> Search
-    API --> Etcd
-
-    Auth --> PG
-    Auth --> KeyDB
-
-    WS --> NATS
-    WS --> Scylla
-    WS --> PG
-    WS --> KeyDB
-
-    Attachments --> Scylla
-    Attachments --> PG
-    Attachments --> NATS
-    Attachments --> S3
-
-    Webhook --> Scylla
-    Webhook --> Etcd
-
-    Indexer --> NATS
-    Indexer --> Search
-
-    Embedder --> NATS
-    Embedder --> Scylla
-
-    Client --> SFU
-    SFU --> Webhook
-```
-
-## Services
+## ![](docs/assets/icons/server.svg) Services
 
 | Service | Path | Responsibility |
-| --- | --- | --- |
-| API | `cmd/api` | Main REST surface for users, guilds, channels, messages, invites, search, uploads, and voice control |
-| Auth | `cmd/auth` | Registration, login, refresh tokens, email flows, and password reset |
-| WebSocket Gateway | `cmd/ws` | Real-time subscriptions, event delivery, presence updates, and session handling |
-| Attachments | `cmd/attachments` | Upload pipeline for attachments, avatars, icons, and related metadata |
-| Webhook | `cmd/webhook` | Internal webhook surface for trusted service callbacks such as SFU heartbeats and attachment finalization |
-| SFU | `cmd/sfu` | External WebRTC media relay and signaling service for voice channels |
-| Indexer | `cmd/indexer` | Consumes message events and writes search documents to OpenSearch |
-| Embedder | `cmd/embedder` | Builds generated message embeds from remote metadata and republishes updates |
-| Tools | `cmd/tools` | Operational helpers such as webhook token generation |
+| :-- | :-- | :-- |
+| **API** | `cmd/api` | Public REST surface — guilds, channels, messages, search, uploads, voice control |
+| **Auth** | `cmd/auth` | Registration, login, token refresh, email flows, password reset |
+| **WebSocket Gateway** | `cmd/ws` | Real-time event delivery, presence updates, session management |
+| **Attachments** | `cmd/attachments` | Upload pipeline for files, avatars, and icons; S3 storage and metadata |
+| **Webhook** | `cmd/webhook` | Internal callbacks — SFU heartbeats and attachment finalization |
+| **SFU** | `cmd/sfu` | WebRTC media relay and WebSocket signaling for voice channels |
+| **Indexer** | `cmd/indexer` | Consumes NATS message events, writes search documents to OpenSearch |
+| **Embedder** | `cmd/embedder` | Builds link-preview embeds from remote metadata |
+| **Telemetry Gateway** | `cmd/telemetrygateway` | OTEL proxy — collects signals from all services, forwards to observability backend |
+| **Tools** | `cmd/tools` | Operational helpers: observability bootstrap, webhook token generation |
 
-## Feature Surface
+---
 
-- Account lifecycle with token-based authentication
-- Guilds, channels, roles, invites, bans, and custom emoji
-- Direct messages, message history, mentions, attachments, and embed generation
+## ![](docs/assets/icons/zap.svg) Features
+
+- Account lifecycle with JWT-based authentication and email flows
+- Guilds, channels, roles, permissions, invites, bans, and custom emoji
+- Direct messages, threads, message history, mentions, and reactions
+- File attachments, avatars, and icons via S3-compatible storage
+- Link-preview embed generation from remote metadata
 - Presence updates and real-time event fanout over WebSocket
-- Search indexing and query flow through OpenSearch
-- Voice channel join flow with region-aware SFU discovery
-- Generated Go and TypeScript API clients from the OpenAPI schema
+- Full-text search indexing and query through OpenSearch
+- Voice channels with region-aware SFU discovery and WebRTC relay
+- Structured observability — distributed traces, metrics, and logs via OTEL
 
-## Stack
+---
 
-- Go `1.25.8`
-- Fiber, Fiber WebSocket, and Pion WebRTC
-- Citus/PostgreSQL for relational data
-- ScyllaDB for message timelines and attachment-heavy data
-- NATS for async messaging between services
-- KeyDB for cache and presence/session state
-- OpenSearch for full-text search
-- S3-compatible storage for media assets
-- etcd for service discovery
-- Traefik, OpenObserve, OpenTelemetry Collector, and OpenSearch Dashboards for local operations
+## ![](docs/assets/icons/layers.svg) Stack
 
-## Repository Layout
+| Area | Technology |
+| :-- | :-- |
+| Language | Go `1.25.8` |
+| HTTP / WebSocket | Fiber v2, Fiber WebSocket |
+| Voice / WebRTC | Pion WebRTC |
+| Relational DB | PostgreSQL / Citus |
+| Wide-column DB | ScyllaDB |
+| Cache / sessions | Redis / KeyDB |
+| Message bus | NATS |
+| Search | OpenSearch |
+| Object storage | S3-compatible |
+| Service discovery | etcd |
+| Reverse proxy | Traefik |
+| Observability | OpenTelemetry + OpenObserve |
 
-```text
-cmd/             runnable services and operational tools
-internal/        shared packages for transport, storage, search, mail, presence, and server wiring
-migration/       PostgreSQL and ScyllaDB migrations
-docs/            project docs and generated OpenAPI output
-clients/api/     generated Go and TypeScript API clients
-compose.yaml     reference local development stack
-Makefile         bootstrap, migration, client generation, and rebuild commands
-```
+---
 
-## Getting Started
+## ![](docs/assets/icons/rocket.svg) Getting Started
 
 ### Prerequisites
 
 - Go `1.25.8` or newer
 - Docker and Docker Compose
 - GNU Make
-- `migrate` CLI when you want to create migration files locally (`make tools` installs it)
+- `migrate` CLI for creating migration files locally (`make tools` installs it)
 
-### Fast Path
+### Quick setup
 
 ```bash
 make setup
 ```
 
-`make setup` installs local tooling, starts the reference stack, initializes ScyllaDB, and applies both PostgreSQL and ScyllaDB migrations.
+Installs local tooling, starts the full Compose stack, initializes ScyllaDB, and applies all migrations.
 
-### Manual Bootstrap
-
-Start the local infrastructure:
+### Manual bootstrap
 
 ```bash
+# Start infrastructure
 docker compose up -d
 docker compose exec scylla bash ./init-scylladb.sh
-docker compose -p gochat up --scale citus-worker=3 -d
-```
 
-Apply migrations locally with the existing Make targets:
-
-```bash
+# Apply all migrations
 make migrate
 ```
 
-Build the versioned migration image locally when you want to test the same packaging used in CI:
+To test the migration image used in CI:
 
 ```bash
 make build_migration_image
-make migrate_image PG_ADDRESS="postgres://postgres@host.docker.internal/gochat" CASSANDRA_ADDRESS="cassandra://host.docker.internal/gochat?x-multi-statement=true"
+make migrate_image \
+  PG_ADDRESS="postgres://postgres@host.docker.internal/gochat" \
+  CASSANDRA_ADDRESS="cassandra://host.docker.internal/gochat?x-multi-statement=true"
 ```
 
-When you run the migration image from Docker, the connection strings need container-reachable hosts such as Compose service DNS names or `host.docker.internal`, not host-local `127.0.0.1`.
+CI publishes `ghcr.io/<owner>/gochat-migrations:<tag>` for releases and `ghcr.io/<owner>/gochat-migrations:dev` from the `dev` branch. Database bootstrap steps outside the migration files (ScyllaDB keyspace creation, Citus enablement) must be completed before running the container.
 
-For deployments, GitHub Actions now publishes `ghcr.io/<owner>/gochat-migrations:<tag>` for releases and `ghcr.io/<owner>/gochat-migrations:dev` from the `dev` branch. The image contains the exact migration files for that version and defaults to applying both migration sets with `up`.
+The container accepts `PG_ADDRESS`, `CASSANDRA_ADDRESS`, and `MIGRATION_SCOPE=all|postgres|pg|cassandra|scylla`.
 
-This image applies versioned schema migrations. Database bootstrap that is outside the migration files, such as creating the ScyllaDB keyspace or enabling Citus, still needs to be completed before the container runs.
+### Service configuration
 
-You can scope it to a single database or change the command:
+Copy and edit the example config for each service:
 
-```bash
-docker run --rm \
-  -e PG_ADDRESS="postgres://postgres@postgres/gochat?sslmode=disable" \
-  -e CASSANDRA_ADDRESS="cassandra://scylla/gochat?x-multi-statement=true" \
-  ghcr.io/<owner>/gochat-migrations:v1.2.3
-
-docker run --rm \
-  -e MIGRATION_SCOPE=postgres \
-  -e PG_ADDRESS="postgres://postgres@postgres/gochat?sslmode=disable" \
-  ghcr.io/<owner>/gochat-migrations:v1.2.3 down 1
+```
+api_config.example.yaml          ws_config.example.yaml
+auth_config.example.yaml         sfu_config.example.yaml
+attachments_config.example.yaml  indexer_config.example.yaml
+webhook_config.example.yaml      embedder_config.example.yaml
+                                  telemetry_gateway_config.example.yaml
 ```
 
-The container accepts:
+---
 
-- `PG_ADDRESS` for PostgreSQL migrations
-- `CASSANDRA_ADDRESS` for Cassandra or ScyllaDB migrations
-- `MIGRATION_SCOPE=all|postgres|pg|cassandra|scylla`
-- `MIGRATION_COMMAND` as a default command when you prefer env-driven invocation
-
-Review the example configuration files before running services locally:
-
-- `api_config.example.yaml`
-- `auth_config.example.yaml`
-- `attachments_config.example.yaml`
-- `ws_config.example.yaml`
-- `sfu_config.example.yaml` for standalone SFU deployments outside Compose
-- `webhook_config.example.yaml`
-- `indexer_config.example.yaml`
-- `embedder_config.example.yaml`
-
-## Running Services
-
-Run individual services directly with Go:
+## ![](docs/assets/icons/terminal.svg) Running Services
 
 ```bash
 go run ./cmd/api
@@ -263,56 +147,87 @@ go run ./cmd/attachments
 go run ./cmd/webhook
 go run ./cmd/indexer
 go run ./cmd/embedder
-```
-
-Run the SFU separately when you need voice media in a non-Compose environment:
-
-```bash
-go run ./cmd/sfu
+go run ./cmd/telemetrygateway
+go run ./cmd/sfu          # voice media; runs separately from Compose
 ```
 
 Useful Make targets:
 
-- `make up` to start the Compose stack and initialize ScyllaDB
-- `make down` to stop the stack
-- `make migrate` to apply both database migration sets
-- `make build_migration_image` to build the versioned migration container locally
-- `make migrate_image` to run both migration sets through the container locally
-- `make swag` to rebuild `docs/api/swagger.json`
-- `make client` to regenerate Go and TypeScript clients
-- `make rebuild_all` to rebuild the application containers
+| Target | What it does |
+| :-- | :-- |
+| `make up` | Start the Compose stack and initialize ScyllaDB |
+| `make down` | Stop the stack |
+| `make migrate` | Apply all database migrations |
+| `make swag` | Rebuild `docs/api/swagger.json` |
+| `make client` | Regenerate Go and TypeScript API clients |
+| `make rebuild_all` | Rebuild API, Auth, Indexer, Embedder, and WS containers |
+| `make build_migration_image` | Build the versioned migration container locally |
 
-## Documentation and Clients
+---
 
-| Resource                  | Link                                                                     |
-|---------------------------|--------------------------------------------------------------------------|
-| Project docs              | [docs/project/README.md](docs/project/README.md)                         |
-| Service documentation     | [docs/project/Services.md](docs/project/Services.md)                     |
-| Observability             | [docs/project/observability/README.md](docs/project/observability/README.md) |
-| WebSocket protocol        | [docs/project/ws/README.md](docs/project/ws/README.md)                   |
-| Voice and SFU docs        | [docs/project/voice/README.md](docs/project/voice/README.md)             |
-| Presence model            | [docs/project/Presence.md](docs/project/Presence.md)                     |
-| OpenAPI schema            | [docs/api/swagger.json](docs/api/swagger.json)                           |
-| Go API client             | [clients/api/goclient/](clients/api/goclient/)                           |
-| TypeScript API client     | [clients/api/jsclient/](clients/api/jsclient/)                           |
-| Frontend repository       | [gochat-react](https://github.com/FlameInTheDark/gochat-react)           |
-| Desktop client repository | [gochat-electron](https://github.com/FlameInTheDark/gochat-electron)     |
-| Deployment repository     | [gochat-deployment](https://github.com/FlameInTheDark/gochat-deployment) |
+## ![](docs/assets/icons/activity.svg) Observability
 
-## Local Observability
+The local stack uses OpenObserve and the OpenTelemetry Collector. Bootstrap dashboards with the Tools CLI:
 
-The supported local observability workflow is OpenObserve plus the OpenTelemetry Collector:
+```bash
+go run ./cmd/tools observability bootstrap \
+  --url http://localhost:5080 --org default \
+  --user root@example.com --password Complexpass#123
 
-- Start fresh with `docker compose down --remove-orphans` and then `docker compose up -d`.
-- Bootstrap dashboards and alerts with `go run ./cmd/tools observability bootstrap --url http://localhost:5080 --org default --user root@example.com --password Complexpass#123`.
-- Run the smoke check with `go run ./cmd/tools observability smoke --url http://localhost:5080 --org default --user root@example.com --password Complexpass#123`.
-- OpenObserve is available on `http://localhost:5080`.
-- OTEL collector health is available on `http://localhost:13133/`.
-- Traefik dashboard remains available on `http://localhost:8080`.
-- OpenSearch Dashboards remains available on `http://localhost:5601`.
+go run ./cmd/tools observability smoke \
+  --url http://localhost:5080 --org default \
+  --user root@example.com --password Complexpass#123
+```
 
-PostgreSQL health in the local stack is now reported through native service-side probe telemetry rather than a Prometheus exporter bridge.
+| Endpoint | URL |
+| :-- | :-- |
+| OpenObserve | http://localhost:5080 |
+| OTEL Collector health | http://localhost:13133/ |
+| Traefik dashboard | http://localhost:8080 |
+| OpenSearch Dashboards | http://localhost:5601 |
 
-## License
+---
 
-MIT. See [LICENSE](LICENSE).
+## ![](docs/assets/icons/book-open.svg) Documentation
+
+| | |
+| :-- | :-- |
+| [Architecture](docs/project/Architecture.md) | Full service diagram, data-store reference, voice flow |
+| [Services overview](docs/project/Services.md) | Per-service responsibilities and config reference |
+| [Channels & messages](docs/project/channels/README.md) | Channel types, message types, threads, embeds |
+| [Guilds, roles & permissions](docs/project/guilds/README.md) | Roles, permissions bitmask, moderation, custom emoji |
+| [Presence system](docs/project/Presence.md) | Presence state model and delivery |
+| [WebSocket protocol](docs/project/ws/README.md) | Event types, subscription model, connection lifecycle |
+| [Voice & SFU](docs/project/voice/README.md) | WebRTC signaling, SFU protocol, permissions |
+| [Observability](docs/project/observability/README.md) | OTEL signals, dashboards, runbooks, external SFU |
+| [Auth security](docs/project/AuthSecurity.md) | Token design, expiry, refresh flow |
+| [Database schema](docs/project/Database.md) | PostgreSQL and ScyllaDB schema diagrams |
+| [Tools CLI](docs/project/Tools.md) | Operational helper commands |
+| [OpenAPI schema](docs/api/swagger.json) | Machine-readable API spec |
+| [Go API client](clients/api/goclient/) | Generated Go client |
+| [TypeScript API client](clients/api/jsclient/) | Generated TypeScript client |
+| [Frontend repo](https://github.com/FlameInTheDark/gochat-react) | React web client |
+| [Desktop client](https://github.com/FlameInTheDark/gochat-electron) | Electron desktop app |
+| [Deployment repo](https://github.com/FlameInTheDark/gochat-deployment) | Production deployment manifests |
+
+---
+
+## Repository Layout
+
+```
+cmd/             runnable services and operational tools
+internal/        shared packages (transport, storage, search, mail, presence, server wiring)
+migration/       PostgreSQL and ScyllaDB migrations
+docs/            project documentation and generated OpenAPI schema
+clients/api/     generated Go and TypeScript API clients
+compose.yaml     local development stack
+Makefile         bootstrap, migration, client generation, and rebuild targets
+```
+
+---
+
+<div align="center">
+
+MIT License · See [LICENSE](LICENSE)
+
+</div>
