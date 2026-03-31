@@ -5,7 +5,9 @@ import (
 	"errors"
 	"sync"
 	"testing"
+	"time"
 
+	cachepkg "github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel"
@@ -67,6 +69,43 @@ func TestFinishCacheOperationKeepsRealErrors(t *testing.T) {
 	}
 	if spans[0].Status().Code != codes.Error {
 		t.Fatalf("expected real redis error to keep error status, got %#v", spans[0].Status())
+	}
+}
+
+func TestShouldProactivelyRefresh(t *testing.T) {
+	c := &Cache{}
+
+	if c.shouldProactivelyRefresh(jsonLookupState{
+		Meta: cachepkg.LookupMeta{Hit: true, TTL: 4 * time.Second, HasTTL: true},
+		Timed: timedJSONMetadata{
+			OriginalTTLSeconds: 60,
+			Proactive:          true,
+		},
+		HasTimed: true,
+	}) {
+		t.Fatalf("did not expect refresh outside the last 5%% window")
+	}
+
+	if !c.shouldProactivelyRefresh(jsonLookupState{
+		Meta: cachepkg.LookupMeta{Hit: true, TTL: time.Second, HasTTL: true},
+		Timed: timedJSONMetadata{
+			OriginalTTLSeconds: 20,
+			Proactive:          true,
+		},
+		HasTimed: true,
+	}) {
+		t.Fatalf("expected refresh inside the last 5%% window")
+	}
+
+	if c.shouldProactivelyRefresh(jsonLookupState{
+		Meta: cachepkg.LookupMeta{Hit: true, TTL: time.Second, HasTTL: true},
+		Timed: timedJSONMetadata{
+			OriginalTTLSeconds: 20,
+			Proactive:          false,
+		},
+		HasTimed: true,
+	}) {
+		t.Fatalf("did not expect refresh when proactive is disabled")
 	}
 }
 

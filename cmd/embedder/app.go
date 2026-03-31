@@ -61,14 +61,14 @@ func NewApp(logger *slog.Logger) (*App, error) {
 	}
 
 	logger.Info("Connecting to NATS subscriber")
-	conn, err := nq.Connect(cfg.NatsConnString, nq.Compression(true))
+	conn, err := nq.Connect(cfg.NATSConnString, nq.Compression(true))
 	if err != nil {
 		_ = database.Close()
 		return nil, err
 	}
 
 	logger.Info("Connecting to NATS publisher")
-	transport, err := mqnats.New(cfg.NatsConnString)
+	transport, err := mqnats.New(cfg.NATSConnString)
 	if err != nil {
 		conn.Close()
 		_ = database.Close()

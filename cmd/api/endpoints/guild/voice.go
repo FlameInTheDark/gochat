@@ -14,6 +14,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 
+	cachepkg "github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq"
@@ -511,7 +512,7 @@ func (e *entity) SetVoiceRegion(c *fiber.Ctx) error {
 				// Mark the intended target before clients start reconnecting so stale
 				// /voice/join and /channel/alive updates from the old SFU cannot
 				// overwrite the migration target.
-				_ = e.cache.SetTimedJSON(c.UserContext(), rebindMarkerKey(channelId), newBinding, 300)
+				_ = e.cache.SetTimedJSON(c.UserContext(), rebindMarkerKey(channelId), newBinding, 300, cachepkg.NoneProactive())
 
 				// I7: Pre-notify guild members so clients can prepare for the reconnect
 				_ = mq.SendGuildUpdate(c.UserContext(), e.mqt, guildId, &mqmsg.VoiceRegionChanging{
@@ -532,9 +533,9 @@ func (e *entity) SetVoiceRegion(c *fiber.Ctx) error {
 					time.Sleep(3 * time.Second)
 
 					// I9: Write new binding with region
-					_ = cache.SetTimedJSON(asyncCtx, bindingKey(channelId), newBinding, voiceRouteInitialTTLSeconds)
+					_ = cache.SetTimedJSON(asyncCtx, bindingKey(channelId), newBinding, voiceRouteInitialTTLSeconds, cachepkg.NoneProactive())
 					// I6: Mark active migration so JoinVoice issues extended JWT
-					_ = cache.SetTimedJSON(asyncCtx, rebindMarkerKey(channelId), newBinding, 300)
+					_ = cache.SetTimedJSON(asyncCtx, rebindMarkerKey(channelId), newBinding, 300, cachepkg.NoneProactive())
 					// I4: Notify clients to reconnect with jitter to spread thundering herd
 					_ = mq.SendChannelMessage(asyncCtx, mqt, channelId, &mqmsg.VoiceRebind{Channel: channelId, JitterMs: 3000})
 					// I5: Tell old SFU to close all sessions

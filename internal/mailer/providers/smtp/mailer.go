@@ -78,12 +78,11 @@ func (m *SmtpMailer) Send(ctx context.Context, notify mailer.MailNotification) e
 		err  error
 	)
 	if m.useTls {
-		conn, err = tls.DialWithDialer(
-			&net.Dialer{},
-			"tcp",
-			fmt.Sprintf("%s:%d", m.host, m.port),
-			&tls.Config{ServerName: m.host},
-		)
+		dialer := &tls.Dialer{
+			NetDialer: &net.Dialer{},
+			Config:    &tls.Config{ServerName: m.host},
+		}
+		conn, err = dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", m.host, m.port))
 		if err != nil {
 			return fmt.Errorf("unable to connect to SMTP: %w", err)
 		}

@@ -43,9 +43,10 @@ type App struct {
 	discoverLog sync.Once
 	telemetry   *observability.SFUTelemetry
 
-	dave             *dave.Coordinator
-	signalV2Mu       sync.Mutex
-	signalV2Sessions map[string]*signalV2Session
+	dave                 *dave.Coordinator
+	signalHeartbeatGrace time.Duration
+	signalV2Mu           sync.Mutex
+	signalV2Sessions     map[string]*signalV2Session
 }
 
 // websocketMessage is the simple event-based message format used over WebSocket.
@@ -98,16 +99,17 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger, cfg *config.Config) *App {
 	sfu := NewSFU(cfg.WebhookURL, cfg.WebhookToken, cfg.ServiceID, signalURL, cfg.Region, logger, maxAudioBps, cfg.EnforceAudioBitrate, marginPct, telemetry)
 
 	a := &App{
-		app:              fiberApp,
-		cfg:              cfg,
-		log:              logger,
-		shut:             shut,
-		sfu:              sfu,
-		instID:           cfg.ServiceID,
-		iceConfig:        iceCfg,
-		webrtcAPI:        api,
-		telemetry:        telemetry,
-		signalV2Sessions: make(map[string]*signalV2Session),
+		app:                  fiberApp,
+		cfg:                  cfg,
+		log:                  logger,
+		shut:                 shut,
+		sfu:                  sfu,
+		instID:               cfg.ServiceID,
+		iceConfig:            iceCfg,
+		webrtcAPI:            api,
+		telemetry:            telemetry,
+		signalHeartbeatGrace: signalHeartbeatGrace,
+		signalV2Sessions:     make(map[string]*signalV2Session),
 	}
 	a.dave = dave.NewCoordinator(dave.Config{
 		Enabled:             cfg.DAVEEnabled,

@@ -37,39 +37,38 @@ const (
 )
 
 type otlpLogExporterConfig struct {
-	endpoint       string
 	headers        map[string]string
-	resourceAttrs  []attribute.KeyValue
+	endpoint       string
 	scopeName      string
-	queueSize      int
-	batchSize      int
+	resourceAttrs  []attribute.KeyValue
 	flushInterval  time.Duration
 	requestTimeout time.Duration
 	retryBackoff   time.Duration
+	queueSize      int
+	batchSize      int
 	maxAttempts    int
 }
 
 type otlpLogExporter struct {
-	client        *http.Client
-	config        otlpLogExporterConfig
-	queue         chan []byte
-	done          chan struct{}
-	cancel        context.CancelFunc
-	registration  metric.Registration
-	shutdownOnce  sync.Once
-	enqueuedTotal atomic.Int64
-	successTotal  atomic.Int64
-	failureTotal  atomic.Int64
-	droppedTotal  atomic.Int64
-	lastSuccess   atomic.Int64
-
-	resource *resourcepb.Resource
+	config       otlpLogExporterConfig
+	registration metric.Registration
+	resource     *resourcepb.Resource
 
 	enqueueCounter metric.Int64Counter
 	successCounter metric.Int64Counter
 	failureCounter metric.Int64Counter
 	droppedCounter metric.Int64Counter
 	batchLatency   metric.Float64Histogram
+	client         *http.Client
+	queue          chan []byte
+	done           chan struct{}
+	cancel         context.CancelFunc
+	enqueuedTotal  atomic.Int64
+	successTotal   atomic.Int64
+	failureTotal   atomic.Int64
+	droppedTotal   atomic.Int64
+	lastSuccess    atomic.Int64
+	shutdownOnce   sync.Once
 }
 
 type otlpLogHandler struct {
@@ -212,7 +211,7 @@ func (h *otlpLogHandler) Handle(ctx context.Context, record slog.Record) error {
 	if err := handler.Handle(ctx, record.Clone()); err != nil {
 		return err
 	}
-	h.exporter.enqueue(buf.Bytes())
+	h.exporter.enqueue(ctx, buf.Bytes())
 	return nil
 }
 
@@ -247,14 +246,18 @@ func (e *otlpLogExporter) Close() error {
 		return nil
 	}
 
+	var closeErr error
 	e.shutdownOnce.Do(func() {
 		e.cancel()
 		<-e.done
 		if e.registration != nil {
-			e.registration.Unregister()
+			closeErr = e.registration.Unregister()
 		}
 	})
-	return nil
+	if closeErr != nil {
+		Logger().Warn("unable to unregister OTLP log exporter metrics", "error", closeErr.Error())
+	}
+	return closeErr
 }
 
 func (e *otlpLogExporter) run(ctx context.Context) {
@@ -280,7 +283,7 @@ func (e *otlpLogExporter) run(ctx context.Context) {
 				case entry := <-e.queue:
 					batch = append(batch, entry)
 				default:
-					flush(context.Background())
+					flush(BackgroundFromContext(ctx))
 					return
 				}
 			}
@@ -295,7 +298,7 @@ func (e *otlpLogExporter) run(ctx context.Context) {
 	}
 }
 
-func (e *otlpLogExporter) enqueue(line []byte) {
+func (e *otlpLogExporter) enqueue(ctx context.Context, line []byte) {
 	if e == nil {
 		return
 	}
@@ -306,16 +309,16 @@ func (e *otlpLogExporter) enqueue(line []byte) {
 
 	select {
 	case e.queue <- bytes.Clone(entry):
-		e.recordEnqueued(1)
+		e.recordEnqueued(ctx, 1)
 	default:
-		e.recordDropped(1)
+		e.recordDropped(ctx, 1)
 	}
 }
 
 func (e *otlpLogExporter) flushBatch(ctx context.Context, batch [][]byte) error {
 	payload, recordCount, err := e.buildRequest(batch)
 	if err != nil {
-		e.recordFailure(int64(len(batch)))
+		e.recordFailure(ctx, int64(len(batch)))
 		return err
 	}
 	if recordCount == 0 {
@@ -324,7 +327,7 @@ func (e *otlpLogExporter) flushBatch(ctx context.Context, batch [][]byte) error 
 
 	body, err := proto.Marshal(payload)
 	if err != nil {
-		e.recordFailure(int64(recordCount))
+		e.recordFailure(ctx, int64(recordCount))
 		return err
 	}
 
@@ -333,8 +336,9 @@ func (e *otlpLogExporter) flushBatch(ctx context.Context, batch [][]byte) error 
 	for attempt := 1; attempt <= e.config.maxAttempts; attempt++ {
 		err = e.sendBatch(ctx, body)
 		if err == nil {
-			e.recordSuccess(int64(recordCount))
-			e.batchLatency.Record(context.Background(), time.Since(started).Seconds())
+			recordCtx := BackgroundFromContext(ctx)
+			e.recordSuccess(recordCtx, int64(recordCount))
+			e.batchLatency.Record(recordCtx, time.Since(started).Seconds())
 			e.lastSuccess.Store(time.Now().Unix())
 			return nil
 		}
@@ -346,13 +350,13 @@ func (e *otlpLogExporter) flushBatch(ctx context.Context, batch [][]byte) error 
 		select {
 		case <-ctx.Done():
 			lastErr = ctx.Err()
-			e.recordFailure(int64(recordCount))
+			e.recordFailure(ctx, int64(recordCount))
 			return lastErr
 		case <-time.After(time.Duration(attempt) * e.config.retryBackoff):
 		}
 	}
 
-	e.recordFailure(int64(recordCount))
+	e.recordFailure(ctx, int64(recordCount))
 	return lastErr
 }
 
@@ -415,37 +419,37 @@ func (e *otlpLogExporter) sendBatch(ctx context.Context, body []byte) error {
 	return nil
 }
 
-func (e *otlpLogExporter) recordEnqueued(delta int64) {
+func (e *otlpLogExporter) recordEnqueued(ctx context.Context, delta int64) {
 	e.enqueuedTotal.Add(delta)
 	if e.enqueueCounter != nil {
-		e.enqueueCounter.Add(context.Background(), delta)
+		e.enqueueCounter.Add(BackgroundFromContext(ctx), delta)
 	}
 }
 
-func (e *otlpLogExporter) recordSuccess(delta int64) {
+func (e *otlpLogExporter) recordSuccess(ctx context.Context, delta int64) {
 	e.successTotal.Add(delta)
 	if e.successCounter != nil {
-		e.successCounter.Add(context.Background(), delta)
+		e.successCounter.Add(BackgroundFromContext(ctx), delta)
 	}
 }
 
-func (e *otlpLogExporter) recordFailure(delta int64) {
+func (e *otlpLogExporter) recordFailure(ctx context.Context, delta int64) {
 	e.failureTotal.Add(delta)
 	if e.failureCounter != nil {
-		e.failureCounter.Add(context.Background(), delta)
+		e.failureCounter.Add(BackgroundFromContext(ctx), delta)
 	}
 }
 
-func (e *otlpLogExporter) recordDropped(delta int64) {
+func (e *otlpLogExporter) recordDropped(ctx context.Context, delta int64) {
 	e.droppedTotal.Add(delta)
 	if e.droppedCounter != nil {
-		e.droppedCounter.Add(context.Background(), delta)
+		e.droppedCounter.Add(BackgroundFromContext(ctx), delta)
 	}
 }
 
 type otlpSendError struct {
-	statusCode int
 	message    string
+	statusCode int
 }
 
 func (e otlpSendError) Error() string {

@@ -802,7 +802,7 @@ func (e *entity) Create(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	user, err := helper.GetUser(c)
@@ -1036,7 +1036,7 @@ func (e *entity) Update(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	guildId, err := e.parseGuildID(c)
@@ -1160,7 +1160,7 @@ func (e *entity) CreateCategory(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	guildId, err := e.parseGuildID(c)
@@ -1316,7 +1316,7 @@ func (e *entity) validatePatchChannelRequest(channel *model.Channel, req *PatchG
 		}
 		if req.Name != nil {
 			if err := validateThreadChannelName(*req.Name); err != nil {
-				return fiber.NewError(fiber.StatusBadRequest, err.Error())
+				return badRequestValidationError(err)
 			}
 		}
 		return nil
@@ -1327,7 +1327,7 @@ func (e *entity) validatePatchChannelRequest(channel *model.Channel, req *PatchG
 	}
 	if req.Name != nil {
 		if err := validateGuildChannelName(*req.Name); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+			return badRequestValidationError(err)
 		}
 	}
 	return nil
@@ -1662,7 +1662,7 @@ func (e *entity) CreateChannel(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	guildId, err := e.parseGuildID(c)
@@ -1726,7 +1726,8 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	if channel.Type == model.ChannelTypeGuildCategory {
+	switch channel.Type {
+	case model.ChannelTypeGuildCategory:
 		_, _, _, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, channelId, userId, permissions.PermServerManageChannels)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
@@ -1734,7 +1735,7 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 		if !hasPermission {
 			return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
 		}
-	} else if channel.Type == model.ChannelTypeThread {
+	case model.ChannelTypeThread:
 		canManage, err := e.canManageThread(c.UserContext(), guildId, &channel, userId)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
@@ -1742,7 +1743,7 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 		if !canManage {
 			return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
 		}
-	} else {
+	default:
 		_, _, _, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, channelId, userId, permissions.PermServerManageChannels)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
@@ -1919,7 +1920,7 @@ func (e *entity) PatchChannelOrder(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	// Permission check: user must be able to manage channels in this guild
@@ -2061,7 +2062,7 @@ func (e *entity) PatchChannel(c *fiber.Ctx) error {
 	}
 
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	// Permission check: user must be able to manage channels in this guild

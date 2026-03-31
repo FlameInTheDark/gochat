@@ -337,7 +337,7 @@ func (e *entity) CreateInvite(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
 	}
 	if err := req.Validate(); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return badRequestValidationError(err)
 	}
 
 	// Expiration handling:

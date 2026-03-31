@@ -17,30 +17,18 @@ func (a *App) SendJSON(sessionID string, op int, payload any) error {
 		return err
 	}
 
-	session.mu.Lock()
-	defer session.mu.Unlock()
-
 	switch op {
 	case voicev2.OpDAVEPrepareEpoch:
 		if msg, ok := payload.(voicev2.PrepareEpoch); ok {
-			session.davePendingProtocol = msg.ProtocolVersion
-			session.davePendingEpoch = msg.Epoch
+			session.setDAVEPending(msg.ProtocolVersion, msg.Epoch)
 		}
 	case voicev2.OpDAVEPrepareTransition:
 		if msg, ok := payload.(voicev2.PrepareTransition); ok {
-			session.davePendingProtocol = msg.ProtocolVersion
-			if msg.ProtocolVersion == 0 {
-				session.davePendingEpoch = 0
-			}
+			session.setDAVEPendingProtocol(msg.ProtocolVersion)
 		}
 	case voicev2.OpDAVEExecuteTransition:
 		if _, ok := payload.(voicev2.ExecuteTransition); ok {
-			session.daveProtocolVersion = session.davePendingProtocol
-			session.daveEpoch = session.davePendingEpoch
-			if session.state != nil {
-				session.state.daveProtocol = session.daveProtocolVersion
-				session.state.daveEpoch = session.daveEpoch
-			}
+			session.applyPendingDAVEState()
 		}
 	}
 

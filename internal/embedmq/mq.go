@@ -39,10 +39,7 @@ func (q *Queue) MakeEmbedContext(ctx context.Context, msg MakeEmbedRequest) erro
 		return err
 	}
 
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	ctx, finish := observability.StartNATSPublishSpan(ctx, MakeEmbedSubject)
+	ctx, finish := observability.StartNATSPublishSpan(observability.BackgroundFromContext(ctx), MakeEmbedSubject)
 	defer func() {
 		finish(err)
 	}()
@@ -58,4 +55,11 @@ func (q *Queue) MakeEmbedContext(ctx context.Context, msg MakeEmbedRequest) erro
 func (q *Queue) Close() error {
 	q.conn.Close()
 	return nil
+}
+
+func (q *Queue) Ping(ctx context.Context) error {
+	if ctx == nil {
+		return context.Canceled
+	}
+	return q.conn.FlushWithContext(ctx)
 }

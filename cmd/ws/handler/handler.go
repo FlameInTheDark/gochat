@@ -61,27 +61,26 @@ type Handler struct {
 	// IDs this connection is watching for presence updates
 	psubs map[int64]struct{}
 	// Channel IDs this connection is explicitly subscribed to.
-	csubs map[int64]struct{}
-	// Whether we successfully set presence after hello
-	presenceSet bool
-	// session identifier for this ws connection
-	sessionID string
-	// callback used to expose the authenticated user id to the outer ws connection
-	onAuthenticated func(userID int64)
-
-	lastEventId int64
-	hbTimeout   int64
-	hTimer      *time.Timer
-	initTimer   *time.Timer
-	closer      func()
-	log         *slog.Logger
-	cache       *kvs.Cache
-	ctx         context.Context
-	telemetry   *observability.WSTelemetry
+	csubs     map[int64]struct{}
+	hTimer    *time.Timer
+	initTimer *time.Timer
+	closer    func()
+	log       *slog.Logger
+	cache     *kvs.Cache
+	ctx       context.Context
+	telemetry *observability.WSTelemetry
 
 	// lastPresenceTouch throttles TouchSessionTTL calls to avoid
 	// redundant Redis round-trips on every heartbeat.
 	lastPresenceTouch time.Time
+	// callback used to expose the authenticated user id to the outer ws connection
+	onAuthenticated func(userID int64)
+	// session identifier for this ws connection
+	sessionID   string
+	lastEventId int64
+	hbTimeout   int64
+	// Whether we successfully set presence after hello
+	presenceSet bool
 }
 
 func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v any) error, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger, nats *nats.Conn, pstore *presence.Store, cache *kvs.Cache, onAuthenticated func(userID int64), baseCtx context.Context, telemetry *observability.WSTelemetry) *Handler {
@@ -560,7 +559,9 @@ func (h *Handler) publishPresence(agg presence.Presence) {
 	}
 	subject := fmt.Sprintf("presence.user.%d", agg.UserID)
 	ctx, finish := observability.StartNATSPublishSpan(h.baseContext(), subject)
-	defer finish(err)
+	defer func() {
+		finish(err)
+	}()
 	headers := observability.InjectNATSHeaders(ctx, nil)
 	err = h.nats.PublishMsg(&nats.Msg{
 		Subject: subject,

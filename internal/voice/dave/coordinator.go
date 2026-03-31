@@ -65,44 +65,40 @@ func (realClock) AfterFunc(d time.Duration, fn func()) Timer {
 }
 
 type Coordinator struct {
-	mu          sync.Mutex
-	cfg         Config
 	clock       Clock
 	rng         io.Reader
 	broadcaster Broadcaster
 
 	sessionToChannel map[string]int64
 	channels         map[int64]*channelState
+	cfg              Config
+	mu               sync.Mutex
 }
 
 type channelState struct {
-	id int64
-
-	participants map[string]*Participant
-	keyPackages  map[string]*mls.KeyPackage
+	participants   map[string]*Participant
+	keyPackages    map[string]*mls.KeyPackage
+	externalSender *mls.ExternalSender
+	active         *transitionState
 
 	currentProtocolVersion int
 	currentEpoch           uint64
+	id                     int64
 	groupEstablished       bool
 
 	nextTransitionID uint16
 	nextSequence     uint16
-
-	externalSender *mls.ExternalSender
-	active         *transitionState
 }
 
 type transitionState struct {
-	id             uint16
-	kind           transitionKind
-	targetProtocol int
-	targetEpoch    uint64
-	stage          transitionStage
-
+	timer               Timer
 	expectedKeyPackages map[string]bool
 	expectedReady       map[string]bool
-
-	timer Timer
+	kind                transitionKind
+	stage               transitionStage
+	targetEpoch         uint64
+	targetProtocol      int
+	id                  uint16
 }
 
 type transitionKind string
@@ -122,10 +118,10 @@ const (
 )
 
 type outboundAction struct {
-	sessionID string
-	op        int
 	jsonData  any
+	sessionID string
 	binary    []byte
+	op        int
 }
 
 func NewCoordinator(cfg Config, broadcaster Broadcaster) *Coordinator {

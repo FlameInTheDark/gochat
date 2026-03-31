@@ -22,24 +22,23 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/ws/hub"
 	"github.com/FlameInTheDark/gochat/cmd/ws/subscriber"
 	cachei "github.com/FlameInTheDark/gochat/internal/cache"
-	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/presence"
-	reactionutil "github.com/FlameInTheDark/gochat/internal/reaction"
+	"github.com/FlameInTheDark/gochat/internal/wsmsg"
 )
 
 // wsConn implements hub.Conn for a single WebSocket connection.
 // It wraps the writer pump's outbound channel so the hub can deliver
 // messages without blocking.
 type wsConn struct {
-	id        string
-	out       chan<- outMsg
-	userID    int64
-	telemetry *observability.WSTelemetry
 	cache     cachei.Cache
+	out       chan<- outMsg
+	telemetry *observability.WSTelemetry
 	close     func(reason string)
+	id        string
+	userID    int64
 }
 
 func (w *wsConn) Send(delivery hub.Delivery) {
@@ -49,7 +48,7 @@ func (w *wsConn) Send(delivery hub.Delivery) {
 		}
 		return
 	}
-	payload := personalizeMessageForRecipientWithCache(w.cache, delivery.Topic, atomic.LoadInt64(&w.userID), delivery.Data)
+	payload := wsmsg.PersonalizeMessageForRecipientWithCache(w.cache, delivery.Topic, atomic.LoadInt64(&w.userID), delivery.Data)
 	// Non-blocking: drop the message if the connection's buffer is full.
 	select {
 	case w.out <- outMsg{kind: 1, data: payload, topic: delivery.Topic, ctx: delivery.Context}:
@@ -66,86 +65,6 @@ func (w *wsConn) SetUserID(userID int64) {
 	atomic.StoreInt64(&w.userID, userID)
 }
 
-func personalizeMessageForRecipient(topic string, userID int64, data []byte) []byte {
-	return personalizeMessageForRecipientWithCache(nil, topic, userID, data)
-}
-
-func personalizeMessageForRecipientWithCache(cache cachei.Cache, topic string, userID int64, data []byte) []byte {
-	if !strings.HasPrefix(topic, "channel.") || userID == 0 {
-		return cloneWSMessage(data)
-	}
-
-	var envelope mqmsg.Message
-	if err := json.Unmarshal(data, &envelope); err != nil || envelope.EventType == nil {
-		return cloneWSMessage(data)
-	}
-
-	switch *envelope.EventType {
-	case mqmsg.EventTypeMessageCreate, mqmsg.EventTypeMessageUpdate:
-		var payload struct {
-			GuildId *int64      `json:"guild_id"`
-			Message dto.Message `json:"message"`
-		}
-		if err := json.Unmarshal(envelope.Data, &payload); err != nil {
-			return cloneWSMessage(data)
-		}
-		if payload.Message.Nonce == nil || payload.Message.Author.Id == userID {
-			return cloneWSMessage(data)
-		}
-
-		payload.Message.Nonce = nil
-		redactedData, err := json.Marshal(payload)
-		if err != nil {
-			return cloneWSMessage(data)
-		}
-		envelope.Data = redactedData
-
-	case mqmsg.EventTypeMessageReactionAdd, mqmsg.EventTypeMessageReactionRemove:
-		var payload struct {
-			GuildId   *int64              `json:"guild_id"`
-			ChannelId int64               `json:"channel_id"`
-			MessageId int64               `json:"message_id"`
-			Reaction  dto.MessageReaction `json:"reaction"`
-		}
-		if err := json.Unmarshal(envelope.Data, &payload); err != nil {
-			return cloneWSMessage(data)
-		}
-		if cache != nil {
-			bucketKey := reactionutil.BucketKeyFromParts(payload.Reaction.Emoji.Id != nil, reactionDTOEmojiID(payload.Reaction), payload.Reaction.Emoji.Name)
-			if reactionID, err := cache.HGet(context.Background(), reactionutil.UserKey(payload.MessageId, userID), bucketKey); err == nil {
-				payload.Reaction.Me = reactionID != ""
-			}
-		}
-		redactedData, err := json.Marshal(payload)
-		if err != nil {
-			return cloneWSMessage(data)
-		}
-		envelope.Data = redactedData
-
-	default:
-		return cloneWSMessage(data)
-	}
-
-	out, err := json.Marshal(envelope)
-	if err != nil {
-		return cloneWSMessage(data)
-	}
-	return out
-}
-
-func reactionDTOEmojiID(reaction dto.MessageReaction) int64 {
-	if reaction.Emoji.Id == nil {
-		return 0
-	}
-	return *reaction.Emoji.Id
-}
-
-func cloneWSMessage(data []byte) []byte {
-	cp := make([]byte, len(data))
-	copy(cp, data)
-	return cp
-}
-
 func isAuthRevokedEvent(data []byte) bool {
 	var envelope mqmsg.Message
 	if err := json.Unmarshal(data, &envelope); err != nil || envelope.EventType == nil {
@@ -156,16 +75,16 @@ func isAuthRevokedEvent(data []byte) bool {
 
 // outMsg is an internal message sent through the writer pump channel.
 type outMsg struct {
-	kind  int
-	data  []byte
 	v     any
-	done  chan error
-	topic string
 	ctx   context.Context
+	topic string
+	done  chan error
+	data  []byte
+	kind  int
 }
 
 func (a *App) wsHandler(c *websocket.Conn) {
-	requestCtx := context.Background()
+	requestCtx := context.TODO()
 	if raw := c.Locals("request_context"); raw != nil {
 		if current, ok := raw.(context.Context); ok && current != nil {
 			requestCtx = observability.BackgroundFromContext(current)

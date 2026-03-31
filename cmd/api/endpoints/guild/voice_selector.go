@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
 )
 
@@ -52,7 +53,10 @@ func newVoiceSelector(log *slog.Logger) *voiceSelector {
 }
 
 func (e *entity) preferredVoiceRegion(ctx context.Context, channelID int64) string {
-	region := e.defaultVoiceRegion
+	var region string
+	if e != nil {
+		region = e.defaultVoiceRegion
+	}
 	if e == nil || e.ch == nil {
 		return region
 	}
@@ -76,7 +80,7 @@ func (e *entity) bindChannelRoute(ctx context.Context, channelID int64, binding 
 		return binding
 	}
 
-	set, err := e.cache.SetTimedJSONNX(ctx, bindingKey(channelID), binding, voiceRouteInitialTTLSeconds)
+	set, err := e.cache.SetTimedJSONNX(ctx, bindingKey(channelID), binding, voiceRouteInitialTTLSeconds, cache.NoneProactive())
 	if err == nil && set {
 		return binding
 	}

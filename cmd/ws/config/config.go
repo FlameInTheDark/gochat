@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/configutil"
 	"github.com/go-playground/validator/v10"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
 	Host              string   `yaml:"host" env:"HOST" envDefault:":3100"`
-	AuthSecret        string   `yaml:"auth_secret" env:"AUTH_SECRET" env-default:"change_me_before_use_it_in_production"`
+	AuthSecret        string   `yaml:"auth_secret" env:"AUTH_SECRET"`
 	Cluster           []string `yaml:"cluster" env:"CLUSTER" env-default:""`
 	ClusterKeyspace   string   `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
 	HearthBeatTimeout int64    `yaml:"hearth_beat_timeout" env:"HEARTH_BEAT_TIME" env-default:"35000"`
-	NatsConnString    string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
+	NATSConnString    string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 	PGDSN             string   `yaml:"pg_dsn" env:"PG_DSN"`
 	PGRetries         int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
 	CacheAddr         string   `yaml:"cache_addr" env:"CACHE_ADDR" env-default:"keydb:6379"`
@@ -30,5 +31,12 @@ func LoadConfig(logger *slog.Logger) (*Config, error) {
 			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
 	}
-	return &config, validator.New().Struct(&config)
+	if err := validator.New().Struct(&config); err != nil {
+		return nil, err
+	}
+	if err := configutil.ValidateAuthSecret(config.AuthSecret); err != nil {
+		return nil, err
+	}
+	configutil.WarnWeakAuthSecret(logger, config.AuthSecret, "ws")
+	return &config, nil
 }

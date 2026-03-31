@@ -47,7 +47,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 		os.Exit(1)
 	}
 
-	natsCon, err := nats.Connect(cfg.NatsConnString, nats.Compression(true))
+	natsCon, err := nats.Connect(cfg.NATSConnString, nats.Compression(true))
 	if err != nil {
 		logger.Error("unable to connect to NATS", slog.String("error", err.Error()))
 		os.Exit(1)

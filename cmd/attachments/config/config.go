@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/configutil"
 	"github.com/go-playground/validator/v10"
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -11,7 +12,7 @@ import (
 type Config struct {
 	ApiLog            bool     `yaml:"api_log" env:"API_LOG" env-default:"true"`
 	ServerAddress     string   `yaml:"server_address" env:"SERVER_ADDRESS" env-default:":3200"`
-	AuthSecret        string   `yaml:"auth_secret" env:"AUTH_SECRET" env-default:"change_me_before_use_it_in_production"`
+	AuthSecret        string   `yaml:"auth_secret" env:"AUTH_SECRET"`
 	Cluster           []string `yaml:"cluster" env:"CLUSTER" env-default:""`
 	ClusterKeyspace   string   `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
 	S3Endpoint        string   `yaml:"s3_endpoint" env:"S3_ENDPOINT" env-default:""`
@@ -24,7 +25,7 @@ type Config struct {
 	PGDSN             string   `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
 	PGRetries         int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
 	KeyDB             string   `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
-	NatsConnString    string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
+	NATSConnString    string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {
@@ -37,5 +38,12 @@ func LoadConfig(logger *slog.Logger) (*Config, error) {
 			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
 	}
-	return &config, validator.New().Struct(&config)
+	if err := validator.New().Struct(&config); err != nil {
+		return nil, err
+	}
+	if err := configutil.ValidateAuthSecret(config.AuthSecret); err != nil {
+		return nil, err
+	}
+	configutil.WarnWeakAuthSecret(logger, config.AuthSecret, "attachments")
+	return &config, nil
 }

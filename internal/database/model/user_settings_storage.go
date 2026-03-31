@@ -18,14 +18,14 @@ func MarshalStoredUserSettingsData(settings UserSettingsData) ([]byte, error) {
 func UnmarshalStoredUserSettingsData(data []byte) (UserSettingsData, error) {
 	var payload storedUserSettingsData
 	if len(data) == 0 {
-		payload.UserSettingsData.NormalizeCollections()
+		payload.NormalizeCollections()
 		return payload.UserSettingsData, nil
 	}
 	if err := json.Unmarshal(data, &payload); err != nil {
 		return UserSettingsData{}, err
 	}
 
-	payload.UserSettingsData.SetDeviceUsageOrder(payload.DeviceUsageOrder)
-	payload.UserSettingsData.NormalizeCollections()
+	payload.SetDeviceUsageOrder(payload.DeviceUsageOrder)
+	payload.NormalizeCollections()
 	return payload.UserSettingsData, nil
 }

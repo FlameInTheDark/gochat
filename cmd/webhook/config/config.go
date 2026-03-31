@@ -26,7 +26,7 @@ type Config struct {
 	// Cache
 	KeyDB string `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
 	// NATS
-	NatsConnString string `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
+	NATSConnString string `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {

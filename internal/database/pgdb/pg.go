@@ -172,11 +172,11 @@ func (db *DB) StartProbeLoop(ctx context.Context, interval time.Duration) {
 	if db == nil || !db.probeLoopStarted.CompareAndSwap(false, true) {
 		return
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	if interval <= 0 {
 		interval = defaultProbeInterval
+	}
+	if ctx == nil {
+		ctx = context.TODO()
 	}
 	baseCtx := observability.BackgroundFromContext(ctx)
 
@@ -238,9 +238,6 @@ func (db *DB) pingContext(ctx context.Context) error {
 func (db *DB) runProbe(ctx context.Context, timeout time.Duration) error {
 	if db == nil {
 		return errors.New("postgres db is nil")
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	if timeout <= 0 {
 		timeout = defaultProbeTimeout

@@ -27,8 +27,8 @@ var (
 type dependencyStateKey struct{}
 
 type dependencyState struct {
-	mu     sync.RWMutex
 	result string
+	mu     sync.RWMutex
 }
 
 func dependencyMetrics() dependencyInstruments {
