@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400">
+  <defs>
+    <style>
+      .title   { animation: fadeIn 0.8s ease-out 0.05s both; }
+      .tagline { animation: fadeIn 0.8s ease-out 0.40s both; }
+      .sep     { animation: fadeIn 0.8s ease-out 0.58s both; }
+      .b1 { animation: fadeIn 0.6s ease-out 0.72s both; }
+      .b2 { animation: fadeIn 0.6s ease-out 0.86s both; }
+      .b3 { animation: fadeIn 0.6s ease-out 1.00s both; }
+      .b4 { animation: fadeIn 0.6s ease-out 1.14s both; }
+      .b5 { animation: fadeIn 0.6s ease-out 1.28s both; }
+      .b6 { animation: fadeIn 0.6s ease-out 1.42s both; }
+      .b7 { animation: fadeIn 0.6s ease-out 1.56s both; }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+    </style>
+  </defs>
+
+  <!-- GoChat logotype -->
+  <text class="title"
+        x="600" y="215"
+        font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif"
+        font-size="108" font-weight="900"
+        text-anchor="middle" letter-spacing="-5">
+    <tspan fill="#00ADD8">Go</tspan><tspan fill="#f8fafc">Chat</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text class="tagline"
+        x="600" y="252"
+        font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif"
+        font-size="15" font-weight="400" letter-spacing="3"
+        fill="#9ca3af" text-anchor="middle">
+    DISTRIBUTED REAL-TIME CHAT &amp; VOICE BACKEND · WRITTEN IN GO
+  </text>
+
+  <!-- Separator -->
+  <rect class="sep" x="500" y="270" width="200" height="1" fill="#f8fafc" fill-opacity="0.15"/>
+
+  <!-- Feature pills — 7 items, total width 970px, centered at x=600, start x=115 -->
+
+  <!-- Guilds & Channels  x=115  w=158 -->
+  <g class="b1">
+    <rect x="115" y="292" width="158" height="34" rx="6"
+          fill="#f8fafc" fill-opacity="0.05" stroke="#f8fafc" stroke-opacity="0.12" stroke-width="1"/>
+    <text x="194" y="314"
+          font-family="system-ui,-apple-system,sans-serif"
+          font-size="13" font-weight="500" fill="#9ca3af" text-anchor="middle">Guilds &amp; Channels</text>
+  </g>
+
+  <!-- Real-time Events  x=283  w=150 -->
+  <g class="b2">
+    <rect x="283" y="292" width="150" height="34" rx="6"
+          fill="#f8fafc" fill-opacity="0.05" stroke="#f8fafc" stroke-opacity="0.12" stroke-width="1"/>
+    <text x="358" y="314"
+          font-family="system-ui,-apple-system,sans-serif"
+          font-size="13" font-weight="500" fill="#9ca3af" text-anchor="middle">Real-time Events</text>
+  </g>
+
+  <!-- Voice & Video  x=443  w=126 -->
+  <g class="b3">
+    <rect x="443" y="292" width="126" height="34" rx="6"
+          fill="#f8fafc" fill-opacity="0.05" stroke="#f8fafc" stroke-opacity="0.12" stroke-width="1"/>
+    <text x="506" y="314"
+          font-family="system-ui,-apple-system,sans-serif"
+          font-size="13" font-weight="500" fill="#9ca3af" text-anchor="middle">Voice &amp; Video</text>
+  </g>
+
+  <!-- File Uploads  x=579  w=118 -->
+  <g class="b4">
+    <rect x="579" y="292" width="118" height="34" rx="6"
+          fill="#f8fafc" fill-opacity="0.05" stroke="#f8fafc" stroke-opacity="0.12" stroke-width="1"/>
+    <text x="638" y="314"
+          font-family="system-ui,-apple-system,sans-serif"
+          font-size="13" font-weight="500" fill="#9ca3af" text-anchor="middle">File Uploads</text>
+  </g>
+
+  <!-- Full-text Search  x=707  w=150 -->
+  <g class="b5">
+    <rect x="707" y="292" width="150" height="34" rx="6"
+          fill="#f8fafc" fill-opacity="0.05" stroke="#f8fafc" stroke-opacity="0.12" stroke-width="1"/>
+    <text x="782" y="314"
+          font-family="system-ui,-apple-system,sans-serif"
+          font-size="13" font-weight="500" fill="#9ca3af" text-anchor="middle">Full-text Search</text>
+  </g>
+
+  <!-- Link Embeds  x=867  w=112 -->
+  <g class="b6">
+    <rect x="867" y="292" width="112" height="34" rx="6"
+          fill="#f8fafc" fill-opacity="0.05" stroke="#f8fafc" stroke-opacity="0.12" stroke-width="1"/>
+    <text x="923" y="314"
+          font-family="system-ui,-apple-system,sans-serif"
+          font-size="13" font-weight="500" fill="#9ca3af" text-anchor="middle">Link Embeds</text>
+  </g>
+
+  <!-- Presence  x=989  w=96 -->
+  <g class="b7">
+    <rect x="989" y="292" width="96" height="34" rx="6"
+          fill="#f8fafc" fill-opacity="0.05" stroke="#f8fafc" stroke-opacity="0.12" stroke-width="1"/>
+    <text x="1037" y="314"
+          font-family="system-ui,-apple-system,sans-serif"
+          font-size="13" font-weight="500" fill="#9ca3af" text-anchor="middle">Presence</text>
+  </g>
+</svg>
