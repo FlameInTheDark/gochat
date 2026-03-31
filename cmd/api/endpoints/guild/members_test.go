@@ -318,6 +318,7 @@ func (f *fakeDiscriminatorRepo) GetDiscriminatorsByUserIDs(ctx context.Context, 
 
 type fakeInviteRepo struct {
 	invite model.GuildInvite
+	err    error
 }
 
 func (f *fakeInviteRepo) CreateInvite(ctx context.Context, code string, inviteID, guildID, authorID int64, expiresAt int64) (model.GuildInvite, error) {
@@ -333,7 +334,7 @@ func (f *fakeInviteRepo) DeleteInviteByID(ctx context.Context, guildID, inviteID
 	return nil
 }
 func (f *fakeInviteRepo) FetchInvite(ctx context.Context, code string) (model.GuildInvite, error) {
-	return f.invite, nil
+	return f.invite, f.err
 }
 
 func newGuildTestApp(t *testing.T, userID int64, path string, handler fiber.Handler) *fiber.App {
