@@ -59,3 +59,10 @@ func (q *Queue) Close() error {
 	q.conn.Close()
 	return nil
 }
+
+func (q *Queue) Ping(ctx context.Context) error {
+	if ctx == nil {
+		return context.Canceled
+	}
+	return q.conn.FlushWithContext(ctx)
+}

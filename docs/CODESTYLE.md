@@ -349,11 +349,11 @@ Exception: fire-and-forget goroutines where the error cannot propagate must log.
 
 ### 8.1 Config struct conventions
 - YAML and env tags must be present on every field.
-- Sensitive fields must not have safe default values — use `env-required:"true"` or fail at startup validation.
+- Sensitive fields must not silently fall back to empty values — use `env-required:"true"` or fail at startup validation.
 - All config fields use `snake_case` in yaml/env tags.
 
 ### 8.2 Fail-fast on bad config
-`LoadConfig` must validate that required secrets are non-empty and non-default before returning. The application must not start with a known-insecure configuration.
+`LoadConfig` must validate that required secrets are non-empty before returning. Weak or local-placeholder secrets should emit warnings unless a service explicitly requires stricter validation.
 
 ---
 

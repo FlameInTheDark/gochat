@@ -87,3 +87,10 @@ func (i *IndexMQ) Close() error {
 	i.conn.Close()
 	return nil
 }
+
+func (i *IndexMQ) Ping(ctx context.Context) error {
+	if ctx == nil {
+		return context.Canceled
+	}
+	return i.conn.FlushWithContext(ctx)
+}

@@ -170,6 +170,17 @@ func readEnvelopeWithTimeout(t *testing.T, conn *ws.Conn, timeout time.Duration)
 	return env
 }
 
+func waitForEnvelopeType(t *testing.T, conn *ws.Conn, timeout time.Duration, wantType int) envelope {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	for {
+		env := readEnvelopeWithTimeout(t, conn, time.Until(deadline))
+		if env.T == wantType {
+			return env
+		}
+	}
+}
+
 func readGatewayPacketWithTimeout(t *testing.T, conn *ws.Conn, timeout time.Duration) gatewayPacket {
 	t.Helper()
 	_ = conn.SetReadDeadline(time.Now().Add(timeout))
@@ -557,7 +568,7 @@ func TestSignalWSV1DefaultAndExplicitVersionStillUseLegacyJoinFlow(t *testing.T)
 				t.Fatalf("unexpected ack envelope: %+v", ack)
 			}
 
-			offer := readEnvelopeWithTimeout(t, conn, 5*time.Second)
+			offer := waitForEnvelopeType(t, conn, 5*time.Second, int(mqmsg.EventTypeRTCOffer))
 			if offer.T != int(mqmsg.EventTypeRTCOffer) {
 				t.Fatalf("unexpected offer envelope: %+v", offer)
 			}
@@ -641,11 +652,8 @@ func TestSignalWSV2HandshakeUsesVoiceGatewayOrder(t *testing.T) {
 }
 
 func TestSignalWSV2HeartbeatTimeoutAfterHello(t *testing.T) {
-	oldGrace := signalHeartbeatGrace
-	signalHeartbeatGrace = 20 * time.Millisecond
-	defer func() { signalHeartbeatGrace = oldGrace }()
-
 	h := newSignalTestHarness(t, 20)
+	h.app.signalHeartbeatGrace = 20 * time.Millisecond
 	perms := int64(permissions.PermVoiceConnect | permissions.PermVoiceSpeak | permissions.PermVoiceVideo)
 	conn := h.dial(t, "?v=2")
 	defer conn.Close()

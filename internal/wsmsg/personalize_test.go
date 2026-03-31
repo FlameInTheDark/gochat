@@ -1,13 +1,28 @@
-package main
+package wsmsg
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
+	"github.com/FlameInTheDark/gochat/internal/cache/testutil"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	reactionutil "github.com/FlameInTheDark/gochat/internal/reaction"
 )
+
+type fakeReactionCache struct {
+	testutil.Noop
+	values map[string]map[string]string
+}
+
+func (f *fakeReactionCache) HGet(_ context.Context, key, field string) (string, error) {
+	if f.values[key] == nil {
+		return "", nil
+	}
+	return f.values[key][field], nil
+}
 
 func mustNonce(t *testing.T, raw string) *helper.MessageNonce {
 	t.Helper()
@@ -32,6 +47,20 @@ func decodeCreateMessage(t *testing.T, payload []byte) mqmsg.CreateMessage {
 	return message
 }
 
+func decodeReactionAdd(t *testing.T, payload []byte) mqmsg.MessageReactionAdd {
+	t.Helper()
+	var envelope mqmsg.Message
+	if err := json.Unmarshal(payload, &envelope); err != nil {
+		t.Fatalf("failed to unmarshal envelope: %v", err)
+	}
+
+	var message mqmsg.MessageReactionAdd
+	if err := json.Unmarshal(envelope.Data, &message); err != nil {
+		t.Fatalf("failed to unmarshal payload: %v", err)
+	}
+	return message
+}
+
 func TestPersonalizeMessageForRecipientKeepsNonceForAuthor(t *testing.T) {
 	event, err := mqmsg.BuildEventMessage(&mqmsg.CreateMessage{
 		Message: dto.Message{
@@ -50,7 +79,7 @@ func TestPersonalizeMessageForRecipientKeepsNonceForAuthor(t *testing.T) {
 		t.Fatalf("Marshal returned error: %v", err)
 	}
 
-	personalized := personalizeMessageForRecipient("channel.99", 42, wire)
+	personalized := PersonalizeMessageForRecipient("channel.99", 42, wire)
 	got := decodeCreateMessage(t, personalized)
 	if got.Message.Nonce == nil || string(*got.Message.Nonce) != `"draft-1"` {
 		t.Fatalf("expected author to receive nonce, got %#v", got.Message.Nonce)
@@ -75,7 +104,7 @@ func TestPersonalizeMessageForRecipientStripsNonceForOtherUsers(t *testing.T) {
 		t.Fatalf("Marshal returned error: %v", err)
 	}
 
-	personalized := personalizeMessageForRecipient("channel.99", 7, wire)
+	personalized := PersonalizeMessageForRecipient("channel.99", 7, wire)
 	got := decodeCreateMessage(t, personalized)
 	if got.Message.Nonce != nil {
 		t.Fatalf("expected nonce to be stripped, got %#v", got.Message.Nonce)
@@ -100,9 +129,41 @@ func TestPersonalizeMessageForRecipientLeavesUserTopicsUntouched(t *testing.T) {
 		t.Fatalf("Marshal returned error: %v", err)
 	}
 
-	personalized := personalizeMessageForRecipient("user.42", 7, wire)
+	personalized := PersonalizeMessageForRecipient("user.42", 7, wire)
 	got := decodeCreateMessage(t, personalized)
 	if got.Message.Nonce == nil || string(*got.Message.Nonce) != `"draft-1"` {
 		t.Fatalf("expected user-topic payload to stay untouched, got %#v", got.Message.Nonce)
+	}
+}
+
+func TestPersonalizeReactionMessageUsesCacheForMe(t *testing.T) {
+	event, err := mqmsg.BuildEventMessage(&mqmsg.MessageReactionAdd{
+		ChannelId: 7,
+		MessageId: 9,
+		Reaction: dto.MessageReaction{
+			Count: 3,
+			Emoji: dto.MessageReactionEmoji{Name: "❤️"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildEventMessage returned error: %v", err)
+	}
+	wire, err := json.Marshal(event)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+
+	cache := &fakeReactionCache{
+		values: map[string]map[string]string{
+			reactionutil.UserKey(9, 55): {
+				reactionutil.SystemBucketKey("❤️"): "123",
+			},
+		},
+	}
+
+	personalized := PersonalizeMessageForRecipientWithCache(cache, "channel.7", 55, wire)
+	got := decodeReactionAdd(t, personalized)
+	if !got.Reaction.Me {
+		t.Fatalf("expected personalized reaction me=true, got %#v", got.Reaction)
 	}
 }

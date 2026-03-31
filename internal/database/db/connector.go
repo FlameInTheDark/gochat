@@ -1,6 +1,8 @@
 package db
 
 import (
+	"context"
+	"errors"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -45,6 +47,13 @@ func NewCQLCon(keyspace string, logger gocql.StdLogger, cluster ...string) (*CQL
 
 func (con *CQLCon) Session() *gocql.Session {
 	return con.s
+}
+
+func (con *CQLCon) Ping(ctx context.Context) error {
+	if con == nil || con.s == nil {
+		return errors.New("scylla session is not connected")
+	}
+	return con.s.Query("SELECT now() FROM system.local").WithContext(ctx).Exec()
 }
 
 func (con *CQLCon) Close() error {

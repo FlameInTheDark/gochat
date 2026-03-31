@@ -49,7 +49,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 
 	var qt mq.SendTransporter
-	nt, err := nats.New(cfg.NatsConnString)
+	nt, err := nats.New(cfg.NATSConnString)
 	if err != nil {
 		return nil, err
 	}

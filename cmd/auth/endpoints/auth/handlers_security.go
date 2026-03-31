@@ -193,7 +193,7 @@ func (e *entity) ConfirmTOTPSetup(c *fiber.Ctx) error {
 	defer func() { _ = tx.Rollback() }()
 
 	now := time.Now()
-	factorID := idgenNext()
+	factorID := e.idGenerator()
 	recoveryCodes, storedCodes, err := e.generateRecoveryCodes()
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGenerateRecoveryCodes)

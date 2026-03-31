@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/FlameInTheDark/gochat/internal/configutil"
 	"github.com/go-playground/validator/v10"
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -16,17 +17,17 @@ type Config struct {
 	RateLimitTime              int           `yaml:"rate_limit_time" env:"RATE_LIMIT_TIME" env-default:"1"`
 	RateLimitRequests          int           `yaml:"rate_limit_requests" env:"RATE_LIMIT_REQUESTS" env-default:"20"`
 	AppName                    string        `yaml:"app_name" env:"APP_NAME" env-default:"GoChat"`
-	BaseUrl                    string        `yaml:"base_url" env:"BASE_URL" env-default:"http://example.com" validation:"http_url"`
+	BaseURL                    string        `yaml:"base_url" env:"BASE_URL" env-default:"http://example.com" validation:"http_url"`
 	ContentHosts               []string      `yaml:"content_hosts" env:"CONTENT_HOSTS" env-separator:","`
 	Cluster                    []string      `yaml:"cluster" env:"CLUSTER" env-default:""`
 	ClusterKeyspace            string        `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
-	AuthSecret                 string        `yaml:"auth_secret" env:"AUTH_SECRET" env-default:"change_me_before_use_it_in_production"`
+	AuthSecret                 string        `yaml:"auth_secret" env:"AUTH_SECRET"`
 	Swagger                    bool          `yaml:"swagger" env:"SWAGGER" env-default:"false"`
 	KeyDB                      string        `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
 	UploadLimit                int64         `yaml:"upload_limit" env:"UPLOAD_LIMIT" env-default:"50000000"`
 	AttachmentTTLMinutes       int64         `yaml:"attachment_ttl_minutes" env:"ATTACHMENT_TTL_MINUTES" env-default:"10"`
-	NatsConnString             string        `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
-	IndexerNatsConnString      string        `yaml:"indexer_nats_conn_string" env:"INDEX_NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`
+	NATSConnString             string        `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
+	IndexerNATSConnString      string        `yaml:"indexer_nats_conn_string" env:"INDEX_NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`
 	PGDSN                      string        `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
 	PGRetries                  int           `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
 	PGQueryLog                 bool          `yaml:"pg_query_log" env:"PG_QUERY_LOG" env-default:"false"`
@@ -68,5 +69,12 @@ func LoadConfig(logger *slog.Logger) (*Config, error) {
 			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
 	}
-	return &config, validator.New().Struct(&config)
+	if err := validator.New().Struct(&config); err != nil {
+		return nil, err
+	}
+	if err := configutil.ValidateAuthSecret(config.AuthSecret); err != nil {
+		return nil, err
+	}
+	configutil.WarnWeakAuthSecret(logger, config.AuthSecret, "api")
+	return &config, nil
 }

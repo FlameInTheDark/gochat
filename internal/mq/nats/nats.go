@@ -28,6 +28,13 @@ func (q *NatsQueue) Close() error {
 	return nil
 }
 
+func (q *NatsQueue) Ping(ctx context.Context) error {
+	if ctx == nil {
+		return context.Canceled
+	}
+	return q.conn.FlushWithContext(ctx)
+}
+
 func (q *NatsQueue) SendChannelMessage(channelId int64, message mqmsg.EventDataMessage) error {
 	return q.SendChannelMessageContext(context.Background(), channelId, message)
 }

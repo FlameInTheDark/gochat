@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/FlameInTheDark/gochat/internal/cache"
+	"github.com/FlameInTheDark/gochat/internal/cache/testutil"
 	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fasthttp"
@@ -453,87 +453,12 @@ func (f *fakeContextualUserTransport) SendUserUpdateContext(ctx context.Context,
 }
 
 type fakeMessageCache struct {
+	testutil.Noop
 	deleted []string
 }
 
-var _ cache.Cache = (*fakeMessageCache)(nil)
-
-func (f *fakeMessageCache) Set(ctx context.Context, key, val string) error { return nil }
-func (f *fakeMessageCache) Get(ctx context.Context, key string) (string, error) {
-	return "", errors.New("not implemented")
-}
-func (f *fakeMessageCache) GetWithTTL(ctx context.Context, key string) (string, cache.LookupMeta, error) {
-	return "", cache.LookupMeta{}, nil
-}
 func (f *fakeMessageCache) Delete(ctx context.Context, key string) error {
 	f.deleted = append(f.deleted, key)
-	return nil
-}
-func (f *fakeMessageCache) GetBytes(ctx context.Context, key string) ([]byte, error) {
-	return nil, errors.New("not implemented")
-}
-func (f *fakeMessageCache) SetTimed(ctx context.Context, key, val string, ttl int64) error {
-	return nil
-}
-func (f *fakeMessageCache) SetTimedInt64(ctx context.Context, key string, val int64, ttl int64) error {
-	return nil
-}
-func (f *fakeMessageCache) SetInt64(ctx context.Context, key string, val int64) error { return nil }
-func (f *fakeMessageCache) SetTTL(ctx context.Context, key string, ttl int64) error   { return nil }
-func (f *fakeMessageCache) Incr(ctx context.Context, key string) (int64, error)       { return 0, nil }
-func (f *fakeMessageCache) GetInt64(ctx context.Context, key string) (int64, error)   { return 0, nil }
-func (f *fakeMessageCache) SetJSON(ctx context.Context, key string, val interface{}) error {
-	return nil
-}
-func (f *fakeMessageCache) SetTimedJSON(ctx context.Context, key string, val interface{}, ttl int64, _ ...cache.TimedOption) error {
-	return nil
-}
-func (f *fakeMessageCache) SetTimedJSONNX(ctx context.Context, key string, val interface{}, ttl int64, _ ...cache.TimedOption) (bool, error) {
-	return true, nil
-}
-func (f *fakeMessageCache) GetJSON(ctx context.Context, key string, v interface{}) error {
-	return errors.New("not implemented")
-}
-func (f *fakeMessageCache) GetJSONWithTTL(ctx context.Context, key string, v interface{}) (cache.LookupMeta, error) {
-	return cache.LookupMeta{}, nil
-}
-func (f *fakeMessageCache) TryAcquireRefreshLock(ctx context.Context, key, token string, ttl time.Duration) (bool, error) {
-	return true, nil
-}
-func (f *fakeMessageCache) ReleaseRefreshLock(ctx context.Context, key, token string) error {
-	return nil
-}
-func (f *fakeMessageCache) HGet(ctx context.Context, key, field string) (string, error) {
-	return "", errors.New("not implemented")
-}
-func (f *fakeMessageCache) HSet(ctx context.Context, key, field, value string) error { return nil }
-func (f *fakeMessageCache) HDel(ctx context.Context, key, field string) error        { return nil }
-func (f *fakeMessageCache) HGetAll(ctx context.Context, key string) (map[string]string, error) {
-	return nil, nil
-}
-func (f *fakeMessageCache) HIncrBy(ctx context.Context, key, field string, delta int64) (int64, error) {
-	return 0, nil
-}
-func (f *fakeMessageCache) ZAdd(ctx context.Context, key string, score float64, member string) error {
-	return nil
-}
-func (f *fakeMessageCache) ZRem(ctx context.Context, key string, members ...string) error { return nil }
-func (f *fakeMessageCache) ZRevRangeByScore(ctx context.Context, key, max, min string, offset, count int64) ([]string, error) {
-	return nil, nil
-}
-func (f *fakeMessageCache) XAdd(ctx context.Context, stream string, maxLen int64, approx bool, values map[string]interface{}) error {
-	return nil
-}
-func (f *fakeMessageCache) HGetAllMulti(_ context.Context, keys []string) ([]map[string]string, error) {
-	return make([]map[string]string, len(keys)), nil
-}
-func (f *fakeMessageCache) MGetBytes(_ context.Context, keys ...string) ([][]byte, error) {
-	return make([][]byte, len(keys)), nil
-}
-func (f *fakeMessageCache) SetTimedJSONBatch(_ context.Context, _ []string, _ []interface{}, _ int64, _ ...cache.TimedOption) error {
-	return nil
-}
-func (f *fakeMessageCache) ZAddBatch(_ context.Context, _ string, _ []cache.ZBatchMember) error {
 	return nil
 }
 

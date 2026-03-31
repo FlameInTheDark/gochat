@@ -204,10 +204,10 @@ func (e *entity) parseReactionRoute(c *fiber.Ctx) (*helper.JWTUser, int64, int64
 func (e *entity) parseGetReactionUsersRequest(c *fiber.Ctx) (*GetReactionUsersRequest, error) {
 	var req GetReactionUsersRequest
 	if err := c.QueryParser(&req); err != nil {
-		return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, badRequestQueryParseError()
 	}
 	if err := req.Validate(); err != nil {
-		return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, badRequestValidationError(err)
 	}
 	if req.Limit == nil {
 		limit := reactionutil.UsersPageDefaultLimit
