@@ -1,4 +1,4 @@
-FROM golang:1.25.8 AS builder
+FROM golang:1.26.1 AS builder
 
 ARG MIGRATE_VERSION=v4.19.1
 
