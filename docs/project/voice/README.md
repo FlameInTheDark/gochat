@@ -4,6 +4,7 @@
 
 - [System Architecture](SystemArchitecture.md) - High-level architecture and components
 - [Connection Protocol](ConnectionProtocol.md) - Complete connection flow and protocol details
+- [DTLS Transport Security](DTLS.md) - Browser-to-SFU transport encryption, server certificates, and frontend expectations
 - [SFU WebSocket Protocol](SFUProtocol.md) - WebSocket protocol and signaling overview
 - [SFU Event Payloads](SFUEventPayloads.md) - Complete event payload reference with examples
 - [SFU Permissions (Bitmasks)](SFUPermissions.md) - Permission definitions
