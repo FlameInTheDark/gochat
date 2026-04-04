@@ -16,6 +16,13 @@ type Config struct {
 	Region        string   `yaml:"region" env:"SFU_REGION" env-default:"global"`
 	PublicBaseURL string   `yaml:"public_base_url" env:"SFU_PUBLIC_BASE_URL" env-required:"true"`
 	ICEPublicIP   string   `yaml:"ice_public_ip" env:"SFU_ICE_PUBLIC_IP"`
+	// Optional DTLS certificate/key pair for WebRTC peer connections. Provide
+	// either the PEM values directly or file paths for both halves of the pair.
+	// When left empty, the SFU generates a self-signed certificate at startup.
+	DTLSCertificatePEM  string `yaml:"dtls_certificate_pem" env:"SFU_DTLS_CERTIFICATE_PEM"`
+	DTLSPrivateKeyPEM   string `yaml:"dtls_private_key_pem" env:"SFU_DTLS_PRIVATE_KEY_PEM"`
+	DTLSCertificateFile string `yaml:"dtls_certificate_file" env:"SFU_DTLS_CERTIFICATE_FILE"`
+	DTLSPrivateKeyFile  string `yaml:"dtls_private_key_file" env:"SFU_DTLS_PRIVATE_KEY_FILE"`
 	// Discovery
 	WebhookURL   string `yaml:"webhook_url" env:"WEBHOOK_URL" env-required:"true"`
 	WebhookToken string `yaml:"webhook_token" env:"WEBHOOK_TOKEN" env-required:"true"`
@@ -89,6 +96,9 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("ice_public_ip must be a valid IP address")
 		}
 	}
+	if err := c.validateDTLSConfig(); err != nil {
+		return err
+	}
 
 	start, end := c.UDPPortRangeStart, c.UDPPortRangeEnd
 	if start == 0 && end == 0 {
@@ -103,6 +113,28 @@ func (c *Config) Validate() error {
 	if start > end {
 		return fmt.Errorf("udp_port_range_start must be less than or equal to udp_port_range_end")
 	}
+	return nil
+}
+
+func (c *Config) validateDTLSConfig() error {
+	inlineCert := strings.TrimSpace(c.DTLSCertificatePEM)
+	inlineKey := strings.TrimSpace(c.DTLSPrivateKeyPEM)
+	fileCert := strings.TrimSpace(c.DTLSCertificateFile)
+	fileKey := strings.TrimSpace(c.DTLSPrivateKeyFile)
+
+	hasInline := inlineCert != "" || inlineKey != ""
+	hasFiles := fileCert != "" || fileKey != ""
+
+	if hasInline && hasFiles {
+		return fmt.Errorf("configure dtls certificate using either pem values or file paths, not both")
+	}
+	if hasInline && (inlineCert == "" || inlineKey == "") {
+		return fmt.Errorf("dtls_certificate_pem and dtls_private_key_pem must both be set")
+	}
+	if hasFiles && (fileCert == "" || fileKey == "") {
+		return fmt.Errorf("dtls_certificate_file and dtls_private_key_file must both be set")
+	}
+
 	return nil
 }
 

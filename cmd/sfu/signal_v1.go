@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"time"
 
+	daveserver "github.com/FlameInTheDark/go-dave/server"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/pion/webrtc/v4"
 	"go.opentelemetry.io/otel/attribute"
@@ -16,7 +17,6 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
-	"github.com/FlameInTheDark/gochat/internal/voice/dave"
 )
 
 func (a *App) handleSignalWSV1(c *websocket.Conn) {
@@ -104,7 +104,7 @@ func (a *App) handleSignalWSV1(c *websocket.Conn) {
 
 	a.sfu.AddPeer(sessionCtx, channelID, state)
 	a.totalPeers.Add(1)
-	if err := a.dave.Connect(dave.Participant{
+	if err := a.dave.Connect(daveserver.Participant{
 		SessionID:     legacySessionID,
 		UserID:        uid,
 		ChannelID:     channelID,

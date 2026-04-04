@@ -41,7 +41,8 @@ This project is composed of several services located under the `cmd/` directory.
   - Webhook validates the token (HS256, claims: `{ typ:"sfu", id:"<service_id>" }`) and writes/refreshes the instance in discovery (etcd).
   - API reads instances from etcd when serving JoinVoice. No fallback to origin; returns 503 when no instance exists.
 - Dependencies: Webhook (for discovery), etcd (backing store for discovery), optional STUN servers.
- - Config: `webhook_url`, pre-generated `webhook_token` (HS256 JWT), and `service_id` (must match token `id`).
+ - Config: `webhook_url`, pre-generated `webhook_token` (HS256 JWT), `service_id` (must match token `id`), and optional `dtls_certificate_file` / `dtls_private_key_file` for reusable WebRTC DTLS certificates.
+ - DTLS cert generation: `go run ./cmd/tools certificates dtls generate --cert-out ./certs/sfu.crt --key-out ./certs/sfu.key`
  - Observability: see `docs/project/observability/ExternalSFU.md` for the direct OTLP and direct log-shipping contract.
 
 ## Webhook (`cmd/webhook`)

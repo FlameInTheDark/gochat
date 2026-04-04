@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	daveserver "github.com/FlameInTheDark/go-dave/server"
 	ws "github.com/fasthttp/websocket"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pion/webrtc/v4"
@@ -23,7 +24,6 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
-	"github.com/FlameInTheDark/gochat/internal/voice/dave/wire"
 )
 
 type signalTestHarness struct {
@@ -224,12 +224,12 @@ func waitForGatewayOp(t *testing.T, conn *ws.Conn, timeout time.Duration, wantOp
 	}
 }
 
-func waitForBinaryOpcode(t *testing.T, conn *ws.Conn, timeout time.Duration, wantOpcode byte) *wire.DecodedMessage {
+func waitForBinaryOpcode(t *testing.T, conn *ws.Conn, timeout time.Duration, wantOpcode daveserver.BinaryOpcode) *daveserver.DecodedBinaryMessage {
 	t.Helper()
 	deadline := time.Now().Add(timeout)
 	for {
 		payload := readBinaryMessageWithTimeout(t, conn, time.Until(deadline))
-		decoded, err := wire.Decode(payload)
+		decoded, err := daveserver.DecodeBinaryMessage(payload)
 		if err != nil {
 			t.Fatalf("decode binary packet: %v", err)
 		}
@@ -239,11 +239,11 @@ func waitForBinaryOpcode(t *testing.T, conn *ws.Conn, timeout time.Duration, wan
 	}
 }
 
-func readNextBinaryDecoded(t *testing.T, conn *ws.Conn, timeout time.Duration) *wire.DecodedMessage {
+func readNextBinaryDecoded(t *testing.T, conn *ws.Conn, timeout time.Duration) *daveserver.DecodedBinaryMessage {
 	t.Helper()
 
 	payload := readBinaryMessageWithTimeout(t, conn, timeout)
-	decoded, err := wire.Decode(payload)
+	decoded, err := daveserver.DecodeBinaryMessage(payload)
 	if err != nil {
 		t.Fatalf("decode binary packet: %v", err)
 	}
@@ -448,19 +448,19 @@ func completeDAVEUpgrade(t *testing.T, c1, c2 *v2Client) uint16 {
 		t.Fatalf("expected protocol version 1 in prepare epoch, got %d and %d", epoch1.ProtocolVersion, epoch2.ProtocolVersion)
 	}
 
-	ext1 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeExternalSenderPackage)
-	ext2 := waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeExternalSenderPackage)
+	ext1 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, daveserver.OpcodeExternalSenderPackage)
+	ext2 := waitForBinaryOpcode(t, c2.conn, 5*time.Second, daveserver.OpcodeExternalSenderPackage)
 	if ext1.ExternalSender == nil || ext2.ExternalSender == nil {
 		t.Fatal("expected external sender packages")
 	}
 
-	keyPackage1, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: mustFixtureKeyPackage(t, c1.userID)})
-	keyPackage2, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: mustFixtureKeyPackage(t, c2.userID)})
+	keyPackage1, _ := daveserver.EncodeKeyPackage(daveserver.KeyPackage{Payload: mustFixtureKeyPackage(t, c1.userID)})
+	keyPackage2, _ := daveserver.EncodeKeyPackage(daveserver.KeyPackage{Payload: mustFixtureKeyPackage(t, c2.userID)})
 	writeBinaryMessage(t, c1.conn, keyPackage1)
 	writeBinaryMessage(t, c2.conn, keyPackage2)
 
-	props1 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeProposals)
-	props2 := waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeProposals)
+	props1 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, daveserver.OpcodeProposals)
+	props2 := waitForBinaryOpcode(t, c2.conn, 5*time.Second, daveserver.OpcodeProposals)
 	if len(props1.Payloads) != 1 || len(props2.Payloads) != 1 {
 		t.Fatalf("expected one proposals blob per recipient, got %d and %d", len(props1.Payloads), len(props2.Payloads))
 	}
@@ -468,18 +468,18 @@ func completeDAVEUpgrade(t *testing.T, c1, c2 *v2Client) uint16 {
 		t.Fatal("expected non-empty proposals payloads")
 	}
 
-	commit, _ := wire.EncodeCommitWelcome(wire.CommitWelcome{
+	commit, _ := daveserver.EncodeCommitWelcome(daveserver.CommitWelcome{
 		Commit:  []byte{11, 12, 13, 14, 15},
 		Welcome: []byte{21, 22, 23, 24, 25},
 	})
 	writeBinaryMessage(t, c1.conn, commit)
 
-	announce1 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeAnnounceCommitTransition)
+	announce1 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, daveserver.OpcodeAnnounceCommit)
 	welcome2 := readNextBinaryDecoded(t, c2.conn, 5*time.Second)
 	if announce1.TransitionID == 0 || welcome2.TransitionID == 0 {
 		t.Fatal("expected non-zero transition id")
 	}
-	if welcome2.Opcode != wire.OpcodeWelcome {
+	if welcome2.Opcode != daveserver.OpcodeWelcome {
 		t.Fatalf("expected welcome for non-committer, got opcode %d", welcome2.Opcode)
 	}
 	if announce1.TransitionID != welcome2.TransitionID {
@@ -800,8 +800,8 @@ func TestSignalWSV2InvalidCommitWelcomeTriggersRecreate(t *testing.T) {
 	writeGatewayMessage(t, c1.conn, voicev2.OpDAVEInvalidCommitWelcome, voicev2.InvalidCommitWelcome{TransitionID: lastTransitionID})
 	_ = waitForGatewayOp(t, c1.conn, 5*time.Second, voicev2.OpDAVEPrepareEpoch)
 	_ = waitForGatewayOp(t, c2.conn, 5*time.Second, voicev2.OpDAVEPrepareEpoch)
-	_ = waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeExternalSenderPackage)
-	_ = waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeExternalSenderPackage)
+	_ = waitForBinaryOpcode(t, c1.conn, 5*time.Second, daveserver.OpcodeExternalSenderPackage)
+	_ = waitForBinaryOpcode(t, c2.conn, 5*time.Second, daveserver.OpcodeExternalSenderPackage)
 }
 
 func TestSignalWSV2DAVEUpgradeLateJoinResumeAndDowngrade(t *testing.T) {
@@ -844,20 +844,20 @@ func TestSignalWSV2DAVEUpgradeLateJoinResumeAndDowngrade(t *testing.T) {
 	if epoch1.Epoch != 2 || epoch2.Epoch != 2 || epoch3.Epoch != 2 {
 		t.Fatalf("expected recreate epoch 2, got %+v %+v %+v", epoch1, epoch2, epoch3)
 	}
-	_ = waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeExternalSenderPackage)
-	_ = waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeExternalSenderPackage)
-	_ = waitForBinaryOpcode(t, c3.conn, 5*time.Second, wire.OpcodeExternalSenderPackage)
+	_ = waitForBinaryOpcode(t, c1.conn, 5*time.Second, daveserver.OpcodeExternalSenderPackage)
+	_ = waitForBinaryOpcode(t, c2.conn, 5*time.Second, daveserver.OpcodeExternalSenderPackage)
+	_ = waitForBinaryOpcode(t, c3.conn, 5*time.Second, daveserver.OpcodeExternalSenderPackage)
 
-	keyPackage1, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: mustFixtureKeyPackage(t, c1.userID)})
-	keyPackage2, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: mustFixtureKeyPackage(t, c2.userID)})
-	keyPackage3, _ := wire.EncodeKeyPackage(wire.KeyPackage{Payload: mustFixtureKeyPackage(t, c3.userID)})
+	keyPackage1, _ := daveserver.EncodeKeyPackage(daveserver.KeyPackage{Payload: mustFixtureKeyPackage(t, c1.userID)})
+	keyPackage2, _ := daveserver.EncodeKeyPackage(daveserver.KeyPackage{Payload: mustFixtureKeyPackage(t, c2.userID)})
+	keyPackage3, _ := daveserver.EncodeKeyPackage(daveserver.KeyPackage{Payload: mustFixtureKeyPackage(t, c3.userID)})
 	writeBinaryMessage(t, c1.conn, keyPackage1)
 	writeBinaryMessage(t, c2.conn, keyPackage2)
 	writeBinaryMessage(t, c3.conn, keyPackage3)
 
-	props1 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeProposals)
-	props2 := waitForBinaryOpcode(t, c2.conn, 5*time.Second, wire.OpcodeProposals)
-	props3 := waitForBinaryOpcode(t, c3.conn, 5*time.Second, wire.OpcodeProposals)
+	props1 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, daveserver.OpcodeProposals)
+	props2 := waitForBinaryOpcode(t, c2.conn, 5*time.Second, daveserver.OpcodeProposals)
+	props3 := waitForBinaryOpcode(t, c3.conn, 5*time.Second, daveserver.OpcodeProposals)
 	if len(props1.Payloads) != 1 || len(props2.Payloads) != 1 || len(props3.Payloads) != 1 {
 		t.Fatalf("expected one proposals blob per recipient, got %d, %d, %d", len(props1.Payloads), len(props2.Payloads), len(props3.Payloads))
 	}
@@ -865,16 +865,16 @@ func TestSignalWSV2DAVEUpgradeLateJoinResumeAndDowngrade(t *testing.T) {
 		t.Fatal("expected non-empty proposals payloads for late join upgrade")
 	}
 
-	commit3, _ := wire.EncodeCommitWelcome(wire.CommitWelcome{
+	commit3, _ := daveserver.EncodeCommitWelcome(daveserver.CommitWelcome{
 		Commit:  []byte{61, 62, 63, 64, 65},
 		Welcome: []byte{71, 72, 73, 74, 75},
 	})
 	writeBinaryMessage(t, c1.conn, commit3)
 
-	announce3 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, wire.OpcodeAnnounceCommitTransition)
+	announce3 := waitForBinaryOpcode(t, c1.conn, 5*time.Second, daveserver.OpcodeAnnounceCommit)
 	welcomeC2 := readNextBinaryDecoded(t, c2.conn, 5*time.Second)
 	welcomeC3 := readNextBinaryDecoded(t, c3.conn, 5*time.Second)
-	if welcomeC2.Opcode != wire.OpcodeWelcome || welcomeC3.Opcode != wire.OpcodeWelcome {
+	if welcomeC2.Opcode != daveserver.OpcodeWelcome || welcomeC3.Opcode != daveserver.OpcodeWelcome {
 		t.Fatalf("expected welcome for recreate recipients, got opcodes %d and %d", welcomeC2.Opcode, welcomeC3.Opcode)
 	}
 	if welcomeC2.TransitionID != announce3.TransitionID || welcomeC3.TransitionID != announce3.TransitionID {

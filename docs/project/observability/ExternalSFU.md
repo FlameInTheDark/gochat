@@ -74,11 +74,24 @@ Equivalent `config.yaml` snippet:
 ```yaml
 webhook_token: "<same-jwt>"
 service_id: "sfu-eu-1"
+dtls_certificate_file: "/etc/gochat/sfu.crt"
+dtls_private_key_file: "/etc/gochat/sfu.key"
 telemetry_otlp_endpoint: "https://telemetry.example.com"
 telemetry_otlp_headers: "Authorization=Bearer <same-jwt>"
 telemetry_otlp_protocol: "http/protobuf"
 telemetry_metric_export_interval: "60000"
 ```
+
+You can generate the DTLS PEM pair with:
+
+```bash
+go run ./cmd/tools certificates dtls generate \
+  --cert-out ./certs/sfu.crt \
+  --key-out ./certs/sfu.key \
+  --common-name sfu-eu-1
+```
+
+If `dtls_certificate_file` and `dtls_private_key_file` are left empty, the SFU generates a self-signed DTLS certificate at startup instead.
 
 ## Runtime behavior
 

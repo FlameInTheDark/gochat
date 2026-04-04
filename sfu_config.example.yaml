@@ -8,6 +8,23 @@ public_base_url: "https://sfu-eu.example.com"
 # runs behind 1:1 NAT or static UDP port forwarding.
 ice_public_ip: ""
 
+# Optional DTLS certificate/key pair for WebRTC peer connections.
+# If left empty, the SFU generates a self-signed certificate at startup.
+# Generate files with:
+#   go run ./cmd/tools certificates dtls generate --cert-out ./certs/sfu.crt --key-out ./certs/sfu.key
+dtls_certificate_file: ""
+dtls_private_key_file: ""
+# Optional inline PEM alternative to the file-based settings above.
+# Set either the file paths or both PEM values, but not both.
+# dtls_certificate_pem: |
+#   -----BEGIN CERTIFICATE-----
+#   ...
+#   -----END CERTIFICATE-----
+# dtls_private_key_pem: |
+#   -----BEGIN PRIVATE KEY-----
+#   ...
+#   -----END PRIVATE KEY-----
+
 # Optional: restrict WebRTC UDP sockets to a fixed port range.
 # Leave both as 0 to preserve the current OS-managed ephemeral port behavior.
 udp_port_range_start: 0

@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	daveserver "github.com/FlameInTheDark/go-dave/server"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/pion/webrtc/v4"
 	"go.opentelemetry.io/otel/codes"
@@ -16,7 +17,6 @@ import (
 	voicev2 "github.com/FlameInTheDark/gochat/cmd/sfu/signaling/v2"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/observability"
-	"github.com/FlameInTheDark/gochat/internal/voice/dave/wire"
 )
 
 const (
@@ -511,13 +511,13 @@ func (a *App) handleSignalV2TextPacket(session *signalV2Session, packet *voicev2
 }
 
 func (a *App) handleSignalV2BinaryPacket(session *signalV2Session, raw []byte) bool {
-	packet, err := wire.Decode(raw)
+	packet, err := daveserver.DecodeBinaryMessage(raw)
 	if err != nil {
 		_ = a.closeSignalV2Session(session, voicev2.CloseCodeInvalidPayload, err.Error())
 		return true
 	}
 	switch packet.Opcode {
-	case wire.OpcodeKeyPackage:
+	case daveserver.OpcodeKeyPackage:
 		if len(packet.Payloads) == 0 {
 			_ = a.closeSignalV2Session(session, voicev2.CloseCodeInvalidPayload, "missing key package payload")
 			return true
@@ -527,7 +527,7 @@ func (a *App) handleSignalV2BinaryPacket(session *signalV2Session, raw []byte) b
 			return true
 		}
 		return false
-	case wire.OpcodeCommitWelcome:
+	case daveserver.OpcodeCommitWelcome:
 		if err := a.dave.HandleCommitWelcome(session.sessionID, packet.Commit, packet.Welcome); err != nil {
 			_ = a.closeSignalV2Session(session, voicev2.CloseCodeWrongPhase, err.Error())
 			return true
