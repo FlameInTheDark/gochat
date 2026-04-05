@@ -132,6 +132,7 @@ type fakeCreateChannelRepo struct {
 	channels         map[int64]model.Channel
 	setParentCalls   []fakeSetChannelParentCall
 	setParentBulkOps []fakeSetChannelParentBulkCall
+	getChannelCh     chan int64
 }
 
 type fakeSetChannelParentCall struct {
@@ -145,6 +146,12 @@ type fakeSetChannelParentBulkCall struct {
 }
 
 func (f *fakeCreateChannelRepo) GetChannel(ctx context.Context, id int64) (model.Channel, error) {
+	if f.getChannelCh != nil {
+		select {
+		case f.getChannelCh <- id:
+		default:
+		}
+	}
 	channel, ok := f.channels[id]
 	if !ok {
 		return model.Channel{}, sql.ErrNoRows

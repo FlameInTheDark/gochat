@@ -276,10 +276,12 @@ func modelToUser(m model.User) dto.User {
 
 func (e *entity) guildModelToGuild(c *fiber.Ctx, m model.Guild) dto.Guild {
 	g := dto.Guild{
-		Id:     m.Id,
-		Name:   m.Name,
-		Owner:  m.OwnerId,
-		Public: m.Public,
+		Id:              m.Id,
+		Name:            m.Name,
+		Owner:           m.OwnerId,
+		Public:          m.Public,
+		Permissions:     m.Permissions,
+		SystemChannelId: m.SystemMessages,
 	}
 	if m.Icon != nil {
 		key := fmt.Sprintf("icons:%d:%d", m.Id, *m.Icon)

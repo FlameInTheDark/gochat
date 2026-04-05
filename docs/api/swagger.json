@@ -7034,6 +7034,11 @@
                     "description": "Whether the guild is public",
                     "type": "boolean",
                     "default": false
+                },
+                "system_channel_id": {
+                    "description": "System notification channel ID",
+                    "type": "integer",
+                    "example": 2230469276416868352
                 }
             }
         },

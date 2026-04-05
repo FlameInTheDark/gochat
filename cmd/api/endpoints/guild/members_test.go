@@ -117,7 +117,8 @@ func (f *fakeMemberRepo) CountGuildMembers(ctx context.Context, guildId int64) (
 }
 
 type fakeGuildRepo struct {
-	guild model.Guild
+	guild                  model.Guild
+	setSystemMessagesCalls []*int64
 }
 
 func (f *fakeGuildRepo) GetGuildById(ctx context.Context, id int64) (model.Guild, error) {
@@ -140,6 +141,15 @@ func (f *fakeGuildRepo) UpdateGuild(ctx context.Context, id int64, name *string,
 	return nil
 }
 func (f *fakeGuildRepo) SetSystemMessagesChannel(ctx context.Context, id int64, channelId *int64) error {
+	if channelId == nil {
+		f.setSystemMessagesCalls = append(f.setSystemMessagesCalls, nil)
+		f.guild.SystemMessages = nil
+		return nil
+	}
+
+	channelCopy := *channelId
+	f.setSystemMessagesCalls = append(f.setSystemMessagesCalls, &channelCopy)
+	f.guild.SystemMessages = &channelCopy
 	return nil
 }
 
@@ -446,6 +456,49 @@ func TestGetMemberReturnsNotFoundForMissingTargetMember(t *testing.T) {
 	}
 }
 
+func TestGetGuildIncludesSystemChannelID(t *testing.T) {
+	const (
+		guildID int64 = 1
+		userID  int64 = 10
+	)
+	systemChannelID := int64(77)
+
+	members := &fakeMemberRepo{
+		members: map[testMemberKey]bool{
+			{guildID: guildID, userID: userID}: true,
+		},
+	}
+	e := &entity{
+		g: &fakeGuildRepo{guild: model.Guild{
+			Id:             guildID,
+			Name:           "guild",
+			OwnerId:        99,
+			Public:         true,
+			Permissions:    123,
+			SystemMessages: &systemChannelID,
+		}},
+		memb: members,
+	}
+	app := newGuildTestApp(t, userID, "/guild/:guild_id", e.Get)
+
+	req := httptest.NewRequest("GET", "/guild/1", nil)
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+
+	var got dto.Guild
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
+		t.Fatalf("unable to decode response: %v", err)
+	}
+	if got.SystemChannelId == nil || *got.SystemChannelId != systemChannelID {
+		t.Fatalf("expected system channel id %d, got %#v", systemChannelID, got.SystemChannelId)
+	}
+}
+
 func TestKickMemberRemovesMemberAndSendsEvents(t *testing.T) {
 	transport := &fakeTransport{removed: make(chan *mqmsg.RemoveGuildMember, 1), moderation: make(chan *mqmsg.GuildMemberModeration, 1)}
 	members := &fakeMemberRepo{members: map[testMemberKey]bool{{guildID: 1, userID: 10}: true, {guildID: 1, userID: 11}: true}}
@@ -484,6 +537,232 @@ func TestKickMemberRemovesMemberAndSendsEvents(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("expected guild moderation event")
+	}
+}
+
+func TestSetSystemMessagesChannelSendsGuildUpdate(t *testing.T) {
+	const (
+		guildID   int64 = 1
+		userID    int64 = 10
+		channelID int64 = 55
+	)
+
+	guildRepo := &fakeGuildRepo{
+		guild: model.Guild{
+			Id:          guildID,
+			Name:        "guild",
+			OwnerId:     99,
+			Public:      true,
+			Permissions: 123,
+		},
+	}
+	perms := &fakePermissionChecker{results: map[testPermKey]bool{
+		{guildID: guildID, userID: userID, perm: permissions.PermAdministrator}: true,
+	}}
+	transport := &fakeGuildLifecycleTransport{}
+	cacheStore := &fakeCache{}
+	e := &entity{
+		g:     guildRepo,
+		gc:    &fakeCreateGuildChannelsRepo{guildChannels: map[int64]model.GuildChannel{channelID: {GuildId: guildID, ChannelId: channelID}}},
+		ch:    &fakeCreateChannelRepo{channels: map[int64]model.Channel{channelID: {Id: channelID, Type: model.ChannelTypeGuild, Name: "general"}}},
+		perm:  perms,
+		mqt:   transport,
+		cache: cacheStore,
+	}
+	app := newGuildTestApp(t, userID, "/guild/:guild_id/systemch", e.SetSystemMessagesChannel)
+
+	req := httptest.NewRequest("PATCH", "/guild/1/systemch", strings.NewReader(`{"channel_id":55}`))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+
+	if len(guildRepo.setSystemMessagesCalls) != 1 {
+		t.Fatalf("expected one set-system-messages call, got %d", len(guildRepo.setSystemMessagesCalls))
+	}
+	if guildRepo.setSystemMessagesCalls[0] == nil || *guildRepo.setSystemMessagesCalls[0] != channelID {
+		t.Fatalf("unexpected system channel set payload: %#v", guildRepo.setSystemMessagesCalls[0])
+	}
+	if len(cacheStore.deleted) != 0 {
+		t.Fatalf("expected guild cache refresh without delete, got %#v", cacheStore.deleted)
+	}
+	var cachedGuild model.Guild
+	if err := cacheStore.GetJSON(context.Background(), "guild:1", &cachedGuild); err != nil {
+		t.Fatalf("expected refreshed guild cache, got error: %v", err)
+	}
+	if cachedGuild.SystemMessages == nil || *cachedGuild.SystemMessages != channelID {
+		t.Fatalf("unexpected cached guild payload: %#v", cachedGuild)
+	}
+
+	if len(transport.guildEvents) != 1 {
+		t.Fatalf("expected one guild event, got %d", len(transport.guildEvents))
+	}
+	update, ok := transport.guildEvents[0].(*mqmsg.UpdateGuild)
+	if !ok {
+		t.Fatalf("expected UpdateGuild event, got %T", transport.guildEvents[0])
+	}
+	if update.Guild.Id != guildID || update.Guild.Name != "guild" {
+		t.Fatalf("unexpected guild update payload: %#v", update.Guild)
+	}
+}
+
+func TestSetSystemMessagesChannelAcceptsStringID(t *testing.T) {
+	const (
+		guildID   int64 = 1
+		userID    int64 = 10
+		channelID int64 = 55
+	)
+
+	guildRepo := &fakeGuildRepo{
+		guild: model.Guild{
+			Id:          guildID,
+			Name:        "guild",
+			OwnerId:     99,
+			Public:      true,
+			Permissions: 123,
+		},
+	}
+	perms := &fakePermissionChecker{results: map[testPermKey]bool{
+		{guildID: guildID, userID: userID, perm: permissions.PermAdministrator}: true,
+	}}
+	e := &entity{
+		g:    guildRepo,
+		gc:   &fakeCreateGuildChannelsRepo{guildChannels: map[int64]model.GuildChannel{channelID: {GuildId: guildID, ChannelId: channelID}}},
+		ch:   &fakeCreateChannelRepo{channels: map[int64]model.Channel{channelID: {Id: channelID, Type: model.ChannelTypeGuild, Name: "general"}}},
+		perm: perms,
+		mqt:  &fakeGuildLifecycleTransport{},
+	}
+	app := newGuildTestApp(t, userID, "/guild/:guild_id/systemch", e.SetSystemMessagesChannel)
+
+	req := httptest.NewRequest("PATCH", "/guild/1/systemch", strings.NewReader(`{"channel_id":"55"}`))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+
+	if len(guildRepo.setSystemMessagesCalls) != 1 {
+		t.Fatalf("expected one set-system-messages call, got %d", len(guildRepo.setSystemMessagesCalls))
+	}
+	if guildRepo.setSystemMessagesCalls[0] == nil || *guildRepo.setSystemMessagesCalls[0] != channelID {
+		t.Fatalf("unexpected system channel set payload: %#v", guildRepo.setSystemMessagesCalls[0])
+	}
+}
+
+func TestSetSystemMessagesChannelRejectsNonTextChannel(t *testing.T) {
+	const (
+		guildID   int64 = 1
+		userID    int64 = 10
+		channelID int64 = 55
+	)
+
+	guildRepo := &fakeGuildRepo{
+		guild: model.Guild{
+			Id:          guildID,
+			Name:        "guild",
+			OwnerId:     99,
+			Public:      true,
+			Permissions: 123,
+		},
+	}
+	perms := &fakePermissionChecker{results: map[testPermKey]bool{
+		{guildID: guildID, userID: userID, perm: permissions.PermAdministrator}: true,
+	}}
+	e := &entity{
+		g:    guildRepo,
+		gc:   &fakeCreateGuildChannelsRepo{guildChannels: map[int64]model.GuildChannel{channelID: {GuildId: guildID, ChannelId: channelID}}},
+		ch:   &fakeCreateChannelRepo{channels: map[int64]model.Channel{channelID: {Id: channelID, Type: model.ChannelTypeGuildVoice, Name: "voice"}}},
+		perm: perms,
+		mqt:  &fakeGuildLifecycleTransport{},
+	}
+	app := newGuildTestApp(t, userID, "/guild/:guild_id/systemch", e.SetSystemMessagesChannel)
+
+	req := httptest.NewRequest("PATCH", "/guild/1/systemch", strings.NewReader(`{"channel_id":55}`))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", resp.StatusCode)
+	}
+
+	if len(guildRepo.setSystemMessagesCalls) != 0 {
+		t.Fatalf("expected no system channel update, got %#v", guildRepo.setSystemMessagesCalls)
+	}
+}
+
+func TestSetSystemMessagesChannelClearsOnNull(t *testing.T) {
+	const (
+		guildID   int64 = 1
+		userID    int64 = 10
+		channelID int64 = 55
+	)
+
+	guildRepo := &fakeGuildRepo{
+		guild: model.Guild{
+			Id:             guildID,
+			Name:           "guild",
+			OwnerId:        99,
+			Public:         true,
+			Permissions:    123,
+			SystemMessages: int64Ptr(channelID),
+		},
+	}
+	perms := &fakePermissionChecker{results: map[testPermKey]bool{
+		{guildID: guildID, userID: userID, perm: permissions.PermAdministrator}: true,
+	}}
+	transport := &fakeGuildLifecycleTransport{}
+	cacheStore := &fakeCache{}
+	e := &entity{
+		g:     guildRepo,
+		perm:  perms,
+		mqt:   transport,
+		cache: cacheStore,
+	}
+	app := newGuildTestApp(t, userID, "/guild/:guild_id/systemch", e.SetSystemMessagesChannel)
+
+	req := httptest.NewRequest("PATCH", "/guild/1/systemch", strings.NewReader(`{"channel_id":null}`))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+
+	if len(guildRepo.setSystemMessagesCalls) != 1 {
+		t.Fatalf("expected one set-system-messages call, got %d", len(guildRepo.setSystemMessagesCalls))
+	}
+	if guildRepo.setSystemMessagesCalls[0] != nil {
+		t.Fatalf("expected nil system channel payload, got %#v", guildRepo.setSystemMessagesCalls[0])
+	}
+
+	var cachedGuild model.Guild
+	if err := cacheStore.GetJSON(context.Background(), "guild:1", &cachedGuild); err != nil {
+		t.Fatalf("expected refreshed guild cache, got error: %v", err)
+	}
+	if cachedGuild.SystemMessages != nil {
+		t.Fatalf("expected cached guild system channel to be nil, got %#v", cachedGuild.SystemMessages)
+	}
+
+	if len(transport.guildEvents) != 1 {
+		t.Fatalf("expected one guild event, got %d", len(transport.guildEvents))
+	}
+	update, ok := transport.guildEvents[0].(*mqmsg.UpdateGuild)
+	if !ok {
+		t.Fatalf("expected UpdateGuild event, got %T", transport.guildEvents[0])
+	}
+	if update.Guild.SystemChannelId != nil {
+		t.Fatalf("expected guild update payload to clear system channel, got %#v", update.Guild.SystemChannelId)
 	}
 }
 

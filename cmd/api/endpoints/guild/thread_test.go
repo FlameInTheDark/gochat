@@ -245,11 +245,12 @@ type fakeSetThreadCall struct {
 }
 
 type fakeDetachMessageRepo struct {
-	threadRefs     map[int64]fakeThreadCreatedRef
-	messages       map[fakeDetachMessageKey]model.Message
-	setThreadCalls []fakeSetThreadCall
-	releaseCalls   []fakeDetachMessageKey
-	deletedRefs    []int64
+	threadRefs        map[int64]fakeThreadCreatedRef
+	messages          map[fakeDetachMessageKey]model.Message
+	setThreadCalls    []fakeSetThreadCall
+	releaseCalls      []fakeDetachMessageKey
+	deletedRefs       []int64
+	createSystemCalls int
 }
 
 func (f *fakeDetachMessageRepo) CreateMessage(ctx context.Context, id, channelID, userID int64, content string, attachments []int64, embedsJSON, autoEmbedsJSON string, position int64) error {
@@ -261,6 +262,7 @@ func (f *fakeDetachMessageRepo) CreateMessageWithMeta(ctx context.Context, id, c
 }
 
 func (f *fakeDetachMessageRepo) CreateSystemMessage(ctx context.Context, id, channelId, userId int64, content string, msgType model.MessageType, position int64) error {
+	f.createSystemCalls++
 	return nil
 }
 
@@ -380,7 +382,8 @@ func (f *fakeDetachTransport) SendUserUpdate(userId int64, message mqmsg.EventDa
 }
 
 type fakeGuildLifecycleTransport struct {
-	guildEvents []mqmsg.EventDataMessage
+	guildEvents  []mqmsg.EventDataMessage
+	guildEventCh chan struct{}
 }
 
 func (f *fakeGuildLifecycleTransport) SendChannelMessage(channelId int64, message mqmsg.EventDataMessage) error {
@@ -389,6 +392,12 @@ func (f *fakeGuildLifecycleTransport) SendChannelMessage(channelId int64, messag
 
 func (f *fakeGuildLifecycleTransport) SendGuildUpdate(guildId int64, message mqmsg.EventDataMessage) error {
 	f.guildEvents = append(f.guildEvents, message)
+	if f.guildEventCh != nil {
+		select {
+		case f.guildEventCh <- struct{}{}:
+		default:
+		}
+	}
 	return nil
 }
 

@@ -5739,6 +5739,7 @@ components:
         permissions: 0
         icon: "{}"
         name: My Guild
+        system_channel_id: 2230469276416868352
         id: 2230469276416868352
       properties:
         icon:
@@ -5766,6 +5767,10 @@ components:
           default: false
           description: Whether the guild is public
           type: boolean
+        system_channel_id:
+          description: System notification channel ID
+          example: 2230469276416868352
+          type: integer
       type: object
     dto.GuildBan:
       example:
@@ -5874,6 +5879,7 @@ components:
           permissions: 0
           icon: "{}"
           name: My Guild
+          system_channel_id: 2230469276416868352
           id: 2230469276416868352
         code: code
         expires_at: expires_at
@@ -7740,12 +7746,14 @@ components:
           permissions: 0
           icon: "{}"
           name: My Guild
+          system_channel_id: 2230469276416868352
           id: 2230469276416868352
         - owner: 2230469276416868352
           public: false
           permissions: 0
           icon: "{}"
           name: My Guild
+          system_channel_id: 2230469276416868352
           id: 2230469276416868352
         mentions:
           key:

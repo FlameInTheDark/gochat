@@ -955,6 +955,12 @@ export interface DtoGuild {
      * @memberof DtoGuild
      */
     'public'?: boolean;
+    /**
+     * System notification channel ID
+     * @type {number}
+     * @memberof DtoGuild
+     */
+    'system_channel_id'?: number;
 }
 /**
  * 

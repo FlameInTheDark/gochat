@@ -175,6 +175,13 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 			asyncLog.Error("unable to send add guild member event", slog.String("error", err.Error()))
 		}
 		if g.SystemMessages != nil {
+			if _, err := e.ch.GetChannel(asyncCtx, *g.SystemMessages); err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					return
+				}
+				asyncLog.Error("unable to get system channel", slog.String("error", err.Error()))
+				return
+			}
 			msgid := idgen.Next()
 			position, err := messageposition.Next(asyncCtx, e.cache, e.ch, *g.SystemMessages)
 			if err != nil {

@@ -92,10 +92,20 @@ func (e *entity) cachedGuild(ctx context.Context, guildId int64) (model.Guild, e
 	if err != nil {
 		return g, err
 	}
-	if e.cache != nil {
-		_ = e.cache.SetTimedJSON(ctx, fmt.Sprintf("guild:%d", guildId), g, guildCacheTTL)
-	}
+	e.cacheGuild(ctx, g)
 	return g, nil
+}
+
+func (e *entity) deleteGuildCache(ctx context.Context, guildId int64) {
+	if e.cache != nil {
+		_ = e.cache.Delete(ctx, fmt.Sprintf("guild:%d", guildId))
+	}
+}
+
+func (e *entity) cacheGuild(ctx context.Context, guild model.Guild) {
+	if e.cache != nil {
+		_ = e.cache.SetTimedJSON(ctx, fmt.Sprintf("guild:%d", guild.Id), guild, guildCacheTTL)
+	}
 }
 
 func (e *entity) cachedMember(ctx context.Context, userId, guildId int64) (model.Member, error) {
@@ -971,6 +981,7 @@ func (e *entity) Delete(c *fiber.Ctx) error {
 	if err := e.g.DeleteGuild(c.UserContext(), guildId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToDeleteGuild)
 	}
+	e.deleteGuildCache(c.UserContext(), guildId)
 
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -987,6 +998,7 @@ func (e *entity) setGuildIconIfProvided(c *fiber.Ctx, guildId int64, iconId *int
 		if err := e.g.SetGuildIcon(c.UserContext(), guildId, cached.Id); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
+		e.deleteGuildCache(c.UserContext(), guildId)
 		return nil
 	}
 
@@ -1013,6 +1025,7 @@ func (e *entity) setGuildIconIfProvided(c *fiber.Ctx, guildId int64, iconId *int
 	if err := e.g.SetGuildIcon(c.UserContext(), guildId, icon.Id); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
+	e.deleteGuildCache(c.UserContext(), guildId)
 
 	return nil
 }
@@ -1087,16 +1100,39 @@ func (e *entity) SetSystemMessagesChannel(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
 	}
 
+	var channelID *int64
 	if req.ChannelId != nil {
-		_, err := e.gc.GetGuildChannel(c.UserContext(), guild.Id, *req.ChannelId)
+		parsedChannelID := int64(*req.ChannelId)
+		channelID = &parsedChannelID
+	}
+
+	if channelID != nil {
+		_, err := e.gc.GetGuildChannel(c.UserContext(), guild.Id, *channelID)
 		if err != nil {
 			return fiber.NewError(fiber.StatusNotFound, ErrUnableToGetChannel)
 		}
+		channel, err := e.ch.GetChannel(c.UserContext(), *channelID)
+		if err != nil {
+			return fiber.NewError(fiber.StatusNotFound, ErrUnableToGetChannel)
+		}
+		if channel.Type != model.ChannelTypeGuild {
+			return fiber.NewError(fiber.StatusBadRequest, ErrNotATextChannel)
+		}
 	}
 
-	err = e.g.SetSystemMessagesChannel(c.UserContext(), guild.Id, req.ChannelId)
+	err = e.g.SetSystemMessagesChannel(c.UserContext(), guild.Id, channelID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetSystemMessagesChannel)
+	}
+
+	updatedGuild, err := e.g.GetGuildById(c.UserContext(), guild.Id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUpdateGuild)
+	}
+	e.cacheGuild(c.UserContext(), updatedGuild)
+
+	if err := e.sendGuildUpdateEvent(c.UserContext(), guildId, &updatedGuild); err != nil {
+		return err
 	}
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -1122,6 +1158,7 @@ func (e *entity) updateGuildWithPermissionCheck(c *fiber.Ctx, guildId, userId in
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToUpdateGuild)
 	}
+	e.cacheGuild(c.UserContext(), updatedGuild)
 
 	// Send update event
 	if err := e.sendGuildUpdateEvent(c.UserContext(), guildId, &updatedGuild); err != nil {

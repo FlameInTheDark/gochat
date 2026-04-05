@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/cache/testutil"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/gofiber/fiber/v2"
@@ -90,7 +91,9 @@ func (m *memberRepoMock) GetUserGuilds(context.Context, int64) ([]model.UserGuil
 func (m *memberRepoMock) SetTimeout(context.Context, int64, int64, *time.Time) error { return nil }
 func (m *memberRepoMock) CountGuildMembers(context.Context, int64) (int64, error)    { return 0, nil }
 
-type guildRepoMock struct{}
+type guildRepoMock struct {
+	guilds []model.Guild
+}
 
 func (m *guildRepoMock) GetGuildById(context.Context, int64) (model.Guild, error) {
 	return model.Guild{}, nil
@@ -103,13 +106,51 @@ func (m *guildRepoMock) SetGuildIcon(context.Context, int64, int64) error     { 
 func (m *guildRepoMock) SetGuildPublic(context.Context, int64, bool) error    { return nil }
 func (m *guildRepoMock) ChangeGuildOwner(context.Context, int64, int64) error { return nil }
 func (m *guildRepoMock) GetGuildsList(context.Context, []int64) ([]model.Guild, error) {
-	return []model.Guild{}, nil
+	if m.guilds == nil {
+		return []model.Guild{}, nil
+	}
+	return m.guilds, nil
 }
 func (m *guildRepoMock) SetGuildPermissions(context.Context, int64, int64) error { return nil }
 func (m *guildRepoMock) UpdateGuild(context.Context, int64, *string, *int64, *bool, *int64) error {
 	return nil
 }
 func (m *guildRepoMock) SetSystemMessagesChannel(context.Context, int64, *int64) error { return nil }
+
+type emojiRepoMock struct{}
+
+func (m *emojiRepoMock) CountActiveGuildEmojis(context.Context, int64) (int64, error) {
+	return 0, nil
+}
+func (m *emojiRepoMock) CreatePlaceholder(context.Context, model.GuildEmoji) error { return nil }
+func (m *emojiRepoMock) ReusePendingPlaceholder(context.Context, model.GuildEmoji) (model.GuildEmoji, error) {
+	return model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) GetGuildEmoji(context.Context, int64, int64) (model.GuildEmoji, error) {
+	return model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) GetEmojiLookup(context.Context, int64) (model.EmojiLookup, error) {
+	return model.EmojiLookup{}, nil
+}
+func (m *emojiRepoMock) ListReadyGuildEmojis(context.Context, int64) ([]model.GuildEmoji, error) {
+	return []model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) ListReadyGuildEmojisByGuilds(context.Context, []int64) ([]model.GuildEmoji, error) {
+	return []model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) MarkReady(context.Context, int64, int64, bool, int64, int64, int64) (model.GuildEmoji, error) {
+	return model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) Rename(context.Context, int64, int64, string, string) (model.GuildEmoji, error) {
+	return model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) Delete(context.Context, int64, int64) (model.GuildEmoji, error) {
+	return model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) DeleteGuildEmojis(context.Context, int64) ([]model.GuildEmoji, error) {
+	return []model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) PruneExpired(context.Context, int64) error { return nil }
 
 type readStatesRepoMock struct{}
 
@@ -246,11 +287,13 @@ func newSettingsTestEntity(repo *userSettingsRepoMock) *entity {
 		uset:         repo,
 		member:       &memberRepoMock{},
 		guild:        &guildRepoMock{},
+		emoji:        &emojiRepoMock{},
 		rs:           &readStatesRepoMock{},
 		gclm:         &guildChannelMessagesRepoMock{},
 		gc:           &guildChannelsRepoMock{},
 		tm:           &threadMemberRepoMock{},
 		ch:           &channelRepoMock{},
+		cache:        testutil.Noop{},
 		contentHosts: []string{"https://cdn.example.com"},
 	}
 }
@@ -420,6 +463,46 @@ func TestGetUserSettingsReturnsEmptyNotificationCollectionsForUI(t *testing.T) {
 	}
 	if got.Settings.UsersSettings == nil || len(got.Settings.UsersSettings) != 0 {
 		t.Fatalf("expected empty user settings slice for UI, got %#v", got.Settings.UsersSettings)
+	}
+}
+
+func TestGetUserSettingsGuildsIncludeSystemChannelID(t *testing.T) {
+	const systemChannelID int64 = 777
+
+	repo := newUserSettingsRepoMock()
+	e := newSettingsTestEntity(repo)
+	e.member = &memberRepoMock{guilds: []model.UserGuild{{GuildId: 10, UserId: 1}}}
+	e.guild = &guildRepoMock{guilds: []model.Guild{{
+		Id:             10,
+		Name:           "guild",
+		OwnerId:        99,
+		Public:         true,
+		Permissions:    123,
+		SystemMessages: int64Ptr(systemChannelID),
+	}}}
+	app := newSettingsTestApp(e)
+
+	req := httptest.NewRequest(http.MethodGet, "/user/me/settings", nil)
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("expected GET request to complete, got %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected GET status %d, got %d", fiber.StatusOK, resp.StatusCode)
+	}
+
+	var got UserSettingsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
+		t.Fatalf("expected valid JSON response, got %v", err)
+	}
+
+	if len(got.Guilds) != 1 {
+		t.Fatalf("expected one guild metadata entry, got %#v", got.Guilds)
+	}
+	if got.Guilds[0].SystemChannelId == nil || *got.Guilds[0].SystemChannelId != systemChannelID {
+		t.Fatalf("expected system channel id %d, got %#v", systemChannelID, got.Guilds[0].SystemChannelId)
 	}
 }
 

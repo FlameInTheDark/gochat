@@ -54,6 +54,7 @@ const (
 	ErrUnableToIssueVoiceToken           = "unable to issue voice token"
 	ErrNoSFUAvailableInRegion            = "no sfu available in region"
 	ErrNotAVoiceChannel                  = "not a voice channel"
+	ErrNotATextChannel                   = "not a text channel"
 	ErrUnableToGetPermission             = "unable to get permissions"
 	ErrUnableToSetSystemMessagesChannel  = "unable to set system messages channel"
 	ErrUnableToCheckGuildBan             = "unable to check guild ban"
@@ -171,7 +172,7 @@ func (r UpdateGuildRequest) Validate() error {
 }
 
 type SetGuildSystemMessagesChannelRequest struct {
-	ChannelId *int64 `json:"channel_id" example:"2230469276416868352"` // Channel ID
+	ChannelId *helper.StringInt64 `json:"channel_id" swaggertype:"integer" example:"2230469276416868352"` // Channel ID
 }
 
 type CreateGuildChannelCategoryRequest struct {
@@ -395,11 +396,12 @@ func channelModelToDTOWithThreadMember(c *model.Channel, guildId *int64, positio
 // buildGuildDTO creates a guild DTO from model
 func buildGuildDTO(guild *model.Guild) dto.Guild {
 	return dto.Guild{
-		Id:          guild.Id,
-		Name:        guild.Name,
-		Owner:       guild.OwnerId,
-		Public:      guild.Public,
-		Permissions: guild.Permissions,
+		Id:              guild.Id,
+		Name:            guild.Name,
+		Owner:           guild.OwnerId,
+		Public:          guild.Public,
+		Permissions:     guild.Permissions,
+		SystemChannelId: guild.SystemMessages,
 	}
 }
 

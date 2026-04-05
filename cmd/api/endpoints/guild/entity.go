@@ -42,7 +42,7 @@ func (e *entity) Init(router fiber.Router) {
 	router.Get("/:guild_id<int>", e.Get)
 	router.Patch("/:guild_id<int>", e.Update)
 	router.Delete("/:guild_id<int>", e.Delete)
-	router.Post("/:guild_id<int>", e.SetSystemMessagesChannel)
+	router.Patch("/:guild_id<int>/systemch", e.SetSystemMessagesChannel)
 
 	router.Post("/:guild_id<int>/icon", e.CreateIcon)
 	router.Get("/:guild_id<int>/icons", e.ListIcons)
