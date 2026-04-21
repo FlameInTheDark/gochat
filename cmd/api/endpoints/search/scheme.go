@@ -19,7 +19,12 @@ const (
 	ErrMentionIdInvalid   = "mention ID must be positive"
 	ErrIncorrectChannelID = "incorrect channel ID"
 	ErrChannelIDRequired  = "channel ID is required"
+	ErrPageInvalid        = "page must be non-negative"
+	ErrContentTooLong     = "content must be 2000 characters or fewer"
+	ErrHasInvalid         = "has values must be one of: url, image, video, file"
 )
+
+const maxSearchContentLength = 2000
 
 type MessageSearchRequest struct {
 	ChannelId int64                   `json:"channel_id,string" example:"2230469276416868352"` // Channel ID to search in. Required.
@@ -43,6 +48,17 @@ func (r MessageSearchRequest) Validate() error {
 		),
 		validation.Field(&r.Mentions,
 			validation.Each(validation.Min(int64(1)).Error(ErrMentionIdInvalid)),
+		),
+		validation.Field(&r.Page,
+			validation.Min(0).Error(ErrPageInvalid),
+		),
+		validation.Field(&r.Content,
+			validation.When(r.Content != nil,
+				validation.RuneLength(0, maxSearchContentLength).Error(ErrContentTooLong),
+			),
+		),
+		validation.Field(&r.Has,
+			validation.Each(validation.In("url", "image", "video", "file").Error(ErrHasInvalid)),
 		),
 	)
 }

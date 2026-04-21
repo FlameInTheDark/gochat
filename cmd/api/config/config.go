@@ -22,6 +22,7 @@ type Config struct {
 	Cluster                    []string      `yaml:"cluster" env:"CLUSTER" env-default:""`
 	ClusterKeyspace            string        `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
 	AuthSecret                 string        `yaml:"auth_secret" env:"AUTH_SECRET"`
+	AuthSecretEnforcement      string        `yaml:"auth_secret_enforcement" env:"AUTH_SECRET_ENFORCEMENT" env-default:"warn"`
 	Swagger                    bool          `yaml:"swagger" env:"SWAGGER" env-default:"false"`
 	KeyDB                      string        `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
 	UploadLimit                int64         `yaml:"upload_limit" env:"UPLOAD_LIMIT" env-default:"50000000"`
@@ -72,7 +73,7 @@ func LoadConfig(logger *slog.Logger) (*Config, error) {
 	if err := validator.New().Struct(&config); err != nil {
 		return nil, err
 	}
-	if err := configutil.ValidateAuthSecret(config.AuthSecret); err != nil {
+	if err := configutil.ValidateAuthSecretWithMode(config.AuthSecret, config.AuthSecretEnforcement); err != nil {
 		return nil, err
 	}
 	configutil.WarnWeakAuthSecret(logger, config.AuthSecret, "api")

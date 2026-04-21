@@ -176,6 +176,18 @@ func TestAuthorizeSearchScopeResolvesGuildForChannelScopedSearch(t *testing.T) {
 	}
 }
 
+func TestAuthorizeSearchScopeRejectsUnauthorizedGuildSearch(t *testing.T) {
+	gc := &model.GuildChannel{GuildId: 77, ChannelId: 9}
+	e := &entity{
+		ch:   &fakeChannelRepo{channel: model.Channel{Id: 9, Type: model.ChannelTypeGuild}},
+		gc:   &fakeGuildChannelsRepo{guildByChannel: *gc},
+		perm: &fakeRoleCheck{canRead: false, guildChannel: gc},
+	}
+
+	_, err := e.authorizeSearchScope(context.Background(), 9, 42, nil)
+	assertFiberErrorCode(t, err, fiber.StatusForbidden)
+}
+
 func TestAuthorizeSearchScopeRejectsDMSearchThroughGuildRoute(t *testing.T) {
 	guildID := int64(77)
 	e := &entity{

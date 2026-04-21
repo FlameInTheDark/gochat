@@ -92,6 +92,15 @@ func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int
 			return &channel, &gc, &guild, true, nil
 		}
 
+		// Current guild membership is required before role or channel overrides apply.
+		isMember, err := e.m.IsGuildMember(ctx, guildID, userID)
+		if err != nil {
+			return nil, nil, nil, false, err
+		}
+		if !isMember {
+			return nil, nil, nil, false, nil
+		}
+
 		// Determine base permissions
 		var permAll int64
 		if channel.Permissions != nil {
@@ -214,6 +223,15 @@ func (e *Entity) GetChannelPermissions(ctx context.Context, guildID, channelID, 
 		return int64(^uint64(0) >> 1), nil
 	}
 
+	// Current guild membership is required before calculating effective perms.
+	isMember, err := e.m.IsGuildMember(ctx, guildID, userID)
+	if err != nil {
+		return 0, err
+	}
+	if !isMember {
+		return 0, nil
+	}
+
 	// Base perms from channel or guild
 	var permAll int64
 	if channel.Permissions != nil {
@@ -275,6 +293,15 @@ func (e *Entity) GuildPerm(ctx context.Context, guildID, userID int64, perm ...p
 	// Guild owner has all permissions
 	if userID == guild.OwnerId {
 		return &guild, true, nil
+	}
+
+	// Current guild membership is required before guild roles apply.
+	isMember, err := e.m.IsGuildMember(ctx, guildID, userID)
+	if err != nil {
+		return nil, false, err
+	}
+	if !isMember {
+		return nil, false, nil
 	}
 
 	// Start with guild base permissions

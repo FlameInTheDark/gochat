@@ -1,9 +1,12 @@
 package guild
 
 import (
+	"context"
+	"crypto/rand"
 	"database/sql"
 	"errors"
 	"log/slog"
+	"math/big"
 	"strconv"
 	"time"
 
@@ -19,37 +22,59 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// generateInviteCodeFromID returns an 8-char, uppercase base36 code derived from the snowflake ID
-// Ensures fixed 8 chars by left-padding with '0' and trimming higher digits if necessary
-func generateInviteCodeFromID(inviteID int64) string {
+const (
+	inviteCodeLength        = 8
+	createInviteTTLCap      = time.Hour
+	defaultInviteTTL        = 7 * 24 * time.Hour
+	unlimitedInviteLifetime = 100
+)
+
+func generateInviteCode() (string, error) {
 	const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" // base36, uppercase
-	// encode base36
-	n := uint64(inviteID)
-	if n == 0 {
-		return "00000000"
-	}
-	buf := make([]byte, 0, 16)
-	for n > 0 {
-		r := n % 36
-		buf = append(buf, alphabet[r])
-		n /= 36
-	}
-	// reverse
-	for i, j := 0, len(buf)-1; i < j; i, j = i+1, j-1 {
-		buf[i], buf[j] = buf[j], buf[i]
-	}
-	// ensure length 8
-	if len(buf) < 8 {
-		pad := make([]byte, 8-len(buf))
-		for i := range pad {
-			pad[i] = '0'
+
+	buf := make([]byte, inviteCodeLength)
+	max := big.NewInt(int64(len(alphabet)))
+	for i := range buf {
+		n, err := rand.Int(rand.Reader, max)
+		if err != nil {
+			return "", err
 		}
-		buf = append(pad, buf...)
-	} else if len(buf) > 8 {
-		// keep least significant 8 digits (right-most)
-		buf = buf[len(buf)-8:]
+		buf[i] = alphabet[n.Int64()]
 	}
-	return string(buf)
+	return string(buf), nil
+}
+
+func (e *entity) canManageInvites(ctx context.Context, guildId, userId int64) (bool, error) {
+	_, ok, err := e.perm.GuildPerm(ctx, guildId, userId, permissions.PermAdministrator)
+	return ok, err
+}
+
+func (e *entity) canCreateInvite(ctx context.Context, guildId, userId int64) (bool, error) {
+	_, ok, err := e.perm.GuildPerm(ctx, guildId, userId, permissions.PermMembershipCreateInvite)
+	return ok, err
+}
+
+func inviteExpiryFromRequest(req CreateInviteRequest, allowExtendedTTL bool) time.Time {
+	now := time.Now()
+	if req.ExpiresInSec == nil {
+		if allowExtendedTTL {
+			return now.Add(defaultInviteTTL)
+		}
+		return now.Add(createInviteTTLCap)
+	}
+
+	if *req.ExpiresInSec == 0 {
+		if allowExtendedTTL {
+			return now.AddDate(unlimitedInviteLifetime, 0, 0)
+		}
+		return now.Add(createInviteTTLCap)
+	}
+
+	ttl := time.Duration(*req.ExpiresInSec) * time.Second
+	if !allowExtendedTTL && ttl > createInviteTTLCap {
+		ttl = createInviteTTLCap
+	}
+	return now.Add(ttl)
 }
 
 // ReceiveInvite
@@ -63,7 +88,7 @@ func generateInviteCodeFromID(inviteID int64) string {
 //	@Router		/guild/invites/receive/{invite_code} [get]
 func (e *entity) ReceiveInvite(c *fiber.Ctx) error {
 	code := c.Params("invite_code")
-	if len(code) != 8 {
+	if len(code) != inviteCodeLength {
 		return fiber.NewError(fiber.StatusBadRequest, ErrInviteCodeInvalid)
 	}
 
@@ -108,7 +133,7 @@ func (e *entity) ReceiveInvite(c *fiber.Ctx) error {
 //	@Router		/guild/invites/accept/{invite_code} [post]
 func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 	code := c.Params("invite_code")
-	if len(code) != 8 {
+	if len(code) != inviteCodeLength {
 		return fiber.NewError(fiber.StatusBadRequest, ErrInviteCodeInvalid)
 	}
 
@@ -246,8 +271,7 @@ func (e *entity) ListInvites(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	// Require permission to create invites as proxy for managing invites
-	if _, ok, perr := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermMembershipCreateInvite); perr != nil {
+	if ok, perr := e.canManageInvites(c.UserContext(), guildId, user.Id); perr != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildByID)
 	} else if !ok {
 		return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
@@ -298,7 +322,7 @@ func (e *entity) DeleteInvite(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	if _, ok, perr := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermMembershipCreateInvite); perr != nil {
+	if ok, perr := e.canManageInvites(c.UserContext(), guildId, user.Id); perr != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildByID)
 	} else if !ok {
 		return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
@@ -333,10 +357,16 @@ func (e *entity) CreateInvite(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
-	if _, ok, perr := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermMembershipCreateInvite); perr != nil {
+	allowExtendedTTL, perr := e.canManageInvites(c.UserContext(), guildId, user.Id)
+	if perr != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildByID)
-	} else if !ok {
-		return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
+	}
+	if !allowExtendedTTL {
+		if ok, checkErr := e.canCreateInvite(c.UserContext(), guildId, user.Id); checkErr != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildByID)
+		} else if !ok {
+			return fiber.NewError(fiber.StatusUnauthorized, ErrPermissionsRequired)
+		}
 	}
 
 	var req CreateInviteRequest
@@ -347,32 +377,23 @@ func (e *entity) CreateInvite(c *fiber.Ctx) error {
 		return badRequestValidationError(err)
 	}
 
-	// Expiration handling:
-	// - nil: default 7 days
-	// - 0: unlimited (set far-future expiry)
-	// - >0: that many seconds
-	var expiresAt time.Time
-	if req.ExpiresInSec == nil {
-		expiresAt = time.Now().Add(7 * 24 * time.Hour)
-	} else if *req.ExpiresInSec == 0 {
-		expiresAt = time.Now().AddDate(100, 0, 0) // effectively unlimited
-	} else {
-		expiresAt = time.Now().Add(time.Duration(*req.ExpiresInSec) * time.Second)
-	}
+	expiresAt := inviteExpiryFromRequest(req, allowExtendedTTL)
 
-	// Derive code from snowflake-based invite ID
-	invId := idgen.Next()
-	code := generateInviteCodeFromID(invId)
-
-	inv, ierr := e.inv.CreateInvite(c.UserContext(), code, invId, guildId, user.Id, expiresAt.Unix())
-	if ierr != nil {
-		// In the unlikely event of collision, regenerate with a new ID and retry once
-		invId = idgen.Next()
-		code = generateInviteCodeFromID(invId)
-		inv, ierr = e.inv.CreateInvite(c.UserContext(), code, invId, guildId, user.Id, expiresAt.Unix())
-		if ierr != nil {
+	var inv model.GuildInvite
+	var ierr error
+	for attempt := 0; attempt < 5; attempt++ {
+		invId := idgen.Next()
+		code, codeErr := generateInviteCode()
+		if codeErr != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateInvite)
 		}
+		inv, ierr = e.inv.CreateInvite(c.UserContext(), code, invId, guildId, user.Id, expiresAt.Unix())
+		if ierr == nil {
+			break
+		}
+	}
+	if ierr != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateInvite)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(dto.GuildInvite{

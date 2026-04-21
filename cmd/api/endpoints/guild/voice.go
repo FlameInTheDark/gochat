@@ -132,6 +132,11 @@ func notifyOldSFUClose(ctx context.Context, oldSFUURL string, channelID int64, a
 	}
 }
 
+func (e *entity) voiceInternalError(c *fiber.Ctx, publicMessage string, err error) error {
+	observability.LoggerFromFiber(c, e.log).Error(publicMessage, slog.String("error", err.Error()))
+	return fiber.NewError(fiber.StatusInternalServerError, publicMessage)
+}
+
 // JoinVoice
 //
 //	@Summary		Join voice channel (get SFU signaling info)
@@ -162,7 +167,7 @@ func (e *entity) JoinVoice(c *fiber.Ctx) error {
 	// Validate channel is in guild, is voice, and user has Connect permission
 	ch, _, _, ok, err := e.perm.ChannelPerm(c.UserContext(), guildId, channelId, user.Id, permissions.PermVoiceConnect)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.voiceInternalError(c, ErrUnableToGetChannel, err)
 	}
 	if !ok {
 		return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
@@ -174,7 +179,7 @@ func (e *entity) JoinVoice(c *fiber.Ctx) error {
 	// Build voice permission bitmask
 	vperm, err := e.perm.GetChannelPermissions(c.UserContext(), guildId, channelId, user.Id)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.voiceInternalError(c, ErrUnableToIssueVoiceToken, err)
 	}
 
 	chosen, err := e.channelBindingForJoin(c.UserContext(), channelId)
@@ -255,7 +260,7 @@ func (e *entity) MoveMember(c *fiber.Ctx) error {
 	// Permission: administrator or move members at guild scope
 	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermVoiceMoveMembers)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.voiceInternalError(c, ErrUnableToGetGuildByID, err)
 	}
 	if !hasPermission {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -267,6 +272,13 @@ func (e *entity) MoveMember(c *fiber.Ctx) error {
 	}
 	if body.UserID == 0 || body.ChannelID == 0 || body.From == 0 {
 		return fiber.NewError(fiber.StatusBadRequest, "missing user_id, channel_id or from")
+	}
+	isTargetMember, err := e.memb.IsGuildMember(c.UserContext(), guildId, body.UserID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
+	}
+	if !isTargetMember {
+		return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
 	}
 
 	// Validate target channel is a voice channel in this guild
@@ -298,7 +310,7 @@ func (e *entity) MoveMember(c *fiber.Ctx) error {
 	// Compute moved user's effective permissions in target channel
 	vperm, err := e.perm.GetChannelPermissions(c.UserContext(), guildId, body.ChannelID, body.UserID)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.voiceInternalError(c, ErrUnableToIssueVoiceToken, err)
 	}
 
 	// Issue a short-lived SFU token with moved=true (typ=sfu, aud=sfu)
@@ -367,7 +379,7 @@ func (e *entity) MoveMember(c *fiber.Ctx) error {
 	// Issue admin token for the caller to signal the source channel
 	adminPerms, err := e.perm.GetChannelPermissions(c.UserContext(), guildId, body.From, user.Id)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.voiceInternalError(c, ErrUnableToIssueVoiceToken, err)
 	}
 	now2 := time.Now()
 	adminClaims := struct {
@@ -429,7 +441,7 @@ func (e *entity) SetVoiceRegion(c *fiber.Ctx) error {
 	// Require manage channels
 	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageChannels)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.voiceInternalError(c, ErrUnableToGetGuildByID, err)
 	}
 	if !hasPermission {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
