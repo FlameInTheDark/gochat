@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -119,7 +120,19 @@ func trimStoredDeviceSettings(devices map[string]model.Devices, order []string, 
 	return devices, normalizeDeviceUsageOrder(order, devices)
 }
 
-func mergeStoredDeviceSettings(current, incoming model.UserSettingsData, deviceKey string) model.UserSettingsData {
+func requestIncludesSettingsField(body []byte, field string) bool {
+	if len(body) == 0 || field == "" {
+		return false
+	}
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return false
+	}
+	_, ok := raw[field]
+	return ok
+}
+
+func mergeStoredDeviceSettings(current, incoming model.UserSettingsData, deviceKey string, devicesProvided bool) model.UserSettingsData {
 	merged := cloneDevicesByKey(current.DevicesByKey)
 	order := normalizeDeviceUsageOrder(current.DeviceUsageOrder(), merged)
 
@@ -136,11 +149,17 @@ func mergeStoredDeviceSettings(current, incoming model.UserSettingsData, deviceK
 		order = touchDeviceUsageKey(order, key)
 	}
 	if deviceKey != "" {
-		if merged == nil {
-			merged = make(map[string]model.Devices)
+		if devicesProvided {
+			if merged == nil {
+				merged = make(map[string]model.Devices)
+			}
+			merged[deviceKey] = incoming.Devices
+			order = touchDeviceUsageKey(order, deviceKey)
+		} else {
+			incoming.Devices = current.Devices
 		}
-		merged[deviceKey] = incoming.Devices
-		order = touchDeviceUsageKey(order, deviceKey)
+	} else if !devicesProvided {
+		incoming.Devices = current.Devices
 	}
 
 	merged, order = trimStoredDeviceSettings(merged, order, maxStoredDeviceSettingsBuckets)

@@ -35,6 +35,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mq/nats"
 	"github.com/FlameInTheDark/gochat/internal/msgsearch"
 	"github.com/FlameInTheDark/gochat/internal/observability"
+	"github.com/FlameInTheDark/gochat/internal/presence"
 	reactionutil "github.com/FlameInTheDark/gochat/internal/reaction"
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
@@ -349,6 +350,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	if err := verifyAPIInfrastructure(logger, cfg.PGRetries, pg, database, cache, nt, imq, emq); err != nil {
 		return nil, err
 	}
+	pstore := presence.NewStore(cache)
 
 	threadCountCtx, cancelThreadCount := context.WithCancel(context.Background())
 	shut.UpFunc(cancelThreadCount)
@@ -402,6 +404,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	streamDisco, err := discovery.NewManager(cfg.EtcdEndpoints, cfg.StreamEtcdPrefix, cfg.EtcdUsername, cfg.EtcdPassword)
+	if err != nil {
+		return nil, err
+	}
 
 	idgen.New(0)
 
@@ -439,7 +445,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		emoji.New(database, pg, cache, logger),
 		user.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, contentHosts, logger),
 		message.New(database, pg, qt, imq, emq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
-		guild.New(database, pg, qt, imq, cache, storage, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, extractRegionIDs(cfg.VoiceRegions), logger),
+		guild.New(database, pg, qt, imq, cache, storage, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, cfg.StreamAuthSecret, pstore, nt.Conn(), cfg.VoiceDefaultRegion, disco, streamDisco, extractRegionIDs(cfg.VoiceRegions), logger),
 		voice.New(convertRegions(cfg.VoiceRegions), logger),
 		search.New(database, pg, searchService, logger),
 	)

@@ -72,6 +72,12 @@ const (
 )
 
 const (
+	EventTypeGuildMemberStartStream EventType = 210 + iota
+	EventTypeGuildMemberStopStream
+	EventTypeGuildStreamsRebind
+)
+
+const (
 	EventTypeGuildChannelMessage EventType = 300 + iota
 	EventTypeChannelUserTyping
 	EventTypeMention

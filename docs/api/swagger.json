@@ -3860,6 +3860,159 @@
                 }
             }
         },
+        "/guild/{guild_id}/voice/{channel_id}/streams": {
+            "get": {
+                "description": "Returns the currently active streams for a voice channel.",
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "List active voice-channel streams",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/guild.VoiceStreamSummary"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates or resumes the caller's screen-share stream for the voice channel.",
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Start a voice-channel stream",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Stream start payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/guild.CreateVoiceStreamRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/guild.CreateVoiceStreamResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/guild/{guild_id}/voice/{channel_id}/streams/{stream_id}": {
+            "delete": {
+                "description": "Stops the caller's active stream in the voice channel.",
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Stop a voice-channel stream",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Stream ID",
+                        "name": "stream_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/guild/{guild_id}/voice/{channel_id}/streams/{stream_id}/join": {
+            "post": {
+                "description": "Returns receive-only stream signaling info for an active voice-channel stream.",
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Join a voice-channel stream as viewer",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Stream ID",
+                        "name": "stream_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/guild.JoinVoiceStreamResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/info/emoji/{emoji_id}": {
             "get": {
                 "produces": [
@@ -7813,6 +7966,34 @@
                 }
             }
         },
+        "guild.CreateVoiceStreamRequest": {
+            "type": "object",
+            "properties": {
+                "audio_mode": {
+                    "type": "string"
+                },
+                "source_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "guild.CreateVoiceStreamResponse": {
+            "type": "object",
+            "properties": {
+                "stream": {
+                    "$ref": "#/definitions/guild.VoiceStreamSummary"
+                },
+                "stream_id": {
+                    "type": "integer"
+                },
+                "stream_token": {
+                    "type": "string"
+                },
+                "stream_url": {
+                    "type": "string"
+                }
+            }
+        },
         "guild.JoinVoiceResponse": {
             "type": "object",
             "properties": {
@@ -7820,6 +8001,20 @@
                     "type": "string"
                 },
                 "sfu_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "guild.JoinVoiceStreamResponse": {
+            "type": "object",
+            "properties": {
+                "stream_id": {
+                    "type": "integer"
+                },
+                "stream_token": {
+                    "type": "string"
+                },
+                "stream_url": {
                     "type": "string"
                 }
             }
@@ -7997,6 +8192,29 @@
                     "description": "Whether the guild is public",
                     "type": "boolean",
                     "default": false
+                }
+            }
+        },
+        "guild.VoiceStreamSummary": {
+            "type": "object",
+            "properties": {
+                "audio_mode": {
+                    "type": "string"
+                },
+                "channel_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "owner_user_id": {
+                    "type": "integer"
+                },
+                "source_type": {
+                    "type": "string"
+                },
+                "started_at": {
+                    "type": "integer"
                 }
             }
         },
@@ -8227,8 +8445,14 @@
                 "echo_cancellation": {
                     "type": "boolean"
                 },
+                "input_mode": {
+                    "type": "string"
+                },
                 "noise_suppression": {
                     "type": "boolean"
+                },
+                "push_to_talk_key": {
+                    "type": "string"
                 },
                 "video_device": {
                     "type": "string"

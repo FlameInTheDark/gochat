@@ -532,6 +532,7 @@ func (e *entity) SetVoiceRegion(c *fiber.Ctx) error {
 					Region:    newRegion,
 					DelayMs:   3000,
 				})
+				e.scheduleStreamRebinds(c.UserContext(), guildId, channelId, newRegion, 3000)
 
 				// Capture values for the background goroutine
 				cache := e.cache

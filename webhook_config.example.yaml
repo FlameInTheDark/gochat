@@ -6,6 +6,7 @@ swagger: false
 etcd_endpoints:
   - "http://etcd:2379"
 etcd_prefix: "/gochat/sfu"
+stream_etcd_prefix: "/gochat/stream"
 etcd_username: "root"
 etcd_password: "${ETCD_ROOT_PASSWORD}"
 

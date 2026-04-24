@@ -1,0 +1,45 @@
+server_address: ":3310"
+auth_secret: "change_me_before_use_it_in_production"
+stun_servers:
+  - "stun:stun.l.google.com:19302"
+region: "eu-central"
+public_base_url: "https://stream-eu.example.com"
+ice_public_ip: ""
+
+# Optional DTLS certificate/key pair for WebRTC peer connections.
+# If left empty, the stream service generates a self-signed certificate at startup.
+dtls_certificate_file: ""
+dtls_private_key_file: ""
+
+udp_port_range_start: 0
+udp_port_range_end: 0
+
+# Webhook callbacks
+webhook_url: "http://webhook:3200"
+# Pre-generated JWT token for webhook authentication (typ=stream, id=<service_id>)
+webhook_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+service_id: ""
+
+# External telemetry gateway. Reuse the same JWT as webhook_token when appropriate.
+telemetry_otlp_endpoint: "https://telemetry.example.com"
+telemetry_otlp_headers: "Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+telemetry_otlp_protocol: "http/protobuf"
+telemetry_metric_export_interval: "60000"
+
+signal_heartbeat_interval_ms: 15000
+
+dave_enabled: true
+dave_required_default: false
+dave_transition_timeout_ms: 2000
+dave_old_ratchet_window_ms: 10000
+dave_allow_av1: false
+
+# 256 kbps is enough headroom for high-quality desktop/application audio.
+max_audio_bitrate_kbps: 256
+enforce_audio_bitrate: false
+audio_bitrate_margin_percent: 15
+
+# High stream video ceiling. The browser still adapts down via WebRTC congestion
+# control when bandwidth drops; this only prevents the backend SDP from capping
+# 4K60-class streams too low.
+max_video_bitrate_kbps: 100000

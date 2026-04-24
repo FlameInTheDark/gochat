@@ -28,7 +28,9 @@ type ModelDevices struct {
 	AutoGainControl     *bool    `json:"auto_gain_control,omitempty"`
 	DenoiserType        *string  `json:"denoiser_type,omitempty"`
 	EchoCancellation    *bool    `json:"echo_cancellation,omitempty"`
+	InputMode           *string  `json:"input_mode,omitempty"`
 	NoiseSuppression    *bool    `json:"noise_suppression,omitempty"`
+	PushToTalkKey       *string  `json:"push_to_talk_key,omitempty"`
 	VideoDevice         *string  `json:"video_device,omitempty"`
 }
 
@@ -305,6 +307,38 @@ func (o *ModelDevices) SetEchoCancellation(v bool) {
 	o.EchoCancellation = &v
 }
 
+// GetInputMode returns the InputMode field value if set, zero value otherwise.
+func (o *ModelDevices) GetInputMode() string {
+	if o == nil || IsNil(o.InputMode) {
+		var ret string
+		return ret
+	}
+	return *o.InputMode
+}
+
+// GetInputModeOk returns a tuple with the InputMode field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelDevices) GetInputModeOk() (*string, bool) {
+	if o == nil || IsNil(o.InputMode) {
+		return nil, false
+	}
+	return o.InputMode, true
+}
+
+// HasInputMode returns a boolean if a field has been set.
+func (o *ModelDevices) HasInputMode() bool {
+	if o != nil && !IsNil(o.InputMode) {
+		return true
+	}
+
+	return false
+}
+
+// SetInputMode gets a reference to the given string and assigns it to the InputMode field.
+func (o *ModelDevices) SetInputMode(v string) {
+	o.InputMode = &v
+}
+
 // GetNoiseSuppression returns the NoiseSuppression field value if set, zero value otherwise.
 func (o *ModelDevices) GetNoiseSuppression() bool {
 	if o == nil || IsNil(o.NoiseSuppression) {
@@ -335,6 +369,38 @@ func (o *ModelDevices) HasNoiseSuppression() bool {
 // SetNoiseSuppression gets a reference to the given bool and assigns it to the NoiseSuppression field.
 func (o *ModelDevices) SetNoiseSuppression(v bool) {
 	o.NoiseSuppression = &v
+}
+
+// GetPushToTalkKey returns the PushToTalkKey field value if set, zero value otherwise.
+func (o *ModelDevices) GetPushToTalkKey() string {
+	if o == nil || IsNil(o.PushToTalkKey) {
+		var ret string
+		return ret
+	}
+	return *o.PushToTalkKey
+}
+
+// GetPushToTalkKeyOk returns a tuple with the PushToTalkKey field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelDevices) GetPushToTalkKeyOk() (*string, bool) {
+	if o == nil || IsNil(o.PushToTalkKey) {
+		return nil, false
+	}
+	return o.PushToTalkKey, true
+}
+
+// HasPushToTalkKey returns a boolean if a field has been set.
+func (o *ModelDevices) HasPushToTalkKey() bool {
+	if o != nil && !IsNil(o.PushToTalkKey) {
+		return true
+	}
+
+	return false
+}
+
+// SetPushToTalkKey gets a reference to the given string and assigns it to the PushToTalkKey field.
+func (o *ModelDevices) SetPushToTalkKey(v string) {
+	o.PushToTalkKey = &v
 }
 
 // GetVideoDevice returns the VideoDevice field value if set, zero value otherwise.
@@ -403,8 +469,14 @@ func (o ModelDevices) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.EchoCancellation) {
 		toSerialize["echo_cancellation"] = o.EchoCancellation
 	}
+	if !IsNil(o.InputMode) {
+		toSerialize["input_mode"] = o.InputMode
+	}
 	if !IsNil(o.NoiseSuppression) {
 		toSerialize["noise_suppression"] = o.NoiseSuppression
+	}
+	if !IsNil(o.PushToTalkKey) {
+		toSerialize["push_to_talk_key"] = o.PushToTalkKey
 	}
 	if !IsNil(o.VideoDevice) {
 		toSerialize["video_device"] = o.VideoDevice

@@ -49,8 +49,10 @@ type Config struct {
 	OSPassword                 string        `yaml:"os_password" env:"OS_PASSWORD"`
 	VoiceRegions               []VoiceRegion `yaml:"voice_regions"`
 	VoiceDefaultRegion         string        `yaml:"voice_region" env:"VOICE_REGION" env-default:"global"`
+	StreamAuthSecret           string        `yaml:"stream_auth_secret" env:"STREAM_AUTH_SECRET"`
 	EtcdEndpoints              []string      `yaml:"etcd_endpoints" env:"ETCD_ENDPOINTS" env-separator:","`
 	EtcdPrefix                 string        `yaml:"etcd_prefix" env:"ETCD_PREFIX" env-default:"/gochat/sfu"`
+	StreamEtcdPrefix           string        `yaml:"stream_etcd_prefix" env:"STREAM_ETCD_PREFIX" env-default:"/gochat/stream"`
 	EtcdUsername               string        `yaml:"etcd_username" env:"ETCD_USERNAME"`
 	EtcdPassword               string        `yaml:"etcd_password" env:"ETCD_PASSWORD"`
 }
@@ -76,6 +78,10 @@ func LoadConfig(logger *slog.Logger) (*Config, error) {
 	if err := configutil.ValidateAuthSecretWithMode(config.AuthSecret, config.AuthSecretEnforcement); err != nil {
 		return nil, err
 	}
+	if err := configutil.ValidateAuthSecretWithMode(config.StreamAuthSecret, config.AuthSecretEnforcement); err != nil {
+		return nil, fmt.Errorf("stream auth secret: %w", err)
+	}
 	configutil.WarnWeakAuthSecret(logger, config.AuthSecret, "api")
+	configutil.WarnWeakAuthSecret(logger, config.StreamAuthSecret, "api-stream")
 	return &config, nil
 }
