@@ -144,7 +144,7 @@ func (e *entity) clearStreamState(ctx context.Context, meta streammeta.Metadata,
 	return nil
 }
 
-func (e *entity) validateVoiceStreamChannel(ctx context.Context, guildID, channelID, userID int64, requireVideo bool) (*model.Channel, int64, error) {
+func (e *entity) validateVoiceStreamChannel(ctx context.Context, guildID, channelID, userID int64, requireVideo, requireMembership bool) (*model.Channel, int64, error) {
 	ch, _, _, ok, err := e.perm.ChannelPerm(ctx, guildID, channelID, userID, permissions.PermVoiceConnect)
 	if err != nil {
 		return nil, 0, err
@@ -164,12 +164,14 @@ func (e *entity) validateVoiceStreamChannel(ctx context.Context, guildID, channe
 		return nil, 0, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
 	}
 
-	member, err := e.isVoiceMember(ctx, channelID, userID)
-	if err != nil {
-		return nil, 0, err
-	}
-	if !member {
-		return nil, 0, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+	if requireMembership {
+		member, err := e.isVoiceMember(ctx, channelID, userID)
+		if err != nil {
+			return nil, 0, err
+		}
+		if !member {
+			return nil, 0, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		}
 	}
 
 	return ch, permsMask, nil
@@ -199,7 +201,7 @@ func (e *entity) ListStreams(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	if _, _, err := e.validateVoiceStreamChannel(c.UserContext(), guildID, channelID, user.Id, false); err != nil {
+	if _, _, err := e.validateVoiceStreamChannel(c.UserContext(), guildID, channelID, user.Id, false, false); err != nil {
 		return err
 	}
 
@@ -240,7 +242,7 @@ func (e *entity) StartStream(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	if _, _, err := e.validateVoiceStreamChannel(c.UserContext(), guildID, channelID, user.Id, true); err != nil {
+	if _, _, err := e.validateVoiceStreamChannel(c.UserContext(), guildID, channelID, user.Id, true, true); err != nil {
 		return err
 	}
 
@@ -354,7 +356,7 @@ func (e *entity) JoinStream(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
 
-	if _, _, err := e.validateVoiceStreamChannel(c.UserContext(), guildID, channelID, user.Id, false); err != nil {
+	if _, _, err := e.validateVoiceStreamChannel(c.UserContext(), guildID, channelID, user.Id, false, true); err != nil {
 		return err
 	}
 

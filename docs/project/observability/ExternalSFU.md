@@ -1,8 +1,8 @@
 [<- Observability](README.md)
 
-# External SFU
+# External Media Services
 
-The SFU is no longer part of the local Compose deployment. It is expected to run as a standalone binary on external infrastructure and push telemetry through the public telemetry gateway.
+The SFU and stream service are not part of the local Compose deployment. They are expected to run as standalone binaries on external infrastructure and push telemetry through the public telemetry gateway.
 
 ## Design goals
 
@@ -17,6 +17,8 @@ Identity:
 
 - `SFU_REGION`
 - `SFU_SERVICE_ID`
+- `STREAM_REGION`
+- `STREAM_SERVICE_ID`
 - `GOCHAT_DEPLOYMENT_ENV`
 
 - `OTEL_EXPORTER_OTLP_ENDPOINT`
@@ -48,12 +50,13 @@ If you provision the SFU with `config.yaml`, you can set the same OTLP values th
 
 ## Authentication format
 
-- Provision one unique `(service_id, jwt)` pair per SFU node.
-- The JWT must be an HS256 token with `typ=sfu` and `id=<service_id>`.
-- Reuse the same JWT for discovery heartbeat and telemetry:
+- Provision one unique `(service_id, jwt)` pair per media node.
+- SFU JWTs must be HS256 tokens with `typ=sfu` and `id=<service_id>`.
+- Stream JWTs must be HS256 tokens with `typ=stream` and `id=<service_id>`.
+- Reuse the same JWT for discovery heartbeat and telemetry on that node:
   - `WEBHOOK_TOKEN=<jwt>`
   - `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <jwt>`
-- `SFU_SERVICE_ID` must match the JWT `id` claim.
+- `SFU_SERVICE_ID` or `STREAM_SERVICE_ID` must match the JWT `id` claim.
 
 ## Example PowerShell environment
 
@@ -93,6 +96,15 @@ go run ./cmd/tools certificates dtls generate \
 
 If `dtls_certificate_file` and `dtls_private_key_file` are left empty, the SFU generates a self-signed DTLS certificate at startup instead.
 
+For the stream service, use the same shape with `stream_config.yaml` and a token generated with `--type stream`:
+
+```bash
+go run ./cmd/tools tokens webhook generate \
+  --type stream \
+  --id stream-eu-1 \
+  --secret <webhook_config.jwt_secret>
+```
+
 ## Runtime behavior
 
 - SFU logs always continue to stdout as JSON.
@@ -104,7 +116,7 @@ If `dtls_certificate_file` and `dtls_private_key_file` are left empty, the SFU g
 
 ## Network requirements
 
-An external SFU node needs outbound access to:
+An external media node needs outbound access to:
 
 - the public telemetry gateway OTLP HTTP endpoint
-- the internal webhook URL used for discovery heartbeat and join/leave notifications
+- the internal webhook URL used for discovery heartbeat and lifecycle notifications

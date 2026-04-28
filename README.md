@@ -14,7 +14,7 @@
 
 **Distributed real-time chat and voice backend written in Go.**
 
-REST API · WebSocket delivery · File uploads · Full-text search · Link-preview embeds · WebRTC voice
+REST API · WebSocket delivery · File uploads · Full-text search · Link-preview embeds · WebRTC voice and streaming
 
 <br/>
 
@@ -40,8 +40,9 @@ GoChat is service-oriented — each binary has a single focused responsibility. 
 | **Auth** | `cmd/auth` | Registration, login, token refresh, email flows, password reset |
 | **WebSocket Gateway** | `cmd/ws` | Real-time event delivery, presence updates, session management |
 | **Attachments** | `cmd/attachments` | Upload pipeline for files, avatars, and icons; S3 storage and metadata |
-| **Webhook** | `cmd/webhook` | Internal callbacks — SFU heartbeats and attachment finalization |
+| **Webhook** | `cmd/webhook` | Internal callbacks — SFU/stream heartbeats, stream lifecycle, and attachment finalization |
 | **SFU** | `cmd/sfu` | WebRTC media relay and WebSocket signaling for voice channels |
+| **Stream** | `cmd/stream` | WebRTC media relay and WebSocket signaling for voice-channel screen/app sharing |
 | **Indexer** | `cmd/indexer` | Consumes NATS message events, writes search documents to OpenSearch |
 | **Embedder** | `cmd/embedder` | Builds link-preview embeds from remote metadata |
 | **Telemetry Gateway** | `cmd/telemetrygateway` | OTEL proxy — collects signals from all services, forwards to observability backend |
@@ -58,7 +59,7 @@ GoChat is service-oriented — each binary has a single focused responsibility. 
 - Link-preview embed generation from remote metadata
 - Presence updates and real-time event fanout over WebSocket
 - Full-text search indexing and query through OpenSearch
-- Voice channels with region-aware SFU discovery and WebRTC relay
+- Voice channels with region-aware SFU discovery, WebRTC relay, and separate screen/app streaming
 - Structured observability — distributed traces, metrics, and logs via OTEL
 
 ---
@@ -130,9 +131,9 @@ Copy and edit the example config for each service:
 ```
 api_config.example.yaml          ws_config.example.yaml
 auth_config.example.yaml         sfu_config.example.yaml
+stream_config.example.yaml       telemetry_gateway_config.example.yaml
 attachments_config.example.yaml  indexer_config.example.yaml
 webhook_config.example.yaml      embedder_config.example.yaml
-                                  telemetry_gateway_config.example.yaml
 ```
 
 ---
@@ -149,6 +150,7 @@ go run ./cmd/indexer
 go run ./cmd/embedder
 go run ./cmd/telemetrygateway
 go run ./cmd/sfu          # voice media; runs separately from Compose
+go run ./cmd/stream       # screen/app streaming media; runs separately from Compose
 ```
 
 Useful Make targets:
@@ -199,6 +201,7 @@ go run ./cmd/tools observability smoke \
 | [Presence system](docs/project/Presence.md) | Presence state model and delivery |
 | [WebSocket protocol](docs/project/ws/README.md) | Event types, subscription model, connection lifecycle |
 | [Voice & SFU](docs/project/voice/README.md) | WebRTC signaling, SFU protocol, permissions |
+| [Voice-channel streaming](docs/project/voice/Streaming.md) | Screen/app streaming service, lifecycle, presence, and region migration |
 | [Observability](docs/project/observability/README.md) | OTEL signals, dashboards, runbooks, external SFU |
 | [Auth security](docs/project/AuthSecurity.md) | Token design, expiry, refresh flow |
 | [Database schema](docs/project/Database.md) | PostgreSQL and ScyllaDB schema diagrams |

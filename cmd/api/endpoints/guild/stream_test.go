@@ -214,6 +214,102 @@ func TestJoinStreamIssuesViewerOnlyToken(t *testing.T) {
 	}
 }
 
+func TestListStreamsDoesNotRequireVoiceMembership(t *testing.T) {
+	cache := &fakeCache{jsonValues: map[string][]byte{}}
+	meta := streammeta.Metadata{
+		ActiveStream: streammeta.ActiveStream{
+			ID:         777,
+			ChannelID:  42,
+			SourceType: streammeta.SourceTypeScreen,
+			AudioMode:  streammeta.AudioModeDesktop,
+			StartedAt:  12345,
+		},
+		GuildID:     1,
+		OwnerUserID: 55,
+	}
+	raw, err := json.Marshal(meta)
+	if err != nil {
+		t.Fatalf("unable to marshal metadata: %v", err)
+	}
+	if err := cache.HSet(context.Background(), streammeta.ChannelKey(meta.ChannelID), fmtInt64(meta.ID), string(raw)); err != nil {
+		t.Fatalf("unable to seed channel hash: %v", err)
+	}
+
+	e := &entity{
+		cache: cache,
+		perm: &fakePermissionChecker{
+			channel:      &model.Channel{Id: 42, Type: model.ChannelTypeGuildVoice},
+			channelOK:    true,
+			channelPerms: int64(permissions.PermVoiceConnect),
+		},
+	}
+	app := newGuildTestApp(t, 10, "/guild/:guild_id/voice/:channel_id/streams", e.ListStreams)
+
+	req := httptest.NewRequest("GET", "/guild/1/voice/42/streams", nil)
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+
+	var streams []VoiceStreamSummary
+	if err := json.NewDecoder(resp.Body).Decode(&streams); err != nil {
+		t.Fatalf("unable to decode response: %v", err)
+	}
+	if len(streams) != 1 || streams[0].ID != meta.ID {
+		t.Fatalf("expected seeded stream summary, got %#v", streams)
+	}
+}
+
+func TestJoinStreamStillRequiresVoiceMembership(t *testing.T) {
+	cache := &fakeCache{jsonValues: map[string][]byte{}}
+	meta := streammeta.Metadata{
+		ActiveStream: streammeta.ActiveStream{
+			ID:         777,
+			ChannelID:  42,
+			SourceType: streammeta.SourceTypeScreen,
+			AudioMode:  streammeta.AudioModeDesktop,
+			StartedAt:  12345,
+		},
+		GuildID:     1,
+		OwnerUserID: 55,
+		Region:      "us-east",
+		RouteID:     "stream-us-1",
+		RouteURL:    "wss://stream-us.example/signal",
+	}
+	if err := cache.SetJSON(context.Background(), streammeta.MetaKey(meta.ID), meta); err != nil {
+		t.Fatalf("unable to seed stream metadata: %v", err)
+	}
+	raw, err := json.Marshal(meta)
+	if err != nil {
+		t.Fatalf("unable to marshal metadata: %v", err)
+	}
+	if err := cache.HSet(context.Background(), streammeta.ChannelKey(meta.ChannelID), fmtInt64(meta.ID), string(raw)); err != nil {
+		t.Fatalf("unable to seed channel hash: %v", err)
+	}
+
+	e := &entity{
+		cache: cache,
+		perm: &fakePermissionChecker{
+			channel:      &model.Channel{Id: 42, Type: model.ChannelTypeGuildVoice},
+			channelOK:    true,
+			channelPerms: int64(permissions.PermVoiceConnect),
+		},
+	}
+	app := newGuildTestApp(t, 10, "/guild/:guild_id/voice/:channel_id/streams/:stream_id/join", e.JoinStream)
+
+	req := httptest.NewRequest("POST", "/guild/1/voice/42/streams/777/join", nil)
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusForbidden {
+		t.Fatalf("expected 403, got %d", resp.StatusCode)
+	}
+}
+
 func TestStopStreamIsIdempotentWhenStreamIsAlreadyGone(t *testing.T) {
 	cache := &fakeCache{jsonValues: map[string][]byte{}}
 	e := &entity{cache: cache}
