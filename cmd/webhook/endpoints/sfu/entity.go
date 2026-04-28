@@ -5,10 +5,12 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/mq"
+	"github.com/FlameInTheDark/gochat/internal/presence"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/serviceauth"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
 	"github.com/gofiber/fiber/v2"
+	natsio "github.com/nats-io/nats.go"
 )
 
 const entityName = "sfu"
@@ -20,9 +22,11 @@ type entity struct {
 	tokens *serviceauth.TokenManager
 	cache  cache.Cache
 	mqt    mq.SendTransporter
+	pstore *presence.Store
+	nats   *natsio.Conn
 }
 
-func New(log *slog.Logger, disco discovery.Manager, tokens *serviceauth.TokenManager, cache cache.Cache, mqt mq.SendTransporter) server.Entity {
+func New(log *slog.Logger, disco discovery.Manager, tokens *serviceauth.TokenManager, cache cache.Cache, mqt mq.SendTransporter, pstore *presence.Store, nats *natsio.Conn) server.Entity {
 	return &entity{
 		name:   entityName,
 		log:    log,
@@ -30,6 +34,8 @@ func New(log *slog.Logger, disco discovery.Manager, tokens *serviceauth.TokenMan
 		tokens: tokens,
 		cache:  cache,
 		mqt:    mqt,
+		pstore: pstore,
+		nats:   nats,
 	}
 }
 

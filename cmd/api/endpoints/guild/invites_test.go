@@ -3,10 +3,12 @@ package guild
 import (
 	"database/sql"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
+	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -98,5 +100,102 @@ func TestAcceptInviteSkipsSystemMessageWhenSystemChannelIsMissing(t *testing.T) 
 
 	if messageRepo.createSystemCalls != 0 {
 		t.Fatalf("expected no system messages to be created, got %d", messageRepo.createSystemCalls)
+	}
+}
+
+func TestListInvitesRejectsCreateOnlyMembers(t *testing.T) {
+	e := &entity{
+		perm: &fakePermissionChecker{
+			results: map[testPermKey]bool{
+				{guildID: 1, userID: 10, perm: permissions.PermMembershipCreateInvite}: true,
+			},
+		},
+		inv: &fakeInviteRepo{},
+	}
+	app := newGuildTestApp(t, 10, "/guild/invites/:guild_id", e.ListInvites)
+
+	req := httptest.NewRequest("GET", "/guild/invites/1", nil)
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", resp.StatusCode)
+	}
+}
+
+func TestDeleteInviteRejectsCreateOnlyMembers(t *testing.T) {
+	e := &entity{
+		perm: &fakePermissionChecker{
+			results: map[testPermKey]bool{
+				{guildID: 1, userID: 10, perm: permissions.PermMembershipCreateInvite}: true,
+			},
+		},
+		inv: &fakeInviteRepo{},
+	}
+	app := newGuildTestApp(t, 10, "/guild/invites/:guild_id/:invite_id", e.DeleteInvite)
+
+	req := httptest.NewRequest("DELETE", "/guild/invites/1/55", nil)
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", resp.StatusCode)
+	}
+}
+
+func TestCreateInviteCapsTTLForCreateOnlyMembers(t *testing.T) {
+	start := time.Now()
+	invites := &fakeInviteRepo{}
+	e := &entity{
+		perm: &fakePermissionChecker{
+			results: map[testPermKey]bool{
+				{guildID: 1, userID: 10, perm: permissions.PermMembershipCreateInvite}: true,
+			},
+		},
+		inv: invites,
+	}
+	app := newGuildTestApp(t, 10, "/guild/invites/:guild_id", e.CreateInvite)
+
+	req := httptest.NewRequest("POST", "/guild/invites/1", strings.NewReader(`{"expires_in_sec":7200}`))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusCreated {
+		t.Fatalf("expected 201, got %d", resp.StatusCode)
+	}
+
+	expiresAt := time.Unix(invites.lastExpiresAt, 0)
+	gotTTL := expiresAt.Sub(start)
+	if gotTTL > time.Hour+5*time.Second {
+		t.Fatalf("expected create-only invite TTL to be capped at 1 hour, got %v", gotTTL)
+	}
+	if gotTTL < time.Hour-5*time.Second {
+		t.Fatalf("expected create-only invite TTL near 1 hour, got %v", gotTTL)
+	}
+}
+
+func TestGenerateInviteCodeReturnsUppercaseBase36(t *testing.T) {
+	seen := make(map[string]struct{})
+	for i := 0; i < 32; i++ {
+		code, err := generateInviteCode()
+		if err != nil {
+			t.Fatalf("generateInviteCode returned error: %v", err)
+		}
+		if len(code) != inviteCodeLength {
+			t.Fatalf("expected %d-char invite code, got %q", inviteCodeLength, code)
+		}
+		for _, ch := range code {
+			if !(ch >= '0' && ch <= '9') && !(ch >= 'A' && ch <= 'Z') {
+				t.Fatalf("expected uppercase base36 code, got %q", code)
+			}
+		}
+		if _, exists := seen[code]; exists {
+			t.Fatalf("expected random invite codes, got duplicate %q", code)
+		}
+		seen[code] = struct{}{}
 	}
 }

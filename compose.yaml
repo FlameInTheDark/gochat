@@ -66,6 +66,8 @@ services:
         condition: service_started
       nats:
         condition: service_started
+      etcd:
+        condition: service_started
       auth:
         condition: service_started
     networks:
@@ -135,6 +137,8 @@ services:
     environment: *otel-app-env
     volumes:
       - ./webhook_config.yaml:/dist/config.yaml
+    ports:
+      - "3200:3200"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.webhook.rule=PathPrefix(`/api/v1/webhook`)"
@@ -143,7 +147,14 @@ services:
       - "traefik.http.services.webhook.loadbalancer.server.port=3200"
       - "traefik.docker.network=gochat_traefik"
     depends_on:
-      - traefik
+      scylla:
+        condition: service_healthy
+      keydb:
+        condition: service_started
+      nats:
+        condition: service_started
+      etcd:
+        condition: service_started
     networks:
       - traefik
       - default

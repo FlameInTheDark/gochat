@@ -29,10 +29,22 @@ type fakePermissionChecker struct {
 	results map[testPermKey]bool
 	calls   []testPermKey
 	err     error
+
+	channel      *model.Channel
+	guildChannel *model.GuildChannel
+	guild        *model.Guild
+	channelOK    bool
+	channelErr   error
+
+	channelPerms    int64
+	channelPermsErr error
 }
 
 func (f *fakePermissionChecker) ChannelPerm(ctx context.Context, guildID, channelID, userID int64, perm ...permissions.RolePermission) (*model.Channel, *model.GuildChannel, *model.Guild, bool, error) {
-	return nil, nil, nil, false, nil
+	if f.channelErr != nil {
+		return nil, nil, nil, false, f.channelErr
+	}
+	return f.channel, f.guildChannel, f.guild, f.channelOK, nil
 }
 
 func (f *fakePermissionChecker) GuildPerm(ctx context.Context, guildID, userID int64, perm ...permissions.RolePermission) (*model.Guild, bool, error) {
@@ -49,7 +61,7 @@ func (f *fakePermissionChecker) GuildPerm(ctx context.Context, guildID, userID i
 }
 
 func (f *fakePermissionChecker) GetChannelPermissions(ctx context.Context, guildID, channelID, userID int64) (int64, error) {
-	return 0, nil
+	return f.channelPerms, f.channelPermsErr
 }
 
 type testMemberKey struct {
@@ -327,20 +339,51 @@ func (f *fakeDiscriminatorRepo) GetDiscriminatorsByUserIDs(ctx context.Context, 
 }
 
 type fakeInviteRepo struct {
-	invite model.GuildInvite
-	err    error
+	invite          model.GuildInvite
+	invites         []model.GuildInvite
+	err             error
+	createCalls     int
+	lastCreateCode  string
+	lastCreateID    int64
+	lastCreateGuild int64
+	lastCreateUser  int64
+	lastExpiresAt   int64
+	deleteCalls     []int64
 }
 
 func (f *fakeInviteRepo) CreateInvite(ctx context.Context, code string, inviteID, guildID, authorID int64, expiresAt int64) (model.GuildInvite, error) {
-	return model.GuildInvite{}, nil
+	f.createCalls++
+	f.lastCreateCode = code
+	f.lastCreateID = inviteID
+	f.lastCreateGuild = guildID
+	f.lastCreateUser = authorID
+	f.lastExpiresAt = expiresAt
+	if f.err != nil {
+		return model.GuildInvite{}, f.err
+	}
+	invite := model.GuildInvite{
+		InviteCode: code,
+		InviteId:   inviteID,
+		GuildId:    guildID,
+		AuthorId:   authorID,
+		ExpiresAt:  time.Unix(expiresAt, 0),
+	}
+	return invite, nil
 }
 func (f *fakeInviteRepo) GetGuildInvites(ctx context.Context, guildID int64) ([]model.GuildInvite, error) {
-	return nil, nil
+	if f.err != nil {
+		return nil, f.err
+	}
+	return append([]model.GuildInvite(nil), f.invites...), nil
 }
 func (f *fakeInviteRepo) DeleteInviteByCode(ctx context.Context, guildID int64, code string) error {
 	return nil
 }
 func (f *fakeInviteRepo) DeleteInviteByID(ctx context.Context, guildID, inviteID int64) error {
+	f.deleteCalls = append(f.deleteCalls, inviteID)
+	if f.err != nil {
+		return f.err
+	}
 	return nil
 }
 func (f *fakeInviteRepo) FetchInvite(ctx context.Context, code string) (model.GuildInvite, error) {

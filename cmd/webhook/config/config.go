@@ -12,10 +12,11 @@ type Config struct {
 	LogLevel      string `yaml:"log_level" env:"LOG_LEVEL" env-default:"warn"`
 	ServerAddress string `yaml:"server_address" env-default:":3200"`
 	// Discovery for SFU heartbeats
-	EtcdEndpoints []string `yaml:"etcd_endpoints" env:"ETCD_ENDPOINTS" env-separator:","`
-	EtcdPrefix    string   `yaml:"etcd_prefix" env:"ETCD_PREFIX" env-default:"/gochat/sfu"`
-	EtcdUsername  string   `yaml:"etcd_username" env:"ETCD_USERNAME"`
-	EtcdPassword  string   `yaml:"etcd_password" env:"ETCD_PASSWORD"`
+	EtcdEndpoints    []string `yaml:"etcd_endpoints" env:"ETCD_ENDPOINTS" env-separator:","`
+	EtcdPrefix       string   `yaml:"etcd_prefix" env:"ETCD_PREFIX" env-default:"/gochat/sfu"`
+	StreamEtcdPrefix string   `yaml:"stream_etcd_prefix" env:"STREAM_ETCD_PREFIX" env-default:"/gochat/stream"`
+	EtcdUsername     string   `yaml:"etcd_username" env:"ETCD_USERNAME"`
+	EtcdPassword     string   `yaml:"etcd_password" env:"ETCD_PASSWORD"`
 	// Cassandra for attachment finalization
 	Cluster         []string `yaml:"cluster" env:"CLUSTER" env-separator:","`
 	ClusterKeyspace string   `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`

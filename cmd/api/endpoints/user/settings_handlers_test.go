@@ -540,7 +540,9 @@ func TestUserSettingsResolvesDevicesPerKey(t *testing.T) {
 			"noise_suppression":true,
 			"echo_cancellation":true,
 			"audio_input_level":100,
-			"audio_output_level":75
+			"audio_output_level":75,
+			"input_mode":"push_to_talk",
+			"push_to_talk_key":"KeyV"
 		}
 	}`))
 	desktopReq.Header.Set("Content-Type", "application/json")
@@ -598,6 +600,9 @@ func TestUserSettingsResolvesDevicesPerKey(t *testing.T) {
 	}
 	if desktopSettings.Settings.Devices.AudioInputDevice != "desk-mic" {
 		t.Fatalf("expected desktop device settings, got %#v", desktopSettings.Settings.Devices)
+	}
+	if desktopSettings.Settings.Devices.InputMode != "push_to_talk" || desktopSettings.Settings.Devices.PushToTalkKey != "KeyV" {
+		t.Fatalf("expected desktop voice mode settings to round-trip, got %#v", desktopSettings.Settings.Devices)
 	}
 	if desktopSettings.Settings.DevicesByKey["phone-web"].AudioInputDevice != "phone-mic" {
 		t.Fatalf("expected phone bucket to remain stored, got %#v", desktopSettings.Settings.DevicesByKey)
@@ -673,6 +678,76 @@ func TestLegacySettingsUpdateKeepsStoredDeviceBuckets(t *testing.T) {
 	}
 	if got.Settings.Devices.AudioInputDevice != "phone-mic" {
 		t.Fatalf("expected stored phone device bucket to survive legacy update, got %#v", got.Settings.Devices)
+	}
+}
+
+func TestDeviceScopedSettingsUpdateWithoutDevicesKeepsCurrentDeviceBucket(t *testing.T) {
+	repo := newUserSettingsRepoMock()
+	repo.settings[1] = model.UserSettings{
+		UserId: 1,
+		Settings: json.RawMessage(`{
+			"language":"en",
+			"status":{"status":"online"},
+			"devices":{"audio_input_device":"legacy-mic"},
+			"devices_by_key":{
+				"desktop-browser":{
+					"audio_input_device":"desk-mic",
+					"audio_output_device":"desk-speakers",
+					"video_device":"desk-cam",
+					"audio_input_level":80,
+					"audio_output_level":90,
+					"input_mode":"push_to_talk",
+					"push_to_talk_key":"KeyV"
+				}
+			}
+		}`),
+		Version: 1,
+	}
+
+	app := newSettingsTestApp(newSettingsTestEntity(repo))
+
+	postReq := httptest.NewRequest(http.MethodPost, "/user/me/settings", strings.NewReader(`{
+		"language":"ru",
+		"status":{"status":"idle"}
+	}`))
+	postReq.Header.Set("Content-Type", "application/json")
+	postReq.Header.Set(userSettingsDeviceKeyHeader, "desktop-browser")
+
+	postResp, err := app.Test(postReq, -1)
+	if err != nil {
+		t.Fatalf("expected POST request to complete, got %v", err)
+	}
+	defer postResp.Body.Close()
+
+	if postResp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected POST status %d, got %d", fiber.StatusOK, postResp.StatusCode)
+	}
+
+	getReq := httptest.NewRequest(http.MethodGet, "/user/me/settings", nil)
+	getReq.Header.Set(userSettingsDeviceKeyHeader, "desktop-browser")
+	getResp, err := app.Test(getReq, -1)
+	if err != nil {
+		t.Fatalf("expected GET request to complete, got %v", err)
+	}
+	defer getResp.Body.Close()
+
+	var got UserSettingsResponse
+	if err := json.NewDecoder(getResp.Body).Decode(&got); err != nil {
+		t.Fatalf("expected valid JSON response, got %v", err)
+	}
+	if got.Settings == nil {
+		t.Fatal("expected settings payload in GET response")
+	}
+	if got.Settings.Language != "ru" {
+		t.Fatalf("expected language update to persist, got %q", got.Settings.Language)
+	}
+	if got.Settings.Devices.AudioInputDevice != "desk-mic" ||
+		got.Settings.Devices.AudioOutputDevice != "desk-speakers" ||
+		got.Settings.Devices.VideoDevice != "desk-cam" {
+		t.Fatalf("expected device-scoped bucket to survive unrelated update, got %#v", got.Settings.Devices)
+	}
+	if got.Settings.Devices.InputMode != "push_to_talk" || got.Settings.Devices.PushToTalkKey != "KeyV" {
+		t.Fatalf("expected voice mode settings to survive unrelated update, got %#v", got.Settings.Devices)
 	}
 }
 

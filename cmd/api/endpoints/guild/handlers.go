@@ -147,7 +147,7 @@ func (e *entity) cachedUserRoles(ctx context.Context, guildId, userId int64) (ma
 	}
 	userRoles, err := e.ur.GetUserRoles(ctx, guildId, userId)
 	if err != nil {
-		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return nil, err
 	}
 	var roleIds []int64
 	for _, ur := range userRoles {
@@ -155,7 +155,7 @@ func (e *entity) cachedUserRoles(ctx context.Context, guildId, userId int64) (ma
 	}
 	roles, err := e.role.GetRolesBulk(ctx, guildId, roleIds)
 	if err != nil {
-		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return nil, err
 	}
 	roleMap := make(map[int64]*model.Role, len(roles))
 	for i := range roles {
@@ -195,7 +195,7 @@ func (e *entity) validateGuildAccess(c *fiber.Ctx, guildId int64) (*guildContext
 
 	guild, err := e.cachedGuild(c.UserContext(), member.GuildId)
 	if err != nil {
-		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return nil, e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	return &guildContext{
@@ -313,7 +313,7 @@ func (e *entity) currentUserThreadMembers(ctx context.Context, userID int64, cha
 func (e *entity) checkChannelPermissions(c *fiber.Ctx, channel *model.Channel, guild *model.Guild, user *helper.JWTUser, roles map[int64]*model.Role) (bool, error) {
 	_, _, _, canView, err := e.perm.ChannelPerm(c.UserContext(), guild.Id, channel.Id, user.Id, permissions.PermServerViewChannels)
 	if err != nil {
-		return false, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return false, e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	return canView, nil
 }
@@ -324,11 +324,11 @@ func (e *entity) createDefaultChannels(c *fiber.Ctx, guildId int64, isPublic boo
 	channelId := idgen.Next()
 
 	if err := e.gc.AddChannel(c.UserContext(), guildId, categoryId, "text", model.ChannelTypeGuildCategory, nil, isPublic, 0, nil, nil, false); err != nil {
-		return 0, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return 0, e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	if err := e.gc.AddChannel(c.UserContext(), guildId, channelId, "general", model.ChannelTypeGuild, &categoryId, isPublic, 0, nil, nil, false); err != nil {
-		return 0, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return 0, e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	return channelId, nil
@@ -484,7 +484,7 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) er
 
 	guildChannels, err := e.gc.GetGuildChannels(c.UserContext(), guildCtx.Guild.Id)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	var channelIds = make([]int64, len(guildChannels))
@@ -494,12 +494,12 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) er
 
 	channels, err := e.ch.GetChannelsBulk(c.UserContext(), channelIds)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	croles, err := e.rperm.GetChannelRolesBulk(c.UserContext(), channelIds)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	positionsByChannelID := make(map[int64]int, len(guildChannels))
 	for _, guildChannel := range guildChannels {
@@ -604,7 +604,7 @@ func (e *entity) GetChannelThreads(c *fiber.Ctx) error {
 
 	parentChannel, _, _, canView, err := e.perm.ChannelPerm(c.UserContext(), guildCtx.Guild.Id, channelId, guildCtx.User.Id, permissions.PermServerViewChannels)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !canView || parentChannel == nil {
 		return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
@@ -615,7 +615,7 @@ func (e *entity) GetChannelThreads(c *fiber.Ctx) error {
 
 	threads, err := e.ch.GetChannelThreads(c.UserContext(), channelId)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if len(threads) == 0 {
 		return c.JSON([]dto.Channel{})
@@ -623,12 +623,12 @@ func (e *entity) GetChannelThreads(c *fiber.Ctx) error {
 	e.applyThreadMessageCounts(c.UserContext(), threads)
 	threadMembers, threadMemberIDs, err := e.currentUserThreadMembers(c.UserContext(), guildCtx.User.Id, threads)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	guildChannels, err := e.gc.GetGuildChannels(c.UserContext(), guildCtx.Guild.Id)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	positions := make(map[int64]int, len(guildChannels))
 	for _, guildChannel := range guildChannels {
@@ -657,7 +657,7 @@ func (e *entity) fetchSingleChannel(c *fiber.Ctx, guildCtx *guildContext, channe
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, ErrUnableToGetChannel)
 		}
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	channel, err := e.ch.GetChannel(c.UserContext(), guildChannel.ChannelId)
@@ -665,7 +665,7 @@ func (e *entity) fetchSingleChannel(c *fiber.Ctx, guildCtx *guildContext, channe
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, ErrUnableToGetChannel)
 		}
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	if channel.Type == model.ChannelTypeThread && channel.Permissions == nil && channel.ParentID != nil {
@@ -693,7 +693,7 @@ func (e *entity) fetchSingleChannel(c *fiber.Ctx, guildCtx *guildContext, channe
 
 	threadMember, threadMemberIDs, err := e.currentUserThreadMember(c.UserContext(), guildCtx.User.Id, &channel)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	return c.JSON(channelModelToDTOWithThreadMember(&channel, &guildCtx.Guild.Id, guildChannel.Position, nil, threadMember, threadMemberIDs))
@@ -730,7 +730,7 @@ func (e *entity) JoinThread(c *fiber.Ctx) error {
 
 	channel, _, _, canView, err := e.perm.ChannelPerm(c.UserContext(), guildCtx.Guild.Id, channelId, guildCtx.User.Id, permissions.PermServerViewChannels)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !canView || channel == nil {
 		return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
@@ -778,7 +778,7 @@ func (e *entity) LeaveThread(c *fiber.Ctx) error {
 
 	channel, _, _, canView, err := e.perm.ChannelPerm(c.UserContext(), guildCtx.Guild.Id, channelId, guildCtx.User.Id, permissions.PermServerViewChannels)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !canView || channel == nil {
 		return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
@@ -848,7 +848,7 @@ func (e *entity) createGuildWithDefaults(c *fiber.Ctx, req *CreateGuildRequest, 
 
 	// Add creator as member
 	if err := e.memb.AddMember(c.UserContext(), user.Id, guildId); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	// Load created guild to include computed fields and icon metadata
@@ -996,7 +996,7 @@ func (e *entity) setGuildIconIfProvided(c *fiber.Ctx, guildId int64, iconId *int
 	var cached dto.Icon
 	if err := e.cache.GetJSON(c.UserContext(), key, &cached); err == nil && cached.URL != "" {
 		if err := e.g.SetGuildIcon(c.UserContext(), guildId, cached.Id); err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			return e.publicError(c, fiber.StatusInternalServerError, err)
 		}
 		e.deleteGuildCache(c.UserContext(), guildId)
 		return nil
@@ -1023,7 +1023,7 @@ func (e *entity) setGuildIconIfProvided(c *fiber.Ctx, guildId int64, iconId *int
 	}
 
 	if err := e.g.SetGuildIcon(c.UserContext(), guildId, icon.Id); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	e.deleteGuildCache(c.UserContext(), guildId)
 
@@ -1141,7 +1141,7 @@ func (e *entity) SetSystemMessagesChannel(c *fiber.Ctx) error {
 func (e *entity) updateGuildWithPermissionCheck(c *fiber.Ctx, guildId, userId int64, req *UpdateGuildRequest) error {
 	guild, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, userId, permissions.PermServerManage)
 	if err != nil {
-		return fiber.NewError(fiber.StatusUnauthorized, err.Error())
+		return e.publicError(c, fiber.StatusUnauthorized, err)
 	}
 
 	if !hasPermission {
@@ -1219,7 +1219,7 @@ func (e *entity) createChannelWithPermissionCheck(c *fiber.Ctx, guildId, userId 
 
 	guild, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, userId, permissions.PermServerManageChannels)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	if !hasPermission {
@@ -1760,14 +1760,14 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 
 	channel, err := e.ch.GetChannel(c.UserContext(), channelId)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	switch channel.Type {
 	case model.ChannelTypeGuildCategory:
 		_, _, _, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, channelId, userId, permissions.PermServerManageChannels)
 		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			return e.publicError(c, fiber.StatusInternalServerError, err)
 		}
 		if !hasPermission {
 			return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -1775,7 +1775,7 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 	case model.ChannelTypeThread:
 		canManage, err := e.canManageThread(c.UserContext(), guildId, &channel, userId)
 		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			return e.publicError(c, fiber.StatusInternalServerError, err)
 		}
 		if !canManage {
 			return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -1783,7 +1783,7 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 	default:
 		_, _, _, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, channelId, userId, permissions.PermServerManageChannels)
 		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			return e.publicError(c, fiber.StatusInternalServerError, err)
 		}
 		if !hasPermission {
 			return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -1792,13 +1792,13 @@ func (e *entity) deleteChannelWithPermissionCheck(c *fiber.Ctx, guildId, channel
 
 	// Delete the channel
 	if err := e.gc.RemoveChannel(c.UserContext(), guildId, channelId); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	// Delete channel messages if any exist
 	if channel.LastMessage != 0 {
 		if err := e.msg.DeleteChannelMessages(c.UserContext(), channelId, channel.LastMessage); err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			return e.publicError(c, fiber.StatusInternalServerError, err)
 		}
 	}
 	if channel.Type == model.ChannelTypeThread {
@@ -1862,7 +1862,7 @@ func (e *entity) deleteCategoryWithPermissionCheck(c *fiber.Ctx, guildId, catego
 
 	channel, _, _, hasPermission, err := e.perm.ChannelPerm(c.UserContext(), guildId, categoryId, userId, permissions.PermServerManageChannels)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	if !hasPermission || channel.Type != model.ChannelTypeGuildCategory {
@@ -1871,7 +1871,7 @@ func (e *entity) deleteCategoryWithPermissionCheck(c *fiber.Ctx, guildId, catego
 
 	// Delete the category (child channels implicitly lose parent via position derivation)
 	if err := e.gc.RemoveChannel(c.UserContext(), guildId, channel.Id); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 
 	// Send delete channel event and clean cached data
@@ -1968,7 +1968,7 @@ func (e *entity) PatchChannelOrder(c *fiber.Ctx) error {
 
 	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageChannels)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !hasPermission {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -1977,7 +1977,7 @@ func (e *entity) PatchChannelOrder(c *fiber.Ctx) error {
 	// Ensure we only update channels that belong to this guild
 	guildChannels, err := e.gc.GetGuildChannels(c.UserContext(), guildId)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	allowed := make(map[int64]struct{}, len(guildChannels))
 	finalPositions := make(map[int64]int, len(guildChannels))
@@ -1990,7 +1990,7 @@ func (e *entity) PatchChannelOrder(c *fiber.Ctx) error {
 
 	channels, err := e.ch.GetChannelsBulk(c.UserContext(), channelIDs)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	channelByID := make(map[int64]model.Channel, len(channels))
 	for _, channel := range channels {
@@ -2033,7 +2033,7 @@ func (e *entity) PatchChannelOrder(c *fiber.Ctx) error {
 
 	// Apply positions
 	if err := e.gc.SetGuildChannelPosition(c.UserContext(), updates); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	for _, update := range parentUpdates {
 		if err := e.ch.SetChannelParent(c.UserContext(), update.channel.Id, update.channel.ParentID); err != nil {
@@ -2132,7 +2132,7 @@ func (e *entity) PatchChannel(c *fiber.Ctx) error {
 	if channel.Type == model.ChannelTypeThread {
 		canManage, err := e.canManageThread(c.UserContext(), guildId, &channel, user.Id)
 		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			return e.publicError(c, fiber.StatusInternalServerError, err)
 		}
 		if !canManage {
 			return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -2140,7 +2140,7 @@ func (e *entity) PatchChannel(c *fiber.Ctx) error {
 	} else {
 		_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageChannels)
 		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			return e.publicError(c, fiber.StatusInternalServerError, err)
 		}
 		if !hasPermission {
 			return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)

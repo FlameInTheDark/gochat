@@ -44,6 +44,10 @@ jobs:
             dockerfile: sfu.Dockerfile
             image: gochat-sfu
             cache_scope: sfu-dev
+          - service: stream
+            dockerfile: stream.Dockerfile
+            image: gochat-stream
+            cache_scope: stream-dev
           - service: webhook
             dockerfile: webhook.Dockerfile
             image: gochat-webhook

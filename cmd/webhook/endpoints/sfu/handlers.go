@@ -12,6 +12,8 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/observability"
+	"github.com/FlameInTheDark/gochat/internal/presence"
+	streammeta "github.com/FlameInTheDark/gochat/internal/stream"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
 	"github.com/gofiber/fiber/v2"
 )
@@ -43,6 +45,36 @@ func refreshVoiceRoute(ctx context.Context, cache cache.Cache, channelID int64, 
 		URL:    routeURL,
 		Region: region,
 	}, voiceRouteActiveTTLSeconds)
+}
+
+func (e *entity) clearOwnedStream(ctx context.Context, userID, channelID int64, reason string) {
+	if e.cache == nil || userID == 0 || channelID == 0 {
+		return
+	}
+
+	var meta streammeta.Metadata
+	if err := e.cache.GetJSON(ctx, streammeta.UserKey(userID), &meta); err != nil || meta.ID == 0 || meta.ChannelID != channelID {
+		return
+	}
+
+	_ = e.cache.Delete(ctx, streammeta.MetaKey(meta.ID))
+	_ = e.cache.Delete(ctx, streammeta.RouteKey(meta.ID))
+	_ = e.cache.Delete(ctx, streammeta.UserKey(userID))
+	_ = e.cache.Delete(ctx, streammeta.RebindKey(meta.ID))
+	_ = e.cache.HDel(ctx, streammeta.ChannelKey(channelID), strconv.FormatInt(meta.ID, 10))
+	if e.pstore != nil {
+		_ = e.pstore.ClearActiveStream(ctx, userID)
+		_, _ = presence.Refresh(ctx, e.pstore, e.nats, userID, voiceRouteActiveTTLSeconds)
+	}
+	if meta.GuildID != 0 {
+		_ = mq.SendGuildUpdate(ctx, e.mqt, meta.GuildID, &mqmsg.GuildMemberStopStream{
+			GuildId:   meta.GuildID,
+			ChannelId: meta.ChannelID,
+			UserId:    meta.OwnerUserID,
+			StreamId:  meta.ID,
+			Reason:    reason,
+		})
+	}
 }
 
 // Heartbeat
@@ -204,6 +236,7 @@ func (e *entity) ChannelUserLeave(c *fiber.Ctx) error {
 			slog.Int64("channel_id", req.ChannelId),
 			slog.String("error", ttlErr.Error()))
 	}
+	e.clearOwnedStream(c.UserContext(), req.UserId, req.ChannelId, "voice_left")
 	if req.GuildId != nil {
 		ctx := observability.BackgroundFromContext(c.UserContext())
 		asyncLog := observability.LoggerWithContext(ctx, log)

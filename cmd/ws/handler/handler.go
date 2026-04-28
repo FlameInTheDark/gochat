@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
-	"github.com/nats-io/nats.go"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -32,6 +31,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/presence"
+	"github.com/nats-io/nats.go"
 )
 
 type helloMessage struct {
@@ -533,12 +533,27 @@ func (h *Handler) sendPresenceSnapshot(userID int64) {
 		since = p.Since
 		text = p.CustomStatusText
 	}
+	var mute, deafen bool
+	var activeStream = p.ActiveStream
+	if ok {
+		mute = p.Mute
+		deafen = p.Deafen
+	}
 	// include voice channel id if present
 	if ok && p.VoiceChannelID != nil {
 		vid := *p.VoiceChannelID
 		voiceID = &vid
 	}
-	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{UserID: userID, Status: status, Since: since, CustomStatusText: text, VoiceChannelID: voiceID})
+	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{
+		UserID:           userID,
+		Status:           status,
+		Since:            since,
+		CustomStatusText: text,
+		VoiceChannelID:   voiceID,
+		Mute:             mute,
+		Deafen:           deafen,
+		ActiveStream:     activeStream,
+	})
 	if err != nil {
 		return
 	}
@@ -546,28 +561,7 @@ func (h *Handler) sendPresenceSnapshot(userID int64) {
 }
 
 func (h *Handler) publishPresence(agg presence.Presence) {
-	if h.nats == nil {
-		return
-	}
-	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{UserID: agg.UserID, Status: agg.Status, Since: agg.Since, CustomStatusText: agg.CustomStatusText, VoiceChannelID: agg.VoiceChannelID, Mute: agg.Mute, Deafen: agg.Deafen})
-	if err != nil {
-		return
-	}
-	b, err := json.Marshal(msg)
-	if err != nil {
-		return
-	}
-	subject := fmt.Sprintf("presence.user.%d", agg.UserID)
-	ctx, finish := observability.StartNATSPublishSpan(h.baseContext(), subject)
-	defer func() {
-		finish(err)
-	}()
-	headers := observability.InjectNATSHeaders(ctx, nil)
-	err = h.nats.PublishMsg(&nats.Msg{
-		Subject: subject,
-		Header:  headers,
-		Data:    b,
-	})
+	_ = presence.Publish(h.baseContext(), h.nats, agg)
 }
 
 func (h *Handler) baseContext() context.Context {

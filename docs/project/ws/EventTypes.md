@@ -5,7 +5,7 @@
 When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies the event type. This page lists all event type values, their payloads, and which NATS topic delivers them.
 
 > [!NOTE]
-> All events on this page (100-406) are delivered over the **Gateway WebSocket** (`/subscribe`). Voice/WebRTC signaling events (500-515) are exchanged over the separate **SFU WebSocket** (`/signal`) - see [SFU Protocol](../voice/SFUProtocol.md). Only a few voice-related control events (509, 512, 513) pass through the Gateway WS as noted in the [RTC Events](#rtc-events-500515-gateway-ws-only) section.
+> All events on this page (100-406) are delivered over the **Gateway WebSocket** (`/subscribe`). Voice/WebRTC signaling events (500-515) are exchanged over the separate **SFU WebSocket** (`/signal`) - see [SFU Protocol](../voice/SFUProtocol.md). Screen/app stream media signaling is exchanged over the separate **Stream WebSocket** (`/signal?v=2`) - see [Voice-Channel Streaming](../voice/Streaming.md). Only a few voice-related control events (509, 512, 513) pass through the Gateway WS as noted in the [RTC Events](#rtc-events-500515-gateway-ws-only) section.
 
 ---
 
@@ -412,7 +412,7 @@ See [Threads](../channels/Threads.md) for the full creation flow and subscriptio
 ```
 
 ---
-## Guild Member Events (200-209)
+## Guild Member Events (200-212)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -425,6 +425,9 @@ See [Threads](../channels/Threads.md) for the full creation flow and subscriptio
 | 206 | Guild Member Leave Voice | `guild.{guildId}` | Member left a voice channel |
 | 207 | Guild Member Moderation | `guild.{guildId}` | Kick, ban, or unban action applied to a user |
 | 209 | Voice State Update | `guild.{guildId}` | User's mute/deafen status changed in voice channel |
+| 210 | Guild Member Start Stream | `guild.{guildId}` | Member started screen/app sharing in a voice channel |
+| 211 | Guild Member Stop Stream | `guild.{guildId}` | Member stopped screen/app sharing |
+| 212 | Guild Streams Rebind | `guild.{guildId}` | Active streams should reconnect during voice region migration |
 
 **Payload (t=200, Guild Member Added):**
 ```json
@@ -573,6 +576,57 @@ See [Threads](../channels/Threads.md) for the full creation flow and subscriptio
 - The `mute` field indicates if the user is muted (cannot speak)
 - The `deafen` field indicates if the user is deafened (cannot hear others)
 - This event is broadcast to all guild members, not just those in the voice channel
+
+---
+
+## Voice Stream Events (210-212)
+
+Stream events are channel UI hints for voice-channel screen/app sharing. They are delivered on `guild.{guildId}` to guild subscribers. Stream media itself uses a separate `cmd/stream` WebSocket and WebRTC connection.
+
+| Type | Name | NATS Topic | Description |
+|------|------|------------|-------------|
+| 210 | Guild Member Start Stream | `guild.{guildId}` | A member's stream became active after publisher media connected |
+| 211 | Guild Member Stop Stream | `guild.{guildId}` | A member's stream ended or was cleared |
+| 212 | Guild Streams Rebind | `guild.{guildId}` | Listed active stream sessions should reconnect to a new stream route |
+
+**Payload (t=210, Guild Member Start Stream):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel_id": 2230469276416868352,
+  "user_id": 2226021950625415200,
+  "stream": {
+    "id": 2309446798663483392,
+    "channel_id": 2230469276416868352,
+    "source_type": "screen",
+    "audio_mode": "desktop",
+    "started_at": 1776943455
+  }
+}
+```
+
+**Payload (t=211, Guild Member Stop Stream):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel_id": 2230469276416868352,
+  "user_id": 2226021950625415200,
+  "stream_id": 2309446798663483392,
+  "reason": "publisher_disconnect"
+}
+```
+
+**Payload (t=212, Guild Streams Rebind):**
+```json
+{
+  "guild_id": 2226022078304223200,
+  "channel_id": 2230469276416868352,
+  "stream_ids": [2309446798663483392],
+  "jitter_ms": 3000
+}
+```
+
+Client action for `GuildStreamsRebind`: only reconnect open stream publisher/viewer sessions whose `stream_id` is listed. The client should wait a random delay up to `jitter_ms`, call the stream REST start/join endpoint again, and reconnect to the returned `stream_url` with the fresh stream token.
 
 ---
 

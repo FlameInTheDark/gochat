@@ -1,13 +1,16 @@
 package presence
 
+import streammeta "github.com/FlameInTheDark/gochat/internal/stream"
+
 type Presence struct {
-	UserID           int64  `json:"user_id"`
-	Status           string `json:"status"`
-	Since            int64  `json:"since"`
-	CustomStatusText string `json:"custom_status_text,omitempty"`
-	VoiceChannelID   *int64 `json:"voice_channel_id,omitempty"`
-	Mute             bool   `json:"mute,omitempty"`
-	Deafen           bool   `json:"deafen,omitempty"`
+	UserID           int64                    `json:"user_id"`
+	Status           string                   `json:"status"`
+	Since            int64                    `json:"since"`
+	CustomStatusText string                   `json:"custom_status_text,omitempty"`
+	VoiceChannelID   *int64                   `json:"voice_channel_id,omitempty"`
+	Mute             bool                     `json:"mute,omitempty"`
+	Deafen           bool                     `json:"deafen,omitempty"`
+	ActiveStream     *streammeta.ActiveStream `json:"active_stream,omitempty"`
 }
 
 // SessionPresence represents a single device/session presence record.

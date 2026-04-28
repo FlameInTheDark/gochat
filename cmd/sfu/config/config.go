@@ -2,20 +2,23 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"os"
 	"strings"
 
+	"github.com/FlameInTheDark/gochat/internal/configutil"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	ServerAddress string   `yaml:"server_address" env-default:":3300"`
-	AuthSecret    string   `yaml:"auth_secret" env:"AUTH_SECRET" env-required:"true"`
-	STUNServers   []string `yaml:"stun_servers" env:"STUN_SERVERS" env-separator:"," env-default:"stun:stun.l.google.com:19302"`
-	Region        string   `yaml:"region" env:"SFU_REGION" env-default:"global"`
-	PublicBaseURL string   `yaml:"public_base_url" env:"SFU_PUBLIC_BASE_URL" env-required:"true"`
-	ICEPublicIP   string   `yaml:"ice_public_ip" env:"SFU_ICE_PUBLIC_IP"`
+	ServerAddress         string   `yaml:"server_address" env-default:":3300"`
+	AuthSecret            string   `yaml:"auth_secret" env:"AUTH_SECRET" env-required:"true"`
+	AuthSecretEnforcement string   `yaml:"auth_secret_enforcement" env:"AUTH_SECRET_ENFORCEMENT" env-default:"warn"`
+	STUNServers           []string `yaml:"stun_servers" env:"STUN_SERVERS" env-separator:"," env-default:"stun:stun.l.google.com:19302"`
+	Region                string   `yaml:"region" env:"SFU_REGION" env-default:"global"`
+	PublicBaseURL         string   `yaml:"public_base_url" env:"SFU_PUBLIC_BASE_URL" env-required:"true"`
+	ICEPublicIP           string   `yaml:"ice_public_ip" env:"SFU_ICE_PUBLIC_IP"`
 	// Optional DTLS certificate/key pair for WebRTC peer connections. Provide
 	// either the PEM values directly or file paths for both halves of the pair.
 	// When left empty, the SFU generates a self-signed certificate at startup.
@@ -76,6 +79,10 @@ func LoadConfig() (*Config, error) {
 		if verr := cfg.Validate(); verr != nil {
 			return nil, verr
 		}
+		if err := configutil.ValidateAuthSecretWithMode(cfg.AuthSecret, cfg.AuthSecretEnforcement); err != nil {
+			return nil, err
+		}
+		configutil.WarnWeakAuthSecret(slog.Default(), cfg.AuthSecret, "sfu")
 		return &cfg, nil
 	}
 	if rerr := cleanenv.ReadEnv(&cfg); rerr != nil {
@@ -84,6 +91,10 @@ func LoadConfig() (*Config, error) {
 	if verr := cfg.Validate(); verr != nil {
 		return nil, verr
 	}
+	if err := configutil.ValidateAuthSecretWithMode(cfg.AuthSecret, cfg.AuthSecretEnforcement); err != nil {
+		return nil, err
+	}
+	configutil.WarnWeakAuthSecret(slog.Default(), cfg.AuthSecret, "sfu")
 	return &cfg, nil
 }
 
@@ -99,7 +110,6 @@ func (c *Config) Validate() error {
 	if err := c.validateDTLSConfig(); err != nil {
 		return err
 	}
-
 	start, end := c.UDPPortRangeStart, c.UDPPortRangeEnd
 	if start == 0 && end == 0 {
 		return nil

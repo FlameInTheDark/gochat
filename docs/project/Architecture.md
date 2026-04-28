@@ -47,6 +47,7 @@ flowchart TD
 
     subgraph voice["Voice"]
         SFU["SFU"]
+        Stream["Stream"]
         TG["Telemetry Gateway"]
     end
 
@@ -70,13 +71,15 @@ flowchart TD
     WS --> PG & Scylla & KeyDB
     Attachments --> PG & Scylla & S3
     Webhook --> Scylla
-    Webhook -- "register" --> etcd
+    Webhook -- "register SFU + stream" --> etcd
 
     Indexer --> OS
     Embedder --> Scylla
 
     Client <-- "WebRTC + WS" --> SFU
+    Client <-- "WebRTC + WS" --> Stream
     SFU -- "heartbeat" --> Webhook
+    Stream -- "heartbeat/start/stop/alive" --> Webhook
 
     services & workers -. "OTEL" .-> Collector
     SFU -. "OTEL" .-> TG
@@ -88,12 +91,13 @@ flowchart TD
 
 | Service | Path | Role |
 | --- | --- | --- |
-| API | `cmd/api` | Public REST surface — guilds, channels, messages, search, voice control |
+| API | `cmd/api` | Public REST surface — guilds, channels, messages, search, voice and stream control |
 | Auth | `cmd/auth` | Registration, login, token refresh, email flows, password reset |
 | WebSocket Gateway | `cmd/ws` | Real-time subscriptions, event delivery, presence, session handling |
 | Attachments | `cmd/attachments` | Upload pipeline for files, avatars, icons; S3 storage and metadata |
-| Webhook | `cmd/webhook` | Internal callbacks — SFU heartbeats and attachment finalization |
+| Webhook | `cmd/webhook` | Internal callbacks — SFU/stream heartbeats, stream lifecycle, and attachment finalization |
 | SFU | `cmd/sfu` | WebRTC media relay and WebSocket signaling for voice channels |
+| Stream | `cmd/stream` | WebRTC media relay and WebSocket signaling for voice-channel screen/app sharing |
 | Indexer | `cmd/indexer` | Consumes NATS message events, writes to OpenSearch |
 | Embedder | `cmd/embedder` | Builds link-preview embeds from remote metadata |
 | Telemetry Gateway | `cmd/telemetrygateway` | OTEL proxy — collects signals from all services and forwards to the observability backend |
@@ -109,7 +113,7 @@ flowchart TD
 | Messaging | NATS | Async event delivery between services |
 | Search index | OpenSearch | Full-text message search |
 | Object storage | S3-compatible | Uploaded files, avatars, icons |
-| Service discovery | etcd | Voice SFU instance registry |
+| Service discovery | etcd | Voice SFU and stream instance registries |
 
 ## Voice flow
 
@@ -120,3 +124,19 @@ flowchart TD
 5. On region change, the API publishes `VoiceRegionChanging` over NATS, waits 3 seconds (jitter), updates the cache binding, then sends a `VoiceRebind` event and closes the old SFU channel via admin endpoint.
 
 See [`voice/SystemArchitecture.md`](voice/SystemArchitecture.md) and [`voice/ConnectionProtocol.md`](voice/ConnectionProtocol.md) for the full protocol.
+
+## Streaming flow
+
+Screen/app streaming is a separate media plane attached to voice channels:
+
+1. Client is already connected to a voice channel.
+2. Client calls `POST /api/v1/guild/{guild_id}/voice/{channel_id}/streams`.
+3. API validates voice membership plus `PermVoiceConnect` and `PermVoiceVideo`.
+4. API resolves the effective voice region and selects only stream instances in that same region.
+5. API returns `stream_url` and a publisher JWT signed with `stream_auth_secret`.
+6. Client connects directly to `cmd/stream` over `/signal?v=2` and establishes a separate WebRTC connection.
+7. Stream service confirms publisher media by calling `POST /api/v1/webhook/stream/start`.
+8. Webhook writes `stream:*` cache state, writes `presence:stream:{userId}`, publishes `GuildMemberStartStream`, and refreshes OP 3 presence.
+9. Viewers call `POST /streams/{stream_id}/join` and receive viewer-only JWTs for separate receive-only WebRTC sessions.
+
+See [`voice/Streaming.md`](voice/Streaming.md) for the complete pipeline, keys, events, and migration behavior.

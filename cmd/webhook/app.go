@@ -6,12 +6,14 @@ import (
 	cfgpkg "github.com/FlameInTheDark/gochat/cmd/webhook/config"
 	attentity "github.com/FlameInTheDark/gochat/cmd/webhook/endpoints/attachments"
 	sfuentity "github.com/FlameInTheDark/gochat/cmd/webhook/endpoints/sfu"
+	streamentity "github.com/FlameInTheDark/gochat/cmd/webhook/endpoints/stream"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/nats"
 	"github.com/FlameInTheDark/gochat/internal/observability"
+	"github.com/FlameInTheDark/gochat/internal/presence"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/serviceauth"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
@@ -35,6 +37,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	disco, err := discovery.NewManager(cfg.EtcdEndpoints, cfg.EtcdPrefix, cfg.EtcdUsername, cfg.EtcdPassword)
 	if err != nil {
 		// If discovery is core to this service, fail fast
+		return nil, err
+	}
+	streamDisco, err := discovery.NewManager(cfg.EtcdEndpoints, cfg.StreamEtcdPrefix, cfg.EtcdUsername, cfg.EtcdPassword)
+	if err != nil {
 		return nil, err
 	}
 
@@ -61,6 +67,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 	shut.Up(cache)
+	pstore := presence.NewStore(cache)
 
 	// HTTP server
 	s := server.NewServer()
@@ -78,7 +85,8 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	// Register endpoints under /webhook
 	s.Register(
 		"/api/v1/webhook",
-		sfuentity.New(logger, disco, tokens, cache, qt),
+		sfuentity.New(logger, disco, tokens, cache, qt, pstore, nt.Conn()),
+		streamentity.New(logger, streamDisco, tokens, cache, qt, pstore, nt.Conn()),
 		attentity.New(logger, att, tokens),
 	)
 

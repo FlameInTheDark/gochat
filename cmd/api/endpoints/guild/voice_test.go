@@ -4,8 +4,14 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
+
+	"github.com/FlameInTheDark/gochat/internal/database/model"
+	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
 )
 
@@ -133,5 +139,48 @@ func TestVoiceSelectorReservationsSpreadBurstAcrossNearEqualNodes(t *testing.T) 
 	}
 	if first.ID == second.ID {
 		t.Fatalf("expected reservations to steer the second cold join to another SFU, got %q twice", first.ID)
+	}
+}
+
+func TestJoinVoiceRejectsUnauthorizedUsers(t *testing.T) {
+	e := &entity{
+		perm: &fakePermissionChecker{
+			channel:   &model.Channel{Id: 2, Type: model.ChannelTypeGuildVoice},
+			channelOK: false,
+		},
+		voiceSelector: newVoiceSelector(newVoiceTestLogger()),
+	}
+	app := newGuildTestApp(t, 10, "/guild/:guild_id/voice/:channel_id/join", e.JoinVoice)
+
+	req := httptest.NewRequest("POST", "/guild/1/voice/2/join", nil)
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusForbidden {
+		t.Fatalf("expected 403, got %d", resp.StatusCode)
+	}
+}
+
+func TestMoveMemberRejectsTargetOutsideGuild(t *testing.T) {
+	e := &entity{
+		perm: &fakePermissionChecker{
+			results: map[testPermKey]bool{
+				{guildID: 1, userID: 10, perm: permissions.PermVoiceMoveMembers}: true,
+			},
+		},
+		memb:          &fakeMemberRepo{members: map[testMemberKey]bool{{guildID: 1, userID: 10}: true}},
+		voiceSelector: newVoiceSelector(newVoiceTestLogger()),
+	}
+	app := newGuildTestApp(t, 10, "/guild/:guild_id/voice/move", e.MoveMember)
+
+	req := httptest.NewRequest("POST", "/guild/1/voice/move", strings.NewReader(`{"user_id":99,"channel_id":20,"from":10}`))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusForbidden {
+		t.Fatalf("expected 403, got %d", resp.StatusCode)
 	}
 }

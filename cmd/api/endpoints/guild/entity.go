@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/gofiber/fiber/v2"
+	natsio "github.com/nats-io/nats.go"
 
 	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
@@ -30,6 +31,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mq"
+	"github.com/FlameInTheDark/gochat/internal/presence"
 	"github.com/FlameInTheDark/gochat/internal/s3"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
@@ -66,6 +68,10 @@ func (e *entity) Init(router fiber.Router) {
 	router.Delete("/:guild_id<int>/category/:category_id<int>", e.DeleteCategory)
 
 	router.Post("/:guild_id<int>/voice/:channel_id<int>/join", e.JoinVoice)
+	router.Get("/:guild_id<int>/voice/:channel_id<int>/streams", e.ListStreams)
+	router.Post("/:guild_id<int>/voice/:channel_id<int>/streams", e.StartStream)
+	router.Post("/:guild_id<int>/voice/:channel_id<int>/streams/:stream_id<int>/join", e.JoinStream)
+	router.Delete("/:guild_id<int>/voice/:channel_id<int>/streams/:stream_id<int>", e.StopStream)
 	router.Patch("/:guild_id<int>/voice/:channel_id<int>/region", e.SetVoiceRegion)
 	router.Post("/:guild_id<int>/voice/move", e.MoveMember)
 
@@ -128,18 +134,23 @@ type entity struct {
 	storage            *s3.Client
 	attachTTL          int64
 	authSecret         string
+	streamAuthSecret   string
+	pstore             *presence.Store
+	natsConn           *natsio.Conn
 	defaultVoiceRegion string
 	disco              discovery.Manager
+	streamDisco        discovery.Manager
 	allowedRegions     map[string]struct{}
 	allowedRegionIDs   []string
 	voiceSelector      *voiceSelector
+	streamSelector     *voiceSelector
 }
 
 func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.IndexMQ, cache cache.Cache, storage *s3.Client, attachTTLSeconds int64, authSecret string, defaultVoiceRegion string, disco discovery.Manager, allowedRegions []string, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.IndexMQ, cache cache.Cache, storage *s3.Client, attachTTLSeconds int64, authSecret, streamAuthSecret string, pstore *presence.Store, natsConn *natsio.Conn, defaultVoiceRegion string, disco, streamDisco discovery.Manager, allowedRegions []string, log *slog.Logger) server.Entity {
 	ar := make(map[string]struct{}, len(allowedRegions))
 	regionIDs := make([]string, 0, len(allowedRegions))
 	for _, r := range allowedRegions {
@@ -181,10 +192,15 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.Ind
 		storage:            storage,
 		attachTTL:          attachTTLSeconds,
 		authSecret:         authSecret,
+		streamAuthSecret:   streamAuthSecret,
+		pstore:             pstore,
+		natsConn:           natsConn,
 		defaultVoiceRegion: defaultVoiceRegion,
 		disco:              disco,
+		streamDisco:        streamDisco,
 		allowedRegions:     ar,
 		allowedRegionIDs:   regionIDs,
 		voiceSelector:      newVoiceSelector(log),
+		streamSelector:     newVoiceSelector(log),
 	}
 }

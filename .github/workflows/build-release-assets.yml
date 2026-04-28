@@ -52,6 +52,10 @@ jobs:
             dockerfile: sfu.Dockerfile
             image: gochat-sfu
             cache_scope: sfu-release
+          - service: stream
+            dockerfile: stream.Dockerfile
+            image: gochat-stream
+            cache_scope: stream-release
           - service: migrations
             dockerfile: migration.Dockerfile
             image: gochat-migrations
@@ -113,7 +117,7 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Build SFU and Tools binaries (linux/amd64)
+      - name: Build SFU, Stream and Tools binaries (linux/amd64)
         env:
           CGO_ENABLED: 0
           GOOS: linux
@@ -121,15 +125,17 @@ jobs:
         run: |
           mkdir -p dist
           go build -o dist/sfu_linux_amd64 ./cmd/sfu
+          go build -o dist/stream_linux_amd64 ./cmd/stream
           go build -o dist/gctools_linux_amd64 ./cmd/tools
 
-      - name: Build SFU and Tools binaries (linux/arm64)
+      - name: Build SFU, Stream and Tools binaries (linux/arm64)
         env:
           CGO_ENABLED: 0
           GOOS: linux
           GOARCH: arm64
         run: |
           go build -o dist/sfu_linux_arm64 ./cmd/sfu
+          go build -o dist/stream_linux_arm64 ./cmd/stream
           go build -o dist/gctools_linux_arm64 ./cmd/tools
 
       - name: Create checksums
@@ -146,6 +152,8 @@ jobs:
           files: |
             dist/sfu_linux_amd64
             dist/sfu_linux_arm64
+            dist/stream_linux_amd64
+            dist/stream_linux_arm64
             dist/gctools_linux_amd64
             dist/gctools_linux_arm64
             dist/SHA256SUMS.txt

@@ -2,7 +2,7 @@
 
 # Presence System
 
-This document outlines the architecture and workflows for user presence, including general online status and voice channel presence (with speech detection).
+This document outlines the architecture and workflows for user presence, including general online status, voice channel presence, and the server-managed active stream overlay.
 
 ## 1. General Presence Statuses
 
@@ -82,3 +82,89 @@ Speech detection follows the **SFU WebSocket Protocol**:
    ```
 
 3. **Client UI:** Receiving clients intercept this OP 7 message, map the `user_id` to their voice channel component, and highlight the speaker's avatar (e.g., adding a green ring) to indicate active speech.
+
+---
+
+## 3. Active Stream Presence
+
+Screen/app sharing is represented as an overlay on top of normal voice presence. Clients do not send this field. It is written by the stream webhook flow after `cmd/stream` confirms that publisher media is established.
+
+### 3.1 Stored Overlay
+
+The Webhook service writes one Redis value per streaming user:
+
+```text
+Key:   presence:stream:{userId}
+Value: {"id":2309446798663483392,"channel_id":2308859058410487808,"source_type":"screen","audio_mode":"desktop","started_at":1776943455}
+TTL:   180 seconds
+```
+
+The active stream object is defined in `internal/stream` and contains:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | int64 | Stream ID. |
+| `channel_id` | int64 | Voice channel the stream belongs to. |
+| `source_type` | string | `screen` or `application`. |
+| `audio_mode` | string | `desktop`, `application`, or `none`. |
+| `started_at` | int64 | Unix timestamp. |
+
+### 3.2 Aggregation Rule
+
+Presence aggregation still starts from session presence:
+
+- status and custom status are aggregated from active sessions
+- `voice_channel_id`, `mute`, and `deafen` are aggregated from session voice state
+- `active_stream` is merged only after voice aggregation
+
+`active_stream` is included only when the overlay exists and its `channel_id` matches the aggregated `voice_channel_id`. If the user is no longer in voice, or the stream overlay belongs to another channel, the field is omitted.
+
+This prevents stale stream keys from producing a "streaming without being in voice" state.
+
+### 3.3 Start And Stop Publication
+
+Start flow:
+
+1. Stream service calls `POST /api/v1/webhook/stream/start`.
+2. Webhook writes `presence:stream:{userId}`.
+3. Webhook publishes `GuildMemberStartStream` on `guild.{guildId}`.
+4. Webhook calls the shared presence publisher, which emits a merged OP 3 presence update.
+
+Stop flow:
+
+1. Stream service calls `POST /api/v1/webhook/stream/stop`.
+2. Webhook clears `presence:stream:{userId}`.
+3. Webhook publishes `GuildMemberStopStream` on `guild.{guildId}`.
+4. Webhook emits a merged OP 3 presence update without `active_stream`.
+
+Example OP 3 payload with active stream:
+
+```json
+{
+  "user_id": 2308863155104645120,
+  "status": "online",
+  "voice_channel_id": 2308859058410487808,
+  "mute": false,
+  "deafen": false,
+  "active_stream": {
+    "id": 2309446798663483392,
+    "channel_id": 2308859058410487808,
+    "source_type": "screen",
+    "audio_mode": "desktop",
+    "started_at": 1776943455
+  },
+  "client_status": {
+    "web": "online"
+  }
+}
+```
+
+### 3.4 Ordering With Voice Leave
+
+When the stream owner leaves voice, the stream must be stopped first:
+
+1. Clear stream state and publish `GuildMemberStopStream`.
+2. Clear `presence:stream:{userId}` and publish the presence update.
+3. Then process the voice leave and clear `voice_channel_id`.
+
+This ordering keeps channel UIs and global presence badges consistent.
