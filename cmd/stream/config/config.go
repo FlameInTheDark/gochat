@@ -13,7 +13,7 @@ import (
 
 type Config struct {
 	ServerAddress         string   `yaml:"server_address" env-default:":3300"`
-	AuthSecret            string   `yaml:"auth_secret" env:"STREAM_AUTH_SECRET" env-required:"true"`
+	AuthSecret            string   `yaml:"auth_secret" env:"AUTH_SECRET"`
 	AuthSecretEnforcement string   `yaml:"auth_secret_enforcement" env:"AUTH_SECRET_ENFORCEMENT" env-default:"warn"`
 	STUNServers           []string `yaml:"stun_servers" env:"STUN_SERVERS" env-separator:"," env-default:"stun:stun.l.google.com:19302"`
 	Region                string   `yaml:"region" env:"STREAM_REGION" env-default:"global"`
@@ -82,6 +82,7 @@ func LoadConfig() (*Config, error) {
 		if rerr := cleanenv.ReadConfig(path, &cfg); rerr != nil {
 			return nil, rerr
 		}
+		cfg.applyAuthSecretMigrationFallback()
 		if verr := cfg.Validate(); verr != nil {
 			return nil, verr
 		}
@@ -94,6 +95,7 @@ func LoadConfig() (*Config, error) {
 	if rerr := cleanenv.ReadEnv(&cfg); rerr != nil {
 		return nil, rerr
 	}
+	cfg.applyAuthSecretMigrationFallback()
 	if verr := cfg.Validate(); verr != nil {
 		return nil, verr
 	}
@@ -136,6 +138,13 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("udp_port_range_start must be less than or equal to udp_port_range_end")
 	}
 	return nil
+}
+
+func (c *Config) applyAuthSecretMigrationFallback() {
+	if c == nil || strings.TrimSpace(c.AuthSecret) != "" {
+		return
+	}
+	c.AuthSecret = strings.TrimSpace(os.Getenv("STREAM_AUTH_SECRET"))
 }
 
 func (c *Config) validateDTLSConfig() error {

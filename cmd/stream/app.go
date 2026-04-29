@@ -143,7 +143,6 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger, cfg *config.Config) *App {
 		WriteBufferSize: 32768,
 	}))
 	fiberApp.Post("/admin/channel/close", a.handleAdminCloseChannel)
-	go sfu.RunKeyFrameTicker()
 
 	return a
 }
@@ -151,6 +150,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger, cfg *config.Config) *App {
 // Start begins listening and blocks until SIGINT/SIGTERM.
 func (a *App) Start() {
 	a.log.Info("SFU starting", slog.String("addr", a.cfg.ServerAddress))
+	go a.sfu.RunKeyFrameTicker()
 	go func() {
 		if err := a.app.Listen(a.cfg.ServerAddress); err != nil {
 			a.log.Error("failed to start sfu", slog.String("error", err.Error()))

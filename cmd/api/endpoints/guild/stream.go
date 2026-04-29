@@ -2,6 +2,7 @@ package guild
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -18,6 +19,8 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/presence"
 	streammeta "github.com/FlameInTheDark/gochat/internal/stream"
 )
+
+const streamTokenTTL = time.Minute
 
 func (e *entity) parseStreamID(c *fiber.Ctx) (int64, error) {
 	streamID, err := strconv.ParseInt(c.Params("stream_id"), 10, 64)
@@ -80,12 +83,9 @@ func buildVoiceStreamSummary(meta streammeta.Metadata) VoiceStreamSummary {
 	}
 }
 
-func (e *entity) issueStreamToken(ctx context.Context, userID int64, meta streammeta.Metadata, role string) (string, error) {
-	tokenTTL := 2 * time.Minute
-	if e.cache != nil {
-		if raw, err := e.cache.Get(ctx, streammeta.RebindKey(meta.ID)); err == nil && raw != "" {
-			tokenTTL = 5 * time.Minute
-		}
+func (e *entity) issueStreamToken(userID int64, meta streammeta.Metadata, role string, binding streammeta.RouteBinding) (string, error) {
+	if binding.ID == "" {
+		return "", fmt.Errorf("stream route id is required")
 	}
 
 	now := time.Now()
@@ -97,19 +97,21 @@ func (e *entity) issueStreamToken(ctx context.Context, userID int64, meta stream
 				Issuer:    "gochat",
 				Audience:  []string{"stream"},
 				IssuedAt:  jwt.NewNumericDate(now),
-				ExpiresAt: jwt.NewNumericDate(now.Add(tokenTTL)),
+				ExpiresAt: jwt.NewNumericDate(now.Add(streamTokenTTL)),
 			},
 		},
-		StreamID:   meta.ID,
-		ChannelID:  meta.ChannelID,
-		GuildID:    meta.GuildID,
-		Role:       role,
-		SourceType: meta.SourceType,
-		AudioMode:  meta.AudioMode,
+		StreamID:    meta.ID,
+		ChannelID:   meta.ChannelID,
+		GuildID:     meta.GuildID,
+		OwnerUserID: meta.OwnerUserID,
+		RouteID:     binding.ID,
+		Role:        role,
+		SourceType:  meta.SourceType,
+		AudioMode:   meta.AudioMode,
 	}
 
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return tok.SignedString([]byte(e.streamAuthSecret))
+	return tok.SignedString([]byte(e.authSecret))
 }
 
 func (e *entity) publishStreamStop(ctx context.Context, meta streammeta.Metadata, reason string) {
@@ -273,7 +275,7 @@ func (e *entity) StartStream(c *fiber.Ctx) error {
 		_ = e.cache.SetTimedJSON(c.UserContext(), streammeta.MetaKey(existing.ID), existing, streamStateTTLSeconds)
 		_ = e.cache.SetTimedJSON(c.UserContext(), streammeta.UserKey(user.Id), existing, streamStateTTLSeconds)
 
-		token, err := e.issueStreamToken(c.UserContext(), user.Id, existing, streammeta.RolePublisher)
+		token, err := e.issueStreamToken(user.Id, existing, streammeta.RolePublisher, binding)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToIssueStreamToken)
 		}
@@ -314,7 +316,7 @@ func (e *entity) StartStream(c *fiber.Ctx) error {
 		_ = e.cache.SetTimedJSON(c.UserContext(), streammeta.UserKey(user.Id), meta, streamStateTTLSeconds)
 	}
 
-	token, err := e.issueStreamToken(c.UserContext(), user.Id, meta, streammeta.RolePublisher)
+	token, err := e.issueStreamToken(user.Id, meta, streammeta.RolePublisher, binding)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToIssueStreamToken)
 	}
@@ -382,7 +384,7 @@ func (e *entity) JoinStream(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusServiceUnavailable, ErrNoStreamServiceAvailableInRegion)
 	}
 
-	token, err := e.issueStreamToken(c.UserContext(), user.Id, meta, streammeta.RoleViewer)
+	token, err := e.issueStreamToken(user.Id, meta, streammeta.RoleViewer, binding)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToIssueStreamToken)
 	}

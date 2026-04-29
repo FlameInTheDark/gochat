@@ -86,6 +86,60 @@ func TestBuildWebRTCAPIAdvertisesStreamVideoTransportCC(t *testing.T) {
 	}
 }
 
+func TestSupportedStreamGatewayCodecsPreferAV1WhenAllowed(t *testing.T) {
+	codecs := supportedVoiceGatewayCodecs(true)
+	var videoCodecs []string
+	for _, codec := range codecs {
+		if codec.Type == "video" {
+			videoCodecs = append(videoCodecs, codec.Name)
+		}
+	}
+
+	want := []string{"AV1", "VP9", "VP8", "H264"}
+	if strings.Join(videoCodecs, ",") != strings.Join(want, ",") {
+		t.Fatalf("video codecs = %v, want %v", videoCodecs, want)
+	}
+
+	codecs = supportedVoiceGatewayCodecs(false)
+	for _, codec := range codecs {
+		if codec.Name == "AV1" {
+			t.Fatalf("AV1 should not be advertised when disabled: %v", codecs)
+		}
+	}
+}
+
+func TestBuildWebRTCAPIAdvertisesAV1FirstWhenAllowed(t *testing.T) {
+	api, err := buildWebRTCAPI(newStreamTestLogger(), true, "", 0, 0)
+	if err != nil {
+		t.Fatalf("build webrtc api: %v", err)
+	}
+	pc, err := api.NewPeerConnection(webrtc.Configuration{})
+	if err != nil {
+		t.Fatalf("create peer connection: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = pc.Close()
+	})
+
+	if _, err := pc.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo, webrtc.RTPTransceiverInit{
+		Direction: webrtc.RTPTransceiverDirectionSendrecv,
+	}); err != nil {
+		t.Fatalf("add video transceiver: %v", err)
+	}
+
+	offer, err := pc.CreateOffer(nil)
+	if err != nil {
+		t.Fatalf("create offer: %v", err)
+	}
+	videoSection := mediaSection(t, offer.SDP, "video")
+	if !strings.Contains(videoSection, "a=rtpmap:45 AV1/90000") {
+		t.Fatalf("expected AV1 payload in offer, got:\n%s", videoSection)
+	}
+	if !strings.HasPrefix(videoSection, "m=video 9 UDP/TLS/RTP/SAVPF 45 ") {
+		t.Fatalf("expected AV1 payload to be first in video m-line, got:\n%s", videoSection)
+	}
+}
+
 func TestViewerOfferCarriesConfiguredVideoBitrate(t *testing.T) {
 	pc := newStreamTestPeerConnection(t)
 	track, err := webrtc.NewTrackLocalStaticRTP(

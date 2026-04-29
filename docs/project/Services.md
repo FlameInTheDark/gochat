@@ -66,7 +66,7 @@ This project is composed of several services located under the `cmd/` directory.
 - Deployment: external to local Compose, like `cmd/sfu`. Run it as a standalone service for local WebRTC testing.
 - Key features:
   - WebSocket signaling endpoint at `/signal`; GoChat clients use `/signal?v=2`.
-  - Validates stream JWTs signed with `stream_auth_secret` / `auth_secret`.
+  - Validates one-minute stream JWTs signed with shared `auth_secret` and bound to this stream service's `service_id`.
   - Enforces publisher/viewer roles: publishers may send video and optional audio; viewers are receive-only.
   - Forwards high-resolution screen/app RTP without transcoding or recording.
   - Supports DAVE over the same v2 signaling opcode surface used by voice.

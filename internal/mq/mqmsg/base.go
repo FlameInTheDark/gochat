@@ -60,8 +60,8 @@ const (
 )
 
 const (
-	// EventTypeVoiceStateUpdate is sent when a user updates their mute/deafen status in a voice channel.
-	// This allows other users to see who is muted or deafened.
+	// EventTypeVoiceStateUpdate is sent when a user updates their voice state in a voice channel.
+	// This allows other users to see who is muted, deafened, or using camera.
 	EventTypeVoiceStateUpdate EventType = 209
 )
 

@@ -89,8 +89,8 @@ func (s *Store) SetSessionVoiceChannel(ctx context.Context, userID int64, sessio
 	return nil
 }
 
-// SetSessionVoiceState sets the session's mute/deafen state and refreshes TTLs.
-func (s *Store) SetSessionVoiceState(ctx context.Context, userID int64, sessionID string, mute, deafen bool, ttlSeconds int64) error {
+// SetSessionVoiceState sets the session's voice state and refreshes TTLs.
+func (s *Store) SetSessionVoiceState(ctx context.Context, userID int64, sessionID string, mute, deafen, selfVideo bool, ttlSeconds int64) error {
 	val, err := s.c.HGet(ctx, sessionsKey(userID), sessionID)
 	var sp SessionPresence
 	if err == nil && val != "" {
@@ -101,6 +101,7 @@ func (s *Store) SetSessionVoiceState(ctx context.Context, userID int64, sessionI
 	sp.ExpiresAt = time.Now().Unix() + ttlSeconds
 	sp.Mute = mute
 	sp.Deafen = deafen
+	sp.SelfVideo = selfVideo
 	b, _ := json.Marshal(sp)
 	if err := s.c.HSet(ctx, sessionsKey(userID), sessionID, string(b)); err != nil {
 		return err
@@ -153,7 +154,7 @@ func (s *Store) Aggregate(ctx context.Context, userID int64, nowUnix int64) (Pre
 	var bestTextUpdated int64
 	var voiceID *int64
 	var voiceIDUpdated int64
-	var mute, deafen bool
+	var mute, deafen, selfVideo bool
 	var voiceStateUpdated int64
 	for _, v := range m {
 		if v == "" {
@@ -195,17 +196,18 @@ func (s *Store) Aggregate(ctx context.Context, userID int64, nowUnix int64) (Pre
 		if sp.VoiceChannelID != nil && sp.UpdatedAt >= voiceStateUpdated {
 			mute = sp.Mute
 			deafen = sp.Deafen
+			selfVideo = sp.SelfVideo
 			voiceStateUpdated = sp.UpdatedAt
 		}
 	}
 	if !any {
-		p := Presence{UserID: userID, Status: StatusOffline, Since: nowUnix, CustomStatusText: bestText, VoiceChannelID: voiceID, Mute: mute, Deafen: deafen}
+		p := Presence{UserID: userID, Status: StatusOffline, Since: nowUnix, CustomStatusText: bestText, VoiceChannelID: voiceID, Mute: mute, Deafen: deafen, SelfVideo: selfVideo}
 		if err := s.mergeActiveStream(ctx, &p); err != nil {
 			return Presence{}, false, err
 		}
 		return p, false, nil
 	}
-	p := Presence{UserID: userID, Status: best, Since: since, CustomStatusText: bestText, VoiceChannelID: voiceID, Mute: mute, Deafen: deafen}
+	p := Presence{UserID: userID, Status: best, Since: since, CustomStatusText: bestText, VoiceChannelID: voiceID, Mute: mute, Deafen: deafen, SelfVideo: selfVideo}
 	if err := s.mergeActiveStream(ctx, &p); err != nil {
 		return Presence{}, false, err
 	}

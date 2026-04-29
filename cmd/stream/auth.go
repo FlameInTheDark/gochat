@@ -93,6 +93,18 @@ func (a *App) validateJoinToken(token string) (int64, int64, int64, *int64, int6
 	if claims.TokenType != "stream" || !containsString(claims.Audience, "stream") {
 		return 0, 0, 0, nil, 0, "", "", "", fmt.Errorf("aud/typ mismatch")
 	}
+	if claims.RouteID == "" || claims.RouteID != a.cfg.ServiceID {
+		return 0, 0, 0, nil, 0, "", "", "", fmt.Errorf("route mismatch")
+	}
+	if claims.OwnerUserID == 0 {
+		return 0, 0, 0, nil, 0, "", "", "", fmt.Errorf("owner missing")
+	}
+	if claims.Role != streammeta.RolePublisher && claims.Role != streammeta.RoleViewer {
+		return 0, 0, 0, nil, 0, "", "", "", fmt.Errorf("role mismatch")
+	}
+	if claims.Role == streammeta.RolePublisher && claims.UserID != claims.OwnerUserID {
+		return 0, 0, 0, nil, 0, "", "", "", fmt.Errorf("owner mismatch")
+	}
 
 	var perms int64
 	if claims.Role == streammeta.RolePublisher {

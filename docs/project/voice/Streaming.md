@@ -139,13 +139,15 @@ Stream media tokens are separate from voice SFU tokens.
 | `stream_id` | Active stream ID |
 | `channel_id` | Voice channel ID |
 | `guild_id` | Guild ID |
+| `owner_user_id` | Stream owner user ID |
+| `route_id` | Stream service ID selected for this stream |
 | `role` | `publisher` or `viewer` |
 | `source_type` | `screen` or `application` |
 | `audio_mode` | `desktop`, `application`, or `none` |
 
-Tokens are signed by API with `stream_auth_secret`. `cmd/stream` must use the same value as its `auth_secret`.
+Tokens are signed by API with the shared `auth_secret`, the same signing model used by voice SFU tokens. `cmd/stream` validates the token with its `auth_secret`; during migration only, `STREAM_AUTH_SECRET` is accepted as a fallback when `AUTH_SECRET`/`auth_secret` is unset.
 
-Normal stream tokens expire after 2 minutes. While `stream:rebind:{streamId}` exists during a voice-region migration, API issues 5-minute tokens to give publishers and viewers extra reconnect time.
+Stream tokens expire after 1 minute. Clients should request a new token for reconnects, stream rebinds, or after leaving and rejoining a stream.
 
 ## Stream Signaling And Media
 
@@ -184,6 +186,7 @@ Relevant `stream_config` values:
 | `enforce_audio_bitrate` | `false` | If true, disconnects publishers that exceed the audio cap beyond margin. |
 | `audio_bitrate_margin_percent` | `15` | Enforcement tolerance for measured RTP overhead. |
 | `max_video_bitrate_kbps` | `100000` | High SDP ceiling for video, suitable for 4K60-class streams. |
+| `dave_allow_av1` | `true` | Registers and advertises AV1 for stream video, including DAVE-protected streams. |
 
 Video bitrate is not hard-enforced. The stream service advertises the configured ceiling in SDP and allows WebRTC congestion control to adapt down when packet loss or bandwidth pressure appears. Viewers receive the forwarded RTP under the same negotiated SDP constraints.
 
@@ -319,13 +322,13 @@ When `SetVoiceRegion` migrates an active voice channel:
 5. API publishes `GuildStreamsRebind` on `guild.{guildId}`.
 6. Open stream publishers/viewers listed in `stream_ids` reconnect and request fresh stream tokens.
 
-During this window, stream start/join returns 5-minute stream JWTs, matching the voice migration behavior.
+Fresh stream tokens are route-bound, so reconnects after this event receive tokens for the newly selected stream service.
 
 ## Local Operation
 
 Required config links:
 
-- `api_config.stream_auth_secret` must match `stream_config.auth_secret`.
+- `api_config.auth_secret` must match `stream_config.auth_secret`.
 - `api_config.stream_etcd_prefix` and `webhook_config.stream_etcd_prefix` must match.
 - `stream_config.region` must be one of the configured voice region IDs.
 - `stream_config.webhook_url` points to the Webhook service base URL.

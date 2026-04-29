@@ -29,6 +29,9 @@ func (a *App) SendJSON(sessionID string, op int, payload any) error {
 	case voicev2.OpDAVEExecuteTransition:
 		if _, ok := payload.(voicev2.ExecuteTransition); ok {
 			session.applyPendingDAVEState()
+			if session.channelID != 0 {
+				a.sfu.RequestKeyFrameBurst(session.channelID)
+			}
 		}
 	}
 

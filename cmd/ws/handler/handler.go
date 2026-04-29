@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"reflect"
 	"sort"
 	"time"
 
@@ -364,6 +365,9 @@ func mergePresenceUpdate(existing presence.SessionPresence, sessionID string, up
 	if update.Deafen != nil {
 		sp.Deafen = *update.Deafen
 	}
+	if update.SelfVideo != nil {
+		sp.SelfVideo = *update.SelfVideo
+	}
 
 	return sp
 }
@@ -509,8 +513,7 @@ func (h *Handler) OnWSClosed() {
 	// Re-aggregate
 	now := time.Now().Unix()
 	agg, _, _ := h.pstore.Aggregate(ctx, h.user.Id, now)
-	// If changed, store and publish (status or text)
-	if agg.Status != prev.Status || agg.CustomStatusText != prev.CustomStatusText {
+	if presenceChanged(prev, agg) {
 		_ = h.pstore.SetAggregated(ctx, agg, ttl)
 		h.publishPresence(agg)
 	}
@@ -533,11 +536,12 @@ func (h *Handler) sendPresenceSnapshot(userID int64) {
 		since = p.Since
 		text = p.CustomStatusText
 	}
-	var mute, deafen bool
+	var mute, deafen, selfVideo bool
 	var activeStream = p.ActiveStream
 	if ok {
 		mute = p.Mute
 		deafen = p.Deafen
+		selfVideo = p.SelfVideo
 	}
 	// include voice channel id if present
 	if ok && p.VoiceChannelID != nil {
@@ -552,6 +556,7 @@ func (h *Handler) sendPresenceSnapshot(userID int64) {
 		VoiceChannelID:   voiceID,
 		Mute:             mute,
 		Deafen:           deafen,
+		SelfVideo:        selfVideo,
 		ActiveStream:     activeStream,
 	})
 	if err != nil {
@@ -562,6 +567,23 @@ func (h *Handler) sendPresenceSnapshot(userID int64) {
 
 func (h *Handler) publishPresence(agg presence.Presence) {
 	_ = presence.Publish(h.baseContext(), h.nats, agg)
+}
+
+func presenceChanged(prev, next presence.Presence) bool {
+	return prev.Status != next.Status ||
+		prev.CustomStatusText != next.CustomStatusText ||
+		!sameInt64Ptr(prev.VoiceChannelID, next.VoiceChannelID) ||
+		prev.Mute != next.Mute ||
+		prev.Deafen != next.Deafen ||
+		prev.SelfVideo != next.SelfVideo ||
+		!reflect.DeepEqual(prev.ActiveStream, next.ActiveStream)
+}
+
+func sameInt64Ptr(a, b *int64) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
 }
 
 func (h *Handler) baseContext() context.Context {

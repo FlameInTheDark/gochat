@@ -25,6 +25,7 @@ func Publish(ctx context.Context, conn *natsio.Conn, agg Presence) (err error) {
 		VoiceChannelID:   agg.VoiceChannelID,
 		Mute:             agg.Mute,
 		Deafen:           agg.Deafen,
+		SelfVideo:        agg.SelfVideo,
 		ActiveStream:     agg.ActiveStream,
 	})
 	if err != nil {

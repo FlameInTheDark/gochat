@@ -22,7 +22,11 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
 
-const periodicKeyFrameInterval = 10 * time.Second
+const (
+	keyFrameBurstAttempts    = 8
+	keyFrameBurstInterval    = 500 * time.Millisecond
+	periodicKeyFrameInterval = 2 * time.Second
+)
 
 // ---------------------------------------------------------------------------
 // threadSafeWriter wraps a websocket.Conn with a mutex for concurrent writes.
@@ -794,10 +798,11 @@ func (c *channelState) blockUser(targetUserID int64, block bool) {
 // ---------------------------------------------------------------------------
 
 type SFU struct {
-	log        *slog.Logger
-	httpClient *resty.Client // Shared HTTP client for all webhook calls
-	channels   map[int64]*channelState
-	telemetry  *observability.SFUTelemetry
+	log                   *slog.Logger
+	httpClient            *resty.Client // Shared HTTP client for all webhook calls
+	channels              map[int64]*channelState
+	telemetry             *observability.SFUTelemetry
+	keyFrameTickerStarted atomic.Bool
 	// Graceful shutdown
 	done         chan struct{}
 	webhookUrl   string
@@ -847,6 +852,33 @@ func (s *SFU) Close() {
 		delete(s.channels, id)
 	}
 	s.mu.Unlock()
+}
+
+// RunKeyFrameTicker periodically sends PLIs for active inbound video tracks so
+// receivers can recover from decoder stalls without waiting for a reconnect.
+func (s *SFU) RunKeyFrameTicker() {
+	if !s.keyFrameTickerStarted.CompareAndSwap(false, true) {
+		return
+	}
+	s.runKeyFrameTicker(periodicKeyFrameInterval)
+}
+
+func (s *SFU) runKeyFrameTicker(interval time.Duration) {
+	if interval <= 0 {
+		return
+	}
+
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			s.RequestAllKeyFrames()
+		case <-s.done:
+			return
+		}
+	}
 }
 
 func (s *SFU) getOrCreateChannel(channelID int64) (*channelState, bool) {
@@ -1029,7 +1061,7 @@ func (s *SFU) ApplyAnswer(ctx context.Context, channelID int64, pc *webrtc.PeerC
 	if !found {
 		return
 	}
-	ch.dispatchKeyFrame()
+	s.RequestKeyFrameBurst(channelID)
 	if !needsSignal {
 		return
 	}
@@ -1049,7 +1081,7 @@ func (s *SFU) RequestKeyFrame(channelID int64) {
 	ch.dispatchKeyFrame()
 }
 
-func (s *SFU) dispatchKeyFrameAll() {
+func (s *SFU) RequestAllKeyFrames() {
 	s.mu.RLock()
 	channels := make([]*channelState, 0, len(s.channels))
 	for _, ch := range s.channels {
@@ -1062,6 +1094,34 @@ func (s *SFU) dispatchKeyFrameAll() {
 	}
 }
 
+func (s *SFU) RequestKeyFrameBurst(channelID int64) {
+	s.requestKeyFrameBurst(channelID, keyFrameBurstAttempts, keyFrameBurstInterval)
+}
+
+func (s *SFU) requestKeyFrameBurst(channelID int64, attempts int, interval time.Duration) {
+	if attempts <= 0 {
+		return
+	}
+	s.RequestKeyFrame(channelID)
+	if attempts == 1 {
+		return
+	}
+
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for i := 1; i < attempts; i++ {
+			select {
+			case <-ticker.C:
+				s.RequestKeyFrame(channelID)
+			case <-s.done:
+				return
+			}
+		}
+	}()
+}
+
 // BroadcastSpeaking relays speaking state to all peers in the channel except the origin.
 func (s *SFU) BroadcastSpeaking(_ context.Context, channelID int64, fromUser int64, speaking int) {
 	s.mu.RLock()
@@ -1071,21 +1131,6 @@ func (s *SFU) BroadcastSpeaking(_ context.Context, channelID int64, fromUser int
 		return
 	}
 	ch.broadcastSpeaking(fromUser, speaking)
-}
-
-// RunKeyFrameTicker periodically requests key frames from all peers.
-// Stops when the SFU's done channel is closed.
-func (s *SFU) RunKeyFrameTicker() {
-	ticker := time.NewTicker(periodicKeyFrameInterval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			s.dispatchKeyFrameAll()
-		case <-s.done:
-			return
-		}
-	}
 }
 
 // hasPerm checks if a permission bitmask includes a specific voice permission.

@@ -133,7 +133,7 @@ Screen/app streaming is a separate media plane attached to voice channels:
 2. Client calls `POST /api/v1/guild/{guild_id}/voice/{channel_id}/streams`.
 3. API validates voice membership plus `PermVoiceConnect` and `PermVoiceVideo`.
 4. API resolves the effective voice region and selects only stream instances in that same region.
-5. API returns `stream_url` and a publisher JWT signed with `stream_auth_secret`.
+5. API returns `stream_url` and a one-minute publisher JWT signed with the shared `auth_secret` and bound to the selected stream service.
 6. Client connects directly to `cmd/stream` over `/signal?v=2` and establishes a separate WebRTC connection.
 7. Stream service confirms publisher media by calling `POST /api/v1/webhook/stream/start`.
 8. Webhook writes `stream:*` cache state, writes `presence:stream:{userId}`, publishes `GuildMemberStartStream`, and refreshes OP 3 presence.

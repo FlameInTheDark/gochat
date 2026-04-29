@@ -623,6 +623,12 @@ func (a *App) handleSignalV2SelectProtocol(session *signalV2Session, raw json.Ra
 		}
 		offer := webrtc.SessionDescription{Type: webrtc.SDPTypeOffer, SDP: selectProtocol.SDP}
 		if err := session.pc.SetRemoteDescription(offer); err != nil {
+			session.log.Warn("failed to apply v2 offer",
+				slog.String("error", err.Error()),
+				slog.String("signaling_state", session.pc.SignalingState().String()),
+				slog.Int("phase", int(session.phase)),
+				slog.String("rtc_connection_id", selectProtocol.RTCConnectionID),
+			)
 			return a.closeSignalV2Session(session, voicev2.CloseCodeInvalidPayload, "unable to apply offer")
 		}
 		a.telemetry.Offer(session.ctx, "inbound", signalPeerAttrs(session.channelID, session.userID, session.guildID)...)
@@ -680,7 +686,7 @@ func (a *App) handleSignalV2SelectProtocol(session *signalV2Session, raw json.Ra
 		if err := a.dave.Connect(a.buildDAVEParticipant(session)); err != nil {
 			return a.closeSignalV2Session(session, websocket.ClosePolicyViolation, err.Error())
 		}
-		a.sfu.RequestKeyFrame(session.channelID)
+		a.sfu.RequestKeyFrameBurst(session.channelID)
 
 		if currentRevision := a.sfu.ChannelRevision(session.channelID); currentRevision > session.state.appliedRevision {
 			a.sfu.SignalPeer(session.ctx, session.channelID, session.pc)
@@ -691,6 +697,12 @@ func (a *App) handleSignalV2SelectProtocol(session *signalV2Session, raw json.Ra
 		remote := webrtc.SessionDescription{Type: descType, SDP: selectProtocol.SDP}
 		if descType == webrtc.SDPTypeAnswer {
 			if err := session.pc.SetRemoteDescription(remote); err != nil {
+				session.log.Warn("failed to apply v2 answer",
+					slog.String("error", err.Error()),
+					slog.String("signaling_state", session.pc.SignalingState().String()),
+					slog.Int("phase", int(session.phase)),
+					slog.String("rtc_connection_id", selectProtocol.RTCConnectionID),
+				)
 				return a.closeSignalV2Session(session, voicev2.CloseCodeInvalidPayload, "unable to apply answer")
 			}
 			a.sfu.ApplyAnswer(session.ctx, session.channelID, session.pc)
@@ -701,6 +713,12 @@ func (a *App) handleSignalV2SelectProtocol(session *signalV2Session, raw json.Ra
 			return a.closeSignalV2Session(session, voicev2.CloseCodeInvalidPayload, "unsupported description type")
 		}
 		if err := session.pc.SetRemoteDescription(remote); err != nil {
+			session.log.Warn("failed to apply v2 offer",
+				slog.String("error", err.Error()),
+				slog.String("signaling_state", session.pc.SignalingState().String()),
+				slog.Int("phase", int(session.phase)),
+				slog.String("rtc_connection_id", selectProtocol.RTCConnectionID),
+			)
 			return a.closeSignalV2Session(session, voicev2.CloseCodeInvalidPayload, "unable to apply offer")
 		}
 		answer, err := session.pc.CreateAnswer(nil)

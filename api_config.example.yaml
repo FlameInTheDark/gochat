@@ -15,7 +15,6 @@ idempotency_storage_lifetime: 10 # seconds
 
 # Auth
 auth_secret: "change_me_before_use_it_in_production"
-stream_auth_secret: "change_me_before_use_it_in_production_stream"
 
 # Cassandra
 cluster: ["scylla"]

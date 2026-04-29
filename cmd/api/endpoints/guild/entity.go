@@ -134,7 +134,6 @@ type entity struct {
 	storage            *s3.Client
 	attachTTL          int64
 	authSecret         string
-	streamAuthSecret   string
 	pstore             *presence.Store
 	natsConn           *natsio.Conn
 	defaultVoiceRegion string
@@ -150,7 +149,7 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.IndexMQ, cache cache.Cache, storage *s3.Client, attachTTLSeconds int64, authSecret, streamAuthSecret string, pstore *presence.Store, natsConn *natsio.Conn, defaultVoiceRegion string, disco, streamDisco discovery.Manager, allowedRegions []string, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.IndexMQ, cache cache.Cache, storage *s3.Client, attachTTLSeconds int64, authSecret string, pstore *presence.Store, natsConn *natsio.Conn, defaultVoiceRegion string, disco, streamDisco discovery.Manager, allowedRegions []string, log *slog.Logger) server.Entity {
 	ar := make(map[string]struct{}, len(allowedRegions))
 	regionIDs := make([]string, 0, len(allowedRegions))
 	for _, r := range allowedRegions {
@@ -192,7 +191,6 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.Ind
 		storage:            storage,
 		attachTTL:          attachTTLSeconds,
 		authSecret:         authSecret,
-		streamAuthSecret:   streamAuthSecret,
 		pstore:             pstore,
 		natsConn:           natsConn,
 		defaultVoiceRegion: defaultVoiceRegion,

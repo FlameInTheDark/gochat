@@ -69,6 +69,25 @@ func registerSFUCodecs(logger *slog.Logger, me *webrtc.MediaEngine, allowAV1 boo
 		PayloadType: 111,
 	}, webrtc.RTPCodecTypeAudio)
 
+	if allowAV1 {
+		registerCodec(logger, me, "AV1", webrtc.RTPCodecParameters{
+			RTPCodecCapability: webrtc.RTPCodecCapability{
+				MimeType:     webrtc.MimeTypeAV1,
+				ClockRate:    90000,
+				RTCPFeedback: videoRTCPFeedback,
+			},
+			PayloadType: 45,
+		}, webrtc.RTPCodecTypeVideo)
+		registerCodec(logger, me, "RTX for AV1", webrtc.RTPCodecParameters{
+			RTPCodecCapability: webrtc.RTPCodecCapability{
+				MimeType:    webrtc.MimeTypeRTX,
+				ClockRate:   90000,
+				SDPFmtpLine: "apt=45",
+			},
+			PayloadType: 46,
+		}, webrtc.RTPCodecTypeVideo)
+	}
+
 	registerCodec(logger, me, "H264", webrtc.RTPCodecParameters{
 		RTPCodecCapability: webrtc.RTPCodecCapability{
 			MimeType:     webrtc.MimeTypeH264,
@@ -172,25 +191,6 @@ func registerSFUCodecs(logger *slog.Logger, me *webrtc.MediaEngine, allowAV1 boo
 		},
 		PayloadType: 99,
 	}, webrtc.RTPCodecTypeVideo)
-
-	if allowAV1 {
-		registerCodec(logger, me, "AV1", webrtc.RTPCodecParameters{
-			RTPCodecCapability: webrtc.RTPCodecCapability{
-				MimeType:     webrtc.MimeTypeAV1,
-				ClockRate:    90000,
-				RTCPFeedback: videoRTCPFeedback,
-			},
-			PayloadType: 45,
-		}, webrtc.RTPCodecTypeVideo)
-		registerCodec(logger, me, "RTX for AV1", webrtc.RTPCodecParameters{
-			RTPCodecCapability: webrtc.RTPCodecCapability{
-				MimeType:    webrtc.MimeTypeRTX,
-				ClockRate:   90000,
-				SDPFmtpLine: "apt=45",
-			},
-			PayloadType: 46,
-		}, webrtc.RTPCodecTypeVideo)
-	}
 }
 
 func registerCodec(logger *slog.Logger, me *webrtc.MediaEngine, label string, codec webrtc.RTPCodecParameters, typ webrtc.RTPCodecType) {
