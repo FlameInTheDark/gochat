@@ -34,6 +34,7 @@ go.work.sum
 
 my-values.yaml
 research
+/bin
 
 /clients/api/*/.openapi-generator/
 

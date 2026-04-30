@@ -600,6 +600,7 @@ func (r CreateIconRequest) Validate() error {
 type JoinVoiceResponse struct {
 	SFUURL   string `json:"sfu_url"`
 	SFUToken string `json:"sfu_token"`
+	Region   string `json:"region,omitempty"`
 }
 
 type CreateVoiceStreamRequest struct {
