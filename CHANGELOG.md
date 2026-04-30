@@ -1,3 +1,19 @@
+# [1.13.0](https://github.com/FlameInTheDark/gochat/compare/v1.12.0...v1.13.0) (2026-04-30)
+
+
+### Bug Fixes
+
+* security audit and fixes ([ee586db](https://github.com/FlameInTheDark/gochat/commit/ee586db6ac14e78756e3a6ff542b6528e50524dd))
+
+
+### Features
+
+* DTLS for SFU WebRTC ([ab955cf](https://github.com/FlameInTheDark/gochat/commit/ab955cfc96a66efc44e8f26838d19219000ef6f4))
+* streaming service ([fb6bd8c](https://github.com/FlameInTheDark/gochat/commit/fb6bd8c789db435eb8123c7d438307655cc2ec20))
+* switched from local DAVE implementation to external library usage ([b6a406e](https://github.com/FlameInTheDark/gochat/commit/b6a406efad506f6130d8a055a39bfd7f242148ed))
+* system notifications channel fixes ([d4bff6f](https://github.com/FlameInTheDark/gochat/commit/d4bff6f17126db92105707afe3c4c7aad326c72b))
+* Updated stream connection flow and video stream stability improvement ([1028db8](https://github.com/FlameInTheDark/gochat/commit/1028db8dbae41a6b6fa5513c560f4cfc0d964ba1))
+
 # [1.12.0](https://github.com/FlameInTheDark/gochat/compare/v1.11.0...v1.12.0) (2026-03-31)
 
 
