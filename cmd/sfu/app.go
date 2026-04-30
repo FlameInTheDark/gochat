@@ -20,11 +20,11 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
+	daveserver "github.com/FlameInTheDark/go-dave/server"
 	"github.com/FlameInTheDark/gochat/cmd/sfu/config"
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
-	"github.com/FlameInTheDark/gochat/internal/voice/dave"
 )
 
 // App is the top-level SFU application.
@@ -43,7 +43,7 @@ type App struct {
 	discoverLog sync.Once
 	telemetry   *observability.SFUTelemetry
 
-	dave                 *dave.Coordinator
+	dave                 *daveserver.Coordinator
 	signalHeartbeatGrace time.Duration
 	signalV2Mu           sync.Mutex
 	signalV2Sessions     map[string]*signalV2Session
@@ -67,6 +67,12 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger, cfg *config.Config) *App {
 	}
 
 	iceCfg := buildICEConfig(cfg.STUNServers)
+	dtlsCertificates, err := loadDTLSCertificates(logger, cfg)
+	if err != nil {
+		logger.Error("unable to configure dtls certificate", slog.String("error", err.Error()))
+		panic(err)
+	}
+	iceCfg.Certificates = dtlsCertificates
 	api, err := buildWebRTCAPI(logger, cfg.DAVEAllowAV1, cfg.ICEPublicIP, cfg.UDPPortRangeStart, cfg.UDPPortRangeEnd)
 	if err != nil {
 		logger.Error("unable to configure webrtc api", slog.String("error", err.Error()))
@@ -111,7 +117,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger, cfg *config.Config) *App {
 		signalHeartbeatGrace: signalHeartbeatGrace,
 		signalV2Sessions:     make(map[string]*signalV2Session),
 	}
-	a.dave = dave.NewCoordinator(dave.Config{
+	a.dave = daveserver.NewCoordinator(daveserver.Config{
 		Enabled:             cfg.DAVEEnabled,
 		RequiredByDefault:   cfg.DAVERequiredDefault,
 		TransitionTimeout:   time.Duration(cfg.DAVETransitionTimeoutMS) * time.Millisecond,

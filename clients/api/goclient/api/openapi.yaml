@@ -3147,6 +3147,130 @@ paths:
       tags:
       - Guild
       x-codegen-request-body-name: request
+  /guild/{guild_id}/voice/{channel_id}/streams:
+    get:
+      description: Returns the currently active streams for a voice channel.
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                items:
+                  $ref: '#/components/schemas/guild.VoiceStreamSummary'
+                type: array
+          description: OK
+      summary: List active voice-channel streams
+      tags:
+      - Guild
+    post:
+      description: Creates or resumes the caller's screen-share stream for the voice
+        channel.
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/guild.CreateVoiceStreamRequest'
+        description: Stream start payload
+        required: true
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/guild.CreateVoiceStreamResponse'
+          description: OK
+      summary: Start a voice-channel stream
+      tags:
+      - Guild
+      x-codegen-request-body-name: request
+  /guild/{guild_id}/voice/{channel_id}/streams/{stream_id}:
+    delete:
+      description: Stops the caller's active stream in the voice channel.
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Stream ID
+        in: path
+        name: stream_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content: {}
+          description: No Content
+      summary: Stop a voice-channel stream
+      tags:
+      - Guild
+  /guild/{guild_id}/voice/{channel_id}/streams/{stream_id}/join:
+    post:
+      description: Returns receive-only stream signaling info for an active voice-channel
+        stream.
+      parameters:
+      - description: Guild ID
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Stream ID
+        in: path
+        name: stream_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/guild.JoinVoiceStreamResponse'
+          description: OK
+      summary: Join a voice-channel stream as viewer
+      tags:
+      - Guild
   /info/emoji/{emoji_id}:
     get:
       parameters:
@@ -5739,6 +5863,7 @@ components:
         permissions: 0
         icon: "{}"
         name: My Guild
+        system_channel_id: 2230469276416868352
         id: 2230469276416868352
       properties:
         icon:
@@ -5766,6 +5891,10 @@ components:
           default: false
           description: Whether the guild is public
           type: boolean
+        system_channel_id:
+          description: System notification channel ID
+          example: 2230469276416868352
+          type: integer
       type: object
     dto.GuildBan:
       example:
@@ -5874,6 +6003,7 @@ components:
           permissions: 0
           icon: "{}"
           name: My Guild
+          system_channel_id: 2230469276416868352
           id: 2230469276416868352
         code: code
         expires_at: expires_at
@@ -6565,6 +6695,35 @@ components:
           example: 86400
           type: integer
       type: object
+    guild.CreateVoiceStreamRequest:
+      properties:
+        audio_mode:
+          type: string
+        source_type:
+          type: string
+      type: object
+    guild.CreateVoiceStreamResponse:
+      example:
+        stream_token: stream_token
+        stream:
+          owner_user_id: 1
+          started_at: 5
+          audio_mode: audio_mode
+          source_type: source_type
+          id: 6
+          channel_id: 0
+        stream_id: 0
+        stream_url: stream_url
+      properties:
+        stream:
+          $ref: '#/components/schemas/guild.VoiceStreamSummary'
+        stream_id:
+          type: integer
+        stream_token:
+          type: string
+        stream_url:
+          type: string
+      type: object
     guild.JoinVoiceResponse:
       example:
         sfu_url: sfu_url
@@ -6573,6 +6732,19 @@ components:
         sfu_token:
           type: string
         sfu_url:
+          type: string
+      type: object
+    guild.JoinVoiceStreamResponse:
+      example:
+        stream_token: stream_token
+        stream_id: 0
+        stream_url: stream_url
+      properties:
+        stream_id:
+          type: integer
+        stream_token:
+          type: string
+        stream_url:
           type: string
       type: object
     guild.MoveMemberRequest:
@@ -6705,6 +6877,28 @@ components:
           default: false
           description: Whether the guild is public
           type: boolean
+      type: object
+    guild.VoiceStreamSummary:
+      example:
+        owner_user_id: 1
+        started_at: 5
+        audio_mode: audio_mode
+        source_type: source_type
+        id: 6
+        channel_id: 0
+      properties:
+        audio_mode:
+          type: string
+        channel_id:
+          type: integer
+        id:
+          type: integer
+        owner_user_id:
+          type: integer
+        source_type:
+          type: string
+        started_at:
+          type: integer
       type: object
     message.CreateThreadRequest:
       properties:
@@ -6878,6 +7072,8 @@ components:
         video_device: video_device
         noise_suppression: true
         denoiser_type: denoiser_type
+        input_mode: input_mode
+        push_to_talk_key: push_to_talk_key
         audio_input_device: audio_input_device
       properties:
         audio_input_device:
@@ -6896,8 +7092,12 @@ components:
           type: string
         echo_cancellation:
           type: boolean
+        input_mode:
+          type: string
         noise_suppression:
           type: boolean
+        push_to_talk_key:
+          type: string
         video_device:
           type: string
       type: object
@@ -7007,6 +7207,8 @@ components:
           video_device: video_device
           noise_suppression: true
           denoiser_type: denoiser_type
+          input_mode: input_mode
+          push_to_talk_key: push_to_talk_key
           audio_input_device: audio_input_device
         guilds:
         - selected_channel: 1
@@ -7043,6 +7245,8 @@ components:
             video_device: video_device
             noise_suppression: true
             denoiser_type: denoiser_type
+            input_mode: input_mode
+            push_to_talk_key: push_to_talk_key
             audio_input_device: audio_input_device
         ui_sounds:
           notification: true
@@ -7619,6 +7823,8 @@ components:
             video_device: video_device
             noise_suppression: true
             denoiser_type: denoiser_type
+            input_mode: input_mode
+            push_to_talk_key: push_to_talk_key
             audio_input_device: audio_input_device
           guilds:
           - selected_channel: 1
@@ -7655,6 +7861,8 @@ components:
               video_device: video_device
               noise_suppression: true
               denoiser_type: denoiser_type
+              input_mode: input_mode
+              push_to_talk_key: push_to_talk_key
               audio_input_device: audio_input_device
           ui_sounds:
             notification: true
@@ -7740,12 +7948,14 @@ components:
           permissions: 0
           icon: "{}"
           name: My Guild
+          system_channel_id: 2230469276416868352
           id: 2230469276416868352
         - owner: 2230469276416868352
           public: false
           permissions: 0
           icon: "{}"
           name: My Guild
+          system_channel_id: 2230469276416868352
           id: 2230469276416868352
         mentions:
           key:

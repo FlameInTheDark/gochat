@@ -10,6 +10,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
+	streammeta "github.com/FlameInTheDark/gochat/internal/stream"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -52,9 +53,17 @@ const (
 	ErrUnableToGetReadState              = "unable to get read state"
 	ErrUnableToSetReadState              = "unable to set read state"
 	ErrUnableToIssueVoiceToken           = "unable to issue voice token"
+	ErrUnableToIssueStreamToken          = "unable to issue stream token"
 	ErrNoSFUAvailableInRegion            = "no sfu available in region"
+	ErrNoStreamServiceAvailableInRegion  = "no stream service available in region"
 	ErrNotAVoiceChannel                  = "not a voice channel"
+	ErrNotATextChannel                   = "not a text channel"
 	ErrUnableToGetPermission             = "unable to get permissions"
+	ErrUnableToGetStream                 = "unable to get stream"
+	ErrStreamNotFound                    = "stream not found"
+	ErrAlreadyStreamingInAnotherChannel  = "user is already streaming in another channel"
+	ErrStreamSourceTypeInvalid           = "invalid stream source type"
+	ErrStreamAudioModeInvalid            = "invalid stream audio mode"
 	ErrUnableToSetSystemMessagesChannel  = "unable to set system messages channel"
 	ErrUnableToCheckGuildBan             = "unable to check guild ban"
 	ErrUnableToRemoveMember              = "unable to remove member"
@@ -171,7 +180,7 @@ func (r UpdateGuildRequest) Validate() error {
 }
 
 type SetGuildSystemMessagesChannelRequest struct {
-	ChannelId *int64 `json:"channel_id" example:"2230469276416868352"` // Channel ID
+	ChannelId *helper.StringInt64 `json:"channel_id" swaggertype:"integer" example:"2230469276416868352"` // Channel ID
 }
 
 type CreateGuildChannelCategoryRequest struct {
@@ -395,11 +404,12 @@ func channelModelToDTOWithThreadMember(c *model.Channel, guildId *int64, positio
 // buildGuildDTO creates a guild DTO from model
 func buildGuildDTO(guild *model.Guild) dto.Guild {
 	return dto.Guild{
-		Id:          guild.Id,
-		Name:        guild.Name,
-		Owner:       guild.OwnerId,
-		Public:      guild.Public,
-		Permissions: guild.Permissions,
+		Id:              guild.Id,
+		Name:            guild.Name,
+		Owner:           guild.OwnerId,
+		Public:          guild.Public,
+		Permissions:     guild.Permissions,
+		SystemChannelId: guild.SystemMessages,
 	}
 }
 
@@ -590,6 +600,53 @@ func (r CreateIconRequest) Validate() error {
 type JoinVoiceResponse struct {
 	SFUURL   string `json:"sfu_url"`
 	SFUToken string `json:"sfu_token"`
+}
+
+type CreateVoiceStreamRequest struct {
+	SourceType string `json:"source_type"`
+	AudioMode  string `json:"audio_mode"`
+}
+
+func (r CreateVoiceStreamRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.SourceType,
+			validation.Required,
+			validation.In(
+				streammeta.SourceTypeScreen,
+				streammeta.SourceTypeApplication,
+			).Error(ErrStreamSourceTypeInvalid),
+		),
+		validation.Field(&r.AudioMode,
+			validation.Required,
+			validation.In(
+				streammeta.AudioModeDesktop,
+				streammeta.AudioModeApplication,
+				streammeta.AudioModeNone,
+			).Error(ErrStreamAudioModeInvalid),
+		),
+	)
+}
+
+type VoiceStreamSummary struct {
+	ID          int64  `json:"id"`
+	OwnerUserID int64  `json:"owner_user_id"`
+	ChannelID   int64  `json:"channel_id"`
+	SourceType  string `json:"source_type"`
+	AudioMode   string `json:"audio_mode"`
+	StartedAt   int64  `json:"started_at"`
+}
+
+type CreateVoiceStreamResponse struct {
+	StreamID    int64              `json:"stream_id"`
+	StreamURL   string             `json:"stream_url"`
+	StreamToken string             `json:"stream_token"`
+	Stream      VoiceStreamSummary `json:"stream"`
+}
+
+type JoinVoiceStreamResponse struct {
+	StreamID    int64  `json:"stream_id"`
+	StreamURL   string `json:"stream_url"`
+	StreamToken string `json:"stream_token"`
 }
 
 // SetVoiceRegionRequest is the body for setting a channel's preferred voice region.

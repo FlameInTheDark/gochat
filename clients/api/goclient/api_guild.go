@@ -4421,6 +4421,446 @@ func (a *GuildAPIService) GuildGuildIdVoiceChannelIdRegionPatchExecute(r ApiGuil
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiGuildGuildIdVoiceChannelIdStreamsGetRequest struct {
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int32
+	channelId  int32
+}
+
+func (r ApiGuildGuildIdVoiceChannelIdStreamsGetRequest) Execute() ([]GuildVoiceStreamSummary, *http.Response, error) {
+	return r.ApiService.GuildGuildIdVoiceChannelIdStreamsGetExecute(r)
+}
+
+/*
+GuildGuildIdVoiceChannelIdStreamsGet List active voice-channel streams
+
+Returns the currently active streams for a voice channel.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param guildId Guild ID
+	@param channelId Channel ID
+	@return ApiGuildGuildIdVoiceChannelIdStreamsGetRequest
+*/
+func (a *GuildAPIService) GuildGuildIdVoiceChannelIdStreamsGet(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdVoiceChannelIdStreamsGetRequest {
+	return ApiGuildGuildIdVoiceChannelIdStreamsGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+		guildId:    guildId,
+		channelId:  channelId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return []GuildVoiceStreamSummary
+func (a *GuildAPIService) GuildGuildIdVoiceChannelIdStreamsGetExecute(r ApiGuildGuildIdVoiceChannelIdStreamsGetRequest) ([]GuildVoiceStreamSummary, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []GuildVoiceStreamSummary
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdVoiceChannelIdStreamsGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/guild/{guild_id}/voice/{channel_id}/streams"
+	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"*/*"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGuildGuildIdVoiceChannelIdStreamsPostRequest struct {
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int32
+	channelId  int32
+	request    *GuildCreateVoiceStreamRequest
+}
+
+// Stream start payload
+func (r ApiGuildGuildIdVoiceChannelIdStreamsPostRequest) Request(request GuildCreateVoiceStreamRequest) ApiGuildGuildIdVoiceChannelIdStreamsPostRequest {
+	r.request = &request
+	return r
+}
+
+func (r ApiGuildGuildIdVoiceChannelIdStreamsPostRequest) Execute() (*GuildCreateVoiceStreamResponse, *http.Response, error) {
+	return r.ApiService.GuildGuildIdVoiceChannelIdStreamsPostExecute(r)
+}
+
+/*
+GuildGuildIdVoiceChannelIdStreamsPost Start a voice-channel stream
+
+Creates or resumes the caller's screen-share stream for the voice channel.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param guildId Guild ID
+	@param channelId Channel ID
+	@return ApiGuildGuildIdVoiceChannelIdStreamsPostRequest
+*/
+func (a *GuildAPIService) GuildGuildIdVoiceChannelIdStreamsPost(ctx context.Context, guildId int32, channelId int32) ApiGuildGuildIdVoiceChannelIdStreamsPostRequest {
+	return ApiGuildGuildIdVoiceChannelIdStreamsPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+		guildId:    guildId,
+		channelId:  channelId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return GuildCreateVoiceStreamResponse
+func (a *GuildAPIService) GuildGuildIdVoiceChannelIdStreamsPostExecute(r ApiGuildGuildIdVoiceChannelIdStreamsPostRequest) (*GuildCreateVoiceStreamResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *GuildCreateVoiceStreamResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdVoiceChannelIdStreamsPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/guild/{guild_id}/voice/{channel_id}/streams"
+	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"*/*"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.request
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest struct {
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int32
+	channelId  int32
+	streamId   int32
+}
+
+func (r ApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest) Execute() (*http.Response, error) {
+	return r.ApiService.GuildGuildIdVoiceChannelIdStreamsStreamIdDeleteExecute(r)
+}
+
+/*
+GuildGuildIdVoiceChannelIdStreamsStreamIdDelete Stop a voice-channel stream
+
+Stops the caller's active stream in the voice channel.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param guildId Guild ID
+	@param channelId Channel ID
+	@param streamId Stream ID
+	@return ApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest
+*/
+func (a *GuildAPIService) GuildGuildIdVoiceChannelIdStreamsStreamIdDelete(ctx context.Context, guildId int32, channelId int32, streamId int32) ApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest {
+	return ApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest{
+		ApiService: a,
+		ctx:        ctx,
+		guildId:    guildId,
+		channelId:  channelId,
+		streamId:   streamId,
+	}
+}
+
+// Execute executes the request
+func (a *GuildAPIService) GuildGuildIdVoiceChannelIdStreamsStreamIdDeleteExecute(r ApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdVoiceChannelIdStreamsStreamIdDelete")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/guild/{guild_id}/voice/{channel_id}/streams/{stream_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"stream_id"+"}", url.PathEscape(parameterValueToString(r.streamId, "streamId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+type ApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest struct {
+	ctx        context.Context
+	ApiService *GuildAPIService
+	guildId    int32
+	channelId  int32
+	streamId   int32
+}
+
+func (r ApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest) Execute() (*GuildJoinVoiceStreamResponse, *http.Response, error) {
+	return r.ApiService.GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostExecute(r)
+}
+
+/*
+GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost Join a voice-channel stream as viewer
+
+Returns receive-only stream signaling info for an active voice-channel stream.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param guildId Guild ID
+	@param channelId Channel ID
+	@param streamId Stream ID
+	@return ApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest
+*/
+func (a *GuildAPIService) GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost(ctx context.Context, guildId int32, channelId int32, streamId int32) ApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest {
+	return ApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+		guildId:    guildId,
+		channelId:  channelId,
+		streamId:   streamId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return GuildJoinVoiceStreamResponse
+func (a *GuildAPIService) GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostExecute(r ApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest) (*GuildJoinVoiceStreamResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *GuildJoinVoiceStreamResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GuildAPIService.GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/guild/{guild_id}/voice/{channel_id}/streams/{stream_id}/join"
+	localVarPath = strings.Replace(localVarPath, "{"+"guild_id"+"}", url.PathEscape(parameterValueToString(r.guildId, "guildId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"stream_id"+"}", url.PathEscape(parameterValueToString(r.streamId, "streamId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"*/*"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiGuildGuildIdVoiceMovePostRequest struct {
 	ctx        context.Context
 	ApiService *GuildAPIService

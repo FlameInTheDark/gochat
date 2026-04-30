@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	icache "github.com/FlameInTheDark/gochat/internal/cache"
+	"github.com/FlameInTheDark/gochat/internal/cache/messagecache"
 	"github.com/FlameInTheDark/gochat/internal/cache/testutil"
 	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
@@ -62,6 +64,7 @@ func (f *fakeAttachmentRepo) UpdateName(ctx context.Context, id, channelId int64
 type fakeReplyMessageRepo struct {
 	getMessage    model.Message
 	getMessageErr error
+	getCalls      int
 	createCalls   int
 	lastCreate    struct {
 		id               int64
@@ -134,6 +137,7 @@ func (f *fakeReplyMessageRepo) DeleteChannelMessages(ctx context.Context, channe
 	return nil
 }
 func (f *fakeReplyMessageRepo) GetMessage(ctx context.Context, id, channelId int64) (model.Message, error) {
+	f.getCalls++
 	return f.getMessage, f.getMessageErr
 }
 func (f *fakeReplyMessageRepo) GetMessagesBefore(ctx context.Context, channelId, msgId int64, limit int) ([]model.Message, []int64, error) {
@@ -156,12 +160,14 @@ func (f *fakeReplyMessageRepo) GetThreadCreatedMessageRef(ctx context.Context, t
 }
 
 type fakeReplyChannelRepo struct {
+	channel          model.Channel
+	getErr           error
 	lastSetChannelID int64
 	lastSetMessageID int64
 }
 
 func (f *fakeReplyChannelRepo) GetChannel(ctx context.Context, id int64) (model.Channel, error) {
-	return model.Channel{}, nil
+	return f.channel, f.getErr
 }
 func (f *fakeReplyChannelRepo) GetChannelsBulk(ctx context.Context, ids []int64) ([]model.Channel, error) {
 	return nil, nil
@@ -215,6 +221,123 @@ func (f *fakeReplyChannelRepo) GetChannelMessagePosition(ctx context.Context, id
 }
 func (f *fakeReplyChannelRepo) ReserveMessagePositions(ctx context.Context, id, count int64) (int64, error) {
 	return count, nil
+}
+
+type fakeAccessMemberRepo struct {
+	isMember bool
+	err      error
+}
+
+func (f *fakeAccessMemberRepo) AddMember(ctx context.Context, userID, guildID int64) error {
+	return nil
+}
+func (f *fakeAccessMemberRepo) RemoveMember(ctx context.Context, userID, guildID int64) error {
+	return nil
+}
+func (f *fakeAccessMemberRepo) RemoveMembersByGuild(ctx context.Context, guildID int64) error {
+	return nil
+}
+func (f *fakeAccessMemberRepo) GetMember(ctx context.Context, userId, guildId int64) (model.Member, error) {
+	return model.Member{}, nil
+}
+func (f *fakeAccessMemberRepo) GetMembersList(ctx context.Context, guildId int64, ids []int64) ([]model.Member, error) {
+	return nil, nil
+}
+func (f *fakeAccessMemberRepo) GetGuildMembers(ctx context.Context, guildId int64) ([]model.Member, error) {
+	return nil, nil
+}
+func (f *fakeAccessMemberRepo) IsGuildMember(ctx context.Context, guildId, userId int64) (bool, error) {
+	return f.isMember, f.err
+}
+func (f *fakeAccessMemberRepo) GetUserGuilds(ctx context.Context, userId int64) ([]model.UserGuild, error) {
+	return nil, nil
+}
+func (f *fakeAccessMemberRepo) SetTimeout(ctx context.Context, userId, guildId int64, timeout *time.Time) error {
+	return nil
+}
+func (f *fakeAccessMemberRepo) CountGuildMembers(ctx context.Context, guildId int64) (int64, error) {
+	return 0, nil
+}
+
+type fakeAccessGuildChannelsRepo struct {
+	guildByChannel model.GuildChannel
+	err            error
+}
+
+func (f *fakeAccessGuildChannelsRepo) AddChannel(ctx context.Context, guildID, channelID int64, channelName string, channelType model.ChannelType, parentID *int64, private bool, position int, topic *string, creatorID *int64, closed bool) error {
+	return nil
+}
+func (f *fakeAccessGuildChannelsRepo) GetGuildChannel(ctx context.Context, guildID, channelID int64) (model.GuildChannel, error) {
+	return f.guildByChannel, f.err
+}
+func (f *fakeAccessGuildChannelsRepo) GetGuildChannels(ctx context.Context, guildID int64) ([]model.GuildChannel, error) {
+	return nil, nil
+}
+func (f *fakeAccessGuildChannelsRepo) GetGuildByChannel(ctx context.Context, channelID int64) (model.GuildChannel, error) {
+	return f.guildByChannel, f.err
+}
+func (f *fakeAccessGuildChannelsRepo) GetGuildChannelsByChannelIDs(ctx context.Context, channelIDs []int64) ([]model.GuildChannel, error) {
+	return nil, nil
+}
+func (f *fakeAccessGuildChannelsRepo) RemoveChannel(ctx context.Context, guildID, channelID int64) error {
+	return nil
+}
+func (f *fakeAccessGuildChannelsRepo) SetGuildChannelPosition(ctx context.Context, updates []model.GuildChannelUpdatePosition) error {
+	return nil
+}
+func (f *fakeAccessGuildChannelsRepo) ResetGuildChannelPositionBulk(ctx context.Context, chs []int64, guildId int64) error {
+	return nil
+}
+func (f *fakeAccessGuildChannelsRepo) GetGuildsChannelsIDsMany(ctx context.Context, guilds []int64) ([]int64, error) {
+	return nil, nil
+}
+
+type fakeAccessDMRepo struct {
+	isParticipant bool
+	err           error
+}
+
+func (f *fakeAccessDMRepo) GetDmChannel(ctx context.Context, userId, participantId int64) (model.DMChannel, error) {
+	return model.DMChannel{}, nil
+}
+func (f *fakeAccessDMRepo) CreateDmChannel(ctx context.Context, userId, participantId, channelId int64) error {
+	return nil
+}
+func (f *fakeAccessDMRepo) IsDmChannelParticipant(ctx context.Context, channelId, userId int64) (bool, error) {
+	return f.isParticipant, f.err
+}
+func (f *fakeAccessDMRepo) GetUserDmChannels(ctx context.Context, userId int64) ([]model.DMChannel, error) {
+	return nil, nil
+}
+func (f *fakeAccessDMRepo) GetDmChannelByChannelId(ctx context.Context, channelId int64) ([]model.DMChannel, error) {
+	return nil, nil
+}
+
+type fakeAccessGroupDMRepo struct {
+	isParticipant bool
+	err           error
+}
+
+func (f *fakeAccessGroupDMRepo) JoinGroupDmChannelMany(ctx context.Context, channelId int64, users []int64) error {
+	return nil
+}
+func (f *fakeAccessGroupDMRepo) JoinGroupDmChannel(ctx context.Context, channelId, userId int64) error {
+	return nil
+}
+func (f *fakeAccessGroupDMRepo) GetGroupDmChannel(ctx context.Context, channelId, userId int64) (model.GroupDMChannel, error) {
+	return model.GroupDMChannel{}, nil
+}
+func (f *fakeAccessGroupDMRepo) LeaveGroupDmChannel(ctx context.Context, channelId, userId int64) error {
+	return nil
+}
+func (f *fakeAccessGroupDMRepo) GetGroupDmParticipants(ctx context.Context, channelId int64) ([]model.GroupDMChannel, error) {
+	return nil, nil
+}
+func (f *fakeAccessGroupDMRepo) IsGroupDmParticipant(ctx context.Context, channelId int64, userId int64) (bool, error) {
+	return f.isParticipant, f.err
+}
+func (f *fakeAccessGroupDMRepo) GetUserGroupDmChannels(ctx context.Context, userId int64) ([]model.GroupDMChannel, error) {
+	return nil, nil
 }
 
 func TestValidateMessageAttachmentsUsesChannelScopedLookup(t *testing.T) {
@@ -459,6 +582,26 @@ type fakeMessageCache struct {
 
 func (f *fakeMessageCache) Delete(ctx context.Context, key string) error {
 	f.deleted = append(f.deleted, key)
+	return nil
+}
+
+type fakeWindowCache struct {
+	testutil.Noop
+	members   []string
+	blobs     [][]byte
+	batchVals []interface{}
+}
+
+func (f *fakeWindowCache) ZRevRangeByScore(ctx context.Context, key, max, min string, offset, count int64) ([]string, error) {
+	return append([]string(nil), f.members...), nil
+}
+
+func (f *fakeWindowCache) MGetBytes(ctx context.Context, keys ...string) ([][]byte, error) {
+	return append([][]byte(nil), f.blobs...), nil
+}
+
+func (f *fakeWindowCache) SetTimedJSONBatch(ctx context.Context, keys []string, vals []interface{}, ttl int64, opts ...icache.TimedOption) error {
+	f.batchVals = append([]interface{}(nil), vals...)
 	return nil
 }
 
@@ -743,5 +886,168 @@ func TestSendReadStateUpdateAsyncPreservesRequestContext(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("timed out waiting for async read state update")
+	}
+}
+
+func TestValidateReadPermissionsRejectsUnauthorizedDMParticipant(t *testing.T) {
+	e := &entity{
+		ch:  &fakeReplyChannelRepo{channel: model.Channel{Id: 9, Type: model.ChannelTypeDM}},
+		dmc: &fakeAccessDMRepo{isParticipant: false},
+	}
+	app := fiber.New()
+	c := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(c)
+
+	_, _, err := e.validateReadPermissions(c, 9, 42)
+	assertMessageFiberErrorCode(t, err, fiber.StatusForbidden)
+}
+
+func TestValidateSendPermissionsRejectsUnauthorizedGroupDMParticipant(t *testing.T) {
+	e := &entity{
+		ch:   &fakeReplyChannelRepo{channel: model.Channel{Id: 9, Type: model.ChannelTypeGroupDM}},
+		gdmc: &fakeAccessGroupDMRepo{isParticipant: false},
+	}
+	app := fiber.New()
+	c := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(c)
+
+	_, _, err := e.validateSendPermissions(c, 9, 42)
+	assertMessageFiberErrorCode(t, err, fiber.StatusForbidden)
+}
+
+func TestValidateUploadPermissionsRejectsUnauthorizedGroupDMParticipant(t *testing.T) {
+	e := &entity{
+		ch:   &fakeReplyChannelRepo{channel: model.Channel{Id: 9, Type: model.ChannelTypeGroupDM}},
+		gdmc: &fakeAccessGroupDMRepo{isParticipant: false},
+	}
+	app := fiber.New()
+	c := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(c)
+
+	err := e.validateUploadPermissions(c, 9, 42)
+	assertMessageFiberErrorCode(t, err, fiber.StatusForbidden)
+}
+
+func TestValidateMessageOwnershipRejectsFormerGuildMemberBeforeLookup(t *testing.T) {
+	msgRepo := &fakeReplyMessageRepo{
+		getMessage: model.Message{Id: 88, ChannelId: 9, UserId: 42, Type: int(model.MessageTypeChat)},
+	}
+	e := &entity{
+		ch:  &fakeReplyChannelRepo{channel: model.Channel{Id: 9, Type: model.ChannelTypeGuild}},
+		gc:  &fakeAccessGuildChannelsRepo{guildByChannel: model.GuildChannel{GuildId: 77, ChannelId: 9}},
+		m:   &fakeAccessMemberRepo{isMember: false},
+		msg: msgRepo,
+	}
+	app := fiber.New()
+	c := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(c)
+
+	_, _, err := e.validateMessageOwnership(c, 88, 9, 42)
+	assertMessageFiberErrorCode(t, err, fiber.StatusForbidden)
+	if msgRepo.getCalls != 0 {
+		t.Fatalf("expected access denial before message lookup, got %d lookups", msgRepo.getCalls)
+	}
+}
+
+func TestValidateDeletePermissionRejectsFormerDMParticipantBeforeLookup(t *testing.T) {
+	msgRepo := &fakeReplyMessageRepo{
+		getMessage: model.Message{Id: 88, ChannelId: 9, UserId: 42, Type: int(model.MessageTypeChat)},
+	}
+	e := &entity{
+		ch:  &fakeReplyChannelRepo{channel: model.Channel{Id: 9, Type: model.ChannelTypeDM}},
+		dmc: &fakeAccessDMRepo{isParticipant: false},
+		msg: msgRepo,
+	}
+	app := fiber.New()
+	c := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(c)
+
+	_, err := e.validateDeletePermission(c, 88, 9, 42)
+	assertMessageFiberErrorCode(t, err, fiber.StatusForbidden)
+	if msgRepo.getCalls != 0 {
+		t.Fatalf("expected access denial before message lookup, got %d lookups", msgRepo.getCalls)
+	}
+}
+
+func assertMessageFiberErrorCode(t *testing.T, err error, want int) {
+	t.Helper()
+	var fiberErr *fiber.Error
+	if !errors.As(err, &fiberErr) {
+		t.Fatalf("expected fiber error, got %v", err)
+	}
+	if fiberErr.Code != want {
+		t.Fatalf("expected status %d, got %d", want, fiberErr.Code)
+	}
+}
+
+func TestTryMessagesFromCacheSanitizesLegacyViewerFields(t *testing.T) {
+	nonce := helper.MessageNonce([]byte(`"draft-1"`))
+	blob, err := json.Marshal(dto.Message{
+		Id:        1,
+		ChannelId: 99,
+		Nonce:     &nonce,
+		Reactions: []dto.MessageReaction{{
+			Count: 2,
+			Me:    true,
+			Emoji: dto.MessageReactionEmoji{Name: "wave"},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+
+	members := make([]string, messagecache.WindowSize)
+	blobs := make([][]byte, messagecache.WindowSize)
+	for i := range members {
+		members[i] = messagecache.IDToMember(int64(i + 1))
+		blobs[i] = blob
+	}
+
+	cacheStore := &fakeWindowCache{members: members, blobs: blobs}
+	e := &entity{cache: cacheStore}
+
+	msgs, ok := e.tryMessagesFromCache(context.Background(), 99)
+	if !ok {
+		t.Fatal("expected cache hit")
+	}
+	if len(msgs) != messagecache.WindowSize {
+		t.Fatalf("expected %d messages, got %d", messagecache.WindowSize, len(msgs))
+	}
+	if msgs[0].Nonce != nil {
+		t.Fatalf("expected nonce to be stripped from cached message, got %#v", msgs[0].Nonce)
+	}
+	if len(msgs[0].Reactions) != 1 || msgs[0].Reactions[0].Me {
+		t.Fatalf("expected cached reaction state to be viewer-neutral, got %#v", msgs[0].Reactions)
+	}
+}
+
+func TestBackfillMessagesCacheStripsViewerSpecificFields(t *testing.T) {
+	nonce := helper.MessageNonce([]byte(`"draft-1"`))
+	cacheStore := &fakeWindowCache{}
+	e := &entity{cache: cacheStore}
+
+	e.backfillMessagesCache(context.Background(), 99, []dto.Message{{
+		Id:        1,
+		ChannelId: 99,
+		Nonce:     &nonce,
+		Reactions: []dto.MessageReaction{{
+			Count: 1,
+			Me:    true,
+			Emoji: dto.MessageReactionEmoji{Name: "wave"},
+		}},
+	}})
+
+	if len(cacheStore.batchVals) != 1 {
+		t.Fatalf("expected one cached message, got %d", len(cacheStore.batchVals))
+	}
+	cached, ok := cacheStore.batchVals[0].(dto.Message)
+	if !ok {
+		t.Fatalf("expected dto.Message in cache batch, got %T", cacheStore.batchVals[0])
+	}
+	if cached.Nonce != nil {
+		t.Fatalf("expected nonce to be stripped before caching, got %#v", cached.Nonce)
+	}
+	if len(cached.Reactions) != 1 || cached.Reactions[0].Me {
+		t.Fatalf("expected cached reactions to clear Me flags, got %#v", cached.Reactions)
 	}
 }

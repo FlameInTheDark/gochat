@@ -54,6 +54,7 @@ voice_regions:
 etcd_endpoints:
   - "http://etcd:2379"
 etcd_prefix: "/gochat/sfu"
+stream_etcd_prefix: "/gochat/stream"
 # Optional etcd auth (recommended in production)
 etcd_username: "root"
 etcd_password: "changeme"

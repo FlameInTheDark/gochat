@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/FlameInTheDark/gochat/internal/cache/testutil"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/gofiber/fiber/v2"
@@ -90,7 +91,9 @@ func (m *memberRepoMock) GetUserGuilds(context.Context, int64) ([]model.UserGuil
 func (m *memberRepoMock) SetTimeout(context.Context, int64, int64, *time.Time) error { return nil }
 func (m *memberRepoMock) CountGuildMembers(context.Context, int64) (int64, error)    { return 0, nil }
 
-type guildRepoMock struct{}
+type guildRepoMock struct {
+	guilds []model.Guild
+}
 
 func (m *guildRepoMock) GetGuildById(context.Context, int64) (model.Guild, error) {
 	return model.Guild{}, nil
@@ -103,13 +106,51 @@ func (m *guildRepoMock) SetGuildIcon(context.Context, int64, int64) error     { 
 func (m *guildRepoMock) SetGuildPublic(context.Context, int64, bool) error    { return nil }
 func (m *guildRepoMock) ChangeGuildOwner(context.Context, int64, int64) error { return nil }
 func (m *guildRepoMock) GetGuildsList(context.Context, []int64) ([]model.Guild, error) {
-	return []model.Guild{}, nil
+	if m.guilds == nil {
+		return []model.Guild{}, nil
+	}
+	return m.guilds, nil
 }
 func (m *guildRepoMock) SetGuildPermissions(context.Context, int64, int64) error { return nil }
 func (m *guildRepoMock) UpdateGuild(context.Context, int64, *string, *int64, *bool, *int64) error {
 	return nil
 }
 func (m *guildRepoMock) SetSystemMessagesChannel(context.Context, int64, *int64) error { return nil }
+
+type emojiRepoMock struct{}
+
+func (m *emojiRepoMock) CountActiveGuildEmojis(context.Context, int64) (int64, error) {
+	return 0, nil
+}
+func (m *emojiRepoMock) CreatePlaceholder(context.Context, model.GuildEmoji) error { return nil }
+func (m *emojiRepoMock) ReusePendingPlaceholder(context.Context, model.GuildEmoji) (model.GuildEmoji, error) {
+	return model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) GetGuildEmoji(context.Context, int64, int64) (model.GuildEmoji, error) {
+	return model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) GetEmojiLookup(context.Context, int64) (model.EmojiLookup, error) {
+	return model.EmojiLookup{}, nil
+}
+func (m *emojiRepoMock) ListReadyGuildEmojis(context.Context, int64) ([]model.GuildEmoji, error) {
+	return []model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) ListReadyGuildEmojisByGuilds(context.Context, []int64) ([]model.GuildEmoji, error) {
+	return []model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) MarkReady(context.Context, int64, int64, bool, int64, int64, int64) (model.GuildEmoji, error) {
+	return model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) Rename(context.Context, int64, int64, string, string) (model.GuildEmoji, error) {
+	return model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) Delete(context.Context, int64, int64) (model.GuildEmoji, error) {
+	return model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) DeleteGuildEmojis(context.Context, int64) ([]model.GuildEmoji, error) {
+	return []model.GuildEmoji{}, nil
+}
+func (m *emojiRepoMock) PruneExpired(context.Context, int64) error { return nil }
 
 type readStatesRepoMock struct{}
 
@@ -246,11 +287,13 @@ func newSettingsTestEntity(repo *userSettingsRepoMock) *entity {
 		uset:         repo,
 		member:       &memberRepoMock{},
 		guild:        &guildRepoMock{},
+		emoji:        &emojiRepoMock{},
 		rs:           &readStatesRepoMock{},
 		gclm:         &guildChannelMessagesRepoMock{},
 		gc:           &guildChannelsRepoMock{},
 		tm:           &threadMemberRepoMock{},
 		ch:           &channelRepoMock{},
+		cache:        testutil.Noop{},
 		contentHosts: []string{"https://cdn.example.com"},
 	}
 }
@@ -423,6 +466,46 @@ func TestGetUserSettingsReturnsEmptyNotificationCollectionsForUI(t *testing.T) {
 	}
 }
 
+func TestGetUserSettingsGuildsIncludeSystemChannelID(t *testing.T) {
+	const systemChannelID int64 = 777
+
+	repo := newUserSettingsRepoMock()
+	e := newSettingsTestEntity(repo)
+	e.member = &memberRepoMock{guilds: []model.UserGuild{{GuildId: 10, UserId: 1}}}
+	e.guild = &guildRepoMock{guilds: []model.Guild{{
+		Id:             10,
+		Name:           "guild",
+		OwnerId:        99,
+		Public:         true,
+		Permissions:    123,
+		SystemMessages: int64Ptr(systemChannelID),
+	}}}
+	app := newSettingsTestApp(e)
+
+	req := httptest.NewRequest(http.MethodGet, "/user/me/settings", nil)
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("expected GET request to complete, got %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected GET status %d, got %d", fiber.StatusOK, resp.StatusCode)
+	}
+
+	var got UserSettingsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
+		t.Fatalf("expected valid JSON response, got %v", err)
+	}
+
+	if len(got.Guilds) != 1 {
+		t.Fatalf("expected one guild metadata entry, got %#v", got.Guilds)
+	}
+	if got.Guilds[0].SystemChannelId == nil || *got.Guilds[0].SystemChannelId != systemChannelID {
+		t.Fatalf("expected system channel id %d, got %#v", systemChannelID, got.Guilds[0].SystemChannelId)
+	}
+}
+
 func TestGetUserSettingsReturnsNoContentWhenVersionIsCurrent(t *testing.T) {
 	repo := newUserSettingsRepoMock()
 	repo.settings[1] = model.UserSettings{
@@ -457,7 +540,9 @@ func TestUserSettingsResolvesDevicesPerKey(t *testing.T) {
 			"noise_suppression":true,
 			"echo_cancellation":true,
 			"audio_input_level":100,
-			"audio_output_level":75
+			"audio_output_level":75,
+			"input_mode":"push_to_talk",
+			"push_to_talk_key":"KeyV"
 		}
 	}`))
 	desktopReq.Header.Set("Content-Type", "application/json")
@@ -515,6 +600,9 @@ func TestUserSettingsResolvesDevicesPerKey(t *testing.T) {
 	}
 	if desktopSettings.Settings.Devices.AudioInputDevice != "desk-mic" {
 		t.Fatalf("expected desktop device settings, got %#v", desktopSettings.Settings.Devices)
+	}
+	if desktopSettings.Settings.Devices.InputMode != "push_to_talk" || desktopSettings.Settings.Devices.PushToTalkKey != "KeyV" {
+		t.Fatalf("expected desktop voice mode settings to round-trip, got %#v", desktopSettings.Settings.Devices)
 	}
 	if desktopSettings.Settings.DevicesByKey["phone-web"].AudioInputDevice != "phone-mic" {
 		t.Fatalf("expected phone bucket to remain stored, got %#v", desktopSettings.Settings.DevicesByKey)
@@ -590,6 +678,76 @@ func TestLegacySettingsUpdateKeepsStoredDeviceBuckets(t *testing.T) {
 	}
 	if got.Settings.Devices.AudioInputDevice != "phone-mic" {
 		t.Fatalf("expected stored phone device bucket to survive legacy update, got %#v", got.Settings.Devices)
+	}
+}
+
+func TestDeviceScopedSettingsUpdateWithoutDevicesKeepsCurrentDeviceBucket(t *testing.T) {
+	repo := newUserSettingsRepoMock()
+	repo.settings[1] = model.UserSettings{
+		UserId: 1,
+		Settings: json.RawMessage(`{
+			"language":"en",
+			"status":{"status":"online"},
+			"devices":{"audio_input_device":"legacy-mic"},
+			"devices_by_key":{
+				"desktop-browser":{
+					"audio_input_device":"desk-mic",
+					"audio_output_device":"desk-speakers",
+					"video_device":"desk-cam",
+					"audio_input_level":80,
+					"audio_output_level":90,
+					"input_mode":"push_to_talk",
+					"push_to_talk_key":"KeyV"
+				}
+			}
+		}`),
+		Version: 1,
+	}
+
+	app := newSettingsTestApp(newSettingsTestEntity(repo))
+
+	postReq := httptest.NewRequest(http.MethodPost, "/user/me/settings", strings.NewReader(`{
+		"language":"ru",
+		"status":{"status":"idle"}
+	}`))
+	postReq.Header.Set("Content-Type", "application/json")
+	postReq.Header.Set(userSettingsDeviceKeyHeader, "desktop-browser")
+
+	postResp, err := app.Test(postReq, -1)
+	if err != nil {
+		t.Fatalf("expected POST request to complete, got %v", err)
+	}
+	defer postResp.Body.Close()
+
+	if postResp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected POST status %d, got %d", fiber.StatusOK, postResp.StatusCode)
+	}
+
+	getReq := httptest.NewRequest(http.MethodGet, "/user/me/settings", nil)
+	getReq.Header.Set(userSettingsDeviceKeyHeader, "desktop-browser")
+	getResp, err := app.Test(getReq, -1)
+	if err != nil {
+		t.Fatalf("expected GET request to complete, got %v", err)
+	}
+	defer getResp.Body.Close()
+
+	var got UserSettingsResponse
+	if err := json.NewDecoder(getResp.Body).Decode(&got); err != nil {
+		t.Fatalf("expected valid JSON response, got %v", err)
+	}
+	if got.Settings == nil {
+		t.Fatal("expected settings payload in GET response")
+	}
+	if got.Settings.Language != "ru" {
+		t.Fatalf("expected language update to persist, got %q", got.Settings.Language)
+	}
+	if got.Settings.Devices.AudioInputDevice != "desk-mic" ||
+		got.Settings.Devices.AudioOutputDevice != "desk-speakers" ||
+		got.Settings.Devices.VideoDevice != "desk-cam" {
+		t.Fatalf("expected device-scoped bucket to survive unrelated update, got %#v", got.Settings.Devices)
+	}
+	if got.Settings.Devices.InputMode != "push_to_talk" || got.Settings.Devices.PushToTalkKey != "KeyV" {
+		t.Fatalf("expected voice mode settings to survive unrelated update, got %#v", got.Settings.Devices)
 	}
 }
 

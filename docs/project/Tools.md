@@ -4,6 +4,32 @@
 
 The `cmd/tools` application provides helper commands for operating the platform.
 
+## Generate DTLS Certificate
+
+Generate a DTLS certificate/key pair for SFU WebRTC transport and write PEM files you can reference from `sfu_config.yaml`.
+
+Flags
+- `--cert-out` Output path for the certificate PEM file.
+- `--key-out` Output path for the private key PEM file.
+- `--common-name` Optional certificate common name. Defaults to `gochat-sfu`.
+- `--valid-for` Optional certificate validity duration. Defaults to `8760h` (one year).
+- `--overwrite` Replace existing output files.
+- `--format` Output format: `text` (default) or `json`.
+
+Examples
+```
+go run ./cmd/tools certificates dtls generate \
+  --cert-out ./certs/sfu.crt \
+  --key-out ./certs/sfu.key
+
+go run ./cmd/tools certificates dtls generate \
+  --cert-out ./certs/sfu.crt \
+  --key-out ./certs/sfu.key \
+  --common-name sfu-eu-1 \
+  --valid-for 2160h \
+  --format json
+```
+
 ## Generate Webhook Token
 
 Generate a JWT for services that authenticate to the Webhook.

@@ -34,6 +34,10 @@ Method | HTTP request | Description
 [**GuildGuildIdSystemchPatch**](GuildAPI.md#GuildGuildIdSystemchPatch) | **Patch** /guild/{guild_id}/systemch | Set system messages channel
 [**GuildGuildIdVoiceChannelIdJoinPost**](GuildAPI.md#GuildGuildIdVoiceChannelIdJoinPost) | **Post** /guild/{guild_id}/voice/{channel_id}/join | Join voice channel (get SFU signaling info)
 [**GuildGuildIdVoiceChannelIdRegionPatch**](GuildAPI.md#GuildGuildIdVoiceChannelIdRegionPatch) | **Patch** /guild/{guild_id}/voice/{channel_id}/region | Set channel voice region
+[**GuildGuildIdVoiceChannelIdStreamsGet**](GuildAPI.md#GuildGuildIdVoiceChannelIdStreamsGet) | **Get** /guild/{guild_id}/voice/{channel_id}/streams | List active voice-channel streams
+[**GuildGuildIdVoiceChannelIdStreamsPost**](GuildAPI.md#GuildGuildIdVoiceChannelIdStreamsPost) | **Post** /guild/{guild_id}/voice/{channel_id}/streams | Start a voice-channel stream
+[**GuildGuildIdVoiceChannelIdStreamsStreamIdDelete**](GuildAPI.md#GuildGuildIdVoiceChannelIdStreamsStreamIdDelete) | **Delete** /guild/{guild_id}/voice/{channel_id}/streams/{stream_id} | Stop a voice-channel stream
+[**GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost**](GuildAPI.md#GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost) | **Post** /guild/{guild_id}/voice/{channel_id}/streams/{stream_id}/join | Join a voice-channel stream as viewer
 [**GuildGuildIdVoiceMovePost**](GuildAPI.md#GuildGuildIdVoiceMovePost) | **Post** /guild/{guild_id}/voice/move | Move member to voice channel
 [**GuildPost**](GuildAPI.md#GuildPost) | **Post** /guild | Create guild
 
@@ -2154,6 +2158,304 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**GuildSetVoiceRegionResponse**](GuildSetVoiceRegionResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdVoiceChannelIdStreamsGet
+
+> []GuildVoiceStreamSummary GuildGuildIdVoiceChannelIdStreamsGet(ctx, guildId, channelId).Execute()
+
+List active voice-channel streams
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdVoiceChannelIdStreamsGet(context.Background(), guildId, channelId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdVoiceChannelIdStreamsGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdVoiceChannelIdStreamsGet`: []GuildVoiceStreamSummary
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdVoiceChannelIdStreamsGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Channel ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdVoiceChannelIdStreamsGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+[**[]GuildVoiceStreamSummary**](GuildVoiceStreamSummary.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdVoiceChannelIdStreamsPost
+
+> GuildCreateVoiceStreamResponse GuildGuildIdVoiceChannelIdStreamsPost(ctx, guildId, channelId).Request(request).Execute()
+
+Start a voice-channel stream
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	request := *openapiclient.NewGuildCreateVoiceStreamRequest() // GuildCreateVoiceStreamRequest | Stream start payload
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdVoiceChannelIdStreamsPost(context.Background(), guildId, channelId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdVoiceChannelIdStreamsPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdVoiceChannelIdStreamsPost`: GuildCreateVoiceStreamResponse
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdVoiceChannelIdStreamsPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Channel ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdVoiceChannelIdStreamsPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+ **request** | [**GuildCreateVoiceStreamRequest**](GuildCreateVoiceStreamRequest.md) | Stream start payload | 
+
+### Return type
+
+[**GuildCreateVoiceStreamResponse**](GuildCreateVoiceStreamResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdVoiceChannelIdStreamsStreamIdDelete
+
+> GuildGuildIdVoiceChannelIdStreamsStreamIdDelete(ctx, guildId, channelId, streamId).Execute()
+
+Stop a voice-channel stream
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	streamId := int32(56) // int32 | Stream ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	r, err := apiClient.GuildAPI.GuildGuildIdVoiceChannelIdStreamsStreamIdDelete(context.Background(), guildId, channelId, streamId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdVoiceChannelIdStreamsStreamIdDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Channel ID | 
+**streamId** | **int32** | Stream ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost
+
+> GuildJoinVoiceStreamResponse GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost(ctx, guildId, channelId, streamId).Execute()
+
+Join a voice-channel stream as viewer
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild ID
+	channelId := int32(56) // int32 | Channel ID
+	streamId := int32(56) // int32 | Stream ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost(context.Background(), guildId, channelId, streamId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost`: GuildJoinVoiceStreamResponse
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild ID | 
+**channelId** | **int32** | Channel ID | 
+**streamId** | **int32** | Stream ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+
+### Return type
+
+[**GuildJoinVoiceStreamResponse**](GuildJoinVoiceStreamResponse.md)
 
 ### Authorization
 

@@ -22,6 +22,23 @@ The client then chooses a signaling version:
 
 If the client later reconnects because of move, rebind, or transient failure, it should keep using the same signaling version it already negotiated.
 
+## Transport Security Layer
+
+The signaling flow described here bootstraps a normal WebRTC transport:
+
+- ICE finds a path between client and SFU
+- SDP carries DTLS fingerprint information
+- DTLS negotiates keys
+- SRTP encrypts media between the client and the SFU
+
+Frontend implication:
+
+- use the browser `RTCPeerConnection` flow as-is
+- do not strip `a=fingerprint` or related DTLS SDP attributes
+- expect DTLS to be handled inside the browser rather than in app-level code
+
+See [DTLS Transport Security](DTLS.md) for the full browser and deployment guidance.
+
 ## JoinVoice REST Step
 
 `POST /api/v1/guild/{guild_id}/voice/{channel_id}/join`

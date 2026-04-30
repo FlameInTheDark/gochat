@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"reflect"
 	"sort"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
-	"github.com/nats-io/nats.go"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -32,6 +32,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 	"github.com/FlameInTheDark/gochat/internal/presence"
+	"github.com/nats-io/nats.go"
 )
 
 type helloMessage struct {
@@ -364,6 +365,9 @@ func mergePresenceUpdate(existing presence.SessionPresence, sessionID string, up
 	if update.Deafen != nil {
 		sp.Deafen = *update.Deafen
 	}
+	if update.SelfVideo != nil {
+		sp.SelfVideo = *update.SelfVideo
+	}
 
 	return sp
 }
@@ -509,8 +513,7 @@ func (h *Handler) OnWSClosed() {
 	// Re-aggregate
 	now := time.Now().Unix()
 	agg, _, _ := h.pstore.Aggregate(ctx, h.user.Id, now)
-	// If changed, store and publish (status or text)
-	if agg.Status != prev.Status || agg.CustomStatusText != prev.CustomStatusText {
+	if presenceChanged(prev, agg) {
 		_ = h.pstore.SetAggregated(ctx, agg, ttl)
 		h.publishPresence(agg)
 	}
@@ -533,12 +536,29 @@ func (h *Handler) sendPresenceSnapshot(userID int64) {
 		since = p.Since
 		text = p.CustomStatusText
 	}
+	var mute, deafen, selfVideo bool
+	var activeStream = p.ActiveStream
+	if ok {
+		mute = p.Mute
+		deafen = p.Deafen
+		selfVideo = p.SelfVideo
+	}
 	// include voice channel id if present
 	if ok && p.VoiceChannelID != nil {
 		vid := *p.VoiceChannelID
 		voiceID = &vid
 	}
-	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{UserID: userID, Status: status, Since: since, CustomStatusText: text, VoiceChannelID: voiceID})
+	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{
+		UserID:           userID,
+		Status:           status,
+		Since:            since,
+		CustomStatusText: text,
+		VoiceChannelID:   voiceID,
+		Mute:             mute,
+		Deafen:           deafen,
+		SelfVideo:        selfVideo,
+		ActiveStream:     activeStream,
+	})
 	if err != nil {
 		return
 	}
@@ -546,28 +566,24 @@ func (h *Handler) sendPresenceSnapshot(userID int64) {
 }
 
 func (h *Handler) publishPresence(agg presence.Presence) {
-	if h.nats == nil {
-		return
+	_ = presence.Publish(h.baseContext(), h.nats, agg)
+}
+
+func presenceChanged(prev, next presence.Presence) bool {
+	return prev.Status != next.Status ||
+		prev.CustomStatusText != next.CustomStatusText ||
+		!sameInt64Ptr(prev.VoiceChannelID, next.VoiceChannelID) ||
+		prev.Mute != next.Mute ||
+		prev.Deafen != next.Deafen ||
+		prev.SelfVideo != next.SelfVideo ||
+		!reflect.DeepEqual(prev.ActiveStream, next.ActiveStream)
+}
+
+func sameInt64Ptr(a, b *int64) bool {
+	if a == nil || b == nil {
+		return a == b
 	}
-	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{UserID: agg.UserID, Status: agg.Status, Since: agg.Since, CustomStatusText: agg.CustomStatusText, VoiceChannelID: agg.VoiceChannelID, Mute: agg.Mute, Deafen: agg.Deafen})
-	if err != nil {
-		return
-	}
-	b, err := json.Marshal(msg)
-	if err != nil {
-		return
-	}
-	subject := fmt.Sprintf("presence.user.%d", agg.UserID)
-	ctx, finish := observability.StartNATSPublishSpan(h.baseContext(), subject)
-	defer func() {
-		finish(err)
-	}()
-	headers := observability.InjectNATSHeaders(ctx, nil)
-	err = h.nats.PublishMsg(&nats.Msg{
-		Subject: subject,
-		Header:  headers,
-		Data:    b,
-	})
+	return *a == *b
 }
 
 func (h *Handler) baseContext() context.Context {

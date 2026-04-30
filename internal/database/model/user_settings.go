@@ -137,12 +137,16 @@ type Devices struct {
 	AudioOutputLevel    float64 `json:"audio_output_level"`
 	AudioInputThreshold float64 `json:"audio_input_threshold"`
 	AutoGainControl     bool    `json:"auto_gain_control"`
+	InputMode           string  `json:"input_mode,omitempty"`
+	PushToTalkKey       string  `json:"push_to_talk_key,omitempty"`
 }
 
 func (d Devices) Validate() error {
 	return validation.ValidateStruct(&d,
 		validation.Field(&d.AudioInputLevel, validation.Min(0.0), validation.Max(200.0)),
 		validation.Field(&d.AudioOutputLevel, validation.Min(0.0), validation.Max(200.0)),
+		validation.Field(&d.InputMode, validation.In("", "voice_activity", "push_to_talk")),
+		validation.Field(&d.PushToTalkKey, validation.Length(0, 64)),
 	)
 }
 

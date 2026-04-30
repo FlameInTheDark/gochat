@@ -3,11 +3,13 @@
 This project is composed of several services located under the `cmd/` directory. Each service is a separate application with a focused responsibility. Below is a brief overview to help you navigate and understand their roles and primary dependencies.
 
 ## API (`cmd/api`)
-- Purpose: Public HTTP API gateway for the platform (guilds, channels, messages, search, voice control).
+- Purpose: Public HTTP API gateway for the platform (guilds, channels, messages, search, voice and stream control).
 - Key features:
   - REST endpoints for core resources and actions.
   - Issues short‑lived SFU tokens for voice join/move flows.
+  - Issues separate short-lived stream tokens for screen/app sharing publishers and viewers.
   - Manages voice region overrides and selects SFU instances via discovery.
+  - Selects stream instances in the same effective region as the voice channel.
   - Publishes/consumes events via NATS.
 - Dependencies: Scylla/Cassandra, PostgreSQL, Redis/KeyDB (cache), NATS, OpenSearch (via Indexer), etcd (discovery).
 
@@ -32,7 +34,7 @@ This project is composed of several services located under the `cmd/` directory.
 - Purpose: Voice Selective Forwarding Unit with WebRTC media relay and WS signaling.
 - Deployment: external to local Compose. The SFU is expected to run as a standalone service and self-ship telemetry to OpenObserve.
 - Key features:
-  - WebSocket signaling endpoint at `/sfu/signal`.
+  - WebSocket signaling endpoint at `/signal` (or the ingress-prefixed equivalent).
   - Validates short‑lived SFU tokens and enforces voice permissions (speak/video/connect).
   - Admin controls: kick, block/unblock, and move notifications.
   - Reports load (peer count) via periodic heartbeats.
@@ -41,18 +43,46 @@ This project is composed of several services located under the `cmd/` directory.
   - Webhook validates the token (HS256, claims: `{ typ:"sfu", id:"<service_id>" }`) and writes/refreshes the instance in discovery (etcd).
   - API reads instances from etcd when serving JoinVoice. No fallback to origin; returns 503 when no instance exists.
 - Dependencies: Webhook (for discovery), etcd (backing store for discovery), optional STUN servers.
- - Config: `webhook_url`, pre-generated `webhook_token` (HS256 JWT), and `service_id` (must match token `id`).
- - Observability: see `docs/project/observability/ExternalSFU.md` for the direct OTLP and direct log-shipping contract.
+- Config: `webhook_url`, pre-generated `webhook_token` (HS256 JWT), `service_id` (must match token `id`), and optional `dtls_certificate_file` / `dtls_private_key_file` for reusable WebRTC DTLS certificates.
+- DTLS cert generation: `go run ./cmd/tools certificates dtls generate --cert-out ./certs/sfu.crt --key-out ./certs/sfu.key`
+- Observability: see `docs/project/observability/ExternalSFU.md` for the direct OTLP and direct log-shipping contract.
 
 ## Webhook (`cmd/webhook`)
-- Purpose: Secure integration surface for internal events (currently: SFU discovery heartbeat, attachment finalize).
+- Purpose: Secure integration surface for internal events (SFU discovery heartbeat, stream discovery/lifecycle, attachment finalize).
 - Endpoints:
   - `POST /api/v1/webhook/sfu/heartbeat` — body: `{ id, region, url, load }`, header: `X-Webhook-Token: <JWT>`.
+  - `POST /api/v1/webhook/stream/heartbeat` — body: `{ id, region, url, load }`, header: `X-Webhook-Token: <JWT>`.
+  - `POST /api/v1/webhook/stream/start` — marks a stream active and publishes stream presence/events.
+  - `POST /api/v1/webhook/stream/stop` — clears active stream state and publishes stream stop presence/events.
+  - `POST /api/v1/webhook/stream/alive` — refreshes active stream route/meta/presence TTLs.
   - `POST /api/v1/webhook/attachments/finalize` — updates attachment metadata after upload completes.
 - Auth: HS256 JWT in `X-Webhook-Token` with claims `{ typ, id }`; no expiration is required.
-- Config: `jwt_secret`, `etcd_endpoints`, `etcd_prefix`, and optional Cassandra cluster for attachments.
-- Writes SFU instances into etcd for API discovery; SFU does not talk to etcd directly when webhook is used.
- - Token generation: use `cmd/tools` → `gen-token --type sfu --secret <jwt_secret> [--id <service_id>]` and set the result as SFU `webhook_token`.
+- Config: `jwt_secret`, `etcd_endpoints`, `etcd_prefix`, `stream_etcd_prefix`, and optional Cassandra cluster for attachments.
+- Writes SFU and stream instances into etcd for API discovery; media services do not talk to etcd directly when webhook is used.
+- Token generation: use `go run ./cmd/tools tokens webhook generate --type sfu --secret <jwt_secret> [--id <service_id>]` or the same command with `--type stream`, then set the result as the media service `webhook_token`.
+
+## Stream (`cmd/stream`)
+- Purpose: Screen/app sharing media service for voice channels.
+- Deployment: external to local Compose, like `cmd/sfu`. Run it as a standalone service for local WebRTC testing.
+- Key features:
+  - WebSocket signaling endpoint at `/signal`; GoChat clients use `/signal?v=2`.
+  - Validates one-minute stream JWTs signed with shared `auth_secret` and bound to this stream service's `service_id`.
+  - Enforces publisher/viewer roles: publishers may send video and optional audio; viewers are receive-only.
+  - Forwards high-resolution screen/app RTP without transcoding or recording.
+  - Supports DAVE over the same v2 signaling opcode surface used by voice.
+  - Reports load and active stream lifecycle through Webhook callbacks.
+- Discovery & heartbeat:
+  - Stream service sends `POST /api/v1/webhook/stream/heartbeat` to the Webhook service with header `X-Webhook-Token: <JWT>`.
+  - Webhook validates the token (HS256, claims: `{ typ:"stream", id:"<service_id>" }`) and writes/refreshes the instance in stream discovery (etcd).
+  - API reads instances from `stream_etcd_prefix` and only selects instances in the effective voice region for the channel. No cross-region fallback is allowed for streams.
+- Active stream callbacks:
+  - `POST /api/v1/webhook/stream/start` marks the stream active after publisher media is established.
+  - `POST /api/v1/webhook/stream/stop` clears stream state after publisher stop/disconnect.
+  - `POST /api/v1/webhook/stream/alive` refreshes stream route/meta/presence TTLs while media is active.
+- Dependencies: Webhook (for discovery and lifecycle), etcd (discovery store), Redis/KeyDB through Webhook/API for active stream state, optional STUN servers.
+- Config: `auth_secret`, `region`, `public_base_url`, `webhook_url`, `webhook_token`, `service_id`, optional DTLS certificate files, optional UDP port range, DAVE settings, and stream bitrate ceilings.
+- Token generation: use `go run ./cmd/tools tokens webhook generate --type stream --secret <jwt_secret> [--id <service_id>]` and set the result as stream `webhook_token`.
+- Full pipeline: see `docs/project/voice/Streaming.md`.
 
 ## Attachments (`cmd/attachments`)
 - Purpose: File upload service for message attachments, avatars, and icons.

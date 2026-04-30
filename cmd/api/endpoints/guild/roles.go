@@ -171,7 +171,7 @@ func (e *entity) CreateGuildRole(c *fiber.Ctx) error {
 
 	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageRoles)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !hasPermission {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -243,7 +243,7 @@ func (e *entity) PatchGuildRole(c *fiber.Ctx) error {
 
 	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageRoles)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !hasPermission {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -329,7 +329,7 @@ func (e *entity) PatchRoleOrder(c *fiber.Ctx) error {
 
 	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageRoles)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !hasPermission {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -421,7 +421,7 @@ func (e *entity) DeleteGuildRole(c *fiber.Ctx) error {
 
 	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageRoles)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !hasPermission {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -493,7 +493,7 @@ func (e *entity) AddMemberRole(c *fiber.Ctx) error {
 
 	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageRoles)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !hasPermission {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -565,7 +565,7 @@ func (e *entity) RemoveMemberRole(c *fiber.Ctx) error {
 
 	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageRoles)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !hasPermission {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -754,7 +754,7 @@ func (e *entity) SetChannelRolePermission(c *fiber.Ctx) error {
 	}
 	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageChannels)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !hasPermission {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -836,7 +836,7 @@ func (e *entity) UpdateChannelRolePermission(c *fiber.Ctx) error {
 	}
 	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageChannels)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !hasPermission {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)
@@ -893,7 +893,7 @@ func (e *entity) RemoveChannelRolePermission(c *fiber.Ctx) error {
 	}
 	_, hasPermission, err := e.perm.GuildPerm(c.UserContext(), guildId, user.Id, permissions.PermServerManageChannels)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
 	if !hasPermission {
 		return fiber.NewError(fiber.StatusNotAcceptable, ErrPermissionsRequired)

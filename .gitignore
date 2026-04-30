@@ -46,3 +46,4 @@ attachments_config.yaml
 sfu_config.yaml
 webhook_config.yaml
 embedder_config.yaml
+*.local.yaml

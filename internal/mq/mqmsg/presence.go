@@ -2,15 +2,19 @@ package mqmsg
 
 import "encoding/json"
 
+import streammeta "github.com/FlameInTheDark/gochat/internal/stream"
+
 type PresenceUpdate struct {
-	UserID           int64             `json:"user_id"`
-	Status           string            `json:"status"`
-	CustomStatusText string            `json:"custom_status_text,omitempty"`
-	Since            int64             `json:"since"`
-	ClientStatus     map[string]string `json:"client_status,omitempty"`
-	VoiceChannelID   *int64            `json:"voice_channel_id,omitempty"`
-	Mute             bool              `json:"mute,omitempty"`
-	Deafen           bool              `json:"deafen,omitempty"`
+	UserID           int64                    `json:"user_id"`
+	Status           string                   `json:"status"`
+	CustomStatusText string                   `json:"custom_status_text,omitempty"`
+	Since            int64                    `json:"since"`
+	ClientStatus     map[string]string        `json:"client_status,omitempty"`
+	VoiceChannelID   *int64                   `json:"voice_channel_id,omitempty"`
+	Mute             bool                     `json:"mute,omitempty"`
+	Deafen           bool                     `json:"deafen,omitempty"`
+	SelfVideo        bool                     `json:"self_video,omitempty"`
+	ActiveStream     *streammeta.ActiveStream `json:"active_stream,omitempty"`
 }
 
 func (m *PresenceUpdate) EventType() *EventType    { return nil }

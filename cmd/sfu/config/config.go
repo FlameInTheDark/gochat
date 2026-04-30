@@ -2,20 +2,30 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"os"
 	"strings"
 
+	"github.com/FlameInTheDark/gochat/internal/configutil"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	ServerAddress string   `yaml:"server_address" env-default:":3300"`
-	AuthSecret    string   `yaml:"auth_secret" env:"AUTH_SECRET" env-required:"true"`
-	STUNServers   []string `yaml:"stun_servers" env:"STUN_SERVERS" env-separator:"," env-default:"stun:stun.l.google.com:19302"`
-	Region        string   `yaml:"region" env:"SFU_REGION" env-default:"global"`
-	PublicBaseURL string   `yaml:"public_base_url" env:"SFU_PUBLIC_BASE_URL" env-required:"true"`
-	ICEPublicIP   string   `yaml:"ice_public_ip" env:"SFU_ICE_PUBLIC_IP"`
+	ServerAddress         string   `yaml:"server_address" env-default:":3300"`
+	AuthSecret            string   `yaml:"auth_secret" env:"AUTH_SECRET" env-required:"true"`
+	AuthSecretEnforcement string   `yaml:"auth_secret_enforcement" env:"AUTH_SECRET_ENFORCEMENT" env-default:"warn"`
+	STUNServers           []string `yaml:"stun_servers" env:"STUN_SERVERS" env-separator:"," env-default:"stun:stun.l.google.com:19302"`
+	Region                string   `yaml:"region" env:"SFU_REGION" env-default:"global"`
+	PublicBaseURL         string   `yaml:"public_base_url" env:"SFU_PUBLIC_BASE_URL" env-required:"true"`
+	ICEPublicIP           string   `yaml:"ice_public_ip" env:"SFU_ICE_PUBLIC_IP"`
+	// Optional DTLS certificate/key pair for WebRTC peer connections. Provide
+	// either the PEM values directly or file paths for both halves of the pair.
+	// When left empty, the SFU generates a self-signed certificate at startup.
+	DTLSCertificatePEM  string `yaml:"dtls_certificate_pem" env:"SFU_DTLS_CERTIFICATE_PEM"`
+	DTLSPrivateKeyPEM   string `yaml:"dtls_private_key_pem" env:"SFU_DTLS_PRIVATE_KEY_PEM"`
+	DTLSCertificateFile string `yaml:"dtls_certificate_file" env:"SFU_DTLS_CERTIFICATE_FILE"`
+	DTLSPrivateKeyFile  string `yaml:"dtls_private_key_file" env:"SFU_DTLS_PRIVATE_KEY_FILE"`
 	// Discovery
 	WebhookURL   string `yaml:"webhook_url" env:"WEBHOOK_URL" env-required:"true"`
 	WebhookToken string `yaml:"webhook_token" env:"WEBHOOK_TOKEN" env-required:"true"`
@@ -69,6 +79,10 @@ func LoadConfig() (*Config, error) {
 		if verr := cfg.Validate(); verr != nil {
 			return nil, verr
 		}
+		if err := configutil.ValidateAuthSecretWithMode(cfg.AuthSecret, cfg.AuthSecretEnforcement); err != nil {
+			return nil, err
+		}
+		configutil.WarnWeakAuthSecret(slog.Default(), cfg.AuthSecret, "sfu")
 		return &cfg, nil
 	}
 	if rerr := cleanenv.ReadEnv(&cfg); rerr != nil {
@@ -77,6 +91,10 @@ func LoadConfig() (*Config, error) {
 	if verr := cfg.Validate(); verr != nil {
 		return nil, verr
 	}
+	if err := configutil.ValidateAuthSecretWithMode(cfg.AuthSecret, cfg.AuthSecretEnforcement); err != nil {
+		return nil, err
+	}
+	configutil.WarnWeakAuthSecret(slog.Default(), cfg.AuthSecret, "sfu")
 	return &cfg, nil
 }
 
@@ -89,7 +107,9 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("ice_public_ip must be a valid IP address")
 		}
 	}
-
+	if err := c.validateDTLSConfig(); err != nil {
+		return err
+	}
 	start, end := c.UDPPortRangeStart, c.UDPPortRangeEnd
 	if start == 0 && end == 0 {
 		return nil
@@ -103,6 +123,28 @@ func (c *Config) Validate() error {
 	if start > end {
 		return fmt.Errorf("udp_port_range_start must be less than or equal to udp_port_range_end")
 	}
+	return nil
+}
+
+func (c *Config) validateDTLSConfig() error {
+	inlineCert := strings.TrimSpace(c.DTLSCertificatePEM)
+	inlineKey := strings.TrimSpace(c.DTLSPrivateKeyPEM)
+	fileCert := strings.TrimSpace(c.DTLSCertificateFile)
+	fileKey := strings.TrimSpace(c.DTLSPrivateKeyFile)
+
+	hasInline := inlineCert != "" || inlineKey != ""
+	hasFiles := fileCert != "" || fileKey != ""
+
+	if hasInline && hasFiles {
+		return fmt.Errorf("configure dtls certificate using either pem values or file paths, not both")
+	}
+	if hasInline && (inlineCert == "" || inlineKey == "") {
+		return fmt.Errorf("dtls_certificate_pem and dtls_private_key_pem must both be set")
+	}
+	if hasFiles && (fileCert == "" || fileKey == "") {
+		return fmt.Errorf("dtls_certificate_file and dtls_private_key_file must both be set")
+	}
+
 	return nil
 }
 

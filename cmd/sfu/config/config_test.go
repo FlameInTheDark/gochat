@@ -107,6 +107,52 @@ func TestValidateRejectsInvalidICEPublicIP(t *testing.T) {
 	}
 }
 
+func TestValidateRejectsPartialInlineDTLSConfig(t *testing.T) {
+	cfg := &Config{DTLSCertificatePEM: "-----BEGIN CERTIFICATE-----\n..."}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected partial inline dtls config to fail validation")
+	}
+}
+
+func TestValidateRejectsPartialDTLSFileConfig(t *testing.T) {
+	cfg := &Config{DTLSCertificateFile: "server.crt"}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected partial dtls file config to fail validation")
+	}
+}
+
+func TestValidateRejectsMixedDTLSConfigSources(t *testing.T) {
+	cfg := &Config{
+		DTLSCertificatePEM:  "-----BEGIN CERTIFICATE-----\n...",
+		DTLSPrivateKeyPEM:   "-----BEGIN PRIVATE KEY-----\n...",
+		DTLSCertificateFile: "server.crt",
+		DTLSPrivateKeyFile:  "server.key",
+	}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected mixed dtls config sources to fail validation")
+	}
+}
+
+func TestValidateAcceptsInlineDTLSConfig(t *testing.T) {
+	cfg := &Config{
+		DTLSCertificatePEM: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+		DTLSPrivateKeyPEM:  "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----",
+	}
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+}
+
+func TestValidateAcceptsDTLSFileConfig(t *testing.T) {
+	cfg := &Config{
+		DTLSCertificateFile: "server.crt",
+		DTLSPrivateKeyFile:  "server.key",
+	}
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+}
+
 func getenvOrEmpty(key string) string {
 	return os.Getenv(key)
 }

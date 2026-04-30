@@ -34,6 +34,7 @@ type Config struct {
 	ResendAPIKey               string `yaml:"resend_api_key" env:"RESEND_API_KEY" env-default:""`
 	DashaMailAPIKey            string `yaml:"dashamail_api_key" env:"DASHAMAIL_API_KEY" env-default:""`
 	AuthSecret                 string `yaml:"auth_secret" env:"AUTH_SECRET"`
+	AuthSecretEnforcement      string `yaml:"auth_secret_enforcement" env:"AUTH_SECRET_ENFORCEMENT" env-default:"warn"`
 	MFAEncryptionKey           string `yaml:"mfa_encryption_key" env:"MFA_ENCRYPTION_KEY" env-default:""`
 	Swagger                    bool   `yaml:"swagger" env:"SWAGGER" env-default:"false"`
 	KeyDB                      string `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
@@ -55,7 +56,7 @@ func LoadConfig(logger *slog.Logger) (*Config, error) {
 	if err := validator.New().Struct(&config); err != nil {
 		return nil, err
 	}
-	if err := configutil.ValidateAuthSecret(config.AuthSecret); err != nil {
+	if err := configutil.ValidateAuthSecretWithMode(config.AuthSecret, config.AuthSecretEnforcement); err != nil {
 		return nil, err
 	}
 	configutil.WarnWeakAuthSecret(logger, config.AuthSecret, "auth")

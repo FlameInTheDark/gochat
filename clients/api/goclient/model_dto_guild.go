@@ -32,6 +32,8 @@ type DtoGuild struct {
 	Permissions *int32 `json:"permissions,omitempty"`
 	// Whether the guild is public
 	Public *bool `json:"public,omitempty"`
+	// System notification channel ID
+	SystemChannelId *int32 `json:"system_channel_id,omitempty"`
 }
 
 // NewDtoGuild instantiates a new DtoGuild object
@@ -247,6 +249,38 @@ func (o *DtoGuild) SetPublic(v bool) {
 	o.Public = &v
 }
 
+// GetSystemChannelId returns the SystemChannelId field value if set, zero value otherwise.
+func (o *DtoGuild) GetSystemChannelId() int32 {
+	if o == nil || IsNil(o.SystemChannelId) {
+		var ret int32
+		return ret
+	}
+	return *o.SystemChannelId
+}
+
+// GetSystemChannelIdOk returns a tuple with the SystemChannelId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoGuild) GetSystemChannelIdOk() (*int32, bool) {
+	if o == nil || IsNil(o.SystemChannelId) {
+		return nil, false
+	}
+	return o.SystemChannelId, true
+}
+
+// HasSystemChannelId returns a boolean if a field has been set.
+func (o *DtoGuild) HasSystemChannelId() bool {
+	if o != nil && !IsNil(o.SystemChannelId) {
+		return true
+	}
+
+	return false
+}
+
+// SetSystemChannelId gets a reference to the given int32 and assigns it to the SystemChannelId field.
+func (o *DtoGuild) SetSystemChannelId(v int32) {
+	o.SystemChannelId = &v
+}
+
 func (o DtoGuild) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -274,6 +308,9 @@ func (o DtoGuild) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Public) {
 		toSerialize["public"] = o.Public
+	}
+	if !IsNil(o.SystemChannelId) {
+		toSerialize["system_channel_id"] = o.SystemChannelId
 	}
 	return toSerialize, nil
 }

@@ -28,6 +28,13 @@ func (q *NatsQueue) Close() error {
 	return nil
 }
 
+func (q *NatsQueue) Conn() *nq.Conn {
+	if q == nil {
+		return nil
+	}
+	return q.conn
+}
+
 func (q *NatsQueue) Ping(ctx context.Context) error {
 	if ctx == nil {
 		return context.Canceled

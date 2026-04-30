@@ -989,8 +989,10 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 func (e *entity) SetUserSettings(c *fiber.Ctx) error {
 	reqLog := observability.LoggerFromFiber(c, e.log)
 
+	body := c.Body()
+	devicesProvided := requestIncludesSettingsField(body, "devices")
 	var req model.UserSettingsData
-	if err := json.Unmarshal(c.Body(), &req); err != nil {
+	if err := json.Unmarshal(body, &req); err != nil {
 		reqLog.Error("failed to parse request body", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseRequestBody)
 	}
@@ -1011,7 +1013,7 @@ func (e *entity) SetUserSettings(c *fiber.Ctx) error {
 	if err != nil {
 		return helper.HttpDbError(err, ErrUnableToGetUserSettings)
 	}
-	req = mergeStoredDeviceSettings(current, req, deviceKey)
+	req = mergeStoredDeviceSettings(current, req, deviceKey, devicesProvided)
 
 	if err := e.uset.SetUserSettings(c.UserContext(), user.Id, req); err != nil {
 		return helper.HttpDbError(err, ErrUnableToSetUserSettings)

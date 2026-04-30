@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	daveserver "github.com/FlameInTheDark/go-dave/server"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/pion/sdp/v3"
 	"github.com/pion/webrtc/v4"
@@ -17,7 +18,6 @@ import (
 	voicev2 "github.com/FlameInTheDark/gochat/cmd/sfu/signaling/v2"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
-	"github.com/FlameInTheDark/gochat/internal/voice/dave"
 )
 
 func (a *App) authorizeJoinFields(channel helper.StringInt64, token string) (int64, int64, *int64, int64, bool, error) {
@@ -152,20 +152,20 @@ func parseVoiceGatewaySDPType(raw string, fallback webrtc.SDPType) webrtc.SDPTyp
 	}
 }
 
-func (a *App) buildDAVEParticipant(session *signalV2Session) dave.Participant {
-	var identityKey *dave.IdentityKey
+func (a *App) buildDAVEParticipant(session *signalV2Session) daveserver.Participant {
+	var identityKey *daveserver.IdentityKey
 	if session.identityKey != nil {
-		identityKey = &dave.IdentityKey{
+		identityKey = &daveserver.IdentityKey{
 			Type:      session.identityKey.Type,
 			PublicKey: append([]byte(nil), session.identityKey.PublicKey...),
 			Version:   session.identityKey.Version,
 		}
 	}
-	return dave.Participant{
+	return daveserver.Participant{
 		SessionID:                 session.sessionID,
 		UserID:                    session.userID,
 		ChannelID:                 session.channelID,
-		SignalVersion:             signalProtocolVersion2,
+		SignalVersion:             daveserver.SignalProtocolVersion,
 		DAVESupported:             session.supportsDAVE,
 		SupportsEncodedTransforms: session.supportsEncodedTransforms,
 		MaxDAVEProtocolVersion:    session.maxDAVEProtocolVersion,

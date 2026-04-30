@@ -11,7 +11,7 @@ It focuses on the frontend implementation shape:
 - how to handle WebRTC bootstrap and later renegotiation
 - how to wire DAVE encoded transforms without coupling the whole app to MLS details
 
-For the full wire contract, also read [Connection Protocol](ConnectionProtocol.md), [SFU WebSocket Protocol](SFUProtocol.md), and [Voice End-to-End Encryption](VoiceEncryption.md).
+For the full wire contract, also read [Connection Protocol](ConnectionProtocol.md), [DTLS Transport Security](DTLS.md), [SFU WebSocket Protocol](SFUProtocol.md), and [Voice End-to-End Encryption](VoiceEncryption.md).
 
 ## Use `v=2` For New React Clients
 
@@ -354,6 +354,25 @@ One important `v=2` rule:
 
 - do not send separate candidate packets
 - wait for ICE gathering to complete, then send the full SDP in `Select Protocol (1)`
+
+### DTLS Expectations In The Frontend
+
+DTLS is not a separate API that the React client has to drive manually.
+
+What the frontend should do:
+
+- build `RTCPeerConnection` from `Ready.ice_servers`
+- exchange SDP normally through `Select Protocol (1)` and `Session Description (4)`
+- pass the browser-generated SDP through without removing DTLS fields
+- let the browser complete the DTLS handshake internally after `setRemoteDescription(...)`
+
+What the frontend should not do:
+
+- do not load the SFU PEM files into browser code
+- do not try to pin the generated SFU certificate from JavaScript
+- do not strip `a=fingerprint` or `a=setup` lines from SDP
+
+For the transport-layer model and operational setup, see [DTLS Transport Security](DTLS.md).
 
 Recommended helpers:
 

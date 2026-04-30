@@ -955,6 +955,12 @@ export interface DtoGuild {
      * @memberof DtoGuild
      */
     'public'?: boolean;
+    /**
+     * System notification channel ID
+     * @type {number}
+     * @memberof DtoGuild
+     */
+    'system_channel_id'?: number;
 }
 /**
  * 
@@ -1976,6 +1982,56 @@ export interface GuildCreateInviteRequest {
 /**
  * 
  * @export
+ * @interface GuildCreateVoiceStreamRequest
+ */
+export interface GuildCreateVoiceStreamRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildCreateVoiceStreamRequest
+     */
+    'audio_mode'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildCreateVoiceStreamRequest
+     */
+    'source_type'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface GuildCreateVoiceStreamResponse
+ */
+export interface GuildCreateVoiceStreamResponse {
+    /**
+     * 
+     * @type {GuildVoiceStreamSummary}
+     * @memberof GuildCreateVoiceStreamResponse
+     */
+    'stream'?: GuildVoiceStreamSummary;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildCreateVoiceStreamResponse
+     */
+    'stream_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildCreateVoiceStreamResponse
+     */
+    'stream_token'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildCreateVoiceStreamResponse
+     */
+    'stream_url'?: string;
+}
+/**
+ * 
+ * @export
  * @interface GuildJoinVoiceResponse
  */
 export interface GuildJoinVoiceResponse {
@@ -1991,6 +2047,31 @@ export interface GuildJoinVoiceResponse {
      * @memberof GuildJoinVoiceResponse
      */
     'sfu_url'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface GuildJoinVoiceStreamResponse
+ */
+export interface GuildJoinVoiceStreamResponse {
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildJoinVoiceStreamResponse
+     */
+    'stream_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildJoinVoiceStreamResponse
+     */
+    'stream_token'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildJoinVoiceStreamResponse
+     */
+    'stream_url'?: string;
 }
 /**
  * 
@@ -2237,6 +2318,49 @@ export interface GuildUpdateGuildRequest {
      * @memberof GuildUpdateGuildRequest
      */
     'public'?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface GuildVoiceStreamSummary
+ */
+export interface GuildVoiceStreamSummary {
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildVoiceStreamSummary
+     */
+    'audio_mode'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildVoiceStreamSummary
+     */
+    'channel_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildVoiceStreamSummary
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildVoiceStreamSummary
+     */
+    'owner_user_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildVoiceStreamSummary
+     */
+    'source_type'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildVoiceStreamSummary
+     */
+    'started_at'?: number;
 }
 /**
  * 
@@ -2509,10 +2633,22 @@ export interface ModelDevices {
     'echo_cancellation'?: boolean;
     /**
      * 
+     * @type {string}
+     * @memberof ModelDevices
+     */
+    'input_mode'?: string;
+    /**
+     * 
      * @type {boolean}
      * @memberof ModelDevices
      */
     'noise_suppression'?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelDevices
+     */
+    'push_to_talk_key'?: string;
     /**
      * 
      * @type {string}
@@ -6293,6 +6429,172 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
+         * Returns the currently active streams for a voice channel.
+         * @summary List active voice-channel streams
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdVoiceChannelIdStreamsGet: async (guildId: number, channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdVoiceChannelIdStreamsGet', 'guildId', guildId)
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('guildGuildIdVoiceChannelIdStreamsGet', 'channelId', channelId)
+            const localVarPath = `/guild/{guild_id}/voice/{channel_id}/streams`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Creates or resumes the caller\'s screen-share stream for the voice channel.
+         * @summary Start a voice-channel stream
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {GuildCreateVoiceStreamRequest} request Stream start payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdVoiceChannelIdStreamsPost: async (guildId: number, channelId: number, request: GuildCreateVoiceStreamRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdVoiceChannelIdStreamsPost', 'guildId', guildId)
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('guildGuildIdVoiceChannelIdStreamsPost', 'channelId', channelId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdVoiceChannelIdStreamsPost', 'request', request)
+            const localVarPath = `/guild/{guild_id}/voice/{channel_id}/streams`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Stops the caller\'s active stream in the voice channel.
+         * @summary Stop a voice-channel stream
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} streamId Stream ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdVoiceChannelIdStreamsStreamIdDelete: async (guildId: number, channelId: number, streamId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdVoiceChannelIdStreamsStreamIdDelete', 'guildId', guildId)
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('guildGuildIdVoiceChannelIdStreamsStreamIdDelete', 'channelId', channelId)
+            // verify required parameter 'streamId' is not null or undefined
+            assertParamExists('guildGuildIdVoiceChannelIdStreamsStreamIdDelete', 'streamId', streamId)
+            const localVarPath = `/guild/{guild_id}/voice/{channel_id}/streams/{stream_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"stream_id"}}`, encodeURIComponent(String(streamId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Returns receive-only stream signaling info for an active voice-channel stream.
+         * @summary Join a voice-channel stream as viewer
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} streamId Stream ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost: async (guildId: number, channelId: number, streamId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost', 'guildId', guildId)
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost', 'channelId', channelId)
+            // verify required parameter 'streamId' is not null or undefined
+            assertParamExists('guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost', 'streamId', streamId)
+            const localVarPath = `/guild/{guild_id}/voice/{channel_id}/streams/{stream_id}/join`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"stream_id"}}`, encodeURIComponent(String(streamId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Move a member to another voice channel and send them connection info (SFU URL + token). Requires administrator or PermVoiceMoveMembers.
          * @summary Move member to voice channel
          * @param {number} guildId Guild ID
@@ -6796,6 +7098,65 @@ export const GuildApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Returns the currently active streams for a voice channel.
+         * @summary List active voice-channel streams
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdVoiceChannelIdStreamsGet(guildId: number, channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<GuildVoiceStreamSummary>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdVoiceChannelIdStreamsGet(guildId, channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdVoiceChannelIdStreamsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Creates or resumes the caller\'s screen-share stream for the voice channel.
+         * @summary Start a voice-channel stream
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {GuildCreateVoiceStreamRequest} request Stream start payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdVoiceChannelIdStreamsPost(guildId: number, channelId: number, request: GuildCreateVoiceStreamRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildCreateVoiceStreamResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdVoiceChannelIdStreamsPost(guildId, channelId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdVoiceChannelIdStreamsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Stops the caller\'s active stream in the voice channel.
+         * @summary Stop a voice-channel stream
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} streamId Stream ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdVoiceChannelIdStreamsStreamIdDelete(guildId: number, channelId: number, streamId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdVoiceChannelIdStreamsStreamIdDelete(guildId, channelId, streamId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdVoiceChannelIdStreamsStreamIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Returns receive-only stream signaling info for an active voice-channel stream.
+         * @summary Join a voice-channel stream as viewer
+         * @param {number} guildId Guild ID
+         * @param {number} channelId Channel ID
+         * @param {number} streamId Stream ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost(guildId: number, channelId: number, streamId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildJoinVoiceStreamResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost(guildId, channelId, streamId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Move a member to another voice channel and send them connection info (SFU URL + token). Requires administrator or PermVoiceMoveMembers.
          * @summary Move member to voice channel
          * @param {number} guildId Guild ID
@@ -7133,6 +7494,46 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.guildGuildIdVoiceChannelIdRegionPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
+         * Returns the currently active streams for a voice channel.
+         * @summary List active voice-channel streams
+         * @param {GuildApiGuildGuildIdVoiceChannelIdStreamsGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdVoiceChannelIdStreamsGet(requestParameters: GuildApiGuildGuildIdVoiceChannelIdStreamsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<GuildVoiceStreamSummary>> {
+            return localVarFp.guildGuildIdVoiceChannelIdStreamsGet(requestParameters.guildId, requestParameters.channelId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Creates or resumes the caller\'s screen-share stream for the voice channel.
+         * @summary Start a voice-channel stream
+         * @param {GuildApiGuildGuildIdVoiceChannelIdStreamsPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdVoiceChannelIdStreamsPost(requestParameters: GuildApiGuildGuildIdVoiceChannelIdStreamsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GuildCreateVoiceStreamResponse> {
+            return localVarFp.guildGuildIdVoiceChannelIdStreamsPost(requestParameters.guildId, requestParameters.channelId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Stops the caller\'s active stream in the voice channel.
+         * @summary Stop a voice-channel stream
+         * @param {GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdVoiceChannelIdStreamsStreamIdDelete(requestParameters: GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.guildGuildIdVoiceChannelIdStreamsStreamIdDelete(requestParameters.guildId, requestParameters.channelId, requestParameters.streamId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Returns receive-only stream signaling info for an active voice-channel stream.
+         * @summary Join a voice-channel stream as viewer
+         * @param {GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost(requestParameters: GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GuildJoinVoiceStreamResponse> {
+            return localVarFp.guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost(requestParameters.guildId, requestParameters.channelId, requestParameters.streamId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Move a member to another voice channel and send them connection info (SFU URL + token). Requires administrator or PermVoiceMoveMembers.
          * @summary Move member to voice channel
          * @param {GuildApiGuildGuildIdVoiceMovePostRequest} requestParameters Request parameters.
@@ -7460,6 +7861,46 @@ export interface GuildApiInterface {
      * @memberof GuildApiInterface
      */
     guildGuildIdVoiceChannelIdRegionPatch(requestParameters: GuildApiGuildGuildIdVoiceChannelIdRegionPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<GuildSetVoiceRegionResponse>;
+
+    /**
+     * Returns the currently active streams for a voice channel.
+     * @summary List active voice-channel streams
+     * @param {GuildApiGuildGuildIdVoiceChannelIdStreamsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdVoiceChannelIdStreamsGet(requestParameters: GuildApiGuildGuildIdVoiceChannelIdStreamsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<GuildVoiceStreamSummary>>;
+
+    /**
+     * Creates or resumes the caller\'s screen-share stream for the voice channel.
+     * @summary Start a voice-channel stream
+     * @param {GuildApiGuildGuildIdVoiceChannelIdStreamsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdVoiceChannelIdStreamsPost(requestParameters: GuildApiGuildGuildIdVoiceChannelIdStreamsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GuildCreateVoiceStreamResponse>;
+
+    /**
+     * Stops the caller\'s active stream in the voice channel.
+     * @summary Stop a voice-channel stream
+     * @param {GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdVoiceChannelIdStreamsStreamIdDelete(requestParameters: GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * Returns receive-only stream signaling info for an active voice-channel stream.
+     * @summary Join a voice-channel stream as viewer
+     * @param {GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost(requestParameters: GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GuildJoinVoiceStreamResponse>;
 
     /**
      * Move a member to another voice channel and send them connection info (SFU URL + token). Requires administrator or PermVoiceMoveMembers.
@@ -8093,6 +8534,111 @@ export interface GuildApiGuildGuildIdVoiceChannelIdRegionPatchRequest {
 }
 
 /**
+ * Request parameters for guildGuildIdVoiceChannelIdStreamsGet operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdVoiceChannelIdStreamsGetRequest
+ */
+export interface GuildApiGuildGuildIdVoiceChannelIdStreamsGetRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdVoiceChannelIdStreamsGet
+     */
+    readonly guildId: number
+
+    /**
+     * Channel ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdVoiceChannelIdStreamsGet
+     */
+    readonly channelId: number
+}
+
+/**
+ * Request parameters for guildGuildIdVoiceChannelIdStreamsPost operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdVoiceChannelIdStreamsPostRequest
+ */
+export interface GuildApiGuildGuildIdVoiceChannelIdStreamsPostRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdVoiceChannelIdStreamsPost
+     */
+    readonly guildId: number
+
+    /**
+     * Channel ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdVoiceChannelIdStreamsPost
+     */
+    readonly channelId: number
+
+    /**
+     * Stream start payload
+     * @type {GuildCreateVoiceStreamRequest}
+     * @memberof GuildApiGuildGuildIdVoiceChannelIdStreamsPost
+     */
+    readonly request: GuildCreateVoiceStreamRequest
+}
+
+/**
+ * Request parameters for guildGuildIdVoiceChannelIdStreamsStreamIdDelete operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest
+ */
+export interface GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdDelete
+     */
+    readonly guildId: number
+
+    /**
+     * Channel ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdDelete
+     */
+    readonly channelId: number
+
+    /**
+     * Stream ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdDelete
+     */
+    readonly streamId: number
+}
+
+/**
+ * Request parameters for guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest
+ */
+export interface GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest {
+    /**
+     * Guild ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost
+     */
+    readonly guildId: number
+
+    /**
+     * Channel ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost
+     */
+    readonly channelId: number
+
+    /**
+     * Stream ID
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost
+     */
+    readonly streamId: number
+}
+
+/**
  * Request parameters for guildGuildIdVoiceMovePost operation in GuildApi.
  * @export
  * @interface GuildApiGuildGuildIdVoiceMovePostRequest
@@ -8492,6 +9038,54 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      */
     public guildGuildIdVoiceChannelIdRegionPatch(requestParameters: GuildApiGuildGuildIdVoiceChannelIdRegionPatchRequest, options?: RawAxiosRequestConfig) {
         return GuildApiFp(this.configuration).guildGuildIdVoiceChannelIdRegionPatch(requestParameters.guildId, requestParameters.channelId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Returns the currently active streams for a voice channel.
+     * @summary List active voice-channel streams
+     * @param {GuildApiGuildGuildIdVoiceChannelIdStreamsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdVoiceChannelIdStreamsGet(requestParameters: GuildApiGuildGuildIdVoiceChannelIdStreamsGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdVoiceChannelIdStreamsGet(requestParameters.guildId, requestParameters.channelId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Creates or resumes the caller\'s screen-share stream for the voice channel.
+     * @summary Start a voice-channel stream
+     * @param {GuildApiGuildGuildIdVoiceChannelIdStreamsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdVoiceChannelIdStreamsPost(requestParameters: GuildApiGuildGuildIdVoiceChannelIdStreamsPostRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdVoiceChannelIdStreamsPost(requestParameters.guildId, requestParameters.channelId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Stops the caller\'s active stream in the voice channel.
+     * @summary Stop a voice-channel stream
+     * @param {GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdVoiceChannelIdStreamsStreamIdDelete(requestParameters: GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdVoiceChannelIdStreamsStreamIdDelete(requestParameters.guildId, requestParameters.channelId, requestParameters.streamId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Returns receive-only stream signaling info for an active voice-channel stream.
+     * @summary Join a voice-channel stream as viewer
+     * @param {GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost(requestParameters: GuildApiGuildGuildIdVoiceChannelIdStreamsStreamIdJoinPostRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdVoiceChannelIdStreamsStreamIdJoinPost(requestParameters.guildId, requestParameters.channelId, requestParameters.streamId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

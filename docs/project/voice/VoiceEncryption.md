@@ -10,6 +10,7 @@ GoChat now uses a DAVE control plane on the v2 voice gateway:
 - binary DAVE opcodes `25-30` for MLS-related payload delivery
 - protocol version `0` for transport-only media
 - protocol version `1` for DAVE-enabled media sessions
+- shared coordinator and binary codec logic from [`github.com/FlameInTheDark/go-dave/server`](https://github.com/FlameInTheDark/go-dave)
 
 ## Current Server Model
 
@@ -22,7 +23,7 @@ GoChat now uses a DAVE control plane on the v2 voice gateway:
   - recreate a DAVE group with `24/25/26/27/28/29/30/23/22`
   - downgrade to transport-only with `21/23/22`
   - resume a recent `v=2` session and return the active `dave_protocol_version`
-- binary DAVE envelopes are encoded in pure Go under `internal/voice/dave/wire`
+- binary DAVE envelopes are encoded via `github.com/FlameInTheDark/go-dave/server`
 
 ### What Is Still Deliberately Lightweight
 
@@ -83,7 +84,7 @@ The server exposes these binary opcodes:
 | `29` | Commit transition announcement |
 | `30` | Welcome for a pending member |
 
-GoChat encodes these gateway envelopes using MLS-style variable-length vectors so the wire is deterministic and testable. Golden-byte tests live under `internal/voice/dave/wire`.
+GoChat encodes these gateway envelopes using MLS-style variable-length vectors through `github.com/FlameInTheDark/go-dave/server`, where the golden-byte codec coverage now lives.
 
 ## Config
 
@@ -105,10 +106,10 @@ dave_allow_av1: false
 
 - SRTP transport encryption between client and SFU is still retained
 - DAVE sits above transport encryption at the encoded-frame layer
-- the current server includes protocol-frame helpers under `internal/voice/dave/frame`
+- protocol-frame helpers are available from `github.com/FlameInTheDark/go-dave/server`
 - the existing RTP fan-out remains the primary forwarding path
 
-The current rollout focuses on connection establishment, voice-gateway parity, and DAVE transition state. Per-receiver protocol-frame dropping during mixed capability transitions is intentionally isolated behind the new frame package so that it can be wired more deeply into fan-out without changing the public wire again.
+The current rollout focuses on connection establishment, voice-gateway parity, and DAVE transition state. GoChat still uses its existing RTP fan-out because it already layers permission checks and bitrate enforcement on top of Pion, while `go-dave/server` now owns the control plane and binary protocol helpers.
 
 ## Client Expectations
 

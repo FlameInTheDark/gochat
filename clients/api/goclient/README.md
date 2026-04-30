@@ -127,6 +127,10 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdSystemchPatch**](docs/GuildAPI.md#guildguildidsystemchpatch) | **Patch** /guild/{guild_id}/systemch | Set system messages channel
 *GuildAPI* | [**GuildGuildIdVoiceChannelIdJoinPost**](docs/GuildAPI.md#guildguildidvoicechannelidjoinpost) | **Post** /guild/{guild_id}/voice/{channel_id}/join | Join voice channel (get SFU signaling info)
 *GuildAPI* | [**GuildGuildIdVoiceChannelIdRegionPatch**](docs/GuildAPI.md#guildguildidvoicechannelidregionpatch) | **Patch** /guild/{guild_id}/voice/{channel_id}/region | Set channel voice region
+*GuildAPI* | [**GuildGuildIdVoiceChannelIdStreamsGet**](docs/GuildAPI.md#guildguildidvoicechannelidstreamsget) | **Get** /guild/{guild_id}/voice/{channel_id}/streams | List active voice-channel streams
+*GuildAPI* | [**GuildGuildIdVoiceChannelIdStreamsPost**](docs/GuildAPI.md#guildguildidvoicechannelidstreamspost) | **Post** /guild/{guild_id}/voice/{channel_id}/streams | Start a voice-channel stream
+*GuildAPI* | [**GuildGuildIdVoiceChannelIdStreamsStreamIdDelete**](docs/GuildAPI.md#guildguildidvoicechannelidstreamsstreamiddelete) | **Delete** /guild/{guild_id}/voice/{channel_id}/streams/{stream_id} | Stop a voice-channel stream
+*GuildAPI* | [**GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost**](docs/GuildAPI.md#guildguildidvoicechannelidstreamsstreamidjoinpost) | **Post** /guild/{guild_id}/voice/{channel_id}/streams/{stream_id}/join | Join a voice-channel stream as viewer
 *GuildAPI* | [**GuildGuildIdVoiceMovePost**](docs/GuildAPI.md#guildguildidvoicemovepost) | **Post** /guild/{guild_id}/voice/move | Move member to voice channel
 *GuildAPI* | [**GuildPost**](docs/GuildAPI.md#guildpost) | **Post** /guild | Create guild
 *GuildInvitesAPI* | [**GuildInvitesAcceptInviteCodePost**](docs/GuildInvitesAPI.md#guildinvitesacceptinvitecodepost) | **Post** /guild/invites/accept/{invite_code} | Accept invite and join guild
@@ -256,7 +260,10 @@ Class | Method | HTTP request | Description
  - [GuildCreateGuildRoleRequest](docs/GuildCreateGuildRoleRequest.md)
  - [GuildCreateIconRequest](docs/GuildCreateIconRequest.md)
  - [GuildCreateInviteRequest](docs/GuildCreateInviteRequest.md)
+ - [GuildCreateVoiceStreamRequest](docs/GuildCreateVoiceStreamRequest.md)
+ - [GuildCreateVoiceStreamResponse](docs/GuildCreateVoiceStreamResponse.md)
  - [GuildJoinVoiceResponse](docs/GuildJoinVoiceResponse.md)
+ - [GuildJoinVoiceStreamResponse](docs/GuildJoinVoiceStreamResponse.md)
  - [GuildMoveMemberRequest](docs/GuildMoveMemberRequest.md)
  - [GuildMoveMemberResponse](docs/GuildMoveMemberResponse.md)
  - [GuildPatchGuildChannelOrderRequest](docs/GuildPatchGuildChannelOrderRequest.md)
@@ -269,6 +276,7 @@ Class | Method | HTTP request | Description
  - [GuildSetVoiceRegionResponse](docs/GuildSetVoiceRegionResponse.md)
  - [GuildUpdateEmojiRequest](docs/GuildUpdateEmojiRequest.md)
  - [GuildUpdateGuildRequest](docs/GuildUpdateGuildRequest.md)
+ - [GuildVoiceStreamSummary](docs/GuildVoiceStreamSummary.md)
  - [MessageCreateThreadRequest](docs/MessageCreateThreadRequest.md)
  - [MessageSendMessageRequest](docs/MessageSendMessageRequest.md)
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)

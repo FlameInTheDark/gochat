@@ -125,13 +125,18 @@ func (f *fakeRoleRepo) rolesForGuild(guildId int64) []model.Role {
 
 type fakeCache struct {
 	testutil.Noop
-	jsonValues map[string][]byte
-	deleted    []string
-	deleteCh   chan string
+	jsonValues   map[string][]byte
+	stringValues map[string]string
+	hashValues   map[string]map[string]string
+	deleted      []string
+	deleteCh     chan string
 }
 
 func (f *fakeCache) Delete(ctx context.Context, key string) error {
 	f.deleted = append(f.deleted, key)
+	delete(f.stringValues, key)
+	delete(f.jsonValues, key)
+	delete(f.hashValues, key)
 	if f.deleteCh != nil {
 		select {
 		case f.deleteCh <- key:
@@ -139,6 +144,21 @@ func (f *fakeCache) Delete(ctx context.Context, key string) error {
 		}
 	}
 	return nil
+}
+
+func (f *fakeCache) Set(ctx context.Context, key, val string) error {
+	if f.stringValues == nil {
+		f.stringValues = make(map[string]string)
+	}
+	f.stringValues[key] = val
+	return nil
+}
+
+func (f *fakeCache) Get(ctx context.Context, key string) (string, error) {
+	if val, ok := f.stringValues[key]; ok {
+		return val, nil
+	}
+	return "", errors.New("cache miss")
 }
 
 func (f *fakeCache) SetJSON(ctx context.Context, key string, val interface{}) error {
@@ -170,6 +190,46 @@ func (f *fakeCache) GetJSON(ctx context.Context, key string, v interface{}) erro
 		return errors.New("cache miss")
 	}
 	return json.Unmarshal(raw, v)
+}
+
+func (f *fakeCache) HGet(ctx context.Context, key, field string) (string, error) {
+	if values, ok := f.hashValues[key]; ok {
+		if val, exists := values[field]; exists {
+			return val, nil
+		}
+	}
+	return "", nil
+}
+
+func (f *fakeCache) HSet(ctx context.Context, key, field, value string) error {
+	if f.hashValues == nil {
+		f.hashValues = make(map[string]map[string]string)
+	}
+	if f.hashValues[key] == nil {
+		f.hashValues[key] = make(map[string]string)
+	}
+	f.hashValues[key][field] = value
+	return nil
+}
+
+func (f *fakeCache) HDel(ctx context.Context, key, field string) error {
+	if f.hashValues != nil {
+		if values, ok := f.hashValues[key]; ok {
+			delete(values, field)
+		}
+	}
+	return nil
+}
+
+func (f *fakeCache) HGetAll(ctx context.Context, key string) (map[string]string, error) {
+	if f.hashValues == nil || f.hashValues[key] == nil {
+		return map[string]string{}, nil
+	}
+	result := make(map[string]string, len(f.hashValues[key]))
+	for field, value := range f.hashValues[key] {
+		result[field] = value
+	}
+	return result, nil
 }
 
 type fakeRoleTransport struct {

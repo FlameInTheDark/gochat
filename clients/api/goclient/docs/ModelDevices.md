@@ -12,7 +12,9 @@ Name | Type | Description | Notes
 **AutoGainControl** | Pointer to **bool** |  | [optional] 
 **DenoiserType** | Pointer to **string** |  | [optional] 
 **EchoCancellation** | Pointer to **bool** |  | [optional] 
+**InputMode** | Pointer to **string** |  | [optional] 
 **NoiseSuppression** | Pointer to **bool** |  | [optional] 
+**PushToTalkKey** | Pointer to **string** |  | [optional] 
 **VideoDevice** | Pointer to **string** |  | [optional] 
 
 ## Methods
@@ -234,6 +236,31 @@ SetEchoCancellation sets EchoCancellation field to given value.
 
 HasEchoCancellation returns a boolean if a field has been set.
 
+### GetInputMode
+
+`func (o *ModelDevices) GetInputMode() string`
+
+GetInputMode returns the InputMode field if non-nil, zero value otherwise.
+
+### GetInputModeOk
+
+`func (o *ModelDevices) GetInputModeOk() (*string, bool)`
+
+GetInputModeOk returns a tuple with the InputMode field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetInputMode
+
+`func (o *ModelDevices) SetInputMode(v string)`
+
+SetInputMode sets InputMode field to given value.
+
+### HasInputMode
+
+`func (o *ModelDevices) HasInputMode() bool`
+
+HasInputMode returns a boolean if a field has been set.
+
 ### GetNoiseSuppression
 
 `func (o *ModelDevices) GetNoiseSuppression() bool`
@@ -258,6 +285,31 @@ SetNoiseSuppression sets NoiseSuppression field to given value.
 `func (o *ModelDevices) HasNoiseSuppression() bool`
 
 HasNoiseSuppression returns a boolean if a field has been set.
+
+### GetPushToTalkKey
+
+`func (o *ModelDevices) GetPushToTalkKey() string`
+
+GetPushToTalkKey returns the PushToTalkKey field if non-nil, zero value otherwise.
+
+### GetPushToTalkKeyOk
+
+`func (o *ModelDevices) GetPushToTalkKeyOk() (*string, bool)`
+
+GetPushToTalkKeyOk returns a tuple with the PushToTalkKey field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPushToTalkKey
+
+`func (o *ModelDevices) SetPushToTalkKey(v string)`
+
+SetPushToTalkKey sets PushToTalkKey field to given value.
+
+### HasPushToTalkKey
+
+`func (o *ModelDevices) HasPushToTalkKey() bool`
+
+HasPushToTalkKey returns a boolean if a field has been set.
 
 ### GetVideoDevice
 

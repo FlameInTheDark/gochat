@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/cache"
+	streammeta "github.com/FlameInTheDark/gochat/internal/stream"
 )
 
 type Store struct {
@@ -18,6 +19,7 @@ func NewStore(c cache.Cache) *Store { return &Store{c: c} }
 func sessionsKey(userID int64) string { return fmt.Sprintf("presence:sessions:%d", userID) }
 func aggKey(userID int64) string      { return fmt.Sprintf("presence:agg:%d", userID) }
 func overrideKey(userID int64) string { return fmt.Sprintf("presence:override:%d", userID) }
+func streamKey(userID int64) string   { return fmt.Sprintf("presence:stream:%d", userID) }
 
 // GetSession returns a single session presence record if it exists.
 func (s *Store) GetSession(ctx context.Context, userID int64, sessionID string) (SessionPresence, bool, error) {
@@ -87,8 +89,8 @@ func (s *Store) SetSessionVoiceChannel(ctx context.Context, userID int64, sessio
 	return nil
 }
 
-// SetSessionVoiceState sets the session's mute/deafen state and refreshes TTLs.
-func (s *Store) SetSessionVoiceState(ctx context.Context, userID int64, sessionID string, mute, deafen bool, ttlSeconds int64) error {
+// SetSessionVoiceState sets the session's voice state and refreshes TTLs.
+func (s *Store) SetSessionVoiceState(ctx context.Context, userID int64, sessionID string, mute, deafen, selfVideo bool, ttlSeconds int64) error {
 	val, err := s.c.HGet(ctx, sessionsKey(userID), sessionID)
 	var sp SessionPresence
 	if err == nil && val != "" {
@@ -99,6 +101,7 @@ func (s *Store) SetSessionVoiceState(ctx context.Context, userID int64, sessionI
 	sp.ExpiresAt = time.Now().Unix() + ttlSeconds
 	sp.Mute = mute
 	sp.Deafen = deafen
+	sp.SelfVideo = selfVideo
 	b, _ := json.Marshal(sp)
 	if err := s.c.HSet(ctx, sessionsKey(userID), sessionID, string(b)); err != nil {
 		return err
@@ -151,7 +154,7 @@ func (s *Store) Aggregate(ctx context.Context, userID int64, nowUnix int64) (Pre
 	var bestTextUpdated int64
 	var voiceID *int64
 	var voiceIDUpdated int64
-	var mute, deafen bool
+	var mute, deafen, selfVideo bool
 	var voiceStateUpdated int64
 	for _, v := range m {
 		if v == "" {
@@ -193,13 +196,22 @@ func (s *Store) Aggregate(ctx context.Context, userID int64, nowUnix int64) (Pre
 		if sp.VoiceChannelID != nil && sp.UpdatedAt >= voiceStateUpdated {
 			mute = sp.Mute
 			deafen = sp.Deafen
+			selfVideo = sp.SelfVideo
 			voiceStateUpdated = sp.UpdatedAt
 		}
 	}
 	if !any {
-		return Presence{UserID: userID, Status: StatusOffline, Since: nowUnix, CustomStatusText: bestText, VoiceChannelID: voiceID, Mute: mute, Deafen: deafen}, false, nil
+		p := Presence{UserID: userID, Status: StatusOffline, Since: nowUnix, CustomStatusText: bestText, VoiceChannelID: voiceID, Mute: mute, Deafen: deafen, SelfVideo: selfVideo}
+		if err := s.mergeActiveStream(ctx, &p); err != nil {
+			return Presence{}, false, err
+		}
+		return p, false, nil
 	}
-	return Presence{UserID: userID, Status: best, Since: since, CustomStatusText: bestText, VoiceChannelID: voiceID, Mute: mute, Deafen: deafen}, true, nil
+	p := Presence{UserID: userID, Status: best, Since: since, CustomStatusText: bestText, VoiceChannelID: voiceID, Mute: mute, Deafen: deafen, SelfVideo: selfVideo}
+	if err := s.mergeActiveStream(ctx, &p); err != nil {
+		return Presence{}, false, err
+	}
+	return p, true, nil
 }
 
 // Get returns aggregated presence (from cache if exists; falls back to recompute).
@@ -214,6 +226,25 @@ func (s *Store) Get(ctx context.Context, userID int64) (Presence, bool, error) {
 // SetAggregated stores aggregated presence with TTL.
 func (s *Store) SetAggregated(ctx context.Context, p Presence, ttlSeconds int64) error {
 	return s.c.SetTimedJSON(ctx, aggKey(p.UserID), p, ttlSeconds)
+}
+
+func (s *Store) SetActiveStream(ctx context.Context, userID int64, stream streammeta.ActiveStream, ttlSeconds int64) error {
+	return s.c.SetTimedJSON(ctx, streamKey(userID), stream, ttlSeconds)
+}
+
+func (s *Store) ClearActiveStream(ctx context.Context, userID int64) error {
+	return s.c.Delete(ctx, streamKey(userID))
+}
+
+func (s *Store) GetActiveStream(ctx context.Context, userID int64) (*streammeta.ActiveStream, bool, error) {
+	var stream streammeta.ActiveStream
+	if err := s.c.GetJSON(ctx, streamKey(userID), &stream); err != nil {
+		return nil, false, nil
+	}
+	if stream.ID == 0 {
+		return nil, false, nil
+	}
+	return &stream, true, nil
 }
 
 // Override APIs
@@ -231,4 +262,25 @@ func (s *Store) GetOverride(ctx context.Context, userID int64) (Presence, bool, 
 		return Presence{}, false, nil
 	}
 	return p, true, nil
+}
+
+func (s *Store) mergeActiveStream(ctx context.Context, p *Presence) error {
+	if p == nil || p.UserID == 0 || p.VoiceChannelID == nil {
+		if p != nil {
+			p.ActiveStream = nil
+		}
+		return nil
+	}
+
+	stream, ok, err := s.GetActiveStream(ctx, p.UserID)
+	if err != nil {
+		return err
+	}
+	if !ok || stream == nil || stream.ChannelID != *p.VoiceChannelID {
+		p.ActiveStream = nil
+		return nil
+	}
+
+	p.ActiveStream = stream
+	return nil
 }

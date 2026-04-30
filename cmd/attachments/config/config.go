@@ -10,22 +10,23 @@ import (
 )
 
 type Config struct {
-	ApiLog            bool     `yaml:"api_log" env:"API_LOG" env-default:"true"`
-	ServerAddress     string   `yaml:"server_address" env:"SERVER_ADDRESS" env-default:":3200"`
-	AuthSecret        string   `yaml:"auth_secret" env:"AUTH_SECRET"`
-	Cluster           []string `yaml:"cluster" env:"CLUSTER" env-default:""`
-	ClusterKeyspace   string   `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
-	S3Endpoint        string   `yaml:"s3_endpoint" env:"S3_ENDPOINT" env-default:""`
-	S3AccessKeyID     string   `yaml:"s3_access_key_id" env:"S3_ACCESS_KEY_ID" env-default:""`
-	S3SecretAccessKey string   `yaml:"s3_secret_access_key" env:"S3_SECRET_ACCESS_KEY" env-default:""`
-	S3UseSSL          bool     `yaml:"s3_use_ssl" env:"S3_USE_SSL" env-default:"false"`
-	S3Bucket          string   `yaml:"s3_bucket" env:"S3_BUCKET" env-default:"gochat"`
-	S3Region          string   `yaml:"s3_region" env:"S3_REGION"`
-	S3ExternalURL     string   `yaml:"s3_external_url" env:"S3_EXTERNAL_URL"`
-	PGDSN             string   `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
-	PGRetries         int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
-	KeyDB             string   `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
-	NATSConnString    string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
+	ApiLog                bool     `yaml:"api_log" env:"API_LOG" env-default:"true"`
+	ServerAddress         string   `yaml:"server_address" env:"SERVER_ADDRESS" env-default:":3200"`
+	AuthSecret            string   `yaml:"auth_secret" env:"AUTH_SECRET"`
+	AuthSecretEnforcement string   `yaml:"auth_secret_enforcement" env:"AUTH_SECRET_ENFORCEMENT" env-default:"warn"`
+	Cluster               []string `yaml:"cluster" env:"CLUSTER" env-default:""`
+	ClusterKeyspace       string   `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
+	S3Endpoint            string   `yaml:"s3_endpoint" env:"S3_ENDPOINT" env-default:""`
+	S3AccessKeyID         string   `yaml:"s3_access_key_id" env:"S3_ACCESS_KEY_ID" env-default:""`
+	S3SecretAccessKey     string   `yaml:"s3_secret_access_key" env:"S3_SECRET_ACCESS_KEY" env-default:""`
+	S3UseSSL              bool     `yaml:"s3_use_ssl" env:"S3_USE_SSL" env-default:"false"`
+	S3Bucket              string   `yaml:"s3_bucket" env:"S3_BUCKET" env-default:"gochat"`
+	S3Region              string   `yaml:"s3_region" env:"S3_REGION"`
+	S3ExternalURL         string   `yaml:"s3_external_url" env:"S3_EXTERNAL_URL"`
+	PGDSN                 string   `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
+	PGRetries             int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
+	KeyDB                 string   `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
+	NATSConnString        string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 }
 
 func LoadConfig(logger *slog.Logger) (*Config, error) {
@@ -41,7 +42,7 @@ func LoadConfig(logger *slog.Logger) (*Config, error) {
 	if err := validator.New().Struct(&config); err != nil {
 		return nil, err
 	}
-	if err := configutil.ValidateAuthSecret(config.AuthSecret); err != nil {
+	if err := configutil.ValidateAuthSecretWithMode(config.AuthSecret, config.AuthSecretEnforcement); err != nil {
 		return nil, err
 	}
 	configutil.WarnWeakAuthSecret(logger, config.AuthSecret, "attachments")

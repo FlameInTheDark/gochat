@@ -1227,6 +1227,52 @@ func stringValue(value *string) string {
 	return *value
 }
 
+func (e *entity) requireCurrentMessageChannelAccess(ctx context.Context, channel *model.Channel, channelId, userId int64) (*int64, error) {
+	switch channel.Type {
+	case model.ChannelTypeGuild, model.ChannelTypeThread:
+		guildChannel, err := e.gc.GetGuildByChannel(ctx, channelId)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, fiber.NewError(fiber.StatusNotFound, "channel not found")
+			}
+			return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuild)
+		}
+
+		isMember, err := e.m.IsGuildMember(ctx, guildChannel.GuildId, userId)
+		if err != nil {
+			return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuild)
+		}
+		if !isMember {
+			return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		}
+
+		guildId := guildChannel.GuildId
+		return &guildId, nil
+
+	case model.ChannelTypeDM:
+		isParticipant, err := e.dmc.IsDmChannelParticipant(ctx, channelId, userId)
+		if err != nil {
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "unable to verify channel access")
+		}
+		if !isParticipant {
+			return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		}
+		return nil, nil
+
+	case model.ChannelTypeGroupDM:
+		isParticipant, err := e.gdmc.IsGroupDmParticipant(ctx, channelId, userId)
+		if err != nil {
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "unable to verify channel access")
+		}
+		if !isParticipant {
+			return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		}
+		return nil, nil
+	}
+
+	return nil, nil
+}
+
 // validateSendPermissions checks if user can send messages to the channel
 func (e *entity) validateSendPermissions(c *fiber.Ctx, channelId, userId int64) (*model.Channel, *int64, error) {
 	channel, err := e.ch.GetChannel(c.UserContext(), channelId)
@@ -1239,41 +1285,28 @@ func (e *entity) validateSendPermissions(c *fiber.Ctx, channelId, userId int64) 
 		return nil, nil, fiber.NewError(fiber.StatusBadRequest, ErrUnableToSentToThisChannel)
 	}
 
-	// Check guild permissions if it's a guild channel
-	if channel.Type == model.ChannelTypeGuild || channel.Type == model.ChannelTypeThread {
-		guildChannel, err := e.gc.GetGuildByChannel(c.UserContext(), channelId)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to get guild channel")
+	guildId, err := e.requireCurrentMessageChannelAccess(c.UserContext(), &channel, channelId, userId)
+	if err != nil {
+		return nil, nil, err
+	}
+	if guildId != nil {
+		requiredPerm := permissions.PermTextSendMessage
+		if channel.Type == model.ChannelTypeThread {
+			requiredPerm = permissions.PermTextSendMessageInThreads
+			if channel.Closed {
+				return nil, nil, fiber.NewError(fiber.StatusForbidden, ErrThreadClosed)
+			}
 		}
-
-		if !errors.Is(err, sql.ErrNoRows) {
-			isMember, err := e.m.IsGuildMember(c.UserContext(), guildChannel.GuildId, userId)
-			if err != nil {
-				return nil, nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuild)
-			}
-			if !isMember {
-				return nil, nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
-			}
-
-			requiredPerm := permissions.PermTextSendMessage
-			if channel.Type == model.ChannelTypeThread {
-				requiredPerm = permissions.PermTextSendMessageInThreads
-				if channel.Closed {
-					return nil, nil, fiber.NewError(fiber.StatusForbidden, ErrThreadClosed)
-				}
-			}
-			_, _, _, canSend, err := e.perm.ChannelPerm(c.UserContext(), guildChannel.GuildId, guildChannel.ChannelId, userId, requiredPerm)
-			if err != nil {
-				return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
-			}
-			if !canSend {
-				return nil, nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
-			}
-			return &channel, &guildChannel.GuildId, nil
+		_, _, _, canSend, err := e.perm.ChannelPerm(c.UserContext(), *guildId, channelId, userId, requiredPerm)
+		if err != nil {
+			return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
+		}
+		if !canSend {
+			return nil, nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
 		}
 	}
 
-	return &channel, nil, nil
+	return &channel, guildId, nil
 }
 
 // createAndSendMessage creates the message and handles all related operations
@@ -2061,7 +2094,9 @@ func (e *entity) GetMessages(c *fiber.Ctx) error {
 	// Hot path: latest-window request with no cursor — try cache before hitting the DB.
 	if isLatestWindowRequest(req) {
 		if msgs, ok := e.tryMessagesFromCache(c.UserContext(), channel.Id); ok {
-			return c.JSON(msgs)
+			if overlaid, ok := e.applyViewerStateToCachedMessages(c.UserContext(), user.Id, msgs); ok {
+				return c.JSON(overlaid)
+			}
 		}
 	}
 
@@ -2129,42 +2164,27 @@ func (e *entity) validateReadPermissions(c *fiber.Ctx, channelId, userId int64) 
 		return nil, nil, fiber.NewError(fiber.StatusBadRequest, ErrUnableToReadFromThisChannel)
 	}
 
-	// Check guild permissions
-	if channel.Type == model.ChannelTypeGuild || channel.Type == model.ChannelTypeThread {
-		guildChannel, err := e.gc.GetGuildByChannel(c.UserContext(), channelId)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to get guild channel")
+	guildId, err := e.requireCurrentMessageChannelAccess(c.UserContext(), &channel, channelId, userId)
+	if err != nil {
+		return nil, nil, err
+	}
+	if guildId != nil {
+		_, _, _, canRead, err := e.perm.ChannelPerm(
+			c.UserContext(),
+			*guildId,
+			channelId,
+			userId,
+			permissions.PermServerViewChannels,
+			permissions.PermTextReadMessageHistory,
+		)
+		if err != nil {
+			return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
 		}
-
-		if !errors.Is(err, sql.ErrNoRows) {
-			isMember, err := e.m.IsGuildMember(c.UserContext(), guildChannel.GuildId, userId)
-			if err != nil {
-				return nil, nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuild)
-			}
-			if !isMember {
-				return nil, nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
-			}
-
-			_, _, _, canRead, err := e.perm.ChannelPerm(
-				c.UserContext(),
-				guildChannel.GuildId,
-				guildChannel.ChannelId,
-				userId,
-				permissions.PermServerViewChannels,
-				permissions.PermTextReadMessageHistory,
-			)
-			if err != nil {
-				return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
-			}
-			if !canRead {
-				return nil, nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
-			}
-			return &channel, &guildChannel.GuildId, nil
+		if !canRead {
+			return nil, nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
 		}
 	}
-
-	// TODO: Implement DM and GroupDM permission checks
-	return &channel, nil, nil
+	return &channel, guildId, nil
 }
 
 // fetchAndBuildMessages fetches messages and builds DTOs with all related data
@@ -2550,6 +2570,10 @@ func (e *entity) validateMessageOwnership(c *fiber.Ctx, messageId, channelId, us
 	if channel.Type == model.ChannelTypeThread && channel.Closed {
 		return nil, nil, fiber.NewError(fiber.StatusForbidden, ErrThreadClosed)
 	}
+	guildId, err := e.requireCurrentMessageChannelAccess(c.UserContext(), &channel, channelId, userId)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	message, err := e.msg.GetMessage(c.UserContext(), messageId, channelId)
 	if err != nil {
@@ -2564,16 +2588,6 @@ func (e *entity) validateMessageOwnership(c *fiber.Ctx, messageId, channelId, us
 	}
 	if !model.IsEditableMessageType(model.MessageType(message.Type)) {
 		return nil, nil, fiber.NewError(fiber.StatusBadRequest, ErrMessageNotEditable)
-	}
-
-	// Get guild ID if it's a guild channel
-	var guildId *int64
-	guildChannel, err := e.gc.GetGuildByChannel(c.UserContext(), channelId)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to get guild channel")
-	}
-	if !errors.Is(err, sql.ErrNoRows) {
-		guildId = &guildChannel.GuildId
 	}
 
 	return &message, guildId, nil
@@ -2883,6 +2897,9 @@ func (e *entity) validateDeletePermission(c *fiber.Ctx, messageId, channelId, us
 	if channel.Type == model.ChannelTypeThread && channel.Closed {
 		return nil, fiber.NewError(fiber.StatusForbidden, ErrThreadClosed)
 	}
+	if _, err := e.requireCurrentMessageChannelAccess(c.UserContext(), &channel, channelId, userId); err != nil {
+		return nil, err
+	}
 
 	message, err := e.msg.GetMessage(c.UserContext(), messageId, channelId)
 	if err != nil {
@@ -3029,35 +3046,23 @@ func (e *entity) validateUploadPermissions(c *fiber.Ctx, channelId, userId int64
 
 	switch channel.Type {
 	case model.ChannelTypeGuild, model.ChannelTypeThread:
-		guildChannel, err := e.gc.GetGuildByChannel(c.UserContext(), channelId)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return fiber.NewError(fiber.StatusInternalServerError, "failed to get guild channel")
+		guildId, err := e.requireCurrentMessageChannelAccess(c.UserContext(), &channel, channelId, userId)
+		if err != nil {
+			return err
 		}
-
-		if !errors.Is(err, sql.ErrNoRows) {
-			isMember, err := e.m.IsGuildMember(c.UserContext(), guildChannel.GuildId, userId)
-			if err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuild)
-			}
-			if !isMember {
-				return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
-			}
-			if channel.Type == model.ChannelTypeThread && channel.Closed {
-				return fiber.NewError(fiber.StatusForbidden, ErrThreadClosed)
-			}
-			_, _, _, canAttach, err := e.perm.ChannelPerm(c.UserContext(), guildChannel.GuildId, guildChannel.ChannelId, userId, permissions.PermTextAttachFiles)
-			if err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
-			}
-			if !canAttach {
-				return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
-			}
+		if channel.Type == model.ChannelTypeThread && channel.Closed {
+			return fiber.NewError(fiber.StatusForbidden, ErrThreadClosed)
 		}
-	case model.ChannelTypeGroupDM:
-		// Check if user is participant in group DM
-		if channel.ParentID != nil && *channel.ParentID != userId {
-			// TODO: Implement proper group DM participant check
+		_, _, _, canAttach, err := e.perm.ChannelPerm(c.UserContext(), *guildId, channelId, userId, permissions.PermTextAttachFiles)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
+		}
+		if !canAttach {
 			return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		}
+	case model.ChannelTypeDM, model.ChannelTypeGroupDM:
+		if _, err := e.requireCurrentMessageChannelAccess(c.UserContext(), &channel, channelId, userId); err != nil {
+			return err
 		}
 	}
 
@@ -3301,6 +3306,48 @@ func isLatestWindowRequest(req *GetMessagesRequest) bool {
 		req.From == nil
 }
 
+func sharedCacheMessage(msg dto.Message) dto.Message {
+	sanitized := msg
+	sanitized.Nonce = nil
+	if msg.Thread != nil {
+		sanitized.Thread = cloneChannelDTO(msg.Thread)
+	}
+	if len(msg.Reactions) > 0 {
+		sanitized.Reactions = make([]dto.MessageReaction, len(msg.Reactions))
+		copy(sanitized.Reactions, msg.Reactions)
+		for i := range sanitized.Reactions {
+			sanitized.Reactions[i].Me = false
+		}
+	}
+	return sanitized
+}
+
+func (e *entity) applyViewerStateToCachedMessages(ctx context.Context, userId int64, msgs []dto.Message) ([]dto.Message, bool) {
+	if len(msgs) == 0 || userId == 0 {
+		return msgs, true
+	}
+
+	reactionMessages := make([]model.Message, len(msgs))
+	for i, msg := range msgs {
+		reactionMessages[i] = model.Message{
+			Id:        msg.Id,
+			ChannelId: msg.ChannelId,
+		}
+	}
+
+	reactions, err := e.loadAllMessageReactionsBatch(ctx, reactionMessages, userId)
+	if err != nil {
+		return nil, false
+	}
+
+	overlaid := make([]dto.Message, len(msgs))
+	copy(overlaid, msgs)
+	for i := range overlaid {
+		overlaid[i].Reactions = reactions[overlaid[i].Id]
+	}
+	return overlaid, true
+}
+
 // tryMessagesFromCache attempts to serve the latest-window from Redis.
 // Returns (messages, true) on a full cache hit, (nil, false) on any miss.
 //
@@ -3347,6 +3394,7 @@ func (e *entity) tryMessagesFromCache(ctx context.Context, channelID int64) ([]d
 		if err := json.Unmarshal(blob, &msgs[i]); err != nil {
 			return nil, false
 		}
+		msgs[i] = sharedCacheMessage(msgs[i])
 	}
 	return msgs, true
 }
@@ -3364,7 +3412,7 @@ func (e *entity) backfillMessagesCache(ctx context.Context, channelID int64, msg
 	vals := make([]interface{}, len(msgs))
 	members := make([]icache.ZBatchMember, len(msgs))
 	for i, m := range msgs {
-		m.Nonce = nil // nonce must never be visible to non-authors
+		m = sharedCacheMessage(m)
 		keys[i] = messagecache.MessageKey(channelID, m.Id)
 		vals[i] = m
 		members[i] = icache.ZBatchMember{Score: float64(m.Id), Member: messagecache.IDToMember(m.Id)}
@@ -3380,6 +3428,7 @@ func (e *entity) pushMessageToWindowCache(ctx context.Context, channelID int64, 
 	if e.cache == nil {
 		return
 	}
+	msg = sharedCacheMessage(msg)
 	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds, icache.NoneProactive())
 	_ = e.cache.ZAdd(ctx, messagecache.IndexKey(channelID), float64(msg.Id), messagecache.IDToMember(msg.Id))
 	_ = e.cache.SetTTL(ctx, messagecache.IndexKey(channelID), messagecache.IndexTTLSeconds)
@@ -3391,6 +3440,7 @@ func (e *entity) refreshMessageInCache(ctx context.Context, channelID int64, msg
 	if e.cache == nil {
 		return
 	}
+	msg = sharedCacheMessage(msg)
 	_ = e.cache.SetTimedJSON(ctx, messagecache.MessageKey(channelID, msg.Id), msg, messagecache.MessageTTLSeconds, icache.NoneProactive())
 }
 
