@@ -2416,6 +2416,142 @@
                 }
             }
         },
+        "/guild/{guild_id}/discovery": {
+            "get": {
+                "description": "Owner-only read for public discovery state, discovery description, tags, and hydrated display data persisted in PostgreSQL/Citus.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Get guild discovery settings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 2230469276416868352,
+                        "description": "Guild id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Guild discovery settings",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GuildDiscoveryUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Guild not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Update guild discovery settings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 2230469276416868352,
+                        "description": "Guild id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Guild discovery settings",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/guild.GuildDiscoveryUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated guild discovery settings",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GuildDiscoveryUpdateResponse"
+                        }
+                    },
+                    "202": {
+                        "description": "Updated settings, indexing notification is pending",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GuildDiscoveryUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Guild not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/guild/{guild_id}/emojis": {
             "get": {
                 "produces": [
@@ -2832,6 +2968,60 @@
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/guild/{guild_id}/join": {
+            "post": {
+                "description": "Joins the authenticated user to a public guild without an invite. Private guilds require the invite flow, banned users are forbidden, and existing members receive the guild without duplicate membership or join events.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Join public guild without invite",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 2230469276416868352,
+                        "description": "Guild id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Joined guild",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Guild"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Guild is private or user is banned",
                         "schema": {
                             "type": "string"
                         }
@@ -4747,6 +4937,140 @@
                     },
                     "409": {
                         "description": "Conflict",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/guild-tags": {
+            "get": {
+                "description": "Returns tag suggestions from tags attached to public guilds only. Limit defaults to 16 and is capped at 16.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Autocomplete public guild tags",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tag prefix",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 16,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 16,
+                        "description": "Maximum tags to return, capped at 16",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag suggestions",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/guilds": {
+            "get": {
+                "description": "Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Search public guilds",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search text for guild name, description, and tags",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "go,voice",
+                        "description": "Comma-separated normalized tags",
+                        "name": "tags",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "best_match",
+                            "popularity",
+                            "alphabetical"
+                        ],
+                        "type": "string",
+                        "default": "best_match",
+                        "description": "Sort mode",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Zero-based page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 16,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 16,
+                        "description": "Results per page, capped at 16",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Public guild search results",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GuildDiscoverySearchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "type": "string"
                         }
@@ -7206,6 +7530,61 @@
                 }
             }
         },
+        "dto.GuildDiscovery": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Community for Go developers"
+                },
+                "icon": {
+                    "$ref": "#/definitions/dto.Icon"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 2230469276416868352
+                },
+                "members_count": {
+                    "type": "integer",
+                    "example": 42
+                },
+                "name": {
+                    "type": "string",
+                    "example": "My Guild"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "dto.GuildDiscoverySearchResponse": {
+            "type": "object",
+            "properties": {
+                "guilds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.GuildDiscovery"
+                    }
+                },
+                "pages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.GuildDiscoveryUpdateResponse": {
+            "type": "object",
+            "properties": {
+                "guild": {
+                    "$ref": "#/definitions/dto.GuildDiscovery"
+                },
+                "indexing_pending": {
+                    "type": "boolean"
+                }
+            }
+        },
         "dto.GuildEmoji": {
             "type": "object",
             "properties": {
@@ -7994,9 +8373,29 @@
                 }
             }
         },
+        "guild.GuildDiscoveryUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "public": {
+                    "type": "boolean"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "guild.JoinVoiceResponse": {
             "type": "object",
             "properties": {
+                "region": {
+                    "type": "string"
+                },
                 "sfu_token": {
                     "type": "string"
                 },

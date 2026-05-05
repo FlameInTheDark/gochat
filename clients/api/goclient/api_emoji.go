@@ -171,7 +171,7 @@ func (a *EmojiAPIService) InfoEmojiEmojiIdGet(ctx context.Context, emojiId int32
 
 // Execute executes the request
 //
-//	@return DtoEmojiInfo
+//	@return	DtoEmojiInfo
 func (a *EmojiAPIService) InfoEmojiEmojiIdGetExecute(r ApiInfoEmojiEmojiIdGetRequest) (*DtoEmojiInfo, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet

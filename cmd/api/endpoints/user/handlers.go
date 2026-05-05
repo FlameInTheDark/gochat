@@ -427,10 +427,15 @@ func (e *entity) LeaveGuild(c *fiber.Ctx) error {
 	if err := e.member.RemoveMember(c.UserContext(), user.Id, guildId); err != nil {
 		return helper.HttpDbError(err, ErrUnableToRemoveMember)
 	}
+	if err := e.gd.AdjustMembersCount(c.UserContext(), guildId, -1); err != nil {
+		_ = e.gd.RecountMembers(c.UserContext(), guildId)
+	}
 
 	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, e.log)
 	go func() {
 		_ = mq.SendGuildUpdate(asyncCtx, e.mqt, guildId, &mqmsg.RemoveGuildMember{GuildId: guildId, UserId: user.Id})
+		e.publishGuildSearchUpsert(asyncCtx, guildId, asyncLog)
 	}()
 
 	return c.SendStatus(fiber.StatusOK)

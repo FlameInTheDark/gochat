@@ -55,7 +55,7 @@ func (a *AuthAPIService) Auth2faDelete(ctx context.Context) ApiAuth2faDeleteRequ
 
 // Execute executes the request
 //
-//	@return AuthLoginResponse
+//	@return	AuthLoginResponse
 func (a *AuthAPIService) Auth2faDeleteExecute(r ApiAuth2faDeleteRequest) (*AuthLoginResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -203,7 +203,7 @@ func (a *AuthAPIService) Auth2faGet(ctx context.Context) ApiAuth2faGetRequest {
 
 // Execute executes the request
 //
-//	@return AuthTwoFactorStatusResponse
+//	@return	AuthTwoFactorStatusResponse
 func (a *AuthAPIService) Auth2faGetExecute(r ApiAuth2faGetRequest) (*AuthTwoFactorStatusResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -331,7 +331,7 @@ func (a *AuthAPIService) Auth2faRecoveryCodesRegeneratePost(ctx context.Context)
 
 // Execute executes the request
 //
-//	@return AuthRecoveryCodesResponse
+//	@return	AuthRecoveryCodesResponse
 func (a *AuthAPIService) Auth2faRecoveryCodesRegeneratePostExecute(r ApiAuth2faRecoveryCodesRegeneratePostRequest) (*AuthRecoveryCodesResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -486,7 +486,7 @@ func (a *AuthAPIService) Auth2faTotpConfirmPost(ctx context.Context) ApiAuth2faT
 
 // Execute executes the request
 //
-//	@return AuthRecoveryCodesResponse
+//	@return	AuthRecoveryCodesResponse
 func (a *AuthAPIService) Auth2faTotpConfirmPostExecute(r ApiAuth2faTotpConfirmPostRequest) (*AuthRecoveryCodesResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -641,7 +641,7 @@ func (a *AuthAPIService) Auth2faTotpSetupPost(ctx context.Context) ApiAuth2faTot
 
 // Execute executes the request
 //
-//	@return AuthTOTPSetupResponse
+//	@return	AuthTOTPSetupResponse
 func (a *AuthAPIService) Auth2faTotpSetupPostExecute(r ApiAuth2faTotpSetupPostRequest) (*AuthTOTPSetupResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -794,7 +794,7 @@ func (a *AuthAPIService) AuthConfirmationPost(ctx context.Context) ApiAuthConfir
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *AuthAPIService) AuthConfirmationPostExecute(r ApiAuthConfirmationPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -949,7 +949,7 @@ func (a *AuthAPIService) AuthLogin2faEmailStartPost(ctx context.Context) ApiAuth
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *AuthAPIService) AuthLogin2faEmailStartPostExecute(r ApiAuthLogin2faEmailStartPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1104,7 +1104,7 @@ func (a *AuthAPIService) AuthLogin2faEmailVerifyPost(ctx context.Context) ApiAut
 
 // Execute executes the request
 //
-//	@return AuthLoginResponse
+//	@return	AuthLoginResponse
 func (a *AuthAPIService) AuthLogin2faEmailVerifyPostExecute(r ApiAuthLogin2faEmailVerifyPostRequest) (*AuthLoginResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1259,7 +1259,7 @@ func (a *AuthAPIService) AuthLogin2faRecoveryCodePost(ctx context.Context) ApiAu
 
 // Execute executes the request
 //
-//	@return AuthLoginResponse
+//	@return	AuthLoginResponse
 func (a *AuthAPIService) AuthLogin2faRecoveryCodePostExecute(r ApiAuthLogin2faRecoveryCodePostRequest) (*AuthLoginResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1414,7 +1414,7 @@ func (a *AuthAPIService) AuthLogin2faTotpPost(ctx context.Context) ApiAuthLogin2
 
 // Execute executes the request
 //
-//	@return AuthLoginResponse
+//	@return	AuthLoginResponse
 func (a *AuthAPIService) AuthLogin2faTotpPostExecute(r ApiAuthLogin2faTotpPostRequest) (*AuthLoginResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1569,7 +1569,7 @@ func (a *AuthAPIService) AuthLoginPost(ctx context.Context) ApiAuthLoginPostRequ
 
 // Execute executes the request
 //
-//	@return AuthLoginResponse
+//	@return	AuthLoginResponse
 func (a *AuthAPIService) AuthLoginPostExecute(r ApiAuthLoginPostRequest) (*AuthLoginResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1724,7 +1724,7 @@ func (a *AuthAPIService) AuthPasswordChangePost(ctx context.Context) ApiAuthPass
 
 // Execute executes the request
 //
-//	@return AuthLoginResponse
+//	@return	AuthLoginResponse
 func (a *AuthAPIService) AuthPasswordChangePostExecute(r ApiAuthPasswordChangePostRequest) (*AuthLoginResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1866,7 +1866,7 @@ func (a *AuthAPIService) AuthRecoveryPost(ctx context.Context) ApiAuthRecoveryPo
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *AuthAPIService) AuthRecoveryPostExecute(r ApiAuthRecoveryPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -2041,7 +2041,7 @@ func (a *AuthAPIService) AuthRefreshGet(ctx context.Context) ApiAuthRefreshGetRe
 
 // Execute executes the request
 //
-//	@return AuthRefreshTokenResponse
+//	@return	AuthRefreshTokenResponse
 func (a *AuthAPIService) AuthRefreshGetExecute(r ApiAuthRefreshGetRequest) (*AuthRefreshTokenResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2182,7 +2182,7 @@ func (a *AuthAPIService) AuthRegistrationPost(ctx context.Context) ApiAuthRegist
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *AuthAPIService) AuthRegistrationPostExecute(r ApiAuthRegistrationPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -2335,7 +2335,7 @@ func (a *AuthAPIService) AuthResetPost(ctx context.Context) ApiAuthResetPostRequ
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *AuthAPIService) AuthResetPostExecute(r ApiAuthResetPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

@@ -22,6 +22,7 @@ import (
 	emojirepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/emoji"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guilddiscovery"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/invite"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/role"
@@ -33,6 +34,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/presence"
 	"github.com/FlameInTheDark/gochat/internal/s3"
+	"github.com/FlameInTheDark/gochat/internal/searchmq"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
 )
@@ -43,7 +45,10 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("", e.Create)
 	router.Get("/:guild_id<int>", e.Get)
 	router.Patch("/:guild_id<int>", e.Update)
+	router.Get("/:guild_id<int>/discovery", e.GetGuildDiscovery)
+	router.Patch("/:guild_id<int>/discovery", e.UpdateGuildDiscovery)
 	router.Delete("/:guild_id<int>", e.Delete)
+	router.Post("/:guild_id<int>/join", e.JoinPublicGuild)
 	router.Patch("/:guild_id<int>/systemch", e.SetSystemMessagesChannel)
 
 	router.Post("/:guild_id<int>/icon", e.CreateIcon)
@@ -109,12 +114,14 @@ type entity struct {
 	log   *slog.Logger
 	mqt   mq.SendTransporter
 	imq   *indexmq.IndexMQ
+	smq   *searchmq.Queue
 	cache cache.Cache
 
 	user  user.User
 	disc  discriminator.Discriminator
 	ch    channel.Channel
 	g     guild.Guild
+	gd    guilddiscovery.GuildDiscovery
 	gc    guildchannels.GuildChannels
 	msg   message.Message
 	at    attachment.Attachment
@@ -149,7 +156,7 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.IndexMQ, cache cache.Cache, storage *s3.Client, attachTTLSeconds int64, authSecret string, pstore *presence.Store, natsConn *natsio.Conn, defaultVoiceRegion string, disco, streamDisco discovery.Manager, allowedRegions []string, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.IndexMQ, smq *searchmq.Queue, cache cache.Cache, storage *s3.Client, attachTTLSeconds int64, authSecret string, pstore *presence.Store, natsConn *natsio.Conn, defaultVoiceRegion string, disco, streamDisco discovery.Manager, allowedRegions []string, log *slog.Logger) server.Entity {
 	ar := make(map[string]struct{}, len(allowedRegions))
 	regionIDs := make([]string, 0, len(allowedRegions))
 	for _, r := range allowedRegions {
@@ -168,11 +175,13 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.Ind
 		log:                log,
 		mqt:                mqt,
 		imq:                imq,
+		smq:                smq,
 		cache:              cache,
 		user:               user.New(pg.Conn()),
 		disc:               discriminator.New(pg.Conn()),
 		ch:                 channel.New(pg.Conn()),
 		g:                  guild.New(pg.Conn()),
+		gd:                 guilddiscovery.New(pg.Conn()),
 		gc:                 guildchannels.New(pg.Conn()),
 		msg:                message.New(dbcon),
 		at:                 attachment.New(dbcon),

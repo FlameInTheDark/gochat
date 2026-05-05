@@ -66,6 +66,8 @@ services:
         condition: service_started
       nats:
         condition: service_started
+      indexer-nats:
+        condition: service_started
       etcd:
         condition: service_started
       auth:
@@ -173,6 +175,39 @@ services:
         condition: service_started
       opensearch:
         condition: service_started
+
+  search:
+    image: gochat/search
+    build:
+      dockerfile: search.Dockerfile
+    restart: always
+    logging: *go-service-logging
+    environment: *otel-app-env
+    volumes:
+      - ./search_config.yaml:/dist/config.yaml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.search.rule=PathPrefix(`/api/v1/search`)"
+      - "traefik.http.routers.search.priority=100"
+      - "traefik.http.routers.search.service=search"
+      - "traefik.http.services.search.loadbalancer.server.port=3100"
+      - "traefik.docker.network=gochat_traefik"
+    depends_on:
+      scylla:
+        condition: service_healthy
+      keydb:
+        condition: service_started
+      indexer-nats:
+        condition: service_started
+      opensearch:
+        condition: service_started
+      citus-master:
+        condition: service_started
+      auth:
+        condition: service_started
+    networks:
+      - traefik
+      - default
 
   embedder:
     image: gochat/embedder

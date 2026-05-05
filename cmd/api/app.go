@@ -17,7 +17,6 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/emoji"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/guild"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/message"
-	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/search"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/user"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/voice"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
@@ -33,11 +32,11 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/nats"
-	"github.com/FlameInTheDark/gochat/internal/msgsearch"
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/presence"
 	reactionutil "github.com/FlameInTheDark/gochat/internal/reaction"
 	"github.com/FlameInTheDark/gochat/internal/s3"
+	"github.com/FlameInTheDark/gochat/internal/searchmq"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 	"github.com/FlameInTheDark/gochat/internal/threadcount"
@@ -393,12 +392,6 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		}
 	}
 
-	logger.Info("Connecting to OpenSearch")
-	searchService, err := msgsearch.NewSearch(cfg.OSAddresses, cfg.OSInsecureSkipVerify, cfg.OSUsername, cfg.OSPassword)
-	if err != nil {
-		return nil, err
-	}
-
 	logger.Info("Connecting to Etcd")
 	disco, err := discovery.NewManager(cfg.EtcdEndpoints, cfg.EtcdPrefix, cfg.EtcdUsername, cfg.EtcdPassword)
 	if err != nil {
@@ -412,6 +405,12 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	idgen.New(0)
 
 	logger.Info("Registering HTTP server")
+	searchQueue, err := searchmq.New(cfg.IndexerNATSConnString)
+	if err != nil {
+		return nil, err
+	}
+	shut.Up(searchQueue)
+
 	s := server.NewServer(cfg.Prefork)
 	shut.Up(s)
 
@@ -443,11 +442,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.Register(
 		"/api/v1",
 		emoji.New(database, pg, cache, logger),
-		user.New(database, pg, qt, cache, cfg.AttachmentTTLMinutes*60, contentHosts, logger),
+		user.New(database, pg, qt, searchQueue, cache, cfg.AttachmentTTLMinutes*60, contentHosts, logger),
 		message.New(database, pg, qt, imq, emq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
-		guild.New(database, pg, qt, imq, cache, storage, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, pstore, nt.Conn(), cfg.VoiceDefaultRegion, disco, streamDisco, extractRegionIDs(cfg.VoiceRegions), logger),
+		guild.New(database, pg, qt, imq, searchQueue, cache, storage, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, pstore, nt.Conn(), cfg.VoiceDefaultRegion, disco, streamDisco, extractRegionIDs(cfg.VoiceRegions), logger),
 		voice.New(convertRegions(cfg.VoiceRegions), logger),
-		search.New(database, pg, searchService, logger),
 	)
 
 	return &App{server: s, db: database, logger: logger, addr: cfg.ServerAddress}, nil

@@ -40,6 +40,10 @@ jobs:
             dockerfile: attachments.Dockerfile
             image: gochat-attachments
             cache_scope: attachments-dev
+          - service: search
+            dockerfile: search.Dockerfile
+            image: gochat-search
+            cache_scope: search-dev
           - service: sfu
             dockerfile: sfu.Dockerfile
             image: gochat-sfu

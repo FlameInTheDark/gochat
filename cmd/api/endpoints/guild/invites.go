@@ -150,7 +150,46 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetInvites)
 	}
 
-	if banned, err := e.isGuildUserBanned(c.UserContext(), inv.GuildId, user.Id); err != nil {
+	return e.joinGuild(c, inv.GuildId, user)
+}
+
+// JoinPublicGuild
+//
+//	@Summary		Join public guild without invite
+//	@Description	Joins the authenticated user to a public guild without an invite. Private guilds require the invite flow, banned users are forbidden, and existing members receive the guild without duplicate membership or join events.
+//	@Produce		json
+//	@Tags			Guild
+//	@Param			guild_id	path		int64		true	"Guild id"	example(2230469276416868352)
+//	@Success		200			{object}	dto.Guild	"Joined guild"
+//	@failure		400			{string}	string		"Bad request"
+//	@failure		401			{string}	string		"Unauthorized"
+//	@failure		403			{string}	string		"Guild is private or user is banned"
+//	@failure		500			{string}	string		"Internal server error"
+//	@Router			/guild/{guild_id}/join [post]
+func (e *entity) JoinPublicGuild(c *fiber.Ctx) error {
+	guildId, err := e.parseGuildID(c)
+	if err != nil {
+		return err
+	}
+
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+
+	g, err := e.g.GetGuildById(c.UserContext(), guildId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildByID)
+	}
+	if !g.Public {
+		return fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+	}
+
+	return e.joinGuild(c, guildId, user)
+}
+
+func (e *entity) joinGuild(c *fiber.Ctx, guildId int64, user *helper.JWTUser) error {
+	if banned, err := e.isGuildUserBanned(c.UserContext(), guildId, user.Id); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCheckGuildBan)
 	} else if banned {
 		return fiber.NewError(fiber.StatusForbidden, ErrUserIsBanned)
@@ -162,14 +201,16 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 	}
 
 	// If already a member, just return guild
-	isMember, err := e.memb.IsGuildMember(c.UserContext(), inv.GuildId, user.Id)
+	isMember, err := e.memb.IsGuildMember(c.UserContext(), guildId, user.Id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
 	}
 	if !isMember {
-		if err := e.memb.AddMember(c.UserContext(), user.Id, inv.GuildId); err != nil {
+		if err := e.memb.AddMember(c.UserContext(), user.Id, guildId); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildMember)
 		}
+		e.deleteMemberCache(c.UserContext(), user.Id, guildId)
+		e.adjustDiscoveryMembers(c.UserContext(), guildId, 1)
 	}
 
 	disc, err := e.disc.GetDiscriminatorByUserId(c.UserContext(), u.Id)
@@ -177,76 +218,79 @@ func (e *entity) AcceptInvite(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetDiscriminator)
 	}
 
-	g, err := e.g.GetGuildById(c.UserContext(), inv.GuildId)
+	g, err := e.g.GetGuildById(c.UserContext(), guildId)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildByID)
 	}
 
-	asyncCtx := observability.BackgroundFromContext(c.UserContext())
-	asyncLog := observability.LoggerWithContext(asyncCtx, e.log)
-	go func() {
-		err := mq.SendGuildUpdate(asyncCtx, e.mqt, inv.GuildId, &mqmsg.AddGuildMember{
-			GuildId: inv.GuildId,
-			UserId:  u.Id,
-			Member: dto.Member{
-				User:     userToDTO(u, disc.Discriminator),
-				Username: nil,
-				Avatar:   nil,
-				JoinAt:   time.Now(),
-				Roles:    nil,
-			},
-		})
-		if err != nil {
-			asyncLog.Error("unable to send add guild member event", slog.String("error", err.Error()))
-		}
-		if g.SystemMessages != nil {
-			if _, err := e.ch.GetChannel(asyncCtx, *g.SystemMessages); err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
+	if !isMember {
+		asyncCtx := observability.BackgroundFromContext(c.UserContext())
+		asyncLog := observability.LoggerWithContext(asyncCtx, e.log)
+		go func() {
+			err := mq.SendGuildUpdate(asyncCtx, e.mqt, guildId, &mqmsg.AddGuildMember{
+				GuildId: guildId,
+				UserId:  u.Id,
+				Member: dto.Member{
+					User:     userToDTO(u, disc.Discriminator),
+					Username: nil,
+					Avatar:   nil,
+					JoinAt:   time.Now(),
+					Roles:    nil,
+				},
+			})
+			if err != nil {
+				asyncLog.Error("unable to send add guild member event", slog.String("error", err.Error()))
+			}
+			e.publishGuildSearchUpsert(asyncCtx, guildId, asyncLog)
+			if g.SystemMessages != nil {
+				if _, err := e.ch.GetChannel(asyncCtx, *g.SystemMessages); err != nil {
+					if errors.Is(err, sql.ErrNoRows) {
+						return
+					}
+					asyncLog.Error("unable to get system channel", slog.String("error", err.Error()))
 					return
 				}
-				asyncLog.Error("unable to get system channel", slog.String("error", err.Error()))
-				return
-			}
-			msgid := idgen.Next()
-			position, err := messageposition.Next(asyncCtx, e.cache, e.ch, *g.SystemMessages)
-			if err != nil {
-				asyncLog.Error("unable to allocate join message position", slog.String("error", err.Error()))
-				return
-			}
-			err = e.msg.CreateSystemMessage(asyncCtx, msgid, *g.SystemMessages, user.Id, "", model.MessageTypeJoin, position)
-			if err != nil {
-				asyncLog.Error("unable to send system user join message", slog.String("error", err.Error()))
-				return
-			}
-			err = e.ch.SetLastMessage(asyncCtx, *g.SystemMessages, msgid)
-			if err != nil {
-				asyncLog.Error("unable to set last message id", slog.String("error", err.Error()))
-			}
-			if err := mq.SendChannelMessage(asyncCtx, e.mqt, *g.SystemMessages, &mqmsg.CreateMessage{
-				GuildId: &g.Id,
-				Message: dto.Message{
-					Id:        msgid,
+				msgid := idgen.Next()
+				position, err := messageposition.Next(asyncCtx, e.cache, e.ch, *g.SystemMessages)
+				if err != nil {
+					asyncLog.Error("unable to allocate join message position", slog.String("error", err.Error()))
+					return
+				}
+				err = e.msg.CreateSystemMessage(asyncCtx, msgid, *g.SystemMessages, user.Id, "", model.MessageTypeJoin, position)
+				if err != nil {
+					asyncLog.Error("unable to send system user join message", slog.String("error", err.Error()))
+					return
+				}
+				err = e.ch.SetLastMessage(asyncCtx, *g.SystemMessages, msgid)
+				if err != nil {
+					asyncLog.Error("unable to set last message id", slog.String("error", err.Error()))
+				}
+				if err := mq.SendChannelMessage(asyncCtx, e.mqt, *g.SystemMessages, &mqmsg.CreateMessage{
+					GuildId: &g.Id,
+					Message: dto.Message{
+						Id:        msgid,
+						ChannelId: *g.SystemMessages,
+						Author:    userToDTO(u, disc.Discriminator),
+						Position:  guildOptionalInt64(position),
+						Type:      int(model.MessageTypeJoin),
+					},
+				}); err != nil {
+					asyncLog.Error("unable to send join message event", slog.String("error", err.Error()))
+				}
+				if err := e.imq.IndexMessageContext(asyncCtx, dto.IndexMessage{
+					MessageId: msgid,
+					UserId:    u.Id,
 					ChannelId: *g.SystemMessages,
-					Author:    userToDTO(u, disc.Discriminator),
-					Position:  guildOptionalInt64(position),
+					GuildId:   &g.Id,
 					Type:      int(model.MessageTypeJoin),
-				},
-			}); err != nil {
-				asyncLog.Error("unable to send join message event", slog.String("error", err.Error()))
+				}); err != nil {
+					asyncLog.Error("failed to send index message event",
+						"message_id", msgid,
+						"error", err.Error())
+				}
 			}
-			if err := e.imq.IndexMessageContext(asyncCtx, dto.IndexMessage{
-				MessageId: msgid,
-				UserId:    u.Id,
-				ChannelId: *g.SystemMessages,
-				GuildId:   &g.Id,
-				Type:      int(model.MessageTypeJoin),
-			}); err != nil {
-				asyncLog.Error("failed to send index message event",
-					"message_id", msgid,
-					"error", err.Error())
-			}
-		}
-	}()
+		}()
+	}
 
 	return c.JSON(e.dtoGuildWithIcon(c, &g))
 }

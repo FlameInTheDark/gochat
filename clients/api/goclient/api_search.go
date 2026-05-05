@@ -57,7 +57,7 @@ func (a *SearchAPIService) SearchGuildIdMessagesPost(ctx context.Context, guildI
 
 // Execute executes the request
 //
-//	@return []SearchMessageSearchResponse
+//	@return	[]SearchMessageSearchResponse
 func (a *SearchAPIService) SearchGuildIdMessagesPostExecute(r ApiSearchGuildIdMessagesPostRequest) ([]SearchMessageSearchResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -180,6 +180,341 @@ func (a *SearchAPIService) SearchGuildIdMessagesPostExecute(r ApiSearchGuildIdMe
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiSearchGuildTagsGetRequest struct {
+	ctx        context.Context
+	ApiService *SearchAPIService
+	q          *string
+	limit      *int32
+}
+
+// Tag prefix
+func (r ApiSearchGuildTagsGetRequest) Q(q string) ApiSearchGuildTagsGetRequest {
+	r.q = &q
+	return r
+}
+
+// Maximum tags to return, capped at 16
+func (r ApiSearchGuildTagsGetRequest) Limit(limit int32) ApiSearchGuildTagsGetRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r ApiSearchGuildTagsGetRequest) Execute() ([]string, *http.Response, error) {
+	return r.ApiService.SearchGuildTagsGetExecute(r)
+}
+
+/*
+SearchGuildTagsGet Autocomplete public guild tags
+
+Returns tag suggestions from tags attached to public guilds only. Limit defaults to 16 and is capped at 16.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiSearchGuildTagsGetRequest
+*/
+func (a *SearchAPIService) SearchGuildTagsGet(ctx context.Context) ApiSearchGuildTagsGetRequest {
+	return ApiSearchGuildTagsGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return	[]string
+func (a *SearchAPIService) SearchGuildTagsGetExecute(r ApiSearchGuildTagsGetRequest) ([]string, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []string
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "SearchAPIService.SearchGuildTagsGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/search/guild-tags"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.q != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "", "")
+	} else {
+		var defaultValue int32 = 16
+		r.limit = &defaultValue
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiSearchGuildsGetRequest struct {
+	ctx        context.Context
+	ApiService *SearchAPIService
+	q          *string
+	tags       *string
+	sort       *string
+	page       *int32
+	limit      *int32
+}
+
+// Search text for guild name, description, and tags
+func (r ApiSearchGuildsGetRequest) Q(q string) ApiSearchGuildsGetRequest {
+	r.q = &q
+	return r
+}
+
+// Comma-separated normalized tags
+func (r ApiSearchGuildsGetRequest) Tags(tags string) ApiSearchGuildsGetRequest {
+	r.tags = &tags
+	return r
+}
+
+// Sort mode
+func (r ApiSearchGuildsGetRequest) Sort(sort string) ApiSearchGuildsGetRequest {
+	r.sort = &sort
+	return r
+}
+
+// Zero-based page number
+func (r ApiSearchGuildsGetRequest) Page(page int32) ApiSearchGuildsGetRequest {
+	r.page = &page
+	return r
+}
+
+// Results per page, capped at 16
+func (r ApiSearchGuildsGetRequest) Limit(limit int32) ApiSearchGuildsGetRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r ApiSearchGuildsGetRequest) Execute() (*DtoGuildDiscoverySearchResponse, *http.Response, error) {
+	return r.ApiService.SearchGuildsGetExecute(r)
+}
+
+/*
+SearchGuildsGet Search public guilds
+
+Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiSearchGuildsGetRequest
+*/
+func (a *SearchAPIService) SearchGuildsGet(ctx context.Context) ApiSearchGuildsGetRequest {
+	return ApiSearchGuildsGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return	DtoGuildDiscoverySearchResponse
+func (a *SearchAPIService) SearchGuildsGetExecute(r ApiSearchGuildsGetRequest) (*DtoGuildDiscoverySearchResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DtoGuildDiscoverySearchResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "SearchAPIService.SearchGuildsGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/search/guilds"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.q != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "", "")
+	}
+	if r.tags != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "tags", r.tags, "", "")
+	}
+	if r.sort != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "sort", r.sort, "", "")
+	} else {
+		var defaultValue string = "best_match"
+		r.sort = &defaultValue
+	}
+	if r.page != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "page", r.page, "", "")
+	} else {
+		var defaultValue int32 = 0
+		r.page = &defaultValue
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "", "")
+	} else {
+		var defaultValue int32 = 16
+		r.limit = &defaultValue
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiSearchMessagesPostRequest struct {
 	ctx        context.Context
 	ApiService *SearchAPIService
@@ -211,7 +546,7 @@ func (a *SearchAPIService) SearchMessagesPost(ctx context.Context) ApiSearchMess
 
 // Execute executes the request
 //
-//	@return []SearchMessageSearchResponse
+//	@return	[]SearchMessageSearchResponse
 func (a *SearchAPIService) SearchMessagesPostExecute(r ApiSearchMessagesPostRequest) ([]SearchMessageSearchResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

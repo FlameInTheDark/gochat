@@ -834,6 +834,11 @@ func (e *entity) createGuildWithDefaults(c *fiber.Ctx, req *CreateGuildRequest, 
 		log.Error("unable to create guild", slog.String("error", err.Error()))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateGuild)
 	}
+	if req.Public {
+		if err := e.g.SetGuildPublic(c.UserContext(), guildId, true); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateGuild)
+		}
+	}
 
 	// Set guild icon if provided
 	if err := e.setGuildIconIfProvided(c, guildId, req.IconId); err != nil {
@@ -850,6 +855,7 @@ func (e *entity) createGuildWithDefaults(c *fiber.Ctx, req *CreateGuildRequest, 
 	if err := e.memb.AddMember(c.UserContext(), user.Id, guildId); err != nil {
 		return e.publicError(c, fiber.StatusInternalServerError, err)
 	}
+	e.adjustDiscoveryMembers(c.UserContext(), guildId, 1)
 
 	// Load created guild to include computed fields and icon metadata
 	createdGuild, err := e.g.GetGuildById(c.UserContext(), guildId)
@@ -859,6 +865,11 @@ func (e *entity) createGuildWithDefaults(c *fiber.Ctx, req *CreateGuildRequest, 
 
 	if err := e.g.SetSystemMessagesChannel(c.UserContext(), guildId, &ch); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetSystemMessagesChannel)
+	}
+	if createdGuild.Public {
+		asyncCtx := observability.BackgroundFromContext(c.UserContext())
+		asyncLog := observability.LoggerWithContext(asyncCtx, log)
+		go e.publishGuildSearchUpsert(asyncCtx, guildId, asyncLog)
 	}
 
 	return c.JSON(e.dtoGuildWithIcon(c, &createdGuild))
@@ -982,6 +993,9 @@ func (e *entity) Delete(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToDeleteGuild)
 	}
 	e.deleteGuildCache(c.UserContext(), guildId)
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, e.log)
+	go e.publishGuildSearchDelete(asyncCtx, guildId, asyncLog)
 
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -1163,6 +1177,13 @@ func (e *entity) updateGuildWithPermissionCheck(c *fiber.Ctx, guildId, userId in
 	// Send update event
 	if err := e.sendGuildUpdateEvent(c.UserContext(), guildId, &updatedGuild); err != nil {
 		return err
+	}
+	if req.Public != nil && !*req.Public {
+		e.publishGuildSearchDelete(c.UserContext(), guildId, e.log)
+	} else if req.Name != nil || req.Public != nil {
+		asyncCtx := observability.BackgroundFromContext(c.UserContext())
+		asyncLog := observability.LoggerWithContext(asyncCtx, e.log)
+		go e.publishGuildSearchUpsert(asyncCtx, guildId, asyncLog)
 	}
 
 	return c.SendStatus(fiber.StatusOK)

@@ -57,7 +57,7 @@ func (a *MessageAPIService) MessageChannelChannelIdAttachmentPost(ctx context.Co
 
 // Execute executes the request
 //
-//	@return DtoAttachmentUpload
+//	@return	DtoAttachmentUpload
 func (a *MessageAPIService) MessageChannelChannelIdAttachmentPostExecute(r ApiMessageChannelChannelIdAttachmentPostRequest) (*DtoAttachmentUpload, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -233,7 +233,7 @@ func (a *MessageAPIService) MessageChannelChannelIdGet(ctx context.Context, chan
 
 // Execute executes the request
 //
-//	@return []DtoMessage
+//	@return	[]DtoMessage
 func (a *MessageAPIService) MessageChannelChannelIdGetExecute(r ApiMessageChannelChannelIdGetRequest) ([]DtoMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -390,7 +390,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPost(ctx context.
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPostExecute(r ApiMessageChannelChannelIdMessageIdAckPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -517,7 +517,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdDelete(ctx context.C
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdDeleteExecute(r ApiMessageChannelChannelIdMessageIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -673,7 +673,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatch(ctx context.Co
 
 // Execute executes the request
 //
-//	@return DtoMessage
+//	@return	DtoMessage
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatchExecute(r ApiMessageChannelChannelIdMessageIdPatchRequest) (*DtoMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -830,7 +830,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdReactionsReactionNam
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdReactionsReactionNameDeleteExecute(r ApiMessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -997,7 +997,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdReactionsReactionNam
 
 // Execute executes the request
 //
-//	@return DtoMessageReactionUsersPage
+//	@return	DtoMessageReactionUsersPage
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdReactionsReactionNameGetExecute(r ApiMessageChannelChannelIdMessageIdReactionsReactionNameGetRequest) (*DtoMessageReactionUsersPage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1156,7 +1156,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdReactionsReactionNam
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdReactionsReactionNamePutExecute(r ApiMessageChannelChannelIdMessageIdReactionsReactionNamePutRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut
@@ -1313,7 +1313,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdThreadPost(ctx conte
 
 // Execute executes the request
 //
-//	@return DtoChannel
+//	@return	DtoChannel
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdThreadPostExecute(r ApiMessageChannelChannelIdMessageIdThreadPostRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1482,7 +1482,7 @@ func (a *MessageAPIService) MessageChannelChannelIdPost(ctx context.Context, cha
 
 // Execute executes the request
 //
-//	@return DtoMessage
+//	@return	DtoMessage
 func (a *MessageAPIService) MessageChannelChannelIdPostExecute(r ApiMessageChannelChannelIdPostRequest) (*DtoMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1632,7 +1632,7 @@ func (a *MessageAPIService) MessageChannelChannelIdTypingPost(ctx context.Contex
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *MessageAPIService) MessageChannelChannelIdTypingPostExecute(r ApiMessageChannelChannelIdTypingPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

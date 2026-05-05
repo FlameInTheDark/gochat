@@ -39,6 +39,7 @@ research
 /clients/api/*/.openapi-generator/
 
 # Config files
+*.local.yaml
 api_config.yaml
 auth_config.yaml
 indexer_config.yaml
@@ -47,4 +48,4 @@ attachments_config.yaml
 sfu_config.yaml
 webhook_config.yaml
 embedder_config.yaml
-*.local.yaml
+search_config.yaml

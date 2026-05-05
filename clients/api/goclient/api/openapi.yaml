@@ -1931,6 +1931,72 @@ paths:
       summary: Get channel threads
       tags:
       - Guild
+  /guild/{guild_id}/discovery:
+    patch:
+      description: "Owner-only update for public discovery state, discovery description,\
+        \ and normalized tags. The API persists this data in PostgreSQL/Citus and\
+        \ notifies the search service to refresh its OpenSearch document."
+      parameters:
+      - description: Guild id
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.GuildDiscoveryUpdateRequest'
+        description: Guild discovery settings
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.GuildDiscoveryUpdateResponse'
+          description: Updated guild discovery settings
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.GuildDiscoveryUpdateResponse'
+          description: "Updated settings, indexing notification is pending"
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Guild not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Update guild discovery settings
+      tags:
+      - Guild
+      x-codegen-request-body-name: request
   /guild/{guild_id}/emojis:
     get:
       parameters:
@@ -2291,6 +2357,53 @@ paths:
                 type: string
           description: Internal server error
       summary: Delete guild icon by ID
+      tags:
+      - Guild
+  /guild/{guild_id}/join:
+    post:
+      description: "Joins the authenticated user to a public guild without an invite.\
+        \ Private guilds require the invite flow, banned users are forbidden, and\
+        \ existing members receive the guild without duplicate membership or join\
+        \ events."
+      parameters:
+      - description: Guild id
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Guild'
+          description: Joined guild
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Guild is private or user is banned
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Join public guild without invite
       tags:
       - Guild
   /guild/{guild_id}/member/{user_id}:
@@ -3894,6 +4007,116 @@ paths:
       tags:
       - Message
       x-codegen-request-body-name: request
+  /search/guild-tags:
+    get:
+      description: Returns tag suggestions from tags attached to public guilds only.
+        Limit defaults to 16 and is capped at 16.
+      parameters:
+      - description: Tag prefix
+        in: query
+        name: q
+        schema:
+          type: string
+      - description: "Maximum tags to return, capped at 16"
+        in: query
+        name: limit
+        schema:
+          default: 16
+          maximum: 16
+          minimum: 1
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  type: string
+                type: array
+          description: Tag suggestions
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Autocomplete public guild tags
+      tags:
+      - Search
+  /search/guilds:
+    get:
+      description: "Searches only public guilds in OpenSearch, then hydrates ordered\
+        \ results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16."
+      parameters:
+      - description: "Search text for guild name, description, and tags"
+        in: query
+        name: q
+        schema:
+          type: string
+      - description: Comma-separated normalized tags
+        in: query
+        name: tags
+        schema:
+          type: string
+      - description: Sort mode
+        in: query
+        name: sort
+        schema:
+          default: best_match
+          enum:
+          - best_match
+          - popularity
+          - alphabetical
+          type: string
+      - description: Zero-based page number
+        in: query
+        name: page
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+      - description: "Results per page, capped at 16"
+        in: query
+        name: limit
+        schema:
+          default: 16
+          maximum: 16
+          minimum: 1
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.GuildDiscoverySearchResponse'
+          description: Public guild search results
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Search public guilds
+      tags:
+      - Search
   /search/messages:
     post:
       requestBody:
@@ -5919,6 +6142,102 @@ components:
         user:
           $ref: '#/components/schemas/dto.User'
       type: object
+    dto.GuildDiscovery:
+      example:
+        icon:
+          width: 128
+          filesize: 12345
+          id: 2230469276416868352
+          url: https://cdn.example.com/icons/2230/2231.webp
+          height: 128
+        name: My Guild
+        description: Community for Go developers
+        members_count: 42
+        id: 2230469276416868352
+        tags:
+        - tags
+        - tags
+      properties:
+        description:
+          example: Community for Go developers
+          type: string
+        icon:
+          $ref: '#/components/schemas/dto.Icon'
+        id:
+          example: 2230469276416868352
+          type: integer
+        members_count:
+          example: 42
+          type: integer
+        name:
+          example: My Guild
+          type: string
+        tags:
+          items:
+            type: string
+          type: array
+      type: object
+    dto.GuildDiscoverySearchResponse:
+      example:
+        pages: 0
+        guilds:
+        - icon:
+            width: 128
+            filesize: 12345
+            id: 2230469276416868352
+            url: https://cdn.example.com/icons/2230/2231.webp
+            height: 128
+          name: My Guild
+          description: Community for Go developers
+          members_count: 42
+          id: 2230469276416868352
+          tags:
+          - tags
+          - tags
+        - icon:
+            width: 128
+            filesize: 12345
+            id: 2230469276416868352
+            url: https://cdn.example.com/icons/2230/2231.webp
+            height: 128
+          name: My Guild
+          description: Community for Go developers
+          members_count: 42
+          id: 2230469276416868352
+          tags:
+          - tags
+          - tags
+      properties:
+        guilds:
+          items:
+            $ref: '#/components/schemas/dto.GuildDiscovery'
+          type: array
+        pages:
+          type: integer
+      type: object
+    dto.GuildDiscoveryUpdateResponse:
+      example:
+        guild:
+          icon:
+            width: 128
+            filesize: 12345
+            id: 2230469276416868352
+            url: https://cdn.example.com/icons/2230/2231.webp
+            height: 128
+          name: My Guild
+          description: Community for Go developers
+          members_count: 42
+          id: 2230469276416868352
+          tags:
+          - tags
+          - tags
+        indexing_pending: true
+      properties:
+        guild:
+          $ref: '#/components/schemas/dto.GuildDiscovery'
+        indexing_pending:
+          type: boolean
+      type: object
     dto.GuildEmoji:
       example:
         guild_id: "0"
@@ -6724,11 +7043,25 @@ components:
         stream_url:
           type: string
       type: object
+    guild.GuildDiscoveryUpdateRequest:
+      properties:
+        description:
+          type: string
+        public:
+          type: boolean
+        tags:
+          items:
+            type: string
+          type: array
+      type: object
     guild.JoinVoiceResponse:
       example:
         sfu_url: sfu_url
+        region: region
         sfu_token: sfu_token
       properties:
+        region:
+          type: string
         sfu_token:
           type: string
         sfu_url:
