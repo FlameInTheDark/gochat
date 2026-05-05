@@ -984,6 +984,87 @@ export interface DtoGuildBan {
 /**
  * 
  * @export
+ * @interface DtoGuildDiscovery
+ */
+export interface DtoGuildDiscovery {
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoGuildDiscovery
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {DtoIcon}
+     * @memberof DtoGuildDiscovery
+     */
+    'icon'?: DtoIcon;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoGuildDiscovery
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoGuildDiscovery
+     */
+    'members_count'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoGuildDiscovery
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof DtoGuildDiscovery
+     */
+    'tags'?: Array<string>;
+}
+/**
+ * 
+ * @export
+ * @interface DtoGuildDiscoverySearchResponse
+ */
+export interface DtoGuildDiscoverySearchResponse {
+    /**
+     * 
+     * @type {Array<DtoGuildDiscovery>}
+     * @memberof DtoGuildDiscoverySearchResponse
+     */
+    'guilds'?: Array<DtoGuildDiscovery>;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoGuildDiscoverySearchResponse
+     */
+    'pages'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DtoGuildDiscoveryUpdateResponse
+ */
+export interface DtoGuildDiscoveryUpdateResponse {
+    /**
+     * 
+     * @type {DtoGuildDiscovery}
+     * @memberof DtoGuildDiscoveryUpdateResponse
+     */
+    'guild'?: DtoGuildDiscovery;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DtoGuildDiscoveryUpdateResponse
+     */
+    'indexing_pending'?: boolean;
+}
+/**
+ * 
+ * @export
  * @interface DtoGuildEmoji
  */
 export interface DtoGuildEmoji {
@@ -2032,9 +2113,40 @@ export interface GuildCreateVoiceStreamResponse {
 /**
  * 
  * @export
+ * @interface GuildGuildDiscoveryUpdateRequest
+ */
+export interface GuildGuildDiscoveryUpdateRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildGuildDiscoveryUpdateRequest
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof GuildGuildDiscoveryUpdateRequest
+     */
+    'public'?: boolean;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof GuildGuildDiscoveryUpdateRequest
+     */
+    'tags'?: Array<string>;
+}
+/**
+ * 
+ * @export
  * @interface GuildJoinVoiceResponse
  */
 export interface GuildJoinVoiceResponse {
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildJoinVoiceResponse
+     */
+    'region'?: string;
     /**
      * 
      * @type {string}
@@ -5775,6 +5887,46 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
+         * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.
+         * @summary Update guild discovery settings
+         * @param {number} guildId Guild id
+         * @param {GuildGuildDiscoveryUpdateRequest} request Guild discovery settings
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdDiscoveryPatch: async (guildId: number, request: GuildGuildDiscoveryUpdateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdDiscoveryPatch', 'guildId', guildId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdDiscoveryPatch', 'request', request)
+            const localVarPath = `/guild/{guild_id}/discovery`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * 
          * @summary Delete guild emoji
          * @param {number} guildId Guild ID
@@ -6062,6 +6214,40 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             }
 
             const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Joins the authenticated user to a public guild without an invite. Private guilds require the invite flow, banned users are forbidden, and existing members receive the guild without duplicate membership or join events.
+         * @summary Join public guild without invite
+         * @param {number} guildId Guild id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdJoinPost: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdJoinPost', 'guildId', guildId)
+            const localVarPath = `/guild/{guild_id}/join`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -6861,6 +7047,20 @@ export const GuildApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.
+         * @summary Update guild discovery settings
+         * @param {number} guildId Guild id
+         * @param {GuildGuildDiscoveryUpdateRequest} request Guild discovery settings
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdDiscoveryPatch(guildId: number, request: GuildGuildDiscoveryUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuildDiscoveryUpdateResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdDiscoveryPatch(guildId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdDiscoveryPatch']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * 
          * @summary Delete guild emoji
          * @param {number} guildId Guild ID
@@ -6968,6 +7168,19 @@ export const GuildApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdIconsIconIdDelete(guildId, iconId, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdIconsIconIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Joins the authenticated user to a public guild without an invite. Private guilds require the invite flow, banned users are forbidden, and existing members receive the guild without duplicate membership or join events.
+         * @summary Join public guild without invite
+         * @param {number} guildId Guild id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdJoinPost(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuild>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdJoinPost(guildId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdJoinPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -7324,6 +7537,16 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.guildGuildIdDelete(requestParameters.guildId, options).then((request) => request(axios, basePath));
         },
         /**
+         * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.
+         * @summary Update guild discovery settings
+         * @param {GuildApiGuildGuildIdDiscoveryPatchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdDiscoveryPatch(requestParameters: GuildApiGuildGuildIdDiscoveryPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuildDiscoveryUpdateResponse> {
+            return localVarFp.guildGuildIdDiscoveryPatch(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
          * 
          * @summary Delete guild emoji
          * @param {GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest} requestParameters Request parameters.
@@ -7402,6 +7625,16 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
          */
         guildGuildIdIconsIconIdDelete(requestParameters: GuildApiGuildGuildIdIconsIconIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
             return localVarFp.guildGuildIdIconsIconIdDelete(requestParameters.guildId, requestParameters.iconId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Joins the authenticated user to a public guild without an invite. Private guilds require the invite flow, banned users are forbidden, and existing members receive the guild without duplicate membership or join events.
+         * @summary Join public guild without invite
+         * @param {GuildApiGuildGuildIdJoinPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdJoinPost(requestParameters: GuildApiGuildGuildIdJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild> {
+            return localVarFp.guildGuildIdJoinPost(requestParameters.guildId, options).then((request) => request(axios, basePath));
         },
         /**
          * Removes a guild ban. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Administrators can only be moderated by the guild owner.
@@ -7693,6 +7926,16 @@ export interface GuildApiInterface {
     guildGuildIdDelete(requestParameters: GuildApiGuildGuildIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
+     * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.
+     * @summary Update guild discovery settings
+     * @param {GuildApiGuildGuildIdDiscoveryPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdDiscoveryPatch(requestParameters: GuildApiGuildGuildIdDiscoveryPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuildDiscoveryUpdateResponse>;
+
+    /**
      * 
      * @summary Delete guild emoji
      * @param {GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest} requestParameters Request parameters.
@@ -7771,6 +8014,16 @@ export interface GuildApiInterface {
      * @memberof GuildApiInterface
      */
     guildGuildIdIconsIconIdDelete(requestParameters: GuildApiGuildGuildIdIconsIconIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * Joins the authenticated user to a public guild without an invite. Private guilds require the invite flow, banned users are forbidden, and existing members receive the guild without duplicate membership or join events.
+     * @summary Join public guild without invite
+     * @param {GuildApiGuildGuildIdJoinPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdJoinPost(requestParameters: GuildApiGuildGuildIdJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuild>;
 
     /**
      * Removes a guild ban. Allowed for guild owner, administrators, or members with PermMembershipBanMembers. Administrators can only be moderated by the guild owner.
@@ -8184,6 +8437,27 @@ export interface GuildApiGuildGuildIdDeleteRequest {
 }
 
 /**
+ * Request parameters for guildGuildIdDiscoveryPatch operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdDiscoveryPatchRequest
+ */
+export interface GuildApiGuildGuildIdDiscoveryPatchRequest {
+    /**
+     * Guild id
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdDiscoveryPatch
+     */
+    readonly guildId: number
+
+    /**
+     * Guild discovery settings
+     * @type {GuildGuildDiscoveryUpdateRequest}
+     * @memberof GuildApiGuildGuildIdDiscoveryPatch
+     */
+    readonly request: GuildGuildDiscoveryUpdateRequest
+}
+
+/**
  * Request parameters for guildGuildIdEmojisEmojiIdDelete operation in GuildApi.
  * @export
  * @interface GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest
@@ -8335,6 +8609,20 @@ export interface GuildApiGuildGuildIdIconsIconIdDeleteRequest {
      * @memberof GuildApiGuildGuildIdIconsIconIdDelete
      */
     readonly iconId: number
+}
+
+/**
+ * Request parameters for guildGuildIdJoinPost operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdJoinPostRequest
+ */
+export interface GuildApiGuildGuildIdJoinPostRequest {
+    /**
+     * Guild id
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdJoinPost
+     */
+    readonly guildId: number
 }
 
 /**
@@ -8837,6 +9125,18 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
     }
 
     /**
+     * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.
+     * @summary Update guild discovery settings
+     * @param {GuildApiGuildGuildIdDiscoveryPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdDiscoveryPatch(requestParameters: GuildApiGuildGuildIdDiscoveryPatchRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdDiscoveryPatch(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * 
      * @summary Delete guild emoji
      * @param {GuildApiGuildGuildIdEmojisEmojiIdDeleteRequest} requestParameters Request parameters.
@@ -8930,6 +9230,18 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      */
     public guildGuildIdIconsIconIdDelete(requestParameters: GuildApiGuildGuildIdIconsIconIdDeleteRequest, options?: RawAxiosRequestConfig) {
         return GuildApiFp(this.configuration).guildGuildIdIconsIconIdDelete(requestParameters.guildId, requestParameters.iconId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Joins the authenticated user to a public guild without an invite. Private guilds require the invite flow, banned users are forbidden, and existing members receive the guild without duplicate membership or join events.
+     * @summary Join public guild without invite
+     * @param {GuildApiGuildGuildIdJoinPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdJoinPost(requestParameters: GuildApiGuildGuildIdJoinPostRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdJoinPost(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -12538,6 +12850,101 @@ export const SearchApiAxiosParamCreator = function (configuration?: Configuratio
             };
         },
         /**
+         * Returns tag suggestions from tags attached to public guilds only. Limit defaults to 16 and is capped at 16.
+         * @summary Autocomplete public guild tags
+         * @param {string} [q] Tag prefix
+         * @param {number} [limit] Maximum tags to return, capped at 16
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchGuildTagsGet: async (q?: string, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/search/guild-tags`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (q !== undefined) {
+                localVarQueryParameter['q'] = q;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+         * @summary Search public guilds
+         * @param {string} [q] Search text for guild name, description, and tags
+         * @param {string} [tags] Comma-separated normalized tags
+         * @param {SearchGuildsGetSortEnum} [sort] Sort mode
+         * @param {number} [page] Zero-based page number
+         * @param {number} [limit] Results per page, capped at 16
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchGuildsGet: async (q?: string, tags?: string, sort?: SearchGuildsGetSortEnum, page?: number, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/search/guilds`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (q !== undefined) {
+                localVarQueryParameter['q'] = q;
+            }
+
+            if (tags !== undefined) {
+                localVarQueryParameter['tags'] = tags;
+            }
+
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort;
+            }
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * 
          * @summary Search messages in a channel
          * @param {SearchMessageSearchRequest} request Search request data
@@ -12598,6 +13005,37 @@ export const SearchApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Returns tag suggestions from tags attached to public guilds only. Limit defaults to 16 and is capped at 16.
+         * @summary Autocomplete public guild tags
+         * @param {string} [q] Tag prefix
+         * @param {number} [limit] Maximum tags to return, capped at 16
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async searchGuildTagsGet(q?: string, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<string>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.searchGuildTagsGet(q, limit, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SearchApi.searchGuildTagsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+         * @summary Search public guilds
+         * @param {string} [q] Search text for guild name, description, and tags
+         * @param {string} [tags] Comma-separated normalized tags
+         * @param {SearchGuildsGetSortEnum} [sort] Sort mode
+         * @param {number} [page] Zero-based page number
+         * @param {number} [limit] Results per page, capped at 16
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async searchGuildsGet(q?: string, tags?: string, sort?: SearchGuildsGetSortEnum, page?: number, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuildDiscoverySearchResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.searchGuildsGet(q, tags, sort, page, limit, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SearchApi.searchGuildsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * 
          * @summary Search messages in a channel
          * @param {SearchMessageSearchRequest} request Search request data
@@ -12631,6 +13069,26 @@ export const SearchApiFactory = function (configuration?: Configuration, basePat
             return localVarFp.searchGuildIdMessagesPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
+         * Returns tag suggestions from tags attached to public guilds only. Limit defaults to 16 and is capped at 16.
+         * @summary Autocomplete public guild tags
+         * @param {SearchApiSearchGuildTagsGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchGuildTagsGet(requestParameters: SearchApiSearchGuildTagsGetRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<Array<string>> {
+            return localVarFp.searchGuildTagsGet(requestParameters.q, requestParameters.limit, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+         * @summary Search public guilds
+         * @param {SearchApiSearchGuildsGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchGuildsGet(requestParameters: SearchApiSearchGuildsGetRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuildDiscoverySearchResponse> {
+            return localVarFp.searchGuildsGet(requestParameters.q, requestParameters.tags, requestParameters.sort, requestParameters.page, requestParameters.limit, options).then((request) => request(axios, basePath));
+        },
+        /**
          * 
          * @summary Search messages in a channel
          * @param {SearchApiSearchMessagesPostRequest} requestParameters Request parameters.
@@ -12658,6 +13116,26 @@ export interface SearchApiInterface {
      * @memberof SearchApiInterface
      */
     searchGuildIdMessagesPost(requestParameters: SearchApiSearchGuildIdMessagesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<SearchMessageSearchResponse>>;
+
+    /**
+     * Returns tag suggestions from tags attached to public guilds only. Limit defaults to 16 and is capped at 16.
+     * @summary Autocomplete public guild tags
+     * @param {SearchApiSearchGuildTagsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SearchApiInterface
+     */
+    searchGuildTagsGet(requestParameters?: SearchApiSearchGuildTagsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<string>>;
+
+    /**
+     * Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+     * @summary Search public guilds
+     * @param {SearchApiSearchGuildsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SearchApiInterface
+     */
+    searchGuildsGet(requestParameters?: SearchApiSearchGuildsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuildDiscoverySearchResponse>;
 
     /**
      * 
@@ -12690,6 +13168,69 @@ export interface SearchApiSearchGuildIdMessagesPostRequest {
      * @memberof SearchApiSearchGuildIdMessagesPost
      */
     readonly request: SearchMessageSearchRequest
+}
+
+/**
+ * Request parameters for searchGuildTagsGet operation in SearchApi.
+ * @export
+ * @interface SearchApiSearchGuildTagsGetRequest
+ */
+export interface SearchApiSearchGuildTagsGetRequest {
+    /**
+     * Tag prefix
+     * @type {string}
+     * @memberof SearchApiSearchGuildTagsGet
+     */
+    readonly q?: string
+
+    /**
+     * Maximum tags to return, capped at 16
+     * @type {number}
+     * @memberof SearchApiSearchGuildTagsGet
+     */
+    readonly limit?: number
+}
+
+/**
+ * Request parameters for searchGuildsGet operation in SearchApi.
+ * @export
+ * @interface SearchApiSearchGuildsGetRequest
+ */
+export interface SearchApiSearchGuildsGetRequest {
+    /**
+     * Search text for guild name, description, and tags
+     * @type {string}
+     * @memberof SearchApiSearchGuildsGet
+     */
+    readonly q?: string
+
+    /**
+     * Comma-separated normalized tags
+     * @type {string}
+     * @memberof SearchApiSearchGuildsGet
+     */
+    readonly tags?: string
+
+    /**
+     * Sort mode
+     * @type {'best_match' | 'popularity' | 'alphabetical'}
+     * @memberof SearchApiSearchGuildsGet
+     */
+    readonly sort?: SearchGuildsGetSortEnum
+
+    /**
+     * Zero-based page number
+     * @type {number}
+     * @memberof SearchApiSearchGuildsGet
+     */
+    readonly page?: number
+
+    /**
+     * Results per page, capped at 16
+     * @type {number}
+     * @memberof SearchApiSearchGuildsGet
+     */
+    readonly limit?: number
 }
 
 /**
@@ -12726,6 +13267,30 @@ export class SearchApi extends BaseAPI implements SearchApiInterface {
     }
 
     /**
+     * Returns tag suggestions from tags attached to public guilds only. Limit defaults to 16 and is capped at 16.
+     * @summary Autocomplete public guild tags
+     * @param {SearchApiSearchGuildTagsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SearchApi
+     */
+    public searchGuildTagsGet(requestParameters: SearchApiSearchGuildTagsGetRequest = {}, options?: RawAxiosRequestConfig) {
+        return SearchApiFp(this.configuration).searchGuildTagsGet(requestParameters.q, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+     * @summary Search public guilds
+     * @param {SearchApiSearchGuildsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SearchApi
+     */
+    public searchGuildsGet(requestParameters: SearchApiSearchGuildsGetRequest = {}, options?: RawAxiosRequestConfig) {
+        return SearchApiFp(this.configuration).searchGuildsGet(requestParameters.q, requestParameters.tags, requestParameters.sort, requestParameters.page, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * 
      * @summary Search messages in a channel
      * @param {SearchApiSearchMessagesPostRequest} requestParameters Request parameters.
@@ -12738,6 +13303,15 @@ export class SearchApi extends BaseAPI implements SearchApiInterface {
     }
 }
 
+/**
+ * @export
+ */
+export const SearchGuildsGetSortEnum = {
+    BestMatch: 'best_match',
+    Popularity: 'popularity',
+    Alphabetical: 'alphabetical'
+} as const;
+export type SearchGuildsGetSortEnum = typeof SearchGuildsGetSortEnum[keyof typeof SearchGuildsGetSortEnum];
 
 
 /**

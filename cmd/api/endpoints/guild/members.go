@@ -46,10 +46,14 @@ func (e *entity) KickMember(c *fiber.Ctx) error {
 	if err := e.memb.RemoveMember(c.UserContext(), memberId, guildId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToRemoveMember)
 	}
+	e.adjustDiscoveryMembers(c.UserContext(), guildId, -1)
 
 	e.deleteMemberCache(c.UserContext(), memberId, guildId)
 	e.deleteUserRolesCache(c.UserContext(), memberId, guildId)
-	e.sendGuildMemberRemoved(observability.BackgroundFromContext(c.UserContext()), guildId, memberId, user.Id, mqmsg.GuildMemberModerationKick, nil)
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, e.log)
+	e.sendGuildMemberRemoved(asyncCtx, guildId, memberId, user.Id, mqmsg.GuildMemberModerationKick, nil)
+	go e.publishGuildSearchUpsert(asyncCtx, guildId, asyncLog)
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
@@ -94,10 +98,14 @@ func (e *entity) BanMember(c *fiber.Ctx) error {
 	if err := e.memb.RemoveMember(c.UserContext(), memberId, guildId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToRemoveMember)
 	}
+	e.adjustDiscoveryMembers(c.UserContext(), guildId, -1)
 
 	e.deleteMemberCache(c.UserContext(), memberId, guildId)
 	e.deleteUserRolesCache(c.UserContext(), memberId, guildId)
-	e.sendGuildMemberRemoved(observability.BackgroundFromContext(c.UserContext()), guildId, memberId, user.Id, mqmsg.GuildMemberModerationBan, req.Reason)
+	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, e.log)
+	e.sendGuildMemberRemoved(asyncCtx, guildId, memberId, user.Id, mqmsg.GuildMemberModerationBan, req.Reason)
+	go e.publishGuildSearchUpsert(asyncCtx, guildId, asyncLog)
 	return c.SendStatus(fiber.StatusNoContent)
 }
 

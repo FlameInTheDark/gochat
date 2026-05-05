@@ -22,12 +22,14 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guilddiscovery"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/threadmember"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/usersettings"
 	"github.com/FlameInTheDark/gochat/internal/mq"
+	"github.com/FlameInTheDark/gochat/internal/searchmq"
 	"github.com/FlameInTheDark/gochat/internal/server"
 )
 
@@ -63,11 +65,13 @@ type entity struct {
 
 	log   *slog.Logger
 	mqt   mq.SendTransporter
+	smq   *searchmq.Queue
 	cache cache.Cache
 
 	user    user.User
 	member  member.Member
 	guild   guild.Guild
+	gd      guilddiscovery.GuildDiscovery
 	urole   userrole.UserRole
 	ch      channel.Channel
 	dm      dmchannel.DmChannel
@@ -93,17 +97,19 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(cql *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, cache cache.Cache, attachTTLSeconds int64, contentHosts []string, log *slog.Logger) server.Entity {
+func New(cql *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, smq *searchmq.Queue, cache cache.Cache, attachTTLSeconds int64, contentHosts []string, log *slog.Logger) server.Entity {
 	return &entity{
 		name:         entityName,
 		log:          log,
 		mqt:          mqt,
+		smq:          smq,
 		cache:        cache,
 		attachTTL:    attachTTLSeconds,
 		contentHosts: append([]string(nil), contentHosts...),
 		user:         user.New(pg.Conn()),
 		member:       member.New(pg.Conn()),
 		guild:        guild.New(pg.Conn()),
+		gd:           guilddiscovery.New(pg.Conn()),
 		urole:        userrole.New(pg.Conn()),
 		ch:           channel.New(pg.Conn()),
 		dm:           dmchannel.New(pg.Conn()),

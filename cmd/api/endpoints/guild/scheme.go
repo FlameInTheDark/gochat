@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"regexp"
 	"strconv"
+	"strings"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
@@ -109,15 +110,21 @@ const (
 	ErrRoleColorInvalid         = "role color must be between 0 and 16777215"
 	ErrUnableToDeleteActiveIcon = "unable to delete active icon"
 	ErrBanReasonTooLong         = "ban reason must be 256 characters or fewer"
+	ErrTagInvalid               = "tags must be 2-32 characters and contain only letters, numbers, hyphens, and underscores"
+	ErrTooManyTags              = "guild can have at most 10 tags"
+	ErrDescriptionTooLong       = "description must be 500 characters or fewer"
 )
 
 var (
-	channelNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+	channelNameRegex       = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+	guildDiscoveryTagRegex = regexp.MustCompile(`^[a-z0-9_-]{2,32}$`)
 )
 
 const (
-	maxGuildChannelNameLength = 100
-	maxThreadNameLength       = 256
+	maxGuildChannelNameLength          = 100
+	maxThreadNameLength                = 256
+	maxGuildDiscoveryDescriptionLength = 500
+	maxGuildDiscoveryTags              = 10
 )
 
 func validateGuildChannelName(name string) error {
@@ -162,6 +169,12 @@ type UpdateGuildRequest struct {
 	Permissions *int64  `json:"permissions" default:"7927905"`         // Permissions. Check the permissions documentation for more info.
 }
 
+type GuildDiscoveryUpdateRequest struct {
+	Public      bool     `json:"public"`
+	Description string   `json:"description"`
+	Tags        []string `json:"tags"`
+}
+
 func (r UpdateGuildRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.Name,
@@ -177,6 +190,35 @@ func (r UpdateGuildRequest) Validate() error {
 			validation.When(r.Permissions != nil, validation.Min(int64(0)).Error(ErrPermissionsInvalid)),
 		),
 	)
+}
+
+func (r GuildDiscoveryUpdateRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Description,
+			validation.RuneLength(0, maxGuildDiscoveryDescriptionLength).Error(ErrDescriptionTooLong),
+		),
+		validation.Field(&r.Tags,
+			validation.Length(0, maxGuildDiscoveryTags).Error(ErrTooManyTags),
+			validation.Each(validation.Match(guildDiscoveryTagRegex).Error(ErrTagInvalid)),
+		),
+	)
+}
+
+func normalizeGuildDiscoveryTags(tags []string) []string {
+	seen := make(map[string]struct{}, len(tags))
+	out := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		tag = strings.ToLower(strings.TrimSpace(tag))
+		if tag == "" {
+			continue
+		}
+		if _, ok := seen[tag]; ok {
+			continue
+		}
+		seen[tag] = struct{}{}
+		out = append(out, tag)
+	}
+	return out
 }
 
 type SetGuildSystemMessagesChannelRequest struct {

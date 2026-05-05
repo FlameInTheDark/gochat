@@ -50,7 +50,7 @@ func (a *GuildInvitesAPIService) GuildInvitesAcceptInviteCodePost(ctx context.Co
 
 // Execute executes the request
 //
-//	@return DtoGuild
+//	@return	DtoGuild
 func (a *GuildInvitesAPIService) GuildInvitesAcceptInviteCodePostExecute(r ApiGuildInvitesAcceptInviteCodePostRequest) (*DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -173,7 +173,7 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdGet(ctx context.Context, gui
 
 // Execute executes the request
 //
-//	@return []DtoGuildInvite
+//	@return	[]DtoGuildInvite
 func (a *GuildInvitesAPIService) GuildInvitesGuildIdGetExecute(r ApiGuildInvitesGuildIdGetRequest) ([]DtoGuildInvite, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -288,7 +288,7 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdInviteIdDelete(ctx context.C
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *GuildInvitesAPIService) GuildInvitesGuildIdInviteIdDeleteExecute(r ApiGuildInvitesGuildIdInviteIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -408,7 +408,7 @@ func (a *GuildInvitesAPIService) GuildInvitesGuildIdPost(ctx context.Context, gu
 
 // Execute executes the request
 //
-//	@return DtoGuildInvite
+//	@return	DtoGuildInvite
 func (a *GuildInvitesAPIService) GuildInvitesGuildIdPostExecute(r ApiGuildInvitesGuildIdPostRequest) (*DtoGuildInvite, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -525,7 +525,7 @@ func (a *GuildInvitesAPIService) GuildInvitesReceiveInviteCodeGet(ctx context.Co
 
 // Execute executes the request
 //
-//	@return DtoInvitePreview
+//	@return	DtoInvitePreview
 func (a *GuildInvitesAPIService) GuildInvitesReceiveInviteCodeGetExecute(r ApiGuildInvitesReceiveInviteCodeGetRequest) (*DtoInvitePreview, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet

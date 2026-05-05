@@ -110,6 +110,7 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdChannelOrderPatch**](docs/GuildAPI.md#guildguildidchannelorderpatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 *GuildAPI* | [**GuildGuildIdChannelPost**](docs/GuildAPI.md#guildguildidchannelpost) | **Post** /guild/{guild_id}/channel | Create guild channel
 *GuildAPI* | [**GuildGuildIdDelete**](docs/GuildAPI.md#guildguildiddelete) | **Delete** /guild/{guild_id} | Delete guild
+*GuildAPI* | [**GuildGuildIdDiscoveryPatch**](docs/GuildAPI.md#guildguildiddiscoverypatch) | **Patch** /guild/{guild_id}/discovery | Update guild discovery settings
 *GuildAPI* | [**GuildGuildIdEmojisEmojiIdDelete**](docs/GuildAPI.md#guildguildidemojisemojiiddelete) | **Delete** /guild/{guild_id}/emojis/{emoji_id} | Delete guild emoji
 *GuildAPI* | [**GuildGuildIdEmojisEmojiIdPatch**](docs/GuildAPI.md#guildguildidemojisemojiidpatch) | **Patch** /guild/{guild_id}/emojis/{emoji_id} | Update guild emoji
 *GuildAPI* | [**GuildGuildIdEmojisGet**](docs/GuildAPI.md#guildguildidemojisget) | **Get** /guild/{guild_id}/emojis | List guild emojis
@@ -118,6 +119,7 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdIconPost**](docs/GuildAPI.md#guildguildidiconpost) | **Post** /guild/{guild_id}/icon | Create guild icon metadata
 *GuildAPI* | [**GuildGuildIdIconsGet**](docs/GuildAPI.md#guildguildidiconsget) | **Get** /guild/{guild_id}/icons | List guild icons
 *GuildAPI* | [**GuildGuildIdIconsIconIdDelete**](docs/GuildAPI.md#guildguildidiconsiconiddelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
+*GuildAPI* | [**GuildGuildIdJoinPost**](docs/GuildAPI.md#guildguildidjoinpost) | **Post** /guild/{guild_id}/join | Join public guild without invite
 *GuildAPI* | [**GuildGuildIdMemberUserIdBanDelete**](docs/GuildAPI.md#guildguildidmemberuseridbandelete) | **Delete** /guild/{guild_id}/member/{user_id}/ban | Unban guild member
 *GuildAPI* | [**GuildGuildIdMemberUserIdBanPost**](docs/GuildAPI.md#guildguildidmemberuseridbanpost) | **Post** /guild/{guild_id}/member/{user_id}/ban | Ban guild member
 *GuildAPI* | [**GuildGuildIdMemberUserIdGet**](docs/GuildAPI.md#guildguildidmemberuseridget) | **Get** /guild/{guild_id}/member/{user_id} | Get guild member
@@ -163,6 +165,8 @@ Class | Method | HTTP request | Description
 *MessageAPI* | [**MessageChannelChannelIdPost**](docs/MessageAPI.md#messagechannelchannelidpost) | **Post** /message/channel/{channel_id} | Send message
 *MessageAPI* | [**MessageChannelChannelIdTypingPost**](docs/MessageAPI.md#messagechannelchannelidtypingpost) | **Post** /message/channel/{channel_id}/typing | Send user typing event in the channel
 *SearchAPI* | [**SearchGuildIdMessagesPost**](docs/SearchAPI.md#searchguildidmessagespost) | **Post** /search/{guild_id}/messages | Search messages
+*SearchAPI* | [**SearchGuildTagsGet**](docs/SearchAPI.md#searchguildtagsget) | **Get** /search/guild-tags | Autocomplete public guild tags
+*SearchAPI* | [**SearchGuildsGet**](docs/SearchAPI.md#searchguildsget) | **Get** /search/guilds | Search public guilds
 *SearchAPI* | [**SearchMessagesPost**](docs/SearchAPI.md#searchmessagespost) | **Post** /search/messages | Search messages in a channel
 *UploadAPI* | [**UploadAttachmentsChannelIdAttachmentIdPost**](docs/UploadAPI.md#uploadattachmentschannelidattachmentidpost) | **Post** /upload/attachments/{channel_id}/{attachment_id} | Upload attachment
 *UploadAPI* | [**UploadAvatarsUserIdAvatarIdPost**](docs/UploadAPI.md#uploadavatarsuseridavataridpost) | **Post** /upload/avatars/{user_id}/{avatar_id} | Upload user avatar
@@ -230,6 +234,9 @@ Class | Method | HTTP request | Description
  - [DtoEmojiUpload](docs/DtoEmojiUpload.md)
  - [DtoGuild](docs/DtoGuild.md)
  - [DtoGuildBan](docs/DtoGuildBan.md)
+ - [DtoGuildDiscovery](docs/DtoGuildDiscovery.md)
+ - [DtoGuildDiscoverySearchResponse](docs/DtoGuildDiscoverySearchResponse.md)
+ - [DtoGuildDiscoveryUpdateResponse](docs/DtoGuildDiscoveryUpdateResponse.md)
  - [DtoGuildEmoji](docs/DtoGuildEmoji.md)
  - [DtoGuildInvite](docs/DtoGuildInvite.md)
  - [DtoIcon](docs/DtoIcon.md)
@@ -262,6 +269,7 @@ Class | Method | HTTP request | Description
  - [GuildCreateInviteRequest](docs/GuildCreateInviteRequest.md)
  - [GuildCreateVoiceStreamRequest](docs/GuildCreateVoiceStreamRequest.md)
  - [GuildCreateVoiceStreamResponse](docs/GuildCreateVoiceStreamResponse.md)
+ - [GuildGuildDiscoveryUpdateRequest](docs/GuildGuildDiscoveryUpdateRequest.md)
  - [GuildJoinVoiceResponse](docs/GuildJoinVoiceResponse.md)
  - [GuildJoinVoiceStreamResponse](docs/GuildJoinVoiceStreamResponse.md)
  - [GuildMoveMemberRequest](docs/GuildMoveMemberRequest.md)

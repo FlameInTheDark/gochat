@@ -1,6 +1,8 @@
 package search
 
 import (
+	"strings"
+
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -9,10 +11,12 @@ import (
 const (
 	ErrPermissionsRequired  = "permissions required"
 	ErrIncorrectGuildID     = "incorrect guild ID"
+	ErrUnableToGetUserToken = "unable to get user token"
 	ErrUnableToParseBody    = "unable to parse body"
 	ErrUnableToFindMessages = "unable to find messages"
 	ErrUnableToGetMessages  = "unable to get messages"
 	ErrUnableToGetUsers     = "unable to get users"
+	ErrUnableToGetGuildByID = "unable to get guild by id"
 	ErrUnsupportedChannel   = "search is only available in text channels"
 
 	// Validation error messages
@@ -22,6 +26,7 @@ const (
 	ErrPageInvalid        = "page must be non-negative"
 	ErrContentTooLong     = "content must be 2000 characters or fewer"
 	ErrHasInvalid         = "has values must be one of: url, image, video, file"
+	ErrSortInvalid        = "sort must be one of: best_match, popularity, alphabetical"
 )
 
 const maxSearchContentLength = 2000
@@ -61,4 +66,21 @@ func (r MessageSearchRequest) Validate() error {
 			validation.Each(validation.In("url", "image", "video", "file").Error(ErrHasInvalid)),
 		),
 	)
+}
+
+func normalizeGuildDiscoveryTags(tags []string) []string {
+	seen := make(map[string]struct{}, len(tags))
+	out := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		tag = strings.ToLower(strings.TrimSpace(tag))
+		if tag == "" {
+			continue
+		}
+		if _, ok := seen[tag]; ok {
+			continue
+		}
+		seen[tag] = struct{}{}
+		out = append(out, tag)
+	}
+	return out
 }

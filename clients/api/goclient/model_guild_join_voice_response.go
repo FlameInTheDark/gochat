@@ -20,6 +20,7 @@ var _ MappedNullable = &GuildJoinVoiceResponse{}
 
 // GuildJoinVoiceResponse struct for GuildJoinVoiceResponse
 type GuildJoinVoiceResponse struct {
+	Region   *string `json:"region,omitempty"`
 	SfuToken *string `json:"sfu_token,omitempty"`
 	SfuUrl   *string `json:"sfu_url,omitempty"`
 }
@@ -39,6 +40,38 @@ func NewGuildJoinVoiceResponse() *GuildJoinVoiceResponse {
 func NewGuildJoinVoiceResponseWithDefaults() *GuildJoinVoiceResponse {
 	this := GuildJoinVoiceResponse{}
 	return &this
+}
+
+// GetRegion returns the Region field value if set, zero value otherwise.
+func (o *GuildJoinVoiceResponse) GetRegion() string {
+	if o == nil || IsNil(o.Region) {
+		var ret string
+		return ret
+	}
+	return *o.Region
+}
+
+// GetRegionOk returns a tuple with the Region field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *GuildJoinVoiceResponse) GetRegionOk() (*string, bool) {
+	if o == nil || IsNil(o.Region) {
+		return nil, false
+	}
+	return o.Region, true
+}
+
+// HasRegion returns a boolean if a field has been set.
+func (o *GuildJoinVoiceResponse) HasRegion() bool {
+	if o != nil && !IsNil(o.Region) {
+		return true
+	}
+
+	return false
+}
+
+// SetRegion gets a reference to the given string and assigns it to the Region field.
+func (o *GuildJoinVoiceResponse) SetRegion(v string) {
+	o.Region = &v
 }
 
 // GetSfuToken returns the SfuToken field value if set, zero value otherwise.
@@ -115,6 +148,9 @@ func (o GuildJoinVoiceResponse) MarshalJSON() ([]byte, error) {
 
 func (o GuildJoinVoiceResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.Region) {
+		toSerialize["region"] = o.Region
+	}
 	if !IsNil(o.SfuToken) {
 		toSerialize["sfu_token"] = o.SfuToken
 	}

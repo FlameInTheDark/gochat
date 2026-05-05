@@ -17,6 +17,7 @@ Method | HTTP request | Description
 [**GuildGuildIdChannelOrderPatch**](GuildAPI.md#GuildGuildIdChannelOrderPatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 [**GuildGuildIdChannelPost**](GuildAPI.md#GuildGuildIdChannelPost) | **Post** /guild/{guild_id}/channel | Create guild channel
 [**GuildGuildIdDelete**](GuildAPI.md#GuildGuildIdDelete) | **Delete** /guild/{guild_id} | Delete guild
+[**GuildGuildIdDiscoveryPatch**](GuildAPI.md#GuildGuildIdDiscoveryPatch) | **Patch** /guild/{guild_id}/discovery | Update guild discovery settings
 [**GuildGuildIdEmojisEmojiIdDelete**](GuildAPI.md#GuildGuildIdEmojisEmojiIdDelete) | **Delete** /guild/{guild_id}/emojis/{emoji_id} | Delete guild emoji
 [**GuildGuildIdEmojisEmojiIdPatch**](GuildAPI.md#GuildGuildIdEmojisEmojiIdPatch) | **Patch** /guild/{guild_id}/emojis/{emoji_id} | Update guild emoji
 [**GuildGuildIdEmojisGet**](GuildAPI.md#GuildGuildIdEmojisGet) | **Get** /guild/{guild_id}/emojis | List guild emojis
@@ -25,6 +26,7 @@ Method | HTTP request | Description
 [**GuildGuildIdIconPost**](GuildAPI.md#GuildGuildIdIconPost) | **Post** /guild/{guild_id}/icon | Create guild icon metadata
 [**GuildGuildIdIconsGet**](GuildAPI.md#GuildGuildIdIconsGet) | **Get** /guild/{guild_id}/icons | List guild icons
 [**GuildGuildIdIconsIconIdDelete**](GuildAPI.md#GuildGuildIdIconsIconIdDelete) | **Delete** /guild/{guild_id}/icons/{icon_id} | Delete guild icon by ID
+[**GuildGuildIdJoinPost**](GuildAPI.md#GuildGuildIdJoinPost) | **Post** /guild/{guild_id}/join | Join public guild without invite
 [**GuildGuildIdMemberUserIdBanDelete**](GuildAPI.md#GuildGuildIdMemberUserIdBanDelete) | **Delete** /guild/{guild_id}/member/{user_id}/ban | Unban guild member
 [**GuildGuildIdMemberUserIdBanPost**](GuildAPI.md#GuildGuildIdMemberUserIdBanPost) | **Post** /guild/{guild_id}/member/{user_id}/ban | Ban guild member
 [**GuildGuildIdMemberUserIdGet**](GuildAPI.md#GuildGuildIdMemberUserIdGet) | **Get** /guild/{guild_id}/member/{user_id} | Get guild member
@@ -960,6 +962,78 @@ No authorization required
 [[Back to README]](../README.md)
 
 
+## GuildGuildIdDiscoveryPatch
+
+> DtoGuildDiscoveryUpdateResponse GuildGuildIdDiscoveryPatch(ctx, guildId).Request(request).Execute()
+
+Update guild discovery settings
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild id
+	request := *openapiclient.NewGuildGuildDiscoveryUpdateRequest() // GuildGuildDiscoveryUpdateRequest | Guild discovery settings
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdDiscoveryPatch(context.Background(), guildId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdDiscoveryPatch``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdDiscoveryPatch`: DtoGuildDiscoveryUpdateResponse
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdDiscoveryPatch`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild id | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdDiscoveryPatchRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **request** | [**GuildGuildDiscoveryUpdateRequest**](GuildGuildDiscoveryUpdateRequest.md) | Guild discovery settings | 
+
+### Return type
+
+[**DtoGuildDiscoveryUpdateResponse**](DtoGuildDiscoveryUpdateResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
 ## GuildGuildIdEmojisEmojiIdDelete
 
 > string GuildGuildIdEmojisEmojiIdDelete(ctx, guildId, emojiId).Execute()
@@ -1519,6 +1593,76 @@ No authorization required
 
 - **Content-Type**: Not defined
 - **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdJoinPost
+
+> DtoGuild GuildGuildIdJoinPost(ctx, guildId).Execute()
+
+Join public guild without invite
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild id
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdJoinPost(context.Background(), guildId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdJoinPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdJoinPost`: DtoGuild
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdJoinPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild id | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdJoinPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**DtoGuild**](DtoGuild.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
