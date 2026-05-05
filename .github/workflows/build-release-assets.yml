@@ -40,6 +40,10 @@ jobs:
             dockerfile: attachments.Dockerfile
             image: gochat-attachments
             cache_scope: attachments-release
+          - service: search
+            dockerfile: search.Dockerfile
+            image: gochat-search
+            cache_scope: search-release
           - service: webhook
             dockerfile: webhook.Dockerfile
             image: gochat-webhook
