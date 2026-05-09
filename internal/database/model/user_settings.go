@@ -139,6 +139,7 @@ type Devices struct {
 	AutoGainControl     bool    `json:"auto_gain_control"`
 	InputMode           string  `json:"input_mode,omitempty"`
 	PushToTalkKey       string  `json:"push_to_talk_key,omitempty"`
+	PushToTalkToggle    bool    `json:"push_to_talk_toggle,omitempty"`
 }
 
 func (d Devices) Validate() error {
@@ -222,10 +223,11 @@ type UserUISounds struct {
 }
 
 type UserSettingsGuildFolders struct {
-	Name     string                  `json:"name"`
-	Color    int64                   `json:"color"`
-	Position int64                   `json:"position"`
-	Guilds   helper.StringInt64Array `json:"guilds"`
+	Name      string                  `json:"name"`
+	Color     int64                   `json:"color"`
+	Position  int64                   `json:"position"`
+	Collapsed bool                    `json:"collapsed"`
+	Guilds    helper.StringInt64Array `json:"guilds"`
 }
 
 type UserSettingsChannel struct {

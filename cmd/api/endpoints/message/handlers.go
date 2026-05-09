@@ -2897,7 +2897,8 @@ func (e *entity) validateDeletePermission(c *fiber.Ctx, messageId, channelId, us
 	if channel.Type == model.ChannelTypeThread && channel.Closed {
 		return nil, fiber.NewError(fiber.StatusForbidden, ErrThreadClosed)
 	}
-	if _, err := e.requireCurrentMessageChannelAccess(c.UserContext(), &channel, channelId, userId); err != nil {
+	guildID, err := e.requireCurrentMessageChannelAccess(c.UserContext(), &channel, channelId, userId)
+	if err != nil {
 		return nil, err
 	}
 
@@ -2910,7 +2911,17 @@ func (e *entity) validateDeletePermission(c *fiber.Ctx, messageId, channelId, us
 	}
 
 	if message.UserId != userId {
-		return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		if guildID == nil {
+			return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		}
+
+		_, _, _, canManageMessages, err := e.perm.ChannelPerm(c.UserContext(), *guildID, channelId, userId, permissions.PermTextManageMessages)
+		if err != nil {
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
+		}
+		if !canManageMessages {
+			return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		}
 	}
 
 	return &message, nil
