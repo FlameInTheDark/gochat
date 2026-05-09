@@ -23,6 +23,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
 
 type fakeAttachmentRepo struct {
@@ -338,6 +339,31 @@ func (f *fakeAccessGroupDMRepo) IsGroupDmParticipant(ctx context.Context, channe
 }
 func (f *fakeAccessGroupDMRepo) GetUserGroupDmChannels(ctx context.Context, userId int64) ([]model.GroupDMChannel, error) {
 	return nil, nil
+}
+
+type fakeDeleteRoleCheck struct {
+	allowed bool
+	calls   int
+	gotPerm []permissions.RolePermission
+}
+
+func (f *fakeDeleteRoleCheck) getUserRoleIDs(ctx context.Context, guildID, userID int64) ([]int64, error) {
+	return nil, nil
+}
+func (f *fakeDeleteRoleCheck) ChannelPerm(ctx context.Context, guildID, channelID, userID int64, perm ...permissions.RolePermission) (*model.Channel, *model.GuildChannel, *model.Guild, bool, error) {
+	f.calls++
+	f.gotPerm = append([]permissions.RolePermission(nil), perm...)
+	return &model.Channel{Id: channelID, Type: model.ChannelTypeGuild},
+		&model.GuildChannel{GuildId: guildID, ChannelId: channelID},
+		&model.Guild{Id: guildID},
+		f.allowed,
+		nil
+}
+func (f *fakeDeleteRoleCheck) GuildPerm(ctx context.Context, guildID, userID int64, perm ...permissions.RolePermission) (*model.Guild, bool, error) {
+	return &model.Guild{Id: guildID}, f.allowed, nil
+}
+func (f *fakeDeleteRoleCheck) GetChannelPermissions(ctx context.Context, guildID, channelID, userID int64) (int64, error) {
+	return 0, nil
 }
 
 func TestValidateMessageAttachmentsUsesChannelScopedLookup(t *testing.T) {
@@ -966,6 +992,80 @@ func TestValidateDeletePermissionRejectsFormerDMParticipantBeforeLookup(t *testi
 	assertMessageFiberErrorCode(t, err, fiber.StatusForbidden)
 	if msgRepo.getCalls != 0 {
 		t.Fatalf("expected access denial before message lookup, got %d lookups", msgRepo.getCalls)
+	}
+}
+
+func TestValidateDeletePermissionAllowsManageMessagesForOtherUserGuildMessage(t *testing.T) {
+	msgRepo := &fakeReplyMessageRepo{
+		getMessage: model.Message{Id: 88, ChannelId: 9, UserId: 99, Type: int(model.MessageTypeChat)},
+	}
+	permRepo := &fakeDeleteRoleCheck{allowed: true}
+	e := &entity{
+		ch:   &fakeReplyChannelRepo{channel: model.Channel{Id: 9, Type: model.ChannelTypeGuild}},
+		gc:   &fakeAccessGuildChannelsRepo{guildByChannel: model.GuildChannel{GuildId: 77, ChannelId: 9}},
+		m:    &fakeAccessMemberRepo{isMember: true},
+		msg:  msgRepo,
+		perm: permRepo,
+	}
+	app := fiber.New()
+	c := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(c)
+
+	message, err := e.validateDeletePermission(c, 88, 9, 42)
+	if err != nil {
+		t.Fatalf("expected delete permission, got %v", err)
+	}
+	if message.Id != 88 {
+		t.Fatalf("expected message 88, got %d", message.Id)
+	}
+	if permRepo.calls != 1 {
+		t.Fatalf("expected one manage-messages permission check, got %d", permRepo.calls)
+	}
+	if len(permRepo.gotPerm) != 1 || permRepo.gotPerm[0] != permissions.PermTextManageMessages {
+		t.Fatalf("expected manage-messages permission check, got %#v", permRepo.gotPerm)
+	}
+}
+
+func TestValidateDeletePermissionRejectsOtherUserGuildMessageWithoutManageMessages(t *testing.T) {
+	msgRepo := &fakeReplyMessageRepo{
+		getMessage: model.Message{Id: 88, ChannelId: 9, UserId: 99, Type: int(model.MessageTypeChat)},
+	}
+	e := &entity{
+		ch:   &fakeReplyChannelRepo{channel: model.Channel{Id: 9, Type: model.ChannelTypeGuild}},
+		gc:   &fakeAccessGuildChannelsRepo{guildByChannel: model.GuildChannel{GuildId: 77, ChannelId: 9}},
+		m:    &fakeAccessMemberRepo{isMember: true},
+		msg:  msgRepo,
+		perm: &fakeDeleteRoleCheck{allowed: false},
+	}
+	app := fiber.New()
+	c := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(c)
+
+	_, err := e.validateDeletePermission(c, 88, 9, 42)
+	assertMessageFiberErrorCode(t, err, fiber.StatusForbidden)
+}
+
+func TestValidateDeletePermissionDoesNotRequireManageMessagesForOwnMessage(t *testing.T) {
+	msgRepo := &fakeReplyMessageRepo{
+		getMessage: model.Message{Id: 88, ChannelId: 9, UserId: 42, Type: int(model.MessageTypeChat)},
+	}
+	permRepo := &fakeDeleteRoleCheck{allowed: false}
+	e := &entity{
+		ch:   &fakeReplyChannelRepo{channel: model.Channel{Id: 9, Type: model.ChannelTypeGuild}},
+		gc:   &fakeAccessGuildChannelsRepo{guildByChannel: model.GuildChannel{GuildId: 77, ChannelId: 9}},
+		m:    &fakeAccessMemberRepo{isMember: true},
+		msg:  msgRepo,
+		perm: permRepo,
+	}
+	app := fiber.New()
+	c := app.AcquireCtx(&fasthttp.RequestCtx{})
+	defer app.ReleaseCtx(c)
+
+	if _, err := e.validateDeletePermission(c, 88, 9, 42); err != nil {
+		t.Fatalf("expected owner of message to delete without manage-messages check, got %v", err)
+	}
+	if permRepo.calls != 0 {
+		t.Fatalf("expected no manage-messages check for own message, got %d", permRepo.calls)
 	}
 }
 
