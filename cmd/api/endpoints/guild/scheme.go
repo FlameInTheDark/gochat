@@ -463,6 +463,7 @@ func roleModelToDTO(r model.Role) dto.Role {
 		Color:       r.Color,
 		Permissions: r.Permissions,
 		Position:    r.Position,
+		Hoist:       r.Hoist,
 	}
 }
 
@@ -497,6 +498,7 @@ type CreateGuildRoleRequest struct {
 	Name        string `json:"name" example:"New Role"`  // Role name
 	Color       int    `json:"color" example:"16777215"` // RGB int value
 	Permissions int64  `json:"permissions" default:"0"`  // Permissions bitset
+	Hoist       bool   `json:"hoist" default:"false"`    // Show online members with this role in a separate section
 }
 
 func (r CreateGuildRoleRequest) Validate() error {
@@ -520,6 +522,7 @@ type PatchGuildRoleRequest struct {
 	Name        *string `json:"name,omitempty" example:"Moderators"` // Role name
 	Color       *int    `json:"color,omitempty" example:"16711680"`  // RGB int value
 	Permissions *int64  `json:"permissions,omitempty"`               // Permissions bitset
+	Hoist       *bool   `json:"hoist,omitempty"`                     // Show online members with this role in a separate section
 }
 
 func (r PatchGuildRoleRequest) Validate() error {

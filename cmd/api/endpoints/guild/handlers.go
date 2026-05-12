@@ -479,7 +479,11 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) er
 	var cachedChannels []dto.Channel
 	err := e.cache.GetJSON(c.UserContext(), fmt.Sprintf("guild:%d:channels", guildCtx.Guild.Id), &cachedChannels)
 	if err == nil {
-		return c.JSON(cachedChannels)
+		channelsWithThreads, err := e.appendJoinedThreads(c.UserContext(), guildCtx, cachedChannels)
+		if err != nil {
+			return e.publicError(c, fiber.StatusInternalServerError, err)
+		}
+		return c.JSON(channelsWithThreads)
 	}
 
 	guildChannels, err := e.gc.GetGuildChannels(c.UserContext(), guildCtx.Guild.Id)
@@ -522,6 +526,10 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) er
 	}
 
 	sortGuildChannels(channelsData)
+	channelsWithThreads, err := e.appendJoinedThreads(c.UserContext(), guildCtx, channelsData)
+	if err != nil {
+		return e.publicError(c, fiber.StatusInternalServerError, err)
+	}
 
 	asyncCtx := observability.BackgroundFromContext(c.UserContext())
 	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
@@ -535,7 +543,75 @@ func (e *entity) fetchAndFilterChannels(c *fiber.Ctx, guildCtx *guildContext) er
 		}
 	}()
 
-	return c.JSON(channelsData)
+	return c.JSON(channelsWithThreads)
+}
+
+func (e *entity) appendJoinedThreads(ctx context.Context, guildCtx *guildContext, channelsData []dto.Channel) ([]dto.Channel, error) {
+	if e.tm == nil || e.gc == nil || e.ch == nil {
+		return channelsData, nil
+	}
+
+	joinedThreadMembers, err := e.tm.GetUserThreadMembers(ctx, guildCtx.User.Id)
+	if err != nil {
+		return nil, err
+	}
+	if len(joinedThreadMembers) == 0 {
+		return channelsData, nil
+	}
+
+	joinedThreadIDs := make(map[int64]model.ThreadMember, len(joinedThreadMembers))
+	for _, member := range joinedThreadMembers {
+		joinedThreadIDs[member.ThreadId] = member
+	}
+
+	guildChannels, err := e.gc.GetGuildChannels(ctx, guildCtx.Guild.Id)
+	if err != nil {
+		return nil, err
+	}
+	threadIDs := make([]int64, 0, len(joinedThreadIDs))
+	positionsByChannelID := make(map[int64]int, len(guildChannels))
+	for _, guildChannel := range guildChannels {
+		positionsByChannelID[guildChannel.ChannelId] = guildChannel.Position
+		if _, ok := joinedThreadIDs[guildChannel.ChannelId]; ok {
+			threadIDs = append(threadIDs, guildChannel.ChannelId)
+		}
+	}
+	if len(threadIDs) == 0 {
+		return channelsData, nil
+	}
+
+	threads, err := e.ch.GetChannelsBulk(ctx, threadIDs)
+	if err != nil {
+		return nil, err
+	}
+	e.applyThreadMessageCounts(ctx, threads)
+
+	_, threadMemberIDs, err := e.currentUserThreadMembers(ctx, guildCtx.User.Id, threads)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := make([]dto.Channel, 0, len(channelsData)+len(threads))
+	resp = append(resp, channelsData...)
+	for i := range threads {
+		if threads[i].Type != model.ChannelTypeThread {
+			continue
+		}
+		if threads[i].Permissions == nil && threads[i].ParentID != nil {
+			if parentChannel, err := e.ch.GetChannel(ctx, *threads[i].ParentID); err == nil && parentChannel.Permissions != nil {
+				threads[i].Permissions = parentChannel.Permissions
+			}
+		}
+		if threads[i].Permissions == nil {
+			threads[i].Permissions = &guildCtx.Guild.Permissions
+		}
+
+		joinedMember := joinedThreadIDs[threads[i].Id]
+		member := buildThreadMemberDTO(&joinedMember)
+		resp = append(resp, channelModelToDTOWithThreadMember(&threads[i], &guildCtx.Guild.Id, positionsByChannelID[threads[i].Id], nil, member, threadMemberIDs[threads[i].Id]))
+	}
+	sortGuildChannels(resp)
+	return resp, nil
 }
 
 // GetChannel

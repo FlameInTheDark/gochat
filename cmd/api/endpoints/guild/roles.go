@@ -178,7 +178,7 @@ func (e *entity) CreateGuildRole(c *fiber.Ctx) error {
 	}
 
 	roleId := idgen.Next()
-	if err := e.role.CreateRole(c.UserContext(), roleId, guildId, req.Name, req.Color, req.Permissions); err != nil {
+	if err := e.role.CreateRole(c.UserContext(), roleId, guildId, req.Name, req.Color, req.Permissions, req.Hoist); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 	}
 
@@ -269,6 +269,11 @@ func (e *entity) PatchGuildRole(c *fiber.Ctx) error {
 	}
 	if req.Permissions != nil {
 		if err := e.role.SetRolePermissions(c.UserContext(), roleId, *req.Permissions); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
+		}
+	}
+	if req.Hoist != nil {
+		if err := e.role.SetRoleHoist(c.UserContext(), roleId, *req.Hoist); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetRoles)
 		}
 	}
