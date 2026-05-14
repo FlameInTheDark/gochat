@@ -29,6 +29,7 @@ const (
 	OpDAVETransitionReady      = 23
 	OpDAVEPrepareEpoch         = 24
 	OpDAVEInvalidCommitWelcome = 31
+	OpError                    = 4000
 )
 
 const (
@@ -58,6 +59,11 @@ type Hello struct {
 	V                 int    `json:"v"`
 	HeartbeatInterval int64  `json:"heartbeat_interval"`
 	SessionID         string `json:"session_id"`
+}
+
+type Error struct {
+	Code   int    `json:"code"`
+	Reason string `json:"reason"`
 }
 
 type Identify struct {
