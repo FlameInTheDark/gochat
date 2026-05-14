@@ -38,7 +38,7 @@ The WebSocket gateway uses a shared NATS subscription model. Rather than each co
 
 | Topic Pattern | Subscribed When | Events Delivered |
 |---------------|----------------|-----------------|
-| `user.{userId}` | Hello (automatic) | Read state, settings, friend events, DMs, direct mentions, joined-thread activity, user updates, VoiceMove |
+| `user.{userId}` | Hello (automatic) | Read state, settings, friend events, DMs, direct mentions, joined-thread activity, DM call events, user updates, VoiceMove |
 | `guild.{guildId}` | Hello (automatic for all guilds) + OP 5 | Guild/channel/role/member/voice events |
 | `channel.{channelId}` | OP 5 Channel Subscription | Messages, typing indicators, channel-specific events |
 | `presence.user.{userId}` | OP 6 Presence Subscription | Presence status changes for watched users |

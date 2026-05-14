@@ -781,16 +781,17 @@ func (e *entity) channelToDTO(channel *model.Channel) dto.Channel {
 
 // GetUserSettings
 //
-//	@Summary	Get current user settings (optional version gating)
-//	@Produce	json
-//	@Tags		User
-//	@Param		version			query		int						false	"Client known version"
-//	@Param		X-Device-Key	header		string					false	"Stable per-device key for device-scoped media settings"
-//	@Success	200				{object}	UserSettingsResponse	"User settings and version"
-//	@Success	204				{string}	string					"No changes"
-//	@failure	400				{string}	string					"Bad request"
-//	@failure	500				{string}	string					"Internal server error"
-//	@Router		/user/me/settings [get]
+//	@Summary		Get current user settings (optional version gating)
+//	@Description	Returns the user settings bootstrap payload, including read states, joined thread indexes, guild emojis, mentions, and active direct-message voice calls in dm_calls.
+//	@Produce		json
+//	@Tags			User
+//	@Param			version			query		int						false	"Client known version"
+//	@Param			X-Device-Key	header		string					false	"Stable per-device key for device-scoped media settings"
+//	@Success		200				{object}	UserSettingsResponse	"User settings and version"
+//	@Success		204				{string}	string					"No changes"
+//	@failure		400				{string}	string					"Bad request"
+//	@failure		500				{string}	string					"Internal server error"
+//	@Router			/user/me/settings [get]
 func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	log := observability.LoggerFromFiber(c, e.log)
 

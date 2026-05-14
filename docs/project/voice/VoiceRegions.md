@@ -34,6 +34,9 @@ Notes
 }
 ```
 - Channel region is stored per‑channel in the database (as the region id). Admins can change it via `PATCH /guild/{guild_id}/voice/{channel_id}/region`.
+- Users can store a preferred voice region in settings as `voice.preferred_region`. The default explicit value is `"auto"`.
+- For guild voice channels, an explicit channel region wins. If the channel is automatic, the first joining user's preferred region can select the route when it is not empty and not `"auto"`; `"auto"` preserves the existing default selection.
+- For direct-message calls, the caller's preferred region selects the initial route. The recipient always joins the route selected for the active call. Missing, empty, or `"auto"` preserves the existing automatic behavior.
 - When an admin changes a channel’s region:
   1. API discovers and pre‑binds a new SFU for that region under `voice:route:{channel}`.
   2. API broadcasts an RTC rebind message via WS so clients call JoinVoice and connect to the preselected SFU.

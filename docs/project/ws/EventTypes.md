@@ -5,7 +5,7 @@
 When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies the event type. This page lists all event type values, their payloads, and which NATS topic delivers them.
 
 > [!NOTE]
-> All events on this page (100-406) are delivered over the **Gateway WebSocket** (`/subscribe`). Voice/WebRTC signaling events (500-515) are exchanged over the separate **SFU WebSocket** (`/signal`) - see [SFU Protocol](../voice/SFUProtocol.md). Screen/app stream media signaling is exchanged over the separate **Stream WebSocket** (`/signal?v=2`) - see [Voice-Channel Streaming](../voice/Streaming.md). Only a few voice-related control events (509, 512, 513) pass through the Gateway WS as noted in the [RTC Events](#rtc-events-500515-gateway-ws-only) section.
+> All events on this page (100-414) are delivered over the **Gateway WebSocket** (`/subscribe`). Voice/WebRTC signaling events (500-515) are exchanged over the separate **SFU WebSocket** (`/signal`) - see [SFU Protocol](../voice/SFUProtocol.md). Screen/app stream media signaling is exchanged over the separate **Stream WebSocket** (`/signal?v=2`) - see [Voice-Channel Streaming](../voice/Streaming.md). Only a few voice-related control events (509, 512, 513) pass through the Gateway WS as noted in the [RTC Events](#rtc-events-500515-gateway-ws-only) section.
 
 ---
 
@@ -673,7 +673,7 @@ Client action for `GuildStreamsRebind`: only reconnect open stream publisher/vie
 
 ---
 
-## User Events (400-406)
+## User Events (400-414)
 
 | Type | Name | NATS Topic | Description |
 |------|------|------------|-------------|
@@ -684,6 +684,14 @@ Client action for `GuildStreamsRebind`: only reconnect open stream publisher/vie
 | 404 | Friend Removed | `user.{userId}` | Friend removed |
 | 405 | User DM Message | `user.{userId}` | New DM message |
 | 406 | User Update | `user.{userId}` | User profile changed |
+| 407 | User Auth Revoked | `user.{userId}` | User sessions or tokens were revoked |
+| 408 | User DM Call Started | `user.{userId}` | Direct-message voice call started or resumed |
+| 409 | User DM Call Joined | `user.{userId}` | Direct-message call participant joined |
+| 410 | User DM Call Declined | `user.{userId}` | Direct-message call was dismissed locally by a participant |
+| 411 | User DM Call Left | `user.{userId}` | Direct-message call participant left |
+| 412 | User DM Call Ended | `user.{userId}` | Direct-message call ended |
+| 413 | User DM Call Stream Started | `user.{userId}` | Direct-message call screen/app stream started |
+| 414 | User DM Call Stream Stopped | `user.{userId}` | Direct-message call screen/app stream stopped |
 
 **Payload (t=400, Read State Update):**
 ```json
@@ -775,6 +783,104 @@ Client action for `GuildStreamsRebind`: only reconnect open stream publisher/vie
 Notes:
 - `User Update` carries the public profile fields from `dto.User`, including `bio`, `banner_color`, and `panel_color`.
 - These profile fields may be `null` if the user has not set them.
+
+**Payload (t=408, User DM Call Started):**
+```json
+{
+  "Type": 408,
+  "call": {
+    "call_id": 2309446798663483392,
+    "channel_id": 2308859058410487808,
+    "caller_id": 2308863155104645120,
+    "recipient_id": 2308858669560758272,
+    "region": "eu",
+    "participants": {
+      "2308863155104645120": 1776943455
+    },
+    "started_at": 1776943455
+  }
+}
+```
+
+**Payload (t=409-411, User DM Call Participant Update):**
+```json
+{
+  "Type": 409,
+  "call": {
+    "call_id": 2309446798663483392,
+    "channel_id": 2308859058410487808,
+    "caller_id": 2308863155104645120,
+    "recipient_id": 2308858669560758272,
+    "region": "eu",
+    "participants": {
+      "2308863155104645120": 1776943455,
+      "2308858669560758272": 1776943462
+    },
+    "started_at": 1776943455
+  },
+  "user_id": 2308858669560758272
+}
+```
+
+**Payload (t=412, User DM Call Ended):**
+```json
+{
+  "Type": 412,
+  "call": {
+    "call_id": 2309446798663483392,
+    "channel_id": 2308859058410487808,
+    "caller_id": 2308863155104645120,
+    "recipient_id": 2308858669560758272,
+    "region": "eu",
+    "started_at": 1776943455
+  },
+  "reason": "idle_timeout"
+}
+```
+
+**Payload (t=413, User DM Call Stream Started):**
+```json
+{
+  "call": {
+    "call_id": 2309446798663483392,
+    "channel_id": 2308859058410487808,
+    "caller_id": 2308863155104645120,
+    "recipient_id": 2308858669560758272,
+    "region": "eu",
+    "started_at": 1776943455
+  },
+  "user_id": 2308863155104645120,
+  "stream": {
+    "id": 2309447000000000000,
+    "channel_id": 2308859058410487808,
+    "owner_user_id": 2308863155104645120,
+    "source_type": "screen",
+    "audio_mode": "desktop",
+    "started_at": 1776943500
+  }
+}
+```
+
+**Payload (t=414, User DM Call Stream Stopped):**
+```json
+{
+  "call": {
+    "call_id": 2309446798663483392,
+    "channel_id": 2308859058410487808,
+    "caller_id": 2308863155104645120,
+    "recipient_id": 2308858669560758272,
+    "region": "eu",
+    "started_at": 1776943455
+  },
+  "user_id": 2308863155104645120,
+  "stream_id": 2309447000000000000,
+  "reason": "publisher_disconnect"
+}
+```
+
+Notes:
+- DM call events are pair-scoped and sent only on `user.{userId}` for the two direct DM participants.
+- Active DM calls are bootstrapped through `GET /api/v1/user/me/settings` in `dm_calls`; they are not exposed through public presence.
 
 ---
 

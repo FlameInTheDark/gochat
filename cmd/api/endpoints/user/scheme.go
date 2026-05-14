@@ -143,8 +143,8 @@ type UserSettingsResponse struct {
 	ReadStates          map[int64]int64                  `json:"read_states"`
 	GuildsLastMessages  map[int64]map[int64]int64        `json:"guilds_last_messages"`
 	ThreadsLastMessages map[int64]int64                  `json:"threads_last_messages"`
-	JoinedThreads       map[int64]map[int64][]int64      `json:"joined_threads"` // Joined thread IDs grouped as guild_id -> parent_channel_id -> sorted thread ids.
-	DMCalls             []mqmsg.DMCallSummary            `json:"dm_calls,omitempty"`
+	JoinedThreads       map[int64]map[int64][]int64      `json:"joined_threads"`     // Joined thread IDs grouped as guild_id -> parent_channel_id -> sorted thread ids.
+	DMCalls             []mqmsg.DMCallSummary            `json:"dm_calls,omitempty"` // Active direct-message voice calls visible to the current user.
 	Guilds              []dto.Guild                      `json:"guilds"`
 	GuildEmojis         map[int64][]dto.EmojiRef         `json:"guild_emojis"`
 	Mentions            map[int64][]model.Mention        `json:"mentions,omitempty"`

@@ -13,4 +13,5 @@
 - [Device-Scoped Media Settings](DeviceScopedSettings.md) - How the frontend should send a stable device key so camera/mic prefs do not leak across devices
 - [Voice End-to-End Encryption](VoiceEncryption.md) - DAVE model, transitions, and server-side scope
 - [Voice-Channel Streaming](Streaming.md) - Screen/app sharing service, discovery, webhooks, presence, and migration flow
+- [Direct-Message Calls](DMCalls.md) - Private 1:1 voice calls, settings bootstrap, pair-scoped events, and DM call streaming
 - [Observability](../observability/ExternalSFU.md) - External deployment and telemetry model for SFU nodes
