@@ -31,9 +31,11 @@ type Client struct {
 // NewClient creates S3 client
 func NewClient(endpoint, accessKeyId, secretAccessKey, region, bucket string, useSSL bool) (*Client, error) {
 	cfg := aws.Config{
-		Region:      region,
-		Credentials: aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(accessKeyId, secretAccessKey, "")),
-		HTTPClient:  observability.NewHTTPClient(&http.Client{Timeout: 30 * time.Second}, "s3"),
+		Region:                     region,
+		Credentials:                aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(accessKeyId, secretAccessKey, "")),
+		HTTPClient:                 observability.NewHTTPClient(&http.Client{Timeout: 30 * time.Second}, "s3"),
+		RequestChecksumCalculation: aws.RequestChecksumCalculationWhenRequired,
+		ResponseChecksumValidation: aws.ResponseChecksumValidationWhenRequired,
 	}
 
 	s3Client := awss3.NewFromConfig(cfg, func(o *awss3.Options) {
@@ -96,6 +98,46 @@ func (c *Client) RemoveAttachment(ctx context.Context, key string) error {
 
 // UploadObject uploads an object from a stream to S3 without requiring local disk.
 func (c *Client) UploadObject(ctx context.Context, key string, body io.Reader, contentType string) (err error) {
+	firstPart, err := readNextUploadChunk(body, multipartPartSize)
+	if err != nil {
+		return err
+	}
+	if len(firstPart) == 0 {
+		return fmt.Errorf("empty upload body")
+	}
+
+	secondPart, err := readNextUploadChunk(body, multipartPartSize)
+	if err != nil {
+		return err
+	}
+	if len(secondPart) == 0 {
+		return c.putObject(ctx, key, firstPart, contentType)
+	}
+
+	return c.multipartUploadObject(ctx, key, [][]byte{firstPart, secondPart}, body, contentType)
+}
+
+func (c *Client) putObject(ctx context.Context, key string, payload []byte, contentType string) (err error) {
+	ctx, end := observability.StartDependencySpan(ctx, "s3", "put_object", c.bucket, attribute.String("s3.key_prefix", objectPrefix(key)))
+	defer func() {
+		end(err)
+	}()
+
+	putIn := &awss3.PutObjectInput{
+		Bucket:        aws.String(c.bucket),
+		Key:           aws.String(key),
+		Body:          bytes.NewReader(payload),
+		ContentLength: aws.Int64(int64(len(payload))),
+	}
+	if contentType != "" {
+		putIn.ContentType = aws.String(contentType)
+	}
+
+	_, err = c.s3.PutObject(ctx, putIn)
+	return err
+}
+
+func (c *Client) multipartUploadObject(ctx context.Context, key string, initialParts [][]byte, body io.Reader, contentType string) (err error) {
 	ctx, end := observability.StartDependencySpan(ctx, "s3", "multipart_upload", c.bucket, attribute.String("s3.key_prefix", objectPrefix(key)))
 	defer func() {
 		end(err)
@@ -128,8 +170,21 @@ func (c *Client) UploadObject(ctx context.Context, key string, body io.Reader, c
 		})
 	}()
 
-	parts := make([]awss3types.CompletedPart, 0, 4)
-	for partNumber := int32(1); ; partNumber++ {
+	parts := make([]awss3types.CompletedPart, 0, len(initialParts)+4)
+	partNumber := int32(1)
+	for _, payload := range initialParts {
+		if len(payload) == 0 {
+			continue
+		}
+		part, err := c.uploadPart(ctx, key, uploadID, partNumber, payload)
+		if err != nil {
+			return err
+		}
+		parts = append(parts, part)
+		partNumber++
+	}
+
+	for ; ; partNumber++ {
 		payload, readErr := readNextUploadChunk(body, multipartPartSize)
 		if readErr != nil {
 			return readErr
@@ -137,23 +192,11 @@ func (c *Client) UploadObject(ctx context.Context, key string, body io.Reader, c
 		if len(payload) == 0 {
 			break
 		}
-
-		partOut, err := c.s3.UploadPart(ctx, &awss3.UploadPartInput{
-			Bucket:        aws.String(c.bucket),
-			Key:           aws.String(key),
-			UploadId:      uploadID,
-			PartNumber:    aws.Int32(partNumber),
-			Body:          bytes.NewReader(payload),
-			ContentLength: aws.Int64(int64(len(payload))),
-		})
+		part, err := c.uploadPart(ctx, key, uploadID, partNumber, payload)
 		if err != nil {
 			return err
 		}
-
-		parts = append(parts, awss3types.CompletedPart{
-			ETag:       partOut.ETag,
-			PartNumber: aws.Int32(partNumber),
-		})
+		parts = append(parts, part)
 	}
 
 	if len(parts) == 0 {
@@ -169,6 +212,25 @@ func (c *Client) UploadObject(ctx context.Context, key string, body io.Reader, c
 		},
 	})
 	return err
+}
+
+func (c *Client) uploadPart(ctx context.Context, key string, uploadID *string, partNumber int32, payload []byte) (awss3types.CompletedPart, error) {
+	partOut, err := c.s3.UploadPart(ctx, &awss3.UploadPartInput{
+		Bucket:        aws.String(c.bucket),
+		Key:           aws.String(key),
+		UploadId:      uploadID,
+		PartNumber:    aws.Int32(partNumber),
+		Body:          bytes.NewReader(payload),
+		ContentLength: aws.Int64(int64(len(payload))),
+	})
+	if err != nil {
+		return awss3types.CompletedPart{}, err
+	}
+
+	return awss3types.CompletedPart{
+		ETag:       partOut.ETag,
+		PartNumber: aws.Int32(partNumber),
+	}, nil
 }
 
 func readNextUploadChunk(reader io.Reader, maxSize int64) ([]byte, error) {
