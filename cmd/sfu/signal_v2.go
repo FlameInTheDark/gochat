@@ -345,6 +345,7 @@ func (a *App) handleSignalV2Identify(conn *websocket.Conn, signalCtx context.Con
 		peerConnection: pc,
 		websocket:      writer,
 		userID:         uid,
+		guildID:        guildID,
 		perms:          perms,
 		signalVersion:  signalProtocolVersion2,
 	}

@@ -92,6 +92,13 @@ const (
 	EventTypeUserDMMessage
 	EventTypeUserUpdate
 	EventTypeUserAuthRevoked
+	EventTypeUserDMCallStarted
+	EventTypeUserDMCallJoined
+	EventTypeUserDMCallDeclined
+	EventTypeUserDMCallLeft
+	EventTypeUserDMCallEnded
+	EventTypeUserDMCallStreamStarted
+	EventTypeUserDMCallStreamStopped
 )
 
 // RTC signaling event types (client <-> SFU via WS)

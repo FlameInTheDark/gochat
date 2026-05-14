@@ -9,6 +9,8 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	streammeta "github.com/FlameInTheDark/gochat/internal/stream"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -142,10 +144,52 @@ type UserSettingsResponse struct {
 	GuildsLastMessages  map[int64]map[int64]int64        `json:"guilds_last_messages"`
 	ThreadsLastMessages map[int64]int64                  `json:"threads_last_messages"`
 	JoinedThreads       map[int64]map[int64][]int64      `json:"joined_threads"` // Joined thread IDs grouped as guild_id -> parent_channel_id -> sorted thread ids.
+	DMCalls             []mqmsg.DMCallSummary            `json:"dm_calls,omitempty"`
 	Guilds              []dto.Guild                      `json:"guilds"`
 	GuildEmojis         map[int64][]dto.EmojiRef         `json:"guild_emojis"`
 	Mentions            map[int64][]model.Mention        `json:"mentions,omitempty"`
 	ChannelMentions     map[int64][]model.ChannelMention `json:"channel_mentions,omitempty"`
+}
+
+type DMCallJoinResponse struct {
+	Call     mqmsg.DMCallSummary `json:"call"`
+	SFUURL   string              `json:"sfu_url"`
+	SFUToken string              `json:"sfu_token"`
+	Region   string              `json:"region,omitempty"`
+}
+
+type CreateDMCallStreamRequest struct {
+	SourceType string `json:"source_type"`
+	AudioMode  string `json:"audio_mode"`
+}
+
+func (r CreateDMCallStreamRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.SourceType, validation.Required, validation.In(streammeta.SourceTypeScreen, streammeta.SourceTypeApplication)),
+		validation.Field(&r.AudioMode, validation.Required, validation.In(streammeta.AudioModeDesktop, streammeta.AudioModeApplication, streammeta.AudioModeNone)),
+	)
+}
+
+type VoiceStreamSummary struct {
+	ID          int64  `json:"id"`
+	OwnerUserID int64  `json:"owner_user_id"`
+	ChannelID   int64  `json:"channel_id"`
+	SourceType  string `json:"source_type"`
+	AudioMode   string `json:"audio_mode"`
+	StartedAt   int64  `json:"started_at"`
+}
+
+type CreateDMCallStreamResponse struct {
+	StreamID    int64              `json:"stream_id"`
+	StreamURL   string             `json:"stream_url"`
+	StreamToken string             `json:"stream_token"`
+	Stream      VoiceStreamSummary `json:"stream"`
+}
+
+type JoinDMCallStreamResponse struct {
+	StreamID    int64  `json:"stream_id"`
+	StreamURL   string `json:"stream_url"`
+	StreamToken string `json:"stream_token"`
 }
 
 func modelToSettings(m *model.UserSettings, guilds []dto.Guild, guildEmojis map[int64][]dto.EmojiRef, rs map[int64]int64, glms map[int64]map[int64]int64) (UserSettingsResponse, error) {
@@ -161,6 +205,7 @@ func modelToSettings(m *model.UserSettings, guilds []dto.Guild, guildEmojis map[
 		GuildsLastMessages:  glms,
 		ThreadsLastMessages: map[int64]int64{},
 		JoinedThreads:       map[int64]map[int64][]int64{},
+		DMCalls:             []mqmsg.DMCallSummary{},
 		Guilds:              guilds,
 		GuildEmojis:         guildEmojis,
 	}, nil

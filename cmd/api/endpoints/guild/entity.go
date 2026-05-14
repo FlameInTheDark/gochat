@@ -30,6 +30,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/threadmember"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/usersettings"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/presence"
@@ -118,6 +119,7 @@ type entity struct {
 	cache cache.Cache
 
 	user  user.User
+	uset  usersettings.UserSettings
 	disc  discriminator.Discriminator
 	ch    channel.Channel
 	g     guild.Guild
@@ -178,6 +180,7 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.Ind
 		smq:                smq,
 		cache:              cache,
 		user:               user.New(pg.Conn()),
+		uset:               usersettings.New(pg.Conn()),
 		disc:               discriminator.New(pg.Conn()),
 		ch:                 channel.New(pg.Conn()),
 		g:                  guild.New(pg.Conn()),
