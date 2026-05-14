@@ -202,6 +202,7 @@ go run ./cmd/tools observability smoke \
 | [WebSocket protocol](docs/project/ws/README.md) | Event types, subscription model, connection lifecycle |
 | [Voice & SFU](docs/project/voice/README.md) | WebRTC signaling, SFU protocol, permissions |
 | [Voice-channel streaming](docs/project/voice/Streaming.md) | Screen/app streaming service, lifecycle, presence, and region migration |
+| [Direct-message calls](docs/project/voice/DMCalls.md) | Private 1:1 voice calls, settings bootstrap, pair-scoped events, and DM call streaming |
 | [Observability](docs/project/observability/README.md) | OTEL signals, dashboards, runbooks, external SFU |
 | [Auth security](docs/project/AuthSecurity.md) | Token design, expiry, refresh flow |
 | [Database schema](docs/project/Database.md) | PostgreSQL and ScyllaDB schema diagrams |

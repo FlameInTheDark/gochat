@@ -43,6 +43,7 @@ const entityName = "message"
 
 func (e *entity) Init(router fiber.Router) {
 	router.Post("/channel/:channel_id<int>", e.Send)
+	router.Post("/channel/:channel_id<int>/thread", e.CreateChannelThread)
 	router.Post("/channel/:channel_id<int>/:message_id<int>/thread", e.CreateThread)
 	router.Post("/channel/:channel_id<int>/attachment", e.Attachment)
 	router.Patch("/channel/:channel_id<int>/:message_id<int>", e.Update)

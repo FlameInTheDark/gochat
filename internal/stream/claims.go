@@ -12,4 +12,5 @@ type Claims struct {
 	Role        string `json:"role"`
 	SourceType  string `json:"source_type,omitempty"`
 	AudioMode   string `json:"audio_mode,omitempty"`
+	Perms       int64  `json:"perms,omitempty"`
 }

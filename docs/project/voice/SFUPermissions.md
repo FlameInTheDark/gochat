@@ -18,3 +18,4 @@ Values below use the same notation as Permissions.md (`1 << n`).
 
 Notes
 - The `moved=true` token flag allows bypassing a room‑level block for a forced move and grants audio/video publish permissions for that session.
+- Direct-message call tokens are media-scoped. They grant `PermVoiceConnect | PermVoiceSpeak | PermVoiceVideo` for the private call room and do not grant moderation permissions such as mute, deafen, move, kick, block, or administrator.

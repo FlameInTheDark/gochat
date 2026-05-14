@@ -427,10 +427,15 @@ func (e *entity) LeaveGuild(c *fiber.Ctx) error {
 	if err := e.member.RemoveMember(c.UserContext(), user.Id, guildId); err != nil {
 		return helper.HttpDbError(err, ErrUnableToRemoveMember)
 	}
+	if err := e.gd.AdjustMembersCount(c.UserContext(), guildId, -1); err != nil {
+		_ = e.gd.RecountMembers(c.UserContext(), guildId)
+	}
 
 	asyncCtx := observability.BackgroundFromContext(c.UserContext())
+	asyncLog := observability.LoggerWithContext(asyncCtx, e.log)
 	go func() {
 		_ = mq.SendGuildUpdate(asyncCtx, e.mqt, guildId, &mqmsg.RemoveGuildMember{GuildId: guildId, UserId: user.Id})
+		e.publishGuildSearchUpsert(asyncCtx, guildId, asyncLog)
 	}()
 
 	return c.SendStatus(fiber.StatusOK)
@@ -776,16 +781,17 @@ func (e *entity) channelToDTO(channel *model.Channel) dto.Channel {
 
 // GetUserSettings
 //
-//	@Summary	Get current user settings (optional version gating)
-//	@Produce	json
-//	@Tags		User
-//	@Param		version			query		int						false	"Client known version"
-//	@Param		X-Device-Key	header		string					false	"Stable per-device key for device-scoped media settings"
-//	@Success	200				{object}	UserSettingsResponse	"User settings and version"
-//	@Success	204				{string}	string					"No changes"
-//	@failure	400				{string}	string					"Bad request"
-//	@failure	500				{string}	string					"Internal server error"
-//	@Router		/user/me/settings [get]
+//	@Summary		Get current user settings (optional version gating)
+//	@Description	Returns the user settings bootstrap payload, including read states, joined thread indexes, guild emojis, mentions, and active direct-message voice calls in dm_calls.
+//	@Produce		json
+//	@Tags			User
+//	@Param			version			query		int						false	"Client known version"
+//	@Param			X-Device-Key	header		string					false	"Stable per-device key for device-scoped media settings"
+//	@Success		200				{object}	UserSettingsResponse	"User settings and version"
+//	@Success		204				{string}	string					"No changes"
+//	@failure		400				{string}	string					"Bad request"
+//	@failure		500				{string}	string					"Internal server error"
+//	@Router			/user/me/settings [get]
 func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	log := observability.LoggerFromFiber(c, e.log)
 
@@ -969,6 +975,7 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	settings.ContentHosts = append([]string(nil), e.contentHosts...)
 	settings.ThreadsLastMessages = threadsLastMessages
 	settings.JoinedThreads = joinedThreads
+	settings.DMCalls = e.activeDMCallSummaries(c.UserContext(), user.Id)
 	settings.Mentions = mentions
 	settings.ChannelMentions = channelMentions
 	return c.JSON(settings)

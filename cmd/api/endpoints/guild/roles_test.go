@@ -56,7 +56,7 @@ func (f *fakeRoleRepo) GetRolesBulk(ctx context.Context, guildID int64, ids []in
 	return filtered, nil
 }
 
-func (f *fakeRoleRepo) CreateRole(ctx context.Context, id, guildId int64, name string, color int, permissions int64) error {
+func (f *fakeRoleRepo) CreateRole(ctx context.Context, id, guildId int64, name string, color int, permissions int64, hoist bool) error {
 	f.roles[id] = model.Role{
 		Id:          id,
 		GuildId:     guildId,
@@ -64,6 +64,7 @@ func (f *fakeRoleRepo) CreateRole(ctx context.Context, id, guildId int64, name s
 		Color:       color,
 		Permissions: permissions,
 		Position:    len(f.rolesForGuild(guildId)),
+		Hoist:       hoist,
 	}
 	return nil
 }
@@ -90,6 +91,13 @@ func (f *fakeRoleRepo) SetRoleName(ctx context.Context, id int64, name string) e
 func (f *fakeRoleRepo) SetRolePermissions(ctx context.Context, id int64, permissions int64) error {
 	role := f.roles[id]
 	role.Permissions = permissions
+	f.roles[id] = role
+	return nil
+}
+
+func (f *fakeRoleRepo) SetRoleHoist(ctx context.Context, id int64, hoist bool) error {
+	role := f.roles[id]
+	role.Hoist = hoist
 	f.roles[id] = role
 	return nil
 }

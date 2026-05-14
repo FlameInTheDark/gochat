@@ -7,6 +7,7 @@ type Role struct {
 	Color       int    `db:"color"`
 	Permissions int64  `db:"permissions"`
 	Position    int    `db:"position"`
+	Hoist       bool   `db:"hoist"`
 }
 
 type RoleUpdatePosition struct {

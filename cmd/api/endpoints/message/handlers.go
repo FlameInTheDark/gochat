@@ -180,7 +180,20 @@ func (e *entity) CreateThread(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetMessage)
 	}
 	if sourceMessage.Thread != 0 {
-		return fiber.NewError(fiber.StatusConflict, ErrThreadAlreadyExists)
+		existingThread, threadErr := e.ch.GetChannel(c.UserContext(), sourceMessage.Thread)
+		if threadErr != nil && !errors.Is(threadErr, sql.ErrNoRows) && !errors.Is(threadErr, gocql.ErrNotFound) {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+		}
+		if threadErr == nil && existingThread.Type == model.ChannelTypeThread {
+			return fiber.NewError(fiber.StatusConflict, ErrThreadAlreadyExists)
+		}
+		if err := e.msg.SetThread(c.UserContext(), sourceMessage.Id, parentChannel.Id, 0); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+		}
+		if err := e.msg.ReleaseThreadClaim(c.UserContext(), parentChannel.Id, sourceMessage.Id); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+		}
+		sourceMessage.Thread = 0
 	}
 
 	validatedAttachments, err := e.validateMessageAttachments(c.UserContext(), parentChannel.Id, user.Id, []int64(req.Attachments))
@@ -204,6 +217,55 @@ func (e *entity) CreateThread(c *fiber.Ctx) error {
 	}
 
 	go e.sendThreadCreateEvents(observability.BackgroundFromContext(c.UserContext()), guildID, parentChannel, result, userData)
+
+	return c.Status(fiber.StatusCreated).JSON(e.dtoThreadChannel(result.Channel, guildID, result.Position, result.Member, result.MemberIds))
+}
+
+// CreateChannelThread
+//
+//	@Summary	Create thread in channel
+//	@Produce	json
+//	@Tags		Message
+//	@Param		channel_id	path		int64				true	"Parent channel id"
+//	@Param		request		body		CreateThreadRequest	true	"Thread data"
+//	@Success	201			{object}	dto.Channel			"Thread channel"
+//	@failure	400			{string}	string				"Bad request"
+//	@failure	403			{string}	string				"Forbidden"
+//	@failure	404			{string}	string				"Not found"
+//	@failure	500			{string}	string				"Internal server error"
+//	@Router		/message/channel/{channel_id}/thread [post]
+func (e *entity) CreateChannelThread(c *fiber.Ctx) error {
+	req, user, parentChannelID, err := e.parseChannelThreadRequest(c)
+	if err != nil {
+		return err
+	}
+
+	parentChannel, guildID, guildChannel, err := e.validateThreadCreation(c, parentChannelID, user.Id)
+	if err != nil {
+		return err
+	}
+
+	validatedAttachments, err := e.validateMessageAttachments(c.UserContext(), parentChannel.Id, user.Id, []int64(req.Attachments))
+	if err != nil {
+		return err
+	}
+
+	req.Content, err = e.sanitizeEmojiContent(c.UserContext(), user.Id, req.Content)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+
+	userData, err := e.fetchUserDataForMessage(c, user.Id)
+	if err != nil {
+		return err
+	}
+
+	result, err := e.createThreadInChannel(c, req, user.Id, guildID, guildChannel, parentChannel, validatedAttachments, userData)
+	if err != nil {
+		return err
+	}
+
+	go e.sendChannelThreadCreateEvents(observability.BackgroundFromContext(c.UserContext()), guildID, parentChannel, result, userData)
 
 	return c.Status(fiber.StatusCreated).JSON(e.dtoThreadChannel(result.Channel, guildID, result.Position, result.Member, result.MemberIds))
 }
@@ -261,6 +323,30 @@ func (e *entity) parseThreadRequest(c *fiber.Ctx) (*CreateThreadRequest, *helper
 	}
 
 	return &req, user, channelId, messageId, nil
+}
+
+func (e *entity) parseChannelThreadRequest(c *fiber.Ctx) (*CreateThreadRequest, *helper.JWTUser, int64, error) {
+	var req CreateThreadRequest
+	if err := c.BodyParser(&req); err != nil {
+		return nil, nil, 0, fiber.NewError(fiber.StatusBadRequest, ErrUnableToParseBody)
+	}
+
+	if err := req.Validate(); err != nil {
+		return nil, nil, 0, badRequestValidationError(err)
+	}
+
+	channelIdStr := c.Params("channel_id")
+	channelId, err := strconv.ParseInt(channelIdStr, 10, 64)
+	if err != nil {
+		return nil, nil, 0, fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
+	}
+
+	user, err := helper.GetUser(c)
+	if err != nil {
+		return nil, nil, 0, fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
+
+	return &req, user, channelId, nil
 }
 
 func (e *entity) validateThreadCreation(c *fiber.Ctx, channelId, userId int64) (*model.Channel, int64, *model.GuildChannel, error) {
@@ -479,6 +565,16 @@ type threadCreateResult struct {
 	StarterReq    *SendMessageRequest
 	Followup      dto.Message
 	SourceMessage dto.Message
+}
+
+type channelThreadCreateResult struct {
+	Channel    *model.Channel
+	Position   int
+	Member     *dto.ThreadMember
+	MemberIds  []int64
+	Starter    dto.Message
+	StarterReq *SendMessageRequest
+	Followup   dto.Message
 }
 
 func (e *entity) createThreadFromMessage(c *fiber.Ctx, req *CreateThreadRequest, creatorID, guildID int64, guildChannel *model.GuildChannel, parentChannel *model.Channel, sourceMessage *model.Message, validatedAttachments []model.Attachment, userData *messageUserData) (*threadCreateResult, error) {
@@ -798,6 +894,209 @@ func (e *entity) createThreadFromMessage(c *fiber.Ctx, req *CreateThreadRequest,
 	}, nil
 }
 
+func (e *entity) createThreadInChannel(c *fiber.Ctx, req *CreateThreadRequest, creatorID, guildID int64, guildChannel *model.GuildChannel, parentChannel *model.Channel, validatedAttachments []model.Attachment, userData *messageUserData) (*channelThreadCreateResult, error) {
+	reqLog := observability.LoggerFromFiber(c, e.log)
+	threadID := idgen.Next()
+	threadName := strings.TrimSpace(req.Name)
+	if threadName == "" {
+		threadName = strings.Join(strings.Fields(req.Content), " ")
+	}
+	if threadName == "" {
+		threadName = fmt.Sprintf("thread-%d", threadID)
+	}
+	runes := []rune(threadName)
+	if len(runes) > maxThreadNameLength {
+		threadName = string(runes[:maxThreadNameLength])
+	}
+
+	threadPosition := guildChannel.Position
+	creator := creatorID
+
+	if err := e.gc.AddChannel(
+		c.UserContext(),
+		guildID,
+		threadID,
+		threadName,
+		model.ChannelTypeThread,
+		&parentChannel.Id,
+		parentChannel.Private,
+		threadPosition,
+		nil,
+		&creator,
+		false,
+	); err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+
+	threadChannel, err := e.ch.GetChannel(c.UserContext(), threadID)
+	if err != nil {
+		_ = e.gc.RemoveChannel(c.UserContext(), guildID, threadID)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+	threadMember, err := e.tm.AddThreadMember(c.UserContext(), threadID, creatorID)
+	if err != nil {
+		_ = e.gc.RemoveChannel(c.UserContext(), guildID, threadID)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+
+	var starterMessageID int64
+	var followupMessageID int64
+	var starterAttachmentIDs []int64
+	var followupMessageRefCreated bool
+	rollbackCtx := observability.BackgroundFromContext(c.UserContext())
+	cleanupThread := func() {
+		if followupMessageRefCreated {
+			_ = e.msg.DeleteThreadCreatedMessageRef(rollbackCtx, threadID)
+		}
+		if followupMessageID != 0 {
+			_ = e.msg.DeleteMessage(rollbackCtx, followupMessageID, parentChannel.Id)
+		}
+		if starterMessageID != 0 {
+			_ = e.msg.DeleteMessage(rollbackCtx, starterMessageID, threadID)
+		}
+		for _, attachmentID := range starterAttachmentIDs {
+			_ = e.at.RemoveAttachment(rollbackCtx, attachmentID, threadID)
+		}
+		_ = e.gc.RemoveChannel(rollbackCtx, guildID, threadID)
+	}
+
+	starterAttachmentIDs, starterAttachments, err := e.cloneAttachmentsToChannel(c.UserContext(), parentChannel.Id, threadID, []int64(req.Attachments), creatorID)
+	if err != nil {
+		cleanupThread()
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+
+	emptyEmbedsJSON, err := embed.MarshalEmbeds(nil)
+	if err != nil {
+		cleanupThread()
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+	manualEmbedsJSON, err := embed.MarshalEmbeds(req.Embeds)
+	if err != nil {
+		cleanupThread()
+		return nil, badRequestEmbedError(err)
+	}
+
+	starterReq := req.MessageRequest(starterAttachmentIDs)
+	starterMessagePosition, err := e.allocateMessagePosition(c.UserContext(), threadID)
+	if err != nil {
+		cleanupThread()
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+	starterMessageID = idgen.Next()
+	if err := e.msg.CreateMessageWithMeta(
+		c.UserContext(),
+		starterMessageID,
+		threadID,
+		creatorID,
+		req.Content,
+		starterAttachmentIDs,
+		manualEmbedsJSON,
+		emptyEmbedsJSON,
+		0,
+		model.MessageTypeChat,
+		0,
+		0,
+		0,
+		starterMessagePosition,
+	); err != nil {
+		cleanupThread()
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+	if err := e.ch.SetLastMessage(c.UserContext(), threadID, starterMessageID); err != nil {
+		cleanupThread()
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+	if err := e.gclm.SetChannelLastMessage(c.UserContext(), guildID, threadID, starterMessageID); err != nil {
+		reqLog.Error("unable to set thread last message id", slog.String("error", err.Error()))
+	}
+
+	starterDTO, err := e.buildMessageResponse(c, starterMessageID, &threadChannel, starterMessagePosition, userData, starterReq, starterAttachments)
+	if err != nil {
+		cleanupThread()
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+
+	followupMessagePosition, err := e.allocateMessagePosition(c.UserContext(), parentChannel.Id)
+	if err != nil {
+		cleanupThread()
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+	followupMessageID = idgen.Next()
+	followupContent := deriveThreadCreationMessageContent(threadName)
+	if err := e.msg.CreateMessageWithMeta(
+		c.UserContext(),
+		followupMessageID,
+		parentChannel.Id,
+		creatorID,
+		followupContent,
+		nil,
+		emptyEmbedsJSON,
+		emptyEmbedsJSON,
+		0,
+		model.MessageTypeThreadCreated,
+		0,
+		0,
+		threadID,
+		followupMessagePosition,
+	); err != nil {
+		cleanupThread()
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+	if err := e.ch.SetLastMessage(c.UserContext(), parentChannel.Id, followupMessageID); err != nil {
+		cleanupThread()
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+	if err := e.gclm.SetChannelLastMessage(c.UserContext(), guildID, parentChannel.Id, followupMessageID); err != nil {
+		reqLog.Error("unable to set parent channel last message id", slog.String("error", err.Error()))
+	}
+	if err := e.msg.CreateThreadCreatedMessageRef(c.UserContext(), threadID, parentChannel.Id, followupMessageID); err != nil {
+		cleanupThread()
+		return nil, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToCreateThread)
+	}
+	followupMessageRefCreated = true
+	followupDTO := e.buildThreadMessageDTO(c, followupMessageID, parentChannel.Id, creatorID, guildID, followupContent, followupMessagePosition, nil, nil, nil, nil, 0, int(model.MessageTypeThreadCreated), 0, 0, threadID, nil)
+
+	for _, attachment := range validatedAttachments {
+		if err := e.at.RemoveAttachment(c.UserContext(), attachment.Id, parentChannel.Id); err != nil && e.log != nil {
+			reqLog.Error("failed to remove temporary parent attachment after channel thread create",
+				"attachment_id", attachment.Id,
+				"channel_id", parentChannel.Id,
+				"error", err.Error())
+		}
+	}
+	if err := e.rs.SetReadState(c.UserContext(), creatorID, threadID, starterMessageID); err != nil && e.log != nil {
+		reqLog.Error("unable to set thread read state after thread create", slog.String("error", err.Error()))
+	}
+	if err := e.rs.SetReadState(c.UserContext(), creatorID, parentChannel.Id, followupMessageID); err != nil && e.log != nil {
+		reqLog.Error("unable to set parent read state after thread create", slog.String("error", err.Error()))
+	}
+	if err := e.ch.AdjustMessageCount(c.UserContext(), threadID, 1); err != nil {
+		if e.log != nil {
+			reqLog.Error("unable to persist thread message count",
+				"thread_id", threadID,
+				"error", err.Error())
+		}
+		e.bumpThreadMessageCount(c.UserContext(), threadID, 1)
+	}
+
+	threadChannel.LastMessage = starterMessageID
+	threadChannel.MessageCount = 1
+	threadChannel.Permissions = parentChannel.Permissions
+	threadMetadata := e.dtoThreadChannel(&threadChannel, guildID, threadPosition, nil, []int64{creatorID})
+	followupDTO.Thread = cloneChannelDTO(&threadMetadata)
+
+	return &channelThreadCreateResult{
+		Channel:    &threadChannel,
+		Position:   threadPosition,
+		Member:     buildMessageThreadMemberDTO(&threadMember),
+		MemberIds:  []int64{creatorID},
+		Starter:    starterDTO,
+		StarterReq: starterReq,
+		Followup:   followupDTO,
+	}, nil
+}
+
 func (e *entity) cloneAttachmentsToChannel(ctx context.Context, sourceChannelID, targetChannelID int64, attachmentIDs []int64, fallbackAuthorID int64) ([]int64, []model.Attachment, error) {
 	if len(attachmentIDs) == 0 {
 		return nil, nil, nil
@@ -1093,6 +1392,35 @@ func (e *entity) sendThreadCreateEvents(ctx context.Context, guildID int64, pare
 
 	e.sendUpdateEvent(ctx, parentChannel.Id, &guildID, result.SourceMessage)
 	e.sendMessageCreateEvent(ctx, result.Channel, &guildID, result.Initial)
+	e.dispatchMessageSideEffects(ctx, result.Channel, &guildID, result.Starter, userData, result.StarterReq)
+	e.sendMessageCreateEvent(ctx, parentChannel, &guildID, result.Followup)
+	if err := e.cache.Delete(ctx, fmt.Sprintf("guild:%d:channels", guildID)); err != nil {
+		log.Error("failed to invalidate guild channel cache after thread create",
+			"guild_id", guildID,
+			"error", err.Error())
+	}
+}
+
+func (e *entity) sendChannelThreadCreateEvents(ctx context.Context, guildID int64, parentChannel *model.Channel, result *channelThreadCreateResult, userData *messageUserData) {
+	log := observability.LoggerWithContext(ctx, e.log)
+	threadDTO := e.dtoThreadChannel(result.Channel, guildID, result.Position, nil, result.MemberIds)
+	if err := mq.SendGuildUpdate(ctx, e.mqt, guildID, &mqmsg.CreateChannel{
+		GuildId: &guildID,
+		Channel: threadDTO,
+	}); err != nil {
+		log.Error("failed to send channel create event for thread",
+			"thread_id", result.Channel.Id,
+			"error", err.Error())
+	}
+	if err := mq.SendGuildUpdate(ctx, e.mqt, guildID, &mqmsg.CreateThread{
+		GuildId: &guildID,
+		Thread:  threadDTO,
+	}); err != nil {
+		log.Error("failed to send thread create event",
+			"thread_id", result.Channel.Id,
+			"error", err.Error())
+	}
+
 	e.dispatchMessageSideEffects(ctx, result.Channel, &guildID, result.Starter, userData, result.StarterReq)
 	e.sendMessageCreateEvent(ctx, parentChannel, &guildID, result.Followup)
 	if err := e.cache.Delete(ctx, fmt.Sprintf("guild:%d:channels", guildID)); err != nil {
@@ -2897,7 +3225,8 @@ func (e *entity) validateDeletePermission(c *fiber.Ctx, messageId, channelId, us
 	if channel.Type == model.ChannelTypeThread && channel.Closed {
 		return nil, fiber.NewError(fiber.StatusForbidden, ErrThreadClosed)
 	}
-	if _, err := e.requireCurrentMessageChannelAccess(c.UserContext(), &channel, channelId, userId); err != nil {
+	guildID, err := e.requireCurrentMessageChannelAccess(c.UserContext(), &channel, channelId, userId)
+	if err != nil {
 		return nil, err
 	}
 
@@ -2910,7 +3239,17 @@ func (e *entity) validateDeletePermission(c *fiber.Ctx, messageId, channelId, us
 	}
 
 	if message.UserId != userId {
-		return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		if guildID == nil {
+			return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		}
+
+		_, _, _, canManageMessages, err := e.perm.ChannelPerm(c.UserContext(), *guildID, channelId, userId, permissions.PermTextManageMessages)
+		if err != nil {
+			return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
+		}
+		if !canManageMessages {
+			return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+		}
 	}
 
 	return &message, nil

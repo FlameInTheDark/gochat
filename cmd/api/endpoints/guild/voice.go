@@ -182,7 +182,7 @@ func (e *entity) JoinVoice(c *fiber.Ctx) error {
 		return e.voiceInternalError(c, ErrUnableToIssueVoiceToken, err)
 	}
 
-	chosen, err := e.channelBindingForJoin(c.UserContext(), channelId)
+	chosen, err := e.channelBindingForJoinByUser(c.UserContext(), channelId, user.Id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadGateway, "voice discovery unavailable")
 	}
@@ -226,7 +226,7 @@ func (e *entity) JoinVoice(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToIssueVoiceToken)
 	}
 
-	return c.JSON(JoinVoiceResponse{SFUURL: chosen.URL, SFUToken: signed})
+	return c.JSON(JoinVoiceResponse{SFUURL: chosen.URL, SFUToken: signed, Region: chosen.Region})
 }
 
 func bindingKey(ch int64) string      { return "voice:route:" + fmtInt64(ch) }

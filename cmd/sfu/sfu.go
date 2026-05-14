@@ -24,6 +24,8 @@ import (
 
 const periodicKeyFrameInterval = 10 * time.Second
 
+var voiceChannelSoloGrace = 3 * time.Minute
+
 // ---------------------------------------------------------------------------
 // threadSafeWriter wraps a websocket.Conn with a mutex for concurrent writes.
 // ---------------------------------------------------------------------------
@@ -130,6 +132,7 @@ type peerConnectionState struct {
 	mediaSessionID  string
 	metaMu          sync.RWMutex
 	userID          int64
+	guildID         *int64
 	perms           int64 // voice permission bitmask from JWT
 	offeredRevision uint64
 	appliedRevision uint64
@@ -257,6 +260,9 @@ type channelState struct {
 
 	// Per-channel blocked users set
 	blockedUsers map[int64]bool
+	soloTimer    *time.Timer
+	soloUserID   int64
+	soloSince    time.Time
 
 	telemetry   *observability.SFUTelemetry
 	trackLocals map[string]trackLocalEntry
@@ -342,6 +348,9 @@ func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToke
 // stop terminates the channel's background goroutines. Safe to call once.
 func (c *channelState) stop() {
 	if c.stopped.CompareAndSwap(false, true) {
+		c.mu.Lock()
+		c.stopSoloTimerLocked()
+		c.mu.Unlock()
 		close(c.ttlStopChan)
 		close(c.signalStop)
 	}
@@ -352,8 +361,67 @@ func (c *channelState) addPeer(state *peerConnectionState) {
 	c.peers = append(c.peers, state)
 	rev := c.bumpTopologyRevisionLocked()
 	n := len(c.peers)
+	c.updateSoloTimerLocked()
 	c.mu.Unlock()
 	c.log.Debug("peer added", slog.Int64("channel", c.id), slog.Int64("user", state.userID), slog.Int("total_peers", n), slog.Uint64("revision", rev))
+}
+
+func (c *channelState) stopSoloTimerLocked() {
+	if c.soloTimer != nil {
+		c.soloTimer.Stop()
+		c.soloTimer = nil
+	}
+	c.soloUserID = 0
+	c.soloSince = time.Time{}
+}
+
+func (c *channelState) updateSoloTimerLocked() {
+	if len(c.peers) != 1 || c.stopped.Load() {
+		c.stopSoloTimerLocked()
+		return
+	}
+
+	peer := c.peers[0]
+	if peer.guildID != nil {
+		c.stopSoloTimerLocked()
+		return
+	}
+	if c.soloTimer != nil && c.soloUserID == peer.userID {
+		return
+	}
+
+	c.stopSoloTimerLocked()
+	c.soloUserID = peer.userID
+	c.soloSince = time.Now()
+	soloSince := c.soloSince
+	c.soloTimer = time.AfterFunc(voiceChannelSoloGrace, func() {
+		c.closePeerIfStillAlone(peer, soloSince)
+	})
+}
+
+func (c *channelState) closePeerIfStillAlone(peer *peerConnectionState, soloSince time.Time) {
+	if peer == nil {
+		return
+	}
+
+	c.mu.Lock()
+	if c.stopped.Load() ||
+		len(c.peers) != 1 ||
+		c.peers[0] != peer ||
+		c.soloUserID != peer.userID ||
+		!c.soloSince.Equal(soloSince) {
+		c.mu.Unlock()
+		return
+	}
+	c.soloTimer = nil
+	c.mu.Unlock()
+
+	c.log.Info("closing solo voice channel peer", slog.Int64("channel", c.id), slog.Int64("user", peer.userID))
+	_ = peer.sendKick(peer.userID)
+	if peer.websocket != nil {
+		_ = peer.websocket.SendClose(websocket.CloseNormalClosure, "voice channel idle")
+	}
+	_ = peer.peerConnection.Close()
 }
 
 func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removedUser int64, removedTracks []trackLocalEntry, removed bool, empty bool) {
@@ -381,6 +449,7 @@ func (c *channelState) removePeer(pc *webrtc.PeerConnection) (removedUser int64,
 	}
 	empty = len(c.peers) == 0 && len(c.trackLocals) == 0
 	n := len(c.peers)
+	c.updateSoloTimerLocked()
 	c.mu.Unlock()
 	if removed {
 		c.log.Debug("peer removed", slog.Int64("channel", c.id), slog.Int64("user", removedUser), slog.Int("total_peers", n), slog.Uint64("revision", rev))

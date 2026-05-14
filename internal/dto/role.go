@@ -7,4 +7,5 @@ type Role struct {
 	Color       int    `json:"color"`                                  // Role color. Will change username color. Represent RGB color in one Integer value.
 	Permissions int64  `json:"permissions"`                            // Role permissions. Check the permissions documentation for more info.
 	Position    int    `json:"position" example:"0"`                   // Role position. Lower values are shown first in guild role lists.
+	Hoist       bool   `json:"hoist"`                                  // Whether online members with this role are shown in a separate members list section.
 }

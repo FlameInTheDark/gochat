@@ -2416,6 +2416,142 @@
                 }
             }
         },
+        "/guild/{guild_id}/discovery": {
+            "get": {
+                "description": "Owner-only read for public discovery state, discovery description, tags, and hydrated display data persisted in PostgreSQL/Citus.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Get guild discovery settings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 2230469276416868352,
+                        "description": "Guild id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Guild discovery settings",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GuildDiscoveryUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Guild not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Update guild discovery settings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 2230469276416868352,
+                        "description": "Guild id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Guild discovery settings",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/guild.GuildDiscoveryUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated guild discovery settings",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GuildDiscoveryUpdateResponse"
+                        }
+                    },
+                    "202": {
+                        "description": "Updated settings, indexing notification is pending",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GuildDiscoveryUpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Guild not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/guild/{guild_id}/emojis": {
             "get": {
                 "produces": [
@@ -2832,6 +2968,60 @@
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/guild/{guild_id}/join": {
+            "post": {
+                "description": "Joins the authenticated user to a public guild without an invite. Private guilds require the invite flow, banned users are forbidden, and existing members receive the guild without duplicate membership or join events.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild"
+                ],
+                "summary": "Join public guild without invite",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 2230469276416868352,
+                        "description": "Guild id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Joined guild",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Guild"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Guild is private or user is banned",
                         "schema": {
                             "type": "string"
                         }
@@ -4268,6 +4458,67 @@
                 }
             }
         },
+        "/message/channel/{channel_id}/thread": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Message"
+                ],
+                "summary": "Create thread in channel",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Parent channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thread data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/message.CreateThreadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Thread channel",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Channel"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/message/channel/{channel_id}/typing": {
             "post": {
                 "produces": [
@@ -4747,6 +4998,140 @@
                     },
                     "409": {
                         "description": "Conflict",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/guild-tags": {
+            "get": {
+                "description": "Returns tag suggestions from tags attached to public guilds only. Limit defaults to 16 and is capped at 16.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Autocomplete public guild tags",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tag prefix",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 16,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 16,
+                        "description": "Maximum tags to return, capped at 16",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag suggestions",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/guilds": {
+            "get": {
+                "description": "Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Search public guilds",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search text for guild name, description, and tags",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "go,voice",
+                        "description": "Comma-separated normalized tags",
+                        "name": "tags",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "best_match",
+                            "popularity",
+                            "alphabetical"
+                        ],
+                        "type": "string",
+                        "default": "best_match",
+                        "description": "Sort mode",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Zero-based page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 16,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 16,
+                        "description": "Results per page, capped at 16",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Public guild search results",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GuildDiscoverySearchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "type": "string"
                         }
@@ -5578,6 +5963,456 @@
                 }
             }
         },
+        "/user/me/channels/{channel_id}/call": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Start or join a direct-message voice call",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Direct DM channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/user.DMCallJoinResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Not a DM participant",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "502": {
+                        "description": "Voice discovery unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "No SFU available",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Leave the current direct-message voice call",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Direct DM channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Not a DM participant",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/me/channels/{channel_id}/call/decline": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Decline or dismiss an incoming direct-message voice call",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Direct DM channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Not a DM participant",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/me/channels/{channel_id}/call/join": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Join an active direct-message voice call",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Direct DM channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/user.DMCallJoinResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Not a DM participant",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Call not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/me/channels/{channel_id}/call/streams": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "List active streams in a direct-message voice call",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Direct DM channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/user.VoiceStreamSummary"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Join the call first",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Call not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Start or resume screen sharing in a direct-message voice call",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Direct DM channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Stream options",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.CreateDMCallStreamRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/user.CreateDMCallStreamResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Join the call first",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Call not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Already streaming in another call",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "502": {
+                        "description": "Stream discovery unavailable",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "No stream service available",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/me/channels/{channel_id}/call/streams/{stream_id}": {
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Stop an owned screen share in a direct-message voice call",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Direct DM channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Stream ID",
+                        "name": "stream_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Join the call first or not stream owner",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Call not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/me/channels/{channel_id}/call/streams/{stream_id}/join": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Join a screen share in a direct-message voice call",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Direct DM channel ID",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Stream ID",
+                        "name": "stream_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/user.JoinDMCallStreamResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Join the call first",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Call or stream not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "No stream service available",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/user/me/friends": {
             "get": {
                 "produces": [
@@ -6007,6 +6842,7 @@
         },
         "/user/me/settings": {
             "get": {
+                "description": "Returns the user settings bootstrap payload, including read states, joined thread indexes, guild emojis, mentions, and active direct-message voice calls in dm_calls.",
                 "produces": [
                     "application/json"
                 ],
@@ -7206,6 +8042,61 @@
                 }
             }
         },
+        "dto.GuildDiscovery": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Community for Go developers"
+                },
+                "icon": {
+                    "$ref": "#/definitions/dto.Icon"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 2230469276416868352
+                },
+                "members_count": {
+                    "type": "integer",
+                    "example": 42
+                },
+                "name": {
+                    "type": "string",
+                    "example": "My Guild"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "dto.GuildDiscoverySearchResponse": {
+            "type": "object",
+            "properties": {
+                "guilds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.GuildDiscovery"
+                    }
+                },
+                "pages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.GuildDiscoveryUpdateResponse": {
+            "type": "object",
+            "properties": {
+                "guild": {
+                    "$ref": "#/definitions/dto.GuildDiscovery"
+                },
+                "indexing_pending": {
+                    "type": "boolean"
+                }
+            }
+        },
         "dto.GuildEmoji": {
             "type": "object",
             "properties": {
@@ -7485,6 +8376,10 @@
                     "description": "Guild ID",
                     "type": "integer",
                     "example": 2230469276416868352
+                },
+                "hoist": {
+                    "description": "Whether online members with this role are shown in a separate members list section.",
+                    "type": "boolean"
                 },
                 "id": {
                     "description": "Role ID",
@@ -7931,6 +8826,11 @@
                     "type": "integer",
                     "example": 16777215
                 },
+                "hoist": {
+                    "description": "Show online members with this role in a separate section",
+                    "type": "boolean",
+                    "default": false
+                },
                 "name": {
                     "description": "Role name",
                     "type": "string",
@@ -7994,9 +8894,29 @@
                 }
             }
         },
+        "guild.GuildDiscoveryUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "public": {
+                    "type": "boolean"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "guild.JoinVoiceResponse": {
             "type": "object",
             "properties": {
+                "region": {
+                    "type": "string"
+                },
                 "sfu_token": {
                     "type": "string"
                 },
@@ -8103,6 +9023,10 @@
                     "description": "RGB int value",
                     "type": "integer",
                     "example": 16711680
+                },
+                "hoist": {
+                    "description": "Show online members with this role in a separate section",
+                    "type": "boolean"
                 },
                 "name": {
                     "description": "Role name",
@@ -8454,6 +9378,9 @@
                 "push_to_talk_key": {
                     "type": "string"
                 },
+                "push_to_talk_toggle": {
+                    "type": "boolean"
+                },
                 "video_device": {
                     "type": "string"
                 }
@@ -8604,12 +9531,18 @@
                     "items": {
                         "$ref": "#/definitions/model.UserSettingsUsers"
                     }
+                },
+                "voice": {
+                    "$ref": "#/definitions/model.UserVoiceSettings"
                 }
             }
         },
         "model.UserSettingsGuildFolders": {
             "type": "object",
             "properties": {
+                "collapsed": {
+                    "type": "boolean"
+                },
                 "color": {
                     "type": "integer"
                 },
@@ -8695,6 +9628,49 @@
                 },
                 "voice_channel": {
                     "type": "boolean"
+                }
+            }
+        },
+        "model.UserVoiceSettings": {
+            "type": "object",
+            "properties": {
+                "preferred_region": {
+                    "type": "string"
+                }
+            }
+        },
+        "mqmsg.DMCallSummary": {
+            "type": "object",
+            "properties": {
+                "call_id": {
+                    "type": "integer"
+                },
+                "caller_id": {
+                    "type": "integer"
+                },
+                "channel_id": {
+                    "type": "integer"
+                },
+                "dismissed": {
+                    "type": "boolean"
+                },
+                "participants": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "recipient_id": {
+                    "type": "integer"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "solo_since": {
+                    "type": "integer"
+                },
+                "started_at": {
+                    "type": "integer"
                 }
             }
         },
@@ -8849,6 +9825,34 @@
                 }
             }
         },
+        "user.CreateDMCallStreamRequest": {
+            "type": "object",
+            "properties": {
+                "audio_mode": {
+                    "type": "string"
+                },
+                "source_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.CreateDMCallStreamResponse": {
+            "type": "object",
+            "properties": {
+                "stream": {
+                    "$ref": "#/definitions/user.VoiceStreamSummary"
+                },
+                "stream_id": {
+                    "type": "integer"
+                },
+                "stream_token": {
+                    "type": "string"
+                },
+                "stream_url": {
+                    "type": "string"
+                }
+            }
+        },
         "user.CreateDMManyRequest": {
             "type": "object",
             "properties": {
@@ -8879,12 +9883,43 @@
                 }
             }
         },
+        "user.DMCallJoinResponse": {
+            "type": "object",
+            "properties": {
+                "call": {
+                    "$ref": "#/definitions/mqmsg.DMCallSummary"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "sfu_token": {
+                    "type": "string"
+                },
+                "sfu_url": {
+                    "type": "string"
+                }
+            }
+        },
         "user.FriendRequestAction": {
             "type": "object",
             "properties": {
                 "user_id": {
                     "type": "string",
                     "example": "0"
+                }
+            }
+        },
+        "user.JoinDMCallStreamResponse": {
+            "type": "object",
+            "properties": {
+                "stream_id": {
+                    "type": "integer"
+                },
+                "stream_token": {
+                    "type": "string"
+                },
+                "stream_url": {
+                    "type": "string"
                 }
             }
         },
@@ -8943,6 +9978,13 @@
                     "type": "array",
                     "items": {
                         "type": "string"
+                    }
+                },
+                "dm_calls": {
+                    "description": "Active direct-message voice calls visible to the current user.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/mqmsg.DMCallSummary"
                     }
                 },
                 "guild_emojis": {
@@ -9007,6 +10049,29 @@
                     }
                 },
                 "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "user.VoiceStreamSummary": {
+            "type": "object",
+            "properties": {
+                "audio_mode": {
+                    "type": "string"
+                },
+                "channel_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "owner_user_id": {
+                    "type": "integer"
+                },
+                "source_type": {
+                    "type": "string"
+                },
+                "started_at": {
                     "type": "integer"
                 }
             }

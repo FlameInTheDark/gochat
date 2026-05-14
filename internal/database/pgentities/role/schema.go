@@ -72,14 +72,14 @@ func (e *Entity) GetRolesBulk(ctx context.Context, guildID int64, ids []int64) (
 	return roles, nil
 }
 
-func (e *Entity) CreateRole(ctx context.Context, id, guildId int64, name string, color int, permissions int64) error {
+func (e *Entity) CreateRole(ctx context.Context, id, guildId int64, name string, color int, permissions int64, hoist bool) error {
 	const query = `
-INSERT INTO roles (id, guild_id, name, color, permissions, position)
-SELECT $1, $2, $3, $4, $5, COALESCE(MAX(position), -1) + 1
+INSERT INTO roles (id, guild_id, name, color, permissions, position, hoist)
+SELECT $1, $2, $3, $4, $5, COALESCE(MAX(position), -1) + 1, $6
 FROM roles
 WHERE guild_id = $2
 `
-	_, err := e.c.ExecContext(ctx, query, id, guildId, name, color, permissions)
+	_, err := e.c.ExecContext(ctx, query, id, guildId, name, color, permissions, hoist)
 	if err != nil {
 		return fmt.Errorf("unable to create role for guild %d: %w", guildId, err)
 	}
@@ -145,6 +145,22 @@ func (e *Entity) SetRolePermissions(ctx context.Context, id int64, permissions i
 	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
 		return fmt.Errorf("unable to set role permissions for guild %d: %w", id, err)
+	}
+	return nil
+}
+
+func (e *Entity) SetRoleHoist(ctx context.Context, id int64, hoist bool) error {
+	q := squirrel.Update("roles").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"id": id}).
+		Set("hoist", hoist)
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	_, err = e.c.ExecContext(ctx, raw, args...)
+	if err != nil {
+		return fmt.Errorf("unable to set role hoist for guild %d: %w", id, err)
 	}
 	return nil
 }

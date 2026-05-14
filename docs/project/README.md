@@ -12,6 +12,7 @@ Here goes the project documentation.
 
 - [Voice](voice/README.md)
 - [Voice-Channel Streaming](voice/Streaming.md)
+- [Direct-Message Calls](voice/DMCalls.md)
 - [Observability](observability/README.md)
 
 - [Services Overview](Services.md)

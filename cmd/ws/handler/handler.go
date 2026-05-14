@@ -248,6 +248,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		}
 		var m struct {
 			Channel int64 `json:"channel"`
+			DMCall  bool  `json:"dm_call"`
 		}
 		if err := json.Unmarshal(e.Data, &m); err != nil {
 			return
@@ -256,6 +257,11 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			return
 		}
 		opCtx, cancel := context.WithTimeout(ctx, time.Second)
+		if m.DMCall {
+			_ = h.cache.SetTTL(opCtx, fmt.Sprintf("dmcall:route:%d", m.Channel), 60)
+			cancel()
+			return
+		}
 		_ = h.cache.SetTTL(opCtx, fmt.Sprintf("voice:route:%d", m.Channel), 60)
 		// Update this session's voice channel and publish aggregated presence
 		if h.pstore != nil && h.sessionID != "" && h.user != nil {

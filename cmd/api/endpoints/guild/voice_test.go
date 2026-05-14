@@ -2,6 +2,7 @@ package guild
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"net/http/httptest"
@@ -159,6 +160,47 @@ func TestJoinVoiceRejectsUnauthorizedUsers(t *testing.T) {
 	}
 	if resp.StatusCode != fiber.StatusForbidden {
 		t.Fatalf("expected 403, got %d", resp.StatusCode)
+	}
+}
+
+func TestJoinVoiceReturnsSelectedRegion(t *testing.T) {
+	e := &entity{
+		perm: &fakePermissionChecker{
+			channel:      &model.Channel{Id: 2, Type: model.ChannelTypeGuildVoice},
+			channelOK:    true,
+			channelPerms: int64(permissions.PermVoiceConnect),
+		},
+		cache:              &fakeCache{jsonValues: map[string][]byte{}},
+		ch:                 &fakeCreateChannelRepo{},
+		authSecret:         "test-secret",
+		defaultVoiceRegion: "global",
+		disco: &fakeDiscoveryManager{
+			lists: map[string][]discovery.Instance{
+				"global": {{ID: "sfu-global-1", Region: "global", URL: "wss://global.example/signal", Load: 1}},
+			},
+		},
+		allowedRegions:   map[string]struct{}{"global": {}},
+		allowedRegionIDs: []string{"global"},
+		voiceSelector:    newVoiceSelector(newVoiceTestLogger()),
+	}
+	app := newGuildTestApp(t, 10, "/guild/:guild_id/voice/:channel_id/join", e.JoinVoice)
+
+	req := httptest.NewRequest("POST", "/guild/1/voice/2/join", nil)
+	resp, err := app.Test(req, -1)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+
+	var body JoinVoiceResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Region != "global" {
+		t.Fatalf("expected selected region global, got %q", body.Region)
 	}
 }
 

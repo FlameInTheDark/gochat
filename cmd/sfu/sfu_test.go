@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/pion/webrtc/v4"
 )
@@ -328,6 +329,81 @@ func TestRemovePeerReturnsRemovedUserAndDanglingTracks(t *testing.T) {
 	}
 	if removedTracks[0].kind != webrtc.RTPCodecTypeAudio.String() {
 		t.Fatalf("removed track kind = %q, want %q", removedTracks[0].kind, webrtc.RTPCodecTypeAudio.String())
+	}
+}
+
+func TestChannelStateClosesSoloPeerAfterGrace(t *testing.T) {
+	oldGrace := voiceChannelSoloGrace
+	voiceChannelSoloGrace = 20 * time.Millisecond
+	t.Cleanup(func() { voiceChannelSoloGrace = oldGrace })
+
+	ch := newTestChannelState()
+	pc := newTestPeerConnection(t)
+	ch.addPeer(&peerConnectionState{
+		peerConnection: pc,
+		websocket:      &threadSafeWriter{},
+		userID:         42,
+	})
+
+	deadline := time.After(2 * time.Second)
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-deadline:
+			t.Fatal("expected solo peer connection to close")
+		case <-ticker.C:
+			if pc.ConnectionState() == webrtc.PeerConnectionStateClosed {
+				return
+			}
+		}
+	}
+}
+
+func TestChannelStateCancelsSoloTimerWhenSecondPeerJoins(t *testing.T) {
+	oldGrace := voiceChannelSoloGrace
+	voiceChannelSoloGrace = 30 * time.Millisecond
+	t.Cleanup(func() { voiceChannelSoloGrace = oldGrace })
+
+	ch := newTestChannelState()
+	pcA := newTestPeerConnection(t)
+	pcB := newTestPeerConnection(t)
+	ch.addPeer(&peerConnectionState{
+		peerConnection: pcA,
+		websocket:      &threadSafeWriter{},
+		userID:         1,
+	})
+	time.Sleep(10 * time.Millisecond)
+	ch.addPeer(&peerConnectionState{
+		peerConnection: pcB,
+		websocket:      &threadSafeWriter{},
+		userID:         2,
+	})
+
+	time.Sleep(60 * time.Millisecond)
+	if pcA.ConnectionState() == webrtc.PeerConnectionStateClosed {
+		t.Fatal("did not expect first peer to close after a second peer joined")
+	}
+}
+
+func TestChannelStateDoesNotCloseSoloGuildPeer(t *testing.T) {
+	oldGrace := voiceChannelSoloGrace
+	voiceChannelSoloGrace = 20 * time.Millisecond
+	t.Cleanup(func() { voiceChannelSoloGrace = oldGrace })
+
+	guildID := int64(99)
+	ch := newTestChannelState()
+	pc := newTestPeerConnection(t)
+	ch.addPeer(&peerConnectionState{
+		peerConnection: pc,
+		websocket:      &threadSafeWriter{},
+		userID:         42,
+		guildID:        &guildID,
+	})
+
+	time.Sleep(60 * time.Millisecond)
+	if pc.ConnectionState() == webrtc.PeerConnectionStateClosed {
+		t.Fatal("did not expect solo guild voice peer to close")
 	}
 }
 
