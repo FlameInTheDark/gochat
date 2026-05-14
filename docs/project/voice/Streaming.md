@@ -126,6 +126,19 @@ Start response:
 
 `POST /streams` is idempotent per owner and voice channel. If the user already has an active stream in the same channel, the API returns the existing `stream_id` with a fresh publisher token and current route. If the user is already streaming in a different channel, it returns `409`.
 
+### Direct-message call streams
+
+Direct-message calls reuse the same stream service with private per-DM endpoints:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/user/me/channels/{channel_id}/call/streams` | List active streams in a DM call. |
+| `POST` | `/user/me/channels/{channel_id}/call/streams` | Create or resume the caller's DM call stream. |
+| `POST` | `/user/me/channels/{channel_id}/call/streams/{stream_id}/join` | Join a DM call stream as viewer. |
+| `DELETE` | `/user/me/channels/{channel_id}/call/streams/{stream_id}` | Stop the caller's own DM call stream. |
+
+DM call streams are visible only to the two DM participants and emit private user WebSocket events instead of guild stream events. See [Direct-Message Calls](DMCalls.md) for the full lifecycle and event list.
+
 ## Stream JWTs
 
 Stream media tokens are separate from voice SFU tokens.
@@ -137,8 +150,8 @@ Stream media tokens are separate from voice SFU tokens.
 | `iss` | `gochat` |
 | `user_id` | Caller user ID |
 | `stream_id` | Active stream ID |
-| `channel_id` | Voice channel ID |
-| `guild_id` | Guild ID |
+| `channel_id` | Voice channel ID, or direct DM channel ID for DM call streams |
+| `guild_id` | Guild ID; `0` or omitted for DM call streams |
 | `owner_user_id` | Stream owner user ID |
 | `route_id` | Stream service ID selected for this stream |
 | `role` | `publisher` or `viewer` |
@@ -163,6 +176,7 @@ Important stream-specific rules:
 
 - A publisher token grants synthetic `PermVoiceSpeak | PermVoiceVideo` inside `cmd/stream`.
 - A viewer token grants no publish permissions.
+- DM call publisher tokens are media-scoped to the private call and do not grant guild moderation permissions.
 - If a viewer attempts to publish audio or video tracks, the stream service rejects those inbound tracks.
 - `cmd/stream` forwards RTP; it does not transcode or record the stream.
 - Stream video/audio can use DAVE. DAVE capability and transition behavior follows the same client model as voice.

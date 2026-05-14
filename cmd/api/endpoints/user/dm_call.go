@@ -452,10 +452,46 @@ func (e *entity) startOrJoinDMCall(c *fiber.Ctx, joinOnly bool) error {
 	return c.JSON(resp)
 }
 
+// StartDMCall
+//
+//	@Summary	Start or join a direct-message voice call
+//	@Produce	json
+//	@Tags		User
+//	@Param		channel_id	path		int64	true	"Direct DM channel ID"
+//	@Success	200			{object}	DMCallJoinResponse
+//	@failure	400			{string}	string	"Bad request"
+//	@failure	403			{string}	string	"Not a DM participant"
+//	@failure	503			{string}	string	"No SFU available"
+//	@failure	502			{string}	string	"Voice discovery unavailable"
+//	@failure	500			{string}	string	"Internal server error"
+//	@Router		/user/me/channels/{channel_id}/call [post]
 func (e *entity) StartDMCall(c *fiber.Ctx) error { return e.startOrJoinDMCall(c, false) }
 
+// JoinDMCall
+//
+//	@Summary	Join an active direct-message voice call
+//	@Produce	json
+//	@Tags		User
+//	@Param		channel_id	path		int64	true	"Direct DM channel ID"
+//	@Success	200			{object}	DMCallJoinResponse
+//	@failure	400			{string}	string	"Bad request"
+//	@failure	403			{string}	string	"Not a DM participant"
+//	@failure	404			{string}	string	"Call not found"
+//	@failure	500			{string}	string	"Internal server error"
+//	@Router		/user/me/channels/{channel_id}/call/join [post]
 func (e *entity) JoinDMCall(c *fiber.Ctx) error { return e.startOrJoinDMCall(c, true) }
 
+// DeclineDMCall
+//
+//	@Summary	Decline or dismiss an incoming direct-message voice call
+//	@Produce	json
+//	@Tags		User
+//	@Param		channel_id	path	int64	true	"Direct DM channel ID"
+//	@Success	204
+//	@failure	400	{string}	string	"Bad request"
+//	@failure	403	{string}	string	"Not a DM participant"
+//	@failure	500	{string}	string	"Internal server error"
+//	@Router		/user/me/channels/{channel_id}/call/decline [post]
 func (e *entity) DeclineDMCall(c *fiber.Ctx) error {
 	channelID, err := e.parseDMCallChannelID(c)
 	if err != nil {
@@ -485,6 +521,17 @@ func (e *entity) DeclineDMCall(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
+// LeaveDMCall
+//
+//	@Summary	Leave the current direct-message voice call
+//	@Produce	json
+//	@Tags		User
+//	@Param		channel_id	path	int64	true	"Direct DM channel ID"
+//	@Success	204
+//	@failure	400	{string}	string	"Bad request"
+//	@failure	403	{string}	string	"Not a DM participant"
+//	@failure	500	{string}	string	"Internal server error"
+//	@Router		/user/me/channels/{channel_id}/call [delete]
 func (e *entity) LeaveDMCall(c *fiber.Ctx) error {
 	channelID, err := e.parseDMCallChannelID(c)
 	if err != nil {
@@ -634,6 +681,18 @@ func (e *entity) issueDMStreamToken(userID int64, meta streammeta.Metadata, role
 	return tok.SignedString([]byte(e.authSecret))
 }
 
+// ListDMCallStreams
+//
+//	@Summary	List active streams in a direct-message voice call
+//	@Produce	json
+//	@Tags		User
+//	@Param		channel_id	path		int64	true	"Direct DM channel ID"
+//	@Success	200			{array}		VoiceStreamSummary
+//	@failure	400			{string}	string	"Bad request"
+//	@failure	403			{string}	string	"Join the call first"
+//	@failure	404			{string}	string	"Call not found"
+//	@failure	500			{string}	string	"Internal server error"
+//	@Router		/user/me/channels/{channel_id}/call/streams [get]
 func (e *entity) ListDMCallStreams(c *fiber.Ctx) error {
 	channelID, err := e.parseDMCallChannelID(c)
 	if err != nil {
@@ -683,6 +742,23 @@ func (e *entity) dmChannelStreams(ctx context.Context, channelID int64) ([]Voice
 	return out, nil
 }
 
+// StartDMCallStream
+//
+//	@Summary	Start or resume screen sharing in a direct-message voice call
+//	@Accept		json
+//	@Produce	json
+//	@Tags		User
+//	@Param		channel_id	path		int64						true	"Direct DM channel ID"
+//	@Param		request		body		CreateDMCallStreamRequest	true	"Stream options"
+//	@Success	200			{object}	CreateDMCallStreamResponse
+//	@failure	400			{string}	string	"Bad request"
+//	@failure	403			{string}	string	"Join the call first"
+//	@failure	404			{string}	string	"Call not found"
+//	@failure	409			{string}	string	"Already streaming in another call"
+//	@failure	502			{string}	string	"Stream discovery unavailable"
+//	@failure	503			{string}	string	"No stream service available"
+//	@failure	500			{string}	string	"Internal server error"
+//	@Router		/user/me/channels/{channel_id}/call/streams [post]
 func (e *entity) StartDMCallStream(c *fiber.Ctx) error {
 	channelID, err := e.parseDMCallChannelID(c)
 	if err != nil {
@@ -782,6 +858,20 @@ func voiceStreamSummaryFromMeta(meta streammeta.Metadata) VoiceStreamSummary {
 	}
 }
 
+// JoinDMCallStream
+//
+//	@Summary	Join a screen share in a direct-message voice call
+//	@Produce	json
+//	@Tags		User
+//	@Param		channel_id	path		int64	true	"Direct DM channel ID"
+//	@Param		stream_id	path		int64	true	"Stream ID"
+//	@Success	200			{object}	JoinDMCallStreamResponse
+//	@failure	400			{string}	string	"Bad request"
+//	@failure	403			{string}	string	"Join the call first"
+//	@failure	404			{string}	string	"Call or stream not found"
+//	@failure	503			{string}	string	"No stream service available"
+//	@failure	500			{string}	string	"Internal server error"
+//	@Router		/user/me/channels/{channel_id}/call/streams/{stream_id}/join [post]
 func (e *entity) JoinDMCallStream(c *fiber.Ctx) error {
 	channelID, err := e.parseDMCallChannelID(c)
 	if err != nil {
@@ -816,6 +906,19 @@ func (e *entity) JoinDMCallStream(c *fiber.Ctx) error {
 	return c.JSON(JoinDMCallStreamResponse{StreamID: meta.ID, StreamURL: binding.URL, StreamToken: token})
 }
 
+// StopDMCallStream
+//
+//	@Summary	Stop an owned screen share in a direct-message voice call
+//	@Produce	json
+//	@Tags		User
+//	@Param		channel_id	path	int64	true	"Direct DM channel ID"
+//	@Param		stream_id	path	int64	true	"Stream ID"
+//	@Success	204
+//	@failure	400	{string}	string	"Bad request"
+//	@failure	403	{string}	string	"Join the call first or not stream owner"
+//	@failure	404	{string}	string	"Call not found"
+//	@failure	500	{string}	string	"Internal server error"
+//	@Router		/user/me/channels/{channel_id}/call/streams/{stream_id} [delete]
 func (e *entity) StopDMCallStream(c *fiber.Ctx) error {
 	channelID, err := e.parseDMCallChannelID(c)
 	if err != nil {
