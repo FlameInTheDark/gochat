@@ -70,6 +70,10 @@ func (t *threadSafeWriter) SendVoiceGatewayPacket(op int, payload any) error {
 	return t.WriteJSON(voicev2.Packet{Op: op, D: payload})
 }
 
+func (t *threadSafeWriter) SendVoiceGatewayError(code int, reason string) error {
+	return t.SendVoiceGatewayPacket(voicev2.OpError, voicev2.Error{Code: code, Reason: reason})
+}
+
 func (t *threadSafeWriter) SendBinaryPacket(payload []byte) error {
 	return t.WriteMessage(websocket.BinaryMessage, payload)
 }

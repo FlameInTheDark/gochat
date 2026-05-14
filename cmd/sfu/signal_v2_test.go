@@ -274,15 +274,21 @@ func writeBinaryMessage(t *testing.T, conn *ws.Conn, payload []byte) {
 func readCloseCode(t *testing.T, conn *ws.Conn, timeout time.Duration) int {
 	t.Helper()
 	_ = conn.SetReadDeadline(time.Now().Add(timeout))
-	_, _, err := conn.ReadMessage()
-	if err == nil {
-		t.Fatal("expected websocket close")
+	for {
+		_, raw, err := conn.ReadMessage()
+		if err == nil {
+			var packet voicev2.IncomingPacket
+			if json.Unmarshal(raw, &packet) == nil && packet.Op == voicev2.OpError {
+				continue
+			}
+			t.Fatalf("expected websocket close, got message %s", string(raw))
+		}
+		var closeErr *ws.CloseError
+		if !errors.As(err, &closeErr) {
+			t.Fatalf("expected close error, got %v", err)
+		}
+		return closeErr.Code
 	}
-	var closeErr *ws.CloseError
-	if !errors.As(err, &closeErr) {
-		t.Fatalf("expected close error, got %v", err)
-	}
-	return closeErr.Code
 }
 
 func issueTestJoinToken(t *testing.T, secret string, userID, channelID int64, perms int64) string {

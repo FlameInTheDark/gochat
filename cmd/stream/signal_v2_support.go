@@ -246,18 +246,37 @@ func (a *App) bindSignalV2Session(session *signalV2Session, conn *websocket.Conn
 func (a *App) closeSignalV2Session(session *signalV2Session, code int, reason string) error {
 	session.mu.Lock()
 	session.explicitClose = true
+	userID := session.userID
+	channelID := session.channelID
+	voiceChannelID := session.voiceChannelID
+	sessionID := session.sessionID
+	role := session.role
+	phase := session.phase
 	session.mu.Unlock()
-	session.log.Info(
+	session.log.Warn(
 		"closing stream signal session",
 		slog.Int("code", code),
 		slog.String("reason", reason),
-		slog.String("session_id", session.sessionID),
-		slog.Int64("stream_id", session.channelID),
-		slog.Int64("voice_channel_id", session.voiceChannelID),
-		slog.Int64("user", session.userID),
-		slog.String("role", session.role),
+		slog.String("session_id", sessionID),
+		slog.Int64("stream_id", channelID),
+		slog.Int64("voice_channel_id", voiceChannelID),
+		slog.Int64("user", userID),
+		slog.String("role", role),
+		slog.Int("phase", int(phase)),
 	)
+	if err := session.writer.SendVoiceGatewayError(code, reason); err != nil {
+		session.log.Warn("failed to send stream signal error packet", slog.String("error", err.Error()), slog.Int("code", code), slog.String("reason", reason))
+	}
 	return session.writer.SendClose(code, reason)
+}
+
+func closeRawSignalV2(log *slog.Logger, conn *websocket.Conn, code int, reason string) error {
+	log.Warn("closing stream signal websocket before session established", slog.Int("code", code), slog.String("reason", reason))
+	writer := &threadSafeWriter{conn: conn.Conn}
+	if err := writer.SendVoiceGatewayError(code, reason); err != nil {
+		log.Warn("failed to send stream signal error packet", slog.String("error", err.Error()), slog.Int("code", code), slog.String("reason", reason))
+	}
+	return writer.SendClose(code, reason)
 }
 
 func signalPeerAttrs(channelID, userID int64, guildID *int64) []attribute.KeyValue {

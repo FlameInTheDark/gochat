@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"strings"
 	"time"
@@ -241,8 +242,33 @@ func (a *App) bindSignalV2Session(session *signalV2Session, conn *websocket.Conn
 func (a *App) closeSignalV2Session(session *signalV2Session, code int, reason string) error {
 	session.mu.Lock()
 	session.explicitClose = true
+	userID := session.userID
+	channelID := session.channelID
+	sessionID := session.sessionID
+	phase := session.phase
 	session.mu.Unlock()
+	session.log.Warn(
+		"closing voice signal session",
+		slog.Int("code", code),
+		slog.String("reason", reason),
+		slog.String("session_id", sessionID),
+		slog.Int64("channel_id", channelID),
+		slog.Int64("user", userID),
+		slog.Int("phase", int(phase)),
+	)
+	if err := session.writer.SendVoiceGatewayError(code, reason); err != nil {
+		session.log.Warn("failed to send voice signal error packet", slog.String("error", err.Error()), slog.Int("code", code), slog.String("reason", reason))
+	}
 	return session.writer.SendClose(code, reason)
+}
+
+func closeRawSignalV2(log *slog.Logger, conn *websocket.Conn, code int, reason string) error {
+	log.Warn("closing voice signal websocket before session established", slog.Int("code", code), slog.String("reason", reason))
+	writer := &threadSafeWriter{conn: conn.Conn}
+	if err := writer.SendVoiceGatewayError(code, reason); err != nil {
+		log.Warn("failed to send voice signal error packet", slog.String("error", err.Error()), slog.Int("code", code), slog.String("reason", reason))
+	}
+	return writer.SendClose(code, reason)
 }
 
 func signalPeerAttrs(channelID, userID int64, guildID *int64) []attribute.KeyValue {

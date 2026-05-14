@@ -22,12 +22,52 @@ const (
 	hdrToken                   = "X-Webhook-Token"
 	voiceRouteActiveTTLSeconds = 180
 	voiceClientsTTLSeconds     = 120
+	dmCallTTLSeconds           = int64(60 * 60 * 6)
+	dmCallUserIndexTTLSeconds  = int64(60 * 60 * 6)
 )
 
 type voiceRouteBinding struct {
 	ID     string `json:"id"`
 	URL    string `json:"url"`
 	Region string `json:"region,omitempty"`
+}
+
+type dmCallState struct {
+	CallID       int64           `json:"call_id"`
+	ChannelID    int64           `json:"channel_id"`
+	CallerID     int64           `json:"caller_id"`
+	RecipientID  int64           `json:"recipient_id"`
+	Region       string          `json:"region,omitempty"`
+	Participants map[int64]int64 `json:"participants,omitempty"`
+	DismissedBy  map[int64]bool  `json:"dismissed_by,omitempty"`
+	StartedAt    int64           `json:"started_at"`
+	UpdatedAt    int64           `json:"updated_at"`
+	SoloSince    int64           `json:"solo_since,omitempty"`
+	EndedAt      int64           `json:"ended_at,omitempty"`
+}
+
+func dmCallStateKey(channelID int64) string {
+	return "dmcall:state:" + strconv.FormatInt(channelID, 10)
+}
+
+func dmCallRouteKey(channelID int64) string {
+	return "dmcall:route:" + strconv.FormatInt(channelID, 10)
+}
+
+func dmCallUserIndexKey(userID int64) string {
+	return "dmcall:user:" + strconv.FormatInt(userID, 10)
+}
+
+func voiceClientsKey(channelID int64) string {
+	return fmt.Sprintf("voice:clients:%d", channelID)
+}
+
+func voiceRouteKey(channelID int64) string {
+	return fmt.Sprintf("voice:route:%d", channelID)
+}
+
+func voiceRebindKey(channelID int64) string {
+	return fmt.Sprintf("voice:rebind:%d", channelID)
 }
 
 func refreshVoiceRoute(ctx context.Context, cache cache.Cache, channelID int64, routeID, routeURL, region string) error {
@@ -45,6 +85,116 @@ func refreshVoiceRoute(ctx context.Context, cache cache.Cache, channelID int64, 
 		URL:    routeURL,
 		Region: region,
 	}, voiceRouteActiveTTLSeconds)
+}
+
+func (e *entity) dmCallSummaryForUser(call dmCallState, userID int64) mqmsg.DMCallSummary {
+	return mqmsg.DMCallSummary{
+		CallID:       call.CallID,
+		ChannelID:    call.ChannelID,
+		CallerID:     call.CallerID,
+		RecipientID:  call.RecipientID,
+		Region:       call.Region,
+		Participants: call.Participants,
+		StartedAt:    call.StartedAt,
+		SoloSince:    call.SoloSince,
+		Dismissed:    call.DismissedBy != nil && call.DismissedBy[userID],
+	}
+}
+
+func (e *entity) publishDMCall(ctx context.Context, call dmCallState, build func(int64) mqmsg.EventDataMessage) {
+	for _, userID := range []int64{call.CallerID, call.RecipientID} {
+		_ = mq.SendUserUpdate(ctx, e.mqt, userID, build(userID))
+	}
+}
+
+func (e *entity) clearDMCall(ctx context.Context, call dmCallState, reason string) {
+	if e.cache != nil {
+		_ = e.cache.Delete(ctx, dmCallStateKey(call.ChannelID))
+		_ = e.cache.Delete(ctx, dmCallRouteKey(call.ChannelID))
+		_ = e.cache.Delete(ctx, voiceRouteKey(call.ChannelID))
+		_ = e.cache.Delete(ctx, voiceRebindKey(call.ChannelID))
+		_ = e.cache.Delete(ctx, voiceClientsKey(call.ChannelID))
+		_ = e.cache.HDel(ctx, dmCallUserIndexKey(call.CallerID), strconv.FormatInt(call.ChannelID, 10))
+		_ = e.cache.HDel(ctx, dmCallUserIndexKey(call.RecipientID), strconv.FormatInt(call.ChannelID, 10))
+	}
+	e.publishDMCall(ctx, call, func(uid int64) mqmsg.EventDataMessage {
+		return mqmsg.NewDMCallEnded(e.dmCallSummaryForUser(call, uid), reason)
+	})
+}
+
+func (e *entity) saveDMCall(ctx context.Context, call dmCallState) error {
+	if e.cache == nil {
+		return nil
+	}
+	call.UpdatedAt = time.Now().Unix()
+	if call.Participants == nil {
+		call.Participants = map[int64]int64{}
+	}
+	if call.DismissedBy == nil {
+		call.DismissedBy = map[int64]bool{}
+	}
+	if err := e.cache.SetTimedJSON(ctx, dmCallStateKey(call.ChannelID), call, dmCallTTLSeconds); err != nil {
+		return err
+	}
+	for _, userID := range []int64{call.CallerID, call.RecipientID} {
+		_ = e.cache.HSet(ctx, dmCallUserIndexKey(userID), strconv.FormatInt(call.ChannelID, 10), "1")
+		_ = e.cache.SetTTL(ctx, dmCallUserIndexKey(userID), dmCallUserIndexTTLSeconds)
+	}
+	return nil
+}
+
+func (e *entity) activeDMVoiceParticipants(ctx context.Context, call dmCallState) map[int64]int64 {
+	active := map[int64]int64{}
+	if e.cache == nil {
+		return active
+	}
+	clients, err := e.cache.HGetAll(ctx, voiceClientsKey(call.ChannelID))
+	if err != nil {
+		return active
+	}
+	now := time.Now().Unix()
+	for rawUserID := range clients {
+		userID, err := strconv.ParseInt(rawUserID, 10, 64)
+		if err != nil {
+			continue
+		}
+		if userID == call.CallerID || userID == call.RecipientID {
+			active[userID] = now
+		}
+	}
+	return active
+}
+
+func (e *entity) handleDMVoiceLeave(ctx context.Context, channelID, userID int64) {
+	if e.cache == nil {
+		return
+	}
+	var call dmCallState
+	if err := e.cache.GetJSON(ctx, dmCallStateKey(channelID), &call); err != nil || call.CallID == 0 || call.EndedAt != 0 {
+		return
+	}
+	if call.CallerID != userID && call.RecipientID != userID {
+		return
+	}
+
+	active := e.activeDMVoiceParticipants(ctx, call)
+	now := time.Now().Unix()
+	call.Participants = active
+	if len(active) == 0 {
+		call.EndedAt = now
+		e.clearDMCall(ctx, call, "empty")
+		return
+	}
+	if len(active) == 1 {
+		call.SoloSince = now
+	} else {
+		call.SoloSince = 0
+	}
+	if err := e.saveDMCall(ctx, call); err == nil {
+		e.publishDMCall(ctx, call, func(uid int64) mqmsg.EventDataMessage {
+			return mqmsg.NewDMCallLeft(e.dmCallSummaryForUser(call, uid), userID)
+		})
+	}
 }
 
 func (e *entity) clearOwnedStream(ctx context.Context, userID, channelID int64, reason string) {
@@ -161,7 +311,7 @@ func (e *entity) ChannelUserJoin(c *fiber.Ctx) error {
 	}
 	err := e.cache.HSet(
 		c.UserContext(),
-		fmt.Sprintf("voice:clients:%d", req.ChannelId),
+		voiceClientsKey(req.ChannelId),
 		strconv.FormatInt(req.UserId, 10), "true")
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "unable to update channel state")
@@ -225,7 +375,7 @@ func (e *entity) ChannelUserLeave(c *fiber.Ctx) error {
 	}
 	err := e.cache.HDel(
 		c.UserContext(),
-		fmt.Sprintf("voice:clients:%d", req.ChannelId),
+		voiceClientsKey(req.ChannelId),
 		strconv.FormatInt(req.UserId, 10))
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "unable to update channel state")
@@ -237,6 +387,9 @@ func (e *entity) ChannelUserLeave(c *fiber.Ctx) error {
 			slog.String("error", ttlErr.Error()))
 	}
 	e.clearOwnedStream(c.UserContext(), req.UserId, req.ChannelId, "voice_left")
+	if req.GuildId == nil {
+		e.handleDMVoiceLeave(c.UserContext(), req.ChannelId, req.UserId)
+	}
 	if req.GuildId != nil {
 		ctx := observability.BackgroundFromContext(c.UserContext())
 		asyncLog := observability.LoggerWithContext(ctx, log)
