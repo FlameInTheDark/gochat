@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -29,6 +30,7 @@ type UserSettingsData struct {
 	Status           Status                     `json:"status"`
 	DMChannels       []UserDMChannels           `json:"dm_channels"`
 	Devices          Devices                    `json:"devices"`
+	Voice            UserVoiceSettings          `json:"voice"`
 	DevicesByKey     map[string]Devices         `json:"devices_by_key,omitempty"`
 	UISounds         UserUISounds               `json:"ui_sounds"`
 
@@ -64,6 +66,7 @@ func (s UserSettingsData) Validate() error {
 		validation.Field(&s.Appearance),
 		validation.Field(&s.Status),
 		validation.Field(&s.Devices),
+		validation.Field(&s.Voice),
 		validation.Field(&s.FavoriteGifs, validation.Each(is.URL)),
 	); err != nil {
 		return err
@@ -125,6 +128,20 @@ func (s *UserSettingsData) SetDeviceUsageOrder(order []string) {
 
 	s.deviceUsageOrder = append([]string(nil), order...)
 }
+
+type UserVoiceSettings struct {
+	PreferredRegion string `json:"preferred_region,omitempty"`
+}
+
+func (v UserVoiceSettings) Validate() error {
+	region := strings.TrimSpace(v.PreferredRegion)
+	if region == "" || region == "auto" {
+		return nil
+	}
+	return validation.Validate(region, validation.Length(1, 64), validation.Match(regexpVoiceRegionID))
+}
+
+var regexpVoiceRegionID = regexp.MustCompile(`^[a-zA-Z0-9_.:-]+$`)
 
 type Devices struct {
 	AudioInputDevice    string  `json:"audio_input_device"`

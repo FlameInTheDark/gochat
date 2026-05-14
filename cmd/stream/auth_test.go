@@ -68,6 +68,22 @@ func TestValidateJoinTokenAcceptsRouteBoundPublisherToken(t *testing.T) {
 	}
 }
 
+func TestValidateJoinTokenUsesExplicitPermissions(t *testing.T) {
+	app := testStreamApp()
+	expectedPerms := int64(permissions.PermVoiceSpeak | permissions.PermVoiceVideo | permissions.PermAdministrator)
+	token := signedStreamToken(t, app.cfg.AuthSecret, func(claims *streammeta.Claims) {
+		claims.Perms = expectedPerms
+	})
+
+	_, _, _, _, perms, _, _, _, err := app.validateJoinToken(token)
+	if err != nil {
+		t.Fatalf("validateJoinToken returned error: %v", err)
+	}
+	if perms != expectedPerms {
+		t.Fatalf("expected explicit permissions %d, got %d", expectedPerms, perms)
+	}
+}
+
 func TestValidateJoinTokenRejectsWrongRoute(t *testing.T) {
 	app := testStreamApp()
 	token := signedStreamToken(t, app.cfg.AuthSecret, func(claims *streammeta.Claims) {

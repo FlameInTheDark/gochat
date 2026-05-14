@@ -442,7 +442,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.Register(
 		"/api/v1",
 		emoji.New(database, pg, cache, logger),
-		user.New(database, pg, qt, searchQueue, cache, cfg.AttachmentTTLMinutes*60, contentHosts, logger),
+		user.New(database, pg, qt, searchQueue, cache, cfg.AttachmentTTLMinutes*60, contentHosts, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, streamDisco, extractRegionIDs(cfg.VoiceRegions), logger),
 		message.New(database, pg, qt, imq, emq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
 		guild.New(database, pg, qt, imq, searchQueue, cache, storage, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, pstore, nt.Conn(), cfg.VoiceDefaultRegion, disco, streamDisco, extractRegionIDs(cfg.VoiceRegions), logger),
 		voice.New(convertRegions(cfg.VoiceRegions), logger),

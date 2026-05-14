@@ -86,7 +86,7 @@ func (a *App) handleSignalWSV1(c *websocket.Conn) {
 
 	writer := &threadSafeWriter{conn: c.Conn}
 	legacySessionID := newSignalSessionID()
-	state := &peerConnectionState{peerConnection: pc, websocket: writer, userID: uid, perms: perms, signalVersion: signalProtocolVersion1}
+	state := &peerConnectionState{peerConnection: pc, websocket: writer, userID: uid, guildID: guildID, perms: perms, signalVersion: signalProtocolVersion1}
 
 	if err := a.setupTransceivers(pc); err != nil {
 		log.Error("failed to setup transceivers", slog.String("error", err.Error()))

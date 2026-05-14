@@ -6,10 +6,12 @@ import (
 	"hash/fnv"
 	"log/slog"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/cache"
+	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/voice/discovery"
 )
 
@@ -53,6 +55,10 @@ func newVoiceSelector(log *slog.Logger) *voiceSelector {
 }
 
 func (e *entity) preferredVoiceRegion(ctx context.Context, channelID int64) string {
+	return e.preferredVoiceRegionForUser(ctx, channelID, 0)
+}
+
+func (e *entity) preferredVoiceRegionForUser(ctx context.Context, channelID, userID int64) string {
 	var region string
 	if e != nil {
 		region = e.defaultVoiceRegion
@@ -62,6 +68,24 @@ func (e *entity) preferredVoiceRegion(ctx context.Context, channelID int64) stri
 	}
 	if dbreg, err := e.ch.GetChannelVoiceRegion(ctx, channelID); err == nil && dbreg != nil && *dbreg != "" {
 		region = *dbreg
+		return region
+	}
+	if userID != 0 && e.uset != nil {
+		settings, err := e.uset.GetUserSettings(ctx, userID, 0)
+		if err == nil {
+			data, err := model.UnmarshalStoredUserSettingsData(settings.Settings)
+			if err == nil {
+				preferred := strings.TrimSpace(data.Voice.PreferredRegion)
+				if preferred != "" && preferred != "auto" {
+					if len(e.allowedRegions) == 0 {
+						return preferred
+					}
+					if _, ok := e.allowedRegions[preferred]; ok {
+						return preferred
+					}
+				}
+			}
+		}
 	}
 	return region
 }
@@ -93,11 +117,15 @@ func (e *entity) bindChannelRoute(ctx context.Context, channelID int64, binding 
 }
 
 func (e *entity) channelBindingForJoin(ctx context.Context, channelID int64) (voiceRouteBinding, error) {
+	return e.channelBindingForJoinByUser(ctx, channelID, 0)
+}
+
+func (e *entity) channelBindingForJoinByUser(ctx context.Context, channelID, userID int64) (voiceRouteBinding, error) {
 	if binding := e.cachedChannelBinding(ctx, channelID); binding.URL != "" {
 		return binding, nil
 	}
 
-	binding, err := e.selectSFUBinding(ctx, channelID, e.preferredVoiceRegion(ctx, channelID), true)
+	binding, err := e.selectSFUBinding(ctx, channelID, e.preferredVoiceRegionForUser(ctx, channelID, userID), true)
 	if err != nil {
 		return voiceRouteBinding{}, err
 	}

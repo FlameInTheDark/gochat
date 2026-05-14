@@ -974,6 +974,7 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	settings.ContentHosts = append([]string(nil), e.contentHosts...)
 	settings.ThreadsLastMessages = threadsLastMessages
 	settings.JoinedThreads = joinedThreads
+	settings.DMCalls = e.activeDMCallSummaries(c.UserContext(), user.Id)
 	settings.Mentions = mentions
 	settings.ChannelMentions = channelMentions
 	return c.JSON(settings)

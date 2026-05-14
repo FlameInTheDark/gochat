@@ -106,8 +106,8 @@ func (a *App) validateJoinToken(token string) (int64, int64, int64, *int64, int6
 		return 0, 0, 0, nil, 0, "", "", "", fmt.Errorf("owner mismatch")
 	}
 
-	var perms int64
-	if claims.Role == streammeta.RolePublisher {
+	perms := claims.Perms
+	if perms == 0 && claims.Role == streammeta.RolePublisher {
 		perms = int64(permissions.PermVoiceSpeak | permissions.PermVoiceVideo)
 	}
 
