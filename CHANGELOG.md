@@ -1,3 +1,20 @@
+# [1.14.0](https://github.com/FlameInTheDark/gochat/compare/v1.13.0...v1.14.0) (2026-05-14)
+
+
+### Bug Fixes
+
+* voice region selection fix ([e335fb8](https://github.com/FlameInTheDark/gochat/commit/e335fb829ef90f3f437937d24b686a6338f153e7))
+
+
+### Features
+
+* DM calls feature ([7506b0d](https://github.com/FlameInTheDark/gochat/commit/7506b0d8169e4ef36082aa313f6253bd1f57bb11))
+* github actions for search service ([2a94255](https://github.com/FlameInTheDark/gochat/commit/2a9425599e5a9578323df80b0e3f8afa200955b9))
+* guild discovery ([27fa1ae](https://github.com/FlameInTheDark/gochat/commit/27fa1aea0412c2897591cb33828ee16a0835fd4c))
+* roles and threads improvement ([d74fae5](https://github.com/FlameInTheDark/gochat/commit/d74fae5e9184faebe78058457053d26032291a09))
+* thread creation fix for deleted threads and non-message threads ([978f50d](https://github.com/FlameInTheDark/gochat/commit/978f50d363ef711d828e9ad0806a81355d76e537))
+* UX improvement and fixes ([86097ae](https://github.com/FlameInTheDark/gochat/commit/86097aed7d616013dda908e5b45fca008d2949a9))
+
 # [1.13.0](https://github.com/FlameInTheDark/gochat/compare/v1.12.0...v1.13.0) (2026-04-30)
 
 
