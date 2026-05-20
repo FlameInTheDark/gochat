@@ -230,6 +230,9 @@ func filterGuildLastMessages(glms map[int64]map[int64]int64, channels []model.Ch
 			if _, ok := allowedChannels[channelID]; !ok {
 				continue
 			}
+			if lastMessageID <= channelID {
+				continue
+			}
 			if filtered[guildID] == nil {
 				filtered[guildID] = make(map[int64]int64)
 			}
@@ -259,6 +262,9 @@ func filterThreadLastMessages(joined map[int64]struct{}, channels []model.Channe
 	for _, channelMessages := range glms {
 		for channelID, lastMessageID := range channelMessages {
 			if _, ok := liveThreads[channelID]; !ok {
+				continue
+			}
+			if lastMessageID <= channelID {
 				continue
 			}
 			out[channelID] = lastMessageID

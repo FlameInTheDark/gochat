@@ -81,12 +81,14 @@ func TestFilterGuildLastMessagesExcludesThreadsAndDeletedChannels(t *testing.T) 
 			10: 100,
 			11: 101,
 			12: 102,
+			13: 0,
 		},
 	}
 
 	channels := []model.Channel{
 		{Id: 10, Type: model.ChannelTypeGuild},
 		{Id: 11, Type: model.ChannelTypeThread},
+		{Id: 13, Type: model.ChannelTypeGuild},
 	}
 
 	filtered := filterGuildLastMessages(glms, channels)
@@ -103,6 +105,9 @@ func TestFilterGuildLastMessagesExcludesThreadsAndDeletedChannels(t *testing.T) 
 	if _, ok := guildMessages[12]; ok {
 		t.Fatalf("expected deleted channel entry to be removed, got %#v", guildMessages)
 	}
+	if _, ok := guildMessages[13]; ok {
+		t.Fatalf("expected empty channel entry to be removed, got %#v", guildMessages)
+	}
 }
 
 func TestFilterThreadLastMessagesKeepsOnlyJoinedLiveThreads(t *testing.T) {
@@ -110,6 +115,7 @@ func TestFilterThreadLastMessagesKeepsOnlyJoinedLiveThreads(t *testing.T) {
 		1: {
 			11: 101,
 			12: 102,
+			13: 0,
 		},
 		2: {
 			21: 201,
@@ -118,6 +124,7 @@ func TestFilterThreadLastMessagesKeepsOnlyJoinedLiveThreads(t *testing.T) {
 
 	joined := map[int64]struct{}{
 		11: {},
+		13: {},
 		21: {},
 		99: {},
 	}
@@ -125,6 +132,7 @@ func TestFilterThreadLastMessagesKeepsOnlyJoinedLiveThreads(t *testing.T) {
 	channels := []model.Channel{
 		{Id: 11, Type: model.ChannelTypeThread},
 		{Id: 12, Type: model.ChannelTypeThread},
+		{Id: 13, Type: model.ChannelTypeThread},
 		{Id: 21, Type: model.ChannelTypeThread},
 		{Id: 22, Type: model.ChannelTypeGuild},
 	}
@@ -141,6 +149,9 @@ func TestFilterThreadLastMessagesKeepsOnlyJoinedLiveThreads(t *testing.T) {
 	}
 	if _, ok := filtered[99]; ok {
 		t.Fatalf("expected deleted thread to be removed, got %#v", filtered)
+	}
+	if _, ok := filtered[13]; ok {
+		t.Fatalf("expected empty thread to be removed, got %#v", filtered)
 	}
 }
 

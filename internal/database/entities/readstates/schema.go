@@ -50,7 +50,15 @@ func (e *Entity) GetReadState(ctx context.Context, userId, channelId int64) (int
 }
 
 func (e *Entity) SetReadState(ctx context.Context, userId, channelId, lastMessageId int64) error {
-	err := e.c.Session().
+	current, err := e.GetReadState(ctx, userId, channelId)
+	if err != nil {
+		return err
+	}
+	if lastMessageId <= current {
+		return nil
+	}
+
+	err = e.c.Session().
 		Query(setReadState).
 		WithContext(ctx).
 		Bind(channelId, lastMessageId, userId).

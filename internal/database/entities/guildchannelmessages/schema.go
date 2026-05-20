@@ -11,6 +11,7 @@ const (
 	getChannelsMessages       = `SELECT channels FROM gochat.guild_channels_last_messages WHERE guild_id = ?`
 	getChannelMessage         = `SELECT channels[?] as last_message_id FROM gochat.guild_channels_last_messages WHERE guild_id = ?`
 	setChannelLastMessage     = `UPDATE gochat.guild_channels_last_messages SET channels[?] = ? WHERE guild_id = ?`
+	clearChannelLastMessage   = `DELETE channels[?] FROM gochat.guild_channels_last_messages WHERE guild_id = ?`
 	setChannelLastMessageMany = `UPDATE gochat.guild_channels_last_messages SET channels = channels + ? WHERE guild_id = ?`
 	getGuildsChannelsMessages = `SELECT guild_id, channels FROM gochat.guild_channels_last_messages WHERE guild_id IN ?`
 )
@@ -55,6 +56,15 @@ func (e *Entity) SetChannelLastMessage(ctx context.Context, guildId, channelId, 
 		Query(setChannelLastMessage).
 		WithContext(ctx).
 		Bind(channelId, lastMessageId, guildId).
+		Exec()
+	return err
+}
+
+func (e *Entity) ClearChannelLastMessage(ctx context.Context, guildId, channelId int64) error {
+	err := e.c.Session().
+		Query(clearChannelLastMessage).
+		WithContext(ctx).
+		Bind(channelId, guildId).
 		Exec()
 	return err
 }

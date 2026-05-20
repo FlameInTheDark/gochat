@@ -176,6 +176,9 @@ func (m *guildChannelMessagesRepoMock) GetChannelMessage(context.Context, int64,
 func (m *guildChannelMessagesRepoMock) SetChannelLastMessage(context.Context, int64, int64, int64) error {
 	return nil
 }
+func (m *guildChannelMessagesRepoMock) ClearChannelLastMessage(context.Context, int64, int64) error {
+	return nil
+}
 func (m *guildChannelMessagesRepoMock) SetReadStateMany(context.Context, map[int64]int64, map[int64]int64) error {
 	return nil
 }
