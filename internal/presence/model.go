@@ -7,6 +7,7 @@ type Presence struct {
 	Status           string                   `json:"status"`
 	Since            int64                    `json:"since"`
 	CustomStatusText string                   `json:"custom_status_text,omitempty"`
+	ClientStatus     map[string]string        `json:"client_status,omitempty"`
 	VoiceChannelID   *int64                   `json:"voice_channel_id,omitempty"`
 	Mute             bool                     `json:"mute,omitempty"`
 	Deafen           bool                     `json:"deafen,omitempty"`
@@ -18,6 +19,8 @@ type Presence struct {
 // Values are stored in a Redis hash per user with field = sessionID.
 type SessionPresence struct {
 	SessionID        string `json:"session_id"`
+	ConnectionID     string `json:"connection_id,omitempty"`
+	Generation       int64  `json:"generation,omitempty"`
 	Status           string `json:"status"`
 	Platform         string `json:"platform,omitempty"`
 	Since            int64  `json:"since"`

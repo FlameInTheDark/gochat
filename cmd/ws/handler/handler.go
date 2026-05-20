@@ -19,14 +19,19 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/ws/subscriber"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/friend"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/usersettings"
 	"github.com/FlameInTheDark/gochat/internal/dto"
+	"github.com/FlameInTheDark/gochat/internal/gatewaystate"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/observability"
@@ -38,6 +43,11 @@ import (
 type helloMessage struct {
 	Token              string `json:"token"`
 	HeartbeatSessionID string `json:"heartbeat_session_id,omitempty"`
+	ClientInstanceID   string `json:"client_instance_id,omitempty"`
+	ResumeSessionID    string `json:"resume_session_id,omitempty"`
+	ResumeGeneration   int64  `json:"resume_generation,omitempty"`
+	LastSeq            int64  `json:"last_seq,omitempty"`
+	KnownReadyVersion  int64  `json:"known_ready_version,omitempty"`
 }
 
 type heartbeatMessage struct {
@@ -52,6 +62,10 @@ type Handler struct {
 	m        member.Member
 	dm       dmchannel.DmChannel
 	gdm      groupdmchannel.GroupDMChannel
+	fr       friend.Friend
+	uset     usersettings.UserSettings
+	rs       readstates.ReadStates
+	gclm     guildchannelmessages.GuildChannelMessages
 	u        user.User
 	gc       guildchannels.GuildChannels
 	perm     rolecheck.RoleCheck
@@ -59,8 +73,10 @@ type Handler struct {
 	sendJSON func(v any) error
 	nats     *nats.Conn
 	pstore   *presence.Store
+	gstate   *gatewaystate.Store
 	// IDs this connection is watching for presence updates
-	psubs map[int64]struct{}
+	psubs     map[int64]struct{}
+	autoPsubs map[int64]struct{}
 	// Channel IDs this connection is explicitly subscribed to.
 	csubs     map[int64]struct{}
 	hTimer    *time.Timer
@@ -77,30 +93,39 @@ type Handler struct {
 	// callback used to expose the authenticated user id to the outer ws connection
 	onAuthenticated func(userID int64)
 	// session identifier for this ws connection
-	sessionID   string
-	lastEventId int64
-	hbTimeout   int64
+	sessionID        string
+	connectionID     string
+	clientInstanceID string
+	generation       int64
+	lastEventId      int64
+	hbTimeout        int64
 	// Whether we successfully set presence after hello
 	presenceSet bool
 }
 
-func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v any) error, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger, nats *nats.Conn, pstore *presence.Store, cache *kvs.Cache, onAuthenticated func(userID int64), baseCtx context.Context, telemetry *observability.WSTelemetry) *Handler {
+func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v any) error, jwt *auth.Auth, hbTimeout int64, closer func(), logger *slog.Logger, nats *nats.Conn, pstore *presence.Store, gstate *gatewaystate.Store, cache *kvs.Cache, onAuthenticated func(userID int64), baseCtx context.Context, telemetry *observability.WSTelemetry) *Handler {
 	initTimer := time.AfterFunc(time.Second*5, closer)
 	return &Handler{
-		sub:      sub,
-		g:        guild.New(pg.Conn()),
-		m:        member.New(pg.Conn()),
-		dm:       dmchannel.New(pg.Conn()),
-		gdm:      groupdmchannel.New(pg.Conn()),
-		u:        user.New(pg.Conn()),
-		gc:       guildchannels.New(pg.Conn()),
-		perm:     rolecheck.New(pg),
-		jwt:      jwt,
-		sendJSON: sendJSON,
-		nats:     nats,
-		pstore:   pstore,
-		psubs:    make(map[int64]struct{}),
-		csubs:    make(map[int64]struct{}),
+		sub:       sub,
+		g:         guild.New(pg.Conn()),
+		m:         member.New(pg.Conn()),
+		dm:        dmchannel.New(pg.Conn()),
+		gdm:       groupdmchannel.New(pg.Conn()),
+		fr:        friend.New(pg.Conn()),
+		uset:      usersettings.New(pg.Conn()),
+		rs:        readstates.New(c),
+		gclm:      guildchannelmessages.New(c),
+		u:         user.New(pg.Conn()),
+		gc:        guildchannels.New(pg.Conn()),
+		perm:      rolecheck.New(pg),
+		jwt:       jwt,
+		sendJSON:  sendJSON,
+		nats:      nats,
+		pstore:    pstore,
+		gstate:    gstate,
+		psubs:     make(map[int64]struct{}),
+		autoPsubs: make(map[int64]struct{}),
+		csubs:     make(map[int64]struct{}),
 
 		hbTimeout:       hbTimeout,
 		initTimer:       initTimer,
@@ -141,21 +166,29 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			h.telemetry.Heartbeat(ctx, "accepted")
 			// add grace to tolerate network jitter (10s)
 			h.hTimer.Reset(time.Millisecond * time.Duration(h.hbTimeout+10000))
+			if h.gstate != nil && h.connectionID != "" {
+				opCtx, cancel := context.WithTimeout(ctx, time.Second)
+				ttl := h.connectionTTLSeconds()
+				_ = h.gstate.TouchConnection(opCtx, h.connectionID, m.LastEventId, ttl)
+				cancel()
+			}
 			// Refresh this session TTL: heartbeat_interval * 2
 			// Throttled: skip if we touched within the last 10s.
 			if h.user != nil && h.pstore != nil && h.sessionID != "" && h.presenceSet &&
 				time.Since(h.lastPresenceTouch) > 10*time.Second {
 				opCtx, cancel := context.WithTimeout(ctx, time.Second*2)
 				// TTL expects seconds
-				ttl := h.hbTimeout * 2 / 1000
-				if ttl < 1 {
-					ttl = 1
+				ttl := h.presenceTTLSeconds()
+				if h.connectionID != "" && h.generation > 0 {
+					_ = h.pstore.TouchSessionTTLIfOwner(opCtx, h.user.Id, h.sessionID, h.connectionID, h.generation, ttl)
+				} else {
+					_ = h.pstore.TouchSessionTTL(opCtx, h.user.Id, h.sessionID, ttl)
 				}
-				_ = h.pstore.TouchSessionTTL(opCtx, h.user.Id, h.sessionID, ttl)
 				cancel()
 				h.lastPresenceTouch = time.Now()
 			}
 			h.lastEventId = m.LastEventId
+			_ = h.sendHeartbeatAck(m.LastEventId)
 		} else {
 			h.telemetry.Heartbeat(ctx, "stale")
 		}
@@ -194,12 +227,18 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 
 		if m.Clear {
 			for uid := range h.psubs {
+				if h.isAutoPresenceSubscription(uid) {
+					continue
+				}
 				_ = h.sub.Unsubscribe(fmt.Sprintf("presence.%d", uid))
 				delete(h.psubs, uid)
 			}
 		}
 		if len(m.Set) > 0 {
 			for uid := range h.psubs {
+				if h.isAutoPresenceSubscription(uid) {
+					continue
+				}
 				_ = h.sub.Unsubscribe(fmt.Sprintf("presence.%d", uid))
 				delete(h.psubs, uid)
 			}
@@ -231,9 +270,13 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			if _, ok := h.psubs[uid]; !ok {
 				continue
 			}
+			if h.isAutoPresenceSubscription(uid) {
+				continue
+			}
 			_ = h.sub.Unsubscribe(fmt.Sprintf("presence.%d", uid))
 			delete(h.psubs, uid)
 		}
+		h.persistClientState(ctx)
 
 	case mqmsg.OPCodeRTC:
 		// Only handle RTCBindingAlive keepalive to refresh per-channel route TTL
@@ -267,7 +310,11 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		if h.pstore != nil && h.sessionID != "" && h.user != nil {
 			// Set session voice channel
 			ch := m.Channel
-			_ = h.pstore.SetSessionVoiceChannel(opCtx, h.user.Id, h.sessionID, &ch, h.hbTimeout*2/1000)
+			if h.connectionID != "" && h.generation > 0 {
+				_ = h.pstore.SetSessionVoiceChannelIfOwner(opCtx, h.user.Id, h.sessionID, h.connectionID, h.generation, &ch, h.presenceTTLSeconds())
+			} else {
+				_ = h.pstore.SetSessionVoiceChannel(opCtx, h.user.Id, h.sessionID, &ch, h.presenceTTLSeconds())
+			}
 			agg, _, _ := h.pstore.Aggregate(opCtx, h.user.Id, time.Now().Unix())
 			// cache aggregated presence and publish
 			_ = h.pstore.SetAggregated(opCtx, agg, h.hbTimeout*2/1000)
@@ -287,10 +334,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		}
 		// Allow offline for manual invisible mode; other valid statuses are online/idle/dnd
 		now := time.Now().Unix()
-		ttl := h.hbTimeout * 2 / 1000
-		if ttl < 1 {
-			ttl = 1
-		}
+		ttl := h.presenceTTLSeconds()
 
 		opCtx, cancel := context.WithTimeout(ctx, time.Second*2)
 		defer cancel()
@@ -331,6 +375,8 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		}
 
 		sp := mergePresenceUpdate(existingSession, h.sessionID, m, now, ttl)
+		sp.ConnectionID = h.connectionID
+		sp.Generation = h.generation
 
 		if err := h.pstore.UpsertSession(opCtx, h.user.Id, h.sessionID, sp, ttl); err != nil {
 			log.Warn("Error upserting session presence", "error", err)
@@ -444,6 +490,7 @@ func channelSubscriptionKey(channelID int64) string {
 }
 
 func (h *Handler) syncChannelSubscriptions(requested []int64) {
+	ctx := h.baseContext()
 	allowed := make([]int64, 0, len(requested))
 	for _, channelID := range requested {
 		if h.canSubscribeChannel(channelID) {
@@ -464,6 +511,7 @@ func (h *Handler) syncChannelSubscriptions(requested []int64) {
 		_ = h.sub.Unsubscribe(channelSubscriptionKey(channelID))
 		delete(h.csubs, channelID)
 	}
+	h.persistClientState(ctx)
 }
 
 func (h *Handler) canSubscribeChannel(channelID int64) bool {
@@ -503,6 +551,11 @@ func (h *Handler) Close() error {
 }
 
 func (h *Handler) OnWSClosed() {
+	if h.user != nil && h.gstate != nil && h.connectionID != "" {
+		ctx, cancel := context.WithTimeout(h.baseContext(), time.Second)
+		_ = h.gstate.DeleteConnection(ctx, h.connectionID, h.user.Id)
+		cancel()
+	}
 	if h.user == nil || h.pstore == nil || h.nats == nil || !h.presenceSet || h.sessionID == "" {
 		return
 	}
@@ -511,11 +564,21 @@ func (h *Handler) OnWSClosed() {
 	// Read previous aggregated presence
 	prev, _, _ := h.pstore.Get(ctx, h.user.Id)
 	// Remove this session
-	ttl := h.hbTimeout * 2 / 1000
-	if ttl < 1 {
-		ttl = 1
+	ttl := h.presenceTTLSeconds()
+	removed := true
+	if h.connectionID != "" && h.generation > 0 {
+		var err error
+		removed, err = h.pstore.RemoveSessionIfOwner(ctx, h.user.Id, h.sessionID, h.connectionID, h.generation, ttl)
+		if err != nil {
+			h.log.Warn("Error removing owned presence session", "error", err, "user_id", h.user.Id, "session_id", h.sessionID)
+			return
+		}
+	} else {
+		_ = h.pstore.RemoveSession(ctx, h.user.Id, h.sessionID, ttl)
 	}
-	_ = h.pstore.RemoveSession(ctx, h.user.Id, h.sessionID, ttl)
+	if !removed {
+		return
+	}
 	// Re-aggregate
 	now := time.Now().Unix()
 	agg, _, _ := h.pstore.Aggregate(ctx, h.user.Id, now)
@@ -554,11 +617,16 @@ func (h *Handler) sendPresenceSnapshot(userID int64) {
 		vid := *p.VoiceChannelID
 		voiceID = &vid
 	}
+	if status == presence.StatusOffline && voiceID == nil {
+		clearVoice := int64(0)
+		voiceID = &clearVoice
+	}
 	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{
 		UserID:           userID,
 		Status:           status,
 		Since:            since,
 		CustomStatusText: text,
+		ClientStatus:     p.ClientStatus,
 		VoiceChannelID:   voiceID,
 		Mute:             mute,
 		Deafen:           deafen,
@@ -575,9 +643,74 @@ func (h *Handler) publishPresence(agg presence.Presence) {
 	_ = presence.Publish(h.baseContext(), h.nats, agg)
 }
 
+func (h *Handler) presenceTTLSeconds() int64 {
+	ttl := h.hbTimeout * 2 / 1000
+	if ttl < 1 {
+		return 1
+	}
+	return ttl
+}
+
+func (h *Handler) connectionTTLSeconds() int64 {
+	ttl := (h.hbTimeout + 10000) * 2 / 1000
+	if ttl < 1 {
+		return 1
+	}
+	return ttl
+}
+
+func (h *Handler) clientStateTTLSeconds() int64 {
+	return int64((24 * time.Hour) / time.Second)
+}
+
+func (h *Handler) sendHeartbeatAck(lastEventID int64) error {
+	msg, err := mqmsg.BuildEventMessage(&mqmsg.HeartbeatAck{
+		LastEventID:  lastEventID,
+		ServerTime:   time.Now().UnixMilli(),
+		ConnectionID: h.connectionID,
+	})
+	if err != nil {
+		return err
+	}
+	return h.sendJSON(msg)
+}
+
+func (h *Handler) persistClientState(ctx context.Context) {
+	if h.gstate == nil || h.user == nil || h.clientInstanceID == "" {
+		return
+	}
+	channels := make([]int64, 0, len(h.csubs))
+	for channelID := range h.csubs {
+		channels = append(channels, channelID)
+	}
+	sort.Slice(channels, func(i, j int) bool { return channels[i] < channels[j] })
+
+	presenceSet := make([]int64, 0, len(h.psubs))
+	for userID := range h.psubs {
+		if h.isAutoPresenceSubscription(userID) {
+			continue
+		}
+		presenceSet = append(presenceSet, userID)
+	}
+	sort.Slice(presenceSet, func(i, j int) bool { return presenceSet[i] < presenceSet[j] })
+
+	opCtx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	_ = h.gstate.SetClientState(opCtx, h.user.Id, h.clientInstanceID, gatewaystate.ClientState{
+		Channels:    channels,
+		PresenceSet: presenceSet,
+	}, h.clientStateTTLSeconds())
+}
+
+func (h *Handler) isAutoPresenceSubscription(userID int64) bool {
+	_, ok := h.autoPsubs[userID]
+	return ok
+}
+
 func presenceChanged(prev, next presence.Presence) bool {
 	return prev.Status != next.Status ||
 		prev.CustomStatusText != next.CustomStatusText ||
+		!reflect.DeepEqual(prev.ClientStatus, next.ClientStatus) ||
 		!sameInt64Ptr(prev.VoiceChannelID, next.VoiceChannelID) ||
 		prev.Mute != next.Mute ||
 		prev.Deafen != next.Deafen ||
