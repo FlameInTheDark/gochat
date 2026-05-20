@@ -206,7 +206,7 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 	})
 
 	// Subscribe to personal user topic
-	err = h.sub.Subscribe("user", fmt.Sprintf("user.%d", token.UserID))
+	err = h.sub.Subscribe(ctx, "user", fmt.Sprintf("user.%d", token.UserID))
 	if err != nil {
 		h.initTimer.Stop()
 		h.closer()
@@ -216,7 +216,7 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 
 	// Subscribe to all guilds (hub registrations are fast in-memory ops)
 	for _, g := range gr.guilds {
-		if err := h.sub.Subscribe(fmt.Sprintf("guild.%d", g.GuildId), fmt.Sprintf("guild.%d", g.GuildId)); err != nil {
+		if err := h.sub.Subscribe(ctx, fmt.Sprintf("guild.%d", g.GuildId), fmt.Sprintf("guild.%d", g.GuildId)); err != nil {
 			log.Warn("Error subscribing to guild", "error", err, "guild_id", g.GuildId)
 		}
 	}
@@ -245,13 +245,13 @@ func (h *Handler) subscribeFriendPresence(ctx context.Context, userID int64) ([]
 		}
 		friendIDs = append(friendIDs, f.FriendID)
 		key := fmt.Sprintf("presence.%d", f.FriendID)
-		if err := h.sub.Subscribe(key, fmt.Sprintf("presence.user.%d", f.FriendID)); err != nil {
+		if err := h.sub.Subscribe(ctx, key, fmt.Sprintf("presence.user.%d", f.FriendID)); err != nil {
 			helper.WithContext(h.log, ctx).Warn("Error subscribing to friend presence", "error", err, "friend_id", f.FriendID)
 			continue
 		}
 		h.psubs[f.FriendID] = struct{}{}
 		h.autoPsubs[f.FriendID] = struct{}{}
-		h.sendPresenceSnapshot(f.FriendID)
+		h.sendPresenceSnapshot(ctx, f.FriendID)
 	}
 
 	requests, err := h.fr.GetFriendRequests(ctx, userID)
@@ -277,7 +277,7 @@ func (h *Handler) restoreClientSubscriptions(ctx context.Context) {
 		return
 	}
 	if state.Channels != nil {
-		h.syncChannelSubscriptions(state.Channels)
+		h.syncChannelSubscriptions(ctx, state.Channels)
 	}
 	if len(state.PresenceSet) > 0 {
 		for _, uid := range state.PresenceSet {
@@ -285,12 +285,12 @@ func (h *Handler) restoreClientSubscriptions(ctx context.Context) {
 				continue
 			}
 			key := fmt.Sprintf("presence.%d", uid)
-			if err := h.sub.Subscribe(key, fmt.Sprintf("presence.user.%d", uid)); err != nil {
+			if err := h.sub.Subscribe(ctx, key, fmt.Sprintf("presence.user.%d", uid)); err != nil {
 				helper.WithContext(h.log, ctx).Warn("Error restoring presence subscription", "error", err, "user_id", uid)
 				continue
 			}
 			h.psubs[uid] = struct{}{}
-			h.sendPresenceSnapshot(uid)
+			h.sendPresenceSnapshot(ctx, uid)
 		}
 	}
 }

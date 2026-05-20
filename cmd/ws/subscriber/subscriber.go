@@ -36,7 +36,7 @@ func New(h *hub.Hub, conn hub.Conn, telemetry *observability.WSTelemetry, ctx fu
 
 // Subscribe registers this connection for the given NATS topic under a logical
 // key. If a previous subscription existed for the same key, it is replaced.
-func (s *Subscriber) Subscribe(key, topic string) error {
+func (s *Subscriber) Subscribe(ctx context.Context, key, topic string) error {
 	s.mx.Lock()
 	defer s.mx.Unlock()
 
@@ -46,25 +46,25 @@ func (s *Subscriber) Subscribe(key, topic string) error {
 			return nil // already subscribed to the exact same topic
 		}
 		s.hub.Unregister(s.conn, old)
-		s.recordSubscriptionDelta(old, -1)
+		s.recordSubscriptionDelta(ctx, old, -1)
 	}
 
 	if err := s.hub.Register(s.conn, topic); err != nil {
 		return fmt.Errorf("subscribe to '%s' error: %w", topic, err)
 	}
 	s.topics[key] = topic
-	s.recordSubscriptionDelta(topic, 1)
+	s.recordSubscriptionDelta(ctx, topic, 1)
 	return nil
 }
 
 // Unsubscribe removes the subscription for the given key.
-func (s *Subscriber) Unsubscribe(key string) error {
+func (s *Subscriber) Unsubscribe(ctx context.Context, key string) error {
 	s.mx.Lock()
 	defer s.mx.Unlock()
 	if topic, ok := s.topics[key]; ok {
 		s.hub.Unregister(s.conn, topic)
 		delete(s.topics, key)
-		s.recordSubscriptionDelta(topic, -1)
+		s.recordSubscriptionDelta(ctx, topic, -1)
 	}
 	return nil
 }
@@ -73,24 +73,30 @@ func (s *Subscriber) Unsubscribe(key string) error {
 func (s *Subscriber) Close() error {
 	s.mx.Lock()
 	defer s.mx.Unlock()
+	ctx := s.currentContext()
 	for _, topic := range s.topics {
-		s.recordSubscriptionDelta(topic, -1)
+		s.recordSubscriptionDelta(ctx, topic, -1)
 	}
 	s.hub.UnregisterAll(s.conn)
 	s.topics = make(map[string]string)
 	return nil
 }
 
-func (s *Subscriber) recordSubscriptionDelta(topic string, delta int64) {
-	if s.telemetry == nil || delta == 0 {
-		return
-	}
+func (s *Subscriber) currentContext() context.Context {
 	ctx := context.Background()
 	if s.ctx != nil {
 		if current := s.ctx(); current != nil {
 			ctx = observability.BackgroundFromContext(current)
 		}
 	}
+	return ctx
+}
+
+func (s *Subscriber) recordSubscriptionDelta(ctx context.Context, topic string, delta int64) {
+	if s.telemetry == nil || delta == 0 {
+		return
+	}
+	ctx = context.WithoutCancel(ctx)
 	s.telemetry.SubscriptionDelta(ctx, subscriptionKind(topic), delta)
 }
 

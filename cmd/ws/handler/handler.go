@@ -201,7 +201,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		}
 
 		if requestedChannels, ok := resolveRequestedChannels(m); ok {
-			h.syncChannelSubscriptions(requestedChannels)
+			h.syncChannelSubscriptions(ctx, requestedChannels)
 		}
 
 		for _, guildID := range m.Guilds {
@@ -209,7 +209,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			if err != nil {
 				log.Warn("Error checking guild access", "error", err)
 			} else if ok {
-				err := h.sub.Subscribe(fmt.Sprintf("guild.%d", guildID), fmt.Sprintf("guild.%d", guildID))
+				err := h.sub.Subscribe(ctx, fmt.Sprintf("guild.%d", guildID), fmt.Sprintf("guild.%d", guildID))
 				if err != nil {
 					log.Warn("Error subscribing to guild", "error", err)
 				}
@@ -230,7 +230,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 				if h.isAutoPresenceSubscription(uid) {
 					continue
 				}
-				_ = h.sub.Unsubscribe(fmt.Sprintf("presence.%d", uid))
+				_ = h.sub.Unsubscribe(ctx, fmt.Sprintf("presence.%d", uid))
 				delete(h.psubs, uid)
 			}
 		}
@@ -239,17 +239,17 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 				if h.isAutoPresenceSubscription(uid) {
 					continue
 				}
-				_ = h.sub.Unsubscribe(fmt.Sprintf("presence.%d", uid))
+				_ = h.sub.Unsubscribe(ctx, fmt.Sprintf("presence.%d", uid))
 				delete(h.psubs, uid)
 			}
 			for _, uid := range m.Set {
 				key := fmt.Sprintf("presence.%d", uid)
-				if err := h.sub.Subscribe(key, fmt.Sprintf("presence.user.%d", uid)); err != nil {
+				if err := h.sub.Subscribe(ctx, key, fmt.Sprintf("presence.user.%d", uid)); err != nil {
 					log.Warn("Error subscribing to presence", "error", err, "user_id", uid)
 					continue
 				}
 				h.psubs[uid] = struct{}{}
-				h.sendPresenceSnapshot(uid)
+				h.sendPresenceSnapshot(ctx, uid)
 			}
 		}
 
@@ -258,12 +258,12 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 				continue
 			}
 			key := fmt.Sprintf("presence.%d", uid)
-			if err := h.sub.Subscribe(key, fmt.Sprintf("presence.user.%d", uid)); err != nil {
+			if err := h.sub.Subscribe(ctx, key, fmt.Sprintf("presence.user.%d", uid)); err != nil {
 				log.Warn("Error subscribing to presence", "error", err, "user_id", uid)
 				continue
 			}
 			h.psubs[uid] = struct{}{}
-			h.sendPresenceSnapshot(uid)
+			h.sendPresenceSnapshot(ctx, uid)
 		}
 
 		for _, uid := range m.Remove {
@@ -273,7 +273,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			if h.isAutoPresenceSubscription(uid) {
 				continue
 			}
-			_ = h.sub.Unsubscribe(fmt.Sprintf("presence.%d", uid))
+			_ = h.sub.Unsubscribe(ctx, fmt.Sprintf("presence.%d", uid))
 			delete(h.psubs, uid)
 		}
 		h.persistClientState(ctx)
@@ -489,11 +489,10 @@ func channelSubscriptionKey(channelID int64) string {
 	return fmt.Sprintf("channel.%d", channelID)
 }
 
-func (h *Handler) syncChannelSubscriptions(requested []int64) {
-	ctx := h.baseContext()
+func (h *Handler) syncChannelSubscriptions(ctx context.Context, requested []int64) {
 	allowed := make([]int64, 0, len(requested))
 	for _, channelID := range requested {
-		if h.canSubscribeChannel(channelID) {
+		if h.canSubscribeChannel(ctx, channelID) {
 			allowed = append(allowed, channelID)
 		}
 	}
@@ -501,21 +500,20 @@ func (h *Handler) syncChannelSubscriptions(requested []int64) {
 	toSubscribe, toUnsubscribe := buildChannelSubscriptionDiff(h.csubs, allowed)
 	for _, channelID := range toSubscribe {
 		key := channelSubscriptionKey(channelID)
-		if err := h.sub.Subscribe(key, key); err != nil {
+		if err := h.sub.Subscribe(ctx, key, key); err != nil {
 			h.log.Warn("Error subscribing to channel", "error", err, "channel_id", channelID)
 			continue
 		}
 		h.csubs[channelID] = struct{}{}
 	}
 	for _, channelID := range toUnsubscribe {
-		_ = h.sub.Unsubscribe(channelSubscriptionKey(channelID))
+		_ = h.sub.Unsubscribe(ctx, channelSubscriptionKey(channelID))
 		delete(h.csubs, channelID)
 	}
 	h.persistClientState(ctx)
 }
 
-func (h *Handler) canSubscribeChannel(channelID int64) bool {
-	ctx := h.baseContext()
+func (h *Handler) canSubscribeChannel(ctx context.Context, channelID int64) bool {
 	log := helper.WithContext(h.log, ctx)
 	if gcinfo, err := h.gc.GetGuildByChannel(ctx, channelID); err == nil {
 		_, _, _, ok, perr := h.perm.ChannelPerm(ctx, gcinfo.GuildId, gcinfo.ChannelId, h.user.Id, permissions.PermServerViewChannels)
@@ -588,12 +586,12 @@ func (h *Handler) OnWSClosed() {
 	}
 }
 
-func (h *Handler) sendPresenceSnapshot(userID int64) {
+func (h *Handler) sendPresenceSnapshot(ctx context.Context, userID int64) {
 	// Read presence from cache and send to this connection only
 	if h.pstore == nil {
 		return
 	}
-	ctx, cancel := context.WithTimeout(h.baseContext(), time.Second*2)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
 	defer cancel()
 	p, ok, _ := h.pstore.Get(ctx, userID)
 	status := presence.StatusOffline
