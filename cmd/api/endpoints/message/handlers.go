@@ -3632,6 +3632,11 @@ func (e *entity) SetReadState(c *fiber.Ctx) error {
 
 	err = e.rs.SetReadState(c.UserContext(), user.Id, channel.Id, messageId)
 	if err != nil {
+		observability.LoggerFromFiber(c, e.log).Error("unable to set read state",
+			slog.String("error", err.Error()),
+			slog.Int64("user_id", user.Id),
+			slog.Int64("channel_id", channel.Id),
+			slog.Int64("message_id", messageId))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetReadState)
 	}
 
