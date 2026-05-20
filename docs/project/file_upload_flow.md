@@ -38,12 +38,12 @@ The upload system is designed around a two-step process:
 - **Initiation:** Validates that the caller is the guild owner and creates a pending icon.
 - **Upload:** The client streams the binary body.
 - **Processing:** Similar to avatars, the service streams the image through `ffmpegToWebPStreamLimited` to produce a `128x128` WebP image capped at `250 KB`.
-- **Finalization:** Uploads the optimized image to S3, finalizes the row in Cassandra, assigns the icon to the guild in PostgreSQL, and broadcasts a guild update event.
+- **Finalization:** Uploads the optimized image to S3, finalizes the row in Cassandra, assigns the icon to the guild in YugabyteDB YSQL, and broadcasts a guild update event.
 
 ### 4. Guild Emoji (`/api/v1/guild/{guild_id}/emojis`)
 **Endpoint:** `POST /api/v1/upload/emojis/{guild_id}/{emoji_id}` (Attachments Service)
 
-- **Initiation:** The main API validates the emoji name, declared file size, content type, guild-local uniqueness, upload permission, and the per-guild active placeholder cap before creating a pending row in Citus.
+- **Initiation:** The main API validates the emoji name, declared file size, content type, guild-local uniqueness, upload permission, and the per-guild active placeholder cap before creating a pending row in YugabyteDB YSQL.
 - **Upload:** The client posts the image as the raw request body.
 - **Processing:**
   - Validates that the actual payload is an image and that the source dimensions do not exceed `128x128`.
@@ -56,7 +56,7 @@ The upload system is designed around a two-step process:
     - `emojis/{emoji_id}/44.webp`
 - **Finalization:**
   - Enforces the final per-guild quota after animation detection: `50` static and `50` animated ready emoji.
-  - Marks the emoji as `done` in Citus and updates the `emoji_lookup` row used for compose-time validation.
+  - Marks the emoji as `done` in YugabyteDB YSQL and updates the `emoji_lookup` row used for compose-time validation.
   - Invalidates KeyDB caches for `emoji:id:{emojiId}` and `emoji:guild:{guildId}`.
   - Broadcasts `Guild Emoji Create` after the upload is finalized.
 - **Failure handling:** If processing, storage upload, or finalization fails, the service deletes any uploaded objects and removes the placeholder rows.
@@ -66,7 +66,7 @@ The upload system is designed around a two-step process:
 
 This route is public and intentionally hot-path friendly:
 - No auth check
-- No Citus lookup
+- No YugabyteDB YSQL lookup
 - No KeyDB lookup
 - Immediate redirect to the deterministic S3 or CDN object URL
 

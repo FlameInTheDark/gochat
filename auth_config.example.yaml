@@ -35,5 +35,5 @@ smtp_use_tls: false
 # Redis
 keydb: "keydb:6379"
 
-# PostgreSQL
-pg_dsn: "host=citus-master port=5432 user=postgres dbname=gochat sslmode=disable"
+# YugabyteDB YSQL
+pg_dsn: "host=yugabyte port=5433 user=yugabyte password=yugabyte dbname=gochat sslmode=disable"

@@ -16,7 +16,7 @@ const maxGuildSearchLimit = 16
 // SearchGuilds
 //
 //	@Summary		Search public guilds
-//	@Description	Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+//	@Description	Searches only public guilds in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
 //	@Produce		json
 //	@Tags			Search
 //	@Param			q		query		string								false	"Search text for guild name, description, and tags"

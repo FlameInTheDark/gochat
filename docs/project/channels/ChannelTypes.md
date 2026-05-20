@@ -50,7 +50,7 @@ This document describes the different channel types available in gochat, their p
 | `private` | bool | If true, only visible to specific roles |
 | `roles` | int64[] | Role IDs with access to private channels |
 | `last_message_id` | int64 | ID of the most recent message |
-| `message_count` | int64? | For threads: approximate message count derived from the stored Postgres base plus any pending KeyDB delta |
+| `message_count` | int64? | For threads: approximate message count derived from the stored YugabyteDB YSQL base plus any pending KeyDB delta |
 | `voice_region` | string? | Voice region for voice channels (e.g., "us-east", "eu-west") |
 | `created_at` | string (ISO8601) | When the channel was created |
 
@@ -244,7 +244,7 @@ A conversation thread attached to a specific message.
 - `creator_id`: User who created the thread
 - `member`: Current user's thread membership when the thread is returned over HTTP
 - `member_ids`: User IDs of members who have joined the thread
-- `message_count`: Approximate thread message count returned as the stored Postgres base plus any pending KeyDB delta
+- `message_count`: Approximate thread message count returned as the stored YugabyteDB YSQL base plus any pending KeyDB delta
 - `closed`: If true, the thread is read-only
 
 **Notes:**

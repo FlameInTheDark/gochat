@@ -26,7 +26,7 @@ REST API · WebSocket delivery · File uploads · Full-text search · Link-previ
 
 ## ![](docs/assets/icons/layout-dashboard.svg) Architecture
 
-GoChat is service-oriented — each binary has a single focused responsibility. Services communicate through NATS for async events and share PostgreSQL, ScyllaDB, and KeyDB for state.
+GoChat is service-oriented — each binary has a single focused responsibility. Services communicate through NATS for async events and share YugabyteDB YSQL, ScyllaDB, and KeyDB for state.
 
 → [Full diagram, data-store reference, and voice flow walkthrough](docs/project/Architecture.md)
 
@@ -71,7 +71,7 @@ GoChat is service-oriented — each binary has a single focused responsibility. 
 | Language | Go `1.25.8` |
 | HTTP / WebSocket | Fiber v2, Fiber WebSocket |
 | Voice / WebRTC | Pion WebRTC |
-| Relational DB | PostgreSQL / Citus |
+| Relational DB | YugabyteDB YSQL |
 | Wide-column DB | ScyllaDB |
 | Cache / sessions | Redis / KeyDB |
 | Message bus | NATS |
@@ -116,13 +116,15 @@ To test the migration image used in CI:
 ```bash
 make build_migration_image
 make migrate_image \
-  PG_ADDRESS="postgres://postgres@host.docker.internal/gochat" \
+  YUGABYTE_ADDRESS="postgres://yugabyte:yugabyte@host.docker.internal:5433/gochat?sslmode=disable" \
   CASSANDRA_ADDRESS="cassandra://host.docker.internal/gochat?x-multi-statement=true"
 ```
 
-CI publishes `ghcr.io/<owner>/gochat-migrations:<tag>` for releases and `ghcr.io/<owner>/gochat-migrations:dev` from the `dev` branch. Database bootstrap steps outside the migration files (ScyllaDB keyspace creation, Citus enablement) must be completed before running the container.
+CI publishes `ghcr.io/<owner>/gochat-migrations:<tag>` for releases and `ghcr.io/<owner>/gochat-migrations:dev` from the `dev` branch. Database bootstrap steps outside the migration files (ScyllaDB keyspace creation and YugabyteDB database creation) must be completed before running the container.
 
-The container accepts `PG_ADDRESS`, `CASSANDRA_ADDRESS`, and `MIGRATION_SCOPE=all|postgres|pg|cassandra|scylla`.
+The container accepts `YUGABYTE_ADDRESS`, `CITUS_ADDRESS`, `PG_ADDRESS` for backward compatibility, `CASSANDRA_ADDRESS`, and `MIGRATION_SCOPE=all|yugabyte|yb|ysql|citus|postgres|pg|cassandra|scylla`.
+
+Local Compose creates the `gochat` YugabyteDB database with `YUGABYTE_COLOCATION=false` by default. This keeps core relational metadata sharded for high-load deployments; enable colocation only for small isolated test databases or tiny reference datasets.
 
 ### Service configuration
 
@@ -205,7 +207,7 @@ go run ./cmd/tools observability smoke \
 | [Direct-message calls](docs/project/voice/DMCalls.md) | Private 1:1 voice calls, settings bootstrap, pair-scoped events, and DM call streaming |
 | [Observability](docs/project/observability/README.md) | OTEL signals, dashboards, runbooks, external SFU |
 | [Auth security](docs/project/AuthSecurity.md) | Token design, expiry, refresh flow |
-| [Database schema](docs/project/Database.md) | PostgreSQL and ScyllaDB schema diagrams |
+| [Database schema](docs/project/Database.md) | YugabyteDB YSQL and ScyllaDB schema diagrams |
 | [Tools CLI](docs/project/Tools.md) | Operational helper commands |
 | [OpenAPI schema](docs/api/swagger.json) | Machine-readable API spec |
 | [Go API client](clients/api/goclient/) | Generated Go client |
@@ -221,7 +223,7 @@ go run ./cmd/tools observability smoke \
 ```
 cmd/             runnable services and operational tools
 internal/        shared packages (transport, storage, search, mail, presence, server wiring)
-migration/       PostgreSQL and ScyllaDB migrations
+migration/       YugabyteDB YSQL, legacy PostgreSQL/Citus, and ScyllaDB migrations
 docs/            project documentation and generated OpenAPI schema
 clients/api/     generated Go and TypeScript API clients
 compose.yaml     local development stack

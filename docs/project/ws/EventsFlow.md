@@ -8,7 +8,7 @@
 sequenceDiagram
     actor C as Client
     participant S as WS Server
-    participant DB as PostgreSQL
+    participant DB as YugabyteDB YSQL
     participant N as NATS
 
     C->>+S: WebSocket Upgrade (/subscribe)

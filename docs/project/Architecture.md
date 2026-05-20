@@ -36,7 +36,7 @@ flowchart TD
 
     subgraph storage["Storage & State"]
         direction LR
-        PG[("PostgreSQL / Citus")]
+    PG[("YugabyteDB YSQL")]
         Scylla[("ScyllaDB")]
         KeyDB[("Redis / KeyDB")]
         etcd[("etcd")]
@@ -107,7 +107,7 @@ flowchart TD
 
 | Store | Technology | Primary use |
 | --- | --- | --- |
-| Relational | PostgreSQL / Citus | Users, guilds, channels, roles, invites, bans |
+| Relational | YugabyteDB YSQL | Users, guilds, channels, roles, invites, bans |
 | Time-series / wide-column | ScyllaDB | Message timelines, attachment metadata, presence data |
 | Cache / session | Redis / KeyDB | Auth tokens, voice route bindings, presence state |
 | Messaging | NATS | Async event delivery between services |

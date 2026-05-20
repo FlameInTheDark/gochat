@@ -11,7 +11,7 @@ This project is composed of several services located under the `cmd/` directory.
   - Manages voice region overrides and selects SFU instances via discovery.
   - Selects stream instances in the same effective region as the voice channel.
   - Publishes/consumes events via NATS.
-- Dependencies: Scylla/Cassandra, PostgreSQL, Redis/KeyDB (cache), NATS, OpenSearch (via Indexer), etcd (discovery).
+- Dependencies: Scylla/Cassandra, YugabyteDB YSQL, Redis/KeyDB (cache), NATS, OpenSearch (via Indexer), etcd (discovery).
 
 ## Auth (`cmd/auth`)
 - Purpose: Authentication and account lifecycle.
@@ -20,7 +20,7 @@ This project is composed of several services located under the `cmd/` directory.
   - Login challenges backed by Redis/KeyDB for second-step verification, recovery codes, and email recovery fallback.
   - Session-versioned JWT issuance so password and 2FA mutations revoke older access, refresh, and WebSocket sessions.
   - Email delivery via pluggable providers (SMTP, SendPulse, Resend, or log-only).
-- Dependencies: PostgreSQL, Redis/KeyDB (cache and MFA state), NATS (session revocation fan-out).
+- Dependencies: YugabyteDB YSQL, Redis/KeyDB (cache and MFA state), NATS (session revocation fan-out).
 
 ## WebSocket Gateway (`cmd/ws`)
 - Purpose: Persistent WebSocket gateway for client real‑time updates.
@@ -28,7 +28,7 @@ This project is composed of several services located under the `cmd/` directory.
   - Bridges NATS topics to user connections (subscribe/publish per user/guild/channel).
   - Presence heartbeats and aggregation, session tracking, and OTEL-based telemetry shipped to OpenObserve.
   - Validates client tokens and enforces access on subscriptions.
-- Dependencies: NATS, Scylla/Cassandra, PostgreSQL, Redis/KeyDB (presence/cache).
+- Dependencies: NATS, Scylla/Cassandra, YugabyteDB YSQL, Redis/KeyDB (presence/cache).
 
 ## SFU (`cmd/sfu`)
 - Purpose: Voice Selective Forwarding Unit with WebRTC media relay and WS signaling.
@@ -90,7 +90,7 @@ This project is composed of several services located under the `cmd/` directory.
   - Upload endpoints with size/type validation and metadata persistence.
   - S3‑compatible storage integration and public URL computation.
   - Emits events (e.g., avatar/icon updates) via NATS.
-- Dependencies: Scylla/Cassandra, PostgreSQL, S3‑compatible storage, NATS.
+- Dependencies: Scylla/Cassandra, YugabyteDB YSQL, S3-compatible storage, NATS.
 
 ## Indexer (`cmd/indexer`)
 - Purpose: Asynchronous search indexing worker.

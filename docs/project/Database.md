@@ -9,7 +9,7 @@ config:
 ---
 classDiagram
     direction TB
-    namespace Citus {
+    namespace YugabyteDB_YSQL {
         class audit {
             bigint guild_id
             jsonb changes

@@ -19,6 +19,7 @@ Here goes the project documentation.
 - [Auth Security](AuthSecurity.md)
 - [Presence System](Presence.md)
 - [Tools CLI](Tools.md)
+- [YugabyteDB Migration](YugabyteMigration.md)
 
 
 - [Swagger API Documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/FlameInTheDark/gochat/refs/heads/dev/docs/api/swagger.json)

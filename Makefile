@@ -1,12 +1,33 @@
-PG_ADDRESS=postgres://postgres@127.0.0.1/gochat
-CASSANDRA_ADDRESS=cassandra://127.0.0.1/gochat?x-multi-statement=true
-MIGRATION_IMAGE=gochat-migrations:local
-MIGRATE_VERSION=v4.19.1
+YUGABYTE_ADDRESS?=postgres://yugabyte:yugabyte@127.0.0.1:5433/gochat?sslmode=disable
+CITUS_ADDRESS?=postgres://postgres@127.0.0.1:5432/gochat?sslmode=disable
+PG_ADDRESS?=$(YUGABYTE_ADDRESS)
+CASSANDRA_ADDRESS?=cassandra://127.0.0.1/gochat?x-multi-statement=true
+MIGRATION_IMAGE?=gochat-migrations:local
+MIGRATE_VERSION?=v4.19.1
+VOYAGER_IMAGE?=software.yugabyte.com/yugabytedb/yb-voyager
+VOYAGER_DOCKER_NETWORK?=gochat_default
+VOYAGER?=docker run --rm --network $(VOYAGER_DOCKER_NETWORK) -v "./.data/voyager:/voyager" $(VOYAGER_IMAGE) yb-voyager
+VOYAGER_EXPORT_DIR?=/voyager/gochat
+VOYAGER_EXPORT_HOST_DIR?=.data/voyager/gochat
+VOYAGER_SOURCE_SCHEMA?=public
+VOYAGER_EXCLUDE_TABLES?=schema_migrations
+CITUS_HOST?=citus-master
+CITUS_PORT?=5432
+CITUS_USER?=postgres
+CITUS_PASSWORD?=postgres
+CITUS_DB?=gochat
+YUGABYTE_HOST?=yugabyte
+YUGABYTE_PORT?=5433
+YUGABYTE_USER?=yugabyte
+YUGABYTE_PASSWORD?=yugabyte
+YUGABYTE_DB?=gochat
+YUGABYTE_VERIFY_IMAGE?=golang:1.26.2
+YUGABYTE_VERIFY_SOURCE_DSN?=postgres://$(CITUS_USER):$(CITUS_PASSWORD)@$(CITUS_HOST):$(CITUS_PORT)/$(CITUS_DB)?sslmode=disable
+YUGABYTE_VERIFY_TARGET_DSN?=postgres://$(YUGABYTE_USER):$(YUGABYTE_PASSWORD)@$(YUGABYTE_HOST):$(YUGABYTE_PORT)/$(YUGABYTE_DB)?sslmode=disable
 
 up:
 	docker compose up -d
 	docker compose exec scylla bash ./init-scylladb.sh
-	docker compose -p gochat up --scale citus-worker=3 -d
 
 scylla_init:
 	docker compose exec scylla bash ./init-scylladb.sh
@@ -26,15 +47,21 @@ build_migration_image:
 
 migrate_image: build_migration_image
 	docker run --rm \
-		-e PG_ADDRESS="$(PG_ADDRESS)" \
+		-e YUGABYTE_ADDRESS="$(YUGABYTE_ADDRESS)" \
 		-e CASSANDRA_ADDRESS="$(CASSANDRA_ADDRESS)" \
 		$(MIGRATION_IMAGE)
 
 migrate_image_down: build_migration_image
 	docker run --rm \
-		-e PG_ADDRESS="$(PG_ADDRESS)" \
+		-e YUGABYTE_ADDRESS="$(YUGABYTE_ADDRESS)" \
 		-e CASSANDRA_ADDRESS="$(CASSANDRA_ADDRESS)" \
 		$(MIGRATION_IMAGE) down
+
+migrate_image_yugabyte: build_migration_image
+	docker run --rm \
+		-e MIGRATION_SCOPE=yugabyte \
+		-e YUGABYTE_ADDRESS="$(YUGABYTE_ADDRESS)" \
+		$(MIGRATION_IMAGE)
 
 migrate_image_scylla: build_migration_image
 	docker run --rm \
@@ -44,8 +71,8 @@ migrate_image_scylla: build_migration_image
 
 migrate_image_pg: build_migration_image
 	docker run --rm \
-		-e MIGRATION_SCOPE=postgres \
-		-e PG_ADDRESS="$(PG_ADDRESS)" \
+		-e MIGRATION_SCOPE=citus \
+		-e CITUS_ADDRESS="$(CITUS_ADDRESS)" \
 		$(MIGRATION_IMAGE)
 
 migrate_image_scylla_down: build_migration_image
@@ -62,14 +89,14 @@ migrate_image_scylla_rollback: build_migration_image
 
 migrate_image_pg_down: build_migration_image
 	docker run --rm \
-		-e MIGRATION_SCOPE=postgres \
-		-e PG_ADDRESS="$(PG_ADDRESS)" \
+		-e MIGRATION_SCOPE=citus \
+		-e CITUS_ADDRESS="$(CITUS_ADDRESS)" \
 		$(MIGRATION_IMAGE) down
 
 migrate_image_pg_rollback: build_migration_image
 	docker run --rm \
-		-e MIGRATION_SCOPE=postgres \
-		-e PG_ADDRESS="$(PG_ADDRESS)" \
+		-e MIGRATION_SCOPE=citus \
+		-e CITUS_ADDRESS="$(CITUS_ADDRESS)" \
 		$(MIGRATION_IMAGE) down 1
 
 run:
@@ -82,17 +109,29 @@ run_embedder:
 	go run ./cmd/embedder
 
 citus_up:
-	docker compose -p gochat up --scale citus-worker=3 -d
+	docker compose --profile citus up --scale citus-worker=3 -d citus-master citus-manager citus-worker citus-init
 
-migrate: migrate_pg migrate_scylla
+yugabyte_up:
+	docker compose up -d yugabyte yugabyte-init
 
-migrate_down: migrate_pg_down migrate_scylla_down
+migrate: migrate_yugabyte migrate_scylla
+
+migrate_down: migrate_yugabyte_down migrate_scylla_down
+
+migrate_yugabyte:
+	migrate -database $(YUGABYTE_ADDRESS) -path ./migration/yugabyte up
+
+migrate_yugabyte_down:
+	migrate -database $(YUGABYTE_ADDRESS) -path ./migration/yugabyte down
+
+migrate_yugabyte_rollback:
+	migrate -database $(YUGABYTE_ADDRESS) -path ./migration/yugabyte down 1
 
 migrate_scylla:
 	migrate -database $(CASSANDRA_ADDRESS) -path ./migration/cassandra up
 
 migrate_pg:
-	migrate -database $(PG_ADDRESS) -path ./migration/postgres up
+	migrate -database $(CITUS_ADDRESS) -path ./migration/postgres up
 
 migrate_scylla_down:
 	migrate -database $(CASSANDRA_ADDRESS) -path ./migration/cassandra down
@@ -101,10 +140,70 @@ migrate_scylla_rollback:
 	migrate -database $(CASSANDRA_ADDRESS) -path ./migration/cassandra down 1
 
 migrate_pg_down:
-	migrate -database $(PG_ADDRESS) -path ./migration/postgres down
+	migrate -database $(CITUS_ADDRESS) -path ./migration/postgres down
 
 migrate_pg_rollback:
-	migrate -database $(PG_ADDRESS) -path ./migration/postgres down 1
+	migrate -database $(CITUS_ADDRESS) -path ./migration/postgres down 1
+
+voyager_assess:
+	powershell -NoProfile -Command "New-Item -ItemType Directory -Force -Path '$(VOYAGER_EXPORT_HOST_DIR)' | Out-Null"
+	$(VOYAGER) assess-migration \
+		--source-db-type postgresql \
+		--source-db-host $(CITUS_HOST) \
+		--source-db-port $(CITUS_PORT) \
+		--source-db-user $(CITUS_USER) \
+		--source-db-password "$(CITUS_PASSWORD)" \
+		--source-db-name $(CITUS_DB) \
+		--source-db-schema $(VOYAGER_SOURCE_SCHEMA) \
+		--source-ssl-mode disable \
+		--send-diagnostics false \
+		--start-clean true \
+		--export-dir $(VOYAGER_EXPORT_DIR) \
+		-y
+
+voyager_export:
+	powershell -NoProfile -Command "New-Item -ItemType Directory -Force -Path '$(VOYAGER_EXPORT_HOST_DIR)' | Out-Null"
+	$(VOYAGER) export data \
+		--source-db-type postgresql \
+		--source-db-host $(CITUS_HOST) \
+		--source-db-port $(CITUS_PORT) \
+		--source-db-user $(CITUS_USER) \
+		--source-db-password "$(CITUS_PASSWORD)" \
+		--source-db-name $(CITUS_DB) \
+		--source-db-schema $(VOYAGER_SOURCE_SCHEMA) \
+		--exclude-table-list "$(VOYAGER_EXCLUDE_TABLES)" \
+		--source-ssl-mode disable \
+		--send-diagnostics false \
+		--disable-pb true \
+		--start-clean true \
+		--export-dir $(VOYAGER_EXPORT_DIR) \
+		-y
+
+voyager_import:
+	powershell -NoProfile -Command "New-Item -ItemType Directory -Force -Path '$(VOYAGER_EXPORT_HOST_DIR)' | Out-Null"
+	$(VOYAGER) import data \
+		--target-db-host $(YUGABYTE_HOST) \
+		--target-db-port $(YUGABYTE_PORT) \
+		--target-db-user $(YUGABYTE_USER) \
+		--target-db-password "$(YUGABYTE_PASSWORD)" \
+		--target-db-name $(YUGABYTE_DB) \
+		--target-ssl-mode disable \
+		--send-diagnostics false \
+		--disable-pb true \
+		--start-clean true \
+		--export-dir $(VOYAGER_EXPORT_DIR) \
+		-y
+
+voyager_status:
+	powershell -NoProfile -Command "New-Item -ItemType Directory -Force -Path '$(VOYAGER_EXPORT_HOST_DIR)' | Out-Null"
+	-$(VOYAGER) export data status --export-dir $(VOYAGER_EXPORT_DIR)
+	-$(VOYAGER) import data status --export-dir $(VOYAGER_EXPORT_DIR)
+
+yugabyte_verify:
+	docker run --rm --network $(VOYAGER_DOCKER_NETWORK) -v "./:/src" -w /src $(YUGABYTE_VERIFY_IMAGE) \
+		go run ./cmd/tools yugabyte verify \
+		--source-dsn "$(YUGABYTE_VERIFY_SOURCE_DSN)" \
+		--target-dsn "$(YUGABYTE_VERIFY_TARGET_DSN)"
 
 add_migration_postgres:
 	migrate create -ext sql -dir migration/postgres -seq $(name)
@@ -136,7 +235,7 @@ go_client:
 
 setup: tools up migrate
 
-.PHONY: setup tools lint build_migration_image migrate_image migrate_image_down migrate_image_scylla migrate_image_pg migrate_image_scylla_down migrate_image_scylla_rollback migrate_image_pg_down migrate_image_pg_rollback run run_ws run_embedder rebuild_all rebuild_api rebuild_auth rebuild_ws rebuild_indexer rebuild_attachments rebuild_sfu rebuild_webhook rebuild_embedder rebuild_telemetry_gateway
+.PHONY: setup tools lint build_migration_image migrate_image migrate_image_down migrate_image_yugabyte migrate_image_scylla migrate_image_pg migrate_image_scylla_down migrate_image_scylla_rollback migrate_image_pg_down migrate_image_pg_rollback run run_ws run_embedder citus_up yugabyte_up migrate migrate_down migrate_yugabyte migrate_yugabyte_down migrate_yugabyte_rollback migrate_scylla migrate_pg migrate_scylla_down migrate_scylla_rollback migrate_pg_down migrate_pg_rollback voyager_assess voyager_export voyager_import voyager_status yugabyte_verify rebuild_all rebuild_api rebuild_auth rebuild_ws rebuild_indexer rebuild_attachments rebuild_sfu rebuild_webhook rebuild_embedder rebuild_telemetry_gateway
 
 # Dev tools
 rebuild_all: rebuild_api rebuild_auth rebuild_indexer rebuild_embedder rebuild_ws
