@@ -63,7 +63,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	shut.Up(dbcon)
 
 	pg := pgdb.NewDB(logger)
-	err = pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{MaxRetries: cfg.PGRetries})
+	err = pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{DriverName: cfg.PGDriver, MaxRetries: cfg.PGRetries})
 	if err != nil {
 		logger.Error("unable to connect to pg", slog.String("error", err.Error()))
 		os.Exit(1)

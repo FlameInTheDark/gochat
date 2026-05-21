@@ -6,6 +6,7 @@ cluster: ["scylla"]
 cluster_keyspace: "gochat"
 
 # YugabyteDB YSQL
+pg_driver: "pgx"
 pg_dsn: "host=yugabyte port=5433 user=yugabyte password=yugabyte dbname=gochat sslmode=disable"
 
 # Cache Address (KeyDB)

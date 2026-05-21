@@ -291,6 +291,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	logger.Info("Connecting to PostgreSQL")
 	pg := pgdb.NewDB(logger)
 	err = pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{
+		DriverName:   cfg.PGDriver,
 		MaxRetries:   cfg.PGRetries,
 		QueryLog:     cfg.PGQueryLog,
 		MaxOpenConns: cfg.PGMaxOpenConns,

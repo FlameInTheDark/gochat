@@ -36,4 +36,5 @@ smtp_use_tls: false
 keydb: "keydb:6379"
 
 # YugabyteDB YSQL
+pg_driver: "pgx"
 pg_dsn: "host=yugabyte port=5433 user=yugabyte password=yugabyte dbname=gochat sslmode=disable"

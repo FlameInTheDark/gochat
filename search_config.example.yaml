@@ -14,6 +14,7 @@ cluster_keyspace: "gochat"
 keydb: "keydb:6379"
 
 # YugabyteDB YSQL
+pg_driver: "pgx"
 pg_dsn: "host=yugabyte port=5433 user=yugabyte password=yugabyte dbname=gochat sslmode=disable"
 pg_retries: 5
 
