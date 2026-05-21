@@ -52,7 +52,7 @@ This document covers the password change and TOTP-based two-factor authenticatio
 
 ### Persistent state
 
-- PostgreSQL stores:
+- YugabyteDB YSQL stores:
   - `authentications.session_version`
   - `auth_factors`
   - `auth_totp_factors`
@@ -69,7 +69,7 @@ This document covers the password change and TOTP-based two-factor authenticatio
 
 - Password changes, TOTP enable, TOTP disable, and recovery-code regeneration bump `session_version`.
 - JWTs now carry `session_version`.
-- HTTP middleware and the WebSocket gateway validate that claim against Redis/KeyDB with PostgreSQL fallback.
+- HTTP middleware and the WebSocket gateway validate that claim against Redis/KeyDB with YugabyteDB YSQL fallback.
 - After a successful security mutation, auth publishes a user-scoped revocation event so existing WebSocket sessions close and reconnect with fresh tokens only.
 
 ## Operational notes

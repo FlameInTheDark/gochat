@@ -220,7 +220,7 @@ NATS is the internal pub/sub backbone. Voice-related topics:
 
 `VoiceRegionChanging` (event type 208) is published to `guild.{guildId}` immediately when `SetVoiceRegion` is called with live sessions. It carries the new region and a `delay_ms` hint (3000 ms) so clients can display a countdown before the disruptive `VoiceRebind` arrives 3 seconds later.
 
-### 2.4 PostgreSQL — Persistent Configuration
+### 2.4 YugabyteDB YSQL - Persistent Configuration
 
 Voice configuration stored in the `channels` table:
 
@@ -544,7 +544,7 @@ The local Compose stack runs the control-plane services and local observability 
 - `ws` provides the persistent real-time gateway.
 - `attachments` handles media uploads.
 - `webhook` receives trusted callbacks from SFU, stream, and attachments flows.
-- `nats`, `etcd`, `keydb`, `postgres/citus`, `scylla`, `opensearch`, `openobserve`, and the OTEL collector support the application services.
+- `nats`, `etcd`, `keydb`, `yugabytedb`, `scylla`, `opensearch`, `openobserve`, and the OTEL collector support the application services.
 
 The SFU and stream service are intentionally deployed outside local Compose:
 
