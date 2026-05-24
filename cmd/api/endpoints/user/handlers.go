@@ -20,6 +20,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/observability"
+	"github.com/FlameInTheDark/gochat/internal/userbootstrap"
 )
 
 // GetUser
@@ -859,13 +860,7 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
 	}
-	joinedThreadSet := make(map[int64]struct{}, len(threadMembers))
-	for _, member := range threadMembers {
-		if _, ok := joinedThreadSet[member.ThreadId]; ok {
-			continue
-		}
-		joinedThreadSet[member.ThreadId] = struct{}{}
-	}
+	joinedThreadSet := userbootstrap.BuildJoinedThreadSet(threadMembers)
 
 	// skip channels without new messages beyond the user's read state.
 	chModels, err := e.ch.GetChannelsBulk(c.UserContext(), gchs)

@@ -14,6 +14,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/gatewaystate"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
+	"github.com/FlameInTheDark/gochat/internal/userbootstrap"
 
 	pgmodel "github.com/FlameInTheDark/gochat/internal/database/model"
 )
@@ -323,19 +324,7 @@ func (h *Handler) sendGatewayReady(ctx context.Context, user pgmodel.User, membe
 		}
 	}
 
-	readStates := map[int64]int64{}
-	if h.rs != nil {
-		if rs, err := h.rs.GetReadStates(ctx, user.Id); err == nil && rs != nil {
-			readStates = rs
-		}
-	}
-
-	guildsLastMessages := map[int64]map[int64]int64{}
-	if h.gclm != nil && len(guildIDs) > 0 {
-		if glms, err := h.gclm.GetChannelsMessagesForGuilds(ctx, guildIDs); err == nil && glms != nil {
-			guildsLastMessages = glms
-		}
-	}
+	readStates, guildsLastMessages, threadsLastMessages, joinedThreads := h.loadGatewayReadyReadState(ctx, user.Id, guildIDs)
 
 	ready := gatewayReadyPayload{
 		User:                userModelToDTO(user),
@@ -343,8 +332,8 @@ func (h *Handler) sendGatewayReady(ctx context.Context, user pgmodel.User, membe
 		SettingsVersion:     settingsVersion,
 		ReadStates:          readStates,
 		GuildsLastMessages:  guildsLastMessages,
-		ThreadsLastMessages: map[int64]int64{},
-		JoinedThreads:       map[int64]map[int64][]int64{},
+		ThreadsLastMessages: threadsLastMessages,
+		JoinedThreads:       joinedThreads,
 		DMCalls:             h.activeDMCallSummaries(ctx, user.Id),
 		Guilds:              guildDTOs,
 		Friends:             friendIDs,
@@ -428,6 +417,74 @@ func userModelToDTO(u pgmodel.User) dto.User {
 		BannerColor: u.BannerColor,
 		PanelColor:  u.PanelColor,
 	}
+}
+
+func (h *Handler) loadGatewayReadyReadState(ctx context.Context, userID int64, guildIDs []int64) (map[int64]int64, map[int64]map[int64]int64, map[int64]int64, map[int64]map[int64][]int64) {
+	log := helper.WithContext(h.log, ctx)
+
+	readStates := map[int64]int64{}
+	if h.rs != nil {
+		rs, err := h.rs.GetReadStates(ctx, userID)
+		if err != nil {
+			log.Warn("Error loading read states for gateway ready", "error", err)
+		} else if rs != nil {
+			readStates = rs
+		}
+	}
+
+	guildsLastMessages := map[int64]map[int64]int64{}
+	if h.gclm == nil || len(guildIDs) == 0 {
+		return readStates, guildsLastMessages, map[int64]int64{}, map[int64]map[int64][]int64{}
+	}
+
+	rawGuildLastMessages, err := h.gclm.GetChannelsMessagesForGuilds(ctx, guildIDs)
+	if err != nil {
+		log.Warn("Error loading guild last messages for gateway ready", "error", err)
+		return readStates, guildsLastMessages, map[int64]int64{}, map[int64]map[int64][]int64{}
+	}
+	if len(rawGuildLastMessages) == 0 {
+		return readStates, guildsLastMessages, map[int64]int64{}, map[int64]map[int64][]int64{}
+	}
+
+	if h.gc == nil || h.ch == nil || h.tm == nil {
+		return readStates, userbootstrap.FilterGuildLastMessages(rawGuildLastMessages, nil), map[int64]int64{}, map[int64]map[int64][]int64{}
+	}
+
+	channelIDs, err := h.gc.GetGuildsChannelsIDsMany(ctx, guildIDs)
+	if err != nil {
+		log.Warn("Error loading guild channel IDs for gateway ready", "error", err)
+		return readStates, guildsLastMessages, map[int64]int64{}, map[int64]map[int64][]int64{}
+	}
+	if len(channelIDs) == 0 {
+		return readStates, guildsLastMessages, map[int64]int64{}, map[int64]map[int64][]int64{}
+	}
+
+	channels, err := h.ch.GetChannelsBulk(ctx, channelIDs)
+	if err != nil {
+		log.Warn("Error loading channels for gateway ready read-state filter", "error", err)
+		return readStates, guildsLastMessages, map[int64]int64{}, map[int64]map[int64][]int64{}
+	}
+	guildsLastMessages = userbootstrap.FilterGuildLastMessages(rawGuildLastMessages, channels)
+
+	threadMembers, err := h.tm.GetUserThreadMembers(ctx, userID)
+	if err != nil {
+		log.Warn("Error loading joined threads for gateway ready", "error", err)
+		return readStates, guildsLastMessages, map[int64]int64{}, map[int64]map[int64][]int64{}
+	}
+	joinedThreadSet := userbootstrap.BuildJoinedThreadSet(threadMembers)
+	if len(joinedThreadSet) == 0 {
+		return readStates, guildsLastMessages, map[int64]int64{}, map[int64]map[int64][]int64{}
+	}
+
+	guildChannels, err := h.gc.GetGuildChannelsByChannelIDs(ctx, channelIDs)
+	if err != nil {
+		log.Warn("Error loading guild channel rows for gateway ready joined threads", "error", err)
+		return readStates, guildsLastMessages, map[int64]int64{}, map[int64]map[int64][]int64{}
+	}
+
+	threadsLastMessages := userbootstrap.FilterThreadLastMessages(joinedThreadSet, channels, rawGuildLastMessages)
+	joinedThreads := userbootstrap.BuildJoinedThreads(joinedThreadSet, channels, guildChannels)
+	return readStates, guildsLastMessages, threadsLastMessages, joinedThreads
 }
 
 func guildModelsToDTOs(guilds []pgmodel.Guild) []dto.Guild {

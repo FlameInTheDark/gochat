@@ -116,6 +116,7 @@ func TestFilterThreadLastMessagesKeepsOnlyJoinedLiveThreads(t *testing.T) {
 			11: 101,
 			12: 102,
 			13: 0,
+			31: 301,
 		},
 		2: {
 			21: 201,
@@ -126,15 +127,17 @@ func TestFilterThreadLastMessagesKeepsOnlyJoinedLiveThreads(t *testing.T) {
 		11: {},
 		13: {},
 		21: {},
+		31: {},
 		99: {},
 	}
 
 	channels := []model.Channel{
-		{Id: 11, Type: model.ChannelTypeThread},
-		{Id: 12, Type: model.ChannelTypeThread},
-		{Id: 13, Type: model.ChannelTypeThread},
-		{Id: 21, Type: model.ChannelTypeThread},
+		{Id: 11, Type: model.ChannelTypeThread, ParentID: int64Ptr(10)},
+		{Id: 12, Type: model.ChannelTypeThread, ParentID: int64Ptr(10)},
+		{Id: 13, Type: model.ChannelTypeThread, ParentID: int64Ptr(10)},
+		{Id: 21, Type: model.ChannelTypeThread, ParentID: int64Ptr(20)},
 		{Id: 22, Type: model.ChannelTypeGuild},
+		{Id: 31, Type: model.ChannelTypeThread},
 	}
 
 	filtered := filterThreadLastMessages(joined, channels, glms)
@@ -152,6 +155,9 @@ func TestFilterThreadLastMessagesKeepsOnlyJoinedLiveThreads(t *testing.T) {
 	}
 	if _, ok := filtered[13]; ok {
 		t.Fatalf("expected empty thread to be removed, got %#v", filtered)
+	}
+	if _, ok := filtered[31]; ok {
+		t.Fatalf("expected parentless thread to be removed, got %#v", filtered)
 	}
 }
 

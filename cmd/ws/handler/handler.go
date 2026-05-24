@@ -22,12 +22,14 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/dmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/friend"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/groupdmchannel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/threadmember"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/usersettings"
 	"github.com/FlameInTheDark/gochat/internal/dto"
@@ -68,6 +70,8 @@ type Handler struct {
 	gclm     guildchannelmessages.GuildChannelMessages
 	u        user.User
 	gc       guildchannels.GuildChannels
+	ch       channel.Channel
+	tm       threadmember.ThreadMember
 	perm     rolecheck.RoleCheck
 	jwt      *auth.Auth
 	sendJSON func(v any) error
@@ -117,6 +121,8 @@ func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v 
 		gclm:      guildchannelmessages.New(c),
 		u:         user.New(pg.Conn()),
 		gc:        guildchannels.New(pg.Conn()),
+		ch:        channel.New(pg.Conn()),
+		tm:        threadmember.New(pg.Conn()),
 		perm:      rolecheck.New(pg),
 		jwt:       jwt,
 		sendJSON:  sendJSON,
