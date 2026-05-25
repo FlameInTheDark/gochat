@@ -1,3 +1,24 @@
+# [1.15.0](https://github.com/FlameInTheDark/gochat/compare/v1.14.0...v1.15.0) (2026-05-25)
+
+
+### Bug Fixes
+
+* dm call functionality fix ([568699c](https://github.com/FlameInTheDark/gochat/commit/568699c83a759a6459c51519c5e990693ac9cc2f))
+* last channel message id on deleted messages fix ([9e9dc4c](https://github.com/FlameInTheDark/gochat/commit/9e9dc4c1a0f097327deef8c8261d792522012ceb))
+* lint fixes ([164d6d7](https://github.com/FlameInTheDark/gochat/commit/164d6d755f0b33b605dc54bb8d5b6e163b09198c))
+* readstate error on ack ([1046616](https://github.com/FlameInTheDark/gochat/commit/104661619e663c9b527c5d4bd30e70bf6ac325a2))
+* s3 upload fix for multipart upload ([0fa0f66](https://github.com/FlameInTheDark/gochat/commit/0fa0f66886b840dc27898a2cd508953ce2e8147d))
+* unread state issue ([2be9ffd](https://github.com/FlameInTheDark/gochat/commit/2be9ffdae52f9d39c636148c4c7f21dab8efe9d4))
+* WS stability improvement ([be46d7f](https://github.com/FlameInTheDark/gochat/commit/be46d7ff9913d2f2f7b93630afba948233f5ad85))
+
+
+### Features
+
+* database connector with yugabyte/pgx driver ([40347e2](https://github.com/FlameInTheDark/gochat/commit/40347e28389749c879e7691e2451db2c7ceb58a2))
+* profile banners and personal notes ([b88745a](https://github.com/FlameInTheDark/gochat/commit/b88745a77da0dfb7025466b8e9f96a53bba30347))
+* YugabyteDB ([88dbe19](https://github.com/FlameInTheDark/gochat/commit/88dbe19dba2976904cc4877e1b160f647302fd0f))
+* YugabyteDB migration ([0d85a10](https://github.com/FlameInTheDark/gochat/commit/0d85a1092a84d42d6789523458cd5d219f4c942e))
+
 # [1.14.0](https://github.com/FlameInTheDark/gochat/compare/v1.13.0...v1.14.0) (2026-05-14)
 
 
