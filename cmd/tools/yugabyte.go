@@ -41,7 +41,7 @@ type yugabyteVerifyResult struct {
 func yugabyte() *cli.Command {
 	return &cli.Command{
 		Name:  "yugabyte",
-		Usage: "YugabyteDB migration helpers",
+		Usage: "YugabyteDB operational helpers",
 		Commands: []*cli.Command{
 			yugabyteVerifyCommand(),
 		},
@@ -51,9 +51,9 @@ func yugabyte() *cli.Command {
 func yugabyteVerifyCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "verify",
-		Usage: "Compare source Citus and target YugabyteDB table counts and checksums",
+		Usage: "Compare two YugabyteDB YSQL databases by table counts and checksums",
 		Flags: []cli.Flag{
-			&cli.StringFlag{Name: "source-dsn", Usage: "source Citus/PostgreSQL DSN", Required: true},
+			&cli.StringFlag{Name: "source-dsn", Usage: "source YugabyteDB YSQL DSN", Required: true},
 			&cli.StringFlag{Name: "target-dsn", Usage: "target YugabyteDB YSQL DSN", Required: true},
 			&cli.StringFlag{Name: "schema", Value: "public", Usage: "schema to compare"},
 			&cli.BoolFlag{Name: "skip-checksum", Usage: "compare row counts only"},

@@ -1920,7 +1920,7 @@ func (r ApiGuildGuildIdDiscoveryPatchRequest) Execute() (*DtoGuildDiscoveryUpdat
 /*
 GuildGuildIdDiscoveryPatch Update guild discovery settings
 
-Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.
+Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in YugabyteDB YSQL and notifies the search service to refresh its OpenSearch document.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param guildId Guild id

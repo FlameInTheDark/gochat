@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS user_notes;
+
+ALTER TABLE users
+    DROP COLUMN IF EXISTS banner;
+

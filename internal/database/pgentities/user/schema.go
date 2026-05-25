@@ -112,6 +112,22 @@ func (e *Entity) SetUserAvatar(ctx context.Context, id, attachmentId int64) erro
 	return nil
 }
 
+func (e *Entity) SetUserBanner(ctx context.Context, id, bannerId int64) error {
+	q := squirrel.Update("users").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"id": id}).
+		Set("banner", bannerId)
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	_, err = e.c.ExecContext(ctx, raw, args...)
+	if err != nil {
+		return fmt.Errorf("unable to set banner Error: %w", err)
+	}
+	return nil
+}
+
 func (e *Entity) SetUsername(ctx context.Context, id, name string) error {
 	q := squirrel.Update("users").
 		PlaceholderFormat(squirrel.Dollar).

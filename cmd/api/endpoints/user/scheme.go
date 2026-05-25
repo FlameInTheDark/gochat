@@ -56,6 +56,12 @@ const (
 	ErrTooManyRecipients          = "maximum 10 recipients allowed"
 	ErrUnableToDeleteActiveAvatar = "unable to delete active avatar"
 	ErrNoFieldsToUpdate           = "at least one field must be provided for update"
+	ErrFileIsTooBig               = "file is too big"
+	ErrUnsupportedContentType     = "unsupported content type"
+	ErrUnableToCreateBanner       = "unable to create banner"
+	ErrUnableToSaveUserNote       = "unable to save user note"
+	ErrUserNoteTooLong            = "user note must be less than or equal to 500 characters"
+	ErrCannotNoteSelf             = "cannot add a personal note to yourself"
 )
 
 const maxProfileColorValue = 16777215

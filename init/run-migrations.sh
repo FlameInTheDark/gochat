@@ -11,18 +11,16 @@ Usage:
   run-migrations [command] [arg]
 
 Environment:
-  MIGRATION_SCOPE    all (default), yugabyte, yb, ysql, citus, postgres, pg, cassandra, or scylla
+  MIGRATION_SCOPE    all (default), yugabyte, yb, ysql, cassandra, or scylla
   MIGRATION_COMMAND  Optional default command when no CLI command is provided
   YUGABYTE_ADDRESS   YugabyteDB YSQL connection string. Falls back to PG_ADDRESS.
-  CITUS_ADDRESS      Legacy Citus connection string. Falls back to PG_ADDRESS.
-  PG_ADDRESS         Backward-compatible PostgreSQL connection string
+  PG_ADDRESS         Backward-compatible YugabyteDB YSQL connection string
   CASSANDRA_ADDRESS  Cassandra/ScyllaDB connection string
 
 Examples:
   run-migrations
   run-migrations down 1
   MIGRATION_SCOPE=yugabyte run-migrations force 16
-  MIGRATION_SCOPE=citus run-migrations force 16
 EOF
 }
 
@@ -33,9 +31,6 @@ normalize_scope() {
             ;;
         yugabyte|yb|ysql)
             printf '%s\n' "yugabyte"
-            ;;
-        citus|postgres|pg)
-            printf '%s\n' "citus"
             ;;
         cassandra|scylla)
             printf '%s\n' "cassandra"
@@ -50,14 +45,6 @@ normalize_scope() {
 resolve_yugabyte_address() {
     if [ -n "${YUGABYTE_ADDRESS:-}" ]; then
         printf '%s\n' "$YUGABYTE_ADDRESS"
-        return
-    fi
-    printf '%s\n' "${PG_ADDRESS:-}"
-}
-
-resolve_citus_address() {
-    if [ -n "${CITUS_ADDRESS:-}" ]; then
-        printf '%s\n' "$CITUS_ADDRESS"
         return
     fi
     printf '%s\n' "${PG_ADDRESS:-}"
@@ -113,11 +100,6 @@ case "$MIGRATION_SCOPE" in
         yugabyte_address="$(resolve_yugabyte_address)"
         require_env "YUGABYTE_ADDRESS or PG_ADDRESS" "$yugabyte_address"
         run_migration "yugabyte" "$yugabyte_address" "/migrations/yugabyte" "$@"
-        ;;
-    citus)
-        citus_address="$(resolve_citus_address)"
-        require_env "CITUS_ADDRESS or PG_ADDRESS" "$citus_address"
-        run_migration "citus" "$citus_address" "/migrations/postgres" "$@"
         ;;
     cassandra)
         require_env "CASSANDRA_ADDRESS" "${CASSANDRA_ADDRESS:-}"

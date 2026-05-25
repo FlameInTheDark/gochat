@@ -122,7 +122,9 @@ make migrate_image \
 
 CI publishes `ghcr.io/<owner>/gochat-migrations:<tag>` for releases and `ghcr.io/<owner>/gochat-migrations:dev` from the `dev` branch. Database bootstrap steps outside the migration files (ScyllaDB keyspace creation and YugabyteDB database creation) must be completed before running the container.
 
-The container accepts `YUGABYTE_ADDRESS`, `CITUS_ADDRESS`, `PG_ADDRESS` for backward compatibility, `CASSANDRA_ADDRESS`, and `MIGRATION_SCOPE=all|yugabyte|yb|ysql|citus|postgres|pg|cassandra|scylla`.
+The container accepts `YUGABYTE_ADDRESS`, `PG_ADDRESS` as a backward-compatible YugabyteDB YSQL alias, `CASSANDRA_ADDRESS`, and `MIGRATION_SCOPE=all|yugabyte|yb|ysql|cassandra|scylla`.
+
+For local Compose development, `make migrate` runs the official `migrate/migrate` container on the Compose network and mounts `./migration` read-only. This uses service names like `yugabyte:5433` and `scylla`, so host-port conflicts on `127.0.0.1:5433` do not affect development migrations. Override `YUGABYTE_DB`, `YUGABYTE_USER`, `YUGABYTE_PASSWORD`, or `COMPOSE_PROJECT_NAME` in `.env` when needed.
 
 Local Compose creates the `gochat` YugabyteDB database with `YUGABYTE_COLOCATION=false` by default. This keeps core relational metadata sharded for high-load deployments; enable colocation only for small isolated test databases or tiny reference datasets.
 
@@ -223,7 +225,7 @@ go run ./cmd/tools observability smoke \
 ```
 cmd/             runnable services and operational tools
 internal/        shared packages (transport, storage, search, mail, presence, server wiring)
-migration/       YugabyteDB YSQL, legacy PostgreSQL/Citus, and ScyllaDB migrations
+migration/       YugabyteDB YSQL and ScyllaDB migrations
 docs/            project documentation and generated OpenAPI schema
 clients/api/     generated Go and TypeScript API clients
 compose.yaml     local development stack

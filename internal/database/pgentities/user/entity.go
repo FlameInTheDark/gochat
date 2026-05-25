@@ -13,6 +13,7 @@ type User interface {
 	GetUsersList(ctx context.Context, ids []int64) ([]model.User, error)
 	CreateUser(ctx context.Context, id int64, name string) error
 	SetUserAvatar(ctx context.Context, id, attachmentId int64) error
+	SetUserBanner(ctx context.Context, id, bannerId int64) error
 	SetUsername(ctx context.Context, id, name string) error
 	SetUserBlocked(ctx context.Context, id int64, blocked bool) error
 	SetUploadLimit(ctx context.Context, id int64, uploadLimit int64) error

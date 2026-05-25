@@ -8,4 +8,6 @@ type User struct {
 	BannerColor   *int        `json:"banner_color" example:"3447003"`
 	PanelColor    *int        `json:"panel_color" example:"15158332"`
 	Avatar        *AvatarData `json:"avatar,omitempty"`
+	Banner        *BannerData `json:"banner,omitempty"`
+	PersonalNote  *string     `json:"personal_note,omitempty" example:"Met during the release party"`
 }

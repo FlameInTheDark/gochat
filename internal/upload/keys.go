@@ -17,6 +17,10 @@ func AvatarKey(userID, avatarID int64) string {
 	return fmt.Sprintf("avatars/%d/%d.webp", userID, avatarID)
 }
 
+func BannerKey(userID, bannerID int64) string {
+	return fmt.Sprintf("banners/%d/%d.webp", userID, bannerID)
+}
+
 func IconKey(guildID, iconID int64) string {
 	return fmt.Sprintf("icons/%d/%d.webp", guildID, iconID)
 }

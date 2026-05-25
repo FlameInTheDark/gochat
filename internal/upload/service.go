@@ -15,6 +15,7 @@ import (
 
 	attachmentrepo "github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	avatarrepo "github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
+	bannerrepo "github.com/FlameInTheDark/gochat/internal/database/entities/banner"
 	iconrepo "github.com/FlameInTheDark/gochat/internal/database/entities/icon"
 	"github.com/FlameInTheDark/gochat/internal/observability"
 )
@@ -371,6 +372,164 @@ func (s *AvatarService) Upload(ctx context.Context, actorID, userID, avatarID in
 		Height:      height,
 		Size:        size,
 	}, nil
+}
+
+type BannerResult struct {
+	AlreadyDone bool
+	URL         string
+	ContentType string
+	Width       int64
+	Height      int64
+	Size        int64
+}
+
+type CropArea struct {
+	X      int64
+	Y      int64
+	Width  int64
+	Height int64
+}
+
+type BannerService struct {
+	repo        bannerrepo.Banner
+	storage     Storage
+	processor   MediaProcessor
+	publicBase  string
+	maxDim      int
+	maxFileSize int64
+	minWidth    int64
+	minHeight   int64
+}
+
+func NewBannerService(repo bannerrepo.Banner, storage Storage, publicBase string, processor MediaProcessor, maxDim int, maxFileSize, minWidth, minHeight int64) *BannerService {
+	return &BannerService{
+		repo:        repo,
+		storage:     storage,
+		processor:   processor,
+		publicBase:  publicBase,
+		maxDim:      maxDim,
+		maxFileSize: maxFileSize,
+		minWidth:    minWidth,
+		minHeight:   minHeight,
+	}
+}
+
+func (s *BannerService) Upload(ctx context.Context, actorID, userID, bannerID int64, body io.Reader, crop *CropArea) (_ *BannerResult, err error) {
+	placeholder, err := s.repo.GetBanner(ctx, bannerID, userID)
+	if err != nil {
+		if errors.Is(err, gocql.ErrNotFound) {
+			return nil, ErrPlaceholderNotFound
+		}
+		return nil, err
+	}
+	if placeholder.UserId != actorID || userID != actorID {
+		return nil, ErrForbidden
+	}
+	if placeholder.Done {
+		return &BannerResult{AlreadyDone: true}, nil
+	}
+	if placeholder.FileSize > s.maxFileSize {
+		return nil, ErrTooLarge
+	}
+
+	buffered, err := ReadBodyToMemory(body, placeholder.FileSize)
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(buffered.Data)) > s.maxFileSize {
+		return nil, ErrTooLarge
+	}
+	if !strings.HasPrefix(strings.ToLower(buffered.ContentType), "image/") {
+		return nil, ErrUnsupportedMedia
+	}
+
+	sourceWidth, sourceHeight, err := DecodeImageDimensions(buffered.Data)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrMediaProcess, err)
+	}
+	if sourceWidth < s.minWidth || sourceHeight < s.minHeight {
+		return nil, ErrInvalidDimensions
+	}
+	normalizedCrop, err := validateCropArea(crop, sourceWidth, sourceHeight)
+	if err != nil {
+		return nil, err
+	}
+
+	webpBytes, err := s.convertBannerToWebP(ctx, buffered.Data, normalizedCrop)
+	if err != nil {
+		return nil, err
+	}
+	if len(webpBytes) == 0 {
+		return nil, ErrMediaProcess
+	}
+	if int64(len(webpBytes)) > s.maxFileSize {
+		return nil, ErrTooLarge
+	}
+
+	width, height, err := DecodeImageDimensions(webpBytes)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrMediaProcess, err)
+	}
+
+	key := BannerKey(userID, bannerID)
+	defer func() {
+		if err == nil {
+			return
+		}
+		_ = s.storage.RemoveAttachment(ctx, key)
+		_ = s.repo.RemoveBanner(ctx, bannerID, userID)
+	}()
+
+	if err := uploadBytes(ctx, s.storage, key, webpBytes, "image/webp"); err != nil {
+		return nil, err
+	}
+
+	publicURL := PublicURL(s.publicBase, key)
+	contentType := "image/webp"
+	size := int64(len(webpBytes))
+	if err := s.repo.DoneBanner(ctx, bannerID, userID, &contentType, &publicURL, &height, &width, &size); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFinalize, err)
+	}
+
+	return &BannerResult{
+		URL:         publicURL,
+		ContentType: contentType,
+		Width:       width,
+		Height:      height,
+		Size:        size,
+	}, nil
+}
+
+func (s *BannerService) convertBannerToWebP(ctx context.Context, data []byte, crop *CropArea) ([]byte, error) {
+	animated, err := DetectAnimated(data)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrMediaProcess, err)
+	}
+	if crop == nil && !animated {
+		return s.processor.ConvertToWebP(ctx, bytes.NewReader(data), s.maxDim, s.maxFileSize)
+	}
+	if crop == nil {
+		width, height, err := DecodeImageDimensions(data)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrMediaProcess, err)
+		}
+		crop = &CropArea{X: 0, Y: 0, Width: width, Height: height}
+	}
+	return s.processor.ConvertToWebPWithCrop(ctx, bytes.NewReader(data), s.maxDim, s.maxFileSize, *crop, animated)
+}
+
+func validateCropArea(crop *CropArea, sourceWidth, sourceHeight int64) (*CropArea, error) {
+	if crop == nil {
+		return nil, nil
+	}
+	if crop.Width <= 0 || crop.Height <= 0 || crop.X < 0 || crop.Y < 0 {
+		return nil, ErrInvalidDimensions
+	}
+	if crop.X+crop.Width > sourceWidth || crop.Y+crop.Height > sourceHeight {
+		return nil, ErrInvalidDimensions
+	}
+	normalized := *crop
+	return &normalized, nil
 }
 
 type IconResult struct {

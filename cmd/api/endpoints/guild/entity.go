@@ -12,6 +12,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/banned"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/banner"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
@@ -29,6 +30,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/threadmember"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/usernote"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/usersettings"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
@@ -139,6 +141,8 @@ type entity struct {
 	ban   banned.Banned
 	inv   invite.Invite
 	av    avatar.Avatar
+	bn    banner.Banner
+	notes usernote.UserNote
 
 	storage            *s3.Client
 	attachTTL          int64
@@ -200,6 +204,8 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.Ind
 		ban:                banned.New(dbcon),
 		inv:                invite.New(pg.Conn()),
 		av:                 avatar.New(dbcon),
+		bn:                 banner.New(dbcon),
+		notes:              usernote.New(pg.Conn()),
 		storage:            storage,
 		attachTTL:          attachTTLSeconds,
 		authSecret:         authSecret,

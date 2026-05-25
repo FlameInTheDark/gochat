@@ -402,78 +402,6 @@ services:
       - ./init/init-yugabytedb.sh:/init-yugabytedb.sh:ro
     entrypoint: ["/bin/bash", "/init-yugabytedb.sh"]
 
-  citus-master:
-    profiles: ["citus"]
-    container_name: "${COMPOSE_PROJECT_NAME:-citus}_master"
-    image: "citusdata/citus:13.0.3"
-    ports: [ "${COORDINATOR_EXTERNAL_PORT:-5432}:5432" ]
-    labels: [ "com.citusdata.role=Master" ]
-    environment: &AUTH
-      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
-      PGUSER: "${POSTGRES_USER:-postgres}"
-      PGPASSWORD: "${POSTGRES_PASSWORD:-postgres}"
-      POSTGRES_HOST_AUTH_METHOD: "${POSTGRES_HOST_AUTH_METHOD:-trust}"
-      POSTGRES_DB: "gochat"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -d gochat -U ${POSTGRES_USER:-postgres} --quiet"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      default:
-        aliases:
-          - master
-      citus:
-        aliases:
-          - master
-  citus-worker:
-    profiles: ["citus"]
-    image: "citusdata/citus:13.0.3"
-    labels: [ "com.citusdata.role=Worker" ]
-    depends_on: [ citus-manager ]
-    environment: *AUTH
-    command: "/wait-for-manager.sh"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U ${POSTGRES_USER:-postgres} --quiet"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - healthcheck-volume:/healthcheck
-    networks:
-      - default
-      - citus
-  citus-manager:
-    profiles: ["citus"]
-    container_name: "${COMPOSE_PROJECT_NAME:-citus}_manager"
-    image: "citusdata/membership-manager:0.3.0"
-    volumes:
-      - "${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock"
-      - healthcheck-volume:/healthcheck
-    depends_on: [ citus-master ]
-    environment: *AUTH
-    networks:
-      default:
-        aliases:
-          - manager
-      citus:
-        aliases:
-          - manager
-
-  citus-init:
-    profiles: ["citus"]
-    image: postgres:15-alpine
-    restart: "no"
-    depends_on:
-      citus-master:
-        condition: service_started
-    environment:
-      - PGPASSWORD=${POSTGRES_PASSWORD:-postgres}
-    entrypoint: ["/bin/sh", "-c", "until pg_isready -h citus-master -p 5432 -U ${POSTGRES_USER:-postgres}; do sleep 1; done; psql -h citus-master -U ${POSTGRES_USER:-postgres} -d gochat -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS citus;'" ]
-    networks:
-      - citus
-
   etcd:
     image: quay.io/coreos/etcd:v3.5.0
     restart: always
@@ -494,12 +422,9 @@ volumes:
   yugabyte-data:
   openobserve-data:
   opensearch-data:
-  healthcheck-volume:
 
 networks:
   traefik:
     name: gochat_traefik
-  citus:
-    name: gochat_citus
 
 
