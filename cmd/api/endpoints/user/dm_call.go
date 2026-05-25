@@ -73,6 +73,18 @@ func dmCallRouteKey(channelID int64) string {
 }
 func dmCallUserIndexKey(userID int64) string { return "dmcall:user:" + strconv.FormatInt(userID, 10) }
 
+func voiceClientsKey(channelID int64) string {
+	return "voice:clients:" + strconv.FormatInt(channelID, 10)
+}
+
+func voiceRouteKey(channelID int64) string {
+	return "voice:route:" + strconv.FormatInt(channelID, 10)
+}
+
+func voiceRebindKey(channelID int64) string {
+	return "voice:rebind:" + strconv.FormatInt(channelID, 10)
+}
+
 func (e *entity) parseDMCallChannelID(c *fiber.Ctx) (int64, error) {
 	channelID, err := strconv.ParseInt(c.Params("channel_id"), 10, 64)
 	if err != nil || channelID <= 0 {
@@ -572,6 +584,9 @@ func (e *entity) clearDMCall(ctx context.Context, call dmCallState, reason strin
 	if e.cache != nil {
 		_ = e.cache.Delete(ctx, dmCallStateKey(call.ChannelID))
 		_ = e.cache.Delete(ctx, dmCallRouteKey(call.ChannelID))
+		_ = e.cache.Delete(ctx, voiceRouteKey(call.ChannelID))
+		_ = e.cache.Delete(ctx, voiceRebindKey(call.ChannelID))
+		_ = e.cache.Delete(ctx, voiceClientsKey(call.ChannelID))
 		_ = e.cache.HDel(ctx, dmCallUserIndexKey(call.CallerID), strconv.FormatInt(call.ChannelID, 10))
 		_ = e.cache.HDel(ctx, dmCallUserIndexKey(call.RecipientID), strconv.FormatInt(call.ChannelID, 10))
 	}
@@ -619,10 +634,50 @@ func (e *entity) activeDMCallSummaries(ctx context.Context, userID int64) []mqms
 		if call.CallerID != userID && call.RecipientID != userID {
 			continue
 		}
+		call, ok = e.reconcileDMCallVoicePresence(ctx, call)
+		if !ok {
+			continue
+		}
 		out = append(out, e.dmCallSummaryForUser(call, userID))
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].StartedAt > out[j].StartedAt })
 	return out
+}
+
+func (e *entity) reconcileDMCallVoicePresence(ctx context.Context, call dmCallState) (dmCallState, bool) {
+	if e.cache == nil {
+		return call, true
+	}
+	clients, err := e.cache.HGetAll(ctx, voiceClientsKey(call.ChannelID))
+	if err != nil {
+		return call, true
+	}
+	now := time.Now().Unix()
+	active := map[int64]int64{}
+	for rawUserID := range clients {
+		userID, err := strconv.ParseInt(rawUserID, 10, 64)
+		if err != nil {
+			continue
+		}
+		if userID == call.CallerID || userID == call.RecipientID {
+			active[userID] = now
+		}
+	}
+	if len(active) == 0 {
+		call.EndedAt = now
+		e.clearDMCall(ctx, call, "empty")
+		return dmCallState{}, false
+	}
+	if len(active) != len(call.Participants) {
+		call.Participants = active
+		if len(active) == 1 {
+			call.SoloSince = now
+		} else {
+			call.SoloSince = 0
+		}
+		_ = e.saveDMCall(ctx, call)
+	}
+	return call, true
 }
 
 func (e *entity) validateActiveDMCallParticipant(ctx context.Context, channelID, userID int64) (dmCallState, error) {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/mq"
 	"github.com/FlameInTheDark/gochat/internal/observability"
+	"github.com/FlameInTheDark/gochat/internal/userbootstrap"
 )
 
 // GetUser
@@ -39,9 +41,13 @@ func (e *entity) GetUser(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	viewer, err := helper.GetUser(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
+	}
 
 	// Fetch user data concurrently
-	userDTO, err := e.fetchUserWithDiscriminatorCtx(c.UserContext(), userId)
+	userDTO, err := e.fetchUserWithDiscriminatorCtx(c.UserContext(), viewer.Id, userId)
 	if err != nil {
 		return err
 	}
@@ -70,7 +76,7 @@ func (e *entity) parseUserIdParam(c *fiber.Ctx, paramName string) (int64, error)
 }
 
 // fetchUserWithDiscriminator fetches user data and discriminator concurrently
-func (e *entity) fetchUserWithDiscriminatorCtx(ctx context.Context, userId int64) (dto.User, error) {
+func (e *entity) fetchUserWithDiscriminatorCtx(ctx context.Context, viewerId, userId int64) (dto.User, error) {
 	type userResult struct {
 		user *model.User
 		err  error
@@ -111,6 +117,19 @@ func (e *entity) fetchUserWithDiscriminatorCtx(ctx context.Context, userId int64
 	if userRes.user.Avatar != nil {
 		if ad, err := e.getAvatarDataCached(ctx, userRes.user.Id, *userRes.user.Avatar); err == nil && ad != nil {
 			userDTO.Avatar = ad
+		}
+	}
+	if userRes.user.Banner == nil {
+		userDTO.Banner = &dto.BannerData{Exists: false}
+	} else if e.bn != nil {
+		if bd, err := e.getBannerDataCached(ctx, userRes.user.Id, *userRes.user.Banner); err == nil && bd != nil {
+			userDTO.Banner = bd
+		}
+	}
+	if viewerId > 0 && viewerId != userId && e.notes != nil {
+		if note, err := e.notes.GetNote(ctx, viewerId, userId); err == nil && strings.TrimSpace(note.Note) != "" {
+			n := note.Note
+			userDTO.PersonalNote = &n
 		}
 	}
 	userDTO.Discriminator = discRes.disc.Discriminator
@@ -154,7 +173,7 @@ func (e *entity) ModifyUser(c *fiber.Ctx) error {
 	asyncCtx := observability.BackgroundFromContext(c.UserContext())
 	asyncLog := observability.LoggerWithContext(asyncCtx, reqLog)
 	go func() {
-		dtoUser, ferr := e.fetchUserWithDiscriminatorCtx(asyncCtx, user.Id)
+		dtoUser, ferr := e.fetchUserWithDiscriminatorCtx(asyncCtx, 0, user.Id)
 		if ferr != nil {
 			asyncLog.Error("unable to build updated user dto", slog.String("error", ferr.Error()))
 			return
@@ -359,6 +378,19 @@ func (e *entity) fetchGuildMemberData(c *fiber.Ctx, userId, guildId int64) (dto.
 			userDTO.Avatar = ad
 		}
 	}
+	if userRes.user.Banner == nil {
+		userDTO.Banner = &dto.BannerData{Exists: false}
+	} else if e.bn != nil {
+		if bd, err := e.getBannerDataCached(c.UserContext(), userRes.user.Id, *userRes.user.Banner); err == nil && bd != nil {
+			userDTO.Banner = bd
+		}
+	}
+	if userId != userRes.user.Id && e.notes != nil {
+		if note, err := e.notes.GetNote(c.UserContext(), userId, userRes.user.Id); err == nil && strings.TrimSpace(note.Note) != "" {
+			n := note.Note
+			userDTO.PersonalNote = &n
+		}
+	}
 
 	// Build and return member DTO
 	return dto.Member{
@@ -397,6 +429,34 @@ func (e *entity) getAvatarDataCached(ctx context.Context, userId, avatarId int64
 	}
 	_ = e.cache.SetTimedJSON(ctx, key, ad, avatarCacheTTLSeconds)
 	return &ad, nil
+}
+
+func (e *entity) getBannerDataCached(ctx context.Context, userId, bannerId int64) (*dto.BannerData, error) {
+	key := fmt.Sprintf("banners:%d:%d", userId, bannerId)
+	var bd dto.BannerData
+
+	if err := e.cache.GetJSON(ctx, key, &bd); err == nil && bd.Exists && bd.URL != "" {
+		return &bd, nil
+	}
+
+	bn, err := e.bn.GetBanner(ctx, bannerId, userId)
+	if err != nil {
+		return nil, err
+	}
+	if bn.URL == nil || *bn.URL == "" {
+		return &dto.BannerData{Exists: false}, nil
+	}
+	bd = dto.BannerData{
+		Exists:      true,
+		Id:          bn.Id,
+		URL:         *bn.URL,
+		ContentType: bn.ContentType,
+		Width:       bn.Width,
+		Height:      bn.Height,
+		Size:        bn.FileSize,
+	}
+	_ = e.cache.SetTimedJSON(ctx, key, bd, avatarCacheTTLSeconds)
+	return &bd, nil
 }
 
 // LeaveGuild
@@ -859,13 +919,7 @@ func (e *entity) GetUserSettings(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetChannel)
 	}
-	joinedThreadSet := make(map[int64]struct{}, len(threadMembers))
-	for _, member := range threadMembers {
-		if _, ok := joinedThreadSet[member.ThreadId]; ok {
-			continue
-		}
-		joinedThreadSet[member.ThreadId] = struct{}{}
-	}
+	joinedThreadSet := userbootstrap.BuildJoinedThreadSet(threadMembers)
 
 	// skip channels without new messages beyond the user's read state.
 	chModels, err := e.ch.GetChannelsBulk(c.UserContext(), gchs)

@@ -15,6 +15,7 @@ type MediaProcessor interface {
 	CreateWebPPreview(ctx context.Context, source string, maxDimension int) ([]byte, error)
 	CreateWebPPreviewFromReader(ctx context.Context, source io.Reader, maxDimension int) ([]byte, error)
 	ConvertToWebP(ctx context.Context, source io.Reader, maxDimension int, sizeLimit int64) ([]byte, error)
+	ConvertToWebPWithCrop(ctx context.Context, source io.Reader, maxDimension int, sizeLimit int64, crop CropArea, animated bool) ([]byte, error)
 	ProbeDimensions(ctx context.Context, source string) (int64, int64, error)
 }
 
@@ -71,6 +72,43 @@ func (p *FFmpegProcessor) ConvertToWebP(ctx context.Context, source io.Reader, m
 		"-fs", strconv.FormatInt(sizeLimit, 10),
 		"-",
 	)
+}
+
+func (p *FFmpegProcessor) ConvertToWebPWithCrop(ctx context.Context, source io.Reader, maxDimension int, sizeLimit int64, crop CropArea, animated bool) ([]byte, error) {
+	filter := fmt.Sprintf(
+		"crop=%d:%d:%d:%d,scale=%d:%d:force_original_aspect_ratio=decrease",
+		crop.Width,
+		crop.Height,
+		crop.X,
+		crop.Y,
+		maxDimension,
+		maxDimension,
+	)
+	args := []string{
+		"-v", "error",
+		"-y",
+		"-i", "pipe:0",
+		"-vf", filter,
+	}
+	if animated {
+		args = append(args,
+			"-loop", "0",
+			"-an",
+			"-vsync", "0",
+			"-c:v", "libwebp_anim",
+			"-f", "webp",
+			"-fs", strconv.FormatInt(sizeLimit, 10),
+			"-",
+		)
+	} else {
+		args = append(args,
+			"-f", "image2pipe",
+			"-vcodec", "webp",
+			"-fs", strconv.FormatInt(sizeLimit, 10),
+			"-",
+		)
+	}
+	return p.runFFmpeg(ctx, source, args...)
 }
 
 func (p *FFmpegProcessor) ProbeDimensions(ctx context.Context, source string) (int64, int64, error) {

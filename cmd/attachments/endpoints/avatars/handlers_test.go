@@ -60,6 +60,9 @@ func (f *fakeProcessor) ConvertToWebP(ctx context.Context, source io.Reader, max
 	_, _ = io.ReadAll(source)
 	return makeWebP(128, 64), nil
 }
+func (f *fakeProcessor) ConvertToWebPWithCrop(ctx context.Context, source io.Reader, maxDimension int, sizeLimit int64, crop upload.CropArea, animated bool) ([]byte, error) {
+	return f.ConvertToWebP(ctx, source, maxDimension, sizeLimit)
+}
 func (f *fakeProcessor) ProbeDimensions(ctx context.Context, source string) (int64, int64, error) {
 	return 0, 0, nil
 }
@@ -85,6 +88,7 @@ func (f *fakeUserRepo) SetUserAvatar(ctx context.Context, id, attachmentId int64
 	}
 	return nil
 }
+func (f *fakeUserRepo) SetUserBanner(ctx context.Context, id, bannerId int64) error      { return nil }
 func (f *fakeUserRepo) SetUsername(ctx context.Context, id, name string) error           { return nil }
 func (f *fakeUserRepo) SetUserBlocked(ctx context.Context, id int64, blocked bool) error { return nil }
 func (f *fakeUserRepo) SetUploadLimit(ctx context.Context, id int64, uploadLimit int64) error {

@@ -7,14 +7,12 @@ CREATE TABLE IF NOT EXISTS guild_tags
     tag      TEXT   NOT NULL,
     PRIMARY KEY (guild_id, tag)
 );
-SELECT create_distributed_table('guild_tags', 'guild_id');
 
 CREATE TABLE IF NOT EXISTS guild_discovery_stats
 (
     guild_id       BIGINT PRIMARY KEY,
     members_count BIGINT NOT NULL DEFAULT 0
 );
-SELECT create_distributed_table('guild_discovery_stats', 'guild_id');
 
 INSERT INTO guild_discovery_stats (guild_id, members_count)
 SELECT g.id, COUNT(m.user_id)

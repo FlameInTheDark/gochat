@@ -61,7 +61,7 @@ Important fields:
 | `member` | Current user's thread membership when the channel is returned over HTTP |
 | `member_ids` | User IDs of members who have joined the thread, ordered by join time |
 | `closed` | If `true`, the thread is read-only |
-| `message_count` | Approximate thread message count returned as the stored Postgres base plus any pending KeyDB delta |
+| `message_count` | Approximate thread message count returned as the stored YugabyteDB YSQL base plus any pending KeyDB delta |
 
 ## Message Model
 
@@ -173,7 +173,7 @@ Message positions are not thread-specific; they exist in any channel type, inclu
 
 Implementation details:
 
-- each channel has a durable Postgres `message_position` high watermark
+- each channel has a durable YugabyteDB YSQL `message_position` high watermark
 - the API allocates message positions from KeyDB-backed blocks to avoid a database write for every message
 - if cache state is lost, allocation resumes from the durable channel watermark, so positions stay monotonic
 - unused reserved values may be skipped after restart or cache loss; clients must treat `position` as ordered navigation metadata, not as a contiguous row number
@@ -330,10 +330,10 @@ Thread channel payloads expose `message_count` as an approximate stored counter.
 
 Behavior:
 
-- A new thread persists an initial count of `2` in Postgres because it contains the thread-initial copy plus the creator's starter message.
-- New thread messages do not update Postgres immediately. They append a delta in KeyDB instead.
-- Reads return the stored Postgres base plus any pending KeyDB delta, so active threads show fresh counts without a SQL write per message.
-- A background flusher periodically merges cached KeyDB deltas back into Postgres.
+- A new thread persists an initial count of `2` in YugabyteDB YSQL because it contains the thread-initial copy plus the creator's starter message.
+- New thread messages do not update YugabyteDB YSQL immediately. They append a delta in KeyDB instead.
+- Reads return the stored YugabyteDB YSQL base plus any pending KeyDB delta, so active threads show fresh counts without a SQL write per message.
+- A background flusher periodically merges cached KeyDB deltas back into YugabyteDB YSQL.
 - Pending KeyDB deltas survive normal API process restarts and are flushed by a later API instance, so counters are eventually persisted instead of being lost on every restart.
 - Message deletes are not applied immediately to the counter, so `message_count` should be treated as approximate.
 - Older threads created before this field existed may start at `0` until new activity or a future backfill updates the stored base count.

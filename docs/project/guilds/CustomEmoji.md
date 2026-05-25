@@ -14,12 +14,12 @@ Custom guild emoji let a guild upload image-based expressions that are reference
 
 ## Storage Model
 
-Emoji metadata lives in PostgreSQL/Citus.
+Emoji metadata lives in YugabyteDB YSQL.
 
-- `guild_emojis` is distributed by `guild_id` and colocated with guild relational data.
+- `guild_emojis` is keyed by `guild_id` for guild-local reads in the sharded YugabyteDB YSQL database.
 - `emoji_lookup` is distributed by `id` for direct lookup by `emoji_id` during message compose.
 
-This data intentionally stays in Citus instead of ScyllaDB because the feature depends on relational guarantees: guild-local unique names, per-guild static and animated quotas, guild membership checks, and guild-scoped delete and rename operations.
+This data intentionally stays in YugabyteDB YSQL instead of ScyllaDB because the feature depends on relational guarantees: guild-local unique names, per-guild static and animated quotas, guild membership checks, and guild-scoped delete and rename operations.
 
 The attachments service stores three deterministic S3 objects per emoji:
 
@@ -29,7 +29,7 @@ The attachments service stores three deterministic S3 objects per emoji:
 
 `guild_id` is intentionally not part of the object key. `emoji_id` is globally unique and the public fetch path must stay cheap.
 
-On guild delete, the API loads all emoji IDs from Citus, removes their metadata rows, and deletes these deterministic object keys from storage.
+On guild delete, the API loads all emoji IDs from YugabyteDB YSQL, removes their metadata rows, and deletes these deterministic object keys from storage.
 
 ## Name Rules and Limits
 
@@ -120,7 +120,7 @@ Rename request:
 }
 ```
 
-Delete removes both Citus rows and all three object variants.
+Delete removes both YugabyteDB YSQL rows and all three object variants.
 
 ## Public Asset Route
 
@@ -129,7 +129,7 @@ Delete removes both Citus rows and all three object variants.
 This route is intentionally hot-path friendly:
 
 - no auth
-- no Citus lookup
+- no YugabyteDB YSQL lookup
 - no KeyDB lookup
 - direct redirect to the deterministic S3 or CDN object key
 

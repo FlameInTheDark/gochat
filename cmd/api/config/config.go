@@ -29,6 +29,7 @@ type Config struct {
 	AttachmentTTLMinutes       int64         `yaml:"attachment_ttl_minutes" env:"ATTACHMENT_TTL_MINUTES" env-default:"10"`
 	NATSConnString             string        `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
 	IndexerNATSConnString      string        `yaml:"indexer_nats_conn_string" env:"INDEX_NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`
+	PGDriver                   string        `yaml:"pg_driver" env:"PG_DRIVER" env-default:"postgres"`
 	PGDSN                      string        `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
 	PGRetries                  int           `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
 	PGQueryLog                 bool          `yaml:"pg_query_log" env:"PG_QUERY_LOG" env-default:"false"`

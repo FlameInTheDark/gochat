@@ -20,9 +20,12 @@ const (
 	OPCodePresenceSubscription
 	// WebRTC signaling over existing WS (single opcode)
 	OPCodeRTC
+	OPCodeHeartbeatAck
 )
 
 type EventType int
+
+const EventTypeGatewayReady EventType = 1
 
 const (
 	EventTypeMessageCreate EventType = 100 + iota

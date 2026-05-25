@@ -17,6 +17,7 @@ type Config struct {
 	ClusterKeyspace       string   `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
 	HearthBeatTimeout     int64    `yaml:"hearth_beat_timeout" env:"HEARTH_BEAT_TIME" env-default:"35000"`
 	NATSConnString        string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
+	PGDriver              string   `yaml:"pg_driver" env:"PG_DRIVER" env-default:"postgres"`
 	PGDSN                 string   `yaml:"pg_dsn" env:"PG_DSN"`
 	PGRetries             int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
 	CacheAddr             string   `yaml:"cache_addr" env:"CACHE_ADDR" env-default:"keydb:6379"`

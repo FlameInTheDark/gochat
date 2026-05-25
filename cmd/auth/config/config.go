@@ -38,6 +38,7 @@ type Config struct {
 	MFAEncryptionKey           string `yaml:"mfa_encryption_key" env:"MFA_ENCRYPTION_KEY" env-default:""`
 	Swagger                    bool   `yaml:"swagger" env:"SWAGGER" env-default:"false"`
 	KeyDB                      string `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
+	PGDriver                   string `yaml:"pg_driver" env:"PG_DRIVER" env-default:"postgres"`
 	PGDSN                      string `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
 	PGRetries                  int    `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
 	NATSConnString             string `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
@@ -17,12 +18,19 @@ func Publish(ctx context.Context, conn *natsio.Conn, agg Presence) (err error) {
 		return nil
 	}
 
+	voiceID := agg.VoiceChannelID
+	if agg.Status == StatusOffline && voiceID == nil {
+		clearVoice := int64(0)
+		voiceID = &clearVoice
+	}
+
 	msg, err := mqmsg.BuildEventMessage(&mqmsg.PresenceUpdate{
 		UserID:           agg.UserID,
 		Status:           agg.Status,
 		CustomStatusText: agg.CustomStatusText,
 		Since:            agg.Since,
-		VoiceChannelID:   agg.VoiceChannelID,
+		ClientStatus:     agg.ClientStatus,
+		VoiceChannelID:   voiceID,
 		Mute:             agg.Mute,
 		Deafen:           agg.Deafen,
 		SelfVideo:        agg.SelfVideo,
@@ -71,4 +79,72 @@ func Refresh(ctx context.Context, store *Store, conn *natsio.Conn, userID, ttlSe
 		return Presence{}, err
 	}
 	return agg, nil
+}
+
+// ReconcileTouched recomputes recently touched users from Redis-backed leases
+// and publishes only when the cached aggregate changed.
+func ReconcileTouched(ctx context.Context, store *Store, conn *natsio.Conn, ttlSeconds, limit int64) (int, error) {
+	if store == nil {
+		return 0, nil
+	}
+	if ttlSeconds <= 0 {
+		ttlSeconds = 60
+	}
+	if limit <= 0 {
+		limit = 1000
+	}
+
+	userIDs, err := store.RecentlyTouched(ctx, limit)
+	if err != nil {
+		return 0, err
+	}
+
+	now := time.Now().Unix()
+	published := 0
+	for _, userID := range userIDs {
+		if _, err := store.PruneExpiredSessions(ctx, userID, now, 1000); err != nil {
+			return published, err
+		}
+
+		prev, prevOK, err := store.CachedAggregate(ctx, userID)
+		if err != nil {
+			return published, err
+		}
+
+		agg, _, err := store.Aggregate(ctx, userID, now)
+		if err != nil {
+			return published, err
+		}
+		if err := store.SetAggregated(ctx, agg, ttlSeconds); err != nil {
+			return published, err
+		}
+		if prevOK && presenceEqual(prev, agg) {
+			continue
+		}
+		if err := Publish(ctx, conn, agg); err != nil {
+			return published, err
+		}
+		published++
+	}
+	return published, nil
+}
+
+func presenceEqual(a, b Presence) bool {
+	return a.UserID == b.UserID &&
+		a.Status == b.Status &&
+		a.CustomStatusText == b.CustomStatusText &&
+		a.Since == b.Since &&
+		equalInt64Ptr(a.VoiceChannelID, b.VoiceChannelID) &&
+		a.Mute == b.Mute &&
+		a.Deafen == b.Deafen &&
+		a.SelfVideo == b.SelfVideo &&
+		reflect.DeepEqual(a.ClientStatus, b.ClientStatus) &&
+		reflect.DeepEqual(a.ActiveStream, b.ActiveStream)
+}
+
+func equalInt64Ptr(a, b *int64) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
 }

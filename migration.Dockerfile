@@ -2,6 +2,8 @@ FROM golang:1.26.2 AS builder
 
 ARG MIGRATE_VERSION=v4.19.1
 
+# YugabyteDB YSQL uses the PostgreSQL wire protocol, so golang-migrate's
+# postgres driver is still required even though only YugabyteDB SQL migrations are shipped.
 RUN CGO_ENABLED=0 go install -tags "postgres cassandra" github.com/golang-migrate/migrate/v4/cmd/migrate@${MIGRATE_VERSION}
 
 FROM alpine:3.22

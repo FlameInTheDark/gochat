@@ -3174,14 +3174,24 @@ func (e *entity) Delete(c *fiber.Ctx) error {
 	}
 
 	// Validate message ownership
-	message, err := e.validateDeletePermission(c, messageId, channelId, user.Id)
+	message, channel, guildID, err := e.validateDeletePermission(c, messageId, channelId, user.Id)
 	if err != nil {
 		return err
+	}
+
+	shouldRollbackLastMessageID := shouldRollbackLastMessage(channel, message)
+	previousLastMessageID, previousLastMessageOK := int64(0), true
+	if shouldRollbackLastMessageID {
+		previousLastMessageID, previousLastMessageOK = e.previousMessageID(c.UserContext(), channel.Id, message.Id)
 	}
 
 	// Delete message and send event
 	if err := e.deleteMessageAndNotify(c, message); err != nil {
 		return err
+	}
+
+	if shouldRollbackLastMessageID && previousLastMessageOK {
+		e.updateLastMessageAfterDelete(c.UserContext(), channel, guildID, previousLastMessageID)
 	}
 
 	// Evict from cache: remove the DTO key and drop the ID from the index.
@@ -3217,42 +3227,102 @@ func (e *entity) parseDeleteMessageRequest(c *fiber.Ctx) (*helper.JWTUser, int64
 }
 
 // validateDeletePermission checks if user can delete the message
-func (e *entity) validateDeletePermission(c *fiber.Ctx, messageId, channelId, userId int64) (*model.Message, error) {
+func (e *entity) validateDeletePermission(c *fiber.Ctx, messageId, channelId, userId int64) (*model.Message, *model.Channel, *int64, error) {
 	channel, err := e.ch.GetChannel(c.UserContext(), channelId)
 	if err != nil {
-		return nil, fiber.NewError(fiber.StatusNotFound, "channel not found")
+		return nil, nil, nil, fiber.NewError(fiber.StatusNotFound, "channel not found")
 	}
 	if channel.Type == model.ChannelTypeThread && channel.Closed {
-		return nil, fiber.NewError(fiber.StatusForbidden, ErrThreadClosed)
+		return nil, nil, nil, fiber.NewError(fiber.StatusForbidden, ErrThreadClosed)
 	}
 	guildID, err := e.requireCurrentMessageChannelAccess(c.UserContext(), &channel, channelId, userId)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
 	message, err := e.msg.GetMessage(c.UserContext(), messageId, channelId)
 	if err != nil {
 		if errors.Is(err, gocql.ErrNotFound) {
-			return nil, fiber.NewError(fiber.StatusNotFound, "message not found")
+			return nil, nil, nil, fiber.NewError(fiber.StatusNotFound, "message not found")
 		}
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to get message")
+		return nil, nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to get message")
 	}
 
 	if message.UserId != userId {
 		if guildID == nil {
-			return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+			return nil, nil, nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
 		}
 
 		_, _, _, canManageMessages, err := e.perm.ChannelPerm(c.UserContext(), *guildID, channelId, userId, permissions.PermTextManageMessages)
 		if err != nil {
-			return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
+			return nil, nil, nil, fiber.NewError(fiber.StatusInternalServerError, "failed to check permissions")
 		}
 		if !canManageMessages {
-			return nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
+			return nil, nil, nil, fiber.NewError(fiber.StatusForbidden, ErrPermissionsRequired)
 		}
 	}
 
-	return &message, nil
+	return &message, &channel, guildID, nil
+}
+
+func shouldRollbackLastMessage(channel *model.Channel, message *model.Message) bool {
+	return channel != nil && message != nil && channel.LastMessage == message.Id
+}
+
+func (e *entity) previousMessageID(ctx context.Context, channelID, messageID int64) (int64, bool) {
+	if messageID <= channelID {
+		return 0, true
+	}
+	messages, _, err := e.msg.GetMessagesBefore(ctx, channelID, messageID-1, 1)
+	if err != nil {
+		if e.log != nil {
+			e.log.Warn("unable to resolve previous message after delete",
+				slog.String("error", err.Error()),
+				slog.Int64("channel_id", channelID),
+				slog.Int64("message_id", messageID))
+		}
+		return 0, false
+	}
+	if len(messages) == 0 {
+		return 0, true
+	}
+	return messages[0].Id, true
+}
+
+func (e *entity) updateLastMessageAfterDelete(ctx context.Context, channel *model.Channel, guildID *int64, lastMessageID int64) {
+	if channel == nil {
+		return
+	}
+
+	if err := e.ch.SetLastMessage(ctx, channel.Id, lastMessageID); err != nil {
+		if e.log != nil {
+			e.log.Warn("unable to update channel last message after delete",
+				slog.String("error", err.Error()),
+				slog.Int64("channel_id", channel.Id),
+				slog.Int64("last_message_id", lastMessageID))
+		}
+		return
+	}
+
+	if guildID == nil {
+		return
+	}
+	if lastMessageID > channel.Id {
+		if err := e.gclm.SetChannelLastMessage(ctx, *guildID, channel.Id, lastMessageID); err != nil && e.log != nil {
+			e.log.Warn("unable to update guild channel last message after delete",
+				slog.String("error", err.Error()),
+				slog.Int64("guild_id", *guildID),
+				slog.Int64("channel_id", channel.Id),
+				slog.Int64("last_message_id", lastMessageID))
+		}
+		return
+	}
+	if err := e.gclm.ClearChannelLastMessage(ctx, *guildID, channel.Id); err != nil && e.log != nil {
+		e.log.Warn("unable to clear guild channel last message after delete",
+			slog.String("error", err.Error()),
+			slog.Int64("guild_id", *guildID),
+			slog.Int64("channel_id", channel.Id))
+	}
 }
 
 // deleteMessageAndNotify deletes the message and sends notification event
@@ -3562,6 +3632,11 @@ func (e *entity) SetReadState(c *fiber.Ctx) error {
 
 	err = e.rs.SetReadState(c.UserContext(), user.Id, channel.Id, messageId)
 	if err != nil {
+		observability.LoggerFromFiber(c, e.log).Error("unable to set read state",
+			slog.String("error", err.Error()),
+			slog.Int64("user_id", user.Id),
+			slog.Int64("channel_id", channel.Id),
+			slog.Int64("message_id", messageId))
 		return fiber.NewError(fiber.StatusInternalServerError, ErrUnableToSetReadState)
 	}
 

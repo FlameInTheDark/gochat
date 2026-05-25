@@ -7,6 +7,7 @@ replace github.com/gocql/gocql => github.com/scylladb/gocql v1.14.4
 require (
 	github.com/FlameInTheDark/go-dave v1.1.0
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/dimuska139/sendpulse-sdk-go/v7 v7.1.3
 	github.com/fasthttp/websocket v1.5.8
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
@@ -36,6 +37,7 @@ require (
 	github.com/simukti/sqldb-logger v0.0.0-20230108155151-646c1a075551
 	github.com/urfave/cli/v3 v3.4.1
 	github.com/valyala/fasthttp v1.57.0
+	github.com/yugabyte/pgx/v5 v5.7.6-yb-1
 	go.etcd.io/etcd/client/v3 v3.5.13
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.40.0
@@ -50,7 +52,6 @@ require (
 )
 
 require (
-	github.com/alicebob/miniredis/v2 v2.35.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.4 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.16 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.16 // indirect
@@ -66,10 +67,15 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
+	github.com/jackc/pgx/v5 v5.9.2 // indirect
+	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/thomas-vilte/mls-go v1.0.0 // indirect
 	github.com/yuin/gopher-lua v1.1.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.40.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
 )
 
 require (

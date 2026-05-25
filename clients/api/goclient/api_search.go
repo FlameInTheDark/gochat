@@ -371,7 +371,7 @@ func (r ApiSearchGuildsGetRequest) Execute() (*DtoGuildDiscoverySearchResponse, 
 /*
 SearchGuildsGet Search public guilds
 
-Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+Searches only public guilds in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiSearchGuildsGetRequest

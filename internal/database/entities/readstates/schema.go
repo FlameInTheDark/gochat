@@ -9,7 +9,6 @@ import (
 
 const (
 	getReadStates    = `SELECT channels FROM gochat.read_states WHERE user_id = ?`
-	getReadState     = `SELECT channels[?] as last_read FROM gochat.read_states WHERE user_id = ?`
 	setReadState     = `UPDATE gochat.read_states SET channels[?] = ? WHERE user_id = ?`
 	setReadStateMany = `UPDATE gochat.read_states SET channels = channels + ? WHERE user_id = ?`
 )
@@ -31,26 +30,26 @@ func (e *Entity) GetReadStates(ctx context.Context, userId int64) (map[int64]int
 }
 
 func (e *Entity) GetReadState(ctx context.Context, userId, channelId int64) (int64, error) {
-	var lastMessageId *int64
-	err := e.c.Session().
-		Query(getReadState).
-		WithContext(ctx).
-		Bind(channelId, userId).
-		Scan(&lastMessageId)
+	readStates, err := e.GetReadStates(ctx, userId)
 	if err != nil {
-		if errors.Is(err, gocql.ErrNotFound) {
-			return 0, nil
-		}
 		return 0, err
 	}
-	if lastMessageId == nil {
-		return 0, err
+	if len(readStates) == 0 {
+		return 0, nil
 	}
-	return *lastMessageId, nil
+	return readStates[channelId], nil
 }
 
 func (e *Entity) SetReadState(ctx context.Context, userId, channelId, lastMessageId int64) error {
-	err := e.c.Session().
+	current, err := e.GetReadState(ctx, userId, channelId)
+	if err != nil {
+		return err
+	}
+	if lastMessageId <= current {
+		return nil
+	}
+
+	err = e.c.Session().
 		Query(setReadState).
 		WithContext(ctx).
 		Bind(channelId, lastMessageId, userId).

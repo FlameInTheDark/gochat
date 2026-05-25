@@ -74,3 +74,23 @@ go run ./cmd/tools observability smoke --url http://localhost:5080 --org default
 
 The local Postgres exporter path is still a temporary internal bridge behind the collector. It is not a user-facing monitoring workflow.
 
+## YugabyteDB Verification
+
+Compare two YugabyteDB YSQL databases by table row counts and checksums:
+
+```
+go run ./cmd/tools yugabyte verify \
+  --source-dsn "postgres://yugabyte:yugabyte@127.0.0.1:5433/gochat?sslmode=disable" \
+  --target-dsn "postgres://yugabyte:yugabyte@127.0.0.1:5433/gochat_copy?sslmode=disable"
+```
+
+For a direct run outside Docker, provide DSNs that are reachable from the current shell:
+
+```
+go run ./cmd/tools yugabyte verify \
+  --source-dsn "postgres://yugabyte:yugabyte@127.0.0.1:5433/gochat?sslmode=disable" \
+  --target-dsn "postgres://yugabyte:yugabyte@127.0.0.1:5433/gochat_copy?sslmode=disable"
+```
+
+The command returns a non-zero exit code if a table is missing, a row count differs, or a checksum differs. Use `--skip-checksum` only when the checksum query is too expensive and a separate validation method is recorded.
+

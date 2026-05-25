@@ -12,5 +12,6 @@ DROP TABLE IF EXISTS channels;
 DROP TABLE IF EXISTS guilds;
 DROP TABLE IF EXISTS discriminators;
 DROP TABLE IF EXISTS registrations;
+DROP TABLE IF EXISTS recoveries;
 DROP TABLE IF EXISTS authentications;
 DROP TABLE IF EXISTS users;

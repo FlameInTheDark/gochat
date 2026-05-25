@@ -71,6 +71,8 @@ type fakeProcessor struct {
 	probeSource    string
 	convertData    []byte
 	previewData    []byte
+	cropArea       *CropArea
+	cropAnimated   bool
 }
 
 func (f *fakeProcessor) CreateWebPPreview(ctx context.Context, source string, maxDimension int) ([]byte, error) {
@@ -91,6 +93,16 @@ func (f *fakeProcessor) CreateWebPPreviewFromReader(ctx context.Context, source 
 
 func (f *fakeProcessor) ConvertToWebP(ctx context.Context, source io.Reader, maxDimension int, sizeLimit int64) ([]byte, error) {
 	f.convertData, _ = io.ReadAll(source)
+	if f.convertErr != nil {
+		return nil, f.convertErr
+	}
+	return append([]byte(nil), f.convertBytes...), nil
+}
+
+func (f *fakeProcessor) ConvertToWebPWithCrop(ctx context.Context, source io.Reader, maxDimension int, sizeLimit int64, crop CropArea, animated bool) ([]byte, error) {
+	f.convertData, _ = io.ReadAll(source)
+	f.cropArea = &crop
+	f.cropAnimated = animated
 	if f.convertErr != nil {
 		return nil, f.convertErr
 	}
@@ -204,6 +216,32 @@ func (f *fakeAvatarRepo) RemoveAvatar(ctx context.Context, id, userId int64) err
 }
 func (f *fakeAvatarRepo) GetAvatarsByUserId(ctx context.Context, userId int64) ([]model.Avatar, error) {
 	return nil, nil
+}
+
+type fakeBannerRepo struct {
+	placeholder model.Banner
+	getErr      error
+	doneErr     error
+	removeCalls int
+	doneCall    *avatarDoneCall
+}
+
+func (f *fakeBannerRepo) CreateBanner(ctx context.Context, id, userId, ttlSeconds, fileSize int64) error {
+	return nil
+}
+func (f *fakeBannerRepo) GetBanner(ctx context.Context, id, userId int64) (model.Banner, error) {
+	return f.placeholder, f.getErr
+}
+func (f *fakeBannerRepo) DoneBanner(ctx context.Context, id, userId int64, contentType, url *string, height, width, fileSize *int64) error {
+	if contentType == nil || url == nil || height == nil || width == nil || fileSize == nil {
+		return errors.New("missing finalize arguments")
+	}
+	f.doneCall = &avatarDoneCall{contentType: *contentType, url: *url, width: *width, height: *height, size: *fileSize}
+	return f.doneErr
+}
+func (f *fakeBannerRepo) RemoveBanner(ctx context.Context, id, userId int64) error {
+	f.removeCalls++
+	return nil
 }
 
 type fakeIconRepo struct {
@@ -471,6 +509,80 @@ func TestAvatarServiceUploadSizeMismatch(t *testing.T) {
 	_, err := service.Upload(context.Background(), 9, 9, 5, bytes.NewReader(body))
 	if !errors.Is(err, ErrSizeMismatch) {
 		t.Fatalf("expected size mismatch, got %v", err)
+	}
+}
+
+func TestBannerServiceUploadSuccess(t *testing.T) {
+	body := makeWebP(1200, 420)
+	repo := &fakeBannerRepo{placeholder: model.Banner{Id: 7, UserId: 9, FileSize: int64(len(body))}}
+	storage := &fakeStorage{}
+	processor := &fakeProcessor{convertBytes: makeWebP(1200, 420)}
+	service := NewBannerService(repo, storage, "", processor, 1920, 10*1024*1024, 680, 240)
+
+	result, err := service.Upload(context.Background(), 9, 9, 7, bytes.NewReader(body), nil)
+	if err != nil {
+		t.Fatalf("Upload returned error: %v", err)
+	}
+	if result.URL != "banners/9/7.webp" {
+		t.Fatalf("unexpected banner URL: %q", result.URL)
+	}
+	if len(storage.uploads) != 1 || storage.uploads[0].key != "banners/9/7.webp" {
+		t.Fatalf("unexpected uploads: %#v", storage.uploads)
+	}
+	if repo.doneCall == nil || repo.doneCall.width != 1200 || repo.doneCall.height != 420 {
+		t.Fatalf("expected webp dimensions to be persisted, got %#v", repo.doneCall)
+	}
+}
+
+func TestBannerServiceRejectsSmallDimensions(t *testing.T) {
+	body := makeWebP(640, 240)
+	repo := &fakeBannerRepo{placeholder: model.Banner{Id: 7, UserId: 9, FileSize: int64(len(body))}}
+	service := NewBannerService(repo, &fakeStorage{}, "", &fakeProcessor{}, 1920, 10*1024*1024, 680, 240)
+
+	_, err := service.Upload(context.Background(), 9, 9, 7, bytes.NewReader(body), nil)
+	if !errors.Is(err, ErrInvalidDimensions) {
+		t.Fatalf("expected invalid dimensions, got %v", err)
+	}
+}
+
+func TestBannerServiceUploadUsesCropArea(t *testing.T) {
+	body := makeWebP(1200, 420)
+	repo := &fakeBannerRepo{placeholder: model.Banner{Id: 7, UserId: 9, FileSize: int64(len(body))}}
+	storage := &fakeStorage{}
+	crop := &CropArea{X: 120, Y: 60, Width: 680, Height: 240}
+	processor := &fakeProcessor{convertBytes: makeWebP(680, 240)}
+	service := NewBannerService(repo, storage, "", processor, 1920, 10*1024*1024, 680, 240)
+
+	result, err := service.Upload(context.Background(), 9, 9, 7, bytes.NewReader(body), crop)
+	if err != nil {
+		t.Fatalf("Upload returned error: %v", err)
+	}
+	if result.Width != 680 || result.Height != 240 {
+		t.Fatalf("expected cropped dimensions, got %dx%d", result.Width, result.Height)
+	}
+	if processor.cropArea == nil || *processor.cropArea != *crop {
+		t.Fatalf("expected crop to be sent to processor, got %#v", processor.cropArea)
+	}
+	if processor.cropAnimated {
+		t.Fatal("expected still image crop conversion")
+	}
+	if len(storage.uploads) != 1 || !bytes.Equal(storage.uploads[0].data, processor.convertBytes) {
+		t.Fatalf("unexpected upload payload: %#v", storage.uploads)
+	}
+}
+
+func TestBannerServiceRejectsInvalidCropArea(t *testing.T) {
+	body := makeWebP(1200, 420)
+	repo := &fakeBannerRepo{placeholder: model.Banner{Id: 7, UserId: 9, FileSize: int64(len(body))}}
+	processor := &fakeProcessor{convertBytes: makeWebP(680, 240)}
+	service := NewBannerService(repo, &fakeStorage{}, "", processor, 1920, 10*1024*1024, 680, 240)
+
+	_, err := service.Upload(context.Background(), 9, 9, 7, bytes.NewReader(body), &CropArea{X: 900, Y: 0, Width: 680, Height: 240})
+	if !errors.Is(err, ErrInvalidDimensions) {
+		t.Fatalf("expected invalid dimensions, got %v", err)
+	}
+	if processor.cropArea != nil {
+		t.Fatalf("processor should not be called for invalid crop, got %#v", processor.cropArea)
 	}
 }
 

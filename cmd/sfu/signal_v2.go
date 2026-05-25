@@ -204,7 +204,7 @@ func (a *App) handleSignalWSV2(c *websocket.Conn) {
 					_ = a.closeSignalV2Session(session, voicev2.CloseCodeInvalidPayload, "invalid payload")
 					return
 				}
-				_ = (&threadSafeWriter{conn: c.Conn}).SendClose(voicev2.CloseCodeInvalidPayload, "invalid payload")
+				_ = closeRawSignalV2(log, c, voicev2.CloseCodeInvalidPayload, "invalid payload")
 				return
 			}
 			if session == nil {
@@ -227,7 +227,7 @@ func (a *App) handleSignalWSV2(c *websocket.Conn) {
 				if session != nil {
 					_ = a.closeSignalV2Session(session, voicev2.CloseCodeWrongPhase, "binary messages are not allowed before session is established")
 				} else {
-					_ = (&threadSafeWriter{conn: c.Conn}).SendClose(voicev2.CloseCodeWrongPhase, "binary messages are not allowed before session is established")
+					_ = closeRawSignalV2(log, c, voicev2.CloseCodeWrongPhase, "binary messages are not allowed before session is established")
 				}
 				return
 			}
@@ -239,7 +239,7 @@ func (a *App) handleSignalWSV2(c *websocket.Conn) {
 			if session != nil {
 				_ = a.closeSignalV2Session(session, voicev2.CloseCodeUnsupportedMedium, "unsupported websocket message type")
 			} else {
-				_ = (&threadSafeWriter{conn: c.Conn}).SendClose(voicev2.CloseCodeUnsupportedMedium, "unsupported websocket message type")
+				_ = closeRawSignalV2(log, c, voicev2.CloseCodeUnsupportedMedium, "unsupported websocket message type")
 			}
 			return
 		}
@@ -281,7 +281,7 @@ func (a *App) handleSignalV2Handshake(
 		return true, false
 
 	default:
-		_ = (&threadSafeWriter{conn: conn.Conn}).SendClose(voicev2.CloseCodeWrongPhase, "identify or resume expected")
+		_ = closeRawSignalV2(log, conn, voicev2.CloseCodeWrongPhase, "identify or resume expected")
 		return false, true
 	}
 }
@@ -289,35 +289,35 @@ func (a *App) handleSignalV2Handshake(
 func (a *App) handleSignalV2Identify(conn *websocket.Conn, signalCtx context.Context, log *slog.Logger, packet *voicev2.IncomingPacket) (*signalV2Session, error) {
 	var identify voicev2.Identify
 	if err := json.Unmarshal(packet.D, &identify); err != nil || identify.ChannelID == 0 || identify.Token == "" {
-		_ = (&threadSafeWriter{conn: conn.Conn}).SendClose(voicev2.CloseCodeInvalidPayload, "invalid identify payload")
+		_ = closeRawSignalV2(log, conn, voicev2.CloseCodeInvalidPayload, "invalid identify payload")
 		return nil, err
 	}
 	normalizeSignalV2IdentifyDAVE(&identify)
 
 	uid, channelID, guildID, perms, moved, err := a.authorizeJoinFields(identify.ChannelID, identify.Token)
 	if err != nil {
-		_ = (&threadSafeWriter{conn: conn.Conn}).SendClose(voicev2.CloseCodeUnauthorized, "unauthorized")
+		_ = closeRawSignalV2(log, conn, voicev2.CloseCodeUnauthorized, "unauthorized")
 		return nil, err
 	}
 	if a.sfu.IsBlocked(channelID, uid) && !moved {
-		_ = (&threadSafeWriter{conn: conn.Conn}).SendClose(voicev2.CloseCodeUnauthorized, "blocked")
+		_ = closeRawSignalV2(log, conn, voicev2.CloseCodeUnauthorized, "blocked")
 		return nil, errors.New("blocked")
 	}
 
 	supportsDAVE := a.cfg.DAVEEnabled && identify.SupportsEncodedTransforms && identify.MaxDAVEProtocolVersion > 0
 	if !supportsDAVE && a.cfg.DAVERequiredDefault {
-		_ = (&threadSafeWriter{conn: conn.Conn}).SendClose(voicev2.CloseCodeDAVERequired, "dave is required")
+		_ = closeRawSignalV2(log, conn, voicev2.CloseCodeDAVERequired, "dave is required")
 		return nil, errors.New("dave required")
 	}
 
 	pc, err := a.webrtcAPI.NewPeerConnection(a.iceConfig)
 	if err != nil {
-		_ = (&threadSafeWriter{conn: conn.Conn}).SendClose(websocket.ClosePolicyViolation, "unable to create peer connection")
+		_ = closeRawSignalV2(log, conn, websocket.ClosePolicyViolation, "unable to create peer connection")
 		return nil, err
 	}
 	if err := a.setupTransceivers(pc); err != nil {
 		_ = pc.Close()
-		_ = (&threadSafeWriter{conn: conn.Conn}).SendClose(websocket.ClosePolicyViolation, "unable to configure peer connection")
+		_ = closeRawSignalV2(log, conn, websocket.ClosePolicyViolation, "unable to configure peer connection")
 		return nil, err
 	}
 
@@ -388,18 +388,18 @@ func normalizeSignalV2IdentifyDAVE(identify *voicev2.Identify) {
 func (a *App) handleSignalV2Resume(conn *websocket.Conn, packet *voicev2.IncomingPacket) (*signalV2Session, error) {
 	var resume voicev2.Resume
 	if err := json.Unmarshal(packet.D, &resume); err != nil || resume.SessionID == "" || resume.ChannelID == 0 || resume.Token == "" {
-		_ = (&threadSafeWriter{conn: conn.Conn}).SendClose(voicev2.CloseCodeInvalidPayload, "invalid resume payload")
+		_ = closeRawSignalV2(a.log, conn, voicev2.CloseCodeInvalidPayload, "invalid resume payload")
 		return nil, err
 	}
 
 	session := a.getSignalV2Session(resume.SessionID)
 	if session == nil {
-		_ = (&threadSafeWriter{conn: conn.Conn}).SendClose(voicev2.CloseCodeSessionExpired, "session expired")
+		_ = closeRawSignalV2(a.log, conn, voicev2.CloseCodeSessionExpired, "session expired")
 		return nil, errors.New("session expired")
 	}
 	uid, channelID, _, _, _, err := a.authorizeJoinFields(resume.ChannelID, resume.Token)
 	if err != nil || uid != session.userID || channelID != session.channelID {
-		_ = (&threadSafeWriter{conn: conn.Conn}).SendClose(voicev2.CloseCodeUnauthorized, "unauthorized")
+		_ = closeRawSignalV2(a.log, conn, voicev2.CloseCodeUnauthorized, "unauthorized")
 		return nil, err
 	}
 

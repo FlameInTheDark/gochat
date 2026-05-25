@@ -36,8 +36,8 @@ services:
     depends_on:
       keydb:
         condition: service_started
-      citus-master:
-        condition: service_started
+      yugabyte-init:
+        condition: service_completed_successfully
       nats:
         condition: service_started
     networks:
@@ -70,6 +70,8 @@ services:
         condition: service_started
       etcd:
         condition: service_started
+      yugabyte-init:
+        condition: service_completed_successfully
       auth:
         condition: service_started
     networks:
@@ -99,6 +101,8 @@ services:
         condition: service_started
       nats:
         condition: service_started
+      yugabyte-init:
+        condition: service_completed_successfully
       auth:
         condition: service_started
     networks:
@@ -126,6 +130,8 @@ services:
     depends_on:
       nats:
         condition: service_started
+      yugabyte-init:
+        condition: service_completed_successfully
     networks:
       - traefik
       - default
@@ -201,8 +207,8 @@ services:
         condition: service_started
       opensearch:
         condition: service_started
-      citus-master:
-        condition: service_started
+      yugabyte-init:
+        condition: service_completed_successfully
       auth:
         condition: service_started
     networks:
@@ -358,73 +364,43 @@ services:
       - "13133:13133"
       - "24224:24224"
 
-  citus-master:
-    container_name: "${COMPOSE_PROJECT_NAME:-citus}_master"
-    image: "citusdata/citus:13.0.3"
-    ports: [ "${COORDINATOR_EXTERNAL_PORT:-5432}:5432" ]
-    labels: [ "com.citusdata.role=Master" ]
-    environment: &AUTH
-      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
-      PGUSER: "${POSTGRES_USER:-postgres}"
-      PGPASSWORD: "${POSTGRES_PASSWORD:-postgres}"
-      POSTGRES_HOST_AUTH_METHOD: "${POSTGRES_HOST_AUTH_METHOD:-trust}"
-      POSTGRES_DB: "gochat"
+  yugabyte:
+    image: "yugabytedb/yugabyte:${YUGABYTE_VERSION:-2025.2.2.2-b11}"
+    hostname: yugabyte
+    command:
+      - "bin/yugabyted"
+      - "start"
+      - "--base_dir=/home/yugabyte/yb_data"
+      - "--background=false"
+    environment: &YUGABYTE_AUTH
+      PGPASSWORD: "${YUGABYTE_PASSWORD:-yugabyte}"
+    volumes:
+      - yugabyte-data:/home/yugabyte/yb_data
+    ports:
+      - "${YUGABYTE_YSQL_PORT:-5433}:5433"
+      - "${YUGABYTE_UI_PORT:-15433}:15433"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -d gochat -U ${POSTGRES_USER:-postgres} --quiet"]
+      test: ["CMD-SHELL", "/home/yugabyte/bin/ysqlsh -h yugabyte -p 5433 -U ${YUGABYTE_USER:-yugabyte} -d yugabyte -c 'SELECT 1' >/dev/null 2>&1"]
       interval: 10s
       timeout: 5s
-      retries: 5
-    networks:
-      default:
-        aliases:
-          - master
-      citus:
-        aliases:
-          - master
-  citus-worker:
-    image: "citusdata/citus:13.0.3"
-    labels: [ "com.citusdata.role=Worker" ]
-    depends_on: [ citus-manager ]
-    environment: *AUTH
-    command: "/wait-for-manager.sh"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U ${POSTGRES_USER:-postgres} --quiet"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - healthcheck-volume:/healthcheck
-    networks:
-      - default
-      - citus
-  citus-manager:
-    container_name: "${COMPOSE_PROJECT_NAME:-citus}_manager"
-    image: "citusdata/membership-manager:0.3.0"
-    volumes:
-      - "${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock"
-      - healthcheck-volume:/healthcheck
-    depends_on: [ citus-master ]
-    environment: *AUTH
-    networks:
-      default:
-        aliases:
-          - manager
-      citus:
-        aliases:
-          - manager
+      retries: 60
+      start_period: 2m
+    restart: always
 
-  citus-init:
-    image: postgres:15-alpine
+  yugabyte-init:
+    image: "yugabytedb/yugabyte:${YUGABYTE_VERSION:-2025.2.2.2-b11}"
     restart: "no"
     depends_on:
-      citus-master:
-        condition: service_started
+      yugabyte:
+        condition: service_healthy
     environment:
-      - PGPASSWORD=${POSTGRES_PASSWORD:-postgres}
-    entrypoint: ["/bin/sh", "-c", "until pg_isready -h citus-master -p 5432 -U ${POSTGRES_USER:-postgres}; do sleep 1; done; psql -h citus-master -U ${POSTGRES_USER:-postgres} -d gochat -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS citus;'" ]
-    networks:
-      - citus
+      <<: *YUGABYTE_AUTH
+      YUGABYTE_USER: "${YUGABYTE_USER:-yugabyte}"
+      YUGABYTE_DB: "${YUGABYTE_DB:-gochat}"
+      YUGABYTE_COLOCATION: "${YUGABYTE_COLOCATION:-false}"
+    volumes:
+      - ./init/init-yugabytedb.sh:/init-yugabytedb.sh:ro
+    entrypoint: ["/bin/bash", "/init-yugabytedb.sh"]
 
   etcd:
     image: quay.io/coreos/etcd:v3.5.0
@@ -443,14 +419,12 @@ services:
 
 volumes:
   scylla-data:
+  yugabyte-data:
   openobserve-data:
   opensearch-data:
-  healthcheck-volume:
 
 networks:
   traefik:
     name: gochat_traefik
-  citus:
-    name: gochat_citus
 
 

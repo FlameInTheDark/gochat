@@ -11,15 +11,16 @@ Usage:
   run-migrations [command] [arg]
 
 Environment:
-  MIGRATION_SCOPE    all (default), postgres, pg, cassandra, or scylla
+  MIGRATION_SCOPE    all (default), yugabyte, yb, ysql, cassandra, or scylla
   MIGRATION_COMMAND  Optional default command when no CLI command is provided
-  PG_ADDRESS         PostgreSQL connection string
+  YUGABYTE_ADDRESS   YugabyteDB YSQL connection string. Falls back to PG_ADDRESS.
+  PG_ADDRESS         Backward-compatible YugabyteDB YSQL connection string
   CASSANDRA_ADDRESS  Cassandra/ScyllaDB connection string
 
 Examples:
   run-migrations
   run-migrations down 1
-  MIGRATION_SCOPE=postgres run-migrations force 16
+  MIGRATION_SCOPE=yugabyte run-migrations force 16
 EOF
 }
 
@@ -28,8 +29,8 @@ normalize_scope() {
         all)
             printf '%s\n' "all"
             ;;
-        postgres|pg)
-            printf '%s\n' "postgres"
+        yugabyte|yb|ysql)
+            printf '%s\n' "yugabyte"
             ;;
         cassandra|scylla)
             printf '%s\n' "cassandra"
@@ -39,6 +40,14 @@ normalize_scope() {
             exit 1
             ;;
     esac
+}
+
+resolve_yugabyte_address() {
+    if [ -n "${YUGABYTE_ADDRESS:-}" ]; then
+        printf '%s\n' "$YUGABYTE_ADDRESS"
+        return
+    fi
+    printf '%s\n' "${PG_ADDRESS:-}"
 }
 
 require_env() {
@@ -81,14 +90,16 @@ MIGRATION_SCOPE="$(normalize_scope "$MIGRATION_SCOPE")"
 
 case "$MIGRATION_SCOPE" in
     all)
-        require_env "PG_ADDRESS" "${PG_ADDRESS:-}"
+        yugabyte_address="$(resolve_yugabyte_address)"
+        require_env "YUGABYTE_ADDRESS or PG_ADDRESS" "$yugabyte_address"
         require_env "CASSANDRA_ADDRESS" "${CASSANDRA_ADDRESS:-}"
-        run_migration "postgres" "$PG_ADDRESS" "/migrations/postgres" "$@"
+        run_migration "yugabyte" "$yugabyte_address" "/migrations/yugabyte" "$@"
         run_migration "cassandra" "$CASSANDRA_ADDRESS" "/migrations/cassandra" "$@"
         ;;
-    postgres)
-        require_env "PG_ADDRESS" "${PG_ADDRESS:-}"
-        run_migration "postgres" "$PG_ADDRESS" "/migrations/postgres" "$@"
+    yugabyte)
+        yugabyte_address="$(resolve_yugabyte_address)"
+        require_env "YUGABYTE_ADDRESS or PG_ADDRESS" "$yugabyte_address"
+        run_migration "yugabyte" "$yugabyte_address" "/migrations/yugabyte" "$@"
         ;;
     cassandra)
         require_env "CASSANDRA_ADDRESS" "${CASSANDRA_ADDRESS:-}"

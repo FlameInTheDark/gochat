@@ -12,6 +12,7 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/attachments/config"
 	attachments "github.com/FlameInTheDark/gochat/cmd/attachments/endpoints/attachments"
 	avatars "github.com/FlameInTheDark/gochat/cmd/attachments/endpoints/avatars"
+	banners "github.com/FlameInTheDark/gochat/cmd/attachments/endpoints/banners"
 	publicemoji "github.com/FlameInTheDark/gochat/cmd/attachments/endpoints/emoji"
 	emojis "github.com/FlameInTheDark/gochat/cmd/attachments/endpoints/emojis"
 	icons "github.com/FlameInTheDark/gochat/cmd/attachments/endpoints/icons"
@@ -51,7 +52,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 
 	pg := pgdb.NewDB(logger)
-	if err := pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{MaxRetries: cfg.PGRetries}); err != nil {
+	if err := pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{DriverName: cfg.PGDriver, MaxRetries: cfg.PGRetries}); err != nil {
 		return nil, err
 	}
 	shut.Up(pg)
@@ -98,6 +99,8 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		"/api/v1/upload",
 		attachments.New(database, pg, storage, publicBase, logger),
 		avatars.New(database, pg, storage, publicBase, nt, logger),
+		banners.New(database, pg, storage, publicBase, nt, logger),
+		banners.NewProfileCovers(database, pg, storage, publicBase, nt, logger),
 		emojis.New(pg, storage, cache, nt, publicBase, logger),
 		icons.New(database, pg, storage, publicBase, nt, logger),
 	)

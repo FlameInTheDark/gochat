@@ -14,6 +14,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	sqldblogger "github.com/simukti/sqldb-logger"
+	_ "github.com/yugabyte/pgx/v5/stdlib"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 )
@@ -50,24 +51,35 @@ func NewDB(logger *slog.Logger) *DB {
 
 // ConnectOptions configures the PostgreSQL connection. Zero values use defaults.
 type ConnectOptions struct {
-	MaxRetries   int  // 0 → unlimited retries
-	QueryLog     bool // emit individual queries at debug level
-	MaxOpenConns int  // default 50  — set lower when running many replicas
-	MaxIdleConns int  // default 25
+	DriverName   string // "postgres" for lib/pq, "pgx" for yugabyte/pgx
+	MaxRetries   int    // 0 → unlimited retries
+	QueryLog     bool   // emit individual queries at debug level
+	MaxOpenConns int    // default 50  — set lower when running many replicas
+	MaxIdleConns int    // default 25
 }
 
 func (db *DB) Connect(dsn string, opts ConnectOptions) error {
-	connectCtx, finishConnect := observability.StartDependencySpan(context.Background(), "postgres", "connect", "primary")
+	connectCtx, finishConnect := observability.StartDependencySpan(
+		context.Background(),
+		"postgres",
+		"connect",
+		"primary",
+	)
 	var connectErr error
 	defer func() {
 		finishConnect(connectErr)
 	}()
 
+	driverName := opts.DriverName
+	if driverName == "" {
+		driverName = "postgres"
+	}
+
 	// Create base driver handle (does not actually establish a network connection).
-	base, err := sql.Open("postgres", dsn)
+	base, err := sql.Open(driverName, dsn)
 	if err != nil {
 		connectErr = err
-		return fmt.Errorf("failed to open postgres driver: %w", err)
+		return fmt.Errorf("failed to open %s driver: %w", driverName, err)
 	}
 
 	// Wrap with query logger.

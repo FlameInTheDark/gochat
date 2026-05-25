@@ -8,6 +8,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/cache"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/banner"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/dmchannelmessages"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
@@ -26,6 +27,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/threadmember"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
+	"github.com/FlameInTheDark/gochat/internal/database/pgentities/usernote"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/usersettings"
 	"github.com/FlameInTheDark/gochat/internal/mq"
@@ -46,8 +48,11 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/me/channels", e.CreateDM)
 
 	router.Post("/me/avatar", e.CreateAvatar)
+	router.Post("/me/banner", e.CreateBanner)
 	router.Get("/me/avatars", e.ListAvatars)
 	router.Delete("/me/avatars/:avatar_id<int>", e.DeleteAvatar)
+	router.Put("/me/notes/:user_id<int>", e.UpsertUserNote)
+	router.Delete("/me/notes/:user_id<int>", e.DeleteUserNote)
 
 	router.Get("/me/friends", e.GetFriends)
 	router.Get("/me/friends/:user_id<int>", e.GetOrCreateFriendDM)
@@ -93,11 +98,13 @@ type entity struct {
 	gclm    guildchannelmessages.GuildChannelMessages
 	dmlm    *dmchannelmessages.Entity
 	av      avatar.Avatar
+	bn      banner.Banner
 	icon    icon.Icon
 	mention mention.Mention
 	gc      guildchannels.GuildChannels
 	emoji   emojirepo.Emoji
 	tm      threadmember.ThreadMember
+	notes   usernote.UserNote
 
 	attachTTL    int64
 	contentHosts []string
@@ -157,10 +164,12 @@ func New(cql *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, smq *searchmq.Queu
 		gclm:               guildchannelmessages.New(cql),
 		dmlm:               dmchannelmessages.New(cql),
 		av:                 avatar.New(cql),
+		bn:                 banner.New(cql),
 		icon:               icon.New(cql),
 		mention:            mention.New(cql),
 		gc:                 guildchannels.New(pg.Conn()),
 		emoji:              emojirepo.New(pg.Conn()),
 		tm:                 threadmember.New(pg.Conn()),
+		notes:              usernote.New(pg.Conn()),
 	}
 }

@@ -20,6 +20,7 @@ type Config struct {
 	ClusterKeyspace       string   `yaml:"cluster_keyspace" env:"CLUSTER_KEYSPACE" env-default:"gochat"`
 	KeyDB                 string   `yaml:"keydb" env:"KEYDB" env-default:"127.0.0.1:6379"`
 	NATSConnString        string   `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`
+	PGDriver              string   `yaml:"pg_driver" env:"PG_DRIVER" env-default:"postgres"`
 	PGDSN                 string   `yaml:"pg_dsn" env:"PG_DSN" env-default:""`
 	PGRetries             int      `yaml:"pg_retries" env:"PG_RETRIES" env-default:"5"`
 	PGQueryLog            bool     `yaml:"pg_query_log" env:"PG_QUERY_LOG" env-default:"false"`

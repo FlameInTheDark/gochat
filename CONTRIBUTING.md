@@ -36,7 +36,7 @@ gochat is a Discord-like real-time chat platform built as a Go monorepo. It is c
 | Embedder | `cmd/embedder` | URL embed generation |
 | Indexer | `cmd/indexer` | Full-text search indexing |
 
-Shared library code lives in `internal/`. Services communicate via NATS. Persistent data is split between PostgreSQL (relational) and ScyllaDB/Cassandra (messages, reactions). Redis/KeyDB is the cache layer.
+Shared library code lives in `internal/`. Services communicate via NATS. Persistent data is split between YugabyteDB YSQL (relational) and ScyllaDB/Cassandra (messages, reactions). Redis/KeyDB is the cache layer.
 
 ---
 
@@ -61,12 +61,14 @@ Shared library code lives in `internal/`. Services communicate via NATS. Persist
 git clone https://github.com/FlameInTheDark/gochat.git
 cd gochat
 
-# Start all containers (Postgres, ScyllaDB, Redis, NATS, etcd, Traefik)
+# Start all containers (YugabyteDB, ScyllaDB, Redis, NATS, etcd, Traefik)
 make up
 
-# Run all migrations (Postgres + Cassandra)
+# Run all migrations (YugabyteDB YSQL + Cassandra)
 make migrate
 ```
+
+`make migrate` runs migrations inside a Docker container attached to the Compose network. That keeps local migrations pointed at the `yugabyte` and `scylla` services even if another database process is bound to the same host ports.
 
 ### 3.2 Configure a service
 
@@ -128,7 +130,7 @@ gochat/
 │   │   └── kvs/                # go-redis backed implementation
 │   ├── database/
 │   │   ├── model/              # Plain Go structs matching DB schema
-│   │   ├── pgentities/         # PostgreSQL repositories (one package per table group)
+│   │   ├── pgentities/         # YugabyteDB YSQL repositories (one package per table group)
 │   │   └── entities/           # ScyllaDB repositories
 │   ├── dto/                    # API response types (never used in DB layer)
 │   ├── mq/                     # NATS publisher/subscriber helpers
@@ -138,7 +140,7 @@ gochat/
 │   └── helper/                 # JWT, HTTP helpers
 │
 ├── migration/
-│   ├── postgres/               # PostgreSQL migration files (.sql)
+│   ├── yugabyte/               # YugabyteDB YSQL migration files (.sql)
 │   └── cassandra/              # ScyllaDB migration files (.cql)
 │
 ├── docs/
@@ -341,14 +343,14 @@ Run with: `go test ./... -bench=. -benchmem`
 ### 8.1 Creating a migration
 
 ```bash
-# PostgreSQL
-make add_migration_postgres name=add_user_display_name
+# YugabyteDB YSQL
+make add_migration_yugabyte name=add_user_display_name
 
 # ScyllaDB / Cassandra
 make add_migration_cassandra name=add_reaction_index
 ```
 
-This creates sequentially numbered files in `migration/postgres/` or `migration/cassandra/`.
+This creates sequentially numbered files in `migration/yugabyte/` or `migration/cassandra/`.
 
 ### 8.2 Rules for migrations
 
@@ -361,11 +363,11 @@ This creates sequentially numbered files in `migration/postgres/` or `migration/
 ### 8.3 Applying migrations locally
 
 ```bash
-make migrate          # apply all pending (both PG and Scylla)
-make migrate_pg       # PostgreSQL only
+make migrate          # apply all pending (YugabyteDB YSQL and Scylla)
+make migrate_yugabyte # YugabyteDB YSQL only
 make migrate_scylla   # ScyllaDB only
 
-make migrate_pg_rollback    # roll back one PG migration
+make migrate_yugabyte_rollback # roll back one YugabyteDB migration
 make migrate_scylla_rollback # roll back one Scylla migration
 ```
 

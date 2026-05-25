@@ -25,7 +25,8 @@ s3_bucket: "gochat"
 s3_external_url: ""
 s3_use_ssl: false
 
-# PostgreSQL (for setting active avatar)
-pg_dsn: "host=citus-master port=5432 user=postgres dbname=gochat sslmode=disable"
+# YugabyteDB YSQL (for setting active avatar)
+pg_driver: "pgx"
+pg_dsn: "host=yugabyte port=5433 user=yugabyte password=yugabyte dbname=gochat sslmode=disable"
 pg_retries: 5
 

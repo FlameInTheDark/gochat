@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
@@ -2371,7 +2372,23 @@ func (e *entity) fetchMemberDTO(c *fiber.Ctx, guildId, memberId int64) (dto.Memb
 		}
 	}
 
-	return memberToDTO(member, user, disc.Discriminator, avatarData, roleIds), nil
+	resp := memberToDTO(member, user, disc.Discriminator, avatarData, roleIds)
+	if user.Banner == nil {
+		resp.User.Banner = &dto.BannerData{Exists: false}
+	} else if e.bn != nil {
+		if bd, err := e.getBannerDataCached(c.UserContext(), user.Id, *user.Banner); err == nil && bd != nil {
+			resp.User.Banner = bd
+		}
+	}
+	viewer, err := helper.GetUser(c)
+	if err == nil && viewer.Id != user.Id && e.notes != nil {
+		if note, err := e.notes.GetNote(c.UserContext(), viewer.Id, user.Id); err == nil && strings.TrimSpace(note.Note) != "" {
+			n := note.Note
+			resp.User.PersonalNote = &n
+		}
+	}
+
+	return resp, nil
 }
 
 // GetMembers
@@ -2465,4 +2482,30 @@ func (e *entity) getAvatarDataCached(ctx context.Context, userId, avatarId int64
 	}
 	_ = e.cache.SetTimedJSON(ctx, key, ad, avatarCacheTTLSeconds)
 	return &ad, nil
+}
+
+func (e *entity) getBannerDataCached(ctx context.Context, userId, bannerId int64) (*dto.BannerData, error) {
+	key := fmt.Sprintf("banners:%d:%d", userId, bannerId)
+	var bd dto.BannerData
+	if err := e.cache.GetJSON(ctx, key, &bd); err == nil && bd.Exists && bd.URL != "" {
+		return &bd, nil
+	}
+	bn, err := e.bn.GetBanner(ctx, bannerId, userId)
+	if err != nil {
+		return nil, err
+	}
+	if bn.URL == nil || *bn.URL == "" {
+		return &dto.BannerData{Exists: false}, nil
+	}
+	bd = dto.BannerData{
+		Exists:      true,
+		Id:          bn.Id,
+		URL:         *bn.URL,
+		ContentType: bn.ContentType,
+		Width:       bn.Width,
+		Height:      bn.Height,
+		Size:        bn.FileSize,
+	}
+	_ = e.cache.SetTimedJSON(ctx, key, bd, avatarCacheTTLSeconds)
+	return &bd, nil
 }

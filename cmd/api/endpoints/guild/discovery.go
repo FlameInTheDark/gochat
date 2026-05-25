@@ -15,7 +15,7 @@ import (
 // GetGuildDiscovery
 //
 //	@Summary		Get guild discovery settings
-//	@Description	Owner-only read for public discovery state, discovery description, tags, and hydrated display data persisted in PostgreSQL/Citus.
+//	@Description	Owner-only read for public discovery state, discovery description, tags, and hydrated display data persisted in YugabyteDB YSQL.
 //	@Produce		json
 //	@Tags			Guild
 //	@Param			guild_id	path		int64								true	"Guild id"	example(2230469276416868352)
@@ -59,7 +59,7 @@ func (e *entity) GetGuildDiscovery(c *fiber.Ctx) error {
 // UpdateGuildDiscovery
 //
 //	@Summary		Update guild discovery settings
-//	@Description	Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.
+//	@Description	Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in YugabyteDB YSQL and notifies the search service to refresh its OpenSearch document.
 //	@Accept			json
 //	@Produce		json
 //	@Tags			Guild

@@ -15,7 +15,6 @@ CREATE TABLE auth_factors
 );
 CREATE INDEX idx_auth_factors_user_status ON auth_factors (user_id, status);
 CREATE UNIQUE INDEX idx_auth_factors_active_totp ON auth_factors (user_id) WHERE factor_type = 'totp' AND status = 'active';
-SELECT create_distributed_table('auth_factors', 'user_id');
 
 CREATE TABLE auth_totp_factors
 (
@@ -30,7 +29,6 @@ CREATE TABLE auth_totp_factors
     PRIMARY KEY (user_id, factor_id)
 );
 CREATE INDEX idx_auth_totp_factors_user_factor ON auth_totp_factors (user_id, factor_id);
-SELECT create_distributed_table('auth_totp_factors', 'user_id');
 
 CREATE TABLE auth_recovery_codes
 (
@@ -43,4 +41,3 @@ CREATE TABLE auth_recovery_codes
     PRIMARY KEY (user_id, code_id)
 );
 CREATE INDEX idx_auth_recovery_codes_factor ON auth_recovery_codes (user_id, factor_id);
-SELECT create_distributed_table('auth_recovery_codes', 'user_id');

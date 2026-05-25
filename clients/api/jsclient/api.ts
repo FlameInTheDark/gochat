@@ -5887,7 +5887,7 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.
+         * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in YugabyteDB YSQL and notifies the search service to refresh its OpenSearch document.
          * @summary Update guild discovery settings
          * @param {number} guildId Guild id
          * @param {GuildGuildDiscoveryUpdateRequest} request Guild discovery settings
@@ -7047,7 +7047,7 @@ export const GuildApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.
+         * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in YugabyteDB YSQL and notifies the search service to refresh its OpenSearch document.
          * @summary Update guild discovery settings
          * @param {number} guildId Guild id
          * @param {GuildGuildDiscoveryUpdateRequest} request Guild discovery settings
@@ -7537,7 +7537,7 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.guildGuildIdDelete(requestParameters.guildId, options).then((request) => request(axios, basePath));
         },
         /**
-         * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.
+         * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in YugabyteDB YSQL and notifies the search service to refresh its OpenSearch document.
          * @summary Update guild discovery settings
          * @param {GuildApiGuildGuildIdDiscoveryPatchRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -7926,7 +7926,7 @@ export interface GuildApiInterface {
     guildGuildIdDelete(requestParameters: GuildApiGuildGuildIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
-     * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.
+     * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in YugabyteDB YSQL and notifies the search service to refresh its OpenSearch document.
      * @summary Update guild discovery settings
      * @param {GuildApiGuildGuildIdDiscoveryPatchRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -9125,7 +9125,7 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
     }
 
     /**
-     * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in PostgreSQL/Citus and notifies the search service to refresh its OpenSearch document.
+     * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in YugabyteDB YSQL and notifies the search service to refresh its OpenSearch document.
      * @summary Update guild discovery settings
      * @param {GuildApiGuildGuildIdDiscoveryPatchRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -12890,7 +12890,7 @@ export const SearchApiAxiosParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         * Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+         * Searches only public guilds in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
          * @summary Search public guilds
          * @param {string} [q] Search text for guild name, description, and tags
          * @param {string} [tags] Comma-separated normalized tags
@@ -13019,7 +13019,7 @@ export const SearchApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+         * Searches only public guilds in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
          * @summary Search public guilds
          * @param {string} [q] Search text for guild name, description, and tags
          * @param {string} [tags] Comma-separated normalized tags
@@ -13079,7 +13079,7 @@ export const SearchApiFactory = function (configuration?: Configuration, basePat
             return localVarFp.searchGuildTagsGet(requestParameters.q, requestParameters.limit, options).then((request) => request(axios, basePath));
         },
         /**
-         * Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+         * Searches only public guilds in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
          * @summary Search public guilds
          * @param {SearchApiSearchGuildsGetRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -13128,7 +13128,7 @@ export interface SearchApiInterface {
     searchGuildTagsGet(requestParameters?: SearchApiSearchGuildTagsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<string>>;
 
     /**
-     * Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+     * Searches only public guilds in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
      * @summary Search public guilds
      * @param {SearchApiSearchGuildsGetRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -13279,7 +13279,7 @@ export class SearchApi extends BaseAPI implements SearchApiInterface {
     }
 
     /**
-     * Searches only public guilds in OpenSearch, then hydrates ordered results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16.
+     * Searches only public guilds in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
      * @summary Search public guilds
      * @param {SearchApiSearchGuildsGetRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.

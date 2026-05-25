@@ -22,6 +22,7 @@ import (
 	authenticationrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/authentication"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/observability"
+	"github.com/FlameInTheDark/gochat/internal/presence"
 	"github.com/FlameInTheDark/gochat/internal/shutter"
 )
 
@@ -62,7 +63,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 	shut.Up(dbcon)
 
 	pg := pgdb.NewDB(logger)
-	err = pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{MaxRetries: cfg.PGRetries})
+	err = pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{DriverName: cfg.PGDriver, MaxRetries: cfg.PGRetries})
 	if err != nil {
 		logger.Error("unable to connect to pg", slog.String("error", err.Error()))
 		os.Exit(1)
@@ -112,6 +113,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) *App {
 		wsm:      observability.NewWSTelemetry("gochat-ws"),
 	}
 
+	presenceReconcileCtx, cancelPresenceReconcile := context.WithCancel(context.Background())
+	shut.UpFunc(cancelPresenceReconcile)
+	go a.startPresenceReconciler(presenceReconcileCtx)
+
 	return a
 }
 
@@ -143,4 +148,42 @@ func (a *App) Start() {
 
 func (a *App) Close() error {
 	return a.app.ShutdownWithTimeout(time.Second * 30)
+}
+
+func (a *App) startPresenceReconciler(ctx context.Context) {
+	if a == nil || a.cache == nil {
+		return
+	}
+	store := presence.NewStore(a.cache)
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			opCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			published, err := presence.ReconcileTouched(opCtx, store, a.natsConn, a.presenceTTLSeconds(), 1000)
+			cancel()
+			if err != nil {
+				a.log.Warn("presence reconciliation failed", slog.String("error", err.Error()))
+				continue
+			}
+			if published > 0 {
+				a.log.Debug("presence reconciliation published corrections", slog.Int("count", published))
+			}
+		}
+	}
+}
+
+func (a *App) presenceTTLSeconds() int64 {
+	if a == nil || a.cfg == nil {
+		return 60
+	}
+	ttl := a.cfg.HearthBeatTimeout * 2 / 1000
+	if ttl < 1 {
+		return 1
+	}
+	return ttl
 }

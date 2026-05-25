@@ -60,6 +60,9 @@ func (f *fakeProcessor) ConvertToWebP(ctx context.Context, source io.Reader, max
 	_, _ = io.ReadAll(source)
 	return makeWebP(64, 64), nil
 }
+func (f *fakeProcessor) ConvertToWebPWithCrop(ctx context.Context, source io.Reader, maxDimension int, sizeLimit int64, crop upload.CropArea, animated bool) ([]byte, error) {
+	return f.ConvertToWebP(ctx, source, maxDimension, sizeLimit)
+}
 func (f *fakeProcessor) ProbeDimensions(ctx context.Context, source string) (int64, int64, error) {
 	return 0, 0, nil
 }

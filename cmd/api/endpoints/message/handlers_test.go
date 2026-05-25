@@ -988,7 +988,7 @@ func TestValidateDeletePermissionRejectsFormerDMParticipantBeforeLookup(t *testi
 	c := app.AcquireCtx(&fasthttp.RequestCtx{})
 	defer app.ReleaseCtx(c)
 
-	_, err := e.validateDeletePermission(c, 88, 9, 42)
+	_, _, _, err := e.validateDeletePermission(c, 88, 9, 42)
 	assertMessageFiberErrorCode(t, err, fiber.StatusForbidden)
 	if msgRepo.getCalls != 0 {
 		t.Fatalf("expected access denial before message lookup, got %d lookups", msgRepo.getCalls)
@@ -1011,7 +1011,7 @@ func TestValidateDeletePermissionAllowsManageMessagesForOtherUserGuildMessage(t 
 	c := app.AcquireCtx(&fasthttp.RequestCtx{})
 	defer app.ReleaseCtx(c)
 
-	message, err := e.validateDeletePermission(c, 88, 9, 42)
+	message, _, _, err := e.validateDeletePermission(c, 88, 9, 42)
 	if err != nil {
 		t.Fatalf("expected delete permission, got %v", err)
 	}
@@ -1041,7 +1041,7 @@ func TestValidateDeletePermissionRejectsOtherUserGuildMessageWithoutManageMessag
 	c := app.AcquireCtx(&fasthttp.RequestCtx{})
 	defer app.ReleaseCtx(c)
 
-	_, err := e.validateDeletePermission(c, 88, 9, 42)
+	_, _, _, err := e.validateDeletePermission(c, 88, 9, 42)
 	assertMessageFiberErrorCode(t, err, fiber.StatusForbidden)
 }
 
@@ -1061,11 +1061,53 @@ func TestValidateDeletePermissionDoesNotRequireManageMessagesForOwnMessage(t *te
 	c := app.AcquireCtx(&fasthttp.RequestCtx{})
 	defer app.ReleaseCtx(c)
 
-	if _, err := e.validateDeletePermission(c, 88, 9, 42); err != nil {
+	if _, _, _, err := e.validateDeletePermission(c, 88, 9, 42); err != nil {
 		t.Fatalf("expected owner of message to delete without manage-messages check, got %v", err)
 	}
 	if permRepo.calls != 0 {
 		t.Fatalf("expected no manage-messages check for own message, got %d", permRepo.calls)
+	}
+}
+
+func TestShouldRollbackLastMessageOnlyForLatestMessage(t *testing.T) {
+	tests := []struct {
+		name    string
+		channel *model.Channel
+		message *model.Message
+		want    bool
+	}{
+		{
+			name:    "latest message",
+			channel: &model.Channel{Id: 9, LastMessage: 88},
+			message: &model.Message{Id: 88, ChannelId: 9},
+			want:    true,
+		},
+		{
+			name:    "older message",
+			channel: &model.Channel{Id: 9, LastMessage: 99},
+			message: &model.Message{Id: 88, ChannelId: 9},
+			want:    false,
+		},
+		{
+			name:    "empty channel pointer",
+			channel: nil,
+			message: &model.Message{Id: 88, ChannelId: 9},
+			want:    false,
+		},
+		{
+			name:    "empty message pointer",
+			channel: &model.Channel{Id: 9, LastMessage: 88},
+			message: nil,
+			want:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := shouldRollbackLastMessage(tt.channel, tt.message); got != tt.want {
+				t.Fatalf("shouldRollbackLastMessage() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 

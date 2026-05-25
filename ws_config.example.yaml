@@ -5,8 +5,9 @@ auth_secret: "change_me_before_use_it_in_production"
 cluster: ["scylla"]
 cluster_keyspace: "gochat"
 
-# PostgreSQL
-pg_dsn: "host=citus-master port=5432 user=postgres dbname=gochat sslmode=disable"
+# YugabyteDB YSQL
+pg_driver: "pgx"
+pg_dsn: "host=yugabyte port=5433 user=yugabyte password=yugabyte dbname=gochat sslmode=disable"
 
 # Cache Address (KeyDB)
 cache_addr: "keydb:6379"

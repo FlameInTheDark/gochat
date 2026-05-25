@@ -22,6 +22,7 @@ import (
 	"github.com/FlameInTheDark/gochat/cmd/ws/hub"
 	"github.com/FlameInTheDark/gochat/cmd/ws/subscriber"
 	cachei "github.com/FlameInTheDark/gochat/internal/cache"
+	"github.com/FlameInTheDark/gochat/internal/gatewaystate"
 	"github.com/FlameInTheDark/gochat/internal/helper"
 	"github.com/FlameInTheDark/gochat/internal/mq/mqmsg"
 	"github.com/FlameInTheDark/gochat/internal/observability"
@@ -249,10 +250,11 @@ func (a *App) wsHandler(c *websocket.Conn) {
 		}
 	}()
 	pstore := presence.NewStore(a.cache)
+	gstate := gatewaystate.NewStore(a.cache)
 
 	h := handler.New(a.cdb, a.pg, subs, sendJSON, a.jwt, a.cfg.HearthBeatTimeout, func() {
 		sendClose("Closed")
-	}, a.log, a.natsConn, pstore, a.cache, conn.SetUserID, connCtx, a.wsm)
+	}, a.log, a.natsConn, pstore, gstate, a.cache, conn.SetUserID, connCtx, a.wsm)
 
 	defer func() { _ = h.Close() }()
 
@@ -263,6 +265,14 @@ func (a *App) wsHandler(c *websocket.Conn) {
 			pingInterval = half
 		}
 	}
+	readDeadline := time.Duration(a.cfg.HearthBeatTimeout+15000) * time.Millisecond
+	if readDeadline <= 0 {
+		readDeadline = 60 * time.Second
+	}
+	_ = c.SetReadDeadline(time.Now().Add(readDeadline))
+	c.SetPongHandler(func(string) error {
+		return c.SetReadDeadline(time.Now().Add(readDeadline))
+	})
 	stopPing := make(chan struct{})
 	go func() {
 		ticker := time.NewTicker(pingInterval)

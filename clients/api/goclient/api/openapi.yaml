@@ -1934,7 +1934,7 @@ paths:
   /guild/{guild_id}/discovery:
     patch:
       description: "Owner-only update for public discovery state, discovery description,\
-        \ and normalized tags. The API persists this data in PostgreSQL/Citus and\
+        \ and normalized tags. The API persists this data in YugabyteDB YSQL and\
         \ notifies the search service to refresh its OpenSearch document."
       parameters:
       - description: Guild id
@@ -4052,7 +4052,7 @@ paths:
   /search/guilds:
     get:
       description: "Searches only public guilds in OpenSearch, then hydrates ordered\
-        \ results from PostgreSQL/Citus. Limit defaults to 16 and is capped at 16."
+        \ results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16."
       parameters:
       - description: "Search text for guild name, description, and tags"
         in: query

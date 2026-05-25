@@ -18,6 +18,7 @@ func main() {
 			observability(),
 			permissions(),
 			tokens(),
+			yugabyte(),
 		},
 	}
 	if err := app.Run(context.Background(), os.Args); err != nil {
