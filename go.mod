@@ -17,7 +17,7 @@ require (
 	github.com/gofiber/contrib/jwt v1.0.10
 	github.com/gofiber/contrib/swagger v1.2.0
 	github.com/gofiber/contrib/websocket v1.3.2
-	github.com/gofiber/fiber/v2 v2.52.12
+	github.com/gofiber/fiber/v2 v2.52.13
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
