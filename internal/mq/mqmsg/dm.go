@@ -1,12 +1,17 @@
 package mqmsg
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/FlameInTheDark/gochat/internal/dto"
+)
 
 // DMMessage notifies a user about a new direct message in a DM channel
 type DMMessage struct {
-	ChannelId int64     `json:"channel_id"`
-	MessageId int64     `json:"message_id"`
-	From      UserBrief `json:"from"`
+	ChannelId int64        `json:"channel_id"`
+	MessageId int64        `json:"message_id"`
+	From      UserBrief    `json:"from"`
+	Message   *dto.Message `json:"message,omitempty"`
 }
 
 func (m *DMMessage) EventType() *EventType {

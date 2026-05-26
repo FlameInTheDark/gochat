@@ -36,6 +36,8 @@ os_password: "CustOM-Pa55w0Rd"
 
 # NATS
 nats_conn_string: "nats://nats:4222"
+bot_nats_conn_string: "nats://bot-nats:4222"
+bot_event_partitions: 1024
 indexer_nats_conn_string: "nats://indexer-nats:4222"
 
 # Uploads / Attachments

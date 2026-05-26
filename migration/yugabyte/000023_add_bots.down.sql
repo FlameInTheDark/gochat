@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS bot_guilds;
+DROP TABLE IF EXISTS bot_install_grants;
+DROP TABLE IF EXISTS bot_tokens;
+DROP TABLE IF EXISTS bots;
+ALTER TABLE users DROP COLUMN IF EXISTS flags;

@@ -1,0 +1,17 @@
+# Bot WebSocket Gateway
+host: ":3101"
+hearth_beat_timeout: 45000
+
+# Cache Address (KeyDB)
+cache_addr: "keydb:6379"
+
+# YugabyteDB YSQL
+pg_driver: "pgx"
+pg_dsn: "host=yugabyte port=5433 user=yugabyte password=yugabyte dbname=gochat_sharded sslmode=disable"
+pg_retries: 5
+
+# Bot NATS
+bot_nats_conn_string: "nats://bot-nats:4222"
+
+# Core NATS (presence publishes only)
+nats_conn_string: "nats://nats:4222"

@@ -236,6 +236,7 @@ func modelToUser(m model.User) dto.User {
 		Bio:         m.Bio,
 		BannerColor: m.BannerColor,
 		PanelColor:  m.PanelColor,
+		IsBot:       m.IsBot(),
 	}
 }
 

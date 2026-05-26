@@ -1,0 +1,17 @@
+# Bot Router
+log_level: "warn"
+
+# YugabyteDB YSQL
+pg_driver: "pgx"
+pg_dsn: "host=yugabyte port=5433 user=yugabyte password=yugabyte dbname=gochat_sharded sslmode=disable"
+pg_retries: 5
+
+# Redis
+keydb: "keydb:6379"
+
+# Bot NATS
+bot_nats_conn_string: "nats://bot-nats:4222"
+bot_event_partitions: 1024
+bot_router_lease_ttl: 15s
+bot_router_lease_renew: 5s
+bot_router_acquire_every: 5s

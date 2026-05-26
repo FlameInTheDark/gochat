@@ -416,6 +416,7 @@ func userModelToDTO(u pgmodel.User) dto.User {
 		Bio:         u.Bio,
 		BannerColor: u.BannerColor,
 		PanelColor:  u.PanelColor,
+		IsBot:       u.IsBot(),
 	}
 }
 

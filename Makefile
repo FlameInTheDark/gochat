@@ -182,10 +182,10 @@ go_client:
 
 setup: tools up migrate
 
-.PHONY: setup tools lint build_migration_image migrate_image migrate_image_down migrate_image_yugabyte migrate_image_scylla migrate_image_scylla_down migrate_image_scylla_rollback run run_ws run_embedder yugabyte_up migrate migrate_down migrate_yugabyte migrate_yugabyte_down migrate_yugabyte_rollback migrate_scylla migrate_scylla_down migrate_scylla_rollback migrate_yugabyte_local migrate_scylla_local add_migration_yugabyte add_migration_cassandra rebuild_all rebuild_api rebuild_auth rebuild_ws rebuild_indexer rebuild_attachments rebuild_sfu rebuild_webhook rebuild_embedder rebuild_telemetry_gateway
+.PHONY: setup tools lint build_migration_image migrate_image migrate_image_down migrate_image_yugabyte migrate_image_scylla migrate_image_scylla_down migrate_image_scylla_rollback run run_ws run_embedder yugabyte_up migrate migrate_down migrate_yugabyte migrate_yugabyte_down migrate_yugabyte_rollback migrate_scylla migrate_scylla_down migrate_scylla_rollback migrate_yugabyte_local migrate_scylla_local add_migration_yugabyte add_migration_cassandra rebuild_all rebuild_api rebuild_auth rebuild_ws rebuild_bot_services rebuild_botapi rebuild_botws rebuild_botrouter rebuild_indexer rebuild_attachments rebuild_sfu rebuild_webhook rebuild_embedder rebuild_telemetry_gateway
 
 # Dev tools
-rebuild_all: rebuild_api rebuild_auth rebuild_indexer rebuild_embedder rebuild_ws
+rebuild_all: rebuild_api rebuild_auth rebuild_indexer rebuild_embedder rebuild_ws rebuild_bot_services
 
 rebuild_api:
 	docker compose down api
@@ -198,6 +198,20 @@ rebuild_auth:
 rebuild_ws:
 	docker compose down ws
 	docker compose up -d --no-deps --build ws
+
+rebuild_bot_services: rebuild_botapi rebuild_botws rebuild_botrouter
+
+rebuild_botapi:
+	docker compose down botapi
+	docker compose up -d --no-deps --build botapi
+
+rebuild_botws:
+	docker compose down botws
+	docker compose up -d --no-deps --build botws
+
+rebuild_botrouter:
+	docker compose down botrouter
+	docker compose up -d --no-deps --build botrouter
 
 rebuild_indexer:
 	docker compose down indexer

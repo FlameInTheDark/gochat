@@ -16,6 +16,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	botrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/bot"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channeluserperm"
@@ -46,6 +47,7 @@ const entityName = "guild"
 
 func (e *entity) Init(router fiber.Router) {
 	router.Post("", e.Create)
+	router.Get("/bots/authorize-guilds", e.ListBotAuthorizationGuilds)
 	router.Get("/:guild_id<int>", e.Get)
 	router.Patch("/:guild_id<int>", e.Update)
 	router.Get("/:guild_id<int>/discovery", e.GetGuildDiscovery)
@@ -84,6 +86,9 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/:guild_id<int>/voice/move", e.MoveMember)
 
 	router.Get("/:guild_id<int>/members", e.GetMembers)
+	router.Get("/:guild_id<int>/bots", e.ListGuildBots)
+	router.Post("/:guild_id<int>/bots", e.InstallBot)
+	router.Delete("/:guild_id<int>/bots/:bot_id<int>", e.RemoveBot)
 	router.Get("/:guild_id<int>/member/:user_id<int>", e.GetMember)
 	router.Get("/:guild_id<int>/bans", e.GetBans)
 	router.Post("/:guild_id<int>/member/:user_id<int>/kick", e.KickMember)
@@ -143,6 +148,7 @@ type entity struct {
 	av    avatar.Avatar
 	bn    banner.Banner
 	notes usernote.UserNote
+	bot   botrepo.Bot
 
 	storage            *s3.Client
 	attachTTL          int64
@@ -206,6 +212,7 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, mqt mq.SendTransporter, imq *indexmq.Ind
 		av:                 avatar.New(dbcon),
 		bn:                 banner.New(dbcon),
 		notes:              usernote.New(pg.Conn()),
+		bot:                botrepo.New(pg.Conn()),
 		storage:            storage,
 		attachTTL:          attachTTLSeconds,
 		authSecret:         authSecret,

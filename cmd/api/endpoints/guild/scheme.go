@@ -42,6 +42,7 @@ const (
 	ErrUnableToGetGuildMember            = "unable to get member"
 	ErrUnableToGetDiscriminator          = "unable to get discriminator"
 	ErrUnableToGetGuildByID              = "unable to get guild by id"
+	ErrUnableToGetGuilds                 = "unable to get guilds"
 	ErrUnableToUpdateGuild               = "unable to update guild"
 	ErrUnableToDeleteGuild               = "unable to delete guild"
 	ErrUnableToGetRoles                  = "unable to get roles"
@@ -600,6 +601,7 @@ func userToDTO(user model.User, dsc string) dto.User {
 		Bio:           user.Bio,
 		BannerColor:   user.BannerColor,
 		PanelColor:    user.PanelColor,
+		IsBot:         user.IsBot(),
 	}
 }
 

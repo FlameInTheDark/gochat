@@ -16,3 +16,7 @@ package main
 //	@schemes	http https
 
 //	@securitydefinitions.bearerauth	BearerAuth
+
+//	@securitydefinitions.apikey	BotToken
+//	@in							header
+//	@name						Authorization

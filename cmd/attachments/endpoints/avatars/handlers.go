@@ -55,13 +55,20 @@ func (e *entity) Upload(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
+	actorID := user.Id
+	if user.Id != userId {
+		if _, err := e.bot.GetBotForOwner(c.UserContext(), user.Id, userId); err != nil {
+			return fiber.NewError(fiber.StatusForbidden, ErrForbiddenToUpload)
+		}
+		actorID = userId
+	}
 
 	body, err := requestBodyReader(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := e.uploader.Upload(c.UserContext(), user.Id, userId, avatarId, body)
+	result, err := e.uploader.Upload(c.UserContext(), actorID, userId, avatarId, body)
 	if err != nil {
 		return avatarUploadError(err)
 	}

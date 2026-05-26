@@ -10,6 +10,20 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
+var userColumns = []string{
+	"id",
+	"name",
+	"bio",
+	"banner_color",
+	"panel_color",
+	"avatar",
+	"banner",
+	"blocked",
+	"flags",
+	"upload_limit",
+	"created_at",
+}
+
 func (e *Entity) ModifyUser(ctx context.Context, userId int64, name *string, avatar *int64, bio *string, bannerColor, panelColor *int) error {
 	q := squirrel.Update("users").
 		PlaceholderFormat(squirrel.Dollar).
@@ -46,7 +60,7 @@ func (e *Entity) ModifyUser(ctx context.Context, userId int64, name *string, ava
 
 func (e *Entity) GetUserById(ctx context.Context, id int64) (model.User, error) {
 	var user model.User
-	q := squirrel.Select("*").
+	q := squirrel.Select(userColumns...).
 		PlaceholderFormat(squirrel.Dollar).
 		From("users").
 		Where(squirrel.Eq{"id": id}).
@@ -64,7 +78,7 @@ func (e *Entity) GetUserById(ctx context.Context, id int64) (model.User, error) 
 
 func (e *Entity) GetUsersList(ctx context.Context, ids []int64) ([]model.User, error) {
 	var users []model.User
-	q := squirrel.Select("*").
+	q := squirrel.Select(userColumns...).
 		PlaceholderFormat(squirrel.Dollar).
 		From("users").
 		Where(squirrel.Eq{"id": ids}).
@@ -81,10 +95,14 @@ func (e *Entity) GetUsersList(ctx context.Context, ids []int64) ([]model.User, e
 }
 
 func (e *Entity) CreateUser(ctx context.Context, id int64, name string) error {
+	return e.CreateUserWithFlags(ctx, id, name, 0)
+}
+
+func (e *Entity) CreateUserWithFlags(ctx context.Context, id int64, name string, flags int64) error {
 	q := squirrel.Insert("users").
 		PlaceholderFormat(squirrel.Dollar).
-		Columns("id", "name", "blocked").
-		Values(id, name, false)
+		Columns("id", "name", "blocked", "flags").
+		Values(id, name, false, flags)
 	raw, args, err := q.ToSql()
 	if err != nil {
 		return fmt.Errorf("unable to create SQL query: %w", err)
@@ -92,6 +110,22 @@ func (e *Entity) CreateUser(ctx context.Context, id int64, name string) error {
 	_, err = e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
 		return fmt.Errorf("unable to create user: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) SetUserFlags(ctx context.Context, id, flags int64) error {
+	q := squirrel.Update("users").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"id": id}).
+		Set("flags", flags)
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	_, err = e.c.ExecContext(ctx, raw, args...)
+	if err != nil {
+		return fmt.Errorf("unable to set user flags: %w", err)
 	}
 	return nil
 }
