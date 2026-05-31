@@ -33,3 +33,12 @@ func (e *entity) publishGuildSearchDelete(ctx context.Context, guildID int64, lo
 		logger.Error("unable to publish guild search delete", slog.Int64("guild_id", guildID), slog.String("error", err.Error()))
 	}
 }
+
+func (e *entity) publishBotSearchUpsert(ctx context.Context, botUserID int64, logger *slog.Logger) {
+	if e.smq == nil {
+		return
+	}
+	if err := e.smq.UpsertBot(ctx, dto.BotIndexMessage{BotUserId: botUserID}); err != nil && logger != nil {
+		logger.Error("unable to publish bot search upsert", slog.Int64("bot_user_id", botUserID), slog.String("error", err.Error()))
+	}
+}

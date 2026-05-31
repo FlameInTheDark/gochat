@@ -6,6 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **ChannelMentions** | Pointer to [**map[string][]ModelChannelMention**](array.md) |  | [optional] 
 **ContentHosts** | Pointer to **[]string** |  | [optional] 
+**DmCalls** | Pointer to [**[]MqmsgDMCallSummary**](MqmsgDMCallSummary.md) | Active direct-message voice calls visible to the current user. | [optional] 
 **GuildEmojis** | Pointer to [**map[string][]DtoEmojiRef**](array.md) |  | [optional] 
 **Guilds** | Pointer to [**[]DtoGuild**](DtoGuild.md) |  | [optional] 
 **GuildsLastMessages** | Pointer to **map[string]map[string]int32** |  | [optional] 
@@ -84,6 +85,31 @@ SetContentHosts sets ContentHosts field to given value.
 `func (o *UserUserSettingsResponse) HasContentHosts() bool`
 
 HasContentHosts returns a boolean if a field has been set.
+
+### GetDmCalls
+
+`func (o *UserUserSettingsResponse) GetDmCalls() []MqmsgDMCallSummary`
+
+GetDmCalls returns the DmCalls field if non-nil, zero value otherwise.
+
+### GetDmCallsOk
+
+`func (o *UserUserSettingsResponse) GetDmCallsOk() (*[]MqmsgDMCallSummary, bool)`
+
+GetDmCallsOk returns a tuple with the DmCalls field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDmCalls
+
+`func (o *UserUserSettingsResponse) SetDmCalls(v []MqmsgDMCallSummary)`
+
+SetDmCalls sets DmCalls field to given value.
+
+### HasDmCalls
+
+`func (o *UserUserSettingsResponse) HasDmCalls() bool`
+
+HasDmCalls returns a boolean if a field has been set.
 
 ### GetGuildEmojis
 

@@ -17,6 +17,7 @@ Method | HTTP request | Description
 [**GuildGuildIdChannelOrderPatch**](GuildAPI.md#GuildGuildIdChannelOrderPatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 [**GuildGuildIdChannelPost**](GuildAPI.md#GuildGuildIdChannelPost) | **Post** /guild/{guild_id}/channel | Create guild channel
 [**GuildGuildIdDelete**](GuildAPI.md#GuildGuildIdDelete) | **Delete** /guild/{guild_id} | Delete guild
+[**GuildGuildIdDiscoveryGet**](GuildAPI.md#GuildGuildIdDiscoveryGet) | **Get** /guild/{guild_id}/discovery | Get guild discovery settings
 [**GuildGuildIdDiscoveryPatch**](GuildAPI.md#GuildGuildIdDiscoveryPatch) | **Patch** /guild/{guild_id}/discovery | Update guild discovery settings
 [**GuildGuildIdEmojisEmojiIdDelete**](GuildAPI.md#GuildGuildIdEmojisEmojiIdDelete) | **Delete** /guild/{guild_id}/emojis/{emoji_id} | Delete guild emoji
 [**GuildGuildIdEmojisEmojiIdPatch**](GuildAPI.md#GuildGuildIdEmojisEmojiIdPatch) | **Patch** /guild/{guild_id}/emojis/{emoji_id} | Update guild emoji
@@ -956,6 +957,76 @@ No authorization required
 
 - **Content-Type**: Not defined
 - **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GuildGuildIdDiscoveryGet
+
+> DtoGuildDiscoveryUpdateResponse GuildGuildIdDiscoveryGet(ctx, guildId).Execute()
+
+Get guild discovery settings
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	guildId := int32(56) // int32 | Guild id
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.GuildAPI.GuildGuildIdDiscoveryGet(context.Background(), guildId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `GuildAPI.GuildGuildIdDiscoveryGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GuildGuildIdDiscoveryGet`: DtoGuildDiscoveryUpdateResponse
+	fmt.Fprintf(os.Stdout, "Response from `GuildAPI.GuildGuildIdDiscoveryGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**guildId** | **int32** | Guild id | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGuildGuildIdDiscoveryGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**DtoGuildDiscoveryUpdateResponse**](DtoGuildDiscoveryUpdateResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)

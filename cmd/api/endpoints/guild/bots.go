@@ -2,8 +2,10 @@ package guild
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/botauth"
@@ -21,6 +23,52 @@ type InstallBotRequest struct {
 	BotUserId          int64  `json:"bot_user_id"`
 	GrantToken         string `json:"grant_token"`
 	GrantedPermissions int64  `json:"granted_permissions"`
+}
+
+func (r *InstallBotRequest) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		BotUserId          jsonInt64 `json:"bot_user_id"`
+		GrantToken         string    `json:"grant_token"`
+		GrantedPermissions int64     `json:"granted_permissions"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	r.BotUserId = int64(raw.BotUserId)
+	r.GrantToken = raw.GrantToken
+	r.GrantedPermissions = raw.GrantedPermissions
+	return nil
+}
+
+func botInstallGrantHasUsesRemaining(grant model.BotInstallGrant) bool {
+	return grant.MaxUses == 0 || grant.Uses < grant.MaxUses
+}
+
+type jsonInt64 int64
+
+func (v *jsonInt64) UnmarshalJSON(data []byte) error {
+	raw := strings.TrimSpace(string(data))
+	if raw == "" || raw == "null" {
+		*v = 0
+		return nil
+	}
+	if strings.HasPrefix(raw, `"`) {
+		unquoted, err := strconv.Unquote(raw)
+		if err != nil {
+			return err
+		}
+		raw = strings.TrimSpace(unquoted)
+		if raw == "" {
+			*v = 0
+			return nil
+		}
+	}
+	parsed, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return err
+	}
+	*v = jsonInt64(parsed)
+	return nil
 }
 
 type InstalledBotResponse struct {
@@ -148,7 +196,7 @@ func (e *entity) InstallBot(c *fiber.Ctx) error {
 		if err != nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "invalid bot install grant")
 		}
-		if grant.RevokedAt != nil || time.Now().After(grant.ExpiresAt) || grant.Uses >= grant.MaxUses {
+		if grant.RevokedAt != nil || time.Now().After(grant.ExpiresAt) || !botInstallGrantHasUsesRemaining(grant) {
 			return fiber.NewError(fiber.StatusUnauthorized, "bot install grant is expired")
 		}
 		bot, err = e.bot.GetBot(c.UserContext(), grant.BotUserId)
@@ -200,6 +248,7 @@ func (e *entity) InstallBot(c *fiber.Ctx) error {
 	if grantID != nil {
 		_ = e.bot.UseGrant(c.UserContext(), *grantID)
 	}
+	e.publishBotSearchUpsert(c.UserContext(), bot.BotUserId, e.log)
 	install, err := e.bot.GetBotGuild(c.UserContext(), bot.BotUserId, guildID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "unable to get installed bot")
@@ -238,6 +287,7 @@ func (e *entity) RemoveBot(c *fiber.Ctx) error {
 	if err := e.bot.DeleteBotGuild(c.UserContext(), botID, guildID); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "unable to remove bot")
 	}
+	e.publishBotSearchUpsert(c.UserContext(), botID, e.log)
 	if isMember, err := e.memb.IsGuildMember(c.UserContext(), guildID, botID); err == nil && isMember {
 		_ = e.memb.RemoveMember(c.UserContext(), botID, guildID)
 	}
@@ -259,6 +309,9 @@ func (e *entity) requireBotInstallAdmin(c *fiber.Ctx) (guildID, actorID int64, e
 	}
 	guild, err := e.g.GetGuildById(c.UserContext(), guildID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, 0, fiber.NewError(fiber.StatusNotFound, ErrUnableToGetGuildByID)
+		}
 		return 0, 0, fiber.NewError(fiber.StatusInternalServerError, ErrUnableToGetGuildByID)
 	}
 	if guild.OwnerId == user.Id {

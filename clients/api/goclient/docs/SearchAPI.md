@@ -4,11 +4,155 @@ All URIs are relative to *http://localhost/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**SearchBotTagsGet**](SearchAPI.md#SearchBotTagsGet) | **Get** /search/bot-tags | Autocomplete public bot tags
+[**SearchBotsGet**](SearchAPI.md#SearchBotsGet) | **Get** /search/bots | Search public bots
 [**SearchGuildIdMessagesPost**](SearchAPI.md#SearchGuildIdMessagesPost) | **Post** /search/{guild_id}/messages | Search messages
 [**SearchGuildTagsGet**](SearchAPI.md#SearchGuildTagsGet) | **Get** /search/guild-tags | Autocomplete public guild tags
 [**SearchGuildsGet**](SearchAPI.md#SearchGuildsGet) | **Get** /search/guilds | Search public guilds
 [**SearchMessagesPost**](SearchAPI.md#SearchMessagesPost) | **Post** /search/messages | Search messages in a channel
 
+
+
+## SearchBotTagsGet
+
+> []string SearchBotTagsGet(ctx).Q(q).Limit(limit).Execute()
+
+Autocomplete public bot tags
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	q := "q_example" // string | Tag prefix (optional)
+	limit := int32(56) // int32 | Maximum tags to return, capped at 16 (optional) (default to 16)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.SearchAPI.SearchBotTagsGet(context.Background()).Q(q).Limit(limit).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `SearchAPI.SearchBotTagsGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `SearchBotTagsGet`: []string
+	fmt.Fprintf(os.Stdout, "Response from `SearchAPI.SearchBotTagsGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiSearchBotTagsGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **q** | **string** | Tag prefix | 
+ **limit** | **int32** | Maximum tags to return, capped at 16 | [default to 16]
+
+### Return type
+
+**[]string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## SearchBotsGet
+
+> DtoBotDiscoverySearchResponse SearchBotsGet(ctx).Q(q).Tags(tags).Sort(sort).Page(page).Limit(limit).Execute()
+
+Search public bots
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	q := "q_example" // string | Search text for bot name, description, bio, and tags (optional)
+	tags := "tags_example" // string | Comma-separated normalized tags (optional)
+	sort := "sort_example" // string | Sort mode (optional) (default to "best_match")
+	page := int32(56) // int32 | Zero-based page number (optional) (default to 0)
+	limit := int32(56) // int32 | Results per page, capped at 16 (optional) (default to 16)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.SearchAPI.SearchBotsGet(context.Background()).Q(q).Tags(tags).Sort(sort).Page(page).Limit(limit).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `SearchAPI.SearchBotsGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `SearchBotsGet`: DtoBotDiscoverySearchResponse
+	fmt.Fprintf(os.Stdout, "Response from `SearchAPI.SearchBotsGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiSearchBotsGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **q** | **string** | Search text for bot name, description, bio, and tags | 
+ **tags** | **string** | Comma-separated normalized tags | 
+ **sort** | **string** | Sort mode | [default to &quot;best_match&quot;]
+ **page** | **int32** | Zero-based page number | [default to 0]
+ **limit** | **int32** | Results per page, capped at 16 | [default to 16]
+
+### Return type
+
+[**DtoBotDiscoverySearchResponse**](DtoBotDiscoverySearchResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
 ## SearchGuildIdMessagesPost

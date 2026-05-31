@@ -13,6 +13,8 @@ import (
 const (
 	GuildUpsertSubject = "search.guild.upsert"
 	GuildDeleteSubject = "search.guild.delete"
+	BotUpsertSubject   = "search.bot.upsert"
+	BotDeleteSubject   = "search.bot.delete"
 )
 
 type Queue struct {
@@ -41,6 +43,22 @@ func (q *Queue) DeleteGuild(ctx context.Context, msg dto.GuildIndexDeleteMessage
 		return err
 	}
 	return q.publish(ctx, GuildDeleteSubject, data)
+}
+
+func (q *Queue) UpsertBot(ctx context.Context, msg dto.BotIndexMessage) error {
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	return q.publish(ctx, BotUpsertSubject, data)
+}
+
+func (q *Queue) DeleteBot(ctx context.Context, msg dto.BotIndexDeleteMessage) error {
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	return q.publish(ctx, BotDeleteSubject, data)
 }
 
 func (q *Queue) publish(ctx context.Context, subject string, data []byte) (err error) {

@@ -8,6 +8,7 @@ Method | HTTP request | Description
 [**UploadAvatarsUserIdAvatarIdPost**](UploadAPI.md#UploadAvatarsUserIdAvatarIdPost) | **Post** /upload/avatars/{user_id}/{avatar_id} | Upload user avatar
 [**UploadEmojisGuildIdEmojiIdPost**](UploadAPI.md#UploadEmojisGuildIdEmojiIdPost) | **Post** /upload/emojis/{guild_id}/{emoji_id} | Upload guild emoji image
 [**UploadIconsGuildIdIconIdPost**](UploadAPI.md#UploadIconsGuildIdIconIdPost) | **Post** /upload/icons/{guild_id}/{icon_id} | Upload guild icon
+[**UploadProfileCoversUserIdBannerIdPost**](UploadAPI.md#UploadProfileCoversUserIdBannerIdPost) | **Post** /upload/profile-covers/{user_id}/{banner_id} | Upload user profile banner
 
 
 
@@ -292,6 +293,89 @@ Name | Type | Description  | Notes
 
 
  **file** | **[]int32** | Binary image payload | 
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/octet-stream
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UploadProfileCoversUserIdBannerIdPost
+
+> string UploadProfileCoversUserIdBannerIdPost(ctx, userId, bannerId).File(file).CropX(cropX).CropY(cropY).CropWidth(cropWidth).CropHeight(cropHeight).Execute()
+
+Upload user profile banner
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	userId := int32(56) // int32 | User ID
+	bannerId := int32(56) // int32 | Banner ID
+	file := []int32{int32(123)} // []int32 | Binary image payload
+	cropX := int32(56) // int32 | Crop X coordinate in source pixels (optional)
+	cropY := int32(56) // int32 | Crop Y coordinate in source pixels (optional)
+	cropWidth := int32(56) // int32 | Crop width in source pixels (optional)
+	cropHeight := int32(56) // int32 | Crop height in source pixels (optional)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UploadAPI.UploadProfileCoversUserIdBannerIdPost(context.Background(), userId, bannerId).File(file).CropX(cropX).CropY(cropY).CropWidth(cropWidth).CropHeight(cropHeight).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UploadAPI.UploadProfileCoversUserIdBannerIdPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UploadProfileCoversUserIdBannerIdPost`: string
+	fmt.Fprintf(os.Stdout, "Response from `UploadAPI.UploadProfileCoversUserIdBannerIdPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**userId** | **int32** | User ID | 
+**bannerId** | **int32** | Banner ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUploadProfileCoversUserIdBannerIdPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+ **file** | **[]int32** | Binary image payload | 
+ **cropX** | **int32** | Crop X coordinate in source pixels | 
+ **cropY** | **int32** | Crop Y coordinate in source pixels | 
+ **cropWidth** | **int32** | Crop width in source pixels | 
+ **cropHeight** | **int32** | Crop height in source pixels | 
 
 ### Return type
 

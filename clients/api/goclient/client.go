@@ -51,9 +51,19 @@ type APIClient struct {
 
 	AuthAPI *AuthAPIService
 
+	BotGuildAPI *BotGuildAPIService
+
+	BotMessageAPI *BotMessageAPIService
+
+	BotUserAPI *BotUserAPIService
+
+	DeveloperBotsAPI *DeveloperBotsAPIService
+
 	EmojiAPI *EmojiAPIService
 
 	GuildAPI *GuildAPIService
+
+	GuildBotsAPI *GuildBotsAPIService
 
 	GuildInvitesAPI *GuildInvitesAPIService
 
@@ -89,8 +99,13 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 
 	// API Services
 	c.AuthAPI = (*AuthAPIService)(&c.common)
+	c.BotGuildAPI = (*BotGuildAPIService)(&c.common)
+	c.BotMessageAPI = (*BotMessageAPIService)(&c.common)
+	c.BotUserAPI = (*BotUserAPIService)(&c.common)
+	c.DeveloperBotsAPI = (*DeveloperBotsAPIService)(&c.common)
 	c.EmojiAPI = (*EmojiAPIService)(&c.common)
 	c.GuildAPI = (*GuildAPIService)(&c.common)
+	c.GuildBotsAPI = (*GuildBotsAPIService)(&c.common)
 	c.GuildInvitesAPI = (*GuildInvitesAPIService)(&c.common)
 	c.GuildRolesAPI = (*GuildRolesAPIService)(&c.common)
 	c.MessageAPI = (*MessageAPIService)(&c.common)

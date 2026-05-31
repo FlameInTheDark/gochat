@@ -2,6 +2,7 @@ package developer
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/botauth"
@@ -36,6 +37,11 @@ func (e *entity) CreateBot(c *fiber.Ctx) error {
 	if err := validateBotName(req.Name); err != nil {
 		return err
 	}
+	req.Description = strings.TrimSpace(req.Description)
+	req.Tags = normalizeBotDiscoveryTags(req.Tags)
+	if err := validateBotDiscoveryTags(req.Tags); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
 	botID := idgen.Next()
 	if err := e.user.CreateUserWithFlags(c.UserContext(), botID, req.Name, model.UserFlagBot); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, errUnableToSaveBot)
@@ -53,6 +59,10 @@ func (e *entity) CreateBot(c *fiber.Ctx) error {
 	if err := e.bot.CreateBot(c.UserContext(), bot); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, errUnableToSaveBot)
 	}
+	if err := e.bot.SetBotTags(c.UserContext(), botID, req.Tags); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, errUnableToSaveBot)
+	}
+	e.publishBotSearchUpsert(c.UserContext(), botID)
 	bot, _ = e.bot.GetBot(c.UserContext(), botID)
 	out, err := e.botResponse(c, bot)
 	if err != nil {
@@ -187,8 +197,20 @@ func (e *entity) UpdateBot(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, errBadRequest)
 	}
 	if req.Name != nil {
+		trimmedName := strings.TrimSpace(*req.Name)
+		req.Name = &trimmedName
 		if err := validateBotName(*req.Name); err != nil {
 			return err
+		}
+	}
+	if req.Description != nil {
+		trimmedDescription := strings.TrimSpace(*req.Description)
+		req.Description = &trimmedDescription
+	}
+	if req.Tags != nil {
+		req.Tags = normalizeBotDiscoveryTags(req.Tags)
+		if err := validateBotDiscoveryTags(req.Tags); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	}
 	if req.Name != nil || req.Avatar != nil || req.Bio != nil || req.BannerColor != nil || req.PanelColor != nil {
@@ -204,9 +226,19 @@ func (e *entity) UpdateBot(c *fiber.Ctx) error {
 	if err := e.bot.UpdateBot(c.UserContext(), botID, req.Description, req.Public, req.DefaultPermissions, req.Disabled); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, errUnableToSaveBot)
 	}
+	if req.Tags != nil {
+		if err := e.bot.SetBotTags(c.UserContext(), botID, req.Tags); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, errUnableToSaveBot)
+		}
+	}
 	bot, err := e.bot.GetBot(c.UserContext(), botID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, errUnableToGetBot)
+	}
+	if bot.Public && !bot.Disabled {
+		e.publishBotSearchUpsert(c.UserContext(), botID)
+	} else {
+		e.publishBotSearchDelete(c.UserContext(), botID)
 	}
 	out, err := e.botResponse(c, bot)
 	if err != nil {
@@ -243,6 +275,7 @@ func (e *entity) DeleteBot(c *fiber.Ctx) error {
 	if err := e.bot.DeleteBot(c.UserContext(), botID); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, errUnableToSaveBot)
 	}
+	e.publishBotSearchDelete(c.UserContext(), botID)
 	return c.SendStatus(fiber.StatusNoContent)
 }
 

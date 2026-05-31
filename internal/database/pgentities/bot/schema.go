@@ -44,6 +44,25 @@ func (e *Entity) GetBot(ctx context.Context, botUserID int64) (model.Bot, error)
 	return bot, nil
 }
 
+func (e *Entity) GetBotsByIDs(ctx context.Context, botUserIDs []int64) ([]model.Bot, error) {
+	var bots []model.Bot
+	if len(botUserIDs) == 0 {
+		return bots, nil
+	}
+	q := squirrel.Select("*").
+		PlaceholderFormat(squirrel.Dollar).
+		From("bots").
+		Where(squirrel.Eq{"bot_user_id": botUserIDs})
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	if err = e.c.SelectContext(ctx, &bots, raw, args...); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("unable to get bots by ids: %w", err)
+	}
+	return bots, nil
+}
+
 func (e *Entity) GetBotForOwner(ctx context.Context, ownerUserID, botUserID int64) (model.Bot, error) {
 	var bot model.Bot
 	q := squirrel.Select("*").
@@ -78,6 +97,33 @@ func (e *Entity) ListOwnerBots(ctx context.Context, ownerUserID int64) ([]model.
 	return bots, nil
 }
 
+func (e *Entity) ListPublicEnabledBotIDs(ctx context.Context, limit uint64) ([]int64, error) {
+	type row struct {
+		BotUserID int64 `db:"bot_user_id"`
+	}
+	var rows []row
+	q := squirrel.Select("bot_user_id").
+		PlaceholderFormat(squirrel.Dollar).
+		From("bots").
+		Where(squirrel.And{squirrel.Eq{"public": true}, squirrel.Eq{"disabled": false}}).
+		OrderBy("bot_user_id ASC")
+	if limit > 0 {
+		q = q.Limit(limit)
+	}
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create SQL query: %w", err)
+	}
+	if err = e.c.SelectContext(ctx, &rows, raw, args...); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("unable to list public bot ids: %w", err)
+	}
+	out := make([]int64, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, r.BotUserID)
+	}
+	return out, nil
+}
+
 func (e *Entity) UpdateBot(ctx context.Context, botUserID int64, description *string, public *bool, defaultPermissions *int64, disabled *bool) error {
 	q := squirrel.Update("bots").
 		PlaceholderFormat(squirrel.Dollar).
@@ -105,6 +151,102 @@ func (e *Entity) UpdateBot(ctx context.Context, botUserID int64, description *st
 	return nil
 }
 
+func (e *Entity) SetBotTags(ctx context.Context, botUserID int64, tags []string) error {
+	tx, err := e.c.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("unable to begin bot tags transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	del := squirrel.Delete("bot_tags").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"bot_user_id": botUserID})
+	raw, args, err := del.ToSql()
+	if err != nil {
+		return fmt.Errorf("unable to create bot tags delete SQL: %w", err)
+	}
+	if _, err = tx.ExecContext(ctx, raw, args...); err != nil {
+		return fmt.Errorf("unable to delete bot tags: %w", err)
+	}
+
+	if len(tags) > 0 {
+		ins := squirrel.Insert("bot_tags").
+			PlaceholderFormat(squirrel.Dollar).
+			Columns("bot_user_id", "tag")
+		for _, tag := range tags {
+			ins = ins.Values(botUserID, tag)
+		}
+		raw, args, err = ins.ToSql()
+		if err != nil {
+			return fmt.Errorf("unable to create bot tags insert SQL: %w", err)
+		}
+		if _, err = tx.ExecContext(ctx, raw, args...); err != nil {
+			return fmt.Errorf("unable to insert bot tags: %w", err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("unable to commit bot tags transaction: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) GetTagsByBots(ctx context.Context, botUserIDs []int64) (map[int64][]string, error) {
+	result := make(map[int64][]string, len(botUserIDs))
+	if len(botUserIDs) == 0 {
+		return result, nil
+	}
+	type row struct {
+		BotUserID int64  `db:"bot_user_id"`
+		Tag       string `db:"tag"`
+	}
+	var rows []row
+	q := squirrel.Select("bot_user_id", "tag").
+		PlaceholderFormat(squirrel.Dollar).
+		From("bot_tags").
+		Where(squirrel.Eq{"bot_user_id": botUserIDs}).
+		OrderBy("tag ASC")
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create bot tags select SQL: %w", err)
+	}
+	if err = e.c.SelectContext(ctx, &rows, raw, args...); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("unable to select bot tags: %w", err)
+	}
+	for _, r := range rows {
+		result[r.BotUserID] = append(result[r.BotUserID], r.Tag)
+	}
+	return result, nil
+}
+
+func (e *Entity) GetInstallCounts(ctx context.Context, botUserIDs []int64) (map[int64]int64, error) {
+	result := make(map[int64]int64, len(botUserIDs))
+	if len(botUserIDs) == 0 {
+		return result, nil
+	}
+	type row struct {
+		BotUserID int64 `db:"bot_user_id"`
+		Count     int64 `db:"count"`
+	}
+	var rows []row
+	q := squirrel.Select("bot_user_id", "COUNT(*) AS count").
+		PlaceholderFormat(squirrel.Dollar).
+		From("bot_guilds").
+		Where(squirrel.Eq{"bot_user_id": botUserIDs}).
+		GroupBy("bot_user_id")
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create bot install count SQL: %w", err)
+	}
+	if err = e.c.SelectContext(ctx, &rows, raw, args...); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("unable to select bot install counts: %w", err)
+	}
+	for _, r := range rows {
+		result[r.BotUserID] = r.Count
+	}
+	return result, nil
+}
+
 func (e *Entity) DeleteBot(ctx context.Context, botUserID int64) error {
 	tx, err := e.c.BeginTxx(ctx, nil)
 	if err != nil {
@@ -114,7 +256,7 @@ func (e *Entity) DeleteBot(ctx context.Context, botUserID int64) error {
 	if _, err = tx.ExecContext(ctx, "DELETE FROM members WHERE user_id = $1", botUserID); err != nil {
 		return fmt.Errorf("unable to delete bot memberships: %w", err)
 	}
-	for _, table := range []string{"bot_guilds", "bot_install_grants", "bot_tokens", "bots"} {
+	for _, table := range []string{"bot_guilds", "bot_install_grants", "bot_tokens", "bot_tags", "bots"} {
 		if _, err = tx.ExecContext(ctx, "DELETE FROM "+table+" WHERE bot_user_id = $1", botUserID); err != nil {
 			return fmt.Errorf("unable to delete %s: %w", table, err)
 		}

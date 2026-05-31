@@ -7,6 +7,15 @@ Method | HTTP request | Description
 [**UserMeAvatarPost**](UserAPI.md#UserMeAvatarPost) | **Post** /user/me/avatar | Create avatar metadata
 [**UserMeAvatarsAvatarIdDelete**](UserAPI.md#UserMeAvatarsAvatarIdDelete) | **Delete** /user/me/avatars/{avatar_id} | Delete my avatar by ID
 [**UserMeAvatarsGet**](UserAPI.md#UserMeAvatarsGet) | **Get** /user/me/avatars | List my avatars
+[**UserMeBannerPost**](UserAPI.md#UserMeBannerPost) | **Post** /user/me/banner | Create profile banner metadata
+[**UserMeChannelsChannelIdCallDeclinePost**](UserAPI.md#UserMeChannelsChannelIdCallDeclinePost) | **Post** /user/me/channels/{channel_id}/call/decline | Decline or dismiss an incoming direct-message voice call
+[**UserMeChannelsChannelIdCallDelete**](UserAPI.md#UserMeChannelsChannelIdCallDelete) | **Delete** /user/me/channels/{channel_id}/call | Leave the current direct-message voice call
+[**UserMeChannelsChannelIdCallJoinPost**](UserAPI.md#UserMeChannelsChannelIdCallJoinPost) | **Post** /user/me/channels/{channel_id}/call/join | Join an active direct-message voice call
+[**UserMeChannelsChannelIdCallPost**](UserAPI.md#UserMeChannelsChannelIdCallPost) | **Post** /user/me/channels/{channel_id}/call | Start or join a direct-message voice call
+[**UserMeChannelsChannelIdCallStreamsGet**](UserAPI.md#UserMeChannelsChannelIdCallStreamsGet) | **Get** /user/me/channels/{channel_id}/call/streams | List active streams in a direct-message voice call
+[**UserMeChannelsChannelIdCallStreamsPost**](UserAPI.md#UserMeChannelsChannelIdCallStreamsPost) | **Post** /user/me/channels/{channel_id}/call/streams | Start or resume screen sharing in a direct-message voice call
+[**UserMeChannelsChannelIdCallStreamsStreamIdDelete**](UserAPI.md#UserMeChannelsChannelIdCallStreamsStreamIdDelete) | **Delete** /user/me/channels/{channel_id}/call/streams/{stream_id} | Stop an owned screen share in a direct-message voice call
+[**UserMeChannelsChannelIdCallStreamsStreamIdJoinPost**](UserAPI.md#UserMeChannelsChannelIdCallStreamsStreamIdJoinPost) | **Post** /user/me/channels/{channel_id}/call/streams/{stream_id}/join | Join a screen share in a direct-message voice call
 [**UserMeChannelsGet**](UserAPI.md#UserMeChannelsGet) | **Get** /user/me/channels | List all DM and Group DM channels for current user
 [**UserMeChannelsGroupPost**](UserAPI.md#UserMeChannelsGroupPost) | **Post** /user/me/channels/group | Create group DM channel
 [**UserMeChannelsPost**](UserAPI.md#UserMeChannelsPost) | **Post** /user/me/channels | Create DM channel
@@ -20,6 +29,8 @@ Method | HTTP request | Description
 [**UserMeGuildsGet**](UserAPI.md#UserMeGuildsGet) | **Get** /user/me/guilds | Get user guilds
 [**UserMeGuildsGuildIdDelete**](UserAPI.md#UserMeGuildsGuildIdDelete) | **Delete** /user/me/guilds/{guild_id} | Leave guild
 [**UserMeGuildsGuildIdMemberGet**](UserAPI.md#UserMeGuildsGuildIdMemberGet) | **Get** /user/me/guilds/{guild_id}/member | Get user guild member
+[**UserMeNotesUserIdDelete**](UserAPI.md#UserMeNotesUserIdDelete) | **Delete** /user/me/notes/{user_id} | Delete a private note for another user
+[**UserMeNotesUserIdPut**](UserAPI.md#UserMeNotesUserIdPut) | **Put** /user/me/notes/{user_id} | Save a private note for another user
 [**UserMePatch**](UserAPI.md#UserMePatch) | **Patch** /user/me | Get user
 [**UserMeSettingsGet**](UserAPI.md#UserMeSettingsGet) | **Get** /user/me/settings | Get current user settings (optional version gating)
 [**UserMeSettingsPost**](UserAPI.md#UserMeSettingsPost) | **Post** /user/me/settings | Update current user settings (replaces and bumps version)
@@ -207,6 +218,618 @@ Other parameters are passed through a pointer to a apiUserMeAvatarsGetRequest st
 ### Return type
 
 [**[]DtoAvatar**](DtoAvatar.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeBannerPost
+
+> DtoBannerUpload UserMeBannerPost(ctx).Request(request).Execute()
+
+Create profile banner metadata
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	request := *openapiclient.NewUserCreateBannerRequest() // UserCreateBannerRequest | Banner creation request
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeBannerPost(context.Background()).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeBannerPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeBannerPost`: DtoBannerUpload
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeBannerPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeBannerPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **request** | [**UserCreateBannerRequest**](UserCreateBannerRequest.md) | Banner creation request | 
+
+### Return type
+
+[**DtoBannerUpload**](DtoBannerUpload.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeChannelsChannelIdCallDeclinePost
+
+> UserMeChannelsChannelIdCallDeclinePost(ctx, channelId).Execute()
+
+Decline or dismiss an incoming direct-message voice call
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Direct DM channel ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	r, err := apiClient.UserAPI.UserMeChannelsChannelIdCallDeclinePost(context.Background(), channelId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeChannelsChannelIdCallDeclinePost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Direct DM channel ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeChannelsChannelIdCallDeclinePostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeChannelsChannelIdCallDelete
+
+> UserMeChannelsChannelIdCallDelete(ctx, channelId).Execute()
+
+Leave the current direct-message voice call
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Direct DM channel ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	r, err := apiClient.UserAPI.UserMeChannelsChannelIdCallDelete(context.Background(), channelId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeChannelsChannelIdCallDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Direct DM channel ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeChannelsChannelIdCallDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeChannelsChannelIdCallJoinPost
+
+> UserDMCallJoinResponse UserMeChannelsChannelIdCallJoinPost(ctx, channelId).Execute()
+
+Join an active direct-message voice call
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Direct DM channel ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeChannelsChannelIdCallJoinPost(context.Background(), channelId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeChannelsChannelIdCallJoinPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeChannelsChannelIdCallJoinPost`: UserDMCallJoinResponse
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeChannelsChannelIdCallJoinPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Direct DM channel ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeChannelsChannelIdCallJoinPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**UserDMCallJoinResponse**](UserDMCallJoinResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeChannelsChannelIdCallPost
+
+> UserDMCallJoinResponse UserMeChannelsChannelIdCallPost(ctx, channelId).Execute()
+
+Start or join a direct-message voice call
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Direct DM channel ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeChannelsChannelIdCallPost(context.Background(), channelId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeChannelsChannelIdCallPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeChannelsChannelIdCallPost`: UserDMCallJoinResponse
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeChannelsChannelIdCallPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Direct DM channel ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeChannelsChannelIdCallPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**UserDMCallJoinResponse**](UserDMCallJoinResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeChannelsChannelIdCallStreamsGet
+
+> []UserVoiceStreamSummary UserMeChannelsChannelIdCallStreamsGet(ctx, channelId).Execute()
+
+List active streams in a direct-message voice call
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Direct DM channel ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeChannelsChannelIdCallStreamsGet(context.Background(), channelId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeChannelsChannelIdCallStreamsGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeChannelsChannelIdCallStreamsGet`: []UserVoiceStreamSummary
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeChannelsChannelIdCallStreamsGet`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Direct DM channel ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeChannelsChannelIdCallStreamsGetRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+[**[]UserVoiceStreamSummary**](UserVoiceStreamSummary.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeChannelsChannelIdCallStreamsPost
+
+> UserCreateDMCallStreamResponse UserMeChannelsChannelIdCallStreamsPost(ctx, channelId).Request(request).Execute()
+
+Start or resume screen sharing in a direct-message voice call
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Direct DM channel ID
+	request := *openapiclient.NewUserCreateDMCallStreamRequest() // UserCreateDMCallStreamRequest | Stream options
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeChannelsChannelIdCallStreamsPost(context.Background(), channelId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeChannelsChannelIdCallStreamsPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeChannelsChannelIdCallStreamsPost`: UserCreateDMCallStreamResponse
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeChannelsChannelIdCallStreamsPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Direct DM channel ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeChannelsChannelIdCallStreamsPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **request** | [**UserCreateDMCallStreamRequest**](UserCreateDMCallStreamRequest.md) | Stream options | 
+
+### Return type
+
+[**UserCreateDMCallStreamResponse**](UserCreateDMCallStreamResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeChannelsChannelIdCallStreamsStreamIdDelete
+
+> UserMeChannelsChannelIdCallStreamsStreamIdDelete(ctx, channelId, streamId).Execute()
+
+Stop an owned screen share in a direct-message voice call
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Direct DM channel ID
+	streamId := int32(56) // int32 | Stream ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	r, err := apiClient.UserAPI.UserMeChannelsChannelIdCallStreamsStreamIdDelete(context.Background(), channelId, streamId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeChannelsChannelIdCallStreamsStreamIdDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Direct DM channel ID | 
+**streamId** | **int32** | Stream ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeChannelsChannelIdCallStreamsStreamIdJoinPost
+
+> UserJoinDMCallStreamResponse UserMeChannelsChannelIdCallStreamsStreamIdJoinPost(ctx, channelId, streamId).Execute()
+
+Join a screen share in a direct-message voice call
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	channelId := int32(56) // int32 | Direct DM channel ID
+	streamId := int32(56) // int32 | Stream ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeChannelsChannelIdCallStreamsStreamIdJoinPost(context.Background(), channelId, streamId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeChannelsChannelIdCallStreamsStreamIdJoinPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeChannelsChannelIdCallStreamsStreamIdJoinPost`: UserJoinDMCallStreamResponse
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeChannelsChannelIdCallStreamsStreamIdJoinPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**channelId** | **int32** | Direct DM channel ID | 
+**streamId** | **int32** | Stream ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+
+### Return type
+
+[**UserJoinDMCallStreamResponse**](UserJoinDMCallStreamResponse.md)
 
 ### Authorization
 
@@ -1046,6 +1669,144 @@ No authorization required
 [[Back to README]](../README.md)
 
 
+## UserMeNotesUserIdDelete
+
+> string UserMeNotesUserIdDelete(ctx, userId).Execute()
+
+Delete a private note for another user
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	userId := int32(56) // int32 | Target user ID
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeNotesUserIdDelete(context.Background(), userId).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeNotesUserIdDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeNotesUserIdDelete`: string
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeNotesUserIdDelete`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**userId** | **int32** | Target user ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeNotesUserIdDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## UserMeNotesUserIdPut
+
+> string UserMeNotesUserIdPut(ctx, userId).Request(request).Execute()
+
+Save a private note for another user
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/FlameInTheDark/gochat/clients/api/goclient"
+)
+
+func main() {
+	userId := int32(56) // int32 | Target user ID
+	request := *openapiclient.NewUserUpsertUserNoteRequest() // UserUpsertUserNoteRequest | Private note
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.UserAPI.UserMeNotesUserIdPut(context.Background(), userId).Request(request).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `UserAPI.UserMeNotesUserIdPut``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `UserMeNotesUserIdPut`: string
+	fmt.Fprintf(os.Stdout, "Response from `UserAPI.UserMeNotesUserIdPut`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**userId** | **int32** | Target user ID | 
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUserMeNotesUserIdPutRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **request** | [**UserUpsertUserNoteRequest**](UserUpsertUserNoteRequest.md) | Private note | 
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
 ## UserMePatch
 
 > string UserMePatch(ctx).Request(request).Execute()
@@ -1115,6 +1876,8 @@ No authorization required
 > UserUserSettingsResponse UserMeSettingsGet(ctx).Version(version).XDeviceKey(xDeviceKey).Execute()
 
 Get current user settings (optional version gating)
+
+
 
 ### Example
 

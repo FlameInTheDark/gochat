@@ -95,6 +95,33 @@ Class | Method | HTTP request | Description
 *AuthAPI* | [**AuthRefreshGet**](docs/AuthAPI.md#authrefreshget) | **Get** /auth/refresh | Refresh authentication token
 *AuthAPI* | [**AuthRegistrationPost**](docs/AuthAPI.md#authregistrationpost) | **Post** /auth/registration | Registration
 *AuthAPI* | [**AuthResetPost**](docs/AuthAPI.md#authresetpost) | **Post** /auth/reset | Password Reset
+*BotGuildAPI* | [**BotApiV1GuildGet**](docs/BotGuildAPI.md#botapiv1guildget) | **Get** /bot/api/v1/guild | List guilds where the bot is installed
+*BotGuildAPI* | [**BotApiV1GuildGuildIdChannelsGet**](docs/BotGuildAPI.md#botapiv1guildguildidchannelsget) | **Get** /bot/api/v1/guild/{guild_id}/channels | List channels visible to the bot in a guild
+*BotMessageAPI* | [**BotApiV1MessageChannelChannelIdGet**](docs/BotMessageAPI.md#botapiv1messagechannelchannelidget) | **Get** /bot/api/v1/message/channel/{channel_id} | List messages visible to the bot
+*BotMessageAPI* | [**BotApiV1MessageChannelChannelIdMessageIdAckPost**](docs/BotMessageAPI.md#botapiv1messagechannelchannelidmessageidackpost) | **Post** /bot/api/v1/message/channel/{channel_id}/{message_id}/ack | Mark a channel read as the bot
+*BotMessageAPI* | [**BotApiV1MessageChannelChannelIdMessageIdDelete**](docs/BotMessageAPI.md#botapiv1messagechannelchannelidmessageiddelete) | **Delete** /bot/api/v1/message/channel/{channel_id}/{message_id} | Delete a message as the bot
+*BotMessageAPI* | [**BotApiV1MessageChannelChannelIdMessageIdPatch**](docs/BotMessageAPI.md#botapiv1messagechannelchannelidmessageidpatch) | **Patch** /bot/api/v1/message/channel/{channel_id}/{message_id} | Edit a message as the bot
+*BotMessageAPI* | [**BotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete**](docs/BotMessageAPI.md#botapiv1messagechannelchannelidmessageidreactionsreactionnamedelete) | **Delete** /bot/api/v1/message/channel/{channel_id}/{message_id}/reactions/{reaction_name} | Remove the bot reaction from a message
+*BotMessageAPI* | [**BotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet**](docs/BotMessageAPI.md#botapiv1messagechannelchannelidmessageidreactionsreactionnameget) | **Get** /bot/api/v1/message/channel/{channel_id}/{message_id}/reactions/{reaction_name} | List users who reacted with a specific reaction
+*BotMessageAPI* | [**BotApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut**](docs/BotMessageAPI.md#botapiv1messagechannelchannelidmessageidreactionsreactionnameput) | **Put** /bot/api/v1/message/channel/{channel_id}/{message_id}/reactions/{reaction_name} | Add the bot reaction to a message
+*BotMessageAPI* | [**BotApiV1MessageChannelChannelIdPost**](docs/BotMessageAPI.md#botapiv1messagechannelchannelidpost) | **Post** /bot/api/v1/message/channel/{channel_id} | Send a message as the bot
+*BotMessageAPI* | [**BotApiV1MessageChannelChannelIdTypingPost**](docs/BotMessageAPI.md#botapiv1messagechannelchannelidtypingpost) | **Post** /bot/api/v1/message/channel/{channel_id}/typing | Send a typing indicator as the bot
+*BotUserAPI* | [**BotApiV1UserMeGet**](docs/BotUserAPI.md#botapiv1usermeget) | **Get** /bot/api/v1/user/me | Get current bot account
+*DeveloperBotsAPI* | [**DeveloperBotsAuthorizePreviewGet**](docs/DeveloperBotsAPI.md#developerbotsauthorizepreviewget) | **Get** /developer/bots/authorize/preview | Preview bot authorization
+*DeveloperBotsAPI* | [**DeveloperBotsBotIdAvatarPost**](docs/DeveloperBotsAPI.md#developerbotsbotidavatarpost) | **Post** /developer/bots/{bot_id}/avatar | Create bot avatar upload metadata
+*DeveloperBotsAPI* | [**DeveloperBotsBotIdBannerPost**](docs/DeveloperBotsAPI.md#developerbotsbotidbannerpost) | **Post** /developer/bots/{bot_id}/banner | Create bot banner upload metadata
+*DeveloperBotsAPI* | [**DeveloperBotsBotIdDelete**](docs/DeveloperBotsAPI.md#developerbotsbotiddelete) | **Delete** /developer/bots/{bot_id} | Delete an owned bot
+*DeveloperBotsAPI* | [**DeveloperBotsBotIdGet**](docs/DeveloperBotsAPI.md#developerbotsbotidget) | **Get** /developer/bots/{bot_id} | Get an owned bot
+*DeveloperBotsAPI* | [**DeveloperBotsBotIdGrantsGet**](docs/DeveloperBotsAPI.md#developerbotsbotidgrantsget) | **Get** /developer/bots/{bot_id}/grants | List bot install grants
+*DeveloperBotsAPI* | [**DeveloperBotsBotIdGrantsGrantIdDelete**](docs/DeveloperBotsAPI.md#developerbotsbotidgrantsgrantiddelete) | **Delete** /developer/bots/{bot_id}/grants/{grant_id} | Revoke a bot install grant
+*DeveloperBotsAPI* | [**DeveloperBotsBotIdGrantsPost**](docs/DeveloperBotsAPI.md#developerbotsbotidgrantspost) | **Post** /developer/bots/{bot_id}/grants | Create a bot install grant
+*DeveloperBotsAPI* | [**DeveloperBotsBotIdPatch**](docs/DeveloperBotsAPI.md#developerbotsbotidpatch) | **Patch** /developer/bots/{bot_id} | Update an owned bot
+*DeveloperBotsAPI* | [**DeveloperBotsBotIdTokensGet**](docs/DeveloperBotsAPI.md#developerbotsbotidtokensget) | **Get** /developer/bots/{bot_id}/tokens | List bot runtime tokens
+*DeveloperBotsAPI* | [**DeveloperBotsBotIdTokensPost**](docs/DeveloperBotsAPI.md#developerbotsbotidtokenspost) | **Post** /developer/bots/{bot_id}/tokens | Create a bot runtime token
+*DeveloperBotsAPI* | [**DeveloperBotsBotIdTokensTokenIdDelete**](docs/DeveloperBotsAPI.md#developerbotsbotidtokenstokeniddelete) | **Delete** /developer/bots/{bot_id}/tokens/{token_id} | Revoke a bot runtime token
+*DeveloperBotsAPI* | [**DeveloperBotsGet**](docs/DeveloperBotsAPI.md#developerbotsget) | **Get** /developer/bots | List owned bots
+*DeveloperBotsAPI* | [**DeveloperBotsPost**](docs/DeveloperBotsAPI.md#developerbotspost) | **Post** /developer/bots | Create a bot
+*DeveloperBotsAPI* | [**DeveloperBotsPublicGet**](docs/DeveloperBotsAPI.md#developerbotspublicget) | **Get** /developer/bots/public | Search public bots
 *EmojiAPI* | [**EmojiEmojiIdGet**](docs/EmojiAPI.md#emojiemojiidget) | **Get** /emoji/{emoji_id} | Redirect to public emoji asset
 *EmojiAPI* | [**InfoEmojiEmojiIdGet**](docs/EmojiAPI.md#infoemojiemojiidget) | **Get** /info/emoji/{emoji_id} | Get emoji info
 *GuildAPI* | [**GuildGuildIdBansGet**](docs/GuildAPI.md#guildguildidbansget) | **Get** /guild/{guild_id}/bans | Get guild bans
@@ -110,6 +137,7 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdChannelOrderPatch**](docs/GuildAPI.md#guildguildidchannelorderpatch) | **Patch** /guild/{guild_id}/channel/order | Change channels order
 *GuildAPI* | [**GuildGuildIdChannelPost**](docs/GuildAPI.md#guildguildidchannelpost) | **Post** /guild/{guild_id}/channel | Create guild channel
 *GuildAPI* | [**GuildGuildIdDelete**](docs/GuildAPI.md#guildguildiddelete) | **Delete** /guild/{guild_id} | Delete guild
+*GuildAPI* | [**GuildGuildIdDiscoveryGet**](docs/GuildAPI.md#guildguildiddiscoveryget) | **Get** /guild/{guild_id}/discovery | Get guild discovery settings
 *GuildAPI* | [**GuildGuildIdDiscoveryPatch**](docs/GuildAPI.md#guildguildiddiscoverypatch) | **Patch** /guild/{guild_id}/discovery | Update guild discovery settings
 *GuildAPI* | [**GuildGuildIdEmojisEmojiIdDelete**](docs/GuildAPI.md#guildguildidemojisemojiiddelete) | **Delete** /guild/{guild_id}/emojis/{emoji_id} | Delete guild emoji
 *GuildAPI* | [**GuildGuildIdEmojisEmojiIdPatch**](docs/GuildAPI.md#guildguildidemojisemojiidpatch) | **Patch** /guild/{guild_id}/emojis/{emoji_id} | Update guild emoji
@@ -135,6 +163,10 @@ Class | Method | HTTP request | Description
 *GuildAPI* | [**GuildGuildIdVoiceChannelIdStreamsStreamIdJoinPost**](docs/GuildAPI.md#guildguildidvoicechannelidstreamsstreamidjoinpost) | **Post** /guild/{guild_id}/voice/{channel_id}/streams/{stream_id}/join | Join a voice-channel stream as viewer
 *GuildAPI* | [**GuildGuildIdVoiceMovePost**](docs/GuildAPI.md#guildguildidvoicemovepost) | **Post** /guild/{guild_id}/voice/move | Move member to voice channel
 *GuildAPI* | [**GuildPost**](docs/GuildAPI.md#guildpost) | **Post** /guild | Create guild
+*GuildBotsAPI* | [**GuildBotsAuthorizeGuildsGet**](docs/GuildBotsAPI.md#guildbotsauthorizeguildsget) | **Get** /guild/bots/authorize-guilds | List guilds available for bot authorization
+*GuildBotsAPI* | [**GuildGuildIdBotsBotIdDelete**](docs/GuildBotsAPI.md#guildguildidbotsbotiddelete) | **Delete** /guild/{guild_id}/bots/{bot_id} | Remove a bot from a guild
+*GuildBotsAPI* | [**GuildGuildIdBotsGet**](docs/GuildBotsAPI.md#guildguildidbotsget) | **Get** /guild/{guild_id}/bots | List installed guild bots
+*GuildBotsAPI* | [**GuildGuildIdBotsPost**](docs/GuildBotsAPI.md#guildguildidbotspost) | **Post** /guild/{guild_id}/bots | Install a bot into a guild
 *GuildInvitesAPI* | [**GuildInvitesAcceptInviteCodePost**](docs/GuildInvitesAPI.md#guildinvitesacceptinvitecodepost) | **Post** /guild/invites/accept/{invite_code} | Accept invite and join guild
 *GuildInvitesAPI* | [**GuildInvitesGuildIdGet**](docs/GuildInvitesAPI.md#guildinvitesguildidget) | **Get** /guild/invites/{guild_id} | List active invites for guild
 *GuildInvitesAPI* | [**GuildInvitesGuildIdInviteIdDelete**](docs/GuildInvitesAPI.md#guildinvitesguildidinviteiddelete) | **Delete** /guild/invites/{guild_id}/{invite_id} | Delete an invite by id
@@ -163,7 +195,10 @@ Class | Method | HTTP request | Description
 *MessageAPI* | [**MessageChannelChannelIdMessageIdReactionsReactionNamePut**](docs/MessageAPI.md#messagechannelchannelidmessageidreactionsreactionnameput) | **Put** /message/channel/{channel_id}/{message_id}/reactions/{reaction_name} | Add message reaction
 *MessageAPI* | [**MessageChannelChannelIdMessageIdThreadPost**](docs/MessageAPI.md#messagechannelchannelidmessageidthreadpost) | **Post** /message/channel/{channel_id}/{message_id}/thread | Create thread from message
 *MessageAPI* | [**MessageChannelChannelIdPost**](docs/MessageAPI.md#messagechannelchannelidpost) | **Post** /message/channel/{channel_id} | Send message
+*MessageAPI* | [**MessageChannelChannelIdThreadPost**](docs/MessageAPI.md#messagechannelchannelidthreadpost) | **Post** /message/channel/{channel_id}/thread | Create thread in channel
 *MessageAPI* | [**MessageChannelChannelIdTypingPost**](docs/MessageAPI.md#messagechannelchannelidtypingpost) | **Post** /message/channel/{channel_id}/typing | Send user typing event in the channel
+*SearchAPI* | [**SearchBotTagsGet**](docs/SearchAPI.md#searchbottagsget) | **Get** /search/bot-tags | Autocomplete public bot tags
+*SearchAPI* | [**SearchBotsGet**](docs/SearchAPI.md#searchbotsget) | **Get** /search/bots | Search public bots
 *SearchAPI* | [**SearchGuildIdMessagesPost**](docs/SearchAPI.md#searchguildidmessagespost) | **Post** /search/{guild_id}/messages | Search messages
 *SearchAPI* | [**SearchGuildTagsGet**](docs/SearchAPI.md#searchguildtagsget) | **Get** /search/guild-tags | Autocomplete public guild tags
 *SearchAPI* | [**SearchGuildsGet**](docs/SearchAPI.md#searchguildsget) | **Get** /search/guilds | Search public guilds
@@ -172,9 +207,19 @@ Class | Method | HTTP request | Description
 *UploadAPI* | [**UploadAvatarsUserIdAvatarIdPost**](docs/UploadAPI.md#uploadavatarsuseridavataridpost) | **Post** /upload/avatars/{user_id}/{avatar_id} | Upload user avatar
 *UploadAPI* | [**UploadEmojisGuildIdEmojiIdPost**](docs/UploadAPI.md#uploademojisguildidemojiidpost) | **Post** /upload/emojis/{guild_id}/{emoji_id} | Upload guild emoji image
 *UploadAPI* | [**UploadIconsGuildIdIconIdPost**](docs/UploadAPI.md#uploadiconsguildidiconidpost) | **Post** /upload/icons/{guild_id}/{icon_id} | Upload guild icon
+*UploadAPI* | [**UploadProfileCoversUserIdBannerIdPost**](docs/UploadAPI.md#uploadprofilecoversuseridbanneridpost) | **Post** /upload/profile-covers/{user_id}/{banner_id} | Upload user profile banner
 *UserAPI* | [**UserMeAvatarPost**](docs/UserAPI.md#usermeavatarpost) | **Post** /user/me/avatar | Create avatar metadata
 *UserAPI* | [**UserMeAvatarsAvatarIdDelete**](docs/UserAPI.md#usermeavatarsavatariddelete) | **Delete** /user/me/avatars/{avatar_id} | Delete my avatar by ID
 *UserAPI* | [**UserMeAvatarsGet**](docs/UserAPI.md#usermeavatarsget) | **Get** /user/me/avatars | List my avatars
+*UserAPI* | [**UserMeBannerPost**](docs/UserAPI.md#usermebannerpost) | **Post** /user/me/banner | Create profile banner metadata
+*UserAPI* | [**UserMeChannelsChannelIdCallDeclinePost**](docs/UserAPI.md#usermechannelschannelidcalldeclinepost) | **Post** /user/me/channels/{channel_id}/call/decline | Decline or dismiss an incoming direct-message voice call
+*UserAPI* | [**UserMeChannelsChannelIdCallDelete**](docs/UserAPI.md#usermechannelschannelidcalldelete) | **Delete** /user/me/channels/{channel_id}/call | Leave the current direct-message voice call
+*UserAPI* | [**UserMeChannelsChannelIdCallJoinPost**](docs/UserAPI.md#usermechannelschannelidcalljoinpost) | **Post** /user/me/channels/{channel_id}/call/join | Join an active direct-message voice call
+*UserAPI* | [**UserMeChannelsChannelIdCallPost**](docs/UserAPI.md#usermechannelschannelidcallpost) | **Post** /user/me/channels/{channel_id}/call | Start or join a direct-message voice call
+*UserAPI* | [**UserMeChannelsChannelIdCallStreamsGet**](docs/UserAPI.md#usermechannelschannelidcallstreamsget) | **Get** /user/me/channels/{channel_id}/call/streams | List active streams in a direct-message voice call
+*UserAPI* | [**UserMeChannelsChannelIdCallStreamsPost**](docs/UserAPI.md#usermechannelschannelidcallstreamspost) | **Post** /user/me/channels/{channel_id}/call/streams | Start or resume screen sharing in a direct-message voice call
+*UserAPI* | [**UserMeChannelsChannelIdCallStreamsStreamIdDelete**](docs/UserAPI.md#usermechannelschannelidcallstreamsstreamiddelete) | **Delete** /user/me/channels/{channel_id}/call/streams/{stream_id} | Stop an owned screen share in a direct-message voice call
+*UserAPI* | [**UserMeChannelsChannelIdCallStreamsStreamIdJoinPost**](docs/UserAPI.md#usermechannelschannelidcallstreamsstreamidjoinpost) | **Post** /user/me/channels/{channel_id}/call/streams/{stream_id}/join | Join a screen share in a direct-message voice call
 *UserAPI* | [**UserMeChannelsGet**](docs/UserAPI.md#usermechannelsget) | **Get** /user/me/channels | List all DM and Group DM channels for current user
 *UserAPI* | [**UserMeChannelsGroupPost**](docs/UserAPI.md#usermechannelsgrouppost) | **Post** /user/me/channels/group | Create group DM channel
 *UserAPI* | [**UserMeChannelsPost**](docs/UserAPI.md#usermechannelspost) | **Post** /user/me/channels | Create DM channel
@@ -188,6 +233,8 @@ Class | Method | HTTP request | Description
 *UserAPI* | [**UserMeGuildsGet**](docs/UserAPI.md#usermeguildsget) | **Get** /user/me/guilds | Get user guilds
 *UserAPI* | [**UserMeGuildsGuildIdDelete**](docs/UserAPI.md#usermeguildsguildiddelete) | **Delete** /user/me/guilds/{guild_id} | Leave guild
 *UserAPI* | [**UserMeGuildsGuildIdMemberGet**](docs/UserAPI.md#usermeguildsguildidmemberget) | **Get** /user/me/guilds/{guild_id}/member | Get user guild member
+*UserAPI* | [**UserMeNotesUserIdDelete**](docs/UserAPI.md#usermenotesuseriddelete) | **Delete** /user/me/notes/{user_id} | Delete a private note for another user
+*UserAPI* | [**UserMeNotesUserIdPut**](docs/UserAPI.md#usermenotesuseridput) | **Put** /user/me/notes/{user_id} | Save a private note for another user
 *UserAPI* | [**UserMePatch**](docs/UserAPI.md#usermepatch) | **Patch** /user/me | Get user
 *UserAPI* | [**UserMeSettingsGet**](docs/UserAPI.md#usermesettingsget) | **Get** /user/me/settings | Get current user settings (optional version gating)
 *UserAPI* | [**UserMeSettingsPost**](docs/UserAPI.md#usermesettingspost) | **Post** /user/me/settings | Update current user settings (replaces and bumps version)
@@ -223,11 +270,25 @@ Class | Method | HTTP request | Description
  - [AuthTOTPSetupRequest](docs/AuthTOTPSetupRequest.md)
  - [AuthTOTPSetupResponse](docs/AuthTOTPSetupResponse.md)
  - [AuthTwoFactorStatusResponse](docs/AuthTwoFactorStatusResponse.md)
+ - [DeveloperBotAuthorizationPreview](docs/DeveloperBotAuthorizationPreview.md)
+ - [DeveloperBotResponse](docs/DeveloperBotResponse.md)
+ - [DeveloperCreateBotAvatarRequest](docs/DeveloperCreateBotAvatarRequest.md)
+ - [DeveloperCreateBotBannerRequest](docs/DeveloperCreateBotBannerRequest.md)
+ - [DeveloperCreateBotRequest](docs/DeveloperCreateBotRequest.md)
+ - [DeveloperCreateGrantRequest](docs/DeveloperCreateGrantRequest.md)
+ - [DeveloperCreateTokenRequest](docs/DeveloperCreateTokenRequest.md)
+ - [DeveloperGrantCreateResponse](docs/DeveloperGrantCreateResponse.md)
+ - [DeveloperTokenCreateResponse](docs/DeveloperTokenCreateResponse.md)
+ - [DeveloperUpdateBotRequest](docs/DeveloperUpdateBotRequest.md)
  - [DtoAttachment](docs/DtoAttachment.md)
  - [DtoAttachmentUpload](docs/DtoAttachmentUpload.md)
  - [DtoAvatar](docs/DtoAvatar.md)
  - [DtoAvatarData](docs/DtoAvatarData.md)
  - [DtoAvatarUpload](docs/DtoAvatarUpload.md)
+ - [DtoBannerData](docs/DtoBannerData.md)
+ - [DtoBannerUpload](docs/DtoBannerUpload.md)
+ - [DtoBotDiscovery](docs/DtoBotDiscovery.md)
+ - [DtoBotDiscoverySearchResponse](docs/DtoBotDiscoverySearchResponse.md)
  - [DtoChannel](docs/DtoChannel.md)
  - [DtoEmojiInfo](docs/DtoEmojiInfo.md)
  - [DtoEmojiRef](docs/DtoEmojiRef.md)
@@ -270,6 +331,8 @@ Class | Method | HTTP request | Description
  - [GuildCreateVoiceStreamRequest](docs/GuildCreateVoiceStreamRequest.md)
  - [GuildCreateVoiceStreamResponse](docs/GuildCreateVoiceStreamResponse.md)
  - [GuildGuildDiscoveryUpdateRequest](docs/GuildGuildDiscoveryUpdateRequest.md)
+ - [GuildInstallBotRequest](docs/GuildInstallBotRequest.md)
+ - [GuildInstalledBotResponse](docs/GuildInstalledBotResponse.md)
  - [GuildJoinVoiceResponse](docs/GuildJoinVoiceResponse.md)
  - [GuildJoinVoiceStreamResponse](docs/GuildJoinVoiceStreamResponse.md)
  - [GuildMoveMemberRequest](docs/GuildMoveMemberRequest.md)
@@ -278,6 +341,7 @@ Class | Method | HTTP request | Description
  - [GuildPatchGuildChannelRequest](docs/GuildPatchGuildChannelRequest.md)
  - [GuildPatchGuildRoleOrderRequest](docs/GuildPatchGuildRoleOrderRequest.md)
  - [GuildPatchGuildRoleRequest](docs/GuildPatchGuildRoleRequest.md)
+ - [GuildResponse](docs/GuildResponse.md)
  - [GuildRoleOrder](docs/GuildRoleOrder.md)
  - [GuildSetGuildSystemMessagesChannelRequest](docs/GuildSetGuildSystemMessagesChannelRequest.md)
  - [GuildSetVoiceRegionRequest](docs/GuildSetVoiceRegionRequest.md)
@@ -287,8 +351,12 @@ Class | Method | HTTP request | Description
  - [GuildVoiceStreamSummary](docs/GuildVoiceStreamSummary.md)
  - [MessageCreateThreadRequest](docs/MessageCreateThreadRequest.md)
  - [MessageSendMessageRequest](docs/MessageSendMessageRequest.md)
+ - [MessageSendRequest](docs/MessageSendRequest.md)
  - [MessageUpdateMessageRequest](docs/MessageUpdateMessageRequest.md)
+ - [MessageUpdateRequest](docs/MessageUpdateRequest.md)
  - [MessageUploadAttachmentRequest](docs/MessageUploadAttachmentRequest.md)
+ - [ModelBotInstallGrant](docs/ModelBotInstallGrant.md)
+ - [ModelBotToken](docs/ModelBotToken.md)
  - [ModelChannelMention](docs/ModelChannelMention.md)
  - [ModelChannelType](docs/ModelChannelType.md)
  - [ModelDevices](docs/ModelDevices.md)
@@ -304,6 +372,8 @@ Class | Method | HTTP request | Description
  - [ModelUserSettingsNotifications](docs/ModelUserSettingsNotifications.md)
  - [ModelUserSettingsUsers](docs/ModelUserSettingsUsers.md)
  - [ModelUserUISounds](docs/ModelUserUISounds.md)
+ - [ModelUserVoiceSettings](docs/ModelUserVoiceSettings.md)
+ - [MqmsgDMCallSummary](docs/MqmsgDMCallSummary.md)
  - [SearchMessageSearchRequest](docs/SearchMessageSearchRequest.md)
  - [SearchMessageSearchResponse](docs/SearchMessageSearchResponse.md)
  - [SfuChannelAlive](docs/SfuChannelAlive.md)
@@ -311,20 +381,49 @@ Class | Method | HTTP request | Description
  - [SfuChannelUserLeave](docs/SfuChannelUserLeave.md)
  - [SfuHeartbeatRequest](docs/SfuHeartbeatRequest.md)
  - [UserCreateAvatarRequest](docs/UserCreateAvatarRequest.md)
+ - [UserCreateBannerRequest](docs/UserCreateBannerRequest.md)
+ - [UserCreateDMCallStreamRequest](docs/UserCreateDMCallStreamRequest.md)
+ - [UserCreateDMCallStreamResponse](docs/UserCreateDMCallStreamResponse.md)
  - [UserCreateDMManyRequest](docs/UserCreateDMManyRequest.md)
  - [UserCreateDMRequest](docs/UserCreateDMRequest.md)
  - [UserCreateFriendRequestRequest](docs/UserCreateFriendRequestRequest.md)
+ - [UserDMCallJoinResponse](docs/UserDMCallJoinResponse.md)
  - [UserFriendRequestAction](docs/UserFriendRequestAction.md)
+ - [UserJoinDMCallStreamResponse](docs/UserJoinDMCallStreamResponse.md)
+ - [UserMeResponse](docs/UserMeResponse.md)
  - [UserModifyUserRequest](docs/UserModifyUserRequest.md)
  - [UserUnfriendRequest](docs/UserUnfriendRequest.md)
+ - [UserUpsertUserNoteRequest](docs/UserUpsertUserNoteRequest.md)
  - [UserUserSettingsResponse](docs/UserUserSettingsResponse.md)
+ - [UserVoiceStreamSummary](docs/UserVoiceStreamSummary.md)
  - [VoiceRegion](docs/VoiceRegion.md)
  - [VoiceVoiceRegionsResponse](docs/VoiceVoiceRegionsResponse.md)
 
 
 ## Documentation For Authorization
 
-Endpoints do not require authorization.
+
+Authentication schemes defined for the API:
+### BotToken
+
+- **Type**: API key
+- **API key parameter name**: Authorization
+- **Location**: HTTP header
+
+Note, each API key must be added to a map of `map[string]APIKey` where the key is: BotToken and passed in as the auth context for each request.
+
+Example
+
+```go
+auth := context.WithValue(
+		context.Background(),
+		goclient.ContextAPIKeys,
+		map[string]goclient.APIKey{
+			"BotToken": {Key: "API_KEY_STRING"},
+		},
+	)
+r, err := client.Service.Operation(auth, args)
+```
 
 
 ## Documentation for Utility Methods

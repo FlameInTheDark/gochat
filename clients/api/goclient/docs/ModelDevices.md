@@ -15,6 +15,7 @@ Name | Type | Description | Notes
 **InputMode** | Pointer to **string** |  | [optional] 
 **NoiseSuppression** | Pointer to **bool** |  | [optional] 
 **PushToTalkKey** | Pointer to **string** |  | [optional] 
+**PushToTalkToggle** | Pointer to **bool** |  | [optional] 
 **VideoDevice** | Pointer to **string** |  | [optional] 
 
 ## Methods
@@ -310,6 +311,31 @@ SetPushToTalkKey sets PushToTalkKey field to given value.
 `func (o *ModelDevices) HasPushToTalkKey() bool`
 
 HasPushToTalkKey returns a boolean if a field has been set.
+
+### GetPushToTalkToggle
+
+`func (o *ModelDevices) GetPushToTalkToggle() bool`
+
+GetPushToTalkToggle returns the PushToTalkToggle field if non-nil, zero value otherwise.
+
+### GetPushToTalkToggleOk
+
+`func (o *ModelDevices) GetPushToTalkToggleOk() (*bool, bool)`
+
+GetPushToTalkToggleOk returns a tuple with the PushToTalkToggle field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPushToTalkToggle
+
+`func (o *ModelDevices) SetPushToTalkToggle(v bool)`
+
+SetPushToTalkToggle sets PushToTalkToggle field to given value.
+
+### HasPushToTalkToggle
+
+`func (o *ModelDevices) HasPushToTalkToggle() bool`
+
+HasPushToTalkToggle returns a boolean if a field has been set.
 
 ### GetVideoDevice
 

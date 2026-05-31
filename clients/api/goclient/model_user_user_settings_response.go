@@ -20,11 +20,13 @@ var _ MappedNullable = &UserUserSettingsResponse{}
 
 // UserUserSettingsResponse struct for UserUserSettingsResponse
 type UserUserSettingsResponse struct {
-	ChannelMentions    *map[string][]ModelChannelMention `json:"channel_mentions,omitempty"`
-	ContentHosts       []string                          `json:"content_hosts,omitempty"`
-	GuildEmojis        *map[string][]DtoEmojiRef         `json:"guild_emojis,omitempty"`
-	Guilds             []DtoGuild                        `json:"guilds,omitempty"`
-	GuildsLastMessages *map[string]map[string]int32      `json:"guilds_last_messages,omitempty"`
+	ChannelMentions *map[string][]ModelChannelMention `json:"channel_mentions,omitempty"`
+	ContentHosts    []string                          `json:"content_hosts,omitempty"`
+	// Active direct-message voice calls visible to the current user.
+	DmCalls            []MqmsgDMCallSummary         `json:"dm_calls,omitempty"`
+	GuildEmojis        *map[string][]DtoEmojiRef    `json:"guild_emojis,omitempty"`
+	Guilds             []DtoGuild                   `json:"guilds,omitempty"`
+	GuildsLastMessages *map[string]map[string]int32 `json:"guilds_last_messages,omitempty"`
 	// Joined thread IDs grouped as guild_id -> parent_channel_id -> sorted thread ids.
 	JoinedThreads       *map[string]map[string][]int32 `json:"joined_threads,omitempty"`
 	Mentions            *map[string][]ModelMention     `json:"mentions,omitempty"`
@@ -113,6 +115,38 @@ func (o *UserUserSettingsResponse) HasContentHosts() bool {
 // SetContentHosts gets a reference to the given []string and assigns it to the ContentHosts field.
 func (o *UserUserSettingsResponse) SetContentHosts(v []string) {
 	o.ContentHosts = v
+}
+
+// GetDmCalls returns the DmCalls field value if set, zero value otherwise.
+func (o *UserUserSettingsResponse) GetDmCalls() []MqmsgDMCallSummary {
+	if o == nil || IsNil(o.DmCalls) {
+		var ret []MqmsgDMCallSummary
+		return ret
+	}
+	return o.DmCalls
+}
+
+// GetDmCallsOk returns a tuple with the DmCalls field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserUserSettingsResponse) GetDmCallsOk() ([]MqmsgDMCallSummary, bool) {
+	if o == nil || IsNil(o.DmCalls) {
+		return nil, false
+	}
+	return o.DmCalls, true
+}
+
+// HasDmCalls returns a boolean if a field has been set.
+func (o *UserUserSettingsResponse) HasDmCalls() bool {
+	if o != nil && !IsNil(o.DmCalls) {
+		return true
+	}
+
+	return false
+}
+
+// SetDmCalls gets a reference to the given []MqmsgDMCallSummary and assigns it to the DmCalls field.
+func (o *UserUserSettingsResponse) SetDmCalls(v []MqmsgDMCallSummary) {
+	o.DmCalls = v
 }
 
 // GetGuildEmojis returns the GuildEmojis field value if set, zero value otherwise.
@@ -418,6 +452,9 @@ func (o UserUserSettingsResponse) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.ContentHosts) {
 		toSerialize["content_hosts"] = o.ContentHosts
+	}
+	if !IsNil(o.DmCalls) {
+		toSerialize["dm_calls"] = o.DmCalls
 	}
 	if !IsNil(o.GuildEmojis) {
 		toSerialize["guild_emojis"] = o.GuildEmojis

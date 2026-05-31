@@ -539,6 +539,322 @@ export interface AuthTwoFactorStatusResponse {
 /**
  * 
  * @export
+ * @interface DeveloperBotAuthorizationPreview
+ */
+export interface DeveloperBotAuthorizationPreview {
+    /**
+     * 
+     * @type {DeveloperBotResponse}
+     * @memberof DeveloperBotAuthorizationPreview
+     */
+    'bot'?: DeveloperBotResponse;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperBotAuthorizationPreview
+     */
+    'grant_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperBotAuthorizationPreview
+     */
+    'requested_permissions'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DeveloperBotResponse
+ */
+export interface DeveloperBotResponse {
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperBotResponse
+     */
+    'bot_user_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperBotResponse
+     */
+    'created_at'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperBotResponse
+     */
+    'default_permissions'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DeveloperBotResponse
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DeveloperBotResponse
+     */
+    'disabled'?: boolean;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperBotResponse
+     */
+    'owner_user_id'?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DeveloperBotResponse
+     */
+    'public'?: boolean;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof DeveloperBotResponse
+     */
+    'tags'?: Array<string>;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperBotResponse
+     */
+    'updated_at'?: number;
+    /**
+     * 
+     * @type {DtoUser}
+     * @memberof DeveloperBotResponse
+     */
+    'user'?: DtoUser;
+}
+/**
+ * 
+ * @export
+ * @interface DeveloperCreateBotAvatarRequest
+ */
+export interface DeveloperCreateBotAvatarRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof DeveloperCreateBotAvatarRequest
+     */
+    'content_type'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperCreateBotAvatarRequest
+     */
+    'file_size'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DeveloperCreateBotBannerRequest
+ */
+export interface DeveloperCreateBotBannerRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof DeveloperCreateBotBannerRequest
+     */
+    'content_type'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperCreateBotBannerRequest
+     */
+    'file_size'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DeveloperCreateBotRequest
+ */
+export interface DeveloperCreateBotRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperCreateBotRequest
+     */
+    'default_permissions'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DeveloperCreateBotRequest
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof DeveloperCreateBotRequest
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DeveloperCreateBotRequest
+     */
+    'public'?: boolean;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof DeveloperCreateBotRequest
+     */
+    'tags'?: Array<string>;
+}
+/**
+ * 
+ * @export
+ * @interface DeveloperCreateGrantRequest
+ */
+export interface DeveloperCreateGrantRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperCreateGrantRequest
+     */
+    'expires_in_seconds'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperCreateGrantRequest
+     */
+    'max_uses'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperCreateGrantRequest
+     */
+    'requested_permissions'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DeveloperCreateTokenRequest
+ */
+export interface DeveloperCreateTokenRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof DeveloperCreateTokenRequest
+     */
+    'name'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface DeveloperGrantCreateResponse
+ */
+export interface DeveloperGrantCreateResponse {
+    /**
+     * 
+     * @type {ModelBotInstallGrant}
+     * @memberof DeveloperGrantCreateResponse
+     */
+    'grant'?: ModelBotInstallGrant;
+    /**
+     * 
+     * @type {string}
+     * @memberof DeveloperGrantCreateResponse
+     */
+    'token'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface DeveloperTokenCreateResponse
+ */
+export interface DeveloperTokenCreateResponse {
+    /**
+     * 
+     * @type {string}
+     * @memberof DeveloperTokenCreateResponse
+     */
+    'token'?: string;
+    /**
+     * 
+     * @type {ModelBotToken}
+     * @memberof DeveloperTokenCreateResponse
+     */
+    'token_data'?: ModelBotToken;
+}
+/**
+ * 
+ * @export
+ * @interface DeveloperUpdateBotRequest
+ */
+export interface DeveloperUpdateBotRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperUpdateBotRequest
+     */
+    'avatar'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperUpdateBotRequest
+     */
+    'banner'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperUpdateBotRequest
+     */
+    'banner_color'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DeveloperUpdateBotRequest
+     */
+    'bio'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperUpdateBotRequest
+     */
+    'default_permissions'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DeveloperUpdateBotRequest
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DeveloperUpdateBotRequest
+     */
+    'disabled'?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof DeveloperUpdateBotRequest
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeveloperUpdateBotRequest
+     */
+    'panel_color'?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DeveloperUpdateBotRequest
+     */
+    'public'?: boolean;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof DeveloperUpdateBotRequest
+     */
+    'tags'?: Array<string>;
+}
+/**
+ * 
+ * @export
  * @interface DtoAttachment
  */
 export interface DtoAttachment {
@@ -714,6 +1030,148 @@ export interface DtoAvatarUpload {
      * @memberof DtoAvatarUpload
      */
     'user_id'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DtoBannerData
+ */
+export interface DtoBannerData {
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoBannerData
+     */
+    'content_type'?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DtoBannerData
+     */
+    'exists'?: boolean;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoBannerData
+     */
+    'height'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoBannerData
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoBannerData
+     */
+    'size'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoBannerData
+     */
+    'url'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoBannerData
+     */
+    'width'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DtoBannerUpload
+ */
+export interface DtoBannerUpload {
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoBannerUpload
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoBannerUpload
+     */
+    'user_id'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface DtoBotDiscovery
+ */
+export interface DtoBotDiscovery {
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoBotDiscovery
+     */
+    'bot_user_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoBotDiscovery
+     */
+    'created_at'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoBotDiscovery
+     */
+    'default_permissions'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoBotDiscovery
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoBotDiscovery
+     */
+    'installs_count'?: number;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof DtoBotDiscovery
+     */
+    'tags'?: Array<string>;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoBotDiscovery
+     */
+    'updated_at'?: number;
+    /**
+     * 
+     * @type {DtoUser}
+     * @memberof DtoBotDiscovery
+     */
+    'user'?: DtoUser;
+}
+/**
+ * 
+ * @export
+ * @interface DtoBotDiscoverySearchResponse
+ */
+export interface DtoBotDiscoverySearchResponse {
+    /**
+     * 
+     * @type {Array<DtoBotDiscovery>}
+     * @memberof DtoBotDiscoverySearchResponse
+     */
+    'bots'?: Array<DtoBotDiscovery>;
+    /**
+     * 
+     * @type {number}
+     * @memberof DtoBotDiscoverySearchResponse
+     */
+    'pages'?: number;
 }
 /**
  * 
@@ -1463,6 +1921,12 @@ export interface DtoRole {
      */
     'guild_id'?: number;
     /**
+     * Whether online members with this role are shown in a separate members list section.
+     * @type {boolean}
+     * @memberof DtoRole
+     */
+    'hoist'?: boolean;
+    /**
      * Role ID
      * @type {number}
      * @memberof DtoRole
@@ -1526,6 +1990,12 @@ export interface DtoUser {
     'avatar'?: DtoAvatarData;
     /**
      * 
+     * @type {DtoBannerData}
+     * @memberof DtoUser
+     */
+    'banner'?: DtoBannerData;
+    /**
+     * 
      * @type {number}
      * @memberof DtoUser
      */
@@ -1550,6 +2020,12 @@ export interface DtoUser {
     'id'?: number;
     /**
      * 
+     * @type {boolean}
+     * @memberof DtoUser
+     */
+    'is_bot'?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof DtoUser
      */
@@ -1560,6 +2036,12 @@ export interface DtoUser {
      * @memberof DtoUser
      */
     'panel_color'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof DtoUser
+     */
+    'personal_note'?: string;
 }
 /**
  * 
@@ -2016,6 +2498,12 @@ export interface GuildCreateGuildRoleRequest {
      */
     'color'?: number;
     /**
+     * Show online members with this role in a separate section
+     * @type {boolean}
+     * @memberof GuildCreateGuildRoleRequest
+     */
+    'hoist'?: boolean;
+    /**
      * Role name
      * @type {string}
      * @memberof GuildCreateGuildRoleRequest
@@ -2134,6 +2622,86 @@ export interface GuildGuildDiscoveryUpdateRequest {
      * @memberof GuildGuildDiscoveryUpdateRequest
      */
     'tags'?: Array<string>;
+}
+/**
+ * 
+ * @export
+ * @interface GuildInstallBotRequest
+ */
+export interface GuildInstallBotRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildInstallBotRequest
+     */
+    'bot_user_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildInstallBotRequest
+     */
+    'grant_token'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildInstallBotRequest
+     */
+    'granted_permissions'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface GuildInstalledBotResponse
+ */
+export interface GuildInstalledBotResponse {
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildInstalledBotResponse
+     */
+    'bot_user_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildInstalledBotResponse
+     */
+    'created_at'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildInstalledBotResponse
+     */
+    'grant_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildInstalledBotResponse
+     */
+    'granted_permissions'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildInstalledBotResponse
+     */
+    'installer_user_id'?: number;
+    /**
+     * 
+     * @type {DtoMember}
+     * @memberof GuildInstalledBotResponse
+     */
+    'member'?: DtoMember;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof GuildInstalledBotResponse
+     */
+    'roles'?: Array<number>;
+    /**
+     * 
+     * @type {DtoUser}
+     * @memberof GuildInstalledBotResponse
+     */
+    'user'?: DtoUser;
 }
 /**
  * 
@@ -2305,6 +2873,12 @@ export interface GuildPatchGuildRoleRequest {
      */
     'color'?: number;
     /**
+     * Show online members with this role in a separate section
+     * @type {boolean}
+     * @memberof GuildPatchGuildRoleRequest
+     */
+    'hoist'?: boolean;
+    /**
      * Role name
      * @type {string}
      * @memberof GuildPatchGuildRoleRequest
@@ -2316,6 +2890,43 @@ export interface GuildPatchGuildRoleRequest {
      * @memberof GuildPatchGuildRoleRequest
      */
     'permissions'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface GuildResponse
+ */
+export interface GuildResponse {
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildResponse
+     */
+    'granted_permissions'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildResponse
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof GuildResponse
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof GuildResponse
+     */
+    'owner'?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof GuildResponse
+     */
+    'public'?: boolean;
 }
 /**
  * 
@@ -2569,6 +3180,37 @@ export interface MessageSendMessageRequest {
 /**
  * 
  * @export
+ * @interface MessageSendRequest
+ */
+export interface MessageSendRequest {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof MessageSendRequest
+     */
+    'attachments'?: Array<number>;
+    /**
+     * 
+     * @type {string}
+     * @memberof MessageSendRequest
+     */
+    'content'?: string;
+    /**
+     * 
+     * @type {Array<EmbedEmbed>}
+     * @memberof MessageSendRequest
+     */
+    'embeds'?: Array<EmbedEmbed>;
+    /**
+     * 
+     * @type {number}
+     * @memberof MessageSendRequest
+     */
+    'reference'?: number;
+}
+/**
+ * 
+ * @export
  * @interface MessageUpdateMessageRequest
  */
 export interface MessageUpdateMessageRequest {
@@ -2588,6 +3230,31 @@ export interface MessageUpdateMessageRequest {
      * Message flags bitmask. Use 4 to suppress URL embed generation and clear generated embeds.
      * @type {number}
      * @memberof MessageUpdateMessageRequest
+     */
+    'flags'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface MessageUpdateRequest
+ */
+export interface MessageUpdateRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof MessageUpdateRequest
+     */
+    'content'?: string;
+    /**
+     * 
+     * @type {Array<EmbedEmbed>}
+     * @memberof MessageUpdateRequest
+     */
+    'embeds'?: Array<EmbedEmbed>;
+    /**
+     * 
+     * @type {number}
+     * @memberof MessageUpdateRequest
      */
     'flags'?: number;
 }
@@ -2627,6 +3294,122 @@ export interface MessageUploadAttachmentRequest {
      * @memberof MessageUploadAttachmentRequest
      */
     'width'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface ModelBotInstallGrant
+ */
+export interface ModelBotInstallGrant {
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelBotInstallGrant
+     */
+    'bot_user_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelBotInstallGrant
+     */
+    'created_at'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelBotInstallGrant
+     */
+    'expires_at'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelBotInstallGrant
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelBotInstallGrant
+     */
+    'max_uses'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelBotInstallGrant
+     */
+    'owner_user_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelBotInstallGrant
+     */
+    'requested_permissions'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelBotInstallGrant
+     */
+    'revoked_at'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelBotInstallGrant
+     */
+    'token_prefix'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelBotInstallGrant
+     */
+    'uses'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface ModelBotToken
+ */
+export interface ModelBotToken {
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelBotToken
+     */
+    'bot_user_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelBotToken
+     */
+    'created_at'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelBotToken
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelBotToken
+     */
+    'last_used_at'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelBotToken
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelBotToken
+     */
+    'revoked_at'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelBotToken
+     */
+    'token_prefix'?: string;
 }
 /**
  * 
@@ -2761,6 +3544,12 @@ export interface ModelDevices {
      * @memberof ModelDevices
      */
     'push_to_talk_key'?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelDevices
+     */
+    'push_to_talk_toggle'?: boolean;
     /**
      * 
      * @type {string}
@@ -2992,6 +3781,12 @@ export interface ModelUserSettingsData {
      * @memberof ModelUserSettingsData
      */
     'users'?: Array<ModelUserSettingsUsers>;
+    /**
+     * 
+     * @type {ModelUserVoiceSettings}
+     * @memberof ModelUserSettingsData
+     */
+    'voice'?: ModelUserVoiceSettings;
 }
 /**
  * 
@@ -2999,6 +3794,12 @@ export interface ModelUserSettingsData {
  * @interface ModelUserSettingsGuildFolders
  */
 export interface ModelUserSettingsGuildFolders {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ModelUserSettingsGuildFolders
+     */
+    'collapsed'?: boolean;
     /**
      * 
      * @type {number}
@@ -3155,6 +3956,80 @@ export interface ModelUserUISounds {
      * @memberof ModelUserUISounds
      */
     'voice_channel'?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface ModelUserVoiceSettings
+ */
+export interface ModelUserVoiceSettings {
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelUserVoiceSettings
+     */
+    'preferred_region'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface MqmsgDMCallSummary
+ */
+export interface MqmsgDMCallSummary {
+    /**
+     * 
+     * @type {number}
+     * @memberof MqmsgDMCallSummary
+     */
+    'call_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof MqmsgDMCallSummary
+     */
+    'caller_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof MqmsgDMCallSummary
+     */
+    'channel_id'?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof MqmsgDMCallSummary
+     */
+    'dismissed'?: boolean;
+    /**
+     * 
+     * @type {{ [key: string]: number; }}
+     * @memberof MqmsgDMCallSummary
+     */
+    'participants'?: { [key: string]: number; };
+    /**
+     * 
+     * @type {number}
+     * @memberof MqmsgDMCallSummary
+     */
+    'recipient_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof MqmsgDMCallSummary
+     */
+    'region'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof MqmsgDMCallSummary
+     */
+    'solo_since'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof MqmsgDMCallSummary
+     */
+    'started_at'?: number;
 }
 /**
  * 
@@ -3386,6 +4261,75 @@ export interface UserCreateAvatarRequest {
 /**
  * 
  * @export
+ * @interface UserCreateBannerRequest
+ */
+export interface UserCreateBannerRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof UserCreateBannerRequest
+     */
+    'content_type'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UserCreateBannerRequest
+     */
+    'file_size'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface UserCreateDMCallStreamRequest
+ */
+export interface UserCreateDMCallStreamRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof UserCreateDMCallStreamRequest
+     */
+    'audio_mode'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserCreateDMCallStreamRequest
+     */
+    'source_type'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface UserCreateDMCallStreamResponse
+ */
+export interface UserCreateDMCallStreamResponse {
+    /**
+     * 
+     * @type {UserVoiceStreamSummary}
+     * @memberof UserCreateDMCallStreamResponse
+     */
+    'stream'?: UserVoiceStreamSummary;
+    /**
+     * 
+     * @type {number}
+     * @memberof UserCreateDMCallStreamResponse
+     */
+    'stream_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserCreateDMCallStreamResponse
+     */
+    'stream_token'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserCreateDMCallStreamResponse
+     */
+    'stream_url'?: string;
+}
+/**
+ * 
+ * @export
  * @interface UserCreateDMManyRequest
  */
 export interface UserCreateDMManyRequest {
@@ -3431,6 +4375,37 @@ export interface UserCreateFriendRequestRequest {
 /**
  * 
  * @export
+ * @interface UserDMCallJoinResponse
+ */
+export interface UserDMCallJoinResponse {
+    /**
+     * 
+     * @type {MqmsgDMCallSummary}
+     * @memberof UserDMCallJoinResponse
+     */
+    'call'?: MqmsgDMCallSummary;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserDMCallJoinResponse
+     */
+    'region'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserDMCallJoinResponse
+     */
+    'sfu_token'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserDMCallJoinResponse
+     */
+    'sfu_url'?: string;
+}
+/**
+ * 
+ * @export
  * @interface UserFriendRequestAction
  */
 export interface UserFriendRequestAction {
@@ -3440,6 +4415,74 @@ export interface UserFriendRequestAction {
      * @memberof UserFriendRequestAction
      */
     'user_id'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface UserJoinDMCallStreamResponse
+ */
+export interface UserJoinDMCallStreamResponse {
+    /**
+     * 
+     * @type {number}
+     * @memberof UserJoinDMCallStreamResponse
+     */
+    'stream_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserJoinDMCallStreamResponse
+     */
+    'stream_token'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserJoinDMCallStreamResponse
+     */
+    'stream_url'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface UserMeResponse
+ */
+export interface UserMeResponse {
+    /**
+     * 
+     * @type {number}
+     * @memberof UserMeResponse
+     */
+    'bot_user_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof UserMeResponse
+     */
+    'default_permissions'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserMeResponse
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UserMeResponse
+     */
+    'owner_user_id'?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof UserMeResponse
+     */
+    'public'?: boolean;
+    /**
+     * 
+     * @type {DtoUser}
+     * @memberof UserMeResponse
+     */
+    'user'?: DtoUser;
 }
 /**
  * 
@@ -3494,6 +4537,19 @@ export interface UserUnfriendRequest {
 /**
  * 
  * @export
+ * @interface UserUpsertUserNoteRequest
+ */
+export interface UserUpsertUserNoteRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof UserUpsertUserNoteRequest
+     */
+    'note'?: string;
+}
+/**
+ * 
+ * @export
  * @interface UserUserSettingsResponse
  */
 export interface UserUserSettingsResponse {
@@ -3509,6 +4565,12 @@ export interface UserUserSettingsResponse {
      * @memberof UserUserSettingsResponse
      */
     'content_hosts'?: Array<string>;
+    /**
+     * Active direct-message voice calls visible to the current user.
+     * @type {Array<MqmsgDMCallSummary>}
+     * @memberof UserUserSettingsResponse
+     */
+    'dm_calls'?: Array<MqmsgDMCallSummary>;
     /**
      * 
      * @type {{ [key: string]: Array<DtoEmojiRef>; }}
@@ -3563,6 +4625,49 @@ export interface UserUserSettingsResponse {
      * @memberof UserUserSettingsResponse
      */
     'version'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface UserVoiceStreamSummary
+ */
+export interface UserVoiceStreamSummary {
+    /**
+     * 
+     * @type {string}
+     * @memberof UserVoiceStreamSummary
+     */
+    'audio_mode'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UserVoiceStreamSummary
+     */
+    'channel_id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof UserVoiceStreamSummary
+     */
+    'id'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof UserVoiceStreamSummary
+     */
+    'owner_user_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserVoiceStreamSummary
+     */
+    'source_type'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UserVoiceStreamSummary
+     */
+    'started_at'?: number;
 }
 /**
  * 
@@ -5141,6 +6246,3026 @@ export class AuthApi extends BaseAPI implements AuthApiInterface {
 
 
 /**
+ * BotGuildApi - axios parameter creator
+ * @export
+ */
+export const BotGuildApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary List guilds where the bot is installed
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1GuildGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/bot/api/v1/guild`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BotToken required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List channels visible to the bot in a guild
+         * @param {number} guildId Guild id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1GuildGuildIdChannelsGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('botApiV1GuildGuildIdChannelsGet', 'guildId', guildId)
+            const localVarPath = `/bot/api/v1/guild/{guild_id}/channels`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BotToken required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * BotGuildApi - functional programming interface
+ * @export
+ */
+export const BotGuildApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = BotGuildApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary List guilds where the bot is installed
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async botApiV1GuildGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<GuildResponse>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.botApiV1GuildGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BotGuildApi.botApiV1GuildGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary List channels visible to the bot in a guild
+         * @param {number} guildId Guild id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async botApiV1GuildGuildIdChannelsGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoChannel>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.botApiV1GuildGuildIdChannelsGet(guildId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BotGuildApi.botApiV1GuildGuildIdChannelsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * BotGuildApi - factory interface
+ * @export
+ */
+export const BotGuildApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = BotGuildApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary List guilds where the bot is installed
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1GuildGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<GuildResponse>> {
+            return localVarFp.botApiV1GuildGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary List channels visible to the bot in a guild
+         * @param {BotGuildApiBotApiV1GuildGuildIdChannelsGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1GuildGuildIdChannelsGet(requestParameters: BotGuildApiBotApiV1GuildGuildIdChannelsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoChannel>> {
+            return localVarFp.botApiV1GuildGuildIdChannelsGet(requestParameters.guildId, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * BotGuildApi - interface
+ * @export
+ * @interface BotGuildApi
+ */
+export interface BotGuildApiInterface {
+    /**
+     * 
+     * @summary List guilds where the bot is installed
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotGuildApiInterface
+     */
+    botApiV1GuildGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<GuildResponse>>;
+
+    /**
+     * 
+     * @summary List channels visible to the bot in a guild
+     * @param {BotGuildApiBotApiV1GuildGuildIdChannelsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotGuildApiInterface
+     */
+    botApiV1GuildGuildIdChannelsGet(requestParameters: BotGuildApiBotApiV1GuildGuildIdChannelsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoChannel>>;
+
+}
+
+/**
+ * Request parameters for botApiV1GuildGuildIdChannelsGet operation in BotGuildApi.
+ * @export
+ * @interface BotGuildApiBotApiV1GuildGuildIdChannelsGetRequest
+ */
+export interface BotGuildApiBotApiV1GuildGuildIdChannelsGetRequest {
+    /**
+     * Guild id
+     * @type {number}
+     * @memberof BotGuildApiBotApiV1GuildGuildIdChannelsGet
+     */
+    readonly guildId: number
+}
+
+/**
+ * BotGuildApi - object-oriented interface
+ * @export
+ * @class BotGuildApi
+ * @extends {BaseAPI}
+ */
+export class BotGuildApi extends BaseAPI implements BotGuildApiInterface {
+    /**
+     * 
+     * @summary List guilds where the bot is installed
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotGuildApi
+     */
+    public botApiV1GuildGet(options?: RawAxiosRequestConfig) {
+        return BotGuildApiFp(this.configuration).botApiV1GuildGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary List channels visible to the bot in a guild
+     * @param {BotGuildApiBotApiV1GuildGuildIdChannelsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotGuildApi
+     */
+    public botApiV1GuildGuildIdChannelsGet(requestParameters: BotGuildApiBotApiV1GuildGuildIdChannelsGetRequest, options?: RawAxiosRequestConfig) {
+        return BotGuildApiFp(this.configuration).botApiV1GuildGuildIdChannelsGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * BotMessageApi - axios parameter creator
+ * @export
+ */
+export const BotMessageApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary List messages visible to the bot
+         * @param {number} channelId Channel id
+         * @param {number} [from] Message id cursor
+         * @param {number} [limit] Page size
+         * @param {string} [direction] before, after, or around
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdGet: async (channelId: number, from?: number, limit?: number, direction?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdGet', 'channelId', channelId)
+            const localVarPath = `/bot/api/v1/message/channel/{channel_id}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BotToken required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (from !== undefined) {
+                localVarQueryParameter['from'] = from;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (direction !== undefined) {
+                localVarQueryParameter['direction'] = direction;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Mark a channel read as the bot
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdMessageIdAckPost: async (channelId: number, messageId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdAckPost', 'channelId', channelId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdAckPost', 'messageId', messageId)
+            const localVarPath = `/bot/api/v1/message/channel/{channel_id}/{message_id}/ack`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"message_id"}}`, encodeURIComponent(String(messageId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BotToken required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete a message as the bot
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdMessageIdDelete: async (channelId: number, messageId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdDelete', 'channelId', channelId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdDelete', 'messageId', messageId)
+            const localVarPath = `/bot/api/v1/message/channel/{channel_id}/{message_id}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"message_id"}}`, encodeURIComponent(String(messageId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BotToken required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Edit a message as the bot
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {MessageUpdateRequest} request Message update
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdMessageIdPatch: async (channelId: number, messageId: number, request: MessageUpdateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdPatch', 'channelId', channelId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdPatch', 'messageId', messageId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdPatch', 'request', request)
+            const localVarPath = `/bot/api/v1/message/channel/{channel_id}/{message_id}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"message_id"}}`, encodeURIComponent(String(messageId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BotToken required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Remove the bot reaction from a message
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {string} reactionName Reaction name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete: async (channelId: number, messageId: number, reactionName: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete', 'channelId', channelId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete', 'messageId', messageId)
+            // verify required parameter 'reactionName' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete', 'reactionName', reactionName)
+            const localVarPath = `/bot/api/v1/message/channel/{channel_id}/{message_id}/reactions/{reaction_name}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"message_id"}}`, encodeURIComponent(String(messageId)))
+                .replace(`{${"reaction_name"}}`, encodeURIComponent(String(reactionName)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BotToken required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List users who reacted with a specific reaction
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {string} reactionName Reaction name
+         * @param {number} [after] Reaction ID cursor
+         * @param {number} [limit] Page size
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet: async (channelId: number, messageId: number, reactionName: string, after?: number, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet', 'channelId', channelId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet', 'messageId', messageId)
+            // verify required parameter 'reactionName' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet', 'reactionName', reactionName)
+            const localVarPath = `/bot/api/v1/message/channel/{channel_id}/{message_id}/reactions/{reaction_name}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"message_id"}}`, encodeURIComponent(String(messageId)))
+                .replace(`{${"reaction_name"}}`, encodeURIComponent(String(reactionName)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BotToken required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (after !== undefined) {
+                localVarQueryParameter['after'] = after;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Add the bot reaction to a message
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {string} reactionName Reaction name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut: async (channelId: number, messageId: number, reactionName: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut', 'channelId', channelId)
+            // verify required parameter 'messageId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut', 'messageId', messageId)
+            // verify required parameter 'reactionName' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut', 'reactionName', reactionName)
+            const localVarPath = `/bot/api/v1/message/channel/{channel_id}/{message_id}/reactions/{reaction_name}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"message_id"}}`, encodeURIComponent(String(messageId)))
+                .replace(`{${"reaction_name"}}`, encodeURIComponent(String(reactionName)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BotToken required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Send a message as the bot
+         * @param {number} channelId Channel id
+         * @param {MessageSendRequest} request Message body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdPost: async (channelId: number, request: MessageSendRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdPost', 'channelId', channelId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdPost', 'request', request)
+            const localVarPath = `/bot/api/v1/message/channel/{channel_id}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BotToken required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Send a typing indicator as the bot
+         * @param {number} channelId Channel id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdTypingPost: async (channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('botApiV1MessageChannelChannelIdTypingPost', 'channelId', channelId)
+            const localVarPath = `/bot/api/v1/message/channel/{channel_id}/typing`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BotToken required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * BotMessageApi - functional programming interface
+ * @export
+ */
+export const BotMessageApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = BotMessageApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary List messages visible to the bot
+         * @param {number} channelId Channel id
+         * @param {number} [from] Message id cursor
+         * @param {number} [limit] Page size
+         * @param {string} [direction] before, after, or around
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async botApiV1MessageChannelChannelIdGet(channelId: number, from?: number, limit?: number, direction?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoMessage>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.botApiV1MessageChannelChannelIdGet(channelId, from, limit, direction, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BotMessageApi.botApiV1MessageChannelChannelIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Mark a channel read as the bot
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async botApiV1MessageChannelChannelIdMessageIdAckPost(channelId: number, messageId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.botApiV1MessageChannelChannelIdMessageIdAckPost(channelId, messageId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BotMessageApi.botApiV1MessageChannelChannelIdMessageIdAckPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Delete a message as the bot
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async botApiV1MessageChannelChannelIdMessageIdDelete(channelId: number, messageId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.botApiV1MessageChannelChannelIdMessageIdDelete(channelId, messageId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BotMessageApi.botApiV1MessageChannelChannelIdMessageIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Edit a message as the bot
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {MessageUpdateRequest} request Message update
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async botApiV1MessageChannelChannelIdMessageIdPatch(channelId: number, messageId: number, request: MessageUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.botApiV1MessageChannelChannelIdMessageIdPatch(channelId, messageId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BotMessageApi.botApiV1MessageChannelChannelIdMessageIdPatch']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Remove the bot reaction from a message
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {string} reactionName Reaction name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete(channelId: number, messageId: number, reactionName: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete(channelId, messageId, reactionName, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BotMessageApi.botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary List users who reacted with a specific reaction
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {string} reactionName Reaction name
+         * @param {number} [after] Reaction ID cursor
+         * @param {number} [limit] Page size
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet(channelId: number, messageId: number, reactionName: string, after?: number, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessageReactionUsersPage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet(channelId, messageId, reactionName, after, limit, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BotMessageApi.botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Add the bot reaction to a message
+         * @param {number} channelId Channel id
+         * @param {number} messageId Message id
+         * @param {string} reactionName Reaction name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut(channelId: number, messageId: number, reactionName: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessageReaction>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut(channelId, messageId, reactionName, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BotMessageApi.botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Send a message as the bot
+         * @param {number} channelId Channel id
+         * @param {MessageSendRequest} request Message body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async botApiV1MessageChannelChannelIdPost(channelId: number, request: MessageSendRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoMessage>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.botApiV1MessageChannelChannelIdPost(channelId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BotMessageApi.botApiV1MessageChannelChannelIdPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Send a typing indicator as the bot
+         * @param {number} channelId Channel id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async botApiV1MessageChannelChannelIdTypingPost(channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.botApiV1MessageChannelChannelIdTypingPost(channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BotMessageApi.botApiV1MessageChannelChannelIdTypingPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * BotMessageApi - factory interface
+ * @export
+ */
+export const BotMessageApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = BotMessageApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary List messages visible to the bot
+         * @param {BotMessageApiBotApiV1MessageChannelChannelIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdGet(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoMessage>> {
+            return localVarFp.botApiV1MessageChannelChannelIdGet(requestParameters.channelId, requestParameters.from, requestParameters.limit, requestParameters.direction, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Mark a channel read as the bot
+         * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdAckPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdMessageIdAckPost(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdAckPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.botApiV1MessageChannelChannelIdMessageIdAckPost(requestParameters.channelId, requestParameters.messageId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Delete a message as the bot
+         * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdMessageIdDelete(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.botApiV1MessageChannelChannelIdMessageIdDelete(requestParameters.channelId, requestParameters.messageId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Edit a message as the bot
+         * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdPatchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdMessageIdPatch(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessage> {
+            return localVarFp.botApiV1MessageChannelChannelIdMessageIdPatch(requestParameters.channelId, requestParameters.messageId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Remove the bot reaction from a message
+         * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete(requestParameters.channelId, requestParameters.messageId, requestParameters.reactionName, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary List users who reacted with a specific reaction
+         * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessageReactionUsersPage> {
+            return localVarFp.botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet(requestParameters.channelId, requestParameters.messageId, requestParameters.reactionName, requestParameters.after, requestParameters.limit, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Add the bot reaction to a message
+         * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePutRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePutRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessageReaction> {
+            return localVarFp.botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut(requestParameters.channelId, requestParameters.messageId, requestParameters.reactionName, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Send a message as the bot
+         * @param {BotMessageApiBotApiV1MessageChannelChannelIdPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdPost(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessage> {
+            return localVarFp.botApiV1MessageChannelChannelIdPost(requestParameters.channelId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Send a typing indicator as the bot
+         * @param {BotMessageApiBotApiV1MessageChannelChannelIdTypingPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1MessageChannelChannelIdTypingPost(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdTypingPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.botApiV1MessageChannelChannelIdTypingPost(requestParameters.channelId, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * BotMessageApi - interface
+ * @export
+ * @interface BotMessageApi
+ */
+export interface BotMessageApiInterface {
+    /**
+     * 
+     * @summary List messages visible to the bot
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApiInterface
+     */
+    botApiV1MessageChannelChannelIdGet(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoMessage>>;
+
+    /**
+     * 
+     * @summary Mark a channel read as the bot
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdAckPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApiInterface
+     */
+    botApiV1MessageChannelChannelIdMessageIdAckPost(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdAckPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * 
+     * @summary Delete a message as the bot
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApiInterface
+     */
+    botApiV1MessageChannelChannelIdMessageIdDelete(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * 
+     * @summary Edit a message as the bot
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApiInterface
+     */
+    botApiV1MessageChannelChannelIdMessageIdPatch(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessage>;
+
+    /**
+     * 
+     * @summary Remove the bot reaction from a message
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApiInterface
+     */
+    botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * 
+     * @summary List users who reacted with a specific reaction
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApiInterface
+     */
+    botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessageReactionUsersPage>;
+
+    /**
+     * 
+     * @summary Add the bot reaction to a message
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApiInterface
+     */
+    botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePutRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessageReaction>;
+
+    /**
+     * 
+     * @summary Send a message as the bot
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApiInterface
+     */
+    botApiV1MessageChannelChannelIdPost(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessage>;
+
+    /**
+     * 
+     * @summary Send a typing indicator as the bot
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdTypingPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApiInterface
+     */
+    botApiV1MessageChannelChannelIdTypingPost(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdTypingPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+}
+
+/**
+ * Request parameters for botApiV1MessageChannelChannelIdGet operation in BotMessageApi.
+ * @export
+ * @interface BotMessageApiBotApiV1MessageChannelChannelIdGetRequest
+ */
+export interface BotMessageApiBotApiV1MessageChannelChannelIdGetRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdGet
+     */
+    readonly channelId: number
+
+    /**
+     * Message id cursor
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdGet
+     */
+    readonly from?: number
+
+    /**
+     * Page size
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdGet
+     */
+    readonly limit?: number
+
+    /**
+     * before, after, or around
+     * @type {string}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdGet
+     */
+    readonly direction?: string
+}
+
+/**
+ * Request parameters for botApiV1MessageChannelChannelIdMessageIdAckPost operation in BotMessageApi.
+ * @export
+ * @interface BotMessageApiBotApiV1MessageChannelChannelIdMessageIdAckPostRequest
+ */
+export interface BotMessageApiBotApiV1MessageChannelChannelIdMessageIdAckPostRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdAckPost
+     */
+    readonly channelId: number
+
+    /**
+     * Message id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdAckPost
+     */
+    readonly messageId: number
+}
+
+/**
+ * Request parameters for botApiV1MessageChannelChannelIdMessageIdDelete operation in BotMessageApi.
+ * @export
+ * @interface BotMessageApiBotApiV1MessageChannelChannelIdMessageIdDeleteRequest
+ */
+export interface BotMessageApiBotApiV1MessageChannelChannelIdMessageIdDeleteRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdDelete
+     */
+    readonly channelId: number
+
+    /**
+     * Message id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdDelete
+     */
+    readonly messageId: number
+}
+
+/**
+ * Request parameters for botApiV1MessageChannelChannelIdMessageIdPatch operation in BotMessageApi.
+ * @export
+ * @interface BotMessageApiBotApiV1MessageChannelChannelIdMessageIdPatchRequest
+ */
+export interface BotMessageApiBotApiV1MessageChannelChannelIdMessageIdPatchRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdPatch
+     */
+    readonly channelId: number
+
+    /**
+     * Message id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdPatch
+     */
+    readonly messageId: number
+
+    /**
+     * Message update
+     * @type {MessageUpdateRequest}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdPatch
+     */
+    readonly request: MessageUpdateRequest
+}
+
+/**
+ * Request parameters for botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete operation in BotMessageApi.
+ * @export
+ * @interface BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest
+ */
+export interface BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete
+     */
+    readonly channelId: number
+
+    /**
+     * Message id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete
+     */
+    readonly messageId: number
+
+    /**
+     * Reaction name
+     * @type {string}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete
+     */
+    readonly reactionName: string
+}
+
+/**
+ * Request parameters for botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet operation in BotMessageApi.
+ * @export
+ * @interface BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGetRequest
+ */
+export interface BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGetRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet
+     */
+    readonly channelId: number
+
+    /**
+     * Message id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet
+     */
+    readonly messageId: number
+
+    /**
+     * Reaction name
+     * @type {string}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet
+     */
+    readonly reactionName: string
+
+    /**
+     * Reaction ID cursor
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet
+     */
+    readonly after?: number
+
+    /**
+     * Page size
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet
+     */
+    readonly limit?: number
+}
+
+/**
+ * Request parameters for botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut operation in BotMessageApi.
+ * @export
+ * @interface BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePutRequest
+ */
+export interface BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePutRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut
+     */
+    readonly channelId: number
+
+    /**
+     * Message id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut
+     */
+    readonly messageId: number
+
+    /**
+     * Reaction name
+     * @type {string}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut
+     */
+    readonly reactionName: string
+}
+
+/**
+ * Request parameters for botApiV1MessageChannelChannelIdPost operation in BotMessageApi.
+ * @export
+ * @interface BotMessageApiBotApiV1MessageChannelChannelIdPostRequest
+ */
+export interface BotMessageApiBotApiV1MessageChannelChannelIdPostRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdPost
+     */
+    readonly channelId: number
+
+    /**
+     * Message body
+     * @type {MessageSendRequest}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdPost
+     */
+    readonly request: MessageSendRequest
+}
+
+/**
+ * Request parameters for botApiV1MessageChannelChannelIdTypingPost operation in BotMessageApi.
+ * @export
+ * @interface BotMessageApiBotApiV1MessageChannelChannelIdTypingPostRequest
+ */
+export interface BotMessageApiBotApiV1MessageChannelChannelIdTypingPostRequest {
+    /**
+     * Channel id
+     * @type {number}
+     * @memberof BotMessageApiBotApiV1MessageChannelChannelIdTypingPost
+     */
+    readonly channelId: number
+}
+
+/**
+ * BotMessageApi - object-oriented interface
+ * @export
+ * @class BotMessageApi
+ * @extends {BaseAPI}
+ */
+export class BotMessageApi extends BaseAPI implements BotMessageApiInterface {
+    /**
+     * 
+     * @summary List messages visible to the bot
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApi
+     */
+    public botApiV1MessageChannelChannelIdGet(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdGetRequest, options?: RawAxiosRequestConfig) {
+        return BotMessageApiFp(this.configuration).botApiV1MessageChannelChannelIdGet(requestParameters.channelId, requestParameters.from, requestParameters.limit, requestParameters.direction, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Mark a channel read as the bot
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdAckPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApi
+     */
+    public botApiV1MessageChannelChannelIdMessageIdAckPost(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdAckPostRequest, options?: RawAxiosRequestConfig) {
+        return BotMessageApiFp(this.configuration).botApiV1MessageChannelChannelIdMessageIdAckPost(requestParameters.channelId, requestParameters.messageId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Delete a message as the bot
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApi
+     */
+    public botApiV1MessageChannelChannelIdMessageIdDelete(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return BotMessageApiFp(this.configuration).botApiV1MessageChannelChannelIdMessageIdDelete(requestParameters.channelId, requestParameters.messageId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Edit a message as the bot
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApi
+     */
+    public botApiV1MessageChannelChannelIdMessageIdPatch(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdPatchRequest, options?: RawAxiosRequestConfig) {
+        return BotMessageApiFp(this.configuration).botApiV1MessageChannelChannelIdMessageIdPatch(requestParameters.channelId, requestParameters.messageId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Remove the bot reaction from a message
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApi
+     */
+    public botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest, options?: RawAxiosRequestConfig) {
+        return BotMessageApiFp(this.configuration).botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameDelete(requestParameters.channelId, requestParameters.messageId, requestParameters.reactionName, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary List users who reacted with a specific reaction
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApi
+     */
+    public botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGetRequest, options?: RawAxiosRequestConfig) {
+        return BotMessageApiFp(this.configuration).botApiV1MessageChannelChannelIdMessageIdReactionsReactionNameGet(requestParameters.channelId, requestParameters.messageId, requestParameters.reactionName, requestParameters.after, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Add the bot reaction to a message
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApi
+     */
+    public botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePutRequest, options?: RawAxiosRequestConfig) {
+        return BotMessageApiFp(this.configuration).botApiV1MessageChannelChannelIdMessageIdReactionsReactionNamePut(requestParameters.channelId, requestParameters.messageId, requestParameters.reactionName, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Send a message as the bot
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApi
+     */
+    public botApiV1MessageChannelChannelIdPost(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdPostRequest, options?: RawAxiosRequestConfig) {
+        return BotMessageApiFp(this.configuration).botApiV1MessageChannelChannelIdPost(requestParameters.channelId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Send a typing indicator as the bot
+     * @param {BotMessageApiBotApiV1MessageChannelChannelIdTypingPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotMessageApi
+     */
+    public botApiV1MessageChannelChannelIdTypingPost(requestParameters: BotMessageApiBotApiV1MessageChannelChannelIdTypingPostRequest, options?: RawAxiosRequestConfig) {
+        return BotMessageApiFp(this.configuration).botApiV1MessageChannelChannelIdTypingPost(requestParameters.channelId, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * BotUserApi - axios parameter creator
+ * @export
+ */
+export const BotUserApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get current bot account
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1UserMeGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/bot/api/v1/user/me`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BotToken required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * BotUserApi - functional programming interface
+ * @export
+ */
+export const BotUserApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = BotUserApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Get current bot account
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async botApiV1UserMeGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserMeResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.botApiV1UserMeGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BotUserApi.botApiV1UserMeGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * BotUserApi - factory interface
+ * @export
+ */
+export const BotUserApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = BotUserApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Get current bot account
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        botApiV1UserMeGet(options?: RawAxiosRequestConfig): AxiosPromise<UserMeResponse> {
+            return localVarFp.botApiV1UserMeGet(options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * BotUserApi - interface
+ * @export
+ * @interface BotUserApi
+ */
+export interface BotUserApiInterface {
+    /**
+     * 
+     * @summary Get current bot account
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotUserApiInterface
+     */
+    botApiV1UserMeGet(options?: RawAxiosRequestConfig): AxiosPromise<UserMeResponse>;
+
+}
+
+/**
+ * BotUserApi - object-oriented interface
+ * @export
+ * @class BotUserApi
+ * @extends {BaseAPI}
+ */
+export class BotUserApi extends BaseAPI implements BotUserApiInterface {
+    /**
+     * 
+     * @summary Get current bot account
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BotUserApi
+     */
+    public botApiV1UserMeGet(options?: RawAxiosRequestConfig) {
+        return BotUserApiFp(this.configuration).botApiV1UserMeGet(options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * DeveloperBotsApi - axios parameter creator
+ * @export
+ */
+export const DeveloperBotsApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Preview bot authorization
+         * @param {string} [grantToken] Install grant token
+         * @param {number} [botUserId] Public bot user id
+         * @param {number} [permissions] Requested permission bitmask
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsAuthorizePreviewGet: async (grantToken?: string, botUserId?: number, permissions?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/developer/bots/authorize/preview`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (grantToken !== undefined) {
+                localVarQueryParameter['grant_token'] = grantToken;
+            }
+
+            if (botUserId !== undefined) {
+                localVarQueryParameter['bot_user_id'] = botUserId;
+            }
+
+            if (permissions !== undefined) {
+                localVarQueryParameter['permissions'] = permissions;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create bot avatar upload metadata
+         * @param {number} botId Bot user id
+         * @param {DeveloperCreateBotAvatarRequest} request Avatar upload request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdAvatarPost: async (botId: number, request: DeveloperCreateBotAvatarRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'botId' is not null or undefined
+            assertParamExists('developerBotsBotIdAvatarPost', 'botId', botId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('developerBotsBotIdAvatarPost', 'request', request)
+            const localVarPath = `/developer/bots/{bot_id}/avatar`
+                .replace(`{${"bot_id"}}`, encodeURIComponent(String(botId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create bot banner upload metadata
+         * @param {number} botId Bot user id
+         * @param {DeveloperCreateBotBannerRequest} request Banner upload request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdBannerPost: async (botId: number, request: DeveloperCreateBotBannerRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'botId' is not null or undefined
+            assertParamExists('developerBotsBotIdBannerPost', 'botId', botId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('developerBotsBotIdBannerPost', 'request', request)
+            const localVarPath = `/developer/bots/{bot_id}/banner`
+                .replace(`{${"bot_id"}}`, encodeURIComponent(String(botId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete an owned bot
+         * @param {number} botId Bot user id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdDelete: async (botId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'botId' is not null or undefined
+            assertParamExists('developerBotsBotIdDelete', 'botId', botId)
+            const localVarPath = `/developer/bots/{bot_id}`
+                .replace(`{${"bot_id"}}`, encodeURIComponent(String(botId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get an owned bot
+         * @param {number} botId Bot user id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdGet: async (botId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'botId' is not null or undefined
+            assertParamExists('developerBotsBotIdGet', 'botId', botId)
+            const localVarPath = `/developer/bots/{bot_id}`
+                .replace(`{${"bot_id"}}`, encodeURIComponent(String(botId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List bot install grants
+         * @param {number} botId Bot user id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdGrantsGet: async (botId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'botId' is not null or undefined
+            assertParamExists('developerBotsBotIdGrantsGet', 'botId', botId)
+            const localVarPath = `/developer/bots/{bot_id}/grants`
+                .replace(`{${"bot_id"}}`, encodeURIComponent(String(botId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Revoke a bot install grant
+         * @param {number} botId Bot user id
+         * @param {number} grantId Grant id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdGrantsGrantIdDelete: async (botId: number, grantId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'botId' is not null or undefined
+            assertParamExists('developerBotsBotIdGrantsGrantIdDelete', 'botId', botId)
+            // verify required parameter 'grantId' is not null or undefined
+            assertParamExists('developerBotsBotIdGrantsGrantIdDelete', 'grantId', grantId)
+            const localVarPath = `/developer/bots/{bot_id}/grants/{grant_id}`
+                .replace(`{${"bot_id"}}`, encodeURIComponent(String(botId)))
+                .replace(`{${"grant_id"}}`, encodeURIComponent(String(grantId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create a bot install grant
+         * @param {number} botId Bot user id
+         * @param {DeveloperCreateGrantRequest} request Grant request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdGrantsPost: async (botId: number, request: DeveloperCreateGrantRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'botId' is not null or undefined
+            assertParamExists('developerBotsBotIdGrantsPost', 'botId', botId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('developerBotsBotIdGrantsPost', 'request', request)
+            const localVarPath = `/developer/bots/{bot_id}/grants`
+                .replace(`{${"bot_id"}}`, encodeURIComponent(String(botId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Update an owned bot
+         * @param {number} botId Bot user id
+         * @param {DeveloperUpdateBotRequest} request Bot update
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdPatch: async (botId: number, request: DeveloperUpdateBotRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'botId' is not null or undefined
+            assertParamExists('developerBotsBotIdPatch', 'botId', botId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('developerBotsBotIdPatch', 'request', request)
+            const localVarPath = `/developer/bots/{bot_id}`
+                .replace(`{${"bot_id"}}`, encodeURIComponent(String(botId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List bot runtime tokens
+         * @param {number} botId Bot user id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdTokensGet: async (botId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'botId' is not null or undefined
+            assertParamExists('developerBotsBotIdTokensGet', 'botId', botId)
+            const localVarPath = `/developer/bots/{bot_id}/tokens`
+                .replace(`{${"bot_id"}}`, encodeURIComponent(String(botId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create a bot runtime token
+         * @param {number} botId Bot user id
+         * @param {DeveloperCreateTokenRequest} request Token request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdTokensPost: async (botId: number, request: DeveloperCreateTokenRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'botId' is not null or undefined
+            assertParamExists('developerBotsBotIdTokensPost', 'botId', botId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('developerBotsBotIdTokensPost', 'request', request)
+            const localVarPath = `/developer/bots/{bot_id}/tokens`
+                .replace(`{${"bot_id"}}`, encodeURIComponent(String(botId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Revoke a bot runtime token
+         * @param {number} botId Bot user id
+         * @param {number} tokenId Token id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdTokensTokenIdDelete: async (botId: number, tokenId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'botId' is not null or undefined
+            assertParamExists('developerBotsBotIdTokensTokenIdDelete', 'botId', botId)
+            // verify required parameter 'tokenId' is not null or undefined
+            assertParamExists('developerBotsBotIdTokensTokenIdDelete', 'tokenId', tokenId)
+            const localVarPath = `/developer/bots/{bot_id}/tokens/{token_id}`
+                .replace(`{${"bot_id"}}`, encodeURIComponent(String(botId)))
+                .replace(`{${"token_id"}}`, encodeURIComponent(String(tokenId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List owned bots
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/developer/bots`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create a bot
+         * @param {DeveloperCreateBotRequest} request Bot configuration
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsPost: async (request: DeveloperCreateBotRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('developerBotsPost', 'request', request)
+            const localVarPath = `/developer/bots`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Search public bots
+         * @param {string} [query] Search query
+         * @param {number} [limit] Page size
+         * @param {number} [offset] Offset
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsPublicGet: async (query?: string, limit?: number, offset?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/developer/bots/public`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (query !== undefined) {
+                localVarQueryParameter['query'] = query;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * DeveloperBotsApi - functional programming interface
+ * @export
+ */
+export const DeveloperBotsApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = DeveloperBotsApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Preview bot authorization
+         * @param {string} [grantToken] Install grant token
+         * @param {number} [botUserId] Public bot user id
+         * @param {number} [permissions] Requested permission bitmask
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsAuthorizePreviewGet(grantToken?: string, botUserId?: number, permissions?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeveloperBotAuthorizationPreview>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsAuthorizePreviewGet(grantToken, botUserId, permissions, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsAuthorizePreviewGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Create bot avatar upload metadata
+         * @param {number} botId Bot user id
+         * @param {DeveloperCreateBotAvatarRequest} request Avatar upload request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsBotIdAvatarPost(botId: number, request: DeveloperCreateBotAvatarRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoAvatarUpload>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsBotIdAvatarPost(botId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsBotIdAvatarPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Create bot banner upload metadata
+         * @param {number} botId Bot user id
+         * @param {DeveloperCreateBotBannerRequest} request Banner upload request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsBotIdBannerPost(botId: number, request: DeveloperCreateBotBannerRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoBannerUpload>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsBotIdBannerPost(botId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsBotIdBannerPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Delete an owned bot
+         * @param {number} botId Bot user id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsBotIdDelete(botId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsBotIdDelete(botId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsBotIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get an owned bot
+         * @param {number} botId Bot user id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsBotIdGet(botId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeveloperBotResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsBotIdGet(botId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsBotIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary List bot install grants
+         * @param {number} botId Bot user id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsBotIdGrantsGet(botId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<ModelBotInstallGrant>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsBotIdGrantsGet(botId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsBotIdGrantsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Revoke a bot install grant
+         * @param {number} botId Bot user id
+         * @param {number} grantId Grant id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsBotIdGrantsGrantIdDelete(botId: number, grantId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsBotIdGrantsGrantIdDelete(botId, grantId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsBotIdGrantsGrantIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Create a bot install grant
+         * @param {number} botId Bot user id
+         * @param {DeveloperCreateGrantRequest} request Grant request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsBotIdGrantsPost(botId: number, request: DeveloperCreateGrantRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeveloperGrantCreateResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsBotIdGrantsPost(botId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsBotIdGrantsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Update an owned bot
+         * @param {number} botId Bot user id
+         * @param {DeveloperUpdateBotRequest} request Bot update
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsBotIdPatch(botId: number, request: DeveloperUpdateBotRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeveloperBotResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsBotIdPatch(botId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsBotIdPatch']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary List bot runtime tokens
+         * @param {number} botId Bot user id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsBotIdTokensGet(botId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<ModelBotToken>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsBotIdTokensGet(botId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsBotIdTokensGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Create a bot runtime token
+         * @param {number} botId Bot user id
+         * @param {DeveloperCreateTokenRequest} request Token request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsBotIdTokensPost(botId: number, request: DeveloperCreateTokenRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeveloperTokenCreateResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsBotIdTokensPost(botId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsBotIdTokensPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Revoke a bot runtime token
+         * @param {number} botId Bot user id
+         * @param {number} tokenId Token id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsBotIdTokensTokenIdDelete(botId: number, tokenId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsBotIdTokensTokenIdDelete(botId, tokenId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsBotIdTokensTokenIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary List owned bots
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DeveloperBotResponse>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Create a bot
+         * @param {DeveloperCreateBotRequest} request Bot configuration
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsPost(request: DeveloperCreateBotRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeveloperBotResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsPost(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Search public bots
+         * @param {string} [query] Search query
+         * @param {number} [limit] Page size
+         * @param {number} [offset] Offset
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async developerBotsPublicGet(query?: string, limit?: number, offset?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DeveloperBotResponse>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.developerBotsPublicGet(query, limit, offset, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DeveloperBotsApi.developerBotsPublicGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * DeveloperBotsApi - factory interface
+ * @export
+ */
+export const DeveloperBotsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = DeveloperBotsApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Preview bot authorization
+         * @param {DeveloperBotsApiDeveloperBotsAuthorizePreviewGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsAuthorizePreviewGet(requestParameters: DeveloperBotsApiDeveloperBotsAuthorizePreviewGetRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<DeveloperBotAuthorizationPreview> {
+            return localVarFp.developerBotsAuthorizePreviewGet(requestParameters.grantToken, requestParameters.botUserId, requestParameters.permissions, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Create bot avatar upload metadata
+         * @param {DeveloperBotsApiDeveloperBotsBotIdAvatarPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdAvatarPost(requestParameters: DeveloperBotsApiDeveloperBotsBotIdAvatarPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoAvatarUpload> {
+            return localVarFp.developerBotsBotIdAvatarPost(requestParameters.botId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Create bot banner upload metadata
+         * @param {DeveloperBotsApiDeveloperBotsBotIdBannerPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdBannerPost(requestParameters: DeveloperBotsApiDeveloperBotsBotIdBannerPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoBannerUpload> {
+            return localVarFp.developerBotsBotIdBannerPost(requestParameters.botId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Delete an owned bot
+         * @param {DeveloperBotsApiDeveloperBotsBotIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdDelete(requestParameters: DeveloperBotsApiDeveloperBotsBotIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.developerBotsBotIdDelete(requestParameters.botId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get an owned bot
+         * @param {DeveloperBotsApiDeveloperBotsBotIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdGet(requestParameters: DeveloperBotsApiDeveloperBotsBotIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DeveloperBotResponse> {
+            return localVarFp.developerBotsBotIdGet(requestParameters.botId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary List bot install grants
+         * @param {DeveloperBotsApiDeveloperBotsBotIdGrantsGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdGrantsGet(requestParameters: DeveloperBotsApiDeveloperBotsBotIdGrantsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<ModelBotInstallGrant>> {
+            return localVarFp.developerBotsBotIdGrantsGet(requestParameters.botId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Revoke a bot install grant
+         * @param {DeveloperBotsApiDeveloperBotsBotIdGrantsGrantIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdGrantsGrantIdDelete(requestParameters: DeveloperBotsApiDeveloperBotsBotIdGrantsGrantIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.developerBotsBotIdGrantsGrantIdDelete(requestParameters.botId, requestParameters.grantId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Create a bot install grant
+         * @param {DeveloperBotsApiDeveloperBotsBotIdGrantsPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdGrantsPost(requestParameters: DeveloperBotsApiDeveloperBotsBotIdGrantsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DeveloperGrantCreateResponse> {
+            return localVarFp.developerBotsBotIdGrantsPost(requestParameters.botId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Update an owned bot
+         * @param {DeveloperBotsApiDeveloperBotsBotIdPatchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdPatch(requestParameters: DeveloperBotsApiDeveloperBotsBotIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DeveloperBotResponse> {
+            return localVarFp.developerBotsBotIdPatch(requestParameters.botId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary List bot runtime tokens
+         * @param {DeveloperBotsApiDeveloperBotsBotIdTokensGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdTokensGet(requestParameters: DeveloperBotsApiDeveloperBotsBotIdTokensGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<ModelBotToken>> {
+            return localVarFp.developerBotsBotIdTokensGet(requestParameters.botId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Create a bot runtime token
+         * @param {DeveloperBotsApiDeveloperBotsBotIdTokensPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdTokensPost(requestParameters: DeveloperBotsApiDeveloperBotsBotIdTokensPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DeveloperTokenCreateResponse> {
+            return localVarFp.developerBotsBotIdTokensPost(requestParameters.botId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Revoke a bot runtime token
+         * @param {DeveloperBotsApiDeveloperBotsBotIdTokensTokenIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsBotIdTokensTokenIdDelete(requestParameters: DeveloperBotsApiDeveloperBotsBotIdTokensTokenIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.developerBotsBotIdTokensTokenIdDelete(requestParameters.botId, requestParameters.tokenId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary List owned bots
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DeveloperBotResponse>> {
+            return localVarFp.developerBotsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Create a bot
+         * @param {DeveloperBotsApiDeveloperBotsPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsPost(requestParameters: DeveloperBotsApiDeveloperBotsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DeveloperBotResponse> {
+            return localVarFp.developerBotsPost(requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Search public bots
+         * @param {DeveloperBotsApiDeveloperBotsPublicGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        developerBotsPublicGet(requestParameters: DeveloperBotsApiDeveloperBotsPublicGetRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<Array<DeveloperBotResponse>> {
+            return localVarFp.developerBotsPublicGet(requestParameters.query, requestParameters.limit, requestParameters.offset, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * DeveloperBotsApi - interface
+ * @export
+ * @interface DeveloperBotsApi
+ */
+export interface DeveloperBotsApiInterface {
+    /**
+     * 
+     * @summary Preview bot authorization
+     * @param {DeveloperBotsApiDeveloperBotsAuthorizePreviewGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsAuthorizePreviewGet(requestParameters?: DeveloperBotsApiDeveloperBotsAuthorizePreviewGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DeveloperBotAuthorizationPreview>;
+
+    /**
+     * 
+     * @summary Create bot avatar upload metadata
+     * @param {DeveloperBotsApiDeveloperBotsBotIdAvatarPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsBotIdAvatarPost(requestParameters: DeveloperBotsApiDeveloperBotsBotIdAvatarPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoAvatarUpload>;
+
+    /**
+     * 
+     * @summary Create bot banner upload metadata
+     * @param {DeveloperBotsApiDeveloperBotsBotIdBannerPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsBotIdBannerPost(requestParameters: DeveloperBotsApiDeveloperBotsBotIdBannerPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoBannerUpload>;
+
+    /**
+     * 
+     * @summary Delete an owned bot
+     * @param {DeveloperBotsApiDeveloperBotsBotIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsBotIdDelete(requestParameters: DeveloperBotsApiDeveloperBotsBotIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * 
+     * @summary Get an owned bot
+     * @param {DeveloperBotsApiDeveloperBotsBotIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsBotIdGet(requestParameters: DeveloperBotsApiDeveloperBotsBotIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DeveloperBotResponse>;
+
+    /**
+     * 
+     * @summary List bot install grants
+     * @param {DeveloperBotsApiDeveloperBotsBotIdGrantsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsBotIdGrantsGet(requestParameters: DeveloperBotsApiDeveloperBotsBotIdGrantsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<ModelBotInstallGrant>>;
+
+    /**
+     * 
+     * @summary Revoke a bot install grant
+     * @param {DeveloperBotsApiDeveloperBotsBotIdGrantsGrantIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsBotIdGrantsGrantIdDelete(requestParameters: DeveloperBotsApiDeveloperBotsBotIdGrantsGrantIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * 
+     * @summary Create a bot install grant
+     * @param {DeveloperBotsApiDeveloperBotsBotIdGrantsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsBotIdGrantsPost(requestParameters: DeveloperBotsApiDeveloperBotsBotIdGrantsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DeveloperGrantCreateResponse>;
+
+    /**
+     * 
+     * @summary Update an owned bot
+     * @param {DeveloperBotsApiDeveloperBotsBotIdPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsBotIdPatch(requestParameters: DeveloperBotsApiDeveloperBotsBotIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DeveloperBotResponse>;
+
+    /**
+     * 
+     * @summary List bot runtime tokens
+     * @param {DeveloperBotsApiDeveloperBotsBotIdTokensGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsBotIdTokensGet(requestParameters: DeveloperBotsApiDeveloperBotsBotIdTokensGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<ModelBotToken>>;
+
+    /**
+     * 
+     * @summary Create a bot runtime token
+     * @param {DeveloperBotsApiDeveloperBotsBotIdTokensPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsBotIdTokensPost(requestParameters: DeveloperBotsApiDeveloperBotsBotIdTokensPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DeveloperTokenCreateResponse>;
+
+    /**
+     * 
+     * @summary Revoke a bot runtime token
+     * @param {DeveloperBotsApiDeveloperBotsBotIdTokensTokenIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsBotIdTokensTokenIdDelete(requestParameters: DeveloperBotsApiDeveloperBotsBotIdTokensTokenIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * 
+     * @summary List owned bots
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DeveloperBotResponse>>;
+
+    /**
+     * 
+     * @summary Create a bot
+     * @param {DeveloperBotsApiDeveloperBotsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsPost(requestParameters: DeveloperBotsApiDeveloperBotsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DeveloperBotResponse>;
+
+    /**
+     * 
+     * @summary Search public bots
+     * @param {DeveloperBotsApiDeveloperBotsPublicGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApiInterface
+     */
+    developerBotsPublicGet(requestParameters?: DeveloperBotsApiDeveloperBotsPublicGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DeveloperBotResponse>>;
+
+}
+
+/**
+ * Request parameters for developerBotsAuthorizePreviewGet operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsAuthorizePreviewGetRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsAuthorizePreviewGetRequest {
+    /**
+     * Install grant token
+     * @type {string}
+     * @memberof DeveloperBotsApiDeveloperBotsAuthorizePreviewGet
+     */
+    readonly grantToken?: string
+
+    /**
+     * Public bot user id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsAuthorizePreviewGet
+     */
+    readonly botUserId?: number
+
+    /**
+     * Requested permission bitmask
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsAuthorizePreviewGet
+     */
+    readonly permissions?: number
+}
+
+/**
+ * Request parameters for developerBotsBotIdAvatarPost operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsBotIdAvatarPostRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsBotIdAvatarPostRequest {
+    /**
+     * Bot user id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdAvatarPost
+     */
+    readonly botId: number
+
+    /**
+     * Avatar upload request
+     * @type {DeveloperCreateBotAvatarRequest}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdAvatarPost
+     */
+    readonly request: DeveloperCreateBotAvatarRequest
+}
+
+/**
+ * Request parameters for developerBotsBotIdBannerPost operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsBotIdBannerPostRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsBotIdBannerPostRequest {
+    /**
+     * Bot user id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdBannerPost
+     */
+    readonly botId: number
+
+    /**
+     * Banner upload request
+     * @type {DeveloperCreateBotBannerRequest}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdBannerPost
+     */
+    readonly request: DeveloperCreateBotBannerRequest
+}
+
+/**
+ * Request parameters for developerBotsBotIdDelete operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsBotIdDeleteRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsBotIdDeleteRequest {
+    /**
+     * Bot user id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdDelete
+     */
+    readonly botId: number
+}
+
+/**
+ * Request parameters for developerBotsBotIdGet operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsBotIdGetRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsBotIdGetRequest {
+    /**
+     * Bot user id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdGet
+     */
+    readonly botId: number
+}
+
+/**
+ * Request parameters for developerBotsBotIdGrantsGet operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsBotIdGrantsGetRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsBotIdGrantsGetRequest {
+    /**
+     * Bot user id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdGrantsGet
+     */
+    readonly botId: number
+}
+
+/**
+ * Request parameters for developerBotsBotIdGrantsGrantIdDelete operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsBotIdGrantsGrantIdDeleteRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsBotIdGrantsGrantIdDeleteRequest {
+    /**
+     * Bot user id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdGrantsGrantIdDelete
+     */
+    readonly botId: number
+
+    /**
+     * Grant id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdGrantsGrantIdDelete
+     */
+    readonly grantId: number
+}
+
+/**
+ * Request parameters for developerBotsBotIdGrantsPost operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsBotIdGrantsPostRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsBotIdGrantsPostRequest {
+    /**
+     * Bot user id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdGrantsPost
+     */
+    readonly botId: number
+
+    /**
+     * Grant request
+     * @type {DeveloperCreateGrantRequest}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdGrantsPost
+     */
+    readonly request: DeveloperCreateGrantRequest
+}
+
+/**
+ * Request parameters for developerBotsBotIdPatch operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsBotIdPatchRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsBotIdPatchRequest {
+    /**
+     * Bot user id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdPatch
+     */
+    readonly botId: number
+
+    /**
+     * Bot update
+     * @type {DeveloperUpdateBotRequest}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdPatch
+     */
+    readonly request: DeveloperUpdateBotRequest
+}
+
+/**
+ * Request parameters for developerBotsBotIdTokensGet operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsBotIdTokensGetRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsBotIdTokensGetRequest {
+    /**
+     * Bot user id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdTokensGet
+     */
+    readonly botId: number
+}
+
+/**
+ * Request parameters for developerBotsBotIdTokensPost operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsBotIdTokensPostRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsBotIdTokensPostRequest {
+    /**
+     * Bot user id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdTokensPost
+     */
+    readonly botId: number
+
+    /**
+     * Token request
+     * @type {DeveloperCreateTokenRequest}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdTokensPost
+     */
+    readonly request: DeveloperCreateTokenRequest
+}
+
+/**
+ * Request parameters for developerBotsBotIdTokensTokenIdDelete operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsBotIdTokensTokenIdDeleteRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsBotIdTokensTokenIdDeleteRequest {
+    /**
+     * Bot user id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdTokensTokenIdDelete
+     */
+    readonly botId: number
+
+    /**
+     * Token id
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsBotIdTokensTokenIdDelete
+     */
+    readonly tokenId: number
+}
+
+/**
+ * Request parameters for developerBotsPost operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsPostRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsPostRequest {
+    /**
+     * Bot configuration
+     * @type {DeveloperCreateBotRequest}
+     * @memberof DeveloperBotsApiDeveloperBotsPost
+     */
+    readonly request: DeveloperCreateBotRequest
+}
+
+/**
+ * Request parameters for developerBotsPublicGet operation in DeveloperBotsApi.
+ * @export
+ * @interface DeveloperBotsApiDeveloperBotsPublicGetRequest
+ */
+export interface DeveloperBotsApiDeveloperBotsPublicGetRequest {
+    /**
+     * Search query
+     * @type {string}
+     * @memberof DeveloperBotsApiDeveloperBotsPublicGet
+     */
+    readonly query?: string
+
+    /**
+     * Page size
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsPublicGet
+     */
+    readonly limit?: number
+
+    /**
+     * Offset
+     * @type {number}
+     * @memberof DeveloperBotsApiDeveloperBotsPublicGet
+     */
+    readonly offset?: number
+}
+
+/**
+ * DeveloperBotsApi - object-oriented interface
+ * @export
+ * @class DeveloperBotsApi
+ * @extends {BaseAPI}
+ */
+export class DeveloperBotsApi extends BaseAPI implements DeveloperBotsApiInterface {
+    /**
+     * 
+     * @summary Preview bot authorization
+     * @param {DeveloperBotsApiDeveloperBotsAuthorizePreviewGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsAuthorizePreviewGet(requestParameters: DeveloperBotsApiDeveloperBotsAuthorizePreviewGetRequest = {}, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsAuthorizePreviewGet(requestParameters.grantToken, requestParameters.botUserId, requestParameters.permissions, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Create bot avatar upload metadata
+     * @param {DeveloperBotsApiDeveloperBotsBotIdAvatarPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsBotIdAvatarPost(requestParameters: DeveloperBotsApiDeveloperBotsBotIdAvatarPostRequest, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsBotIdAvatarPost(requestParameters.botId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Create bot banner upload metadata
+     * @param {DeveloperBotsApiDeveloperBotsBotIdBannerPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsBotIdBannerPost(requestParameters: DeveloperBotsApiDeveloperBotsBotIdBannerPostRequest, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsBotIdBannerPost(requestParameters.botId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Delete an owned bot
+     * @param {DeveloperBotsApiDeveloperBotsBotIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsBotIdDelete(requestParameters: DeveloperBotsApiDeveloperBotsBotIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsBotIdDelete(requestParameters.botId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get an owned bot
+     * @param {DeveloperBotsApiDeveloperBotsBotIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsBotIdGet(requestParameters: DeveloperBotsApiDeveloperBotsBotIdGetRequest, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsBotIdGet(requestParameters.botId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary List bot install grants
+     * @param {DeveloperBotsApiDeveloperBotsBotIdGrantsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsBotIdGrantsGet(requestParameters: DeveloperBotsApiDeveloperBotsBotIdGrantsGetRequest, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsBotIdGrantsGet(requestParameters.botId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Revoke a bot install grant
+     * @param {DeveloperBotsApiDeveloperBotsBotIdGrantsGrantIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsBotIdGrantsGrantIdDelete(requestParameters: DeveloperBotsApiDeveloperBotsBotIdGrantsGrantIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsBotIdGrantsGrantIdDelete(requestParameters.botId, requestParameters.grantId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Create a bot install grant
+     * @param {DeveloperBotsApiDeveloperBotsBotIdGrantsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsBotIdGrantsPost(requestParameters: DeveloperBotsApiDeveloperBotsBotIdGrantsPostRequest, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsBotIdGrantsPost(requestParameters.botId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Update an owned bot
+     * @param {DeveloperBotsApiDeveloperBotsBotIdPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsBotIdPatch(requestParameters: DeveloperBotsApiDeveloperBotsBotIdPatchRequest, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsBotIdPatch(requestParameters.botId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary List bot runtime tokens
+     * @param {DeveloperBotsApiDeveloperBotsBotIdTokensGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsBotIdTokensGet(requestParameters: DeveloperBotsApiDeveloperBotsBotIdTokensGetRequest, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsBotIdTokensGet(requestParameters.botId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Create a bot runtime token
+     * @param {DeveloperBotsApiDeveloperBotsBotIdTokensPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsBotIdTokensPost(requestParameters: DeveloperBotsApiDeveloperBotsBotIdTokensPostRequest, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsBotIdTokensPost(requestParameters.botId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Revoke a bot runtime token
+     * @param {DeveloperBotsApiDeveloperBotsBotIdTokensTokenIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsBotIdTokensTokenIdDelete(requestParameters: DeveloperBotsApiDeveloperBotsBotIdTokensTokenIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsBotIdTokensTokenIdDelete(requestParameters.botId, requestParameters.tokenId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary List owned bots
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsGet(options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Create a bot
+     * @param {DeveloperBotsApiDeveloperBotsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsPost(requestParameters: DeveloperBotsApiDeveloperBotsPostRequest, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Search public bots
+     * @param {DeveloperBotsApiDeveloperBotsPublicGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeveloperBotsApi
+     */
+    public developerBotsPublicGet(requestParameters: DeveloperBotsApiDeveloperBotsPublicGetRequest = {}, options?: RawAxiosRequestConfig) {
+        return DeveloperBotsApiFp(this.configuration).developerBotsPublicGet(requestParameters.query, requestParameters.limit, requestParameters.offset, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
  * EmojiApi - axios parameter creator
  * @export
  */
@@ -5872,6 +9997,40 @@ export const GuildApiAxiosParamCreator = function (configuration?: Configuration
             }
 
             const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Owner-only read for public discovery state, discovery description, tags, and hydrated display data persisted in YugabyteDB YSQL.
+         * @summary Get guild discovery settings
+         * @param {number} guildId Guild id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdDiscoveryGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdDiscoveryGet', 'guildId', guildId)
+            const localVarPath = `/guild/{guild_id}/discovery`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -7047,6 +11206,19 @@ export const GuildApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Owner-only read for public discovery state, discovery description, tags, and hydrated display data persisted in YugabyteDB YSQL.
+         * @summary Get guild discovery settings
+         * @param {number} guildId Guild id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdDiscoveryGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoGuildDiscoveryUpdateResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdDiscoveryGet(guildId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildApi.guildGuildIdDiscoveryGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in YugabyteDB YSQL and notifies the search service to refresh its OpenSearch document.
          * @summary Update guild discovery settings
          * @param {number} guildId Guild id
@@ -7537,6 +11709,16 @@ export const GuildApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.guildGuildIdDelete(requestParameters.guildId, options).then((request) => request(axios, basePath));
         },
         /**
+         * Owner-only read for public discovery state, discovery description, tags, and hydrated display data persisted in YugabyteDB YSQL.
+         * @summary Get guild discovery settings
+         * @param {GuildApiGuildGuildIdDiscoveryGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdDiscoveryGet(requestParameters: GuildApiGuildGuildIdDiscoveryGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuildDiscoveryUpdateResponse> {
+            return localVarFp.guildGuildIdDiscoveryGet(requestParameters.guildId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in YugabyteDB YSQL and notifies the search service to refresh its OpenSearch document.
          * @summary Update guild discovery settings
          * @param {GuildApiGuildGuildIdDiscoveryPatchRequest} requestParameters Request parameters.
@@ -7924,6 +12106,16 @@ export interface GuildApiInterface {
      * @memberof GuildApiInterface
      */
     guildGuildIdDelete(requestParameters: GuildApiGuildGuildIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * Owner-only read for public discovery state, discovery description, tags, and hydrated display data persisted in YugabyteDB YSQL.
+     * @summary Get guild discovery settings
+     * @param {GuildApiGuildGuildIdDiscoveryGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApiInterface
+     */
+    guildGuildIdDiscoveryGet(requestParameters: GuildApiGuildGuildIdDiscoveryGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoGuildDiscoveryUpdateResponse>;
 
     /**
      * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in YugabyteDB YSQL and notifies the search service to refresh its OpenSearch document.
@@ -8432,6 +12624,20 @@ export interface GuildApiGuildGuildIdDeleteRequest {
      * Guild ID
      * @type {number}
      * @memberof GuildApiGuildGuildIdDelete
+     */
+    readonly guildId: number
+}
+
+/**
+ * Request parameters for guildGuildIdDiscoveryGet operation in GuildApi.
+ * @export
+ * @interface GuildApiGuildGuildIdDiscoveryGetRequest
+ */
+export interface GuildApiGuildGuildIdDiscoveryGetRequest {
+    /**
+     * Guild id
+     * @type {number}
+     * @memberof GuildApiGuildGuildIdDiscoveryGet
      */
     readonly guildId: number
 }
@@ -9125,6 +13331,18 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
     }
 
     /**
+     * Owner-only read for public discovery state, discovery description, tags, and hydrated display data persisted in YugabyteDB YSQL.
+     * @summary Get guild discovery settings
+     * @param {GuildApiGuildGuildIdDiscoveryGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildApi
+     */
+    public guildGuildIdDiscoveryGet(requestParameters: GuildApiGuildGuildIdDiscoveryGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildApiFp(this.configuration).guildGuildIdDiscoveryGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * Owner-only update for public discovery state, discovery description, and normalized tags. The API persists this data in YugabyteDB YSQL and notifies the search service to refresh its OpenSearch document.
      * @summary Update guild discovery settings
      * @param {GuildApiGuildGuildIdDiscoveryPatchRequest} requestParameters Request parameters.
@@ -9422,6 +13640,429 @@ export class GuildApi extends BaseAPI implements GuildApiInterface {
      */
     public guildPost(requestParameters: GuildApiGuildPostRequest, options?: RawAxiosRequestConfig) {
         return GuildApiFp(this.configuration).guildPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * GuildBotsApi - axios parameter creator
+ * @export
+ */
+export const GuildBotsApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary List guilds available for bot authorization
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildBotsAuthorizeGuildsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/guild/bots/authorize-guilds`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Remove a bot from a guild
+         * @param {number} guildId Guild id
+         * @param {number} botId Bot user id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdBotsBotIdDelete: async (guildId: number, botId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdBotsBotIdDelete', 'guildId', guildId)
+            // verify required parameter 'botId' is not null or undefined
+            assertParamExists('guildGuildIdBotsBotIdDelete', 'botId', botId)
+            const localVarPath = `/guild/{guild_id}/bots/{bot_id}`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)))
+                .replace(`{${"bot_id"}}`, encodeURIComponent(String(botId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List installed guild bots
+         * @param {number} guildId Guild id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdBotsGet: async (guildId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdBotsGet', 'guildId', guildId)
+            const localVarPath = `/guild/{guild_id}/bots`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Install a bot into a guild
+         * @param {number} guildId Guild id
+         * @param {GuildInstallBotRequest} request Install request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdBotsPost: async (guildId: number, request: GuildInstallBotRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guildId' is not null or undefined
+            assertParamExists('guildGuildIdBotsPost', 'guildId', guildId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('guildGuildIdBotsPost', 'request', request)
+            const localVarPath = `/guild/{guild_id}/bots`
+                .replace(`{${"guild_id"}}`, encodeURIComponent(String(guildId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * GuildBotsApi - functional programming interface
+ * @export
+ */
+export const GuildBotsApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = GuildBotsApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary List guilds available for bot authorization
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildBotsAuthorizeGuildsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<DtoGuild>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildBotsAuthorizeGuildsGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildBotsApi.guildBotsAuthorizeGuildsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Remove a bot from a guild
+         * @param {number} guildId Guild id
+         * @param {number} botId Bot user id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdBotsBotIdDelete(guildId: number, botId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdBotsBotIdDelete(guildId, botId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildBotsApi.guildGuildIdBotsBotIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary List installed guild bots
+         * @param {number} guildId Guild id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdBotsGet(guildId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<GuildInstalledBotResponse>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdBotsGet(guildId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildBotsApi.guildGuildIdBotsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Install a bot into a guild
+         * @param {number} guildId Guild id
+         * @param {GuildInstallBotRequest} request Install request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async guildGuildIdBotsPost(guildId: number, request: GuildInstallBotRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GuildInstalledBotResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.guildGuildIdBotsPost(guildId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GuildBotsApi.guildGuildIdBotsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * GuildBotsApi - factory interface
+ * @export
+ */
+export const GuildBotsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = GuildBotsApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary List guilds available for bot authorization
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildBotsAuthorizeGuildsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoGuild>> {
+            return localVarFp.guildBotsAuthorizeGuildsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Remove a bot from a guild
+         * @param {GuildBotsApiGuildGuildIdBotsBotIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdBotsBotIdDelete(requestParameters: GuildBotsApiGuildGuildIdBotsBotIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.guildGuildIdBotsBotIdDelete(requestParameters.guildId, requestParameters.botId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary List installed guild bots
+         * @param {GuildBotsApiGuildGuildIdBotsGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdBotsGet(requestParameters: GuildBotsApiGuildGuildIdBotsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<GuildInstalledBotResponse>> {
+            return localVarFp.guildGuildIdBotsGet(requestParameters.guildId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Install a bot into a guild
+         * @param {GuildBotsApiGuildGuildIdBotsPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        guildGuildIdBotsPost(requestParameters: GuildBotsApiGuildGuildIdBotsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GuildInstalledBotResponse> {
+            return localVarFp.guildGuildIdBotsPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * GuildBotsApi - interface
+ * @export
+ * @interface GuildBotsApi
+ */
+export interface GuildBotsApiInterface {
+    /**
+     * 
+     * @summary List guilds available for bot authorization
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildBotsApiInterface
+     */
+    guildBotsAuthorizeGuildsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoGuild>>;
+
+    /**
+     * 
+     * @summary Remove a bot from a guild
+     * @param {GuildBotsApiGuildGuildIdBotsBotIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildBotsApiInterface
+     */
+    guildGuildIdBotsBotIdDelete(requestParameters: GuildBotsApiGuildGuildIdBotsBotIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * 
+     * @summary List installed guild bots
+     * @param {GuildBotsApiGuildGuildIdBotsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildBotsApiInterface
+     */
+    guildGuildIdBotsGet(requestParameters: GuildBotsApiGuildGuildIdBotsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<GuildInstalledBotResponse>>;
+
+    /**
+     * 
+     * @summary Install a bot into a guild
+     * @param {GuildBotsApiGuildGuildIdBotsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildBotsApiInterface
+     */
+    guildGuildIdBotsPost(requestParameters: GuildBotsApiGuildGuildIdBotsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<GuildInstalledBotResponse>;
+
+}
+
+/**
+ * Request parameters for guildGuildIdBotsBotIdDelete operation in GuildBotsApi.
+ * @export
+ * @interface GuildBotsApiGuildGuildIdBotsBotIdDeleteRequest
+ */
+export interface GuildBotsApiGuildGuildIdBotsBotIdDeleteRequest {
+    /**
+     * Guild id
+     * @type {number}
+     * @memberof GuildBotsApiGuildGuildIdBotsBotIdDelete
+     */
+    readonly guildId: number
+
+    /**
+     * Bot user id
+     * @type {number}
+     * @memberof GuildBotsApiGuildGuildIdBotsBotIdDelete
+     */
+    readonly botId: number
+}
+
+/**
+ * Request parameters for guildGuildIdBotsGet operation in GuildBotsApi.
+ * @export
+ * @interface GuildBotsApiGuildGuildIdBotsGetRequest
+ */
+export interface GuildBotsApiGuildGuildIdBotsGetRequest {
+    /**
+     * Guild id
+     * @type {number}
+     * @memberof GuildBotsApiGuildGuildIdBotsGet
+     */
+    readonly guildId: number
+}
+
+/**
+ * Request parameters for guildGuildIdBotsPost operation in GuildBotsApi.
+ * @export
+ * @interface GuildBotsApiGuildGuildIdBotsPostRequest
+ */
+export interface GuildBotsApiGuildGuildIdBotsPostRequest {
+    /**
+     * Guild id
+     * @type {number}
+     * @memberof GuildBotsApiGuildGuildIdBotsPost
+     */
+    readonly guildId: number
+
+    /**
+     * Install request
+     * @type {GuildInstallBotRequest}
+     * @memberof GuildBotsApiGuildGuildIdBotsPost
+     */
+    readonly request: GuildInstallBotRequest
+}
+
+/**
+ * GuildBotsApi - object-oriented interface
+ * @export
+ * @class GuildBotsApi
+ * @extends {BaseAPI}
+ */
+export class GuildBotsApi extends BaseAPI implements GuildBotsApiInterface {
+    /**
+     * 
+     * @summary List guilds available for bot authorization
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildBotsApi
+     */
+    public guildBotsAuthorizeGuildsGet(options?: RawAxiosRequestConfig) {
+        return GuildBotsApiFp(this.configuration).guildBotsAuthorizeGuildsGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Remove a bot from a guild
+     * @param {GuildBotsApiGuildGuildIdBotsBotIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildBotsApi
+     */
+    public guildGuildIdBotsBotIdDelete(requestParameters: GuildBotsApiGuildGuildIdBotsBotIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return GuildBotsApiFp(this.configuration).guildGuildIdBotsBotIdDelete(requestParameters.guildId, requestParameters.botId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary List installed guild bots
+     * @param {GuildBotsApiGuildGuildIdBotsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildBotsApi
+     */
+    public guildGuildIdBotsGet(requestParameters: GuildBotsApiGuildGuildIdBotsGetRequest, options?: RawAxiosRequestConfig) {
+        return GuildBotsApiFp(this.configuration).guildGuildIdBotsGet(requestParameters.guildId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Install a bot into a guild
+     * @param {GuildBotsApiGuildGuildIdBotsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GuildBotsApi
+     */
+    public guildGuildIdBotsPost(requestParameters: GuildBotsApiGuildGuildIdBotsPostRequest, options?: RawAxiosRequestConfig) {
+        return GuildBotsApiFp(this.configuration).guildGuildIdBotsPost(requestParameters.guildId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -11920,6 +16561,46 @@ export const MessageApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Create thread in channel
+         * @param {number} channelId Parent channel id
+         * @param {MessageCreateThreadRequest} request Thread data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdThreadPost: async (channelId: number, request: MessageCreateThreadRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('messageChannelChannelIdThreadPost', 'channelId', channelId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('messageChannelChannelIdThreadPost', 'request', request)
+            const localVarPath = `/message/channel/{channel_id}/thread`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Send user typing event in the channel
          * @param {number} channelId Channel id
          * @param {*} [options] Override http request option.
@@ -12113,6 +16794,20 @@ export const MessageApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Create thread in channel
+         * @param {number} channelId Parent channel id
+         * @param {MessageCreateThreadRequest} request Thread data
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async messageChannelChannelIdThreadPost(channelId: number, request: MessageCreateThreadRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoChannel>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.messageChannelChannelIdThreadPost(channelId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['MessageApi.messageChannelChannelIdThreadPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Send user typing event in the channel
          * @param {number} channelId Channel id
          * @param {*} [options] Override http request option.
@@ -12236,6 +16931,16 @@ export const MessageApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
+         * @summary Create thread in channel
+         * @param {MessageApiMessageChannelChannelIdThreadPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        messageChannelChannelIdThreadPost(requestParameters: MessageApiMessageChannelChannelIdThreadPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoChannel> {
+            return localVarFp.messageChannelChannelIdThreadPost(requestParameters.channelId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Send user typing event in the channel
          * @param {MessageApiMessageChannelChannelIdTypingPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -12352,6 +17057,16 @@ export interface MessageApiInterface {
      * @memberof MessageApiInterface
      */
     messageChannelChannelIdPost(requestParameters: MessageApiMessageChannelChannelIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoMessage>;
+
+    /**
+     * 
+     * @summary Create thread in channel
+     * @param {MessageApiMessageChannelChannelIdThreadPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApiInterface
+     */
+    messageChannelChannelIdThreadPost(requestParameters: MessageApiMessageChannelChannelIdThreadPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoChannel>;
 
     /**
      * 
@@ -12639,6 +17354,27 @@ export interface MessageApiMessageChannelChannelIdPostRequest {
 }
 
 /**
+ * Request parameters for messageChannelChannelIdThreadPost operation in MessageApi.
+ * @export
+ * @interface MessageApiMessageChannelChannelIdThreadPostRequest
+ */
+export interface MessageApiMessageChannelChannelIdThreadPostRequest {
+    /**
+     * Parent channel id
+     * @type {number}
+     * @memberof MessageApiMessageChannelChannelIdThreadPost
+     */
+    readonly channelId: number
+
+    /**
+     * Thread data
+     * @type {MessageCreateThreadRequest}
+     * @memberof MessageApiMessageChannelChannelIdThreadPost
+     */
+    readonly request: MessageCreateThreadRequest
+}
+
+/**
  * Request parameters for messageChannelChannelIdTypingPost operation in MessageApi.
  * @export
  * @interface MessageApiMessageChannelChannelIdTypingPostRequest
@@ -12781,6 +17517,18 @@ export class MessageApi extends BaseAPI implements MessageApiInterface {
 
     /**
      * 
+     * @summary Create thread in channel
+     * @param {MessageApiMessageChannelChannelIdThreadPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof MessageApi
+     */
+    public messageChannelChannelIdThreadPost(requestParameters: MessageApiMessageChannelChannelIdThreadPostRequest, options?: RawAxiosRequestConfig) {
+        return MessageApiFp(this.configuration).messageChannelChannelIdThreadPost(requestParameters.channelId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
      * @summary Send user typing event in the channel
      * @param {MessageApiMessageChannelChannelIdTypingPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -12809,6 +17557,101 @@ export type MessageChannelChannelIdGetDirectionEnum = typeof MessageChannelChann
  */
 export const SearchApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * Returns tag suggestions from tags attached to public enabled bots only. Limit defaults to 16 and is capped at 16.
+         * @summary Autocomplete public bot tags
+         * @param {string} [q] Tag prefix
+         * @param {number} [limit] Maximum tags to return, capped at 16
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchBotTagsGet: async (q?: string, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/search/bot-tags`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (q !== undefined) {
+                localVarQueryParameter['q'] = q;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Searches only public enabled bots in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
+         * @summary Search public bots
+         * @param {string} [q] Search text for bot name, description, bio, and tags
+         * @param {string} [tags] Comma-separated normalized tags
+         * @param {SearchBotsGetSortEnum} [sort] Sort mode
+         * @param {number} [page] Zero-based page number
+         * @param {number} [limit] Results per page, capped at 16
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchBotsGet: async (q?: string, tags?: string, sort?: SearchBotsGetSortEnum, page?: number, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/search/bots`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (q !== undefined) {
+                localVarQueryParameter['q'] = q;
+            }
+
+            if (tags !== undefined) {
+                localVarQueryParameter['tags'] = tags;
+            }
+
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort;
+            }
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * 
          * @summary Search messages
@@ -12991,6 +17834,37 @@ export const SearchApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = SearchApiAxiosParamCreator(configuration)
     return {
         /**
+         * Returns tag suggestions from tags attached to public enabled bots only. Limit defaults to 16 and is capped at 16.
+         * @summary Autocomplete public bot tags
+         * @param {string} [q] Tag prefix
+         * @param {number} [limit] Maximum tags to return, capped at 16
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async searchBotTagsGet(q?: string, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<string>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.searchBotTagsGet(q, limit, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SearchApi.searchBotTagsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Searches only public enabled bots in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
+         * @summary Search public bots
+         * @param {string} [q] Search text for bot name, description, bio, and tags
+         * @param {string} [tags] Comma-separated normalized tags
+         * @param {SearchBotsGetSortEnum} [sort] Sort mode
+         * @param {number} [page] Zero-based page number
+         * @param {number} [limit] Results per page, capped at 16
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async searchBotsGet(q?: string, tags?: string, sort?: SearchBotsGetSortEnum, page?: number, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoBotDiscoverySearchResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.searchBotsGet(q, tags, sort, page, limit, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SearchApi.searchBotsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * 
          * @summary Search messages
          * @param {number} guildId Guild id
@@ -13059,6 +17933,26 @@ export const SearchApiFactory = function (configuration?: Configuration, basePat
     const localVarFp = SearchApiFp(configuration)
     return {
         /**
+         * Returns tag suggestions from tags attached to public enabled bots only. Limit defaults to 16 and is capped at 16.
+         * @summary Autocomplete public bot tags
+         * @param {SearchApiSearchBotTagsGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchBotTagsGet(requestParameters: SearchApiSearchBotTagsGetRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<Array<string>> {
+            return localVarFp.searchBotTagsGet(requestParameters.q, requestParameters.limit, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Searches only public enabled bots in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
+         * @summary Search public bots
+         * @param {SearchApiSearchBotsGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchBotsGet(requestParameters: SearchApiSearchBotsGetRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<DtoBotDiscoverySearchResponse> {
+            return localVarFp.searchBotsGet(requestParameters.q, requestParameters.tags, requestParameters.sort, requestParameters.page, requestParameters.limit, options).then((request) => request(axios, basePath));
+        },
+        /**
          * 
          * @summary Search messages
          * @param {SearchApiSearchGuildIdMessagesPostRequest} requestParameters Request parameters.
@@ -13108,6 +18002,26 @@ export const SearchApiFactory = function (configuration?: Configuration, basePat
  */
 export interface SearchApiInterface {
     /**
+     * Returns tag suggestions from tags attached to public enabled bots only. Limit defaults to 16 and is capped at 16.
+     * @summary Autocomplete public bot tags
+     * @param {SearchApiSearchBotTagsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SearchApiInterface
+     */
+    searchBotTagsGet(requestParameters?: SearchApiSearchBotTagsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<string>>;
+
+    /**
+     * Searches only public enabled bots in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
+     * @summary Search public bots
+     * @param {SearchApiSearchBotsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SearchApiInterface
+     */
+    searchBotsGet(requestParameters?: SearchApiSearchBotsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoBotDiscoverySearchResponse>;
+
+    /**
      * 
      * @summary Search messages
      * @param {SearchApiSearchGuildIdMessagesPostRequest} requestParameters Request parameters.
@@ -13147,6 +18061,69 @@ export interface SearchApiInterface {
      */
     searchMessagesPost(requestParameters: SearchApiSearchMessagesPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<SearchMessageSearchResponse>>;
 
+}
+
+/**
+ * Request parameters for searchBotTagsGet operation in SearchApi.
+ * @export
+ * @interface SearchApiSearchBotTagsGetRequest
+ */
+export interface SearchApiSearchBotTagsGetRequest {
+    /**
+     * Tag prefix
+     * @type {string}
+     * @memberof SearchApiSearchBotTagsGet
+     */
+    readonly q?: string
+
+    /**
+     * Maximum tags to return, capped at 16
+     * @type {number}
+     * @memberof SearchApiSearchBotTagsGet
+     */
+    readonly limit?: number
+}
+
+/**
+ * Request parameters for searchBotsGet operation in SearchApi.
+ * @export
+ * @interface SearchApiSearchBotsGetRequest
+ */
+export interface SearchApiSearchBotsGetRequest {
+    /**
+     * Search text for bot name, description, bio, and tags
+     * @type {string}
+     * @memberof SearchApiSearchBotsGet
+     */
+    readonly q?: string
+
+    /**
+     * Comma-separated normalized tags
+     * @type {string}
+     * @memberof SearchApiSearchBotsGet
+     */
+    readonly tags?: string
+
+    /**
+     * Sort mode
+     * @type {'best_match' | 'popularity' | 'alphabetical'}
+     * @memberof SearchApiSearchBotsGet
+     */
+    readonly sort?: SearchBotsGetSortEnum
+
+    /**
+     * Zero-based page number
+     * @type {number}
+     * @memberof SearchApiSearchBotsGet
+     */
+    readonly page?: number
+
+    /**
+     * Results per page, capped at 16
+     * @type {number}
+     * @memberof SearchApiSearchBotsGet
+     */
+    readonly limit?: number
 }
 
 /**
@@ -13255,6 +18232,30 @@ export interface SearchApiSearchMessagesPostRequest {
  */
 export class SearchApi extends BaseAPI implements SearchApiInterface {
     /**
+     * Returns tag suggestions from tags attached to public enabled bots only. Limit defaults to 16 and is capped at 16.
+     * @summary Autocomplete public bot tags
+     * @param {SearchApiSearchBotTagsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SearchApi
+     */
+    public searchBotTagsGet(requestParameters: SearchApiSearchBotTagsGetRequest = {}, options?: RawAxiosRequestConfig) {
+        return SearchApiFp(this.configuration).searchBotTagsGet(requestParameters.q, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Searches only public enabled bots in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
+     * @summary Search public bots
+     * @param {SearchApiSearchBotsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SearchApi
+     */
+    public searchBotsGet(requestParameters: SearchApiSearchBotsGetRequest = {}, options?: RawAxiosRequestConfig) {
+        return SearchApiFp(this.configuration).searchBotsGet(requestParameters.q, requestParameters.tags, requestParameters.sort, requestParameters.page, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * 
      * @summary Search messages
      * @param {SearchApiSearchGuildIdMessagesPostRequest} requestParameters Request parameters.
@@ -13303,6 +18304,15 @@ export class SearchApi extends BaseAPI implements SearchApiInterface {
     }
 }
 
+/**
+ * @export
+ */
+export const SearchBotsGetSortEnum = {
+    BestMatch: 'best_match',
+    Popularity: 'popularity',
+    Alphabetical: 'alphabetical'
+} as const;
+export type SearchBotsGetSortEnum = typeof SearchBotsGetSortEnum[keyof typeof SearchBotsGetSortEnum];
 /**
  * @export
  */
@@ -13496,6 +18506,70 @@ export const UploadApiAxiosParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Uploads a profile banner image. Requires source dimensions at least 680x240 and converts to WebP under 10MB.
+         * @summary Upload user profile banner
+         * @param {number} userId User ID
+         * @param {number} bannerId Banner ID
+         * @param {Array<number>} file Binary image payload
+         * @param {number} [cropX] Crop X coordinate in source pixels
+         * @param {number} [cropY] Crop Y coordinate in source pixels
+         * @param {number} [cropWidth] Crop width in source pixels
+         * @param {number} [cropHeight] Crop height in source pixels
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        uploadProfileCoversUserIdBannerIdPost: async (userId: number, bannerId: number, file: Array<number>, cropX?: number, cropY?: number, cropWidth?: number, cropHeight?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('uploadProfileCoversUserIdBannerIdPost', 'userId', userId)
+            // verify required parameter 'bannerId' is not null or undefined
+            assertParamExists('uploadProfileCoversUserIdBannerIdPost', 'bannerId', bannerId)
+            // verify required parameter 'file' is not null or undefined
+            assertParamExists('uploadProfileCoversUserIdBannerIdPost', 'file', file)
+            const localVarPath = `/upload/profile-covers/{user_id}/{banner_id}`
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)))
+                .replace(`{${"banner_id"}}`, encodeURIComponent(String(bannerId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (cropX !== undefined) {
+                localVarQueryParameter['crop_x'] = cropX;
+            }
+
+            if (cropY !== undefined) {
+                localVarQueryParameter['crop_y'] = cropY;
+            }
+
+            if (cropWidth !== undefined) {
+                localVarQueryParameter['crop_width'] = cropWidth;
+            }
+
+            if (cropHeight !== undefined) {
+                localVarQueryParameter['crop_height'] = cropHeight;
+            }
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/octet-stream';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(file, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -13566,6 +18640,25 @@ export const UploadApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['UploadApi.uploadIconsGuildIdIconIdPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * Uploads a profile banner image. Requires source dimensions at least 680x240 and converts to WebP under 10MB.
+         * @summary Upload user profile banner
+         * @param {number} userId User ID
+         * @param {number} bannerId Banner ID
+         * @param {Array<number>} file Binary image payload
+         * @param {number} [cropX] Crop X coordinate in source pixels
+         * @param {number} [cropY] Crop Y coordinate in source pixels
+         * @param {number} [cropWidth] Crop width in source pixels
+         * @param {number} [cropHeight] Crop height in source pixels
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async uploadProfileCoversUserIdBannerIdPost(userId: number, bannerId: number, file: Array<number>, cropX?: number, cropY?: number, cropWidth?: number, cropHeight?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.uploadProfileCoversUserIdBannerIdPost(userId, bannerId, file, cropX, cropY, cropWidth, cropHeight, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UploadApi.uploadProfileCoversUserIdBannerIdPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -13616,6 +18709,16 @@ export const UploadApiFactory = function (configuration?: Configuration, basePat
         uploadIconsGuildIdIconIdPost(requestParameters: UploadApiUploadIconsGuildIdIconIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
             return localVarFp.uploadIconsGuildIdIconIdPost(requestParameters.guildId, requestParameters.iconId, requestParameters.file, options).then((request) => request(axios, basePath));
         },
+        /**
+         * Uploads a profile banner image. Requires source dimensions at least 680x240 and converts to WebP under 10MB.
+         * @summary Upload user profile banner
+         * @param {UploadApiUploadProfileCoversUserIdBannerIdPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        uploadProfileCoversUserIdBannerIdPost(requestParameters: UploadApiUploadProfileCoversUserIdBannerIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.uploadProfileCoversUserIdBannerIdPost(requestParameters.userId, requestParameters.bannerId, requestParameters.file, requestParameters.cropX, requestParameters.cropY, requestParameters.cropWidth, requestParameters.cropHeight, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -13664,6 +18767,16 @@ export interface UploadApiInterface {
      * @memberof UploadApiInterface
      */
     uploadIconsGuildIdIconIdPost(requestParameters: UploadApiUploadIconsGuildIdIconIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * Uploads a profile banner image. Requires source dimensions at least 680x240 and converts to WebP under 10MB.
+     * @summary Upload user profile banner
+     * @param {UploadApiUploadProfileCoversUserIdBannerIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UploadApiInterface
+     */
+    uploadProfileCoversUserIdBannerIdPost(requestParameters: UploadApiUploadProfileCoversUserIdBannerIdPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
 }
 
@@ -13780,6 +18893,62 @@ export interface UploadApiUploadIconsGuildIdIconIdPostRequest {
 }
 
 /**
+ * Request parameters for uploadProfileCoversUserIdBannerIdPost operation in UploadApi.
+ * @export
+ * @interface UploadApiUploadProfileCoversUserIdBannerIdPostRequest
+ */
+export interface UploadApiUploadProfileCoversUserIdBannerIdPostRequest {
+    /**
+     * User ID
+     * @type {number}
+     * @memberof UploadApiUploadProfileCoversUserIdBannerIdPost
+     */
+    readonly userId: number
+
+    /**
+     * Banner ID
+     * @type {number}
+     * @memberof UploadApiUploadProfileCoversUserIdBannerIdPost
+     */
+    readonly bannerId: number
+
+    /**
+     * Binary image payload
+     * @type {Array<number>}
+     * @memberof UploadApiUploadProfileCoversUserIdBannerIdPost
+     */
+    readonly file: Array<number>
+
+    /**
+     * Crop X coordinate in source pixels
+     * @type {number}
+     * @memberof UploadApiUploadProfileCoversUserIdBannerIdPost
+     */
+    readonly cropX?: number
+
+    /**
+     * Crop Y coordinate in source pixels
+     * @type {number}
+     * @memberof UploadApiUploadProfileCoversUserIdBannerIdPost
+     */
+    readonly cropY?: number
+
+    /**
+     * Crop width in source pixels
+     * @type {number}
+     * @memberof UploadApiUploadProfileCoversUserIdBannerIdPost
+     */
+    readonly cropWidth?: number
+
+    /**
+     * Crop height in source pixels
+     * @type {number}
+     * @memberof UploadApiUploadProfileCoversUserIdBannerIdPost
+     */
+    readonly cropHeight?: number
+}
+
+/**
  * UploadApi - object-oriented interface
  * @export
  * @class UploadApi
@@ -13832,6 +19001,18 @@ export class UploadApi extends BaseAPI implements UploadApiInterface {
      */
     public uploadIconsGuildIdIconIdPost(requestParameters: UploadApiUploadIconsGuildIdIconIdPostRequest, options?: RawAxiosRequestConfig) {
         return UploadApiFp(this.configuration).uploadIconsGuildIdIconIdPost(requestParameters.guildId, requestParameters.iconId, requestParameters.file, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Uploads a profile banner image. Requires source dimensions at least 680x240 and converts to WebP under 10MB.
+     * @summary Upload user profile banner
+     * @param {UploadApiUploadProfileCoversUserIdBannerIdPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UploadApi
+     */
+    public uploadProfileCoversUserIdBannerIdPost(requestParameters: UploadApiUploadProfileCoversUserIdBannerIdPostRequest, options?: RawAxiosRequestConfig) {
+        return UploadApiFp(this.configuration).uploadProfileCoversUserIdBannerIdPost(requestParameters.userId, requestParameters.bannerId, requestParameters.file, requestParameters.cropX, requestParameters.cropY, requestParameters.cropWidth, requestParameters.cropHeight, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -13929,6 +19110,328 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             }
 
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Creates a profile banner placeholder and returns upload info. Upload the binary to attachments service.
+         * @summary Create profile banner metadata
+         * @param {UserCreateBannerRequest} request Banner creation request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeBannerPost: async (request: UserCreateBannerRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('userMeBannerPost', 'request', request)
+            const localVarPath = `/user/me/banner`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Decline or dismiss an incoming direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallDeclinePost: async (channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('userMeChannelsChannelIdCallDeclinePost', 'channelId', channelId)
+            const localVarPath = `/user/me/channels/{channel_id}/call/decline`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Leave the current direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallDelete: async (channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('userMeChannelsChannelIdCallDelete', 'channelId', channelId)
+            const localVarPath = `/user/me/channels/{channel_id}/call`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Join an active direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallJoinPost: async (channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('userMeChannelsChannelIdCallJoinPost', 'channelId', channelId)
+            const localVarPath = `/user/me/channels/{channel_id}/call/join`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Start or join a direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallPost: async (channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('userMeChannelsChannelIdCallPost', 'channelId', channelId)
+            const localVarPath = `/user/me/channels/{channel_id}/call`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List active streams in a direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallStreamsGet: async (channelId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('userMeChannelsChannelIdCallStreamsGet', 'channelId', channelId)
+            const localVarPath = `/user/me/channels/{channel_id}/call/streams`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Start or resume screen sharing in a direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {UserCreateDMCallStreamRequest} request Stream options
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallStreamsPost: async (channelId: number, request: UserCreateDMCallStreamRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('userMeChannelsChannelIdCallStreamsPost', 'channelId', channelId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('userMeChannelsChannelIdCallStreamsPost', 'request', request)
+            const localVarPath = `/user/me/channels/{channel_id}/call/streams`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Stop an owned screen share in a direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {number} streamId Stream ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallStreamsStreamIdDelete: async (channelId: number, streamId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('userMeChannelsChannelIdCallStreamsStreamIdDelete', 'channelId', channelId)
+            // verify required parameter 'streamId' is not null or undefined
+            assertParamExists('userMeChannelsChannelIdCallStreamsStreamIdDelete', 'streamId', streamId)
+            const localVarPath = `/user/me/channels/{channel_id}/call/streams/{stream_id}`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"stream_id"}}`, encodeURIComponent(String(streamId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Join a screen share in a direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {number} streamId Stream ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallStreamsStreamIdJoinPost: async (channelId: number, streamId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'channelId' is not null or undefined
+            assertParamExists('userMeChannelsChannelIdCallStreamsStreamIdJoinPost', 'channelId', channelId)
+            // verify required parameter 'streamId' is not null or undefined
+            assertParamExists('userMeChannelsChannelIdCallStreamsStreamIdJoinPost', 'streamId', streamId)
+            const localVarPath = `/user/me/channels/{channel_id}/call/streams/{stream_id}/join`
+                .replace(`{${"channel_id"}}`, encodeURIComponent(String(channelId)))
+                .replace(`{${"stream_id"}}`, encodeURIComponent(String(streamId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -14383,6 +19886,80 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         },
         /**
          * 
+         * @summary Delete a private note for another user
+         * @param {number} userId Target user ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeNotesUserIdDelete: async (userId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('userMeNotesUserIdDelete', 'userId', userId)
+            const localVarPath = `/user/me/notes/{user_id}`
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Save a private note for another user
+         * @param {number} userId Target user ID
+         * @param {UserUpsertUserNoteRequest} request Private note
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeNotesUserIdPut: async (userId: number, request: UserUpsertUserNoteRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'userId' is not null or undefined
+            assertParamExists('userMeNotesUserIdPut', 'userId', userId)
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('userMeNotesUserIdPut', 'request', request)
+            const localVarPath = `/user/me/notes/{user_id}`
+                .replace(`{${"user_id"}}`, encodeURIComponent(String(userId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get user
          * @param {UserModifyUserRequest} request Modify user data
          * @param {*} [options] Override http request option.
@@ -14418,7 +19995,7 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * 
+         * Returns the user settings bootstrap payload, including read states, joined thread indexes, guild emojis, mentions, and active direct-message voice calls in dm_calls.
          * @summary Get current user settings (optional version gating)
          * @param {number} [version] Client known version
          * @param {string} [xDeviceKey] Stable per-device key for device-scoped media settings
@@ -14576,6 +20153,126 @@ export const UserApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.userMeAvatarsGet(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.userMeAvatarsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Creates a profile banner placeholder and returns upload info. Upload the binary to attachments service.
+         * @summary Create profile banner metadata
+         * @param {UserCreateBannerRequest} request Banner creation request
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeBannerPost(request: UserCreateBannerRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DtoBannerUpload>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeBannerPost(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeBannerPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Decline or dismiss an incoming direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeChannelsChannelIdCallDeclinePost(channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsChannelIdCallDeclinePost(channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeChannelsChannelIdCallDeclinePost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Leave the current direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeChannelsChannelIdCallDelete(channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsChannelIdCallDelete(channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeChannelsChannelIdCallDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Join an active direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeChannelsChannelIdCallJoinPost(channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserDMCallJoinResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsChannelIdCallJoinPost(channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeChannelsChannelIdCallJoinPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Start or join a direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeChannelsChannelIdCallPost(channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserDMCallJoinResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsChannelIdCallPost(channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeChannelsChannelIdCallPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary List active streams in a direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeChannelsChannelIdCallStreamsGet(channelId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<UserVoiceStreamSummary>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsChannelIdCallStreamsGet(channelId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeChannelsChannelIdCallStreamsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Start or resume screen sharing in a direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {UserCreateDMCallStreamRequest} request Stream options
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeChannelsChannelIdCallStreamsPost(channelId: number, request: UserCreateDMCallStreamRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserCreateDMCallStreamResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsChannelIdCallStreamsPost(channelId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeChannelsChannelIdCallStreamsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Stop an owned screen share in a direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {number} streamId Stream ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeChannelsChannelIdCallStreamsStreamIdDelete(channelId: number, streamId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsChannelIdCallStreamsStreamIdDelete(channelId, streamId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeChannelsChannelIdCallStreamsStreamIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Join a screen share in a direct-message voice call
+         * @param {number} channelId Direct DM channel ID
+         * @param {number} streamId Stream ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeChannelsChannelIdCallStreamsStreamIdJoinPost(channelId: number, streamId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserJoinDMCallStreamResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeChannelsChannelIdCallStreamsStreamIdJoinPost(channelId, streamId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeChannelsChannelIdCallStreamsStreamIdJoinPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -14745,6 +20442,33 @@ export const UserApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Delete a private note for another user
+         * @param {number} userId Target user ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeNotesUserIdDelete(userId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeNotesUserIdDelete(userId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeNotesUserIdDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Save a private note for another user
+         * @param {number} userId Target user ID
+         * @param {UserUpsertUserNoteRequest} request Private note
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userMeNotesUserIdPut(userId: number, request: UserUpsertUserNoteRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.userMeNotesUserIdPut(userId, request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['UserApi.userMeNotesUserIdPut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Get user
          * @param {UserModifyUserRequest} request Modify user data
          * @param {*} [options] Override http request option.
@@ -14757,7 +20481,7 @@ export const UserApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         * Returns the user settings bootstrap payload, including read states, joined thread indexes, guild emojis, mentions, and active direct-message voice calls in dm_calls.
          * @summary Get current user settings (optional version gating)
          * @param {number} [version] Client known version
          * @param {string} [xDeviceKey] Stable per-device key for device-scoped media settings
@@ -14835,6 +20559,96 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          */
         userMeAvatarsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoAvatar>> {
             return localVarFp.userMeAvatarsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Creates a profile banner placeholder and returns upload info. Upload the binary to attachments service.
+         * @summary Create profile banner metadata
+         * @param {UserApiUserMeBannerPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeBannerPost(requestParameters: UserApiUserMeBannerPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoBannerUpload> {
+            return localVarFp.userMeBannerPost(requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Decline or dismiss an incoming direct-message voice call
+         * @param {UserApiUserMeChannelsChannelIdCallDeclinePostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallDeclinePost(requestParameters: UserApiUserMeChannelsChannelIdCallDeclinePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.userMeChannelsChannelIdCallDeclinePost(requestParameters.channelId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Leave the current direct-message voice call
+         * @param {UserApiUserMeChannelsChannelIdCallDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallDelete(requestParameters: UserApiUserMeChannelsChannelIdCallDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.userMeChannelsChannelIdCallDelete(requestParameters.channelId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Join an active direct-message voice call
+         * @param {UserApiUserMeChannelsChannelIdCallJoinPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallJoinPost(requestParameters: UserApiUserMeChannelsChannelIdCallJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<UserDMCallJoinResponse> {
+            return localVarFp.userMeChannelsChannelIdCallJoinPost(requestParameters.channelId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Start or join a direct-message voice call
+         * @param {UserApiUserMeChannelsChannelIdCallPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallPost(requestParameters: UserApiUserMeChannelsChannelIdCallPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<UserDMCallJoinResponse> {
+            return localVarFp.userMeChannelsChannelIdCallPost(requestParameters.channelId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary List active streams in a direct-message voice call
+         * @param {UserApiUserMeChannelsChannelIdCallStreamsGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallStreamsGet(requestParameters: UserApiUserMeChannelsChannelIdCallStreamsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<UserVoiceStreamSummary>> {
+            return localVarFp.userMeChannelsChannelIdCallStreamsGet(requestParameters.channelId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Start or resume screen sharing in a direct-message voice call
+         * @param {UserApiUserMeChannelsChannelIdCallStreamsPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallStreamsPost(requestParameters: UserApiUserMeChannelsChannelIdCallStreamsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<UserCreateDMCallStreamResponse> {
+            return localVarFp.userMeChannelsChannelIdCallStreamsPost(requestParameters.channelId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Stop an owned screen share in a direct-message voice call
+         * @param {UserApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallStreamsStreamIdDelete(requestParameters: UserApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.userMeChannelsChannelIdCallStreamsStreamIdDelete(requestParameters.channelId, requestParameters.streamId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Join a screen share in a direct-message voice call
+         * @param {UserApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeChannelsChannelIdCallStreamsStreamIdJoinPost(requestParameters: UserApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<UserJoinDMCallStreamResponse> {
+            return localVarFp.userMeChannelsChannelIdCallStreamsStreamIdJoinPost(requestParameters.channelId, requestParameters.streamId, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -14964,6 +20778,26 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
         },
         /**
          * 
+         * @summary Delete a private note for another user
+         * @param {UserApiUserMeNotesUserIdDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeNotesUserIdDelete(requestParameters: UserApiUserMeNotesUserIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.userMeNotesUserIdDelete(requestParameters.userId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Save a private note for another user
+         * @param {UserApiUserMeNotesUserIdPutRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userMeNotesUserIdPut(requestParameters: UserApiUserMeNotesUserIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.userMeNotesUserIdPut(requestParameters.userId, requestParameters.request, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Get user
          * @param {UserApiUserMePatchRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -14973,7 +20807,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
             return localVarFp.userMePatch(requestParameters.request, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         * Returns the user settings bootstrap payload, including read states, joined thread indexes, guild emojis, mentions, and active direct-message voice calls in dm_calls.
          * @summary Get current user settings (optional version gating)
          * @param {UserApiUserMeSettingsGetRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -15039,6 +20873,96 @@ export interface UserApiInterface {
      * @memberof UserApiInterface
      */
     userMeAvatarsGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<DtoAvatar>>;
+
+    /**
+     * Creates a profile banner placeholder and returns upload info. Upload the binary to attachments service.
+     * @summary Create profile banner metadata
+     * @param {UserApiUserMeBannerPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeBannerPost(requestParameters: UserApiUserMeBannerPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<DtoBannerUpload>;
+
+    /**
+     * 
+     * @summary Decline or dismiss an incoming direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallDeclinePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeChannelsChannelIdCallDeclinePost(requestParameters: UserApiUserMeChannelsChannelIdCallDeclinePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * 
+     * @summary Leave the current direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeChannelsChannelIdCallDelete(requestParameters: UserApiUserMeChannelsChannelIdCallDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * 
+     * @summary Join an active direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallJoinPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeChannelsChannelIdCallJoinPost(requestParameters: UserApiUserMeChannelsChannelIdCallJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<UserDMCallJoinResponse>;
+
+    /**
+     * 
+     * @summary Start or join a direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeChannelsChannelIdCallPost(requestParameters: UserApiUserMeChannelsChannelIdCallPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<UserDMCallJoinResponse>;
+
+    /**
+     * 
+     * @summary List active streams in a direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallStreamsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeChannelsChannelIdCallStreamsGet(requestParameters: UserApiUserMeChannelsChannelIdCallStreamsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<UserVoiceStreamSummary>>;
+
+    /**
+     * 
+     * @summary Start or resume screen sharing in a direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallStreamsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeChannelsChannelIdCallStreamsPost(requestParameters: UserApiUserMeChannelsChannelIdCallStreamsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<UserCreateDMCallStreamResponse>;
+
+    /**
+     * 
+     * @summary Stop an owned screen share in a direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeChannelsChannelIdCallStreamsStreamIdDelete(requestParameters: UserApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * 
+     * @summary Join a screen share in a direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeChannelsChannelIdCallStreamsStreamIdJoinPost(requestParameters: UserApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<UserJoinDMCallStreamResponse>;
 
     /**
      * 
@@ -15168,6 +21092,26 @@ export interface UserApiInterface {
 
     /**
      * 
+     * @summary Delete a private note for another user
+     * @param {UserApiUserMeNotesUserIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeNotesUserIdDelete(requestParameters: UserApiUserMeNotesUserIdDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
+     * @summary Save a private note for another user
+     * @param {UserApiUserMeNotesUserIdPutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApiInterface
+     */
+    userMeNotesUserIdPut(requestParameters: UserApiUserMeNotesUserIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
+
+    /**
+     * 
      * @summary Get user
      * @param {UserApiUserMePatchRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -15177,7 +21121,7 @@ export interface UserApiInterface {
     userMePatch(requestParameters: UserApiUserMePatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
-     * 
+     * Returns the user settings bootstrap payload, including read states, joined thread indexes, guild emojis, mentions, and active direct-message voice calls in dm_calls.
      * @summary Get current user settings (optional version gating)
      * @param {UserApiUserMeSettingsGetRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -15234,6 +21178,153 @@ export interface UserApiUserMeAvatarsAvatarIdDeleteRequest {
      * @memberof UserApiUserMeAvatarsAvatarIdDelete
      */
     readonly avatarId: number
+}
+
+/**
+ * Request parameters for userMeBannerPost operation in UserApi.
+ * @export
+ * @interface UserApiUserMeBannerPostRequest
+ */
+export interface UserApiUserMeBannerPostRequest {
+    /**
+     * Banner creation request
+     * @type {UserCreateBannerRequest}
+     * @memberof UserApiUserMeBannerPost
+     */
+    readonly request: UserCreateBannerRequest
+}
+
+/**
+ * Request parameters for userMeChannelsChannelIdCallDeclinePost operation in UserApi.
+ * @export
+ * @interface UserApiUserMeChannelsChannelIdCallDeclinePostRequest
+ */
+export interface UserApiUserMeChannelsChannelIdCallDeclinePostRequest {
+    /**
+     * Direct DM channel ID
+     * @type {number}
+     * @memberof UserApiUserMeChannelsChannelIdCallDeclinePost
+     */
+    readonly channelId: number
+}
+
+/**
+ * Request parameters for userMeChannelsChannelIdCallDelete operation in UserApi.
+ * @export
+ * @interface UserApiUserMeChannelsChannelIdCallDeleteRequest
+ */
+export interface UserApiUserMeChannelsChannelIdCallDeleteRequest {
+    /**
+     * Direct DM channel ID
+     * @type {number}
+     * @memberof UserApiUserMeChannelsChannelIdCallDelete
+     */
+    readonly channelId: number
+}
+
+/**
+ * Request parameters for userMeChannelsChannelIdCallJoinPost operation in UserApi.
+ * @export
+ * @interface UserApiUserMeChannelsChannelIdCallJoinPostRequest
+ */
+export interface UserApiUserMeChannelsChannelIdCallJoinPostRequest {
+    /**
+     * Direct DM channel ID
+     * @type {number}
+     * @memberof UserApiUserMeChannelsChannelIdCallJoinPost
+     */
+    readonly channelId: number
+}
+
+/**
+ * Request parameters for userMeChannelsChannelIdCallPost operation in UserApi.
+ * @export
+ * @interface UserApiUserMeChannelsChannelIdCallPostRequest
+ */
+export interface UserApiUserMeChannelsChannelIdCallPostRequest {
+    /**
+     * Direct DM channel ID
+     * @type {number}
+     * @memberof UserApiUserMeChannelsChannelIdCallPost
+     */
+    readonly channelId: number
+}
+
+/**
+ * Request parameters for userMeChannelsChannelIdCallStreamsGet operation in UserApi.
+ * @export
+ * @interface UserApiUserMeChannelsChannelIdCallStreamsGetRequest
+ */
+export interface UserApiUserMeChannelsChannelIdCallStreamsGetRequest {
+    /**
+     * Direct DM channel ID
+     * @type {number}
+     * @memberof UserApiUserMeChannelsChannelIdCallStreamsGet
+     */
+    readonly channelId: number
+}
+
+/**
+ * Request parameters for userMeChannelsChannelIdCallStreamsPost operation in UserApi.
+ * @export
+ * @interface UserApiUserMeChannelsChannelIdCallStreamsPostRequest
+ */
+export interface UserApiUserMeChannelsChannelIdCallStreamsPostRequest {
+    /**
+     * Direct DM channel ID
+     * @type {number}
+     * @memberof UserApiUserMeChannelsChannelIdCallStreamsPost
+     */
+    readonly channelId: number
+
+    /**
+     * Stream options
+     * @type {UserCreateDMCallStreamRequest}
+     * @memberof UserApiUserMeChannelsChannelIdCallStreamsPost
+     */
+    readonly request: UserCreateDMCallStreamRequest
+}
+
+/**
+ * Request parameters for userMeChannelsChannelIdCallStreamsStreamIdDelete operation in UserApi.
+ * @export
+ * @interface UserApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest
+ */
+export interface UserApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest {
+    /**
+     * Direct DM channel ID
+     * @type {number}
+     * @memberof UserApiUserMeChannelsChannelIdCallStreamsStreamIdDelete
+     */
+    readonly channelId: number
+
+    /**
+     * Stream ID
+     * @type {number}
+     * @memberof UserApiUserMeChannelsChannelIdCallStreamsStreamIdDelete
+     */
+    readonly streamId: number
+}
+
+/**
+ * Request parameters for userMeChannelsChannelIdCallStreamsStreamIdJoinPost operation in UserApi.
+ * @export
+ * @interface UserApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest
+ */
+export interface UserApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest {
+    /**
+     * Direct DM channel ID
+     * @type {number}
+     * @memberof UserApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPost
+     */
+    readonly channelId: number
+
+    /**
+     * Stream ID
+     * @type {number}
+     * @memberof UserApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPost
+     */
+    readonly streamId: number
 }
 
 /**
@@ -15363,6 +21454,41 @@ export interface UserApiUserMeGuildsGuildIdMemberGetRequest {
 }
 
 /**
+ * Request parameters for userMeNotesUserIdDelete operation in UserApi.
+ * @export
+ * @interface UserApiUserMeNotesUserIdDeleteRequest
+ */
+export interface UserApiUserMeNotesUserIdDeleteRequest {
+    /**
+     * Target user ID
+     * @type {number}
+     * @memberof UserApiUserMeNotesUserIdDelete
+     */
+    readonly userId: number
+}
+
+/**
+ * Request parameters for userMeNotesUserIdPut operation in UserApi.
+ * @export
+ * @interface UserApiUserMeNotesUserIdPutRequest
+ */
+export interface UserApiUserMeNotesUserIdPutRequest {
+    /**
+     * Target user ID
+     * @type {number}
+     * @memberof UserApiUserMeNotesUserIdPut
+     */
+    readonly userId: number
+
+    /**
+     * Private note
+     * @type {UserUpsertUserNoteRequest}
+     * @memberof UserApiUserMeNotesUserIdPut
+     */
+    readonly request: UserUpsertUserNoteRequest
+}
+
+/**
  * Request parameters for userMePatch operation in UserApi.
  * @export
  * @interface UserApiUserMePatchRequest
@@ -15472,6 +21598,114 @@ export class UserApi extends BaseAPI implements UserApiInterface {
      */
     public userMeAvatarsGet(options?: RawAxiosRequestConfig) {
         return UserApiFp(this.configuration).userMeAvatarsGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Creates a profile banner placeholder and returns upload info. Upload the binary to attachments service.
+     * @summary Create profile banner metadata
+     * @param {UserApiUserMeBannerPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeBannerPost(requestParameters: UserApiUserMeBannerPostRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeBannerPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Decline or dismiss an incoming direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallDeclinePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeChannelsChannelIdCallDeclinePost(requestParameters: UserApiUserMeChannelsChannelIdCallDeclinePostRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeChannelsChannelIdCallDeclinePost(requestParameters.channelId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Leave the current direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeChannelsChannelIdCallDelete(requestParameters: UserApiUserMeChannelsChannelIdCallDeleteRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeChannelsChannelIdCallDelete(requestParameters.channelId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Join an active direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallJoinPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeChannelsChannelIdCallJoinPost(requestParameters: UserApiUserMeChannelsChannelIdCallJoinPostRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeChannelsChannelIdCallJoinPost(requestParameters.channelId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Start or join a direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeChannelsChannelIdCallPost(requestParameters: UserApiUserMeChannelsChannelIdCallPostRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeChannelsChannelIdCallPost(requestParameters.channelId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary List active streams in a direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallStreamsGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeChannelsChannelIdCallStreamsGet(requestParameters: UserApiUserMeChannelsChannelIdCallStreamsGetRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeChannelsChannelIdCallStreamsGet(requestParameters.channelId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Start or resume screen sharing in a direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallStreamsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeChannelsChannelIdCallStreamsPost(requestParameters: UserApiUserMeChannelsChannelIdCallStreamsPostRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeChannelsChannelIdCallStreamsPost(requestParameters.channelId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Stop an owned screen share in a direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeChannelsChannelIdCallStreamsStreamIdDelete(requestParameters: UserApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeChannelsChannelIdCallStreamsStreamIdDelete(requestParameters.channelId, requestParameters.streamId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Join a screen share in a direct-message voice call
+     * @param {UserApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeChannelsChannelIdCallStreamsStreamIdJoinPost(requestParameters: UserApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeChannelsChannelIdCallStreamsStreamIdJoinPost(requestParameters.channelId, requestParameters.streamId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -15628,6 +21862,30 @@ export class UserApi extends BaseAPI implements UserApiInterface {
 
     /**
      * 
+     * @summary Delete a private note for another user
+     * @param {UserApiUserMeNotesUserIdDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeNotesUserIdDelete(requestParameters: UserApiUserMeNotesUserIdDeleteRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeNotesUserIdDelete(requestParameters.userId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Save a private note for another user
+     * @param {UserApiUserMeNotesUserIdPutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public userMeNotesUserIdPut(requestParameters: UserApiUserMeNotesUserIdPutRequest, options?: RawAxiosRequestConfig) {
+        return UserApiFp(this.configuration).userMeNotesUserIdPut(requestParameters.userId, requestParameters.request, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
      * @summary Get user
      * @param {UserApiUserMePatchRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -15639,7 +21897,7 @@ export class UserApi extends BaseAPI implements UserApiInterface {
     }
 
     /**
-     * 
+     * Returns the user settings bootstrap payload, including read states, joined thread indexes, guild emojis, mentions, and active direct-message voice calls in dm_calls.
      * @summary Get current user settings (optional version gating)
      * @param {UserApiUserMeSettingsGetRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.

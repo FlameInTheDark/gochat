@@ -12,12 +12,15 @@ import (
 
 	"github.com/FlameInTheDark/gochat/cmd/search/config"
 	searchendpoints "github.com/FlameInTheDark/gochat/cmd/search/endpoints/search"
+	"github.com/FlameInTheDark/gochat/internal/botsearch"
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	authenticationrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/authentication"
+	botrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/bot"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guild"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guilddiscovery"
+	userrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/guildsearch"
 	"github.com/FlameInTheDark/gochat/internal/helper"
@@ -37,8 +40,11 @@ type App struct {
 	subs   []*nats.Subscription
 
 	guildRepo guild.Guild
+	botRepo   botrepo.Bot
+	userRepo  userrepo.User
 	discovery guilddiscovery.GuildDiscovery
 	guildOS   *guildsearch.Search
+	botOS     *botsearch.Search
 }
 
 const startupProbeTimeout = 3 * time.Second
@@ -90,6 +96,10 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	botSearch, err := botsearch.NewSearch(cfg.OSAddresses, cfg.OSInsecureSkipVerify, cfg.OSUsername, cfg.OSPassword)
+	if err != nil {
+		return nil, err
+	}
 
 	logger.Info("Connecting to Search NATS")
 	nc, err := nats.Connect(cfg.NATSConnString, nats.Compression(true))
@@ -117,7 +127,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.AuthMiddleware(cfg.AuthSecret)
 	s.Use(helper.RequireSessionVersion(helper.NewSessionVersionChecker(authenticationrepo.New(pg.Conn()), cache)))
 	s.Use(helper.RequireTokenType("access", "api"))
-	s.Register("/api/v1", searchendpoints.New(database, pg, messageSearch, guildSearch, logger))
+	s.Register("/api/v1", searchendpoints.New(database, pg, messageSearch, guildSearch, botSearch, logger))
 
 	app := &App{
 		server:    s,
@@ -125,12 +135,19 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		addr:      cfg.ServerAddress,
 		nats:      nc,
 		guildRepo: guild.New(pg.Conn()),
+		botRepo:   botrepo.New(pg.Conn()),
+		userRepo:  userrepo.New(pg.Conn()),
 		discovery: guilddiscovery.New(pg.Conn()),
 		guildOS:   guildSearch,
+		botOS:     botSearch,
 	}
 	if err := app.subscribeGuildIndexing(); err != nil {
 		return nil, err
 	}
+	if err := app.subscribeBotIndexing(); err != nil {
+		return nil, err
+	}
+	go app.backfillBotIndex()
 	shut.Up(app)
 	return app, nil
 }
@@ -206,6 +223,53 @@ func (a *App) subscribeGuildIndexing() error {
 	return nil
 }
 
+func (a *App) subscribeBotIndexing() error {
+	upsertSub, err := a.nats.Subscribe(searchmq.BotUpsertSubject, func(msg *nats.Msg) {
+		ctx := observability.ExtractNATSContext(context.Background(), msg)
+		ctx, finish := observability.StartNATSConsumeSpan(ctx, msg.Subject)
+		var processErr error
+		defer func() { finish(processErr) }()
+
+		var payload dto.BotIndexMessage
+		if err := json.Unmarshal(msg.Data, &payload); err != nil {
+			processErr = err
+			a.logger.ErrorContext(ctx, "failed to decode bot index message", slog.String("error", err.Error()))
+			return
+		}
+		if err := a.indexBot(ctx, payload.BotUserId); err != nil {
+			processErr = err
+			a.logger.ErrorContext(ctx, "failed to index bot", slog.Int64("bot_user_id", payload.BotUserId), slog.String("error", err.Error()))
+		}
+	})
+	if err != nil {
+		return err
+	}
+	a.subs = append(a.subs, upsertSub)
+
+	deleteSub, err := a.nats.Subscribe(searchmq.BotDeleteSubject, func(msg *nats.Msg) {
+		ctx := observability.ExtractNATSContext(context.Background(), msg)
+		ctx, finish := observability.StartNATSConsumeSpan(ctx, msg.Subject)
+		var processErr error
+		defer func() { finish(processErr) }()
+
+		var payload dto.BotIndexDeleteMessage
+		if err := json.Unmarshal(msg.Data, &payload); err != nil {
+			processErr = err
+			a.logger.ErrorContext(ctx, "failed to decode bot delete index message", slog.String("error", err.Error()))
+			return
+		}
+		if err := a.botOS.DeleteBot(ctx, payload.BotUserId); err != nil {
+			processErr = err
+			a.logger.ErrorContext(ctx, "failed to delete indexed bot", slog.Int64("bot_user_id", payload.BotUserId), slog.String("error", err.Error()))
+		}
+	})
+	if err != nil {
+		return err
+	}
+	a.subs = append(a.subs, deleteSub)
+	return nil
+}
+
 func (a *App) indexGuild(ctx context.Context, guildID int64) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
@@ -230,6 +294,61 @@ func (a *App) indexGuild(ctx context.Context, guildID int64) error {
 		Public:       g.Public,
 		MembersCount: statsByGuild[g.Id].MembersCount,
 	})
+}
+
+func (a *App) indexBot(ctx context.Context, botUserID int64) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	b, err := a.botRepo.GetBot(ctx, botUserID)
+	if err != nil {
+		return err
+	}
+	if !b.Public || b.Disabled {
+		return a.botOS.DeleteBot(ctx, botUserID)
+	}
+	u, err := a.userRepo.GetUserById(ctx, botUserID)
+	if err != nil {
+		return err
+	}
+	tagsByBot, err := a.botRepo.GetTagsByBots(ctx, []int64{botUserID})
+	if err != nil {
+		return err
+	}
+	countsByBot, err := a.botRepo.GetInstallCounts(ctx, []int64{botUserID})
+	if err != nil {
+		return err
+	}
+	bio := ""
+	if u.Bio != nil {
+		bio = *u.Bio
+	}
+	return a.botOS.IndexBot(ctx, botsearch.Bot{
+		BotUserID:     b.BotUserId,
+		Name:          u.Name,
+		Description:   b.Description,
+		Bio:           bio,
+		Tags:          tagsByBot[b.BotUserId],
+		Public:        b.Public,
+		Disabled:      b.Disabled,
+		InstallsCount: countsByBot[b.BotUserId],
+	})
+}
+
+func (a *App) backfillBotIndex() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	ids, err := a.botRepo.ListPublicEnabledBotIDs(ctx, 10000)
+	if err != nil {
+		a.logger.ErrorContext(ctx, "failed to list public bots for backfill", slog.String("error", err.Error()))
+		return
+	}
+	for _, id := range ids {
+		if err := a.indexBot(ctx, id); err != nil {
+			a.logger.ErrorContext(ctx, "failed to backfill bot index", slog.Int64("bot_user_id", id), slog.String("error", err.Error()))
+		}
+	}
 }
 
 func verifyInfrastructure(logger *slog.Logger, retries int, pg *pgdb.DB, database *db.CQLCon, cache *kvs.Cache, nc *nats.Conn) error {

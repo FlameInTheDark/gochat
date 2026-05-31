@@ -33,6 +33,7 @@ type ModelUserSettingsData struct {
 	Status         *ModelStatus                    `json:"status,omitempty"`
 	UiSounds       *ModelUserUISounds              `json:"ui_sounds,omitempty"`
 	Users          []ModelUserSettingsUsers        `json:"users,omitempty"`
+	Voice          *ModelUserVoiceSettings         `json:"voice,omitempty"`
 }
 
 // NewModelUserSettingsData instantiates a new ModelUserSettingsData object
@@ -468,6 +469,38 @@ func (o *ModelUserSettingsData) SetUsers(v []ModelUserSettingsUsers) {
 	o.Users = v
 }
 
+// GetVoice returns the Voice field value if set, zero value otherwise.
+func (o *ModelUserSettingsData) GetVoice() ModelUserVoiceSettings {
+	if o == nil || IsNil(o.Voice) {
+		var ret ModelUserVoiceSettings
+		return ret
+	}
+	return *o.Voice
+}
+
+// GetVoiceOk returns a tuple with the Voice field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsData) GetVoiceOk() (*ModelUserVoiceSettings, bool) {
+	if o == nil || IsNil(o.Voice) {
+		return nil, false
+	}
+	return o.Voice, true
+}
+
+// HasVoice returns a boolean if a field has been set.
+func (o *ModelUserSettingsData) HasVoice() bool {
+	if o != nil && !IsNil(o.Voice) {
+		return true
+	}
+
+	return false
+}
+
+// SetVoice gets a reference to the given ModelUserVoiceSettings and assigns it to the Voice field.
+func (o *ModelUserSettingsData) SetVoice(v ModelUserVoiceSettings) {
+	o.Voice = &v
+}
+
 func (o ModelUserSettingsData) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -516,6 +549,9 @@ func (o ModelUserSettingsData) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Users) {
 		toSerialize["users"] = o.Users
+	}
+	if !IsNil(o.Voice) {
+		toSerialize["voice"] = o.Voice
 	}
 	return toSerialize, nil
 }
