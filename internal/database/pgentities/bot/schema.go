@@ -110,7 +110,7 @@ func (e *Entity) DeleteBot(ctx context.Context, botUserID int64) error {
 	if err != nil {
 		return fmt.Errorf("unable to begin bot delete transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	if _, err = tx.ExecContext(ctx, "DELETE FROM members WHERE user_id = $1", botUserID); err != nil {
 		return fmt.Errorf("unable to delete bot memberships: %w", err)
 	}

@@ -174,7 +174,7 @@ func (a *App) acquirePartitions(ctx context.Context) {
 		if !ok {
 			continue
 		}
-		if err := a.subscribePartition(partition); err != nil {
+		if err := a.subscribePartition(ctx, partition); err != nil {
 			a.log.Error("bot router partition subscribe failed", slog.Int("partition", partition), slog.String("error", err.Error()))
 			_ = a.cache.Client().Del(ctx, partitionLeaseKey(partition)).Err()
 		}
@@ -188,10 +188,10 @@ func (a *App) hasPartition(partition int) bool {
 	return ok
 }
 
-func (a *App) subscribePartition(partition int) error {
+func (a *App) subscribePartition(ctx context.Context, partition int) error {
 	subject := botgateway.PartitionWildcardSubject(partition)
 	sub, err := a.nc.Subscribe(subject, func(msg *nats.Msg) {
-		a.handleEvent(msg)
+		a.handleEvent(ctx, msg)
 	})
 	if err != nil {
 		return err
@@ -231,12 +231,12 @@ func (a *App) releasePartition(partition int) {
 	a.log.Warn("bot router partition released", slog.Int("partition", partition))
 }
 
-func (a *App) handleEvent(msg *nats.Msg) {
+func (a *App) handleEvent(ctx context.Context, msg *nats.Msg) {
 	subject, ok := botgateway.ParseEventSubject(msg.Subject)
 	if !ok {
 		return
 	}
-	ctx := observability.ExtractNATSContext(context.Background(), msg)
+	ctx = observability.ExtractNATSContext(ctx, msg)
 	switch subject.Kind {
 	case botgateway.EventKindGuild, botgateway.EventKindGuildChannel:
 		a.routeGuildEvent(ctx, subject, msg.Data)
