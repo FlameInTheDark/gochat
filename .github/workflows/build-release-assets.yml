@@ -24,6 +24,18 @@ jobs:
             dockerfile: ws.Dockerfile
             image: gochat-ws
             cache_scope: ws-release
+          - service: botapi
+            dockerfile: botapi.Dockerfile
+            image: gochat-botapi
+            cache_scope: botapi-release
+          - service: botws
+            dockerfile: botws.Dockerfile
+            image: gochat-botws
+            cache_scope: botws-release
+          - service: botrouter
+            dockerfile: botrouter.Dockerfile
+            image: gochat-botrouter
+            cache_scope: botrouter-release
           - service: auth
             dockerfile: auth.Dockerfile
             image: gochat-auth
