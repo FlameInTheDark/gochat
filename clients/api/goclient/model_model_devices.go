@@ -31,6 +31,7 @@ type ModelDevices struct {
 	InputMode           *string  `json:"input_mode,omitempty"`
 	NoiseSuppression    *bool    `json:"noise_suppression,omitempty"`
 	PushToTalkKey       *string  `json:"push_to_talk_key,omitempty"`
+	PushToTalkToggle    *bool    `json:"push_to_talk_toggle,omitempty"`
 	VideoDevice         *string  `json:"video_device,omitempty"`
 }
 
@@ -403,6 +404,38 @@ func (o *ModelDevices) SetPushToTalkKey(v string) {
 	o.PushToTalkKey = &v
 }
 
+// GetPushToTalkToggle returns the PushToTalkToggle field value if set, zero value otherwise.
+func (o *ModelDevices) GetPushToTalkToggle() bool {
+	if o == nil || IsNil(o.PushToTalkToggle) {
+		var ret bool
+		return ret
+	}
+	return *o.PushToTalkToggle
+}
+
+// GetPushToTalkToggleOk returns a tuple with the PushToTalkToggle field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelDevices) GetPushToTalkToggleOk() (*bool, bool) {
+	if o == nil || IsNil(o.PushToTalkToggle) {
+		return nil, false
+	}
+	return o.PushToTalkToggle, true
+}
+
+// HasPushToTalkToggle returns a boolean if a field has been set.
+func (o *ModelDevices) HasPushToTalkToggle() bool {
+	if o != nil && !IsNil(o.PushToTalkToggle) {
+		return true
+	}
+
+	return false
+}
+
+// SetPushToTalkToggle gets a reference to the given bool and assigns it to the PushToTalkToggle field.
+func (o *ModelDevices) SetPushToTalkToggle(v bool) {
+	o.PushToTalkToggle = &v
+}
+
 // GetVideoDevice returns the VideoDevice field value if set, zero value otherwise.
 func (o *ModelDevices) GetVideoDevice() string {
 	if o == nil || IsNil(o.VideoDevice) {
@@ -477,6 +510,9 @@ func (o ModelDevices) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.PushToTalkKey) {
 		toSerialize["push_to_talk_key"] = o.PushToTalkKey
+	}
+	if !IsNil(o.PushToTalkToggle) {
+		toSerialize["push_to_talk_toggle"] = o.PushToTalkToggle
 	}
 	if !IsNil(o.VideoDevice) {
 		toSerialize["video_device"] = o.VideoDevice

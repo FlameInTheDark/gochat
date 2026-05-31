@@ -21,12 +21,15 @@ var _ MappedNullable = &DtoUser{}
 // DtoUser struct for DtoUser
 type DtoUser struct {
 	Avatar        *DtoAvatarData `json:"avatar,omitempty"`
+	Banner        *DtoBannerData `json:"banner,omitempty"`
 	BannerColor   *int32         `json:"banner_color,omitempty"`
 	Bio           *string        `json:"bio,omitempty"`
 	Discriminator *string        `json:"discriminator,omitempty"`
 	Id            *int32         `json:"id,omitempty"`
+	IsBot         *bool          `json:"is_bot,omitempty"`
 	Name          *string        `json:"name,omitempty"`
 	PanelColor    *int32         `json:"panel_color,omitempty"`
+	PersonalNote  *string        `json:"personal_note,omitempty"`
 }
 
 // NewDtoUser instantiates a new DtoUser object
@@ -76,6 +79,38 @@ func (o *DtoUser) HasAvatar() bool {
 // SetAvatar gets a reference to the given DtoAvatarData and assigns it to the Avatar field.
 func (o *DtoUser) SetAvatar(v DtoAvatarData) {
 	o.Avatar = &v
+}
+
+// GetBanner returns the Banner field value if set, zero value otherwise.
+func (o *DtoUser) GetBanner() DtoBannerData {
+	if o == nil || IsNil(o.Banner) {
+		var ret DtoBannerData
+		return ret
+	}
+	return *o.Banner
+}
+
+// GetBannerOk returns a tuple with the Banner field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoUser) GetBannerOk() (*DtoBannerData, bool) {
+	if o == nil || IsNil(o.Banner) {
+		return nil, false
+	}
+	return o.Banner, true
+}
+
+// HasBanner returns a boolean if a field has been set.
+func (o *DtoUser) HasBanner() bool {
+	if o != nil && !IsNil(o.Banner) {
+		return true
+	}
+
+	return false
+}
+
+// SetBanner gets a reference to the given DtoBannerData and assigns it to the Banner field.
+func (o *DtoUser) SetBanner(v DtoBannerData) {
+	o.Banner = &v
 }
 
 // GetBannerColor returns the BannerColor field value if set, zero value otherwise.
@@ -206,6 +241,38 @@ func (o *DtoUser) SetId(v int32) {
 	o.Id = &v
 }
 
+// GetIsBot returns the IsBot field value if set, zero value otherwise.
+func (o *DtoUser) GetIsBot() bool {
+	if o == nil || IsNil(o.IsBot) {
+		var ret bool
+		return ret
+	}
+	return *o.IsBot
+}
+
+// GetIsBotOk returns a tuple with the IsBot field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoUser) GetIsBotOk() (*bool, bool) {
+	if o == nil || IsNil(o.IsBot) {
+		return nil, false
+	}
+	return o.IsBot, true
+}
+
+// HasIsBot returns a boolean if a field has been set.
+func (o *DtoUser) HasIsBot() bool {
+	if o != nil && !IsNil(o.IsBot) {
+		return true
+	}
+
+	return false
+}
+
+// SetIsBot gets a reference to the given bool and assigns it to the IsBot field.
+func (o *DtoUser) SetIsBot(v bool) {
+	o.IsBot = &v
+}
+
 // GetName returns the Name field value if set, zero value otherwise.
 func (o *DtoUser) GetName() string {
 	if o == nil || IsNil(o.Name) {
@@ -270,6 +337,38 @@ func (o *DtoUser) SetPanelColor(v int32) {
 	o.PanelColor = &v
 }
 
+// GetPersonalNote returns the PersonalNote field value if set, zero value otherwise.
+func (o *DtoUser) GetPersonalNote() string {
+	if o == nil || IsNil(o.PersonalNote) {
+		var ret string
+		return ret
+	}
+	return *o.PersonalNote
+}
+
+// GetPersonalNoteOk returns a tuple with the PersonalNote field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoUser) GetPersonalNoteOk() (*string, bool) {
+	if o == nil || IsNil(o.PersonalNote) {
+		return nil, false
+	}
+	return o.PersonalNote, true
+}
+
+// HasPersonalNote returns a boolean if a field has been set.
+func (o *DtoUser) HasPersonalNote() bool {
+	if o != nil && !IsNil(o.PersonalNote) {
+		return true
+	}
+
+	return false
+}
+
+// SetPersonalNote gets a reference to the given string and assigns it to the PersonalNote field.
+func (o *DtoUser) SetPersonalNote(v string) {
+	o.PersonalNote = &v
+}
+
 func (o DtoUser) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -283,6 +382,9 @@ func (o DtoUser) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Avatar) {
 		toSerialize["avatar"] = o.Avatar
 	}
+	if !IsNil(o.Banner) {
+		toSerialize["banner"] = o.Banner
+	}
 	if !IsNil(o.BannerColor) {
 		toSerialize["banner_color"] = o.BannerColor
 	}
@@ -295,11 +397,17 @@ func (o DtoUser) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Id) {
 		toSerialize["id"] = o.Id
 	}
+	if !IsNil(o.IsBot) {
+		toSerialize["is_bot"] = o.IsBot
+	}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
 	}
 	if !IsNil(o.PanelColor) {
 		toSerialize["panel_color"] = o.PanelColor
+	}
+	if !IsNil(o.PersonalNote) {
+		toSerialize["personal_note"] = o.PersonalNote
 	}
 	return toSerialize, nil
 }

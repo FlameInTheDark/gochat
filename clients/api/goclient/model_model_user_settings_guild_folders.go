@@ -20,10 +20,11 @@ var _ MappedNullable = &ModelUserSettingsGuildFolders{}
 
 // ModelUserSettingsGuildFolders struct for ModelUserSettingsGuildFolders
 type ModelUserSettingsGuildFolders struct {
-	Color    *int32  `json:"color,omitempty"`
-	Guilds   []int32 `json:"guilds,omitempty"`
-	Name     *string `json:"name,omitempty"`
-	Position *int32  `json:"position,omitempty"`
+	Collapsed *bool   `json:"collapsed,omitempty"`
+	Color     *int32  `json:"color,omitempty"`
+	Guilds    []int32 `json:"guilds,omitempty"`
+	Name      *string `json:"name,omitempty"`
+	Position  *int32  `json:"position,omitempty"`
 }
 
 // NewModelUserSettingsGuildFolders instantiates a new ModelUserSettingsGuildFolders object
@@ -41,6 +42,38 @@ func NewModelUserSettingsGuildFolders() *ModelUserSettingsGuildFolders {
 func NewModelUserSettingsGuildFoldersWithDefaults() *ModelUserSettingsGuildFolders {
 	this := ModelUserSettingsGuildFolders{}
 	return &this
+}
+
+// GetCollapsed returns the Collapsed field value if set, zero value otherwise.
+func (o *ModelUserSettingsGuildFolders) GetCollapsed() bool {
+	if o == nil || IsNil(o.Collapsed) {
+		var ret bool
+		return ret
+	}
+	return *o.Collapsed
+}
+
+// GetCollapsedOk returns a tuple with the Collapsed field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *ModelUserSettingsGuildFolders) GetCollapsedOk() (*bool, bool) {
+	if o == nil || IsNil(o.Collapsed) {
+		return nil, false
+	}
+	return o.Collapsed, true
+}
+
+// HasCollapsed returns a boolean if a field has been set.
+func (o *ModelUserSettingsGuildFolders) HasCollapsed() bool {
+	if o != nil && !IsNil(o.Collapsed) {
+		return true
+	}
+
+	return false
+}
+
+// SetCollapsed gets a reference to the given bool and assigns it to the Collapsed field.
+func (o *ModelUserSettingsGuildFolders) SetCollapsed(v bool) {
+	o.Collapsed = &v
 }
 
 // GetColor returns the Color field value if set, zero value otherwise.
@@ -181,6 +214,9 @@ func (o ModelUserSettingsGuildFolders) MarshalJSON() ([]byte, error) {
 
 func (o ModelUserSettingsGuildFolders) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.Collapsed) {
+		toSerialize["collapsed"] = o.Collapsed
+	}
 	if !IsNil(o.Color) {
 		toSerialize["color"] = o.Color
 	}

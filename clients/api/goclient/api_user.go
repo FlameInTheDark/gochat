@@ -56,7 +56,7 @@ func (a *UserAPIService) UserMeAvatarPost(ctx context.Context) ApiUserMeAvatarPo
 
 // Execute executes the request
 //
-//	@return	DtoAvatarUpload
+//	@return DtoAvatarUpload
 func (a *UserAPIService) UserMeAvatarPostExecute(r ApiUserMeAvatarPostRequest) (*DtoAvatarUpload, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -162,7 +162,7 @@ func (a *UserAPIService) UserMeAvatarsAvatarIdDelete(ctx context.Context, avatar
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeAvatarsAvatarIdDeleteExecute(r ApiUserMeAvatarsAvatarIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -295,7 +295,7 @@ func (a *UserAPIService) UserMeAvatarsGet(ctx context.Context) ApiUserMeAvatarsG
 
 // Execute executes the request
 //
-//	@return	[]DtoAvatar
+//	@return []DtoAvatar
 func (a *UserAPIService) UserMeAvatarsGetExecute(r ApiUserMeAvatarsGetRequest) ([]DtoAvatar, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -379,6 +379,1295 @@ func (a *UserAPIService) UserMeAvatarsGetExecute(r ApiUserMeAvatarsGetRequest) (
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiUserMeBannerPostRequest struct {
+	ctx        context.Context
+	ApiService *UserAPIService
+	request    *UserCreateBannerRequest
+}
+
+// Banner creation request
+func (r ApiUserMeBannerPostRequest) Request(request UserCreateBannerRequest) ApiUserMeBannerPostRequest {
+	r.request = &request
+	return r
+}
+
+func (r ApiUserMeBannerPostRequest) Execute() (*DtoBannerUpload, *http.Response, error) {
+	return r.ApiService.UserMeBannerPostExecute(r)
+}
+
+/*
+UserMeBannerPost Create profile banner metadata
+
+Creates a profile banner placeholder and returns upload info. Upload the binary to attachments service.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiUserMeBannerPostRequest
+*/
+func (a *UserAPIService) UserMeBannerPost(ctx context.Context) ApiUserMeBannerPostRequest {
+	return ApiUserMeBannerPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return DtoBannerUpload
+func (a *UserAPIService) UserMeBannerPostExecute(r ApiUserMeBannerPostRequest) (*DtoBannerUpload, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DtoBannerUpload
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.UserMeBannerPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/user/me/banner"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.request
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiUserMeChannelsChannelIdCallDeclinePostRequest struct {
+	ctx        context.Context
+	ApiService *UserAPIService
+	channelId  int32
+}
+
+func (r ApiUserMeChannelsChannelIdCallDeclinePostRequest) Execute() (*http.Response, error) {
+	return r.ApiService.UserMeChannelsChannelIdCallDeclinePostExecute(r)
+}
+
+/*
+UserMeChannelsChannelIdCallDeclinePost Decline or dismiss an incoming direct-message voice call
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param channelId Direct DM channel ID
+	@return ApiUserMeChannelsChannelIdCallDeclinePostRequest
+*/
+func (a *UserAPIService) UserMeChannelsChannelIdCallDeclinePost(ctx context.Context, channelId int32) ApiUserMeChannelsChannelIdCallDeclinePostRequest {
+	return ApiUserMeChannelsChannelIdCallDeclinePostRequest{
+		ApiService: a,
+		ctx:        ctx,
+		channelId:  channelId,
+	}
+}
+
+// Execute executes the request
+func (a *UserAPIService) UserMeChannelsChannelIdCallDeclinePostExecute(r ApiUserMeChannelsChannelIdCallDeclinePostRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.UserMeChannelsChannelIdCallDeclinePost")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/user/me/channels/{channel_id}/call/decline"
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+type ApiUserMeChannelsChannelIdCallDeleteRequest struct {
+	ctx        context.Context
+	ApiService *UserAPIService
+	channelId  int32
+}
+
+func (r ApiUserMeChannelsChannelIdCallDeleteRequest) Execute() (*http.Response, error) {
+	return r.ApiService.UserMeChannelsChannelIdCallDeleteExecute(r)
+}
+
+/*
+UserMeChannelsChannelIdCallDelete Leave the current direct-message voice call
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param channelId Direct DM channel ID
+	@return ApiUserMeChannelsChannelIdCallDeleteRequest
+*/
+func (a *UserAPIService) UserMeChannelsChannelIdCallDelete(ctx context.Context, channelId int32) ApiUserMeChannelsChannelIdCallDeleteRequest {
+	return ApiUserMeChannelsChannelIdCallDeleteRequest{
+		ApiService: a,
+		ctx:        ctx,
+		channelId:  channelId,
+	}
+}
+
+// Execute executes the request
+func (a *UserAPIService) UserMeChannelsChannelIdCallDeleteExecute(r ApiUserMeChannelsChannelIdCallDeleteRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.UserMeChannelsChannelIdCallDelete")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/user/me/channels/{channel_id}/call"
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+type ApiUserMeChannelsChannelIdCallJoinPostRequest struct {
+	ctx        context.Context
+	ApiService *UserAPIService
+	channelId  int32
+}
+
+func (r ApiUserMeChannelsChannelIdCallJoinPostRequest) Execute() (*UserDMCallJoinResponse, *http.Response, error) {
+	return r.ApiService.UserMeChannelsChannelIdCallJoinPostExecute(r)
+}
+
+/*
+UserMeChannelsChannelIdCallJoinPost Join an active direct-message voice call
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param channelId Direct DM channel ID
+	@return ApiUserMeChannelsChannelIdCallJoinPostRequest
+*/
+func (a *UserAPIService) UserMeChannelsChannelIdCallJoinPost(ctx context.Context, channelId int32) ApiUserMeChannelsChannelIdCallJoinPostRequest {
+	return ApiUserMeChannelsChannelIdCallJoinPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+		channelId:  channelId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return UserDMCallJoinResponse
+func (a *UserAPIService) UserMeChannelsChannelIdCallJoinPostExecute(r ApiUserMeChannelsChannelIdCallJoinPostRequest) (*UserDMCallJoinResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *UserDMCallJoinResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.UserMeChannelsChannelIdCallJoinPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/user/me/channels/{channel_id}/call/join"
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiUserMeChannelsChannelIdCallPostRequest struct {
+	ctx        context.Context
+	ApiService *UserAPIService
+	channelId  int32
+}
+
+func (r ApiUserMeChannelsChannelIdCallPostRequest) Execute() (*UserDMCallJoinResponse, *http.Response, error) {
+	return r.ApiService.UserMeChannelsChannelIdCallPostExecute(r)
+}
+
+/*
+UserMeChannelsChannelIdCallPost Start or join a direct-message voice call
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param channelId Direct DM channel ID
+	@return ApiUserMeChannelsChannelIdCallPostRequest
+*/
+func (a *UserAPIService) UserMeChannelsChannelIdCallPost(ctx context.Context, channelId int32) ApiUserMeChannelsChannelIdCallPostRequest {
+	return ApiUserMeChannelsChannelIdCallPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+		channelId:  channelId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return UserDMCallJoinResponse
+func (a *UserAPIService) UserMeChannelsChannelIdCallPostExecute(r ApiUserMeChannelsChannelIdCallPostRequest) (*UserDMCallJoinResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *UserDMCallJoinResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.UserMeChannelsChannelIdCallPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/user/me/channels/{channel_id}/call"
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 502 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 503 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiUserMeChannelsChannelIdCallStreamsGetRequest struct {
+	ctx        context.Context
+	ApiService *UserAPIService
+	channelId  int32
+}
+
+func (r ApiUserMeChannelsChannelIdCallStreamsGetRequest) Execute() ([]UserVoiceStreamSummary, *http.Response, error) {
+	return r.ApiService.UserMeChannelsChannelIdCallStreamsGetExecute(r)
+}
+
+/*
+UserMeChannelsChannelIdCallStreamsGet List active streams in a direct-message voice call
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param channelId Direct DM channel ID
+	@return ApiUserMeChannelsChannelIdCallStreamsGetRequest
+*/
+func (a *UserAPIService) UserMeChannelsChannelIdCallStreamsGet(ctx context.Context, channelId int32) ApiUserMeChannelsChannelIdCallStreamsGetRequest {
+	return ApiUserMeChannelsChannelIdCallStreamsGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+		channelId:  channelId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return []UserVoiceStreamSummary
+func (a *UserAPIService) UserMeChannelsChannelIdCallStreamsGetExecute(r ApiUserMeChannelsChannelIdCallStreamsGetRequest) ([]UserVoiceStreamSummary, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []UserVoiceStreamSummary
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.UserMeChannelsChannelIdCallStreamsGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/user/me/channels/{channel_id}/call/streams"
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiUserMeChannelsChannelIdCallStreamsPostRequest struct {
+	ctx        context.Context
+	ApiService *UserAPIService
+	channelId  int32
+	request    *UserCreateDMCallStreamRequest
+}
+
+// Stream options
+func (r ApiUserMeChannelsChannelIdCallStreamsPostRequest) Request(request UserCreateDMCallStreamRequest) ApiUserMeChannelsChannelIdCallStreamsPostRequest {
+	r.request = &request
+	return r
+}
+
+func (r ApiUserMeChannelsChannelIdCallStreamsPostRequest) Execute() (*UserCreateDMCallStreamResponse, *http.Response, error) {
+	return r.ApiService.UserMeChannelsChannelIdCallStreamsPostExecute(r)
+}
+
+/*
+UserMeChannelsChannelIdCallStreamsPost Start or resume screen sharing in a direct-message voice call
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param channelId Direct DM channel ID
+	@return ApiUserMeChannelsChannelIdCallStreamsPostRequest
+*/
+func (a *UserAPIService) UserMeChannelsChannelIdCallStreamsPost(ctx context.Context, channelId int32) ApiUserMeChannelsChannelIdCallStreamsPostRequest {
+	return ApiUserMeChannelsChannelIdCallStreamsPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+		channelId:  channelId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return UserCreateDMCallStreamResponse
+func (a *UserAPIService) UserMeChannelsChannelIdCallStreamsPostExecute(r ApiUserMeChannelsChannelIdCallStreamsPostRequest) (*UserCreateDMCallStreamResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *UserCreateDMCallStreamResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.UserMeChannelsChannelIdCallStreamsPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/user/me/channels/{channel_id}/call/streams"
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.request
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 409 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 502 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 503 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest struct {
+	ctx        context.Context
+	ApiService *UserAPIService
+	channelId  int32
+	streamId   int32
+}
+
+func (r ApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest) Execute() (*http.Response, error) {
+	return r.ApiService.UserMeChannelsChannelIdCallStreamsStreamIdDeleteExecute(r)
+}
+
+/*
+UserMeChannelsChannelIdCallStreamsStreamIdDelete Stop an owned screen share in a direct-message voice call
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param channelId Direct DM channel ID
+	@param streamId Stream ID
+	@return ApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest
+*/
+func (a *UserAPIService) UserMeChannelsChannelIdCallStreamsStreamIdDelete(ctx context.Context, channelId int32, streamId int32) ApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest {
+	return ApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest{
+		ApiService: a,
+		ctx:        ctx,
+		channelId:  channelId,
+		streamId:   streamId,
+	}
+}
+
+// Execute executes the request
+func (a *UserAPIService) UserMeChannelsChannelIdCallStreamsStreamIdDeleteExecute(r ApiUserMeChannelsChannelIdCallStreamsStreamIdDeleteRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.UserMeChannelsChannelIdCallStreamsStreamIdDelete")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/user/me/channels/{channel_id}/call/streams/{stream_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"stream_id"+"}", url.PathEscape(parameterValueToString(r.streamId, "streamId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+type ApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest struct {
+	ctx        context.Context
+	ApiService *UserAPIService
+	channelId  int32
+	streamId   int32
+}
+
+func (r ApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest) Execute() (*UserJoinDMCallStreamResponse, *http.Response, error) {
+	return r.ApiService.UserMeChannelsChannelIdCallStreamsStreamIdJoinPostExecute(r)
+}
+
+/*
+UserMeChannelsChannelIdCallStreamsStreamIdJoinPost Join a screen share in a direct-message voice call
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param channelId Direct DM channel ID
+	@param streamId Stream ID
+	@return ApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest
+*/
+func (a *UserAPIService) UserMeChannelsChannelIdCallStreamsStreamIdJoinPost(ctx context.Context, channelId int32, streamId int32) ApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest {
+	return ApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+		channelId:  channelId,
+		streamId:   streamId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return UserJoinDMCallStreamResponse
+func (a *UserAPIService) UserMeChannelsChannelIdCallStreamsStreamIdJoinPostExecute(r ApiUserMeChannelsChannelIdCallStreamsStreamIdJoinPostRequest) (*UserJoinDMCallStreamResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *UserJoinDMCallStreamResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.UserMeChannelsChannelIdCallStreamsStreamIdJoinPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/user/me/channels/{channel_id}/call/streams/{stream_id}/join"
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"stream_id"+"}", url.PathEscape(parameterValueToString(r.streamId, "streamId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 503 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiUserMeChannelsGetRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
@@ -403,7 +1692,7 @@ func (a *UserAPIService) UserMeChannelsGet(ctx context.Context) ApiUserMeChannel
 
 // Execute executes the request
 //
-//	@return	[]DtoChannel
+//	@return []DtoChannel
 func (a *UserAPIService) UserMeChannelsGetExecute(r ApiUserMeChannelsGetRequest) ([]DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -529,7 +1818,7 @@ func (a *UserAPIService) UserMeChannelsGroupPost(ctx context.Context) ApiUserMeC
 
 // Execute executes the request
 //
-//	@return	DtoChannel
+//	@return DtoChannel
 func (a *UserAPIService) UserMeChannelsGroupPostExecute(r ApiUserMeChannelsGroupPostRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -682,7 +1971,7 @@ func (a *UserAPIService) UserMeChannelsPost(ctx context.Context) ApiUserMeChanne
 
 // Execute executes the request
 //
-//	@return	DtoChannel
+//	@return DtoChannel
 func (a *UserAPIService) UserMeChannelsPostExecute(r ApiUserMeChannelsPostRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -824,7 +2113,7 @@ func (a *UserAPIService) UserMeFriendsDelete(ctx context.Context) ApiUserMeFrien
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeFriendsDeleteExecute(r ApiUserMeFriendsDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -948,7 +2237,7 @@ func (a *UserAPIService) UserMeFriendsGet(ctx context.Context) ApiUserMeFriendsG
 
 // Execute executes the request
 //
-//	@return	[]DtoUser
+//	@return []DtoUser
 func (a *UserAPIService) UserMeFriendsGetExecute(r ApiUserMeFriendsGetRequest) ([]DtoUser, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1074,7 +2363,7 @@ func (a *UserAPIService) UserMeFriendsPost(ctx context.Context) ApiUserMeFriends
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeFriendsPostExecute(r ApiUserMeFriendsPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1205,7 +2494,7 @@ func (a *UserAPIService) UserMeFriendsRequestsDelete(ctx context.Context) ApiUse
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeFriendsRequestsDeleteExecute(r ApiUserMeFriendsRequestsDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1329,7 +2618,7 @@ func (a *UserAPIService) UserMeFriendsRequestsGet(ctx context.Context) ApiUserMe
 
 // Execute executes the request
 //
-//	@return	[]DtoUser
+//	@return []DtoUser
 func (a *UserAPIService) UserMeFriendsRequestsGetExecute(r ApiUserMeFriendsRequestsGetRequest) ([]DtoUser, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1455,7 +2744,7 @@ func (a *UserAPIService) UserMeFriendsRequestsPost(ctx context.Context) ApiUserM
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeFriendsRequestsPostExecute(r ApiUserMeFriendsRequestsPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1582,7 +2871,7 @@ func (a *UserAPIService) UserMeFriendsUserIdGet(ctx context.Context, userId int3
 
 // Execute executes the request
 //
-//	@return	DtoChannel
+//	@return DtoChannel
 func (a *UserAPIService) UserMeFriendsUserIdGetExecute(r ApiUserMeFriendsUserIdGetRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1713,7 +3002,7 @@ func (a *UserAPIService) UserMeGuildsGet(ctx context.Context) ApiUserMeGuildsGet
 
 // Execute executes the request
 //
-//	@return	[]DtoGuild
+//	@return []DtoGuild
 func (a *UserAPIService) UserMeGuildsGetExecute(r ApiUserMeGuildsGetRequest) ([]DtoGuild, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1846,7 +3135,7 @@ func (a *UserAPIService) UserMeGuildsGuildIdDelete(ctx context.Context, guildId 
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeGuildsGuildIdDeleteExecute(r ApiUserMeGuildsGuildIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1991,7 +3280,7 @@ func (a *UserAPIService) UserMeGuildsGuildIdMemberGet(ctx context.Context, guild
 
 // Execute executes the request
 //
-//	@return	DtoMember
+//	@return DtoMember
 func (a *UserAPIService) UserMeGuildsGuildIdMemberGetExecute(r ApiUserMeGuildsGuildIdMemberGetRequest) (*DtoMember, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2098,6 +3387,222 @@ func (a *UserAPIService) UserMeGuildsGuildIdMemberGetExecute(r ApiUserMeGuildsGu
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiUserMeNotesUserIdDeleteRequest struct {
+	ctx        context.Context
+	ApiService *UserAPIService
+	userId     int32
+}
+
+func (r ApiUserMeNotesUserIdDeleteRequest) Execute() (string, *http.Response, error) {
+	return r.ApiService.UserMeNotesUserIdDeleteExecute(r)
+}
+
+/*
+UserMeNotesUserIdDelete Delete a private note for another user
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param userId Target user ID
+	@return ApiUserMeNotesUserIdDeleteRequest
+*/
+func (a *UserAPIService) UserMeNotesUserIdDelete(ctx context.Context, userId int32) ApiUserMeNotesUserIdDeleteRequest {
+	return ApiUserMeNotesUserIdDeleteRequest{
+		ApiService: a,
+		ctx:        ctx,
+		userId:     userId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return string
+func (a *UserAPIService) UserMeNotesUserIdDeleteExecute(r ApiUserMeNotesUserIdDeleteRequest) (string, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue string
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.UserMeNotesUserIdDelete")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/user/me/notes/{user_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", url.PathEscape(parameterValueToString(r.userId, "userId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"*/*"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiUserMeNotesUserIdPutRequest struct {
+	ctx        context.Context
+	ApiService *UserAPIService
+	userId     int32
+	request    *UserUpsertUserNoteRequest
+}
+
+// Private note
+func (r ApiUserMeNotesUserIdPutRequest) Request(request UserUpsertUserNoteRequest) ApiUserMeNotesUserIdPutRequest {
+	r.request = &request
+	return r
+}
+
+func (r ApiUserMeNotesUserIdPutRequest) Execute() (string, *http.Response, error) {
+	return r.ApiService.UserMeNotesUserIdPutExecute(r)
+}
+
+/*
+UserMeNotesUserIdPut Save a private note for another user
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param userId Target user ID
+	@return ApiUserMeNotesUserIdPutRequest
+*/
+func (a *UserAPIService) UserMeNotesUserIdPut(ctx context.Context, userId int32) ApiUserMeNotesUserIdPutRequest {
+	return ApiUserMeNotesUserIdPutRequest{
+		ApiService: a,
+		ctx:        ctx,
+		userId:     userId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return string
+func (a *UserAPIService) UserMeNotesUserIdPutExecute(r ApiUserMeNotesUserIdPutRequest) (string, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPut
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue string
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.UserMeNotesUserIdPut")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/user/me/notes/{user_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", url.PathEscape(parameterValueToString(r.userId, "userId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.request
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiUserMePatchRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
@@ -2129,7 +3634,7 @@ func (a *UserAPIService) UserMePatch(ctx context.Context) ApiUserMePatchRequest 
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMePatchExecute(r ApiUserMePatchRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -2266,6 +3771,8 @@ func (r ApiUserMeSettingsGetRequest) Execute() (*UserUserSettingsResponse, *http
 /*
 UserMeSettingsGet Get current user settings (optional version gating)
 
+Returns the user settings bootstrap payload, including read states, joined thread indexes, guild emojis, mentions, and active direct-message voice calls in dm_calls.
+
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiUserMeSettingsGetRequest
 */
@@ -2278,7 +3785,7 @@ func (a *UserAPIService) UserMeSettingsGet(ctx context.Context) ApiUserMeSetting
 
 // Execute executes the request
 //
-//	@return	UserUserSettingsResponse
+//	@return UserUserSettingsResponse
 func (a *UserAPIService) UserMeSettingsGetExecute(r ApiUserMeSettingsGetRequest) (*UserUserSettingsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2417,7 +3924,7 @@ func (a *UserAPIService) UserMeSettingsPost(ctx context.Context) ApiUserMeSettin
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *UserAPIService) UserMeSettingsPostExecute(r ApiUserMeSettingsPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -2547,7 +4054,7 @@ func (a *UserAPIService) UserUserIdGet(ctx context.Context, userId string) ApiUs
 
 // Execute executes the request
 //
-//	@return	DtoUser
+//	@return DtoUser
 func (a *UserAPIService) UserUserIdGetExecute(r ApiUserUserIdGetRequest) (*DtoUser, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet

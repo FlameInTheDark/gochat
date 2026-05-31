@@ -6,6 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Color** | Pointer to **int32** | Role color. Will change username color. Represent RGB color in one Integer value. | [optional] 
 **GuildId** | Pointer to **int32** | Guild ID | [optional] 
+**Hoist** | Pointer to **bool** | Whether online members with this role are shown in a separate members list section. | [optional] 
 **Id** | Pointer to **int32** | Role ID | [optional] 
 **Name** | Pointer to **string** | Role name | [optional] 
 **Permissions** | Pointer to **int32** | Role permissions. Check the permissions documentation for more info. | [optional] 
@@ -79,6 +80,31 @@ SetGuildId sets GuildId field to given value.
 `func (o *DtoRole) HasGuildId() bool`
 
 HasGuildId returns a boolean if a field has been set.
+
+### GetHoist
+
+`func (o *DtoRole) GetHoist() bool`
+
+GetHoist returns the Hoist field if non-nil, zero value otherwise.
+
+### GetHoistOk
+
+`func (o *DtoRole) GetHoistOk() (*bool, bool)`
+
+GetHoistOk returns a tuple with the Hoist field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetHoist
+
+`func (o *DtoRole) SetHoist(v bool)`
+
+SetHoist sets Hoist field to given value.
+
+### HasHoist
+
+`func (o *DtoRole) HasHoist() bool`
+
+HasHoist returns a boolean if a field has been set.
 
 ### GetId
 

@@ -22,6 +22,8 @@ var _ MappedNullable = &GuildCreateGuildRoleRequest{}
 type GuildCreateGuildRoleRequest struct {
 	// RGB int value
 	Color *int32 `json:"color,omitempty"`
+	// Show online members with this role in a separate section
+	Hoist *bool `json:"hoist,omitempty"`
 	// Role name
 	Name *string `json:"name,omitempty"`
 	// Permissions bitset
@@ -34,6 +36,8 @@ type GuildCreateGuildRoleRequest struct {
 // will change when the set of required properties is changed
 func NewGuildCreateGuildRoleRequest() *GuildCreateGuildRoleRequest {
 	this := GuildCreateGuildRoleRequest{}
+	var hoist bool = false
+	this.Hoist = &hoist
 	return &this
 }
 
@@ -42,6 +46,8 @@ func NewGuildCreateGuildRoleRequest() *GuildCreateGuildRoleRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewGuildCreateGuildRoleRequestWithDefaults() *GuildCreateGuildRoleRequest {
 	this := GuildCreateGuildRoleRequest{}
+	var hoist bool = false
+	this.Hoist = &hoist
 	return &this
 }
 
@@ -75,6 +81,38 @@ func (o *GuildCreateGuildRoleRequest) HasColor() bool {
 // SetColor gets a reference to the given int32 and assigns it to the Color field.
 func (o *GuildCreateGuildRoleRequest) SetColor(v int32) {
 	o.Color = &v
+}
+
+// GetHoist returns the Hoist field value if set, zero value otherwise.
+func (o *GuildCreateGuildRoleRequest) GetHoist() bool {
+	if o == nil || IsNil(o.Hoist) {
+		var ret bool
+		return ret
+	}
+	return *o.Hoist
+}
+
+// GetHoistOk returns a tuple with the Hoist field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *GuildCreateGuildRoleRequest) GetHoistOk() (*bool, bool) {
+	if o == nil || IsNil(o.Hoist) {
+		return nil, false
+	}
+	return o.Hoist, true
+}
+
+// HasHoist returns a boolean if a field has been set.
+func (o *GuildCreateGuildRoleRequest) HasHoist() bool {
+	if o != nil && !IsNil(o.Hoist) {
+		return true
+	}
+
+	return false
+}
+
+// SetHoist gets a reference to the given bool and assigns it to the Hoist field.
+func (o *GuildCreateGuildRoleRequest) SetHoist(v bool) {
+	o.Hoist = &v
 }
 
 // GetName returns the Name field value if set, zero value otherwise.
@@ -153,6 +191,9 @@ func (o GuildCreateGuildRoleRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.Color) {
 		toSerialize["color"] = o.Color
+	}
+	if !IsNil(o.Hoist) {
+		toSerialize["hoist"] = o.Hoist
 	}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name

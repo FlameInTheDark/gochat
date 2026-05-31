@@ -57,7 +57,7 @@ func (a *MessageAPIService) MessageChannelChannelIdAttachmentPost(ctx context.Co
 
 // Execute executes the request
 //
-//	@return	DtoAttachmentUpload
+//	@return DtoAttachmentUpload
 func (a *MessageAPIService) MessageChannelChannelIdAttachmentPostExecute(r ApiMessageChannelChannelIdAttachmentPostRequest) (*DtoAttachmentUpload, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -233,7 +233,7 @@ func (a *MessageAPIService) MessageChannelChannelIdGet(ctx context.Context, chan
 
 // Execute executes the request
 //
-//	@return	[]DtoMessage
+//	@return []DtoMessage
 func (a *MessageAPIService) MessageChannelChannelIdGetExecute(r ApiMessageChannelChannelIdGetRequest) ([]DtoMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -390,7 +390,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPost(ctx context.
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdAckPostExecute(r ApiMessageChannelChannelIdMessageIdAckPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -517,7 +517,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdDelete(ctx context.C
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdDeleteExecute(r ApiMessageChannelChannelIdMessageIdDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -673,7 +673,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatch(ctx context.Co
 
 // Execute executes the request
 //
-//	@return	DtoMessage
+//	@return DtoMessage
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdPatchExecute(r ApiMessageChannelChannelIdMessageIdPatchRequest) (*DtoMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPatch
@@ -830,7 +830,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdReactionsReactionNam
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdReactionsReactionNameDeleteExecute(r ApiMessageChannelChannelIdMessageIdReactionsReactionNameDeleteRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -997,7 +997,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdReactionsReactionNam
 
 // Execute executes the request
 //
-//	@return	DtoMessageReactionUsersPage
+//	@return DtoMessageReactionUsersPage
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdReactionsReactionNameGetExecute(r ApiMessageChannelChannelIdMessageIdReactionsReactionNameGetRequest) (*DtoMessageReactionUsersPage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1156,7 +1156,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdReactionsReactionNam
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdReactionsReactionNamePutExecute(r ApiMessageChannelChannelIdMessageIdReactionsReactionNamePutRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut
@@ -1313,7 +1313,7 @@ func (a *MessageAPIService) MessageChannelChannelIdMessageIdThreadPost(ctx conte
 
 // Execute executes the request
 //
-//	@return	DtoChannel
+//	@return DtoChannel
 func (a *MessageAPIService) MessageChannelChannelIdMessageIdThreadPostExecute(r ApiMessageChannelChannelIdMessageIdThreadPostRequest) (*DtoChannel, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1482,7 +1482,7 @@ func (a *MessageAPIService) MessageChannelChannelIdPost(ctx context.Context, cha
 
 // Execute executes the request
 //
-//	@return	DtoMessage
+//	@return DtoMessage
 func (a *MessageAPIService) MessageChannelChannelIdPostExecute(r ApiMessageChannelChannelIdPostRequest) (*DtoMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1605,6 +1605,163 @@ func (a *MessageAPIService) MessageChannelChannelIdPostExecute(r ApiMessageChann
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiMessageChannelChannelIdThreadPostRequest struct {
+	ctx        context.Context
+	ApiService *MessageAPIService
+	channelId  int32
+	request    *MessageCreateThreadRequest
+}
+
+// Thread data
+func (r ApiMessageChannelChannelIdThreadPostRequest) Request(request MessageCreateThreadRequest) ApiMessageChannelChannelIdThreadPostRequest {
+	r.request = &request
+	return r
+}
+
+func (r ApiMessageChannelChannelIdThreadPostRequest) Execute() (*DtoChannel, *http.Response, error) {
+	return r.ApiService.MessageChannelChannelIdThreadPostExecute(r)
+}
+
+/*
+MessageChannelChannelIdThreadPost Create thread in channel
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param channelId Parent channel id
+	@return ApiMessageChannelChannelIdThreadPostRequest
+*/
+func (a *MessageAPIService) MessageChannelChannelIdThreadPost(ctx context.Context, channelId int32) ApiMessageChannelChannelIdThreadPostRequest {
+	return ApiMessageChannelChannelIdThreadPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+		channelId:  channelId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return DtoChannel
+func (a *MessageAPIService) MessageChannelChannelIdThreadPostExecute(r ApiMessageChannelChannelIdThreadPostRequest) (*DtoChannel, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DtoChannel
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MessageAPIService.MessageChannelChannelIdThreadPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/message/channel/{channel_id}/thread"
+	localVarPath = strings.Replace(localVarPath, "{"+"channel_id"+"}", url.PathEscape(parameterValueToString(r.channelId, "channelId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.request
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiMessageChannelChannelIdTypingPostRequest struct {
 	ctx        context.Context
 	ApiService *MessageAPIService
@@ -1632,7 +1789,7 @@ func (a *MessageAPIService) MessageChannelChannelIdTypingPost(ctx context.Contex
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *MessageAPIService) MessageChannelChannelIdTypingPostExecute(r ApiMessageChannelChannelIdTypingPostRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

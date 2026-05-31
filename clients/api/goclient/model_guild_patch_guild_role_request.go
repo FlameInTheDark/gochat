@@ -22,6 +22,8 @@ var _ MappedNullable = &GuildPatchGuildRoleRequest{}
 type GuildPatchGuildRoleRequest struct {
 	// RGB int value
 	Color *int32 `json:"color,omitempty"`
+	// Show online members with this role in a separate section
+	Hoist *bool `json:"hoist,omitempty"`
 	// Role name
 	Name *string `json:"name,omitempty"`
 	// Permissions bitset
@@ -75,6 +77,38 @@ func (o *GuildPatchGuildRoleRequest) HasColor() bool {
 // SetColor gets a reference to the given int32 and assigns it to the Color field.
 func (o *GuildPatchGuildRoleRequest) SetColor(v int32) {
 	o.Color = &v
+}
+
+// GetHoist returns the Hoist field value if set, zero value otherwise.
+func (o *GuildPatchGuildRoleRequest) GetHoist() bool {
+	if o == nil || IsNil(o.Hoist) {
+		var ret bool
+		return ret
+	}
+	return *o.Hoist
+}
+
+// GetHoistOk returns a tuple with the Hoist field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *GuildPatchGuildRoleRequest) GetHoistOk() (*bool, bool) {
+	if o == nil || IsNil(o.Hoist) {
+		return nil, false
+	}
+	return o.Hoist, true
+}
+
+// HasHoist returns a boolean if a field has been set.
+func (o *GuildPatchGuildRoleRequest) HasHoist() bool {
+	if o != nil && !IsNil(o.Hoist) {
+		return true
+	}
+
+	return false
+}
+
+// SetHoist gets a reference to the given bool and assigns it to the Hoist field.
+func (o *GuildPatchGuildRoleRequest) SetHoist(v bool) {
+	o.Hoist = &v
 }
 
 // GetName returns the Name field value if set, zero value otherwise.
@@ -153,6 +187,9 @@ func (o GuildPatchGuildRoleRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.Color) {
 		toSerialize["color"] = o.Color
+	}
+	if !IsNil(o.Hoist) {
+		toSerialize["hoist"] = o.Hoist
 	}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name

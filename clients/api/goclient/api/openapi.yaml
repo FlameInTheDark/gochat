@@ -738,6 +738,1326 @@ paths:
       tags:
       - Auth
       x-codegen-request-body-name: request
+  /bot/api/v1/guild:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/guild.Response'
+                type: array
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BotToken: []
+      summary: List guilds where the bot is installed
+      tags:
+      - Bot Guild
+  /bot/api/v1/guild/{guild_id}/channels:
+    get:
+      parameters:
+      - description: Guild id
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Channel'
+                type: array
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BotToken: []
+      summary: List channels visible to the bot in a guild
+      tags:
+      - Bot Guild
+  /bot/api/v1/message/channel/{channel_id}:
+    get:
+      parameters:
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Message id cursor
+        in: query
+        name: from
+        schema:
+          type: integer
+      - description: Page size
+        in: query
+        name: limit
+        schema:
+          type: integer
+      - description: "before, after, or around"
+        in: query
+        name: direction
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Message'
+                type: array
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BotToken: []
+      summary: List messages visible to the bot
+      tags:
+      - Bot Message
+    post:
+      parameters:
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/message.SendRequest'
+        description: Message body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Message'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BotToken: []
+      summary: Send a message as the bot
+      tags:
+      - Bot Message
+      x-codegen-request-body-name: request
+  /bot/api/v1/message/channel/{channel_id}/typing:
+    post:
+      parameters:
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content: {}
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BotToken: []
+      summary: Send a typing indicator as the bot
+      tags:
+      - Bot Message
+  /bot/api/v1/message/channel/{channel_id}/{message_id}:
+    delete:
+      parameters:
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Message id
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content: {}
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BotToken: []
+      summary: Delete a message as the bot
+      tags:
+      - Bot Message
+    patch:
+      parameters:
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Message id
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/message.UpdateRequest'
+        description: Message update
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Message'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BotToken: []
+      summary: Edit a message as the bot
+      tags:
+      - Bot Message
+      x-codegen-request-body-name: request
+  /bot/api/v1/message/channel/{channel_id}/{message_id}/ack:
+    post:
+      parameters:
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Message id
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content: {}
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BotToken: []
+      summary: Mark a channel read as the bot
+      tags:
+      - Bot Message
+  /bot/api/v1/message/channel/{channel_id}/{message_id}/reactions/{reaction_name}:
+    delete:
+      parameters:
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Message id
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+      - description: Reaction name
+        in: path
+        name: reaction_name
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content: {}
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BotToken: []
+      summary: Remove the bot reaction from a message
+      tags:
+      - Bot Message
+    get:
+      parameters:
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Message id
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+      - description: Reaction name
+        in: path
+        name: reaction_name
+        required: true
+        schema:
+          type: string
+      - description: Reaction ID cursor
+        in: query
+        name: after
+        schema:
+          type: integer
+      - description: Page size
+        in: query
+        name: limit
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.MessageReactionUsersPage'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BotToken: []
+      summary: List users who reacted with a specific reaction
+      tags:
+      - Bot Message
+    put:
+      parameters:
+      - description: Channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Message id
+        in: path
+        name: message_id
+        required: true
+        schema:
+          type: integer
+      - description: Reaction name
+        in: path
+        name: reaction_name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.MessageReaction'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BotToken: []
+      summary: Add the bot reaction to a message
+      tags:
+      - Bot Message
+  /bot/api/v1/user/me:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user.MeResponse'
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+      security:
+      - BotToken: []
+      summary: Get current bot account
+      tags:
+      - Bot User
+  /developer/bots:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/developer.BotResponse'
+                type: array
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: List owned bots
+      tags:
+      - Developer Bots
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/developer.CreateBotRequest'
+        description: Bot configuration
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/developer.BotResponse'
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Create a bot
+      tags:
+      - Developer Bots
+      x-codegen-request-body-name: request
+  /developer/bots/authorize/preview:
+    get:
+      parameters:
+      - description: Install grant token
+        in: query
+        name: grant_token
+        schema:
+          type: string
+      - description: Public bot user id
+        in: query
+        name: bot_user_id
+        schema:
+          type: integer
+      - description: Requested permission bitmask
+        in: query
+        name: permissions
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/developer.BotAuthorizationPreview'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+      security:
+      - BearerAuth: []
+      summary: Preview bot authorization
+      tags:
+      - Developer Bots
+  /developer/bots/public:
+    get:
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        schema:
+          type: string
+      - description: Page size
+        in: query
+        name: limit
+        schema:
+          type: integer
+      - description: Offset
+        in: query
+        name: offset
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/developer.BotResponse'
+                type: array
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Search public bots
+      tags:
+      - Developer Bots
+  /developer/bots/{bot_id}:
+    delete:
+      parameters:
+      - description: Bot user id
+        in: path
+        name: bot_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content: {}
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Delete an owned bot
+      tags:
+      - Developer Bots
+    get:
+      parameters:
+      - description: Bot user id
+        in: path
+        name: bot_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/developer.BotResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Get an owned bot
+      tags:
+      - Developer Bots
+    patch:
+      parameters:
+      - description: Bot user id
+        in: path
+        name: bot_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/developer.UpdateBotRequest'
+        description: Bot update
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/developer.BotResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Update an owned bot
+      tags:
+      - Developer Bots
+      x-codegen-request-body-name: request
+  /developer/bots/{bot_id}/avatar:
+    post:
+      parameters:
+      - description: Bot user id
+        in: path
+        name: bot_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/developer.CreateBotAvatarRequest'
+        description: Avatar upload request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.AvatarUpload'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "413":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: File too large
+        "415":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unsupported media type
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Create bot avatar upload metadata
+      tags:
+      - Developer Bots
+      x-codegen-request-body-name: request
+  /developer/bots/{bot_id}/banner:
+    post:
+      parameters:
+      - description: Bot user id
+        in: path
+        name: bot_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/developer.CreateBotBannerRequest'
+        description: Banner upload request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.BannerUpload'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "413":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: File too large
+        "415":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unsupported media type
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Create bot banner upload metadata
+      tags:
+      - Developer Bots
+      x-codegen-request-body-name: request
+  /developer/bots/{bot_id}/grants:
+    get:
+      parameters:
+      - description: Bot user id
+        in: path
+        name: bot_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/model.BotInstallGrant'
+                type: array
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: List bot install grants
+      tags:
+      - Developer Bots
+    post:
+      parameters:
+      - description: Bot user id
+        in: path
+        name: bot_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/developer.CreateGrantRequest'
+        description: Grant request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/developer.GrantCreateResponse'
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Create a bot install grant
+      tags:
+      - Developer Bots
+      x-codegen-request-body-name: request
+  /developer/bots/{bot_id}/grants/{grant_id}:
+    delete:
+      parameters:
+      - description: Bot user id
+        in: path
+        name: bot_id
+        required: true
+        schema:
+          type: integer
+      - description: Grant id
+        in: path
+        name: grant_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content: {}
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Revoke a bot install grant
+      tags:
+      - Developer Bots
+  /developer/bots/{bot_id}/tokens:
+    get:
+      parameters:
+      - description: Bot user id
+        in: path
+        name: bot_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/model.BotToken'
+                type: array
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: List bot runtime tokens
+      tags:
+      - Developer Bots
+    post:
+      parameters:
+      - description: Bot user id
+        in: path
+        name: bot_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/developer.CreateTokenRequest'
+        description: Token request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/developer.TokenCreateResponse'
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Create a bot runtime token
+      tags:
+      - Developer Bots
+      x-codegen-request-body-name: request
+  /developer/bots/{bot_id}/tokens/{token_id}:
+    delete:
+      parameters:
+      - description: Bot user id
+        in: path
+        name: bot_id
+        required: true
+        schema:
+          type: integer
+      - description: Token id
+        in: path
+        name: token_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content: {}
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Revoke a bot runtime token
+      tags:
+      - Developer Bots
   /emoji/{emoji_id}:
     get:
       parameters:
@@ -806,6 +2126,34 @@ paths:
       tags:
       - Guild
       x-codegen-request-body-name: request
+  /guild/bots/authorize-guilds:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/dto.Guild'
+                type: array
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: List guilds available for bot authorization
+      tags:
+      - Guild Bots
   /guild/invites/accept/{invite_code}:
     post:
       parameters:
@@ -1106,6 +2454,153 @@ paths:
       summary: Get guild bans
       tags:
       - Guild
+  /guild/{guild_id}/bots:
+    get:
+      parameters:
+      - description: Guild id
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/guild.InstalledBotResponse'
+                type: array
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: List installed guild bots
+      tags:
+      - Guild Bots
+    post:
+      parameters:
+      - description: Guild id
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/guild.InstallBotRequest'
+        description: Install request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/guild.InstalledBotResponse'
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Install a bot into a guild
+      tags:
+      - Guild Bots
+      x-codegen-request-body-name: request
+  /guild/{guild_id}/bots/{bot_id}:
+    delete:
+      parameters:
+      - description: Guild id
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      - description: Bot user id
+        in: path
+        name: bot_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content: {}
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      security:
+      - BearerAuth: []
+      summary: Remove a bot from a guild
+      tags:
+      - Guild Bots
   /guild/{guild_id}/category:
     post:
       parameters:
@@ -1932,10 +3427,60 @@ paths:
       tags:
       - Guild
   /guild/{guild_id}/discovery:
+    get:
+      description: "Owner-only read for public discovery state, discovery description,\
+        \ tags, and hydrated display data persisted in YugabyteDB YSQL."
+      parameters:
+      - description: Guild id
+        in: path
+        name: guild_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.GuildDiscoveryUpdateResponse'
+          description: Guild discovery settings
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Guild not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Get guild discovery settings
+      tags:
+      - Guild
     patch:
       description: "Owner-only update for public discovery state, discovery description,\
-        \ and normalized tags. The API persists this data in YugabyteDB YSQL and\
-        \ notifies the search service to refresh its OpenSearch document."
+        \ and normalized tags. The API persists this data in YugabyteDB YSQL and notifies\
+        \ the search service to refresh its OpenSearch document."
       parameters:
       - description: Guild id
         in: path
@@ -3598,6 +5143,57 @@ paths:
       tags:
       - Message
       x-codegen-request-body-name: request
+  /message/channel/{channel_id}/thread:
+    post:
+      parameters:
+      - description: Parent channel id
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/message.CreateThreadRequest'
+        description: Thread data
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.Channel'
+          description: Thread channel
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Create thread in channel
+      tags:
+      - Message
+      x-codegen-request-body-name: request
   /message/channel/{channel_id}/typing:
     post:
       parameters:
@@ -4007,6 +5603,117 @@ paths:
       tags:
       - Message
       x-codegen-request-body-name: request
+  /search/bot-tags:
+    get:
+      description: Returns tag suggestions from tags attached to public enabled bots
+        only. Limit defaults to 16 and is capped at 16.
+      parameters:
+      - description: Tag prefix
+        in: query
+        name: q
+        schema:
+          type: string
+      - description: "Maximum tags to return, capped at 16"
+        in: query
+        name: limit
+        schema:
+          default: 16
+          maximum: 16
+          minimum: 1
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  type: string
+                type: array
+          description: Tag suggestions
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Autocomplete public bot tags
+      tags:
+      - Search
+  /search/bots:
+    get:
+      description: "Searches only public enabled bots in OpenSearch, then hydrates\
+        \ ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped\
+        \ at 16."
+      parameters:
+      - description: "Search text for bot name, description, bio, and tags"
+        in: query
+        name: q
+        schema:
+          type: string
+      - description: Comma-separated normalized tags
+        in: query
+        name: tags
+        schema:
+          type: string
+      - description: Sort mode
+        in: query
+        name: sort
+        schema:
+          default: best_match
+          enum:
+          - best_match
+          - popularity
+          - alphabetical
+          type: string
+      - description: Zero-based page number
+        in: query
+        name: page
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+      - description: "Results per page, capped at 16"
+        in: query
+        name: limit
+        schema:
+          default: 16
+          maximum: 16
+          minimum: 1
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.BotDiscoverySearchResponse'
+          description: Public bot search results
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Search public bots
+      tags:
+      - Search
   /search/guild-tags:
     get:
       description: Returns tag suggestions from tags attached to public guilds only.
@@ -4569,6 +6276,111 @@ paths:
       tags:
       - Upload
       x-codegen-request-body-name: file
+  /upload/profile-covers/{user_id}/{banner_id}:
+    post:
+      description: Uploads a profile banner image. Requires source dimensions at least
+        680x240 and converts to WebP under 10MB.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      - description: Banner ID
+        in: path
+        name: banner_id
+        required: true
+        schema:
+          type: integer
+      - description: Crop X coordinate in source pixels
+        in: query
+        name: crop_x
+        schema:
+          type: integer
+      - description: Crop Y coordinate in source pixels
+        in: query
+        name: crop_y
+        schema:
+          type: integer
+      - description: Crop width in source pixels
+        in: query
+        name: crop_width
+        schema:
+          type: integer
+      - description: Crop height in source pixels
+        in: query
+        name: crop_height
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              items:
+                type: integer
+              type: array
+        description: Binary image payload
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Created
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content (already uploaded)
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Banner not found
+        "413":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: File too large
+        "415":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Unsupported Media Type
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Upload user profile banner
+      tags:
+      - Upload
+      x-codegen-request-body-name: file
   /user/me:
     patch:
       requestBody:
@@ -4688,6 +6500,28 @@ paths:
       summary: Delete my avatar by ID
       tags:
       - User
+  /user/me/banner:
+    post:
+      description: Creates a profile banner placeholder and returns upload info. Upload
+        the binary to attachments service.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user.CreateBannerRequest'
+        description: Banner creation request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dto.BannerUpload'
+          description: Banner upload data
+      summary: Create profile banner metadata
+      tags:
+      - User
+      x-codegen-request-body-name: request
   /user/me/channels:
     get:
       responses:
@@ -4795,6 +6629,379 @@ paths:
       tags:
       - User
       x-codegen-request-body-name: request
+  /user/me/channels/{channel_id}/call:
+    delete:
+      parameters:
+      - description: Direct DM channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content: {}
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not a DM participant
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Leave the current direct-message voice call
+      tags:
+      - User
+    post:
+      parameters:
+      - description: Direct DM channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user.DMCallJoinResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not a DM participant
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+        "502":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Voice discovery unavailable
+        "503":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No SFU available
+      summary: Start or join a direct-message voice call
+      tags:
+      - User
+  /user/me/channels/{channel_id}/call/decline:
+    post:
+      parameters:
+      - description: Direct DM channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content: {}
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not a DM participant
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Decline or dismiss an incoming direct-message voice call
+      tags:
+      - User
+  /user/me/channels/{channel_id}/call/join:
+    post:
+      parameters:
+      - description: Direct DM channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user.DMCallJoinResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Not a DM participant
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Call not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Join an active direct-message voice call
+      tags:
+      - User
+  /user/me/channels/{channel_id}/call/streams:
+    get:
+      parameters:
+      - description: Direct DM channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/user.VoiceStreamSummary'
+                type: array
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Join the call first
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Call not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: List active streams in a direct-message voice call
+      tags:
+      - User
+    post:
+      parameters:
+      - description: Direct DM channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user.CreateDMCallStreamRequest'
+        description: Stream options
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user.CreateDMCallStreamResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Join the call first
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Call not found
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Already streaming in another call
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+        "502":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Stream discovery unavailable
+        "503":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No stream service available
+      summary: Start or resume screen sharing in a direct-message voice call
+      tags:
+      - User
+      x-codegen-request-body-name: request
+  /user/me/channels/{channel_id}/call/streams/{stream_id}:
+    delete:
+      parameters:
+      - description: Direct DM channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Stream ID
+        in: path
+        name: stream_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          content: {}
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Join the call first or not stream owner
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Call not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+      summary: Stop an owned screen share in a direct-message voice call
+      tags:
+      - User
+  /user/me/channels/{channel_id}/call/streams/{stream_id}/join:
+    post:
+      parameters:
+      - description: Direct DM channel ID
+        in: path
+        name: channel_id
+        required: true
+        schema:
+          type: integer
+      - description: Stream ID
+        in: path
+        name: stream_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user.JoinDMCallStreamResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Join the call first
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Call or stream not found
+        "500":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: Internal server error
+        "503":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No stream service available
+      summary: Join a screen share in a direct-message voice call
+      tags:
+      - User
   /user/me/friends:
     delete:
       requestBody:
@@ -5120,8 +7327,56 @@ paths:
       summary: Get user guild member
       tags:
       - User
+  /user/me/notes/{user_id}:
+    delete:
+      parameters:
+      - description: Target user ID
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: OK
+      summary: Delete a private note for another user
+      tags:
+      - User
+    put:
+      parameters:
+      - description: Target user ID
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user.UpsertUserNoteRequest'
+        description: Private note
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+      summary: Save a private note for another user
+      tags:
+      - User
+      x-codegen-request-body-name: request
   /user/me/settings:
     get:
+      description: "Returns the user settings bootstrap payload, including read states,\
+        \ joined thread indexes, guild emojis, mentions, and active direct-message\
+        \ voice calls in dm_calls."
       parameters:
       - description: Client known version
         in: query
@@ -5797,6 +8052,226 @@ components:
           example: 10
           type: integer
       type: object
+    developer.BotAuthorizationPreview:
+      example:
+        bot:
+          default_permissions: 1
+          public: true
+          updated_at: 5
+          owner_user_id: 5
+          bot_user_id: 0
+          created_at: 6
+          description: description
+          disabled: true
+          user:
+            banner_color: 3447003
+            personal_note: Met during the release party
+            name: FancyUserName
+            banner:
+              content_type: image/webp
+              size: 245678
+              width: 680
+              exists: true
+              id: 2230469276416868352
+              url: https://cdn.example.com/banners/2230/2231.webp
+              height: 240
+            bio: Building gochat one endpoint at a time
+            avatar:
+              content_type: image/webp
+              size: 245678
+              width: 128
+              id: 2230469276416868352
+              url: https://cdn.example.com/avatars/2230/2231.webp
+              height: 128
+            id: 2230469276416868352
+            is_bot: false
+            panel_color: 15158332
+            discriminator: uniquename
+          tags:
+          - tags
+          - tags
+        grant_id: 0
+        requested_permissions: 6
+      properties:
+        bot:
+          $ref: '#/components/schemas/developer.BotResponse'
+        grant_id:
+          type: integer
+        requested_permissions:
+          type: integer
+      type: object
+    developer.BotResponse:
+      example:
+        default_permissions: 1
+        public: true
+        updated_at: 5
+        owner_user_id: 5
+        bot_user_id: 0
+        created_at: 6
+        description: description
+        disabled: true
+        user:
+          banner_color: 3447003
+          personal_note: Met during the release party
+          name: FancyUserName
+          banner:
+            content_type: image/webp
+            size: 245678
+            width: 680
+            exists: true
+            id: 2230469276416868352
+            url: https://cdn.example.com/banners/2230/2231.webp
+            height: 240
+          bio: Building gochat one endpoint at a time
+          avatar:
+            content_type: image/webp
+            size: 245678
+            width: 128
+            id: 2230469276416868352
+            url: https://cdn.example.com/avatars/2230/2231.webp
+            height: 128
+          id: 2230469276416868352
+          is_bot: false
+          panel_color: 15158332
+          discriminator: uniquename
+        tags:
+        - tags
+        - tags
+      properties:
+        bot_user_id:
+          type: integer
+        created_at:
+          type: integer
+        default_permissions:
+          type: integer
+        description:
+          type: string
+        disabled:
+          type: boolean
+        owner_user_id:
+          type: integer
+        public:
+          type: boolean
+        tags:
+          items:
+            type: string
+          type: array
+        updated_at:
+          type: integer
+        user:
+          $ref: '#/components/schemas/dto.User'
+      type: object
+    developer.CreateBotAvatarRequest:
+      properties:
+        content_type:
+          example: image/png
+          type: string
+        file_size:
+          example: 120000
+          type: integer
+      type: object
+    developer.CreateBotBannerRequest:
+      properties:
+        content_type:
+          example: image/png
+          type: string
+        file_size:
+          example: 1048576
+          type: integer
+      type: object
+    developer.CreateBotRequest:
+      properties:
+        default_permissions:
+          type: integer
+        description:
+          type: string
+        name:
+          type: string
+        public:
+          type: boolean
+        tags:
+          items:
+            type: string
+          type: array
+      type: object
+    developer.CreateGrantRequest:
+      properties:
+        expires_in_seconds:
+          type: integer
+        max_uses:
+          type: integer
+        requested_permissions:
+          type: integer
+      type: object
+    developer.CreateTokenRequest:
+      properties:
+        name:
+          type: string
+      type: object
+    developer.GrantCreateResponse:
+      example:
+        grant:
+          expires_at: expires_at
+          revoked_at: revoked_at
+          max_uses: 1
+          owner_user_id: 5
+          bot_user_id: 0
+          token_prefix: token_prefix
+          created_at: created_at
+          uses: 2
+          id: 6
+          requested_permissions: 5
+        token: token
+      properties:
+        grant:
+          $ref: '#/components/schemas/model.BotInstallGrant'
+        token:
+          type: string
+      type: object
+    developer.TokenCreateResponse:
+      example:
+        token_data:
+          last_used_at: last_used_at
+          revoked_at: revoked_at
+          bot_user_id: 0
+          name: name
+          token_prefix: token_prefix
+          created_at: created_at
+          id: 6
+        token: token
+      properties:
+        token:
+          type: string
+        token_data:
+          $ref: '#/components/schemas/model.BotToken'
+      type: object
+    developer.UpdateBotRequest:
+      properties:
+        avatar:
+          type: integer
+        banner:
+          type: integer
+        banner_color:
+          type: integer
+        bio:
+          type: string
+        default_permissions:
+          type: integer
+        description:
+          type: string
+        disabled:
+          type: boolean
+        name:
+          type: string
+        panel_color:
+          type: integer
+        public:
+          type: boolean
+        tags:
+          items:
+            type: string
+          type: array
+      type: object
     dto.Attachment:
       example:
         filename: image.png
@@ -5921,6 +8396,189 @@ components:
           type: integer
         user_id:
           example: 2230469276416868352
+          type: integer
+      type: object
+    dto.BannerData:
+      example:
+        content_type: image/webp
+        size: 245678
+        width: 680
+        exists: true
+        id: 2230469276416868352
+        url: https://cdn.example.com/banners/2230/2231.webp
+        height: 240
+      properties:
+        content_type:
+          example: image/webp
+          type: string
+        exists:
+          example: true
+          type: boolean
+        height:
+          example: 240
+          type: integer
+        id:
+          example: 2230469276416868352
+          type: integer
+        size:
+          example: 245678
+          type: integer
+        url:
+          example: https://cdn.example.com/banners/2230/2231.webp
+          type: string
+        width:
+          example: 680
+          type: integer
+      type: object
+    dto.BannerUpload:
+      example:
+        user_id: 2230469276416868352
+        id: 2230469276416868352
+      properties:
+        id:
+          example: 2230469276416868352
+          type: integer
+        user_id:
+          example: 2230469276416868352
+          type: integer
+      type: object
+    dto.BotDiscovery:
+      example:
+        default_permissions: 7927905
+        updated_at: 1714500000000
+        bot_user_id: 2230469276416868352
+        created_at: 1714500000000
+        description: Moderation and utility bot
+        installs_count: 42
+        user:
+          banner_color: 3447003
+          personal_note: Met during the release party
+          name: FancyUserName
+          banner:
+            content_type: image/webp
+            size: 245678
+            width: 680
+            exists: true
+            id: 2230469276416868352
+            url: https://cdn.example.com/banners/2230/2231.webp
+            height: 240
+          bio: Building gochat one endpoint at a time
+          avatar:
+            content_type: image/webp
+            size: 245678
+            width: 128
+            id: 2230469276416868352
+            url: https://cdn.example.com/avatars/2230/2231.webp
+            height: 128
+          id: 2230469276416868352
+          is_bot: false
+          panel_color: 15158332
+          discriminator: uniquename
+        tags:
+        - tags
+        - tags
+      properties:
+        bot_user_id:
+          example: 2230469276416868352
+          type: integer
+        created_at:
+          example: 1714500000000
+          type: integer
+        default_permissions:
+          example: 7927905
+          type: integer
+        description:
+          example: Moderation and utility bot
+          type: string
+        installs_count:
+          example: 42
+          type: integer
+        tags:
+          items:
+            type: string
+          type: array
+        updated_at:
+          example: 1714500000000
+          type: integer
+        user:
+          $ref: '#/components/schemas/dto.User'
+      type: object
+    dto.BotDiscoverySearchResponse:
+      example:
+        bots:
+        - default_permissions: 7927905
+          updated_at: 1714500000000
+          bot_user_id: 2230469276416868352
+          created_at: 1714500000000
+          description: Moderation and utility bot
+          installs_count: 42
+          user:
+            banner_color: 3447003
+            personal_note: Met during the release party
+            name: FancyUserName
+            banner:
+              content_type: image/webp
+              size: 245678
+              width: 680
+              exists: true
+              id: 2230469276416868352
+              url: https://cdn.example.com/banners/2230/2231.webp
+              height: 240
+            bio: Building gochat one endpoint at a time
+            avatar:
+              content_type: image/webp
+              size: 245678
+              width: 128
+              id: 2230469276416868352
+              url: https://cdn.example.com/avatars/2230/2231.webp
+              height: 128
+            id: 2230469276416868352
+            is_bot: false
+            panel_color: 15158332
+            discriminator: uniquename
+          tags:
+          - tags
+          - tags
+        - default_permissions: 7927905
+          updated_at: 1714500000000
+          bot_user_id: 2230469276416868352
+          created_at: 1714500000000
+          description: Moderation and utility bot
+          installs_count: 42
+          user:
+            banner_color: 3447003
+            personal_note: Met during the release party
+            name: FancyUserName
+            banner:
+              content_type: image/webp
+              size: 245678
+              width: 680
+              exists: true
+              id: 2230469276416868352
+              url: https://cdn.example.com/banners/2230/2231.webp
+              height: 240
+            bio: Building gochat one endpoint at a time
+            avatar:
+              content_type: image/webp
+              size: 245678
+              width: 128
+              id: 2230469276416868352
+              url: https://cdn.example.com/avatars/2230/2231.webp
+              height: 128
+            id: 2230469276416868352
+            is_bot: false
+            panel_color: 15158332
+            discriminator: uniquename
+          tags:
+          - tags
+          - tags
+        pages: 0
+      properties:
+        bots:
+          items:
+            $ref: '#/components/schemas/dto.BotDiscovery'
+          type: array
+        pages:
           type: integer
       type: object
     dto.Channel:
@@ -6124,7 +8782,16 @@ components:
         reason: reason
         user:
           banner_color: 3447003
+          personal_note: Met during the release party
           name: FancyUserName
+          banner:
+            content_type: image/webp
+            size: 245678
+            width: 680
+            exists: true
+            id: 2230469276416868352
+            url: https://cdn.example.com/banners/2230/2231.webp
+            height: 240
           bio: Building gochat one endpoint at a time
           avatar:
             content_type: image/webp
@@ -6134,6 +8801,7 @@ components:
             url: https://cdn.example.com/avatars/2230/2231.webp
             height: 128
           id: 2230469276416868352
+          is_bot: false
           panel_color: 15158332
           discriminator: uniquename
       properties:
@@ -6399,7 +9067,16 @@ components:
           height: 600
         author:
           banner_color: 3447003
+          personal_note: Met during the release party
           name: FancyUserName
+          banner:
+            content_type: image/webp
+            size: 245678
+            width: 680
+            exists: true
+            id: 2230469276416868352
+            url: https://cdn.example.com/banners/2230/2231.webp
+            height: 240
           bio: Building gochat one endpoint at a time
           avatar:
             content_type: image/webp
@@ -6409,6 +9086,7 @@ components:
             url: https://cdn.example.com/avatars/2230/2231.webp
             height: 128
           id: 2230469276416868352
+          is_bot: false
           panel_color: 15158332
           discriminator: uniquename
         flags: 0
@@ -6565,7 +9243,16 @@ components:
         next_after: 0
         items:
         - banner_color: 3447003
+          personal_note: Met during the release party
           name: FancyUserName
+          banner:
+            content_type: image/webp
+            size: 245678
+            width: 680
+            exists: true
+            id: 2230469276416868352
+            url: https://cdn.example.com/banners/2230/2231.webp
+            height: 240
           bio: Building gochat one endpoint at a time
           avatar:
             content_type: image/webp
@@ -6575,10 +9262,20 @@ components:
             url: https://cdn.example.com/avatars/2230/2231.webp
             height: 128
           id: 2230469276416868352
+          is_bot: false
           panel_color: 15158332
           discriminator: uniquename
         - banner_color: 3447003
+          personal_note: Met during the release party
           name: FancyUserName
+          banner:
+            content_type: image/webp
+            size: 245678
+            width: 680
+            exists: true
+            id: 2230469276416868352
+            url: https://cdn.example.com/banners/2230/2231.webp
+            height: 240
           bio: Building gochat one endpoint at a time
           avatar:
             content_type: image/webp
@@ -6588,6 +9285,7 @@ components:
             url: https://cdn.example.com/avatars/2230/2231.webp
             height: 128
           id: 2230469276416868352
+          is_bot: false
           panel_color: 15158332
           discriminator: uniquename
       properties:
@@ -6606,6 +9304,7 @@ components:
         name: role-name
         id: 2230469276416868352
         position: 0
+        hoist: true
       properties:
         color:
           description: Role color. Will change username color. Represent RGB color
@@ -6615,6 +9314,10 @@ components:
           description: Guild ID
           example: 2230469276416868352
           type: integer
+        hoist:
+          description: Whether online members with this role are shown in a separate
+            members list section.
+          type: boolean
         id:
           description: Role ID
           example: 2230469276416868352
@@ -6649,7 +9352,16 @@ components:
     dto.User:
       example:
         banner_color: 3447003
+        personal_note: Met during the release party
         name: FancyUserName
+        banner:
+          content_type: image/webp
+          size: 245678
+          width: 680
+          exists: true
+          id: 2230469276416868352
+          url: https://cdn.example.com/banners/2230/2231.webp
+          height: 240
         bio: Building gochat one endpoint at a time
         avatar:
           content_type: image/webp
@@ -6659,11 +9371,14 @@ components:
           url: https://cdn.example.com/avatars/2230/2231.webp
           height: 128
         id: 2230469276416868352
+        is_bot: false
         panel_color: 15158332
         discriminator: uniquename
       properties:
         avatar:
           $ref: '#/components/schemas/dto.AvatarData'
+        banner:
+          $ref: '#/components/schemas/dto.BannerData'
         banner_color:
           example: 3447003
           type: integer
@@ -6676,12 +9391,18 @@ components:
         id:
           example: 2230469276416868352
           type: integer
+        is_bot:
+          example: false
+          type: boolean
         name:
           example: FancyUserName
           type: string
         panel_color:
           example: 15158332
           type: integer
+        personal_note:
+          example: Met during the release party
+          type: string
       type: object
     embed.Embed:
       example:
@@ -6990,6 +9711,10 @@ components:
           description: RGB int value
           example: 16777215
           type: integer
+        hoist:
+          default: false
+          description: Show online members with this role in a separate section
+          type: boolean
         name:
           description: Role name
           example: New Role
@@ -7053,6 +9778,76 @@ components:
           items:
             type: string
           type: array
+      type: object
+    guild.InstallBotRequest:
+      properties:
+        bot_user_id:
+          type: integer
+        grant_token:
+          type: string
+        granted_permissions:
+          type: integer
+      type: object
+    guild.InstalledBotResponse:
+      example:
+        installer_user_id: 5
+        bot_user_id: 0
+        grant_id: 1
+        roles:
+        - 2
+        - 2
+        member:
+          join_at: join_at
+          roles:
+          - 2230469276416868352
+          avatar: 2230469276416868352
+          user: "{}"
+          username: FancyUserName
+        created_at: 6
+        granted_permissions: 5
+        user:
+          banner_color: 3447003
+          personal_note: Met during the release party
+          name: FancyUserName
+          banner:
+            content_type: image/webp
+            size: 245678
+            width: 680
+            exists: true
+            id: 2230469276416868352
+            url: https://cdn.example.com/banners/2230/2231.webp
+            height: 240
+          bio: Building gochat one endpoint at a time
+          avatar:
+            content_type: image/webp
+            size: 245678
+            width: 128
+            id: 2230469276416868352
+            url: https://cdn.example.com/avatars/2230/2231.webp
+            height: 128
+          id: 2230469276416868352
+          is_bot: false
+          panel_color: 15158332
+          discriminator: uniquename
+      properties:
+        bot_user_id:
+          type: integer
+        created_at:
+          type: integer
+        grant_id:
+          type: integer
+        granted_permissions:
+          type: integer
+        installer_user_id:
+          type: integer
+        member:
+          $ref: '#/components/schemas/dto.Member'
+        roles:
+          items:
+            type: integer
+          type: array
+        user:
+          $ref: '#/components/schemas/dto.User'
       type: object
     guild.JoinVoiceResponse:
       example:
@@ -7144,6 +9939,9 @@ components:
           description: RGB int value
           example: 16711680
           type: integer
+        hoist:
+          description: Show online members with this role in a separate section
+          type: boolean
         name:
           description: Role name
           example: Moderators
@@ -7151,6 +9949,25 @@ components:
         permissions:
           description: Permissions bitset
           type: integer
+      type: object
+    guild.Response:
+      example:
+        owner: 1
+        public: true
+        name: name
+        granted_permissions: 0
+        id: 6
+      properties:
+        granted_permissions:
+          type: integer
+        id:
+          type: integer
+        name:
+          type: string
+        owner:
+          type: integer
+        public:
+          type: boolean
       type: object
     guild.RoleOrder:
       properties:
@@ -7308,6 +10125,21 @@ components:
           example: 2230469276416868352
           type: integer
       type: object
+    message.SendRequest:
+      properties:
+        attachments:
+          items:
+            type: integer
+          type: array
+        content:
+          type: string
+        embeds:
+          items:
+            $ref: '#/components/schemas/embed.Embed'
+          type: array
+        reference:
+          type: integer
+      type: object
     message.UpdateMessageRequest:
       properties:
         content:
@@ -7324,6 +10156,17 @@ components:
           description: Message flags bitmask. Use 4 to suppress URL embed generation
             and clear generated embeds.
           example: 4
+          type: integer
+      type: object
+    message.UpdateRequest:
+      properties:
+        content:
+          type: string
+        embeds:
+          items:
+            $ref: '#/components/schemas/embed.Embed'
+          type: array
+        flags:
           type: integer
       type: object
     message.UploadAttachmentRequest:
@@ -7348,6 +10191,65 @@ components:
           description: Image width in pixels
           example: 800
           type: integer
+      type: object
+    model.BotInstallGrant:
+      example:
+        expires_at: expires_at
+        revoked_at: revoked_at
+        max_uses: 1
+        owner_user_id: 5
+        bot_user_id: 0
+        token_prefix: token_prefix
+        created_at: created_at
+        uses: 2
+        id: 6
+        requested_permissions: 5
+      properties:
+        bot_user_id:
+          type: integer
+        created_at:
+          type: string
+        expires_at:
+          type: string
+        id:
+          type: integer
+        max_uses:
+          type: integer
+        owner_user_id:
+          type: integer
+        requested_permissions:
+          type: integer
+        revoked_at:
+          type: string
+        token_prefix:
+          type: string
+        uses:
+          type: integer
+      type: object
+    model.BotToken:
+      example:
+        last_used_at: last_used_at
+        revoked_at: revoked_at
+        bot_user_id: 0
+        name: name
+        token_prefix: token_prefix
+        created_at: created_at
+        id: 6
+      properties:
+        bot_user_id:
+          type: integer
+        created_at:
+          type: string
+        id:
+          type: integer
+        last_used_at:
+          type: string
+        name:
+          type: string
+        revoked_at:
+          type: string
+        token_prefix:
+          type: string
       type: object
     model.ChannelMention:
       example:
@@ -7396,18 +10298,19 @@ components:
       - ChannelTypeThread
     model.Devices:
       example:
-        audio_input_level: 1.1730742509559433
         auto_gain_control: true
         audio_output_device: audio_output_device
         audio_output_level: 5.025004791520295
         audio_input_threshold: 4.965218492984954
-        echo_cancellation: true
         video_device: video_device
         noise_suppression: true
         denoiser_type: denoiser_type
-        input_mode: input_mode
         push_to_talk_key: push_to_talk_key
         audio_input_device: audio_input_device
+        audio_input_level: 1.1730742509559433
+        echo_cancellation: true
+        push_to_talk_toggle: true
+        input_mode: input_mode
       properties:
         audio_input_device:
           type: string
@@ -7431,6 +10334,8 @@ components:
           type: boolean
         push_to_talk_key:
           type: string
+        push_to_talk_toggle:
+          type: boolean
         video_device:
           type: string
       type: object
@@ -7521,6 +10426,8 @@ components:
         favorite_gifs:
         - favorite_gifs
         - favorite_gifs
+        voice:
+          preferred_region: preferred_region
         dm_channels:
         - hidden: true
           user_id: 6
@@ -7531,18 +10438,19 @@ components:
           hidden_after: 9
           channel_id: 9
         devices:
-          audio_input_level: 1.1730742509559433
           auto_gain_control: true
           audio_output_device: audio_output_device
           audio_output_level: 5.025004791520295
           audio_input_threshold: 4.965218492984954
-          echo_cancellation: true
           video_device: video_device
           noise_suppression: true
           denoiser_type: denoiser_type
-          input_mode: input_mode
           push_to_talk_key: push_to_talk_key
           audio_input_device: audio_input_device
+          audio_input_level: 1.1730742509559433
+          echo_cancellation: true
+          push_to_talk_toggle: true
+          input_mode: input_mode
         guilds:
         - selected_channel: 1
           guild_id: 3
@@ -7569,18 +10477,19 @@ components:
         language: language
         devices_by_key:
           key:
-            audio_input_level: 1.1730742509559433
             auto_gain_control: true
             audio_output_device: audio_output_device
             audio_output_level: 5.025004791520295
             audio_input_threshold: 4.965218492984954
-            echo_cancellation: true
             video_device: video_device
             noise_suppression: true
             denoiser_type: denoiser_type
-            input_mode: input_mode
             push_to_talk_key: push_to_talk_key
             audio_input_device: audio_input_device
+            audio_input_level: 1.1730742509559433
+            echo_cancellation: true
+            push_to_talk_toggle: true
+            input_mode: input_mode
         ui_sounds:
           notification: true
           mute: true
@@ -7634,12 +10543,14 @@ components:
           guilds:
           - 9
           - 9
+          collapsed: true
           name: name
           position: 6
         - color: 8
           guilds:
           - 9
           - 9
+          collapsed: true
           name: name
           position: 6
         status:
@@ -7686,6 +10597,8 @@ components:
           items:
             $ref: '#/components/schemas/model.UserSettingsUsers'
           type: array
+        voice:
+          $ref: '#/components/schemas/model.UserVoiceSettings'
       type: object
     model.UserSettingsGuildFolders:
       example:
@@ -7693,9 +10606,12 @@ components:
         guilds:
         - 9
         - 9
+        collapsed: true
         name: name
         position: 6
       properties:
+        collapsed:
+          type: boolean
         color:
           type: integer
         guilds:
@@ -7788,6 +10704,47 @@ components:
         voice_channel:
           type: boolean
       type: object
+    model.UserVoiceSettings:
+      example:
+        preferred_region: preferred_region
+      properties:
+        preferred_region:
+          type: string
+      type: object
+    mqmsg.DMCallSummary:
+      example:
+        solo_since: 2
+        caller_id: 6
+        dismissed: true
+        started_at: 7
+        region: region
+        channel_id: 1
+        call_id: 0
+        participants:
+          key: 5
+        recipient_id: 5
+      properties:
+        call_id:
+          type: integer
+        caller_id:
+          type: integer
+        channel_id:
+          type: integer
+        dismissed:
+          type: boolean
+        participants:
+          additionalProperties:
+            type: integer
+          type: object
+        recipient_id:
+          type: integer
+        region:
+          type: string
+        solo_since:
+          type: integer
+        started_at:
+          type: integer
+      type: object
     search.MessageSearchRequest:
       properties:
         author_id:
@@ -7846,7 +10803,16 @@ components:
             height: 600
           author:
             banner_color: 3447003
+            personal_note: Met during the release party
             name: FancyUserName
+            banner:
+              content_type: image/webp
+              size: 245678
+              width: 680
+              exists: true
+              id: 2230469276416868352
+              url: https://cdn.example.com/banners/2230/2231.webp
+              height: 240
             bio: Building gochat one endpoint at a time
             avatar:
               content_type: image/webp
@@ -7856,6 +10822,7 @@ components:
               url: https://cdn.example.com/avatars/2230/2231.webp
               height: 128
             id: 2230469276416868352
+            is_bot: false
             panel_color: 15158332
             discriminator: uniquename
           flags: 0
@@ -7937,7 +10904,16 @@ components:
             height: 600
           author:
             banner_color: 3447003
+            personal_note: Met during the release party
             name: FancyUserName
+            banner:
+              content_type: image/webp
+              size: 245678
+              width: 680
+              exists: true
+              id: 2230469276416868352
+              url: https://cdn.example.com/banners/2230/2231.webp
+              height: 240
             bio: Building gochat one endpoint at a time
             avatar:
               content_type: image/webp
@@ -7947,6 +10923,7 @@ components:
               url: https://cdn.example.com/avatars/2230/2231.webp
               height: 128
             id: 2230469276416868352
+            is_bot: false
             panel_color: 15158332
             discriminator: uniquename
           flags: 0
@@ -8077,6 +11054,44 @@ components:
           example: 120000
           type: integer
       type: object
+    user.CreateBannerRequest:
+      properties:
+        content_type:
+          example: image/png
+          type: string
+        file_size:
+          example: 1048576
+          type: integer
+      type: object
+    user.CreateDMCallStreamRequest:
+      properties:
+        audio_mode:
+          type: string
+        source_type:
+          type: string
+      type: object
+    user.CreateDMCallStreamResponse:
+      example:
+        stream_token: stream_token
+        stream:
+          owner_user_id: 1
+          started_at: 5
+          audio_mode: audio_mode
+          source_type: source_type
+          id: 6
+          channel_id: 0
+        stream_id: 0
+        stream_url: stream_url
+      properties:
+        stream:
+          $ref: '#/components/schemas/user.VoiceStreamSummary'
+        stream_id:
+          type: integer
+        stream_token:
+          type: string
+        stream_url:
+          type: string
+      type: object
     user.CreateDMManyRequest:
       properties:
         channel_id:
@@ -8096,11 +11111,95 @@ components:
         discriminator:
           type: string
       type: object
+    user.DMCallJoinResponse:
+      example:
+        call:
+          solo_since: 2
+          caller_id: 6
+          dismissed: true
+          started_at: 7
+          region: region
+          channel_id: 1
+          call_id: 0
+          participants:
+            key: 5
+          recipient_id: 5
+        sfu_url: sfu_url
+        region: region
+        sfu_token: sfu_token
+      properties:
+        call:
+          $ref: '#/components/schemas/mqmsg.DMCallSummary'
+        region:
+          type: string
+        sfu_token:
+          type: string
+        sfu_url:
+          type: string
+      type: object
     user.FriendRequestAction:
       properties:
         user_id:
           example: "0"
           type: string
+      type: object
+    user.JoinDMCallStreamResponse:
+      example:
+        stream_token: stream_token
+        stream_id: 0
+        stream_url: stream_url
+      properties:
+        stream_id:
+          type: integer
+        stream_token:
+          type: string
+        stream_url:
+          type: string
+      type: object
+    user.MeResponse:
+      example:
+        default_permissions: 6
+        public: true
+        owner_user_id: 1
+        bot_user_id: 0
+        description: description
+        user:
+          banner_color: 3447003
+          personal_note: Met during the release party
+          name: FancyUserName
+          banner:
+            content_type: image/webp
+            size: 245678
+            width: 680
+            exists: true
+            id: 2230469276416868352
+            url: https://cdn.example.com/banners/2230/2231.webp
+            height: 240
+          bio: Building gochat one endpoint at a time
+          avatar:
+            content_type: image/webp
+            size: 245678
+            width: 128
+            id: 2230469276416868352
+            url: https://cdn.example.com/avatars/2230/2231.webp
+            height: 128
+          id: 2230469276416868352
+          is_bot: false
+          panel_color: 15158332
+          discriminator: uniquename
+      properties:
+        bot_user_id:
+          type: integer
+        default_permissions:
+          type: integer
+        description:
+          type: string
+        owner_user_id:
+          type: integer
+        public:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/dto.User'
       type: object
     user.ModifyUserRequest:
       properties:
@@ -8131,12 +11230,20 @@ components:
           example: "0"
           type: string
       type: object
+    user.UpsertUserNoteRequest:
+      properties:
+        note:
+          example: Met during the release party
+          type: string
+      type: object
     user.UserSettingsResponse:
       example:
         settings:
           favorite_gifs:
           - favorite_gifs
           - favorite_gifs
+          voice:
+            preferred_region: preferred_region
           dm_channels:
           - hidden: true
             user_id: 6
@@ -8147,18 +11254,19 @@ components:
             hidden_after: 9
             channel_id: 9
           devices:
-            audio_input_level: 1.1730742509559433
             auto_gain_control: true
             audio_output_device: audio_output_device
             audio_output_level: 5.025004791520295
             audio_input_threshold: 4.965218492984954
-            echo_cancellation: true
             video_device: video_device
             noise_suppression: true
             denoiser_type: denoiser_type
-            input_mode: input_mode
             push_to_talk_key: push_to_talk_key
             audio_input_device: audio_input_device
+            audio_input_level: 1.1730742509559433
+            echo_cancellation: true
+            push_to_talk_toggle: true
+            input_mode: input_mode
           guilds:
           - selected_channel: 1
             guild_id: 3
@@ -8185,18 +11293,19 @@ components:
           language: language
           devices_by_key:
             key:
-              audio_input_level: 1.1730742509559433
               auto_gain_control: true
               audio_output_device: audio_output_device
               audio_output_level: 5.025004791520295
               audio_input_threshold: 4.965218492984954
-              echo_cancellation: true
               video_device: video_device
               noise_suppression: true
               denoiser_type: denoiser_type
-              input_mode: input_mode
               push_to_talk_key: push_to_talk_key
               audio_input_device: audio_input_device
+              audio_input_level: 1.1730742509559433
+              echo_cancellation: true
+              push_to_talk_toggle: true
+              input_mode: input_mode
           ui_sounds:
             notification: true
             mute: true
@@ -8250,12 +11359,14 @@ components:
             guilds:
             - 9
             - 9
+            collapsed: true
             name: name
             position: 6
           - color: 8
             guilds:
             - 9
             - 9
+            collapsed: true
             name: name
             position: 6
           status:
@@ -8290,6 +11401,27 @@ components:
           name: My Guild
           system_channel_id: 2230469276416868352
           id: 2230469276416868352
+        dm_calls:
+        - solo_since: 2
+          caller_id: 6
+          dismissed: true
+          started_at: 7
+          region: region
+          channel_id: 1
+          call_id: 0
+          participants:
+            key: 5
+          recipient_id: 5
+        - solo_since: 2
+          caller_id: 6
+          dismissed: true
+          started_at: 7
+          region: region
+          channel_id: 1
+          call_id: 0
+          participants:
+            key: 5
+          recipient_id: 5
         mentions:
           key:
           - messageId: 4
@@ -8332,6 +11464,11 @@ components:
         content_hosts:
           items:
             type: string
+          type: array
+        dm_calls:
+          description: Active direct-message voice calls visible to the current user.
+          items:
+            $ref: '#/components/schemas/mqmsg.DMCallSummary'
           type: array
         guild_emojis:
           additionalProperties:
@@ -8378,6 +11515,28 @@ components:
         version:
           type: integer
       type: object
+    user.VoiceStreamSummary:
+      example:
+        owner_user_id: 1
+        started_at: 5
+        audio_mode: audio_mode
+        source_type: source_type
+        id: 6
+        channel_id: 0
+      properties:
+        audio_mode:
+          type: string
+        channel_id:
+          type: integer
+        id:
+          type: integer
+        owner_user_id:
+          type: integer
+        source_type:
+          type: string
+        started_at:
+          type: integer
+      type: object
     voice.Region:
       example:
         name: name
@@ -8401,4 +11560,9 @@ components:
             $ref: '#/components/schemas/voice.Region'
           type: array
       type: object
+  securitySchemes:
+    BotToken:
+      in: header
+      name: Authorization
+      type: apiKey
 x-original-swagger-version: "2.0"

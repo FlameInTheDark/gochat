@@ -6926,6 +6926,140 @@
                 }
             }
         },
+        "/search/bot-tags": {
+            "get": {
+                "description": "Returns tag suggestions from tags attached to public enabled bots only. Limit defaults to 16 and is capped at 16.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Autocomplete public bot tags",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tag prefix",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 16,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 16,
+                        "description": "Maximum tags to return, capped at 16",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag suggestions",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/bots": {
+            "get": {
+                "description": "Searches only public enabled bots in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Search public bots",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search text for bot name, description, bio, and tags",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "moderation,music",
+                        "description": "Comma-separated normalized tags",
+                        "name": "tags",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "best_match",
+                            "popularity",
+                            "alphabetical"
+                        ],
+                        "type": "string",
+                        "default": "best_match",
+                        "description": "Sort mode",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Zero-based page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 16,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 16,
+                        "description": "Results per page, capped at 16",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Public bot search results",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BotDiscoverySearchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/search/guild-tags": {
             "get": {
                 "description": "Returns tag suggestions from tags attached to public guilds only. Limit defaults to 16 and is capped at 16.",
@@ -9871,6 +10005,12 @@
                 "public": {
                     "type": "boolean"
                 },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "updated_at": {
                     "type": "integer"
                 },
@@ -9919,6 +10059,12 @@
                 },
                 "public": {
                     "type": "boolean"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -9998,6 +10144,12 @@
                 },
                 "public": {
                     "type": "boolean"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -10175,6 +10327,58 @@
                 "user_id": {
                     "type": "integer",
                     "example": 2230469276416868352
+                }
+            }
+        },
+        "dto.BotDiscovery": {
+            "type": "object",
+            "properties": {
+                "bot_user_id": {
+                    "type": "integer",
+                    "example": 2230469276416868352
+                },
+                "created_at": {
+                    "type": "integer",
+                    "example": 1714500000000
+                },
+                "default_permissions": {
+                    "type": "integer",
+                    "example": 7927905
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Moderation and utility bot"
+                },
+                "installs_count": {
+                    "type": "integer",
+                    "example": 42
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "updated_at": {
+                    "type": "integer",
+                    "example": 1714500000000
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.User"
+                }
+            }
+        },
+        "dto.BotDiscoverySearchResponse": {
+            "type": "object",
+            "properties": {
+                "bots": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.BotDiscovery"
+                    }
+                },
+                "pages": {
+                    "type": "integer"
                 }
             }
         },

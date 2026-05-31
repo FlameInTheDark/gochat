@@ -6,12 +6,16 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/FlameInTheDark/gochat/internal/botsearch"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/attachment"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
+	"github.com/FlameInTheDark/gochat/internal/database/entities/banner"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/icon"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	botrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/bot"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channeluserperm"
@@ -40,6 +44,8 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/:guild_id<int>/messages", e.Search)
 	router.Get("/guilds", e.SearchGuilds)
 	router.Get("/guild-tags", e.SearchGuildTags)
+	router.Get("/bots", e.SearchBots)
+	router.Get("/bot-tags", e.SearchBotTags)
 }
 
 type entity struct {
@@ -49,16 +55,20 @@ type entity struct {
 	log         *slog.Logger
 	search      *msgsearch.Search
 	guildSearch *guildsearch.Search
+	botSearch   *botsearch.Search
 	perm        permissionChecker
 
 	// DB entities
 	user  user.User
 	disc  discriminator.Discriminator
+	bot   botrepo.Bot
 	ch    channel.Channel
 	g     guild.Guild
 	gc    guildchannels.GuildChannels
 	msg   message.Message
 	at    attachment.Attachment
+	av    avatar.Avatar
+	bn    banner.Banner
 	icon  icon.Icon
 	gd    guilddiscovery.GuildDiscovery
 	uperm channeluserperm.ChannelUserPerm
@@ -71,20 +81,24 @@ func (e *entity) Name() string {
 	return e.name
 }
 
-func New(dbcon *db.CQLCon, pg *pgdb.DB, search *msgsearch.Search, guildSearch *guildsearch.Search, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, search *msgsearch.Search, guildSearch *guildsearch.Search, botSearch *botsearch.Search, log *slog.Logger) server.Entity {
 	return &entity{
 		name:        entityName,
 		log:         log,
 		search:      search,
 		guildSearch: guildSearch,
+		botSearch:   botSearch,
 		perm:        rolecheck.New(pg),
 		user:        user.New(pg.Conn()),
 		disc:        discriminator.New(pg.Conn()),
+		bot:         botrepo.New(pg.Conn()),
 		ch:          channel.New(pg.Conn()),
 		g:           guild.New(pg.Conn()),
 		gc:          guildchannels.New(pg.Conn()),
 		msg:         message.New(dbcon),
 		at:          attachment.New(dbcon),
+		av:          avatar.New(dbcon),
+		bn:          banner.New(dbcon),
 		icon:        icon.New(dbcon),
 		gd:          guilddiscovery.New(pg.Conn()),
 		uperm:       channeluserperm.New(pg.Conn()),

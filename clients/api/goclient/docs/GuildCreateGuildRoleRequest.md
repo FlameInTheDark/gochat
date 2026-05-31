@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Color** | Pointer to **int32** | RGB int value | [optional] 
+**Hoist** | Pointer to **bool** | Show online members with this role in a separate section | [optional] [default to false]
 **Name** | Pointer to **string** | Role name | [optional] 
 **Permissions** | Pointer to **int32** | Permissions bitset | [optional] 
 
@@ -51,6 +52,31 @@ SetColor sets Color field to given value.
 `func (o *GuildCreateGuildRoleRequest) HasColor() bool`
 
 HasColor returns a boolean if a field has been set.
+
+### GetHoist
+
+`func (o *GuildCreateGuildRoleRequest) GetHoist() bool`
+
+GetHoist returns the Hoist field if non-nil, zero value otherwise.
+
+### GetHoistOk
+
+`func (o *GuildCreateGuildRoleRequest) GetHoistOk() (*bool, bool)`
+
+GetHoistOk returns a tuple with the Hoist field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetHoist
+
+`func (o *GuildCreateGuildRoleRequest) SetHoist(v bool)`
+
+SetHoist sets Hoist field to given value.
+
+### HasHoist
+
+`func (o *GuildCreateGuildRoleRequest) HasHoist() bool`
+
+HasHoist returns a boolean if a field has been set.
 
 ### GetName
 

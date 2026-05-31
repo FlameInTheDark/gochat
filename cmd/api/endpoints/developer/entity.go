@@ -11,6 +11,7 @@ import (
 	botrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/bot"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
+	"github.com/FlameInTheDark/gochat/internal/searchmq"
 	"github.com/FlameInTheDark/gochat/internal/server"
 	"github.com/gofiber/fiber/v2"
 )
@@ -25,6 +26,7 @@ type entity struct {
 	disc discriminator.Discriminator
 	av   avatar.Avatar
 	bn   banner.Banner
+	smq  *searchmq.Queue
 
 	attachTTL int64
 }
@@ -34,7 +36,7 @@ type botUserRepo interface {
 	CreateUserWithFlags(ctx context.Context, id int64, name string, flags int64) error
 }
 
-func New(dbcon *db.CQLCon, pg *pgdb.DB, attachTTLSeconds int64, log *slog.Logger) server.Entity {
+func New(dbcon *db.CQLCon, pg *pgdb.DB, smq *searchmq.Queue, attachTTLSeconds int64, log *slog.Logger) server.Entity {
 	return &entity{
 		name:      entityName,
 		log:       log,
@@ -43,6 +45,7 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, attachTTLSeconds int64, log *slog.Logger
 		disc:      discriminator.New(pg.Conn()),
 		av:        avatar.New(dbcon),
 		bn:        banner.New(dbcon),
+		smq:       smq,
 		attachTTL: attachTTLSeconds,
 	}
 }

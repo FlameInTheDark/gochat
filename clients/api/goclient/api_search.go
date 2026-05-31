@@ -23,6 +23,341 @@ import (
 // SearchAPIService SearchAPI service
 type SearchAPIService service
 
+type ApiSearchBotTagsGetRequest struct {
+	ctx        context.Context
+	ApiService *SearchAPIService
+	q          *string
+	limit      *int32
+}
+
+// Tag prefix
+func (r ApiSearchBotTagsGetRequest) Q(q string) ApiSearchBotTagsGetRequest {
+	r.q = &q
+	return r
+}
+
+// Maximum tags to return, capped at 16
+func (r ApiSearchBotTagsGetRequest) Limit(limit int32) ApiSearchBotTagsGetRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r ApiSearchBotTagsGetRequest) Execute() ([]string, *http.Response, error) {
+	return r.ApiService.SearchBotTagsGetExecute(r)
+}
+
+/*
+SearchBotTagsGet Autocomplete public bot tags
+
+Returns tag suggestions from tags attached to public enabled bots only. Limit defaults to 16 and is capped at 16.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiSearchBotTagsGetRequest
+*/
+func (a *SearchAPIService) SearchBotTagsGet(ctx context.Context) ApiSearchBotTagsGetRequest {
+	return ApiSearchBotTagsGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return []string
+func (a *SearchAPIService) SearchBotTagsGetExecute(r ApiSearchBotTagsGetRequest) ([]string, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []string
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "SearchAPIService.SearchBotTagsGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/search/bot-tags"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.q != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "", "")
+	} else {
+		var defaultValue int32 = 16
+		r.limit = &defaultValue
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiSearchBotsGetRequest struct {
+	ctx        context.Context
+	ApiService *SearchAPIService
+	q          *string
+	tags       *string
+	sort       *string
+	page       *int32
+	limit      *int32
+}
+
+// Search text for bot name, description, bio, and tags
+func (r ApiSearchBotsGetRequest) Q(q string) ApiSearchBotsGetRequest {
+	r.q = &q
+	return r
+}
+
+// Comma-separated normalized tags
+func (r ApiSearchBotsGetRequest) Tags(tags string) ApiSearchBotsGetRequest {
+	r.tags = &tags
+	return r
+}
+
+// Sort mode
+func (r ApiSearchBotsGetRequest) Sort(sort string) ApiSearchBotsGetRequest {
+	r.sort = &sort
+	return r
+}
+
+// Zero-based page number
+func (r ApiSearchBotsGetRequest) Page(page int32) ApiSearchBotsGetRequest {
+	r.page = &page
+	return r
+}
+
+// Results per page, capped at 16
+func (r ApiSearchBotsGetRequest) Limit(limit int32) ApiSearchBotsGetRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r ApiSearchBotsGetRequest) Execute() (*DtoBotDiscoverySearchResponse, *http.Response, error) {
+	return r.ApiService.SearchBotsGetExecute(r)
+}
+
+/*
+SearchBotsGet Search public bots
+
+Searches only public enabled bots in OpenSearch, then hydrates ordered results from YugabyteDB YSQL. Limit defaults to 16 and is capped at 16.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiSearchBotsGetRequest
+*/
+func (a *SearchAPIService) SearchBotsGet(ctx context.Context) ApiSearchBotsGetRequest {
+	return ApiSearchBotsGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return DtoBotDiscoverySearchResponse
+func (a *SearchAPIService) SearchBotsGetExecute(r ApiSearchBotsGetRequest) (*DtoBotDiscoverySearchResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DtoBotDiscoverySearchResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "SearchAPIService.SearchBotsGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/search/bots"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.q != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "", "")
+	}
+	if r.tags != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "tags", r.tags, "", "")
+	}
+	if r.sort != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "sort", r.sort, "", "")
+	} else {
+		var defaultValue string = "best_match"
+		r.sort = &defaultValue
+	}
+	if r.page != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "page", r.page, "", "")
+	} else {
+		var defaultValue int32 = 0
+		r.page = &defaultValue
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "", "")
+	} else {
+		var defaultValue int32 = 16
+		r.limit = &defaultValue
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiSearchGuildIdMessagesPostRequest struct {
 	ctx        context.Context
 	ApiService *SearchAPIService
@@ -57,7 +392,7 @@ func (a *SearchAPIService) SearchGuildIdMessagesPost(ctx context.Context, guildI
 
 // Execute executes the request
 //
-//	@return	[]SearchMessageSearchResponse
+//	@return []SearchMessageSearchResponse
 func (a *SearchAPIService) SearchGuildIdMessagesPostExecute(r ApiSearchGuildIdMessagesPostRequest) ([]SearchMessageSearchResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -220,7 +555,7 @@ func (a *SearchAPIService) SearchGuildTagsGet(ctx context.Context) ApiSearchGuil
 
 // Execute executes the request
 //
-//	@return	[]string
+//	@return []string
 func (a *SearchAPIService) SearchGuildTagsGetExecute(r ApiSearchGuildTagsGetRequest) ([]string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -385,7 +720,7 @@ func (a *SearchAPIService) SearchGuildsGet(ctx context.Context) ApiSearchGuildsG
 
 // Execute executes the request
 //
-//	@return	DtoGuildDiscoverySearchResponse
+//	@return DtoGuildDiscoverySearchResponse
 func (a *SearchAPIService) SearchGuildsGetExecute(r ApiSearchGuildsGetRequest) (*DtoGuildDiscoverySearchResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -546,7 +881,7 @@ func (a *SearchAPIService) SearchMessagesPost(ctx context.Context) ApiSearchMess
 
 // Execute executes the request
 //
-//	@return	[]SearchMessageSearchResponse
+//	@return []SearchMessageSearchResponse
 func (a *SearchAPIService) SearchMessagesPostExecute(r ApiSearchMessagesPostRequest) ([]SearchMessageSearchResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

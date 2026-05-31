@@ -24,6 +24,8 @@ type DtoRole struct {
 	Color *int32 `json:"color,omitempty"`
 	// Guild ID
 	GuildId *int32 `json:"guild_id,omitempty"`
+	// Whether online members with this role are shown in a separate members list section.
+	Hoist *bool `json:"hoist,omitempty"`
 	// Role ID
 	Id *int32 `json:"id,omitempty"`
 	// Role name
@@ -113,6 +115,38 @@ func (o *DtoRole) HasGuildId() bool {
 // SetGuildId gets a reference to the given int32 and assigns it to the GuildId field.
 func (o *DtoRole) SetGuildId(v int32) {
 	o.GuildId = &v
+}
+
+// GetHoist returns the Hoist field value if set, zero value otherwise.
+func (o *DtoRole) GetHoist() bool {
+	if o == nil || IsNil(o.Hoist) {
+		var ret bool
+		return ret
+	}
+	return *o.Hoist
+}
+
+// GetHoistOk returns a tuple with the Hoist field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DtoRole) GetHoistOk() (*bool, bool) {
+	if o == nil || IsNil(o.Hoist) {
+		return nil, false
+	}
+	return o.Hoist, true
+}
+
+// HasHoist returns a boolean if a field has been set.
+func (o *DtoRole) HasHoist() bool {
+	if o != nil && !IsNil(o.Hoist) {
+		return true
+	}
+
+	return false
+}
+
+// SetHoist gets a reference to the given bool and assigns it to the Hoist field.
+func (o *DtoRole) SetHoist(v bool) {
+	o.Hoist = &v
 }
 
 // GetId returns the Id field value if set, zero value otherwise.
@@ -258,6 +292,9 @@ func (o DtoRole) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.GuildId) {
 		toSerialize["guild_id"] = o.GuildId
+	}
+	if !IsNil(o.Hoist) {
+		toSerialize["hoist"] = o.Hoist
 	}
 	if !IsNil(o.Id) {
 		toSerialize["id"] = o.Id

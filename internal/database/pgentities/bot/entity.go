@@ -10,11 +10,16 @@ import (
 type Bot interface {
 	CreateBot(ctx context.Context, bot model.Bot) error
 	GetBot(ctx context.Context, botUserID int64) (model.Bot, error)
+	GetBotsByIDs(ctx context.Context, botUserIDs []int64) ([]model.Bot, error)
 	GetBotForOwner(ctx context.Context, ownerUserID, botUserID int64) (model.Bot, error)
 	ListOwnerBots(ctx context.Context, ownerUserID int64) ([]model.Bot, error)
 	UpdateBot(ctx context.Context, botUserID int64, description *string, public *bool, defaultPermissions *int64, disabled *bool) error
 	DeleteBot(ctx context.Context, botUserID int64) error
 	SearchPublicBots(ctx context.Context, query string, limit, offset uint64) ([]model.Bot, error)
+	ListPublicEnabledBotIDs(ctx context.Context, limit uint64) ([]int64, error)
+	SetBotTags(ctx context.Context, botUserID int64, tags []string) error
+	GetTagsByBots(ctx context.Context, botUserIDs []int64) (map[int64][]string, error)
+	GetInstallCounts(ctx context.Context, botUserIDs []int64) (map[int64]int64, error)
 
 	CreateToken(ctx context.Context, token model.BotToken) error
 	GetTokenByHash(ctx context.Context, tokenHash string) (model.BotToken, error)

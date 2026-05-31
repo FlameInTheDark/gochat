@@ -1,6 +1,7 @@
 package guild
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -27,6 +28,51 @@ func TestCreateGuildChannelCategoryRequestValidate(t *testing.T) {
 			t.Fatalf("Validate() error = %v, want message containing %q", err, ErrChannelNameRequired)
 		}
 	})
+}
+
+func TestInstallBotRequestUnmarshalBotUserID(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want int64
+	}{
+		{
+			name: "string snowflake",
+			body: `{"bot_user_id":"2321114293732376576","granted_permissions":559105}`,
+			want: 2321114293732376576,
+		},
+		{
+			name: "number snowflake",
+			body: `{"bot_user_id":2321114293732376576,"granted_permissions":559105}`,
+			want: 2321114293732376576,
+		},
+		{
+			name: "missing snowflake",
+			body: `{"granted_permissions":559105}`,
+			want: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var req InstallBotRequest
+
+			if err := json.Unmarshal([]byte(tt.body), &req); err != nil {
+				t.Fatalf("Unmarshal() error = %v", err)
+			}
+			if got := req.BotUserId; got != tt.want {
+				t.Fatalf("BotUserId = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInstallBotRequestUnmarshalBotUserIDRejectsInvalidString(t *testing.T) {
+	var req InstallBotRequest
+
+	if err := json.Unmarshal([]byte(`{"bot_user_id":"not-a-snowflake"}`), &req); err == nil {
+		t.Fatal("Unmarshal() error = nil")
+	}
 }
 
 func TestCreateGuildChannelRequestValidate(t *testing.T) {

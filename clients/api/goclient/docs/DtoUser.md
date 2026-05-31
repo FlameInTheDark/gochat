@@ -5,12 +5,15 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Avatar** | Pointer to [**DtoAvatarData**](DtoAvatarData.md) |  | [optional] 
+**Banner** | Pointer to [**DtoBannerData**](DtoBannerData.md) |  | [optional] 
 **BannerColor** | Pointer to **int32** |  | [optional] 
 **Bio** | Pointer to **string** |  | [optional] 
 **Discriminator** | Pointer to **string** |  | [optional] 
 **Id** | Pointer to **int32** |  | [optional] 
+**IsBot** | Pointer to **bool** |  | [optional] 
 **Name** | Pointer to **string** |  | [optional] 
 **PanelColor** | Pointer to **int32** |  | [optional] 
+**PersonalNote** | Pointer to **string** |  | [optional] 
 
 ## Methods
 
@@ -55,6 +58,31 @@ SetAvatar sets Avatar field to given value.
 `func (o *DtoUser) HasAvatar() bool`
 
 HasAvatar returns a boolean if a field has been set.
+
+### GetBanner
+
+`func (o *DtoUser) GetBanner() DtoBannerData`
+
+GetBanner returns the Banner field if non-nil, zero value otherwise.
+
+### GetBannerOk
+
+`func (o *DtoUser) GetBannerOk() (*DtoBannerData, bool)`
+
+GetBannerOk returns a tuple with the Banner field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetBanner
+
+`func (o *DtoUser) SetBanner(v DtoBannerData)`
+
+SetBanner sets Banner field to given value.
+
+### HasBanner
+
+`func (o *DtoUser) HasBanner() bool`
+
+HasBanner returns a boolean if a field has been set.
 
 ### GetBannerColor
 
@@ -156,6 +184,31 @@ SetId sets Id field to given value.
 
 HasId returns a boolean if a field has been set.
 
+### GetIsBot
+
+`func (o *DtoUser) GetIsBot() bool`
+
+GetIsBot returns the IsBot field if non-nil, zero value otherwise.
+
+### GetIsBotOk
+
+`func (o *DtoUser) GetIsBotOk() (*bool, bool)`
+
+GetIsBotOk returns a tuple with the IsBot field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIsBot
+
+`func (o *DtoUser) SetIsBot(v bool)`
+
+SetIsBot sets IsBot field to given value.
+
+### HasIsBot
+
+`func (o *DtoUser) HasIsBot() bool`
+
+HasIsBot returns a boolean if a field has been set.
+
 ### GetName
 
 `func (o *DtoUser) GetName() string`
@@ -205,6 +258,31 @@ SetPanelColor sets PanelColor field to given value.
 `func (o *DtoUser) HasPanelColor() bool`
 
 HasPanelColor returns a boolean if a field has been set.
+
+### GetPersonalNote
+
+`func (o *DtoUser) GetPersonalNote() string`
+
+GetPersonalNote returns the PersonalNote field if non-nil, zero value otherwise.
+
+### GetPersonalNoteOk
+
+`func (o *DtoUser) GetPersonalNoteOk() (*string, bool)`
+
+GetPersonalNoteOk returns a tuple with the PersonalNote field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPersonalNote
+
+`func (o *DtoUser) SetPersonalNote(v string)`
+
+SetPersonalNote sets PersonalNote field to given value.
+
+### HasPersonalNote
+
+`func (o *DtoUser) HasPersonalNote() bool`
+
+HasPersonalNote returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

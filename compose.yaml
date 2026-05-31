@@ -465,6 +465,11 @@ services:
       - "start"
       - "--base_dir=/home/yugabyte/yb_data"
       - "--background=false"
+      # Docker Desktop/WSL can occasionally jump the container clock by more
+      # than YugabyteDB's default 500ms local-dev skew allowance, which causes
+      # yb-tserver to crash and briefly makes YSQL unavailable.
+      - "--master_flags=yb_enable_read_committed_isolation=true,max_clock_skew_usec=${YUGABYTE_MAX_CLOCK_SKEW_USEC:-5000000}"
+      - "--tserver_flags=yb_enable_read_committed_isolation=true,ysql_pg_conf_csv={yb_enable_cbo=on},max_clock_skew_usec=${YUGABYTE_MAX_CLOCK_SKEW_USEC:-5000000}"
     environment: &YUGABYTE_AUTH
       PGPASSWORD: "${YUGABYTE_PASSWORD:-yugabyte}"
     volumes:
