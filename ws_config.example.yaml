@@ -11,3 +11,6 @@ pg_dsn: "host=yugabyte port=5433 user=yugabyte password=yugabyte dbname=gochat s
 
 # Cache Address (KeyDB)
 cache_addr: "keydb:6379"
+
+# NATS
+nats_conn_string: "nats://nats:4222"

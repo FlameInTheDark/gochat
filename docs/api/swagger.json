@@ -929,6 +929,1694 @@
                 }
             }
         },
+        "/bot/api/v1/guild": {
+            "get": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot Guild"
+                ],
+                "summary": "List guilds where the bot is installed",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/guild.Response"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/bot/api/v1/guild/{guild_id}/channels": {
+            "get": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot Guild"
+                ],
+                "summary": "List channels visible to the bot in a guild",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.Channel"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/bot/api/v1/message/channel/{channel_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot Message"
+                ],
+                "summary": "List messages visible to the bot",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Message id cursor",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "before, after, or around",
+                        "name": "direction",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.Message"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot Message"
+                ],
+                "summary": "Send a message as the bot",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Message body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/message.SendRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Message"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/bot/api/v1/message/channel/{channel_id}/typing": {
+            "post": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot Message"
+                ],
+                "summary": "Send a typing indicator as the bot",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/bot/api/v1/message/channel/{channel_id}/{message_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot Message"
+                ],
+                "summary": "Delete a message as the bot",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Message id",
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot Message"
+                ],
+                "summary": "Edit a message as the bot",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Message id",
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Message update",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/message.UpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Message"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/bot/api/v1/message/channel/{channel_id}/{message_id}/ack": {
+            "post": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot Message"
+                ],
+                "summary": "Mark a channel read as the bot",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Message id",
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/bot/api/v1/message/channel/{channel_id}/{message_id}/reactions/{reaction_name}": {
+            "get": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot Message"
+                ],
+                "summary": "List users who reacted with a specific reaction",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Message id",
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Reaction name",
+                        "name": "reaction_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Reaction ID cursor",
+                        "name": "after",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageReactionUsersPage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot Message"
+                ],
+                "summary": "Add the bot reaction to a message",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Message id",
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Reaction name",
+                        "name": "reaction_name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageReaction"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot Message"
+                ],
+                "summary": "Remove the bot reaction from a message",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Channel id",
+                        "name": "channel_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Message id",
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Reaction name",
+                        "name": "reaction_name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/bot/api/v1/user/me": {
+            "get": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot User"
+                ],
+                "summary": "Get current bot account",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/user.MeResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/developer/bots": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "List owned bots",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/developer.BotResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "Create a bot",
+                "parameters": [
+                    {
+                        "description": "Bot configuration",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/developer.CreateBotRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/developer.BotResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/developer/bots/authorize/preview": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "Preview bot authorization",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Install grant token",
+                        "name": "grant_token",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Public bot user id",
+                        "name": "bot_user_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Requested permission bitmask",
+                        "name": "permissions",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/developer.BotAuthorizationPreview"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/developer/bots/public": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "Search public bots",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/developer.BotResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/developer/bots/{bot_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "Get an owned bot",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot user id",
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/developer.BotResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "Delete an owned bot",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot user id",
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "Update an owned bot",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot user id",
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Bot update",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/developer.UpdateBotRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/developer.BotResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/developer/bots/{bot_id}/avatar": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "Create bot avatar upload metadata",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot user id",
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Avatar upload request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/developer.CreateBotAvatarRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AvatarUpload"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "413": {
+                        "description": "File too large",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "415": {
+                        "description": "Unsupported media type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/developer/bots/{bot_id}/banner": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "Create bot banner upload metadata",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot user id",
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Banner upload request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/developer.CreateBotBannerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BannerUpload"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "413": {
+                        "description": "File too large",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "415": {
+                        "description": "Unsupported media type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/developer/bots/{bot_id}/grants": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "List bot install grants",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot user id",
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.BotInstallGrant"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "Create a bot install grant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot user id",
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Grant request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/developer.CreateGrantRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/developer.GrantCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/developer/bots/{bot_id}/grants/{grant_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "Revoke a bot install grant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot user id",
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Grant id",
+                        "name": "grant_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/developer/bots/{bot_id}/tokens": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "List bot runtime tokens",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot user id",
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.BotToken"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "Create a bot runtime token",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot user id",
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Token request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/developer.CreateTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/developer.TokenCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/developer/bots/{bot_id}/tokens/{token_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Developer Bots"
+                ],
+                "summary": "Revoke a bot runtime token",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bot user id",
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Token id",
+                        "name": "token_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/emoji/{emoji_id}": {
             "get": {
                 "produces": [
@@ -1010,6 +2698,45 @@
                     },
                     "500": {
                         "description": "Something bad happened",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/guild/bots/authorize-guilds": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild Bots"
+                ],
+                "summary": "List guilds available for bot authorization",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.Guild"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -1394,6 +3121,194 @@
                     },
                     "406": {
                         "description": "Permissions required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/guild/{guild_id}/bots": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild Bots"
+                ],
+                "summary": "List installed guild bots",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/guild.InstalledBotResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild Bots"
+                ],
+                "summary": "Install a bot into a guild",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Install request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/guild.InstallBotRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/guild.InstalledBotResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/guild/{guild_id}/bots/{bot_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guild Bots"
+                ],
+                "summary": "Remove a bot from a guild",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Guild id",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Bot user id",
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -5675,6 +7590,129 @@
                 }
             }
         },
+        "/upload/profile-covers/{user_id}/{banner_id}": {
+            "post": {
+                "description": "Uploads a profile banner image. Requires source dimensions at least 680x240 and converts to WebP under 10MB.",
+                "consumes": [
+                    "application/octet-stream"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Upload"
+                ],
+                "summary": "Upload user profile banner",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Banner ID",
+                        "name": "banner_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Crop X coordinate in source pixels",
+                        "name": "crop_x",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Crop Y coordinate in source pixels",
+                        "name": "crop_y",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Crop width in source pixels",
+                        "name": "crop_width",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Crop height in source pixels",
+                        "name": "crop_height",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Binary image payload",
+                        "name": "file",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "204": {
+                        "description": "No Content (already uploaded)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Banner not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "413": {
+                        "description": "File too large",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "415": {
+                        "description": "Unsupported Media Type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/user/me": {
             "patch": {
                 "produces": [
@@ -5824,6 +7862,40 @@
                         "description": "Internal server error",
                         "schema": {
                             "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/me/banner": {
+            "post": {
+                "description": "Creates a profile banner placeholder and returns upload info. Upload the binary to attachments service.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Create profile banner metadata",
+                "parameters": [
+                    {
+                        "description": "Banner creation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.CreateBannerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Banner upload data",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BannerUpload"
                         }
                     }
                 }
@@ -6840,6 +8912,69 @@
                 }
             }
         },
+        "/user/me/notes/{user_id}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Save a private note for another user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Target user ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Private note",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UpsertUserNoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Delete a private note for another user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Target user ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/user/me/settings": {
             "get": {
                 "description": "Returns the user settings bootstrap payload, including read states, joined thread indexes, guild emojis, mentions, and active direct-message voice calls in dm_calls.",
@@ -7698,6 +9833,174 @@
                 }
             }
         },
+        "developer.BotAuthorizationPreview": {
+            "type": "object",
+            "properties": {
+                "bot": {
+                    "$ref": "#/definitions/developer.BotResponse"
+                },
+                "grant_id": {
+                    "type": "integer"
+                },
+                "requested_permissions": {
+                    "type": "integer"
+                }
+            }
+        },
+        "developer.BotResponse": {
+            "type": "object",
+            "properties": {
+                "bot_user_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "integer"
+                },
+                "default_permissions": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "disabled": {
+                    "type": "boolean"
+                },
+                "owner_user_id": {
+                    "type": "integer"
+                },
+                "public": {
+                    "type": "boolean"
+                },
+                "updated_at": {
+                    "type": "integer"
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.User"
+                }
+            }
+        },
+        "developer.CreateBotAvatarRequest": {
+            "type": "object",
+            "properties": {
+                "content_type": {
+                    "type": "string",
+                    "example": "image/png"
+                },
+                "file_size": {
+                    "type": "integer",
+                    "example": 120000
+                }
+            }
+        },
+        "developer.CreateBotBannerRequest": {
+            "type": "object",
+            "properties": {
+                "content_type": {
+                    "type": "string",
+                    "example": "image/png"
+                },
+                "file_size": {
+                    "type": "integer",
+                    "example": 1048576
+                }
+            }
+        },
+        "developer.CreateBotRequest": {
+            "type": "object",
+            "properties": {
+                "default_permissions": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "public": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "developer.CreateGrantRequest": {
+            "type": "object",
+            "properties": {
+                "expires_in_seconds": {
+                    "type": "integer"
+                },
+                "max_uses": {
+                    "type": "integer"
+                },
+                "requested_permissions": {
+                    "type": "integer"
+                }
+            }
+        },
+        "developer.CreateTokenRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "developer.GrantCreateResponse": {
+            "type": "object",
+            "properties": {
+                "grant": {
+                    "$ref": "#/definitions/model.BotInstallGrant"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "developer.TokenCreateResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                },
+                "token_data": {
+                    "$ref": "#/definitions/model.BotToken"
+                }
+            }
+        },
+        "developer.UpdateBotRequest": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "integer"
+                },
+                "banner": {
+                    "type": "integer"
+                },
+                "banner_color": {
+                    "type": "integer"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "default_permissions": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "disabled": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "panel_color": {
+                    "type": "integer"
+                },
+                "public": {
+                    "type": "boolean"
+                }
+            }
+        },
         "dto.Attachment": {
             "type": "object",
             "properties": {
@@ -7817,6 +10120,52 @@
             }
         },
         "dto.AvatarUpload": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 2230469276416868352
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 2230469276416868352
+                }
+            }
+        },
+        "dto.BannerData": {
+            "type": "object",
+            "properties": {
+                "content_type": {
+                    "type": "string",
+                    "example": "image/webp"
+                },
+                "exists": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "height": {
+                    "type": "integer",
+                    "example": 240
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 2230469276416868352
+                },
+                "size": {
+                    "type": "integer",
+                    "example": 245678
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://cdn.example.com/banners/2230/2231.webp"
+                },
+                "width": {
+                    "type": "integer",
+                    "example": 680
+                }
+            }
+        },
+        "dto.BannerUpload": {
             "type": "object",
             "properties": {
                 "id": {
@@ -8423,6 +10772,9 @@
                 "avatar": {
                     "$ref": "#/definitions/dto.AvatarData"
                 },
+                "banner": {
+                    "$ref": "#/definitions/dto.BannerData"
+                },
                 "banner_color": {
                     "type": "integer",
                     "example": 3447003
@@ -8439,6 +10791,10 @@
                     "type": "integer",
                     "example": 2230469276416868352
                 },
+                "is_bot": {
+                    "type": "boolean",
+                    "example": false
+                },
                 "name": {
                     "type": "string",
                     "example": "FancyUserName"
@@ -8446,6 +10802,10 @@
                 "panel_color": {
                     "type": "integer",
                     "example": 15158332
+                },
+                "personal_note": {
+                    "type": "string",
+                    "example": "Met during the release party"
                 }
             }
         },
@@ -8911,6 +11271,52 @@
                 }
             }
         },
+        "guild.InstallBotRequest": {
+            "type": "object",
+            "properties": {
+                "bot_user_id": {
+                    "type": "integer"
+                },
+                "grant_token": {
+                    "type": "string"
+                },
+                "granted_permissions": {
+                    "type": "integer"
+                }
+            }
+        },
+        "guild.InstalledBotResponse": {
+            "type": "object",
+            "properties": {
+                "bot_user_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "integer"
+                },
+                "grant_id": {
+                    "type": "integer"
+                },
+                "granted_permissions": {
+                    "type": "integer"
+                },
+                "installer_user_id": {
+                    "type": "integer"
+                },
+                "member": {
+                    "$ref": "#/definitions/dto.Member"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.User"
+                }
+            }
+        },
         "guild.JoinVoiceResponse": {
             "type": "object",
             "properties": {
@@ -9036,6 +11442,26 @@
                 "permissions": {
                     "description": "Permissions bitset",
                     "type": "integer"
+                }
+            }
+        },
+        "guild.Response": {
+            "type": "object",
+            "properties": {
+                "granted_permissions": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "integer"
+                },
+                "public": {
+                    "type": "boolean"
                 }
             }
         },
@@ -9240,6 +11666,29 @@
                 }
             }
         },
+        "message.SendRequest": {
+            "type": "object",
+            "properties": {
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "content": {
+                    "type": "string"
+                },
+                "embeds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/embed.Embed"
+                    }
+                },
+                "reference": {
+                    "type": "integer"
+                }
+            }
+        },
         "message.UpdateMessageRequest": {
             "type": "object",
             "properties": {
@@ -9259,6 +11708,23 @@
                     "description": "Message flags bitmask. Use 4 to suppress URL embed generation and clear generated embeds.",
                     "type": "integer",
                     "example": 4
+                }
+            }
+        },
+        "message.UpdateRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "embeds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/embed.Embed"
+                    }
+                },
+                "flags": {
+                    "type": "integer"
                 }
             }
         },
@@ -9289,6 +11755,67 @@
                     "description": "Image width in pixels",
                     "type": "integer",
                     "example": 800
+                }
+            }
+        },
+        "model.BotInstallGrant": {
+            "type": "object",
+            "properties": {
+                "bot_user_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "max_uses": {
+                    "type": "integer"
+                },
+                "owner_user_id": {
+                    "type": "integer"
+                },
+                "requested_permissions": {
+                    "type": "integer"
+                },
+                "revoked_at": {
+                    "type": "string"
+                },
+                "token_prefix": {
+                    "type": "string"
+                },
+                "uses": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.BotToken": {
+            "type": "object",
+            "properties": {
+                "bot_user_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "last_used_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "revoked_at": {
+                    "type": "string"
+                },
+                "token_prefix": {
+                    "type": "string"
                 }
             }
         },
@@ -9825,6 +12352,19 @@
                 }
             }
         },
+        "user.CreateBannerRequest": {
+            "type": "object",
+            "properties": {
+                "content_type": {
+                    "type": "string",
+                    "example": "image/png"
+                },
+                "file_size": {
+                    "type": "integer",
+                    "example": 1048576
+                }
+            }
+        },
         "user.CreateDMCallStreamRequest": {
             "type": "object",
             "properties": {
@@ -9923,6 +12463,29 @@
                 }
             }
         },
+        "user.MeResponse": {
+            "type": "object",
+            "properties": {
+                "bot_user_id": {
+                    "type": "integer"
+                },
+                "default_permissions": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "owner_user_id": {
+                    "type": "integer"
+                },
+                "public": {
+                    "type": "boolean"
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.User"
+                }
+            }
+        },
         "user.ModifyUserRequest": {
             "type": "object",
             "properties": {
@@ -9959,6 +12522,15 @@
                 "user_id": {
                     "type": "string",
                     "example": "0"
+                }
+            }
+        },
+        "user.UpsertUserNoteRequest": {
+            "type": "object",
+            "properties": {
+                "note": {
+                    "type": "string",
+                    "example": "Met during the release party"
                 }
             }
         },
@@ -10097,6 +12669,13 @@
                     }
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BotToken": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

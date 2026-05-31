@@ -6,12 +6,13 @@ This project is composed of several services located under the `cmd/` directory.
 - Purpose: Public HTTP API gateway for the platform (guilds, channels, messages, search, voice and stream control).
 - Key features:
   - REST endpoints for core resources and actions.
+  - User-authenticated bot management and guild-admin bot installation/removal routes.
   - Issues short‑lived SFU tokens for voice join/move flows.
   - Issues separate short-lived stream tokens for screen/app sharing publishers and viewers.
   - Manages voice region overrides and selects SFU instances via discovery.
   - Selects stream instances in the same effective region as the voice channel.
-  - Publishes/consumes events via NATS.
-- Dependencies: Scylla/Cassandra, YugabyteDB YSQL, Redis/KeyDB (cache), NATS, OpenSearch (via Indexer), etcd (discovery).
+  - Publishes client events via user NATS and bot fan-out events via bot NATS.
+- Dependencies: Scylla/Cassandra, YugabyteDB YSQL, Redis/KeyDB (cache), user NATS, bot NATS, OpenSearch (via Indexer), etcd (discovery).
 
 ## Auth (`cmd/auth`)
 - Purpose: Authentication and account lifecycle.
@@ -29,6 +30,34 @@ This project is composed of several services located under the `cmd/` directory.
   - Presence heartbeats and aggregation, session tracking, and OTEL-based telemetry shipped to OpenObserve.
   - Validates client tokens and enforces access on subscriptions.
 - Dependencies: NATS, Scylla/Cassandra, YugabyteDB YSQL, Redis/KeyDB (presence/cache).
+
+## Bot API (`cmd/botapi`)
+- Purpose: Dedicated REST API for bot runtime traffic.
+- Key features:
+  - Authenticates only bot runtime tokens with `Authorization: Bot <token>`.
+  - Exposes bot account context, installed guilds, visible channels, message send/edit/delete/read, typing, reactions, and read-state routes.
+  - Uses bot-specific endpoint packages under `cmd/botapi/endpoints` and does not mount user API handlers.
+  - Enforces normal guild/channel permissions capped by the guild install grant.
+- Dependencies: Scylla/Cassandra, YugabyteDB YSQL, Redis/KeyDB, user NATS, bot NATS.
+
+## Bot Event Router (`cmd/botrouter`)
+- Purpose: Partitioned fan-out service for bot gateway events.
+- Key features:
+  - Owns `bot.event.p.*` partitions through Redis leases.
+  - Expands each guild event to all currently installed eligible bots.
+  - Applies grant caps, role permissions, and channel visibility before delivery.
+  - Publishes compact delivery envelopes to `bot.deliver.instance.*` subjects.
+- Dependencies: bot NATS, YugabyteDB YSQL, Redis/KeyDB.
+
+## Bot WebSocket Gateway (`cmd/botws`)
+- Purpose: Dedicated WebSocket gateway for bot event delivery.
+- Deployment config: `botws_config.yaml` mounted as `/dist/config.yaml`.
+- Key features:
+  - Authenticates upgrades with `Authorization: Bot <token>`.
+  - Registers active bot sessions in Redis for router targeting.
+  - Uses guild-based sharding so each guild event stream is delivered to one bot shard, or to all active instances when unsharded.
+  - Subscribes only to its instance delivery subject on bot NATS.
+- Dependencies: bot NATS, YugabyteDB YSQL, Redis/KeyDB.
 
 ## SFU (`cmd/sfu`)
 - Purpose: Voice Selective Forwarding Unit with WebRTC media relay and WS signaling.

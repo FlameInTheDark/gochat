@@ -90,7 +90,7 @@ func (h *Hub) Register(conn Conn, topic string) error {
 		defer te.mu.RUnlock()
 		for c := range te.conns {
 			c.Send(Delivery{
-				Topic:   topic,
+				Topic:   msg.Subject,
 				Data:    msg.Data,
 				Headers: msg.Header,
 				Context: ctx,

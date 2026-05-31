@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/FlameInTheDark/gochat/cmd/api/config"
+	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/developer"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/emoji"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/guild"
 	"github.com/FlameInTheDark/gochat/cmd/api/endpoints/message"
@@ -31,6 +32,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/FlameInTheDark/gochat/internal/indexmq"
 	"github.com/FlameInTheDark/gochat/internal/mq"
+	"github.com/FlameInTheDark/gochat/internal/mq/botnats"
 	"github.com/FlameInTheDark/gochat/internal/mq/nats"
 	"github.com/FlameInTheDark/gochat/internal/observability"
 	"github.com/FlameInTheDark/gochat/internal/presence"
@@ -98,7 +100,11 @@ func retryStartupProbe(ctx context.Context, logger *slog.Logger, dependency stri
 	}
 }
 
-func verifyAPIInfrastructure(logger *slog.Logger, retries int, pg *pgdb.DB, database *db.CQLCon, cache *kvs.Cache, natsQueue *nats.NatsQueue, indexMQ *indexmq.IndexMQ, embedMQ *embedmq.Queue) error {
+type startupProbeDependency interface {
+	Ping(context.Context) error
+}
+
+func verifyAPIInfrastructure(logger *slog.Logger, retries int, pg *pgdb.DB, database *db.CQLCon, cache *kvs.Cache, natsQueue startupProbeDependency, botNatsQueue startupProbeDependency, indexMQ *indexmq.IndexMQ, embedMQ *embedmq.Queue) error {
 	baseCtx := context.Background()
 	if err := retryStartupProbe(baseCtx, logger, "postgres", retries, func(ctx context.Context) error {
 		return pg.Conn().PingContext(ctx)
@@ -112,6 +118,9 @@ func verifyAPIInfrastructure(logger *slog.Logger, retries int, pg *pgdb.DB, data
 		return err
 	}
 	if err := retryStartupProbe(baseCtx, logger, "nats", retries, natsQueue.Ping); err != nil {
+		return err
+	}
+	if err := retryStartupProbe(baseCtx, logger, "bot_nats", retries, botNatsQueue.Ping); err != nil {
 		return err
 	}
 	if err := retryStartupProbe(baseCtx, logger, "indexer_nats", retries, indexMQ.Ping); err != nil {
@@ -315,13 +324,19 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 
 	logger.Info("Connecting to NATS")
-	var qt mq.SendTransporter
 	nt, err := nats.New(cfg.NATSConnString)
 	if err != nil {
 		return nil, err
 	}
 	shut.Up(nt)
-	qt = nt
+
+	logger.Info("Connecting to Bot NATS")
+	botNt, err := botnats.New(cfg.BotNATSConnString, cfg.BotEventPartitions)
+	if err != nil {
+		return nil, err
+	}
+	shut.Up(botNt)
+	qt := mq.NewFanoutTransporter(nt, botNt)
 
 	logger.Info("Connecting to Indexer NATS")
 	imq, err := indexmq.NewIndexMQ(cfg.IndexerNATSConnString)
@@ -347,7 +362,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	}
 	shut.Up(cache)
 
-	if err := verifyAPIInfrastructure(logger, cfg.PGRetries, pg, database, cache, nt, imq, emq); err != nil {
+	if err := verifyAPIInfrastructure(logger, cfg.PGRetries, pg, database, cache, nt, botNt, imq, emq); err != nil {
 		return nil, err
 	}
 	pstore := presence.NewStore(cache)
@@ -443,6 +458,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 	s.Register(
 		"/api/v1",
 		emoji.New(database, pg, cache, logger),
+		developer.New(database, pg, cfg.AttachmentTTLMinutes*60, logger),
 		user.New(database, pg, qt, searchQueue, cache, cfg.AttachmentTTLMinutes*60, contentHosts, cfg.AuthSecret, cfg.VoiceDefaultRegion, disco, streamDisco, extractRegionIDs(cfg.VoiceRegions), logger),
 		message.New(database, pg, qt, imq, emq, cfg.UploadLimit, cfg.AttachmentTTLMinutes*60, cache, logger),
 		guild.New(database, pg, qt, imq, searchQueue, cache, storage, cfg.AttachmentTTLMinutes*60, cfg.AuthSecret, pstore, nt.Conn(), cfg.VoiceDefaultRegion, disco, streamDisco, extractRegionIDs(cfg.VoiceRegions), logger),

@@ -51,7 +51,13 @@ func (q *NatsQueue) SendChannelMessageContext(ctx context.Context, channelId int
 	if err != nil {
 		return err
 	}
-	return q.publish(ctx, fmt.Sprintf("channel.%d", channelId), msg)
+	if err := q.publish(ctx, fmt.Sprintf("channel.%d", channelId), msg); err != nil {
+		return err
+	}
+	if guildID, ok := guildIDFromChannelMessage(message); ok {
+		return q.publish(ctx, fmt.Sprintf("guild.%d.channel.%d", guildID, channelId), msg)
+	}
+	return nil
 }
 
 func (q *NatsQueue) SendGuildUpdate(guildId int64, message mqmsg.EventDataMessage) error {
@@ -95,4 +101,32 @@ func (q *NatsQueue) publish(ctx context.Context, subject string, msg mqmsg.Messa
 		Header:  headers,
 		Data:    messageBody,
 	})
+}
+
+func guildIDFromChannelMessage(message mqmsg.EventDataMessage) (int64, bool) {
+	switch m := message.(type) {
+	case *mqmsg.CreateMessage:
+		return optionalGuildID(m.GuildId)
+	case *mqmsg.UpdateMessage:
+		return optionalGuildID(m.GuildId)
+	case *mqmsg.DeleteMessage:
+		return optionalGuildID(m.GuildId)
+	case *mqmsg.MessageReactionAdd:
+		return optionalGuildID(m.GuildId)
+	case *mqmsg.MessageReactionRemove:
+		return optionalGuildID(m.GuildId)
+	case *mqmsg.GuildChannelMessage:
+		return optionalGuildID(m.GuildId)
+	case *mqmsg.ChannelUserTyping:
+		return optionalGuildID(m.GuildId)
+	default:
+		return 0, false
+	}
+}
+
+func optionalGuildID(id *int64) (int64, bool) {
+	if id == nil || *id == 0 {
+		return 0, false
+	}
+	return *id, true
 }

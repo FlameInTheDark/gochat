@@ -5,6 +5,7 @@ import (
 
 	"github.com/FlameInTheDark/gochat/internal/database/model"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	botrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/bot"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channelroleperm"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channeluserperm"
@@ -14,6 +15,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/guildchannels"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/member"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/role"
+	userrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/userrole"
 	"github.com/FlameInTheDark/gochat/internal/permissions"
 )
@@ -35,6 +37,8 @@ type Entity struct {
 	m    member.Member
 	dm   dmchannel.DmChannel
 	gdm  groupdmchannel.GroupDMChannel
+	bot  botrepo.Bot
+	u    userrepo.User
 }
 
 func New(pg *pgdb.DB) RoleCheck {
@@ -49,5 +53,7 @@ func New(pg *pgdb.DB) RoleCheck {
 		m:    member.New(pg.Conn()),
 		dm:   dmchannel.New(pg.Conn()),
 		gdm:  groupdmchannel.New(pg.Conn()),
+		bot:  botrepo.New(pg.Conn()),
+		u:    userrepo.New(pg.Conn()),
 	}
 }

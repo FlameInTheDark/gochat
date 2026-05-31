@@ -101,3 +101,7 @@ func (s *Server) Close() error {
 func (s *Server) Use(args ...interface{}) {
 	s.app.Use(args...)
 }
+
+func (s *Server) App() *fiber.App {
+	return s.app
+}

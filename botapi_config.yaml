@@ -1,0 +1,29 @@
+# Bot API
+server_address: ":3102"
+log_level: "warn"
+rate_limit_time: 1
+rate_limit_requests: 60
+idempotency_storage_lifetime: 10
+
+auth_secret: "change_me_before_use_it_in_production"
+auth_secret_enforcement: "warn"
+
+# Cassandra
+cluster: ["scylla"]
+cluster_keyspace: "gochat"
+
+# Redis
+keydb: "keydb:6379"
+
+# YugabyteDB YSQL
+pg_driver: "pgx"
+pg_dsn: "host=yugabyte port=5433 user=yugabyte password=yugabyte dbname=gochat_sharded sslmode=disable"
+
+# NATS
+nats_conn_string: "nats://nats:4222"
+bot_nats_conn_string: "nats://bot-nats:4222"
+bot_event_partitions: 1024
+indexer_nats_conn_string: "nats://indexer-nats:4222"
+
+upload_limit: 50000000
+attachment_ttl_minutes: 10

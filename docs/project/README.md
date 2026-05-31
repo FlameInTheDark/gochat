@@ -6,6 +6,7 @@ Here goes the project documentation.
 - [Channels](channels/README.md)
 - [Message Embeds](channels/Embeds.md)
 - [Guilds](guilds/README.md)
+- [Bots](bots/README.md)
 
 
 - [WebSocket Events](ws/README.md)

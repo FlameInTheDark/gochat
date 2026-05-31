@@ -32,8 +32,8 @@ func (r UpsertUserNoteRequest) Validate() error {
 //	@Tags		User
 //	@Accept		json
 //	@Produce	json
-//	@Param		user_id	path	int64					true	"Target user ID"
-//	@Param		request	body	UpsertUserNoteRequest	true	"Private note"
+//	@Param		user_id	path		int64					true	"Target user ID"
+//	@Param		request	body		UpsertUserNoteRequest	true	"Private note"
 //	@Success	200		{string}	string					"OK"
 //	@Router		/user/me/notes/{user_id} [put]
 func (e *entity) UpsertUserNote(c *fiber.Ctx) error {
@@ -82,7 +82,7 @@ func (e *entity) UpsertUserNote(c *fiber.Ctx) error {
 //
 //	@Summary	Delete a private note for another user
 //	@Tags		User
-//	@Param		user_id	path	int64	true	"Target user ID"
+//	@Param		user_id	path		int64	true	"Target user ID"
 //	@Success	200		{string}	string	"OK"
 //	@Router		/user/me/notes/{user_id} [delete]
 func (e *entity) DeleteUserNote(c *fiber.Ctx) error {

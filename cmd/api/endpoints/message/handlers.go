@@ -2147,6 +2147,7 @@ func (e *entity) sendMessageEvents(ctx context.Context, channel *model.Channel, 
 						ChannelId: channel.Id,
 						MessageId: message.Id,
 						From:      mqmsg.UserBrief{Id: userData.User.Id, Name: userData.User.Name, Discriminator: userData.Discriminator.Discriminator, Avatar: userData.User.Avatar, AvatarData: ad},
+						Message:   &message,
 					})
 				}
 			}
@@ -3186,7 +3187,7 @@ func (e *entity) Delete(c *fiber.Ctx) error {
 	}
 
 	// Delete message and send event
-	if err := e.deleteMessageAndNotify(c, message); err != nil {
+	if err := e.deleteMessageAndNotify(c, message, guildID); err != nil {
 		return err
 	}
 
@@ -3326,22 +3327,23 @@ func (e *entity) updateLastMessageAfterDelete(ctx context.Context, channel *mode
 }
 
 // deleteMessageAndNotify deletes the message and sends notification event
-func (e *entity) deleteMessageAndNotify(c *fiber.Ctx, message *model.Message) error {
+func (e *entity) deleteMessageAndNotify(c *fiber.Ctx, message *model.Message, guildID *int64) error {
 	// Delete the message
 	if err := e.msg.DeleteMessage(c.UserContext(), message.Id, message.ChannelId); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to delete message")
 	}
 
 	// Send delete event asynchronously
-	go e.sendDeleteEvent(observability.BackgroundFromContext(c.UserContext()), message.ChannelId, message.Id)
+	go e.sendDeleteEvent(observability.BackgroundFromContext(c.UserContext()), message.ChannelId, guildID, message.Id)
 
 	return nil
 }
 
 // sendDeleteEvent sends the message delete event asynchronously
-func (e *entity) sendDeleteEvent(ctx context.Context, channelId, messageId int64) {
+func (e *entity) sendDeleteEvent(ctx context.Context, channelId int64, guildID *int64, messageId int64) {
 	log := observability.LoggerWithContext(ctx, e.log)
 	if err := mq.SendChannelMessage(ctx, e.mqt, channelId, &mqmsg.DeleteMessage{
+		GuildId:   guildID,
 		MessageId: messageId,
 		ChannelId: channelId,
 	}); err != nil {
@@ -3563,6 +3565,7 @@ func publicUserDTO(user model.User, name, discriminator string) dto.User {
 		Bio:           user.Bio,
 		BannerColor:   user.BannerColor,
 		PanelColor:    user.PanelColor,
+		IsBot:         user.IsBot(),
 	}
 }
 
@@ -3680,11 +3683,12 @@ func (e *entity) Typing(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, ErrIncorrectChannelID)
 	}
 	// Validate channel and permissions
-	channel, _, err := e.validateSendPermissions(c, channelId, user.Id)
+	channel, guildID, err := e.validateSendPermissions(c, channelId, user.Id)
 	if err != nil {
 		return err
 	}
 	err = mq.SendChannelMessage(c.UserContext(), e.mqt, channelId, &mqmsg.ChannelUserTyping{
+		GuildId:   guildID,
 		ChannelId: channel.Id,
 		UserId:    user.Id,
 	})

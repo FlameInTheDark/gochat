@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -73,6 +75,9 @@ func (db *DB) Connect(dsn string, opts ConnectOptions) error {
 	driverName := opts.DriverName
 	if driverName == "" {
 		driverName = "postgres"
+	}
+	if strings.EqualFold(driverName, "pgx") {
+		dsn = withPGXExecMode(dsn)
 	}
 
 	// Create base driver handle (does not actually establish a network connection).
@@ -155,6 +160,26 @@ func (db *DB) Connect(dsn string, opts ConnectOptions) error {
 	db.registerPoolMetrics()
 	db.logger.Info("Postgres DB connected")
 	return nil
+}
+
+func withPGXExecMode(dsn string) string {
+	if strings.Contains(dsn, "default_query_exec_mode=") {
+		return dsn
+	}
+
+	trimmed := strings.TrimSpace(dsn)
+	if trimmed == "" {
+		return dsn
+	}
+
+	if u, err := url.Parse(trimmed); err == nil && u.Scheme != "" && u.Host != "" {
+		q := u.Query()
+		q.Set("default_query_exec_mode", "exec")
+		u.RawQuery = q.Encode()
+		return u.String()
+	}
+
+	return trimmed + " default_query_exec_mode=exec"
 }
 
 func (db *DB) Conn() *sqlx.DB {

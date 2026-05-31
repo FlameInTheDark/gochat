@@ -26,6 +26,30 @@ func (e *Entity) getUserRoleIDs(ctx context.Context, guildID, userID int64) ([]i
 	return roleIDs, nil
 }
 
+func (e *Entity) capBotGuildPermissions(ctx context.Context, guildID, userID int64, permAll int64) (int64, bool, error) {
+	if e.u == nil || e.bot == nil {
+		return permAll, true, nil
+	}
+	u, err := e.u.GetUserById(ctx, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, false, nil
+		}
+		return 0, false, err
+	}
+	if !u.IsBot() {
+		return permAll, true, nil
+	}
+	install, err := e.bot.GetBotGuild(ctx, userID, guildID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, false, nil
+		}
+		return 0, false, err
+	}
+	return permAll & install.GrantedPermissions, true, nil
+}
+
 // ChannelPerm checks if a user has the specified permissions for a channel
 // Returns channel, guild channel, guild, permission status, and error
 func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int64, perm ...permissions.RolePermission) (*model.Channel, *model.GuildChannel, *model.Guild, bool, error) {
@@ -87,9 +111,16 @@ func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int
 			return nil, nil, nil, false, err
 		}
 
-		// Guild owner has all permissions
+		// Guild owner has all permissions unless this is a bot account, which stays grant-capped.
 		if userID == guild.OwnerId {
-			return &channel, &gc, &guild, true, nil
+			capped, ok, err := e.capBotGuildPermissions(ctx, guildID, userID, int64(^uint64(0)>>1))
+			if err != nil || !ok {
+				return nil, nil, nil, false, err
+			}
+			if permissions.CheckPermissions(capped, perm...) {
+				return &channel, &gc, &guild, true, nil
+			}
+			return nil, nil, nil, false, nil
 		}
 
 		// Current guild membership is required before role or channel overrides apply.
@@ -164,6 +195,11 @@ func (e *Entity) ChannelPerm(ctx context.Context, guildID, channelID, userID int
 			return nil, nil, nil, false, nil
 		}
 
+		permAll, ok, err := e.capBotGuildPermissions(ctx, guildID, userID, permAll)
+		if err != nil || !ok {
+			return nil, nil, nil, false, err
+		}
+
 		// Check if user has all required permissions
 		if permissions.CheckPermissions(permAll, perm...) {
 			return &channel, &gc, &guild, true, nil
@@ -220,7 +256,11 @@ func (e *Entity) GetChannelPermissions(ctx context.Context, guildID, channelID, 
 
 	// Guild owner has all permissions
 	if userID == guild.OwnerId {
-		return int64(^uint64(0) >> 1), nil
+		capped, ok, err := e.capBotGuildPermissions(ctx, guildID, userID, int64(^uint64(0)>>1))
+		if err != nil || !ok {
+			return 0, err
+		}
+		return capped, nil
 	}
 
 	// Current guild membership is required before calculating effective perms.
@@ -278,6 +318,10 @@ func (e *Entity) GetChannelPermissions(ctx context.Context, guildID, channelID, 
 	}
 
 	// If channel is private and user has no role overrides, access may still be restricted in higher layers.
+	permAll, ok, err := e.capBotGuildPermissions(ctx, guildID, userID, permAll)
+	if err != nil || !ok {
+		return 0, err
+	}
 	return permAll, nil
 }
 
@@ -290,9 +334,16 @@ func (e *Entity) GuildPerm(ctx context.Context, guildID, userID int64, perm ...p
 		return nil, false, err
 	}
 
-	// Guild owner has all permissions
+	// Guild owner has all permissions unless this is a bot account, which stays grant-capped.
 	if userID == guild.OwnerId {
-		return &guild, true, nil
+		capped, ok, err := e.capBotGuildPermissions(ctx, guildID, userID, int64(^uint64(0)>>1))
+		if err != nil || !ok {
+			return nil, false, err
+		}
+		if permissions.CheckPermissions(capped, perm...) {
+			return &guild, true, nil
+		}
+		return nil, false, nil
 	}
 
 	// Current guild membership is required before guild roles apply.
@@ -322,6 +373,11 @@ func (e *Entity) GuildPerm(ctx context.Context, guildID, userID int64, perm ...p
 	// Process role permissions
 	for _, role := range roles {
 		permAll = permissions.AddRoles(permAll, role.Permissions)
+	}
+
+	permAll, ok, err := e.capBotGuildPermissions(ctx, guildID, userID, permAll)
+	if err != nil || !ok {
+		return nil, false, err
 	}
 
 	// Check if user has all required permissions

@@ -28,6 +28,8 @@ type Config struct {
 	UploadLimit                int64         `yaml:"upload_limit" env:"UPLOAD_LIMIT" env-default:"50000000"`
 	AttachmentTTLMinutes       int64         `yaml:"attachment_ttl_minutes" env:"ATTACHMENT_TTL_MINUTES" env-default:"10"`
 	NATSConnString             string        `yaml:"nats_conn_string" env:"NATS_CONN_STRING" env-default:"nats://nats:4222"`
+	BotNATSConnString          string        `yaml:"bot_nats_conn_string" env:"BOT_NATS_CONN_STRING" env-default:"nats://bot-nats:4222"`
+	BotEventPartitions         int           `yaml:"bot_event_partitions" env:"BOT_EVENT_PARTITIONS" env-default:"1024"`
 	IndexerNATSConnString      string        `yaml:"indexer_nats_conn_string" env:"INDEX_NATS_CONN_STRING" env-default:"nats://indexer-nats:4222"`
 	PGDriver                   string        `yaml:"pg_driver" env:"PG_DRIVER" env-default:"postgres"`
 	PGDSN                      string        `yaml:"pg_dsn" env:"PG_DSN" env-default:""`

@@ -57,6 +57,13 @@ func (e *entity) Upload(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, ErrUnableToGetUserToken)
 	}
+	actorID := user.Id
+	if user.Id != userId {
+		if _, err := e.bot.GetBotForOwner(c.UserContext(), user.Id, userId); err != nil {
+			return fiber.NewError(fiber.StatusForbidden, ErrForbiddenToUpload)
+		}
+		actorID = userId
+	}
 	crop, err := parseBannerCrop(c)
 	if err != nil {
 		return err
@@ -67,7 +74,7 @@ func (e *entity) Upload(c *fiber.Ctx) error {
 		return err
 	}
 
-	result, err := e.uploader.Upload(c.UserContext(), user.Id, userId, bannerId, body, crop)
+	result, err := e.uploader.Upload(c.UserContext(), actorID, userId, bannerId, body, crop)
 	if err != nil {
 		return bannerUploadError(err)
 	}

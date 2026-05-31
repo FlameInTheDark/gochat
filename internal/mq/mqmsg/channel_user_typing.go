@@ -5,8 +5,9 @@ import (
 )
 
 type ChannelUserTyping struct {
-	ChannelId int64 `json:"channel_id"`
-	UserId    int64 `json:"user_id"`
+	GuildId   *int64 `json:"guild_id,omitempty"`
+	ChannelId int64  `json:"channel_id"`
+	UserId    int64  `json:"user_id"`
 }
 
 func (m *ChannelUserTyping) EventType() *EventType {

@@ -10,4 +10,5 @@ type User struct {
 	Avatar        *AvatarData `json:"avatar,omitempty"`
 	Banner        *BannerData `json:"banner,omitempty"`
 	PersonalNote  *string     `json:"personal_note,omitempty" example:"Met during the release party"`
+	IsBot         bool        `json:"is_bot" example:"false"`
 }

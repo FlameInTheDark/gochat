@@ -66,6 +66,8 @@ services:
         condition: service_started
       nats:
         condition: service_started
+      bot-nats:
+        condition: service_started
       indexer-nats:
         condition: service_started
       etcd:
@@ -128,12 +130,95 @@ services:
       - "traefik.http.services.ws.loadbalancer.server.port=3100"
       - "traefik.docker.network=gochat_traefik"
     depends_on:
+      scylla:
+        condition: service_healthy
+      keydb:
+        condition: service_started
       nats:
         condition: service_started
       yugabyte-init:
         condition: service_completed_successfully
     networks:
       - traefik
+      - default
+
+  botapi:
+    image: gochat/botapi
+    build:
+      dockerfile: botapi.Dockerfile
+    restart: always
+    logging: *go-service-logging
+    environment: *otel-app-env
+    volumes:
+      - ./botapi_config.yaml:/dist/config.yaml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.botapi.rule=PathPrefix(`/bot/api/v1`)"
+      - "traefik.http.routers.botapi.service=botapi"
+      - "traefik.http.services.botapi.loadbalancer.server.port=3102"
+      - "traefik.docker.network=gochat_traefik"
+    depends_on:
+      scylla:
+        condition: service_healthy
+      keydb:
+        condition: service_started
+      nats:
+        condition: service_started
+      bot-nats:
+        condition: service_started
+      indexer-nats:
+        condition: service_started
+      yugabyte-init:
+        condition: service_completed_successfully
+    networks:
+      - traefik
+      - default
+
+  botws:
+    image: gochat/botws
+    build:
+      dockerfile: botws.Dockerfile
+    restart: always
+    logging: *go-service-logging
+    environment: *otel-app-env
+    volumes:
+      - ./botws_config.yaml:/dist/config.yaml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.botws.rule=PathPrefix(`/bot/ws`)"
+      - "traefik.http.routers.botws.service=botws"
+      - "traefik.http.services.botws.loadbalancer.server.port=3101"
+      - "traefik.docker.network=gochat_traefik"
+    depends_on:
+      nats:
+        condition: service_started
+      bot-nats:
+        condition: service_started
+      yugabyte-init:
+        condition: service_completed_successfully
+      keydb:
+        condition: service_started
+    networks:
+      - traefik
+      - default
+
+  botrouter:
+    image: gochat/botrouter
+    build:
+      dockerfile: botrouter.Dockerfile
+    restart: always
+    logging: *go-service-logging
+    environment: *otel-app-env
+    volumes:
+      - ./botrouter_config.yaml:/dist/config.yaml
+    depends_on:
+      bot-nats:
+        condition: service_started
+      keydb:
+        condition: service_started
+      yugabyte-init:
+        condition: service_completed_successfully
+    networks:
       - default
 
   webhook:
@@ -256,6 +341,14 @@ services:
       - "4222:4222"
       - "8222:8222"
       - "6222:6222"
+    restart: always
+
+  bot-nats:
+    image: nats:2.10.22-alpine3.20
+    ports:
+      - "4444:4222"
+      - "8444:8222"
+      - "6444:6222"
     restart: always
 
   indexer-nats:

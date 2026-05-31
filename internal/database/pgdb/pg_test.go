@@ -100,6 +100,38 @@ func TestStartProbeLoopRunsImmediateProbe(t *testing.T) {
 	}
 }
 
+func TestWithPGXExecMode(t *testing.T) {
+	tests := []struct {
+		name string
+		dsn  string
+		want string
+	}{
+		{
+			name: "keyword dsn",
+			dsn:  "host=yugabyte port=5433 user=yugabyte password=yugabyte dbname=gochat sslmode=disable",
+			want: "host=yugabyte port=5433 user=yugabyte password=yugabyte dbname=gochat sslmode=disable default_query_exec_mode=exec",
+		},
+		{
+			name: "keeps explicit mode",
+			dsn:  "host=yugabyte port=5433 default_query_exec_mode=simple_protocol",
+			want: "host=yugabyte port=5433 default_query_exec_mode=simple_protocol",
+		},
+		{
+			name: "url dsn",
+			dsn:  "postgres://user:pass@yugabyte:5433/gochat?sslmode=disable",
+			want: "postgres://user:pass@yugabyte:5433/gochat?default_query_exec_mode=exec&sslmode=disable",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := withPGXExecMode(tt.dsn); got != tt.want {
+				t.Fatalf("withPGXExecMode() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func collectResourceMetrics(t *testing.T, reader *sdkmetric.ManualReader) metricdata.ResourceMetrics {
 	t.Helper()
 
