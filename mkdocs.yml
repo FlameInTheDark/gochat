@@ -1,0 +1,89 @@
+site_name: GoChat Documentation
+site_description: Developer documentation for GoChat services and bot APIs.
+repo_url: https://github.com/FlameInTheDark/gochat
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: readthedocs
+  highlightjs: true
+
+markdown_extensions:
+  - admonition
+  - fenced_code
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Bot API:
+      - Overview: bot-api/index.md
+      - Quick Start: bot-api/quickstart.md
+      - Authentication: bot-api/authentication.md
+      - REST API: bot-api/rest.md
+      - Gateway: bot-api/gateway.md
+      - Events: bot-api/events.md
+      - Payloads: bot-api/payloads.md
+      - Go Client: bot-api/go-client.md
+      - Operations: bot-api/operations.md
+  - Project Internals:
+      - Overview: project/README.md
+      - Architecture: project/Architecture.md
+      - Services: project/Services.md
+      - Database: project/Database.md
+      - Auth Security: project/AuthSecurity.md
+      - File Upload Flow: project/file_upload_flow.md
+      - Presence: project/Presence.md
+      - Tools: project/Tools.md
+      - Bots:
+          - Overview: project/bots/README.md
+          - Internal Overview: project/bots/Overview.md
+          - Runtime API: project/bots/RuntimeAPI.md
+          - Gateway: project/bots/Gateway.md
+          - Event Routing: project/bots/EventRouting.md
+          - Management API: project/bots/ManagementAPI.md
+          - Permissions: project/bots/Permissions.md
+          - Presence: project/bots/Presence.md
+          - Operations: project/bots/Operations.md
+      - Channels:
+          - Overview: project/channels/README.md
+          - Channel Types: project/channels/ChannelTypes.md
+          - Message Types: project/channels/MessageTypes.md
+          - Embeds: project/channels/Embeds.md
+          - Threads: project/channels/Threads.md
+      - Guilds:
+          - Overview: project/guilds/README.md
+          - Custom Emoji: project/guilds/CustomEmoji.md
+          - Moderation: project/guilds/Moderation.md
+          - Roles and Permissions: project/guilds/RolesAndPermissions.md
+      - WebSocket:
+          - Overview: project/ws/README.md
+          - Connection Lifecycle: project/ws/ConnectionLifecycle.md
+          - Event Message Structure: project/ws/EventMessageStructure.md
+          - Events Flow: project/ws/EventsFlow.md
+          - Event Types: project/ws/EventTypes.md
+          - Subscription Model: project/ws/SubscriptionModel.md
+      - Voice:
+          - Overview: project/voice/README.md
+          - Connection Protocol: project/voice/ConnectionProtocol.md
+          - Device Scoped Settings: project/voice/DeviceScopedSettings.md
+          - DM Calls: project/voice/DMCalls.md
+          - DTLS: project/voice/DTLS.md
+          - SFU Event Payloads: project/voice/SFUEventPayloads.md
+          - SFU Permissions: project/voice/SFUPermissions.md
+          - SFU Protocol: project/voice/SFUProtocol.md
+          - SFU React Integration: project/voice/SFUReactIntegration.md
+          - Streaming: project/voice/Streaming.md
+          - System Architecture: project/voice/SystemArchitecture.md
+          - Voice Encryption: project/voice/VoiceEncryption.md
+          - Voice Regions: project/voice/VoiceRegions.md
+      - Observability:
+          - Overview: project/observability/README.md
+          - Architecture: project/observability/Architecture.md
+          - Dashboards and Alerts: project/observability/DashboardsAndAlerts.md
+          - External SFU: project/observability/ExternalSFU.md
+          - Local Development: project/observability/LocalDevelopment.md
+          - Runbooks: project/observability/Runbooks.md
+          - Signals and Conventions: project/observability/SignalsAndConventions.md
+  - Code Style: CODESTYLE.md

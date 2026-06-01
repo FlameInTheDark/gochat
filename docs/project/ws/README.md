@@ -21,7 +21,7 @@ Traefik routes `/ws` → `ws:3100` (with `StripPrefix`), so the external URL is 
 > | **Voice SFU WS** | `cmd/sfu` (port 3300) | `/signal` | WebRTC signaling, media negotiation, speaking indicators |
 > | **Stream WS** | `cmd/stream` (port 3310) | `/signal` | Screen/app stream WebRTC signaling and media negotiation |
 >
-> These are **independent connections** — a client has one Gateway WS open at all times, opens a separate SFU WS when joining a voice channel, and opens separate Stream WS sessions for each stream it publishes or watches. This documentation covers the **Gateway WS**. For the SFU and stream media protocols, see [Voice Protocol](../voice/) docs.
+> These are **independent connections** — a client has one Gateway WS open at all times, opens a separate SFU WS when joining a voice channel, and opens separate Stream WS sessions for each stream it publishes or watches. This documentation covers the **Gateway WS**. For the SFU and stream media protocols, see [Voice Protocol](../voice/README.md) docs.
 
 ## Features
 

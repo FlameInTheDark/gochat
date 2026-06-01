@@ -31,12 +31,12 @@ All messages exchanged over the Gateway WebSocket share a single JSON envelope:
 
 | OP | Name | Description | Payload |
 |----|------|-------------|---------|
-| 1 | **Hello** | First message after WS connect; authenticates the session | See [Hello](#op-1--hello) |
-| 2 | **Heartbeat** | Keep-alive sent on the server-defined interval | See [Heartbeat](#op-2--heartbeat) |
-| 3 | **Presence Update** | Update own presence status | See [Presence Update](#op-3--presence-update) |
-| 5 | **Channel Subscription** | Subscribe to channel and/or guild events | See [Channel Subscription](#op-5--channel-subscription) |
-| 6 | **Presence Subscription** | Manage which users' presence you track | See [Presence Subscription](#op-6--presence-subscription) |
-| 7 | **RTC** | WebRTC/voice signaling (send to SFU or keep-alive) | See [RTC](#op-7--rtc) |
+| 1 | **Hello** | First message after WS connect; authenticates the session | See [Hello](#op-1-hello) |
+| 2 | **Heartbeat** | Keep-alive sent on the server-defined interval | See [Heartbeat](#op-2-heartbeat) |
+| 3 | **Presence Update** | Update own presence status | See [Presence Update](#op-3-presence-update) |
+| 5 | **Channel Subscription** | Subscribe to channel and/or guild events | See [Channel Subscription](#op-5-channel-subscription) |
+| 6 | **Presence Subscription** | Manage which users' presence you track | See [Presence Subscription](#op-6-presence-subscription) |
+| 7 | **RTC** | WebRTC/voice signaling (send to SFU or keep-alive) | See [RTC](#op-7-rtc-gateway-ws-limited) |
 
 ## OP Codes (Server → Client)
 
@@ -250,7 +250,7 @@ This refreshes `voice:route:{channelId}` TTL (60s) in Redis and updates the sess
 
 ### OP 3 — Presence Update (Dispatch)
 
-When you subscribe to a user's presence via [OP 6](#op-6--presence-subscription), you receive their presence updates via OP 3 dispatches:
+When you subscribe to a user's presence via [OP 6](#op-6-presence-subscription), you receive their presence updates via OP 3 dispatches:
 
 ```json
 {
