@@ -349,7 +349,7 @@ func (a *App) handleSignalV2Identify(conn *websocket.Conn, signalCtx context.Con
 		perms:          perms,
 		signalVersion:  signalProtocolVersion2,
 	}
-	a.registerPeerCallbacks(session.ctx, pc, writer, session.state, uid, channelID, perms)
+	a.registerPeerCallbacks(sessionCtx, pc, writer, session.state, uid, channelID, perms)
 	a.registerSignalV2Session(session)
 
 	if err := writer.SendVoiceGatewayPacket(voicev2.OpHello, voicev2.Hello{

@@ -1,4 +1,4 @@
-[<- Documentation](../../README.md) - [Project Documentation](README.md)
+[<- Documentation](../index.md) - [Project Documentation](README.md)
 
 # Presence System
 

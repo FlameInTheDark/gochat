@@ -5,7 +5,7 @@
 When the server sends a **Dispatch** message (`op: 0`), the `t` field identifies the event type. This page lists all event type values, their payloads, and which NATS topic delivers them.
 
 > [!NOTE]
-> All events on this page (100-414) are delivered over the **Gateway WebSocket** (`/subscribe`). Voice/WebRTC signaling events (500-515) are exchanged over the separate **SFU WebSocket** (`/signal`) - see [SFU Protocol](../voice/SFUProtocol.md). Screen/app stream media signaling is exchanged over the separate **Stream WebSocket** (`/signal?v=2`) - see [Voice-Channel Streaming](../voice/Streaming.md). Only a few voice-related control events (509, 512, 513) pass through the Gateway WS as noted in the [RTC Events](#rtc-events-500515-gateway-ws-only) section.
+> All events on this page (100-414) are delivered over the **Gateway WebSocket** (`/subscribe`). Voice/WebRTC signaling events (500-515) are exchanged over the separate **SFU WebSocket** (`/signal`) - see [SFU Protocol](../voice/SFUProtocol.md). Screen/app stream media signaling is exchanged over the separate **Stream WebSocket** (`/signal?v=2`) - see [Voice-Channel Streaming](../voice/Streaming.md). Only a few voice-related control events (509, 512, 513) pass through the Gateway WS as noted in the [RTC Events](#rtc-events-500-515-gateway-ws-only) section.
 
 ---
 
@@ -886,7 +886,7 @@ Notes:
 
 ## Presence Events (OP 3 Dispatch)
 
-Presence updates are dispatched with `op: 3` (not `op: 0`). They are delivered via NATS topic `presence.user.{userId}` to clients that have subscribed via [OP 6](EventMessageStructure.md#op-6--presence-subscription).
+Presence updates are dispatched with `op: 3` (not `op: 0`). They are delivered via NATS topic `presence.user.{userId}` to clients that have subscribed via [OP 6](EventMessageStructure.md#op-6-presence-subscription).
 
 **Payload:**
 ```json

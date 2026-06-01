@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"strings"
@@ -89,7 +90,7 @@ func TestDoSignalPeerConnections_TargetedNegotiateOnlyOffersRequestingPeer(t *te
 		t.Fatal("expected targeted negotiation request to find peer")
 	}
 
-	ch.doSignalPeerConnections()
+	ch.doSignalPeerConnections(context.Background())
 
 	if pcA.LocalDescription() == nil {
 		t.Fatal("expected requesting peer to receive a fresh offer")
@@ -125,7 +126,7 @@ func TestDoSignalPeerConnections_NoOpTopologyChangeAdvancesRevisionWithoutOffer(
 	ch.peers = []*peerConnectionState{state}
 	ch.topologyRevision = 2
 
-	ch.doSignalPeerConnections()
+	ch.doSignalPeerConnections(context.Background())
 
 	if pc.LocalDescription() != nil {
 		t.Fatal("expected no-op topology change to avoid a new offer")
@@ -164,7 +165,7 @@ func TestApplyPeerAnswer_ResignalsWhenTopologyAdvancedWhilePeerWasBehind(t *test
 		t.Fatalf("expected applied revision to match last offer, got %d", state.appliedRevision)
 	}
 
-	ch.doSignalPeerConnections()
+	ch.doSignalPeerConnections(context.Background())
 
 	if pc.LocalDescription() == nil {
 		t.Fatal("expected follow-up offer after missed topology change")
@@ -188,7 +189,7 @@ func TestDoSignalPeerConnections_NewPeerGetsInitialOfferForExistingTracks(t *tes
 	track := newTestTrack(t, "1-video", "1")
 	ch.trackLocals[track.ID()] = trackLocalEntry{track: track, owner: 1, kind: webrtc.RTPCodecTypeVideo.String()}
 
-	ch.doSignalPeerConnections()
+	ch.doSignalPeerConnections(context.Background())
 
 	if pc.LocalDescription() == nil {
 		t.Fatal("expected new peer to receive initial offer with current tracks")
@@ -265,7 +266,7 @@ func TestDoSignalPeerConnections_V2BootstrappedPeerRenegotiatesOnTopologyChange(
 	ch.peers = []*peerConnectionState{state}
 	ch.topologyRevision = 1
 
-	ch.doSignalPeerConnections()
+	ch.doSignalPeerConnections(context.Background())
 
 	if pc.LocalDescription() != nil {
 		t.Fatal("did not expect immediate renegotiation without a topology change")
@@ -275,7 +276,7 @@ func TestDoSignalPeerConnections_V2BootstrappedPeerRenegotiatesOnTopologyChange(
 	ch.trackLocals[track.ID()] = trackLocalEntry{track: track, owner: 1, kind: webrtc.RTPCodecTypeVideo.String()}
 	ch.topologyRevision = 2
 
-	ch.doSignalPeerConnections()
+	ch.doSignalPeerConnections(context.Background())
 
 	if pc.LocalDescription() == nil {
 		t.Fatal("expected renegotiation offer after topology changed for a v2-bootstrapped peer")

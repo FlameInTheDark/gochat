@@ -1,4 +1,4 @@
-[Project main](../../README.md)
+[Docs home](../index.md)
 # Project documentation
 
 Here goes the project documentation.

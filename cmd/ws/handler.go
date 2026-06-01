@@ -112,12 +112,8 @@ func (a *App) wsHandler(c *websocket.Conn) {
 	}
 
 	go func() {
-		for m := range out {
-			writeCtx := m.ctx
-			if writeCtx == nil {
-				writeCtx = connCtx
-			}
-			writeCtx = observability.BackgroundFromContext(writeCtx)
+		writeMessage := func(writeCtx context.Context, m outMsg) bool {
+			writeCtx, cancelWrite := context.WithCancel(writeCtx)
 			var err error
 			var span trace.Span
 			if m.kind == 1 || m.kind == 2 {
@@ -196,10 +192,25 @@ func (a *App) wsHandler(c *websocket.Conn) {
 			if m.done != nil {
 				m.done <- err
 			}
+			cancelWrite()
 			if m.kind == 3 {
 				if compressMode && zw != nil {
 					_ = zw.Close()
 				}
+				return true
+			}
+			return false
+		}
+
+		for m := range out {
+			if m.ctx != nil {
+				//nolint:contextcheck // m.ctx is the producer context intentionally carried through the writer queue.
+				if writeMessage(m.ctx, m) {
+					return
+				}
+				continue
+			}
+			if writeMessage(connCtx, m) {
 				return
 			}
 		}

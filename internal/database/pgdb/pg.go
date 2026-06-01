@@ -61,8 +61,15 @@ type ConnectOptions struct {
 }
 
 func (db *DB) Connect(dsn string, opts ConnectOptions) error {
+	return db.ConnectContext(context.Background(), dsn, opts)
+}
+
+func (db *DB) ConnectContext(ctx context.Context, dsn string, opts ConnectOptions) error {
+	if ctx == nil {
+		return errors.New("nil context")
+	}
 	connectCtx, finishConnect := observability.StartDependencySpan(
-		context.Background(),
+		ctx,
 		"postgres",
 		"connect",
 		"primary",
@@ -154,7 +161,12 @@ func (db *DB) Connect(dsn string, opts ConnectOptions) error {
 			connectErr = err
 			return fmt.Errorf("failed to connect to DB after %d attempts: %w", attempt, err)
 		}
-		time.Sleep(5 * time.Second)
+		select {
+		case <-connectCtx.Done():
+			connectErr = connectCtx.Err()
+			return fmt.Errorf("connect to DB canceled: %w", connectErr)
+		case <-time.After(5 * time.Second):
+		}
 	}
 
 	db.registerPoolMetrics()
@@ -213,9 +225,9 @@ func (db *DB) StartProbeLoop(ctx context.Context, interval time.Duration) {
 		interval = defaultProbeInterval
 	}
 	if ctx == nil {
-		ctx = context.TODO()
+		return
 	}
-	baseCtx := observability.BackgroundFromContext(ctx)
+	baseCtx := ctx
 
 	_ = db.runProbe(baseCtx, defaultProbeTimeout)
 

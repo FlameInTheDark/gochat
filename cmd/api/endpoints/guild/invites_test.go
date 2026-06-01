@@ -189,7 +189,7 @@ func TestGenerateInviteCodeReturnsUppercaseBase36(t *testing.T) {
 			t.Fatalf("expected %d-char invite code, got %q", inviteCodeLength, code)
 		}
 		for _, ch := range code {
-			if !(ch >= '0' && ch <= '9') && !(ch >= 'A' && ch <= 'Z') {
+			if (ch < '0' || ch > '9') && (ch < 'A' || ch > 'Z') {
 				t.Fatalf("expected uppercase base36 code, got %q", code)
 			}
 		}
