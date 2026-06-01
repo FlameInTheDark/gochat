@@ -59,6 +59,7 @@ func main() {
 
 	session.AddHandler(func(session *goclient.Session, interaction *goclient.Interaction) {
 		data := interaction.ApplicationCommandData()
+		fmt.Printf("interaction received: id=%d type=%d command=%q options=%d\n", interaction.ID, interaction.Type, data.Name, len(data.Options))
 		switch interaction.Type {
 		case goclient.InteractionAutocomplete:
 			_ = session.InteractionRespond(context.Background(), interaction, &goclient.InteractionResponse{
@@ -70,13 +71,29 @@ func main() {
 		case goclient.InteractionApplicationCommand:
 			switch data.Name {
 			case "hello":
-				_ = session.InteractionRespond(context.Background(), interaction, &goclient.InteractionResponse{
+				fmt.Println("hello action used")
+				if err := session.InteractionRespond(context.Background(), interaction, &goclient.InteractionResponse{
 					Type: goclient.InteractionResponseChannelMessageWithSource,
 					Data: &goclient.InteractionResponseData{
 						Content: "Hello from an application command.",
 						Flags:   goclient.MessageFlagsEphemeral,
 					},
-				})
+				}); err != nil {
+					fmt.Println("error responding to interaction:", err)
+				}
+			case "day":
+				location := "your location"
+				if option := data.Option("location"); option != nil && option.StringValue() != "" {
+					location = option.StringValue()
+				}
+				if err := session.InteractionRespond(context.Background(), interaction, &goclient.InteractionResponse{
+					Type: goclient.InteractionResponseChannelMessageWithSource,
+					Data: &goclient.InteractionResponseData{
+						Content: fmt.Sprintf("Forecast for %s: clear skies with a high chance of working slash commands.", location),
+					},
+				}); err != nil {
+					fmt.Println("error responding to interaction:", err)
+				}
 			case "slow":
 				_ = session.InteractionRespond(context.Background(), interaction, &goclient.InteractionResponse{
 					Type: goclient.InteractionResponseDeferredChannelMessageSource,
@@ -122,6 +139,20 @@ func registerCommands(ctx context.Context, session *goclient.Session, applicatio
 		},
 		{
 			Type:        goclient.ApplicationCommandChatInput,
+			Name:        "day",
+			Description: "Show today's forecast",
+			Options: []*goclient.ApplicationCommandOption{
+				{
+					Type:        goclient.ApplicationCommandOptionString,
+					Name:        "location",
+					Description: "The name of the location",
+					Required:    true,
+				},
+			},
+			Contexts: []goclient.InteractionContextType{goclient.InteractionContextGuild, goclient.InteractionContextBotDM},
+		},
+		{
+			Type:        goclient.ApplicationCommandChatInput,
 			Name:        "search",
 			Description: "Demonstrate autocomplete",
 			Options: []*goclient.ApplicationCommandOption{
@@ -141,11 +172,8 @@ func registerCommands(ctx context.Context, session *goclient.Session, applicatio
 
 func autocompleteChoices(data goclient.ApplicationCommandInteractionData) []*goclient.ApplicationCommandOptionChoice {
 	query := ""
-	for _, option := range data.Options {
-		if option.Focused {
-			query = strings.ToLower(option.StringValue())
-			break
-		}
+	if option := data.FocusedOption(); option != nil {
+		query = strings.ToLower(option.StringValue())
 	}
 	values := []string{"alpha", "beta", "release", "roadmap", "support"}
 	choices := make([]*goclient.ApplicationCommandOptionChoice, 0, len(values))

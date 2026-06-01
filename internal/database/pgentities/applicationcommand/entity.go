@@ -27,6 +27,7 @@ type ApplicationCommand interface {
 	CreateInteraction(ctx context.Context, interaction appcmd.InteractionRecord) error
 	GetInteractionByToken(ctx context.Context, applicationID int64, tokenHash string) (appcmd.InteractionRecord, error)
 	AckInteraction(ctx context.Context, interactionID int64, state string, initialResponseID *int64) error
+	SetInitialResponse(ctx context.Context, interactionID, initialResponseID int64) error
 }
 
 type Entity struct {
@@ -393,6 +394,31 @@ func (e *Entity) AckInteraction(ctx context.Context, interactionID int64, state 
 	res, err := e.c.ExecContext(ctx, raw, args...)
 	if err != nil {
 		return fmt.Errorf("ack interaction: %w", err)
+	}
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+func (e *Entity) SetInitialResponse(ctx context.Context, interactionID, initialResponseID int64) error {
+	q := squirrel.Update("application_command_interactions").
+		PlaceholderFormat(squirrel.Dollar).
+		Set("ack_state", appcmd.AckStateResponded).
+		Set("responded_at", time.Now()).
+		Set("initial_response_message_id", initialResponseID).
+		Where(squirrel.And{
+			squirrel.Eq{"id": interactionID},
+			squirrel.Eq{"ack_state": appcmd.AckStateDeferred},
+			squirrel.Eq{"initial_response_message_id": nil},
+		})
+	raw, args, err := q.ToSql()
+	if err != nil {
+		return fmt.Errorf("build set initial response SQL: %w", err)
+	}
+	res, err := e.c.ExecContext(ctx, raw, args...)
+	if err != nil {
+		return fmt.Errorf("set initial response: %w", err)
 	}
 	if rows, _ := res.RowsAffected(); rows == 0 {
 		return sql.ErrNoRows

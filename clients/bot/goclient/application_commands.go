@@ -139,6 +139,29 @@ type ApplicationCommandInteractionData struct {
 	GuildID  *int64                                     `json:"guild_id,omitempty"`
 }
 
+// Option returns the first top-level option with the given name.
+func (d ApplicationCommandInteractionData) Option(name string) *ApplicationCommandInteractionDataOption {
+	for _, option := range d.Options {
+		if option != nil && option.Name == name {
+			return option
+		}
+	}
+	return nil
+}
+
+// FocusedOption returns the focused option from an autocomplete interaction.
+func (d ApplicationCommandInteractionData) FocusedOption() *ApplicationCommandInteractionDataOption {
+	for _, option := range d.Options {
+		if option == nil {
+			continue
+		}
+		if focused := option.FocusedOption(); focused != nil {
+			return focused
+		}
+	}
+	return nil
+}
+
 // ApplicationCommandInteractionDataOption is an invoked option or subcommand node.
 type ApplicationCommandInteractionDataOption struct {
 	Name    string                                     `json:"name"`
@@ -146,6 +169,32 @@ type ApplicationCommandInteractionDataOption struct {
 	Value   any                                        `json:"value,omitempty"`
 	Options []*ApplicationCommandInteractionDataOption `json:"options,omitempty"`
 	Focused bool                                       `json:"focused,omitempty"`
+}
+
+// Option returns a nested option by name.
+func (o ApplicationCommandInteractionDataOption) Option(name string) *ApplicationCommandInteractionDataOption {
+	for _, option := range o.Options {
+		if option != nil && option.Name == name {
+			return option
+		}
+	}
+	return nil
+}
+
+// FocusedOption returns this option or a nested option marked focused.
+func (o ApplicationCommandInteractionDataOption) FocusedOption() *ApplicationCommandInteractionDataOption {
+	if o.Focused {
+		return &o
+	}
+	for _, option := range o.Options {
+		if option == nil {
+			continue
+		}
+		if focused := option.FocusedOption(); focused != nil {
+			return focused
+		}
+	}
+	return nil
 }
 
 // StringValue returns an option value as a string when possible.
@@ -225,6 +274,28 @@ type Interaction struct {
 	Token                        string                             `json:"token"`
 	Version                      int                                `json:"version"`
 	AuthorizingIntegrationOwners map[string]string                  `json:"authorizing_integration_owners,omitempty"`
+}
+
+// UnmarshalJSON accepts both Discord's direct interaction payload and GoChat's
+// gateway wrapper: {"interaction": {...}}.
+func (i *Interaction) UnmarshalJSON(b []byte) error {
+	type interactionAlias Interaction
+	var wrapped struct {
+		Interaction *interactionAlias `json:"interaction"`
+	}
+	if err := json.Unmarshal(b, &wrapped); err != nil {
+		return err
+	}
+	if wrapped.Interaction != nil {
+		*i = Interaction(*wrapped.Interaction)
+		return nil
+	}
+	var direct interactionAlias
+	if err := json.Unmarshal(b, &direct); err != nil {
+		return err
+	}
+	*i = Interaction(direct)
+	return nil
 }
 
 // ApplicationCommandData returns interaction data or an empty value.

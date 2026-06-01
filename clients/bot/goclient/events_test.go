@@ -153,3 +153,59 @@ func TestGatewayMessageAcceptsDataAlias(t *testing.T) {
 		t.Fatalf("data = %s", msg.Data)
 	}
 }
+
+func TestApplicationCommandInteractionDispatchUnwrapsGoChatPayload(t *testing.T) {
+	s, err := New("gcb_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var commandName string
+	var optionValue string
+	var rawStruct any
+	s.AddHandler(func(_ *Session, event *Event) {
+		rawStruct = event.Struct
+	})
+	s.AddHandler(func(_ *Session, interaction *Interaction) {
+		data := interaction.ApplicationCommandData()
+		commandName = data.Name
+		if option := data.Option("location"); option != nil {
+			optionValue = option.StringValue()
+		}
+	})
+
+	eventType := EventTypeApplicationCommandInteractionCreate
+	err = s.dispatch(GatewayMessage{
+		Operation: OpCodeDispatch,
+		EventType: &eventType,
+		Data: []byte(`{
+			"interaction": {
+				"id": 1511131987748847616,
+				"application_id": 562525284348329986,
+				"type": 2,
+				"channel_id": 565062979255795712,
+				"token": "interaction-token",
+				"version": 1,
+				"data": {
+					"id": 1222140942451085363,
+					"name": "day",
+					"type": 1,
+					"options": [
+						{"type": 3, "name": "location", "value": "new york"}
+					]
+				}
+			}
+		}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rawStruct == nil {
+		t.Fatal("expected raw Event.Struct to contain decoded interaction")
+	}
+	if commandName != "day" {
+		t.Fatalf("command name = %q, want day", commandName)
+	}
+	if optionValue != "new york" {
+		t.Fatalf("location option = %q, want new york", optionValue)
+	}
+}

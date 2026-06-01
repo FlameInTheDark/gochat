@@ -108,8 +108,10 @@ func (e *entity) buildGuildApplicationCommandIndex(ctx context.Context, guildID 
 		}
 		var icon *string
 		if u.Avatar != nil {
-			raw := strconv.FormatInt(*u.Avatar, 10)
-			icon = &raw
+			if avatar, err := e.av.GetAvatar(ctx, *u.Avatar, id); err == nil && avatar.Done && avatar.URL != nil && *avatar.URL != "" {
+				raw := *avatar.URL
+				icon = &raw
+			}
 		}
 		applications = append(applications, appcmd.ApplicationCommandIndexApplication{
 			ID:          id,
