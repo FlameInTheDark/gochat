@@ -423,7 +423,11 @@ func normalizeBotPresencePayload(input *presencePayload) (string, string, error)
 }
 
 func normalizeBotPresenceRequest(input mqmsg.PresenceUpdateRequest) (string, string, error) {
-	return normalizeBotPresence(input.Status, input.CustomStatusText)
+	customText := ""
+	if input.CustomStatusText != nil {
+		customText = *input.CustomStatusText
+	}
+	return normalizeBotPresence(input.Status, customText)
 }
 
 func normalizeBotPresence(status, customText string) (string, string, error) {

@@ -26,7 +26,7 @@ func sessionKey(userID int64, leaseID string) string {
 func aggKey(userID int64) string      { return fmt.Sprintf("presence:agg:%d", userID) }
 func overrideKey(userID int64) string { return fmt.Sprintf("presence:override:%d", userID) }
 func streamKey(userID int64) string   { return fmt.Sprintf("presence:stream:%d", userID) }
-func touchedUsersKey() string         { return "presence:touched_users" }
+func reconcileDueKey() string         { return "presence:reconcile_due" }
 
 func leaseID(sessionID string, generation int64) string {
 	if generation <= 0 {
@@ -177,7 +177,7 @@ func (s *Store) UpsertSession(ctx context.Context, userID int64, sessionID strin
 	if err := s.c.ZAdd(ctx, sessionsKey(userID), float64(p.ExpiresAt), member); err != nil {
 		return err
 	}
-	_ = s.markTouched(ctx, userID)
+	_ = s.scheduleReconcile(ctx, reconcileSessionMember(userID, member), p.ExpiresAt+1)
 	return s.c.SetTTL(ctx, sessionsKey(userID), ttlSeconds)
 }
 
@@ -254,9 +254,9 @@ func (s *Store) RemoveSession(ctx context.Context, userID int64, sessionID strin
 		member := leaseID(sp.SessionID, sp.Generation)
 		_ = s.c.ZRem(ctx, sessionsKey(userID), member)
 		_ = s.c.Delete(ctx, sessionKey(userID, member))
+		_ = s.c.ZRem(ctx, reconcileDueKey(), reconcileSessionMember(userID, member))
 	}
 	_ = s.c.HDel(ctx, legacySessionsKey(userID), sessionID)
-	_ = s.markTouched(ctx, userID)
 	_ = s.c.SetTTL(ctx, aggKey(userID), ttlSeconds)
 	return nil
 }
@@ -276,7 +276,7 @@ func (s *Store) RemoveSessionIfOwner(ctx context.Context, userID int64, sessionI
 	if err := s.c.Delete(ctx, sessionKey(userID, member)); err != nil {
 		return false, err
 	}
-	_ = s.markTouched(ctx, userID)
+	_ = s.c.ZRem(ctx, reconcileDueKey(), reconcileSessionMember(userID, member))
 	_ = s.c.SetTTL(ctx, aggKey(userID), ttlSeconds)
 	return true, nil
 }
@@ -284,9 +284,29 @@ func (s *Store) RemoveSessionIfOwner(ctx context.Context, userID int64, sessionI
 func (s *Store) Aggregate(ctx context.Context, userID int64, nowUnix int64) (Presence, bool, error) {
 	var ov Presence
 	if err := s.c.GetJSON(ctx, overrideKey(userID), &ov); err == nil && ov.Status != "" {
-		return Presence{UserID: userID, Status: ov.Status, Since: ov.Since, CustomStatusText: ov.CustomStatusText}, true, nil
+		if ov.Status == StatusOffline {
+			return Presence{UserID: userID, Status: ov.Status, Since: ov.Since, CustomStatusText: ov.CustomStatusText}, true, nil
+		}
+		agg, ok, err := s.aggregateSessions(ctx, userID, nowUnix)
+		if err != nil {
+			return Presence{}, false, err
+		}
+		if !ok {
+			agg = Presence{UserID: userID, Status: StatusOffline, Since: nowUnix}
+		}
+		agg.Status = ov.Status
+		agg.Since = ov.Since
+		agg.CustomStatusText = ov.CustomStatusText
+		for platform := range agg.ClientStatus {
+			agg.ClientStatus[platform] = ov.Status
+		}
+		return agg, true, nil
 	}
 
+	return s.aggregateSessions(ctx, userID, nowUnix)
+}
+
+func (s *Store) aggregateSessions(ctx context.Context, userID int64, nowUnix int64) (Presence, bool, error) {
 	sessions, err := s.liveSessions(ctx, userID, nowUnix)
 	if err != nil {
 		return Presence{}, false, err
@@ -380,12 +400,12 @@ func (s *Store) SetAggregated(ctx context.Context, p Presence, ttlSeconds int64)
 }
 
 func (s *Store) SetActiveStream(ctx context.Context, userID int64, stream streammeta.ActiveStream, ttlSeconds int64) error {
-	_ = s.markTouched(ctx, userID)
+	_ = s.scheduleReconcile(ctx, reconcileStreamMember(userID), time.Now().Unix()+ttlSeconds+1)
 	return s.c.SetTimedJSON(ctx, streamKey(userID), stream, ttlSeconds)
 }
 
 func (s *Store) ClearActiveStream(ctx context.Context, userID int64) error {
-	_ = s.markTouched(ctx, userID)
+	_ = s.c.ZRem(ctx, reconcileDueKey(), reconcileStreamMember(userID))
 	return s.c.Delete(ctx, streamKey(userID))
 }
 
@@ -401,12 +421,10 @@ func (s *Store) GetActiveStream(ctx context.Context, userID int64) (*streammeta.
 }
 
 func (s *Store) SetOverride(ctx context.Context, userID int64, status string, since int64, text string) error {
-	_ = s.markTouched(ctx, userID)
 	return s.c.SetJSON(ctx, overrideKey(userID), Presence{UserID: userID, Status: status, Since: since, CustomStatusText: text})
 }
 
 func (s *Store) ClearOverride(ctx context.Context, userID int64) error {
-	_ = s.markTouched(ctx, userID)
 	return s.c.Delete(ctx, overrideKey(userID))
 }
 
@@ -443,7 +461,7 @@ func (s *Store) RecentlyTouched(ctx context.Context, limit int64) ([]int64, erro
 	if limit <= 0 {
 		limit = 1000
 	}
-	members, err := s.c.ZRevRangeByScore(ctx, touchedUsersKey(), "+inf", "-inf", 0, limit)
+	members, err := s.c.ZRevRangeByScore(ctx, reconcileDueKey(), "+inf", "-inf", 0, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -451,8 +469,41 @@ func (s *Store) RecentlyTouched(ctx context.Context, limit int64) ([]int64, erro
 	for _, member := range members {
 		userID, err := strconv.ParseInt(member, 10, 64)
 		if err != nil || userID == 0 {
+			var ok bool
+			userID, ok = reconcileMemberUserID(member)
+			if !ok {
+				continue
+			}
+		}
+		out = append(out, userID)
+	}
+	return out, nil
+}
+
+func (s *Store) ReconcileDue(ctx context.Context, nowUnix, limit int64) ([]int64, error) {
+	if limit <= 0 {
+		limit = 1000
+	}
+	members, err := s.c.ZRevRangeByScore(ctx, reconcileDueKey(), fmt.Sprintf("%d", nowUnix), "-inf", 0, limit)
+	if err != nil {
+		return nil, err
+	}
+	if len(members) == 0 {
+		return nil, nil
+	}
+	_ = s.c.ZRem(ctx, reconcileDueKey(), members...)
+
+	seen := make(map[int64]struct{}, len(members))
+	out := make([]int64, 0, len(members))
+	for _, member := range members {
+		userID, ok := reconcileMemberUserID(member)
+		if !ok {
 			continue
 		}
+		if _, exists := seen[userID]; exists {
+			continue
+		}
+		seen[userID] = struct{}{}
 		out = append(out, userID)
 	}
 	return out, nil
@@ -486,21 +537,48 @@ func (s *Store) PruneExpiredSessions(ctx context.Context, userID int64, nowUnix,
 		}
 		_ = s.c.Delete(ctx, sessionKey(userID, member))
 		_ = s.c.ZRem(ctx, sessionsKey(userID), member)
-	}
-	if len(members) > 0 {
-		_ = s.markTouched(ctx, userID)
+		_ = s.c.ZRem(ctx, reconcileDueKey(), reconcileSessionMember(userID, member))
 	}
 	return len(members), nil
 }
 
-func (s *Store) markTouched(ctx context.Context, userID int64) error {
-	if userID == 0 {
+func (s *Store) scheduleReconcile(ctx context.Context, member string, dueUnix int64) error {
+	if member == "" || dueUnix <= 0 {
 		return nil
 	}
-	if err := s.c.ZAdd(ctx, touchedUsersKey(), float64(time.Now().Unix()), strconv.FormatInt(userID, 10)); err != nil {
+	if err := s.c.ZAdd(ctx, reconcileDueKey(), float64(dueUnix), member); err != nil {
 		return err
 	}
-	return s.c.SetTTL(ctx, touchedUsersKey(), int64((24*time.Hour)/time.Second))
+	return s.c.SetTTL(ctx, reconcileDueKey(), int64((24*time.Hour)/time.Second))
+}
+
+func reconcileSessionMember(userID int64, leaseID string) string {
+	if userID == 0 || leaseID == "" {
+		return ""
+	}
+	return fmt.Sprintf("%d:session:%s", userID, leaseID)
+}
+
+func reconcileStreamMember(userID int64) string {
+	if userID == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%d:stream", userID)
+}
+
+func reconcileMemberUserID(member string) (int64, bool) {
+	if member == "" {
+		return 0, false
+	}
+	prefix, _, ok := strings.Cut(member, ":")
+	if !ok {
+		return 0, false
+	}
+	userID, err := strconv.ParseInt(prefix, 10, 64)
+	if err != nil || userID == 0 {
+		return 0, false
+	}
+	return userID, true
 }
 
 func LeaseIDForTest(sessionID string, generation int64) string {
