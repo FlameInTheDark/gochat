@@ -9,6 +9,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	cqlappcmd "github.com/FlameInTheDark/gochat/internal/database/entities/applicationcommand"
+	cqlavatar "github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	appcmdrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/applicationcommand"
 	botrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/bot"
@@ -32,6 +33,7 @@ type entity struct {
 
 	appcmd   appcmdrepo.ApplicationCommand
 	payload  cqlappcmd.ApplicationCommandInteraction
+	av       cqlavatar.Avatar
 	bot      botrepo.Bot
 	user     user.User
 	disc     discriminator.Discriminator
@@ -49,6 +51,7 @@ func New(cql *db.CQLCon, pg *pgdb.DB, cache *kvs.Cache, nc *natsio.Conn, log *sl
 		nc:       nc,
 		appcmd:   appcmdrepo.New(pg.Conn()),
 		payload:  cqlappcmd.New(cql),
+		av:       cqlavatar.New(cql),
 		bot:      botrepo.New(pg.Conn()),
 		user:     user.New(pg.Conn()),
 		disc:     discriminator.New(pg.Conn()),

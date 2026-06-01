@@ -290,11 +290,30 @@ func (e *Entity) EditOriginalInteractionResponse(c *fiber.Ctx) error {
 	if err := c.BodyParser(&data); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid interaction response body")
 	}
-	if appcmd.HasResponseFlag(&data, appcmd.MessageFlagEphemeral) || record.InitialResponseID == nil {
+	if appcmd.HasResponseFlag(&data, appcmd.MessageFlagEphemeral) {
 		if err := e.setEphemeralResponse(c.UserContext(), record.ID, &data); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "unable to store ephemeral response")
 		}
 		return c.JSON(data)
+	}
+	if record.InitialResponseID == nil {
+		if _, ok, err := e.getEphemeralResponse(c.UserContext(), record.ID); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "unable to load ephemeral response")
+		} else if ok {
+			if err := e.setEphemeralResponse(c.UserContext(), record.ID, &data); err != nil {
+				return fiber.NewError(fiber.StatusInternalServerError, "unable to store ephemeral response")
+			}
+			return c.JSON(data)
+		}
+		out, err := e.createPublicInteractionMessage(c, record, &data)
+		if err != nil {
+			return err
+		}
+		if err := e.appcmd.SetInitialResponse(c.UserContext(), record.ID, out.Id); err != nil {
+			_ = e.deleteMessageResponse(c, record, out.Id)
+			return duplicateAckError()
+		}
+		return c.JSON(out)
 	}
 	out, err := e.editMessageResponse(c, record, *record.InitialResponseID, &data)
 	if err != nil {

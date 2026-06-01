@@ -145,22 +145,32 @@ type ChannelOrder struct {
 
 // Message is a message visible to the bot.
 type Message struct {
-	ID                 int64             `json:"id"`
-	ChannelID          int64             `json:"channel_id"`
-	Author             User              `json:"author"`
-	Content            string            `json:"content"`
-	Position           *int64            `json:"position,omitempty"`
-	Nonce              *string           `json:"nonce,omitempty"`
-	Attachments        []Attachment      `json:"attachments,omitempty"`
-	Embeds             []Embed           `json:"embeds,omitempty"`
-	Flags              int               `json:"flags,omitempty"`
-	Type               int               `json:"type"`
-	Reference          *int64            `json:"reference,omitempty"`
-	ReferenceChannelID *int64            `json:"reference_channel_id,omitempty"`
-	ThreadID           *int64            `json:"thread_id,omitempty"`
-	Thread             *Channel          `json:"thread,omitempty"`
-	Reactions          []MessageReaction `json:"reactions,omitempty"`
-	UpdatedAt          *time.Time        `json:"updated_at,omitempty"`
+	ID                 int64               `json:"id"`
+	ChannelID          int64               `json:"channel_id"`
+	Author             User                `json:"author"`
+	Content            string              `json:"content"`
+	Position           *int64              `json:"position,omitempty"`
+	Nonce              *string             `json:"nonce,omitempty"`
+	Attachments        []Attachment        `json:"attachments,omitempty"`
+	Embeds             []Embed             `json:"embeds,omitempty"`
+	Flags              int                 `json:"flags,omitempty"`
+	Type               int                 `json:"type"`
+	Reference          *int64              `json:"reference,omitempty"`
+	ReferenceChannelID *int64              `json:"reference_channel_id,omitempty"`
+	ThreadID           *int64              `json:"thread_id,omitempty"`
+	Thread             *Channel            `json:"thread,omitempty"`
+	Reactions          []MessageReaction   `json:"reactions,omitempty"`
+	UpdatedAt          *time.Time          `json:"updated_at,omitempty"`
+	Interaction        *MessageInteraction `json:"interaction,omitempty"`
+}
+
+// MessageInteraction describes the application command interaction that produced a message.
+type MessageInteraction struct {
+	ID            int64  `json:"id"`
+	ApplicationID int64  `json:"application_id"`
+	CommandID     int64  `json:"command_id"`
+	CommandName   string `json:"command_name"`
+	UserID        int64  `json:"user_id"`
 }
 
 // Attachment describes a message attachment.
