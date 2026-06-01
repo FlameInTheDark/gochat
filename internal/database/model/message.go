@@ -3,20 +3,25 @@ package model
 import "time"
 
 type Message struct {
-	Id               int64
-	ChannelId        int64
-	UserId           int64
-	Content          string
-	Position         int64
-	Attachments      []int64
-	EmbedsJSON       *string
-	AutoEmbedsJSON   *string
-	Flags            *int
-	Type             int
-	ReferenceChannel int64
-	Reference        int64
-	Thread           int64
-	EditedAt         *time.Time
+	Id                       int64
+	ChannelId                int64
+	UserId                   int64
+	Content                  string
+	Position                 int64
+	Attachments              []int64
+	EmbedsJSON               *string
+	AutoEmbedsJSON           *string
+	Flags                    *int
+	Type                     int
+	ReferenceChannel         int64
+	Reference                int64
+	Thread                   int64
+	EditedAt                 *time.Time
+	InteractionID            *int64
+	InteractionApplicationID *int64
+	InteractionCommandID     *int64
+	InteractionCommandName   *string
+	InteractionUserID        *int64
 }
 
 type MessageType int

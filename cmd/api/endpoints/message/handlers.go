@@ -3023,6 +3023,7 @@ func (e *entity) updateMessageAndBuildResponse(c *fiber.Ctx, req *UpdateMessageR
 		Thread:             e.lookupThreadMetadata(c.UserContext(), message.Thread),
 		Reactions:          reactions,
 		UpdatedAt:          &updatedAt,
+		Interaction:        messageInteractionDTO(*message),
 	}, nil
 }
 
@@ -3522,6 +3523,7 @@ func (e *entity) buildMessageDTOsOptimized(ctx context.Context, messages []model
 			ThreadId:           optionalInt64(message.Thread),
 			Thread:             e.threadMetadataFromCache(message.Thread, data),
 			Reactions:          data.Reactions[message.Id],
+			Interaction:        messageInteractionDTO(message),
 		}
 	}
 

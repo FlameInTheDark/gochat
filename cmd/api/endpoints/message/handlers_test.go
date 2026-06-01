@@ -104,6 +104,9 @@ func (f *fakeReplyMessageRepo) CreateMessageWithMeta(ctx context.Context, id, ch
 	f.lastCreate.position = position
 	return nil
 }
+func (f *fakeReplyMessageRepo) CreateMessageWithInteraction(ctx context.Context, id, channelID, userID int64, content string, attachments []int64, embedsJSON, autoEmbedsJSON string, flags int, msgType model.MessageType, referenceChannel, reference, thread, position int64, interactionID, applicationID, commandID, interactionUserID int64, commandName string) error {
+	return f.CreateMessageWithMeta(ctx, id, channelID, userID, content, attachments, embedsJSON, autoEmbedsJSON, flags, msgType, referenceChannel, reference, thread, position)
+}
 func (f *fakeReplyMessageRepo) CreateSystemMessage(ctx context.Context, id, channelId, userId int64, content string, msgType model.MessageType, position int64) error {
 	return nil
 }

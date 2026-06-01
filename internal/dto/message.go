@@ -24,6 +24,15 @@ type Message struct {
 	Thread             *Channel             `json:"thread,omitempty"`                                             // Thread metadata when the message is linked to a thread.
 	Reactions          []MessageReaction    `json:"reactions,omitempty"`                                          // Aggregated reactions for this message.
 	UpdatedAt          *time.Time           `json:"updated_at,omitempty"`                                         // Timestamp of the last message edit
+	Interaction        *MessageInteraction  `json:"interaction,omitempty"`                                        // Application command interaction that produced this message.
+}
+
+type MessageInteraction struct {
+	Id            int64  `json:"id" example:"2230469276416868352"`
+	ApplicationId int64  `json:"application_id" example:"2230469276416868352"`
+	CommandId     int64  `json:"command_id" example:"2230469276416868352"`
+	CommandName   string `json:"command_name" example:"ping"`
+	UserId        int64  `json:"user_id" example:"2230469276416868352"`
 }
 
 type Attachment struct {

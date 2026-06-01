@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/FlameInTheDark/gochat/cmd/botapi/config"
+	botappcommand "github.com/FlameInTheDark/gochat/cmd/botapi/endpoints/applicationcommand"
 	botguild "github.com/FlameInTheDark/gochat/cmd/botapi/endpoints/guild"
 	botmessage "github.com/FlameInTheDark/gochat/cmd/botapi/endpoints/message"
 	botuser "github.com/FlameInTheDark/gochat/cmd/botapi/endpoints/user"
@@ -152,6 +153,7 @@ func NewApp(shut *shutter.Shut, logger *slog.Logger) (*App, error) {
 		botuser.New(logger),
 		botguild.New(pg, logger),
 		botmessage.New(database, pg, qt, logger),
+		botappcommand.New(database, pg, qt, cache, logger),
 	)
 
 	return &App{server: s, db: database, logger: logger, addr: cfg.ServerAddress}, nil

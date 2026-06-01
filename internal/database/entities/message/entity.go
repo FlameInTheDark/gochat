@@ -10,6 +10,7 @@ import (
 type Message interface {
 	CreateMessage(ctx context.Context, id, channelID, userID int64, content string, attachments []int64, embedsJSON, autoEmbedsJSON string, position int64) error
 	CreateMessageWithMeta(ctx context.Context, id, channelID, userID int64, content string, attachments []int64, embedsJSON, autoEmbedsJSON string, flags int, msgType model.MessageType, referenceChannel, reference, thread, position int64) error
+	CreateMessageWithInteraction(ctx context.Context, id, channelID, userID int64, content string, attachments []int64, embedsJSON, autoEmbedsJSON string, flags int, msgType model.MessageType, referenceChannel, reference, thread, position int64, interactionID, applicationID, commandID, interactionUserID int64, commandName string) error
 	CreateSystemMessage(ctx context.Context, id, channelId, userId int64, content string, msgType model.MessageType, position int64) error
 	CreateThreadCreatedMessageRef(ctx context.Context, threadID, channelID, messageID int64) error
 	ClaimThread(ctx context.Context, channelID, messageID, threadID int64) (bool, int64, error)

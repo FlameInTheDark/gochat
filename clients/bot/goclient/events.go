@@ -209,6 +209,11 @@ const (
 	EventTypeRTCError EventType = 539
 )
 
+const (
+	// EventTypeApplicationCommandInteractionCreate is dispatched when a user invokes an application command.
+	EventTypeApplicationCommandInteractionCreate EventType = 600
+)
+
 // GatewayMessage is the JSON envelope used by the bot gateway.
 type GatewayMessage struct {
 	Operation OPCodeType      `json:"op"`
@@ -743,4 +748,7 @@ var eventConstructors = map[EventType]func() any{
 	EventTypeUserDMCallStreamStopped:  func() any { return &DMCallStreamStopped{} },
 	EventTypeRTCMoved:                 func() any { return &VoiceMove{} },
 	EventTypeRTCServerRebind:          func() any { return &VoiceRebind{} },
+	EventTypeApplicationCommandInteractionCreate: func() any {
+		return &Interaction{}
+	},
 }

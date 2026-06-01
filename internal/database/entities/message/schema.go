@@ -12,6 +12,7 @@ import (
 
 const (
 	createMessage                 = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, position, attachments, embeds, auto_embeds, flags, type, reference_channel, reference, thread) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	createInteractionMessage      = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, position, attachments, embeds, auto_embeds, flags, type, reference_channel, reference, thread, interaction_id, interaction_application_id, interaction_command_id, interaction_command_name, interaction_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	createSystemMessage           = `INSERT INTO gochat.messages (channel_id, bucket, id, user_id, content, position, flags, type) VALUES (?, ?, ?, ?, ?, ?, 0, ?)`
 	claimThread                   = `INSERT INTO gochat.message_threads (channel_id, message_id, thread_id) VALUES (?, ?, ?) IF NOT EXISTS`
 	createThreadCreatedMessageRef = `INSERT INTO gochat.thread_created_messages (thread_id, channel_id, message_id) VALUES (?, ?, ?)`
@@ -24,11 +25,12 @@ const (
 	updateGeneratedEmbeds         = `UPDATE gochat.messages SET auto_embeds = ? WHERE channel_id = ? AND id = ? AND bucket = ?`
 	deleteMessage                 = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id = ?`
 	deleteChannelMessages         = `DELETE FROM gochat.messages WHERE channel_id = ? AND bucket IN ?`
-	getMessage                    = `SELECT id, channel_id, user_id, content, position, attachments, embeds, auto_embeds, flags, edited_at, type, reference_channel, reference, thread FROM gochat.messages WHERE id = ? AND channel_id = ? AND bucket = ?`
-	getMessagesBefore             = `SELECT id, channel_id, user_id, content, position, attachments, embeds, auto_embeds, flags, edited_at, type, reference_channel, reference, thread FROM gochat.messages WHERE channel_id = ? AND id <= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
-	getMessagesAfter              = `SELECT id, channel_id, user_id, content, position, attachments, embeds, auto_embeds, flags, edited_at, type, reference_channel, reference, thread FROM gochat.messages WHERE channel_id = ? AND id >= ? AND bucket = ? ORDER BY id LIMIT ?`
-	getMessagesList               = `SELECT id, channel_id, user_id, content, position, attachments, embeds, auto_embeds, flags, edited_at, type, reference_channel, reference, thread FROM gochat.messages WHERE id IN ?`
-	getMessagesByIds              = `SELECT id, channel_id, user_id, content, position, attachments, embeds, auto_embeds, flags, edited_at, type, reference_channel, reference, thread FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id IN ?;
+	messageSelectColumns          = `id, channel_id, user_id, content, position, attachments, embeds, auto_embeds, flags, edited_at, type, reference_channel, reference, thread, interaction_id, interaction_application_id, interaction_command_id, interaction_command_name, interaction_user_id`
+	getMessage                    = `SELECT ` + messageSelectColumns + ` FROM gochat.messages WHERE id = ? AND channel_id = ? AND bucket = ?`
+	getMessagesBefore             = `SELECT ` + messageSelectColumns + ` FROM gochat.messages WHERE channel_id = ? AND id <= ? AND bucket = ? ORDER BY id DESC LIMIT ?`
+	getMessagesAfter              = `SELECT ` + messageSelectColumns + ` FROM gochat.messages WHERE channel_id = ? AND id >= ? AND bucket = ? ORDER BY id LIMIT ?`
+	getMessagesList               = `SELECT ` + messageSelectColumns + ` FROM gochat.messages WHERE id IN ?`
+	getMessagesByIds              = `SELECT ` + messageSelectColumns + ` FROM gochat.messages WHERE channel_id = ? AND bucket = ? AND id IN ?;
 `
 )
 
@@ -44,6 +46,18 @@ func (e *Entity) CreateMessageWithMeta(ctx context.Context, id, channelID, userI
 		Exec()
 	if err != nil {
 		return fmt.Errorf("unable to create message: %w", err)
+	}
+	return nil
+}
+
+func (e *Entity) CreateMessageWithInteraction(ctx context.Context, id, channelID, userID int64, content string, attachments []int64, embedsJSON, autoEmbedsJSON string, flags int, msgType model.MessageType, referenceChannel, reference, thread, position int64, interactionID, applicationID, commandID, interactionUserID int64, commandName string) error {
+	err := e.c.Session().
+		Query(createInteractionMessage).
+		WithContext(ctx).
+		Bind(channelID, idgen.GetBucket(id), id, userID, content, position, attachments, embedsJSON, autoEmbedsJSON, flags, int(msgType), referenceChannel, reference, thread, interactionID, applicationID, commandID, commandName, interactionUserID).
+		Exec()
+	if err != nil {
+		return fmt.Errorf("unable to create interaction message: %w", err)
 	}
 	return nil
 }
@@ -225,7 +239,7 @@ func (e *Entity) GetMessage(ctx context.Context, id, channelID int64) (model.Mes
 		Query(getMessage).
 		WithContext(ctx).
 		Bind(id, channelID, idgen.GetBucket(id)).
-		Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Position, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type, &m.ReferenceChannel, &m.Reference, &m.Thread)
+		Scan(messageScanDest(&m)...)
 	if err != nil {
 		return m, fmt.Errorf("unable to get message: %w", err)
 	}
@@ -247,7 +261,7 @@ func (e *Entity) GetMessagesBefore(ctx context.Context, channelID, msgID int64, 
 			Bind(channelID, msgID, lastBucket, limit-len(msgs)).
 			Iter()
 		var m model.Message
-		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Position, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type, &m.ReferenceChannel, &m.Reference, &m.Thread) {
+		for iter.Scan(messageScanDest(&m)...) {
 			msgs = append(msgs, cloneMessageRow(m))
 			users[m.UserId] = true
 		}
@@ -281,7 +295,7 @@ func (e *Entity) GetMessagesAfter(ctx context.Context, channelID, msgID, lastCha
 			Bind(channelID, msgID, lastBucket, limit-len(msgs)).
 			Iter()
 		var m model.Message
-		for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Position, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type, &m.ReferenceChannel, &m.Reference, &m.Thread) {
+		for iter.Scan(messageScanDest(&m)...) {
 			msgs = append(msgs, cloneMessageRow(m))
 			users[m.UserId] = true
 		}
@@ -329,7 +343,7 @@ func (e *Entity) GetMessagesList(ctx context.Context, msgIDs []int64) ([]model.M
 		Bind(msgIDs).
 		Iter()
 	var m model.Message
-	for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Position, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type, &m.ReferenceChannel, &m.Reference, &m.Thread) {
+	for iter.Scan(messageScanDest(&m)...) {
 		msgs = append(msgs, cloneMessageRow(m))
 	}
 	if err := iter.Close(); err != nil {
@@ -372,7 +386,7 @@ func (e *Entity) GetChannelMessagesByIDs(ctx context.Context, channelID int64, i
 				Iter()
 
 			var m model.Message
-			for iter.Scan(&m.Id, &m.ChannelId, &m.UserId, &m.Content, &m.Position, &m.Attachments, &m.EmbedsJSON, &m.AutoEmbedsJSON, &m.Flags, &m.EditedAt, &m.Type, &m.ReferenceChannel, &m.Reference, &m.Thread) {
+			for iter.Scan(messageScanDest(&m)...) {
 				results = append(results, cloneMessageRow(m))
 			}
 			if err := iter.Close(); err != nil {
@@ -412,5 +426,49 @@ func cloneMessageRow(m model.Message) model.Message {
 		flags := *mm.Flags
 		mm.Flags = &flags
 	}
+	if mm.InteractionID != nil {
+		v := *mm.InteractionID
+		mm.InteractionID = &v
+	}
+	if mm.InteractionApplicationID != nil {
+		v := *mm.InteractionApplicationID
+		mm.InteractionApplicationID = &v
+	}
+	if mm.InteractionCommandID != nil {
+		v := *mm.InteractionCommandID
+		mm.InteractionCommandID = &v
+	}
+	if mm.InteractionCommandName != nil {
+		v := *mm.InteractionCommandName
+		mm.InteractionCommandName = &v
+	}
+	if mm.InteractionUserID != nil {
+		v := *mm.InteractionUserID
+		mm.InteractionUserID = &v
+	}
 	return mm
+}
+
+func messageScanDest(m *model.Message) []interface{} {
+	return []interface{}{
+		&m.Id,
+		&m.ChannelId,
+		&m.UserId,
+		&m.Content,
+		&m.Position,
+		&m.Attachments,
+		&m.EmbedsJSON,
+		&m.AutoEmbedsJSON,
+		&m.Flags,
+		&m.EditedAt,
+		&m.Type,
+		&m.ReferenceChannel,
+		&m.Reference,
+		&m.Thread,
+		&m.InteractionID,
+		&m.InteractionApplicationID,
+		&m.InteractionCommandID,
+		&m.InteractionCommandName,
+		&m.InteractionUserID,
+	}
 }
