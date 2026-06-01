@@ -261,6 +261,10 @@ func (f *fakeDetachMessageRepo) CreateMessageWithMeta(ctx context.Context, id, c
 	return nil
 }
 
+func (f *fakeDetachMessageRepo) CreateMessageWithInteraction(ctx context.Context, id, channelID, userID int64, content string, attachments []int64, embedsJSON, autoEmbedsJSON string, flags int, msgType model.MessageType, referenceChannel, reference, thread, position int64, interactionID, applicationID, commandID, interactionUserID int64, commandName string) error {
+	return nil
+}
+
 func (f *fakeDetachMessageRepo) CreateSystemMessage(ctx context.Context, id, channelId, userId int64, content string, msgType model.MessageType, position int64) error {
 	f.createSystemCalls++
 	return nil

@@ -8,6 +8,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/banner"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
+	appcmdrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/applicationcommand"
 	botrepo "github.com/FlameInTheDark/gochat/internal/database/pgentities/bot"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/discriminator"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/user"
@@ -22,6 +23,7 @@ type entity struct {
 	name string
 	log  *slog.Logger
 	bot  botrepo.Bot
+	cmd  appcmdrepo.ApplicationCommand
 	user botUserRepo
 	disc discriminator.Discriminator
 	av   avatar.Avatar
@@ -41,6 +43,7 @@ func New(dbcon *db.CQLCon, pg *pgdb.DB, smq *searchmq.Queue, attachTTLSeconds in
 		name:      entityName,
 		log:       log,
 		bot:       botrepo.New(pg.Conn()),
+		cmd:       appcmdrepo.New(pg.Conn()),
 		user:      user.New(pg.Conn()).(botUserRepo),
 		disc:      discriminator.New(pg.Conn()),
 		av:        avatar.New(dbcon),
@@ -72,4 +75,11 @@ func (e *entity) Init(router fiber.Router) {
 	router.Post("/bots/:bot_id<int>/grants", e.CreateGrant)
 	router.Get("/bots/:bot_id<int>/grants", e.ListGrants)
 	router.Delete("/bots/:bot_id<int>/grants/:grant_id<int>", e.RevokeGrant)
+
+	router.Get("/bots/:bot_id<int>/commands", e.ListBotCommands)
+	router.Post("/bots/:bot_id<int>/commands", e.CreateBotCommand)
+	router.Put("/bots/:bot_id<int>/commands", e.BulkOverwriteBotCommands)
+	router.Get("/bots/:bot_id<int>/commands/:command_id<int>", e.GetBotCommand)
+	router.Patch("/bots/:bot_id<int>/commands/:command_id<int>", e.UpdateBotCommand)
+	router.Delete("/bots/:bot_id<int>/commands/:command_id<int>", e.DeleteBotCommand)
 }

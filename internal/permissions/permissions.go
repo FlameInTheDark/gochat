@@ -32,6 +32,7 @@ const (
 	PermAdministrator
 	PermCreateExpressions
 	PermManageExpressions
+	PermUseApplicationCommands
 )
 
 var DefaultPermissions = CreatePermissions(
@@ -44,6 +45,7 @@ var DefaultPermissions = CreatePermissions(
 	PermTextAddReactions,
 	PermTextAttachFiles,
 	PermTextReadMessageHistory,
+	PermUseApplicationCommands,
 	PermVoiceConnect,
 	PermVoiceSpeak,
 	PermVoiceVideo)

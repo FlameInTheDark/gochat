@@ -4,6 +4,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/FlameInTheDark/gochat/internal/database/model"
+	"github.com/FlameInTheDark/gochat/internal/dto"
 )
 
 func GetAttachmentType(contentType string) string {
@@ -97,4 +100,21 @@ func MentionsExtractor(content string) (users, roles []int64, everyone, here boo
 	}
 
 	return users, roles, everyone, here
+}
+
+func messageInteractionDTO(message model.Message) *dto.MessageInteraction {
+	if message.InteractionID == nil ||
+		message.InteractionApplicationID == nil ||
+		message.InteractionCommandID == nil ||
+		message.InteractionCommandName == nil ||
+		message.InteractionUserID == nil {
+		return nil
+	}
+	return &dto.MessageInteraction{
+		Id:            *message.InteractionID,
+		ApplicationId: *message.InteractionApplicationID,
+		CommandId:     *message.InteractionCommandID,
+		CommandName:   *message.InteractionCommandName,
+		UserId:        *message.InteractionUserID,
+	}
 }

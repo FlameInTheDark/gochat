@@ -32,6 +32,31 @@ var (
 	EndpointMessageReactionAll = func(channelID, messageID string) string {
 		return EndpointChannelMessage(channelID, messageID) + "/reactions"
 	}
+
+	EndpointApplicationCommands = func(applicationID string) string {
+		return EndpointAPIPath + "/applications/" + applicationID + "/commands"
+	}
+	EndpointApplicationCommand = func(applicationID, commandID string) string {
+		return EndpointApplicationCommands(applicationID) + "/" + commandID
+	}
+	EndpointGuildApplicationCommands = func(applicationID, guildID string) string {
+		return EndpointAPIPath + "/applications/" + applicationID + "/guilds/" + guildID + "/commands"
+	}
+	EndpointGuildApplicationCommand = func(applicationID, guildID, commandID string) string {
+		return EndpointGuildApplicationCommands(applicationID, guildID) + "/" + commandID
+	}
+	EndpointInteractionCallback = func(interactionID int64, token string) string {
+		return EndpointAPIPath + "/interactions/" + formatID(interactionID) + "/" + url.PathEscape(token) + "/callback"
+	}
+	EndpointOriginalInteractionResponse = func(applicationID int64, token string) string {
+		return EndpointAPIPath + "/webhooks/" + formatID(applicationID) + "/" + url.PathEscape(token) + "/messages/@original"
+	}
+	EndpointInteractionFollowup = func(applicationID int64, token string) string {
+		return EndpointAPIPath + "/webhooks/" + formatID(applicationID) + "/" + url.PathEscape(token)
+	}
+	EndpointInteractionFollowupMessage = func(applicationID int64, token string, messageID int64) string {
+		return EndpointInteractionFollowup(applicationID, token) + "/messages/" + formatID(messageID)
+	}
 )
 
 func normalizeEndpoint(endpoint string) string {

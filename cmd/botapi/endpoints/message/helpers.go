@@ -82,6 +82,15 @@ func (e *Entity) messageDTO(c *fiber.Ctx, msg model.Message) (dto.Message, error
 	if msg.Thread != 0 {
 		out.ThreadId = &msg.Thread
 	}
+	if msg.InteractionID != nil && msg.InteractionApplicationID != nil && msg.InteractionCommandID != nil && msg.InteractionCommandName != nil && msg.InteractionUserID != nil {
+		out.Interaction = &dto.MessageInteraction{
+			Id:            *msg.InteractionID,
+			ApplicationId: *msg.InteractionApplicationID,
+			CommandId:     *msg.InteractionCommandID,
+			CommandName:   *msg.InteractionCommandName,
+			UserId:        *msg.InteractionUserID,
+		}
+	}
 	return out, nil
 }
 

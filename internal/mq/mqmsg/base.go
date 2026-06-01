@@ -149,6 +149,10 @@ const (
 	EventTypeRTCError EventType = 539
 )
 
+const (
+	EventTypeApplicationCommandInteractionCreate EventType = 600 + iota
+)
+
 type Message struct {
 	Operation OPCodeType      `json:"op"`
 	Data      json.RawMessage `json:"d"`
