@@ -94,12 +94,12 @@ func ReconcileTouched(ctx context.Context, store *Store, conn *natsio.Conn, ttlS
 		limit = 1000
 	}
 
-	userIDs, err := store.RecentlyTouched(ctx, limit)
+	now := time.Now().Unix()
+	userIDs, err := store.ReconcileDue(ctx, now, limit)
 	if err != nil {
 		return 0, err
 	}
 
-	now := time.Now().Unix()
 	published := 0
 	for _, userID := range userIDs {
 		if _, err := store.PruneExpiredSessions(ctx, userID, now, 1000); err != nil {

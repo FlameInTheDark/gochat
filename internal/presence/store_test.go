@@ -108,6 +108,141 @@ func TestAggregateReturnsOfflineWithoutStaleVoice(t *testing.T) {
 	}
 }
 
+func TestManualOverrideWinsAcrossSessions(t *testing.T) {
+	t.Parallel()
+
+	store := newTestStore(t)
+	ctx := context.Background()
+	now := time.Now().Unix()
+	const userID = int64(13)
+	const ttl = int64(60)
+
+	if err := store.UpsertSession(ctx, userID, "desktop", SessionPresence{
+		SessionID: "desktop",
+		Status:    StatusOnline,
+		Platform:  "desktop",
+		Since:     now,
+		UpdatedAt: now,
+		ExpiresAt: now + ttl,
+	}, ttl); err != nil {
+		t.Fatalf("upsert desktop: %v", err)
+	}
+	if err := store.UpsertSession(ctx, userID, "web", SessionPresence{
+		SessionID: "web",
+		Status:    StatusOnline,
+		Platform:  "web",
+		Since:     now,
+		UpdatedAt: now,
+		ExpiresAt: now + ttl,
+	}, ttl); err != nil {
+		t.Fatalf("upsert web: %v", err)
+	}
+	if err := store.SetOverride(ctx, userID, StatusIdle, now+5, "lunch"); err != nil {
+		t.Fatalf("set override: %v", err)
+	}
+
+	agg, ok, err := store.Aggregate(ctx, userID, now+5)
+	if err != nil {
+		t.Fatalf("aggregate: %v", err)
+	}
+	if !ok || agg.Status != StatusIdle {
+		t.Fatalf("expected manual idle override, ok=%v presence=%#v", ok, agg)
+	}
+	if agg.CustomStatusText != "lunch" {
+		t.Fatalf("expected override custom text, got %q", agg.CustomStatusText)
+	}
+	if got := agg.ClientStatus["web"]; got != StatusIdle {
+		t.Fatalf("expected client_status web to reflect override, got %q", got)
+	}
+}
+
+func TestManualOnlineClearsOverrideAndResumesAutomaticAggregation(t *testing.T) {
+	t.Parallel()
+
+	store := newTestStore(t)
+	ctx := context.Background()
+	now := time.Now().Unix()
+	const userID = int64(14)
+	const ttl = int64(60)
+
+	if err := store.UpsertSession(ctx, userID, "desktop", SessionPresence{
+		SessionID: "desktop",
+		Status:    StatusOnline,
+		Platform:  "desktop",
+		Since:     now,
+		UpdatedAt: now,
+		ExpiresAt: now + ttl,
+	}, ttl); err != nil {
+		t.Fatalf("upsert desktop: %v", err)
+	}
+	if err := store.UpsertSession(ctx, userID, "web", SessionPresence{
+		SessionID: "web",
+		Status:    StatusIdle,
+		Platform:  "web",
+		Since:     now,
+		UpdatedAt: now,
+		ExpiresAt: now + ttl,
+	}, ttl); err != nil {
+		t.Fatalf("upsert web: %v", err)
+	}
+	if err := store.SetOverride(ctx, userID, StatusDND, now+1, "focus"); err != nil {
+		t.Fatalf("set override: %v", err)
+	}
+	if err := store.ClearOverride(ctx, userID); err != nil {
+		t.Fatalf("clear override: %v", err)
+	}
+
+	agg, ok, err := store.Aggregate(ctx, userID, now+2)
+	if err != nil {
+		t.Fatalf("aggregate: %v", err)
+	}
+	if !ok || agg.Status != StatusOnline {
+		t.Fatalf("expected automatic online aggregation, ok=%v presence=%#v", ok, agg)
+	}
+	if got := agg.ClientStatus["web"]; got != StatusIdle {
+		t.Fatalf("expected web session to remain idle, got %q", got)
+	}
+}
+
+func TestAutoIdleDoesNotOverrideAnotherOnlineSession(t *testing.T) {
+	t.Parallel()
+
+	store := newTestStore(t)
+	ctx := context.Background()
+	now := time.Now().Unix()
+	const userID = int64(15)
+	const ttl = int64(60)
+
+	if err := store.UpsertSession(ctx, userID, "web", SessionPresence{
+		SessionID: "web",
+		Status:    StatusIdle,
+		Platform:  "web",
+		Since:     now,
+		UpdatedAt: now,
+		ExpiresAt: now + ttl,
+	}, ttl); err != nil {
+		t.Fatalf("upsert web: %v", err)
+	}
+	if err := store.UpsertSession(ctx, userID, "mobile", SessionPresence{
+		SessionID: "mobile",
+		Status:    StatusOnline,
+		Platform:  "mobile",
+		Since:     now,
+		UpdatedAt: now,
+		ExpiresAt: now + ttl,
+	}, ttl); err != nil {
+		t.Fatalf("upsert mobile: %v", err)
+	}
+
+	agg, ok, err := store.Aggregate(ctx, userID, now+1)
+	if err != nil {
+		t.Fatalf("aggregate: %v", err)
+	}
+	if !ok || agg.Status != StatusOnline {
+		t.Fatalf("expected online because another session is active, ok=%v presence=%#v", ok, agg)
+	}
+}
+
 func TestReconcileTouchedPublishesCorrectionForExpiredLease(t *testing.T) {
 	t.Parallel()
 

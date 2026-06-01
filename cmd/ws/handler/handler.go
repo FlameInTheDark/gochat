@@ -345,28 +345,12 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		opCtx, cancel := context.WithTimeout(ctx, time.Second*2)
 		defer cancel()
 
-		if m.Status == presence.StatusOffline {
-			// Set global override to appear offline
-			if err := h.pstore.SetOverride(opCtx, h.user.Id, presence.StatusOffline, now, m.CustomStatusText); err != nil {
-				log.Warn("Error setting offline override", "error", err)
-				return
-			}
-			agg, _, _ := h.pstore.Aggregate(opCtx, h.user.Id, now)
-			_ = h.pstore.SetAggregated(opCtx, agg, ttl)
-			h.publishPresence(agg)
-			return
-		}
-
-		// Clear override and upsert session presence
-		if err := h.pstore.ClearOverride(opCtx, h.user.Id); err != nil {
-			log.Warn("Error clearing presence override", "error", err)
-		}
 		if h.sessionID == "" {
 			h.sessionID = fmt.Sprintf("%d-%d", h.user.Id, now)
 		}
 
 		switch m.Status {
-		case presence.StatusOnline, presence.StatusIdle, presence.StatusDND:
+		case presence.StatusOnline, presence.StatusIdle, presence.StatusDND, presence.StatusOffline:
 		default:
 			return
 		}
@@ -378,6 +362,52 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 		}
 		if !ok {
 			existingSession = presence.SessionPresence{}
+		}
+
+		if m.Manual {
+			text := presenceCustomText(m.CustomStatusText, existingSession.CustomStatusText)
+			if m.CustomStatusText == nil {
+				if currentOverride, ok, err := h.pstore.GetOverride(opCtx, h.user.Id); err == nil && ok && currentOverride.CustomStatusText != "" {
+					text = currentOverride.CustomStatusText
+				}
+			}
+			if m.Status == presence.StatusOnline {
+				if err := h.pstore.ClearOverride(opCtx, h.user.Id); err != nil {
+					log.Warn("Error clearing presence override", "error", err)
+				}
+				m.Status = presence.StatusOnline
+			} else {
+				if m.Status != presence.StatusOffline {
+					sp := mergePresenceUpdate(existingSession, h.sessionID, m, now, ttl)
+					sp.ConnectionID = h.connectionID
+					sp.Generation = h.generation
+					if err := h.pstore.UpsertSession(opCtx, h.user.Id, h.sessionID, sp, ttl); err != nil {
+						log.Warn("Error upserting session presence", "error", err)
+						return
+					}
+				}
+				if err := h.pstore.SetOverride(opCtx, h.user.Id, m.Status, now, text); err != nil {
+					log.Warn("Error setting presence override", "error", err)
+					return
+				}
+				agg, _, _ := h.pstore.Aggregate(opCtx, h.user.Id, now)
+				_ = h.pstore.SetAggregated(opCtx, agg, ttl)
+				h.publishPresence(agg)
+				h.presenceSet = true
+				return
+			}
+		}
+
+		if !m.Manual && m.Status == presence.StatusOffline {
+			return
+		}
+
+		if !m.Manual {
+			switch m.Status {
+			case presence.StatusOnline, presence.StatusIdle, presence.StatusDND:
+			default:
+				return
+			}
 		}
 
 		sp := mergePresenceUpdate(existingSession, h.sessionID, m, now, ttl)
@@ -404,10 +434,16 @@ func mergePresenceUpdate(existing presence.SessionPresence, sessionID string, up
 	sp.SessionID = sessionID
 	sp.Status = update.Status
 	sp.Platform = update.Platform
-	sp.Since = now
+	if sp.Status == existing.Status && existing.Since > 0 {
+		sp.Since = existing.Since
+	} else {
+		sp.Since = now
+	}
 	sp.UpdatedAt = now
 	sp.ExpiresAt = now + ttl
-	sp.CustomStatusText = update.CustomStatusText
+	if update.CustomStatusText != nil {
+		sp.CustomStatusText = *update.CustomStatusText
+	}
 
 	if update.VoiceChannelID != nil {
 		if *update.VoiceChannelID > 0 {
@@ -428,6 +464,13 @@ func mergePresenceUpdate(existing presence.SessionPresence, sessionID string, up
 	}
 
 	return sp
+}
+
+func presenceCustomText(update *string, existing string) string {
+	if update == nil {
+		return existing
+	}
+	return *update
 }
 
 func resolveRequestedChannels(m mqmsg.Subscribe) ([]int64, bool) {
