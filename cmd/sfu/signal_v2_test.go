@@ -272,14 +272,26 @@ func writeBinaryMessage(t *testing.T, conn *ws.Conn, payload []byte) {
 }
 
 func readCloseCode(t *testing.T, conn *ws.Conn, timeout time.Duration) int {
+	return readCloseCodeIgnoringOps(t, conn, timeout)
+}
+
+func readCloseCodeIgnoringOps(t *testing.T, conn *ws.Conn, timeout time.Duration, ignoredOps ...int) int {
 	t.Helper()
+	ignored := make(map[int]struct{}, len(ignoredOps)+1)
+	ignored[voicev2.OpError] = struct{}{}
+	for _, op := range ignoredOps {
+		ignored[op] = struct{}{}
+	}
+
 	_ = conn.SetReadDeadline(time.Now().Add(timeout))
 	for {
 		_, raw, err := conn.ReadMessage()
 		if err == nil {
 			var packet voicev2.IncomingPacket
-			if json.Unmarshal(raw, &packet) == nil && packet.Op == voicev2.OpError {
-				continue
+			if json.Unmarshal(raw, &packet) == nil {
+				if _, ok := ignored[packet.Op]; ok {
+					continue
+				}
 			}
 			t.Fatalf("expected websocket close, got message %s", string(raw))
 		}
@@ -744,7 +756,7 @@ func TestSignalWSV2RejectsWrongPhaseUnsupportedProtocolAndMalformedSDP(t *testin
 			RTCConnectionID: "rtc-bad-protocol",
 			Type:            webrtc.SDPTypeAnswer.String(),
 		})
-		if code := readCloseCode(t, client.conn, 5*time.Second); code != voicev2.CloseCodeUnsupportedMedium {
+		if code := readCloseCodeIgnoringOps(t, client.conn, 5*time.Second, voicev2.OpSessionDescription); code != voicev2.CloseCodeUnsupportedMedium {
 			t.Fatalf("close code = %d, want %d", code, voicev2.CloseCodeUnsupportedMedium)
 		}
 	})

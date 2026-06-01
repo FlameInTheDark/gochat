@@ -280,7 +280,7 @@ type channelState struct {
 	stopped            atomic.Bool
 }
 
-func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToken, routeID, routeURL, routeRegion string, log *slog.Logger, maxAudioBitrateBps uint64, telemetry *observability.SFUTelemetry) *channelState {
+func newChannelState(ctx context.Context, id int64, httpClient *resty.Client, webhookUrl, webhookToken, routeID, routeURL, routeRegion string, log *slog.Logger, maxAudioBitrateBps uint64, telemetry *observability.SFUTelemetry) *channelState {
 	t := time.NewTicker(time.Minute)
 	stop := make(chan struct{})
 	go func(channelId int64, ch chan struct{}) {
@@ -328,7 +328,7 @@ func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToke
 
 	// Dedicated goroutine for debounced signaling.
 	// Coalesces rapid signal requests into one sync pass with 50ms debounce.
-	go func() {
+	go func(ctx context.Context) {
 		for {
 			select {
 			case <-sigCh:
@@ -339,12 +339,12 @@ func newChannelState(id int64, httpClient *resty.Client, webhookUrl, webhookToke
 				case <-sigCh:
 				default:
 				}
-				cs.doSignalPeerConnections()
+				cs.doSignalPeerConnections(ctx)
 			case <-sigStop:
 				return
 			}
 		}
-	}()
+	}(ctx)
 
 	return cs
 }
@@ -550,8 +550,8 @@ func (c *channelState) preparePeerInitialSync(state *peerConnectionState) uint64
 
 // signalPeerConnections enqueues a signal request to the dedicated goroutine.
 // Non-blocking: if a signal is already pending it is coalesced.
-func (c *channelState) signalPeerConnections() {
-	if c.stopped.Load() {
+func (c *channelState) signalPeerConnections(ctx context.Context) {
+	if c.stopped.Load() || ctx == nil {
 		return
 	}
 	select {
@@ -570,7 +570,7 @@ func (c *channelState) signalPeerConnections() {
 //     current track set and create an offer if the effective sender layout changed
 //     or the peer explicitly needs an offer.
 //  3. Release the lock and send offers over WebSocket.
-func (c *channelState) doSignalPeerConnections() {
+func (c *channelState) doSignalPeerConnections(ctx context.Context) {
 	c.mu.Lock()
 
 	// Step 1: Remove all closed/failed peers in one pass.
@@ -645,7 +645,7 @@ func (c *channelState) doSignalPeerConnections() {
 			continue
 		}
 		if c.telemetry != nil {
-			c.telemetry.Offer(context.Background(), "outbound",
+			c.telemetry.Offer(ctx, "outbound",
 				attribute.Int64("voice.channel_id", c.id),
 				attribute.Int64("user.id", w.state.userID),
 			)
@@ -764,7 +764,7 @@ func (c *channelState) broadcastDeafenState(userID int64, deafened bool) {
 
 // serverMuteUser sets/unsets server-wide mute on a target user.
 // When muted, the user's audio tracks are removed so no one receives them.
-func (c *channelState) serverMuteUser(targetUserID int64, muted bool) {
+func (c *channelState) serverMuteUser(ctx context.Context, targetUserID int64, muted bool) {
 	var changedTopology bool
 	c.mu.Lock()
 	for _, p := range c.peers {
@@ -790,13 +790,13 @@ func (c *channelState) serverMuteUser(targetUserID int64, muted bool) {
 	// Notify all peers about the mute state and renegotiate
 	c.broadcastMuteState(targetUserID, muted)
 	if changedTopology {
-		c.signalPeerConnections()
+		c.signalPeerConnections(ctx)
 	}
 }
 
 // serverDeafenUser sets/unsets server-wide deafen on a target user.
 // When deafened, the user receives no audio/video from anyone.
-func (c *channelState) serverDeafenUser(targetUserID int64, deafened bool) {
+func (c *channelState) serverDeafenUser(ctx context.Context, targetUserID int64, deafened bool) {
 	var changedTopology bool
 	c.mu.Lock()
 	for _, p := range c.peers {
@@ -816,7 +816,7 @@ func (c *channelState) serverDeafenUser(targetUserID int64, deafened bool) {
 	// Notify all peers and renegotiate (deafened user gets no senders)
 	c.broadcastDeafenState(targetUserID, deafened)
 	if changedTopology {
-		c.signalPeerConnections()
+		c.signalPeerConnections(ctx)
 	}
 }
 
@@ -916,7 +916,7 @@ func (s *SFU) Close() {
 	s.mu.Unlock()
 }
 
-func (s *SFU) getOrCreateChannel(channelID int64) (*channelState, bool) {
+func (s *SFU) getOrCreateChannel(ctx context.Context, channelID int64) (*channelState, bool) {
 	// Fast path: read lock
 	s.mu.RLock()
 	ch, ok := s.channels[channelID]
@@ -930,7 +930,7 @@ func (s *SFU) getOrCreateChannel(channelID int64) (*channelState, bool) {
 	ch, ok = s.channels[channelID]
 	created := false
 	if !ok {
-		ch = newChannelState(channelID, s.httpClient, s.webhookUrl, s.webhookToken, s.routeID, s.routeURL, s.routeRegion, s.log, s.maxAudioBitrateBps, s.telemetry)
+		ch = newChannelState(ctx, channelID, s.httpClient, s.webhookUrl, s.webhookToken, s.routeID, s.routeURL, s.routeRegion, s.log, s.maxAudioBitrateBps, s.telemetry)
 		s.channels[channelID] = ch
 		created = true
 	}
@@ -939,7 +939,7 @@ func (s *SFU) getOrCreateChannel(channelID int64) (*channelState, bool) {
 }
 
 func (s *SFU) AddPeer(ctx context.Context, channelID int64, state *peerConnectionState) *channelState {
-	ch, created := s.getOrCreateChannel(channelID)
+	ch, created := s.getOrCreateChannel(ctx, channelID)
 	if created && s.telemetry != nil {
 		s.telemetry.ChannelDelta(ctx, 1)
 	}
@@ -976,7 +976,7 @@ func (s *SFU) RemovePeer(ctx context.Context, channelID int64, pc *webrtc.PeerCo
 				)
 			}
 		}
-		ch.signalPeerConnections()
+		ch.signalPeerConnections(ctx)
 	}
 	if empty {
 		s.cleanupChannel(ctx, channelID, ch)
@@ -1004,7 +1004,7 @@ func (s *SFU) ChannelRevision(channelID int64) uint64 {
 }
 
 func (s *SFU) AddTrack(ctx context.Context, channelID int64, userID int64, t *webrtc.TrackRemote) *webrtc.TrackLocalStaticRTP {
-	ch, _ := s.getOrCreateChannel(channelID)
+	ch, _ := s.getOrCreateChannel(ctx, channelID)
 	track := ch.addTrack(userID, t)
 	if track != nil {
 		if s.telemetry != nil {
@@ -1013,7 +1013,7 @@ func (s *SFU) AddTrack(ctx context.Context, channelID int64, userID int64, t *we
 				attribute.Int64("user.id", userID),
 			)
 		}
-		ch.signalPeerConnections()
+		ch.signalPeerConnections(ctx)
 	}
 	return track
 }
@@ -1033,7 +1033,7 @@ func (s *SFU) RemoveTrack(ctx context.Context, channelID int64, track *webrtc.Tr
 				attribute.Int64("user.id", owner),
 			)
 		}
-		ch.signalPeerConnections()
+		ch.signalPeerConnections(ctx)
 	}
 	if empty {
 		s.cleanupChannel(ctx, channelID, ch)
@@ -1066,7 +1066,7 @@ func (s *SFU) SignalChannel(ctx context.Context, channelID int64) {
 	if s.telemetry != nil {
 		s.telemetry.Renegotiation(ctx, attribute.Int64("voice.channel_id", channelID))
 	}
-	ch.signalPeerConnections()
+	ch.signalPeerConnections(ctx)
 }
 
 func (s *SFU) SignalPeer(ctx context.Context, channelID int64, pc *webrtc.PeerConnection) {
@@ -1082,7 +1082,7 @@ func (s *SFU) SignalPeer(ctx context.Context, channelID int64, pc *webrtc.PeerCo
 	if s.telemetry != nil {
 		s.telemetry.Renegotiation(ctx, attribute.Int64("voice.channel_id", channelID))
 	}
-	ch.signalPeerConnections()
+	ch.signalPeerConnections(ctx)
 }
 
 func (s *SFU) ApplyAnswer(ctx context.Context, channelID int64, pc *webrtc.PeerConnection) {
@@ -1103,7 +1103,7 @@ func (s *SFU) ApplyAnswer(ctx context.Context, channelID int64, pc *webrtc.PeerC
 	if s.telemetry != nil {
 		s.telemetry.Renegotiation(ctx, attribute.Int64("voice.channel_id", channelID))
 	}
-	ch.signalPeerConnections()
+	ch.signalPeerConnections(ctx)
 }
 
 func (s *SFU) RequestKeyFrame(channelID int64) {
@@ -1172,7 +1172,7 @@ func (s *SFU) ServerMuteUser(ctx context.Context, channelID int64, targetUserID 
 	if !ok {
 		return
 	}
-	ch.serverMuteUser(targetUserID, muted)
+	ch.serverMuteUser(ctx, targetUserID, muted)
 	if s.telemetry != nil {
 		s.telemetry.Renegotiation(ctx, attribute.Int64("voice.channel_id", channelID))
 	}
@@ -1186,7 +1186,7 @@ func (s *SFU) ServerDeafenUser(ctx context.Context, channelID int64, targetUserI
 	if !ok {
 		return
 	}
-	ch.serverDeafenUser(targetUserID, deafened)
+	ch.serverDeafenUser(ctx, targetUserID, deafened)
 	if s.telemetry != nil {
 		s.telemetry.Renegotiation(ctx, attribute.Int64("voice.channel_id", channelID))
 	}

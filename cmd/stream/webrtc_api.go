@@ -44,7 +44,13 @@ func buildWebRTCAPI(logger *slog.Logger, allowAV1 bool, icePublicIP string, udpP
 		)
 	}
 	if publicIP := strings.TrimSpace(icePublicIP); publicIP != "" {
-		settingEngine.SetNAT1To1IPs([]string{publicIP}, webrtc.ICECandidateTypeHost)
+		if err := settingEngine.SetICEAddressRewriteRules(webrtc.ICEAddressRewriteRule{
+			External:        []string{publicIP},
+			AsCandidateType: webrtc.ICECandidateTypeHost,
+			Mode:            webrtc.ICEAddressRewriteReplace,
+		}); err != nil {
+			return nil, fmt.Errorf("set ice address rewrite rules: %w", err)
+		}
 		logger.Info("configured webrtc public ice ip",
 			slog.String("public_ip", publicIP),
 			slog.String("candidate_type", webrtc.ICECandidateTypeHost.String()),

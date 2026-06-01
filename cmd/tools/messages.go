@@ -90,7 +90,7 @@ func messagesBackfillPositions() *cli.Command {
 				return err
 			}
 
-			cql, pg, err := openBackfillDatabases(logger, cfg)
+			cql, pg, err := openBackfillDatabases(ctx, logger, cfg)
 			if err != nil {
 				return err
 			}
@@ -127,7 +127,7 @@ type backfillOptions struct {
 	rewrite          bool
 }
 
-func openBackfillDatabases(logger *slog.Logger, cfg *apiconfig.Config) (*db.CQLCon, *pgdb.DB, error) {
+func openBackfillDatabases(ctx context.Context, logger *slog.Logger, cfg *apiconfig.Config) (*db.CQLCon, *pgdb.DB, error) {
 	if len(cfg.Cluster) == 0 {
 		return nil, nil, fmt.Errorf("CLUSTER must be configured")
 	}
@@ -141,7 +141,7 @@ func openBackfillDatabases(logger *slog.Logger, cfg *apiconfig.Config) (*db.CQLC
 	}
 
 	pg := pgdb.NewDB(logger)
-	if err := pg.Connect(cfg.PGDSN, pgdb.ConnectOptions{DriverName: cfg.PGDriver, MaxRetries: cfg.PGRetries}); err != nil {
+	if err := pg.ConnectContext(ctx, cfg.PGDSN, pgdb.ConnectOptions{DriverName: cfg.PGDriver, MaxRetries: cfg.PGRetries}); err != nil {
 		_ = cql.Close()
 		return nil, nil, err
 	}
