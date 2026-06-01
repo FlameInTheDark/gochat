@@ -19,6 +19,7 @@ type ApplicationCommand interface {
 	GetCommand(ctx context.Context, commandID int64) (appcmd.ApplicationCommand, error)
 	GetCommandForBot(ctx context.Context, botUserID, commandID int64) (appcmd.ApplicationCommand, error)
 	ListBotCommands(ctx context.Context, botUserID int64, guildID *int64) ([]appcmd.ApplicationCommand, error)
+	ListGuildCommandIndex(ctx context.Context, guildID int64) ([]appcmd.ApplicationCommand, error)
 	ListVisibleGuildCommands(ctx context.Context, guildID int64, commandType appcmd.CommandType, query string, limit uint64) ([]appcmd.ApplicationCommand, error)
 	BulkOverwrite(ctx context.Context, botUserID int64, guildID *int64, commands []appcmd.ApplicationCommand) error
 	DeleteCommand(ctx context.Context, botUserID, commandID int64) error
@@ -194,6 +195,22 @@ func (e *Entity) ListBotCommands(ctx context.Context, botUserID int64, guildID *
 		Where(where).
 		OrderBy("ac.type ASC", "ac.name ASC")
 	return e.listCommands(ctx, q)
+}
+
+func (e *Entity) ListGuildCommandIndex(ctx context.Context, guildID int64) ([]appcmd.ApplicationCommand, error) {
+	q := commandSelect().
+		Join("bot_guilds bg ON bg.bot_user_id = ac.application_id AND bg.guild_id = ?", guildID).
+		Join("bots b ON b.bot_user_id = ac.application_id").
+		Where(squirrel.And{
+			squirrel.Eq{"b.disabled": false},
+			squirrel.Or{squirrel.Eq{"ac.guild_id": nil}, squirrel.Eq{"ac.guild_id": guildID}},
+		}).
+		OrderBy("ac.application_id ASC", "ac.type ASC", "ac.guild_id NULLS FIRST", "ac.name ASC")
+	commands, err := e.listCommands(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	return dedupeGuildOverrides(commands), nil
 }
 
 func (e *Entity) ListVisibleGuildCommands(ctx context.Context, guildID int64, commandType appcmd.CommandType, query string, limit uint64) ([]appcmd.ApplicationCommand, error) {
