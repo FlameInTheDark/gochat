@@ -68,9 +68,13 @@ func (e *entity) invoke(c *fiber.Ctx, interactionType appcmd.InteractionType) er
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnauthorized, "unable to get user")
 	}
-	var req appcmd.InvokeRequest
-	if err := c.BodyParser(&req); err != nil {
+	req, err := parseInvokeRequest(c.Body(), interactionType)
+	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid interaction body")
+	}
+	interactionType = req.Type
+	if interactionType != appcmd.InteractionTypeApplicationCommand && interactionType != appcmd.InteractionTypeAutocomplete {
+		return fiber.NewError(fiber.StatusBadRequest, "unsupported interaction type")
 	}
 	if req.CommandID == 0 {
 		return fiber.NewError(fiber.StatusBadRequest, "command_id is required")

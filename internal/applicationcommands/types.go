@@ -96,6 +96,21 @@ type ApplicationCommand struct {
 	UpdatedAt                *time.Time                 `json:"updated_at,omitempty"`
 }
 
+type ApplicationCommandIndex struct {
+	Applications        []ApplicationCommandIndexApplication `json:"applications"`
+	ApplicationCommands []ApplicationCommand                 `json:"application_commands"`
+	Version             int64                                `json:"version,string"`
+}
+
+type ApplicationCommandIndexApplication struct {
+	ID          int64   `json:"id,string"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Icon        *string `json:"icon,omitempty"`
+	BotID       int64   `json:"bot_id,string"`
+	Flags       string  `json:"flags"`
+}
+
 type ApplicationCommandOption struct {
 	Type                     OptionType                 `json:"type"`
 	Name                     string                     `json:"name"`

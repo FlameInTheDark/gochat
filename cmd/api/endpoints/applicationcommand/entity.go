@@ -38,6 +38,7 @@ type entity struct {
 	ch       channel.Channel
 	gc       guildchannels.GuildChannels
 	perm     rolecheck.RoleCheck
+	cache    *kvs.Cache
 	registry appcmddispatch.BotSessionRegistry
 }
 
@@ -54,6 +55,7 @@ func New(cql *db.CQLCon, pg *pgdb.DB, cache *kvs.Cache, nc *natsio.Conn, log *sl
 		ch:       channel.New(pg.Conn()),
 		gc:       guildchannels.New(pg.Conn()),
 		perm:     rolecheck.New(pg),
+		cache:    cache,
 		registry: botgateway.NewRegistry(cache, sessionRegistryTTL),
 	}
 }
@@ -63,7 +65,7 @@ func (e *entity) Name() string {
 }
 
 func (e *entity) Init(router fiber.Router) {
-	router.Get("/application-commands", e.ListVisibleCommands)
+	router.Get("/guilds/:guild_id<int>/application-command-index", e.GuildApplicationCommandIndex)
 	router.Post("/application-commands/interactions", e.InvokeCommand)
 	router.Post("/application-commands/autocomplete", e.AutocompleteCommand)
 }
