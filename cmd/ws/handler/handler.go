@@ -21,6 +21,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
+	iconrepo "github.com/FlameInTheDark/gochat/internal/database/entities/icon"
 	"github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
 	"github.com/FlameInTheDark/gochat/internal/database/pgdb"
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/channel"
@@ -69,6 +70,7 @@ type Handler struct {
 	uset     usersettings.UserSettings
 	rs       readstates.ReadStates
 	gclm     guildchannelmessages.GuildChannelMessages
+	ico      iconrepo.Icon
 	u        user.User
 	gc       guildchannels.GuildChannels
 	ch       channel.Channel
@@ -121,6 +123,7 @@ func New(c *db.CQLCon, pg *pgdb.DB, sub *subscriber.Subscriber, sendJSON func(v 
 		uset:      usersettings.New(pg.Conn()),
 		rs:        readstates.New(c),
 		gclm:      guildchannelmessages.New(c),
+		ico:       iconrepo.New(c),
 		u:         user.New(pg.Conn()),
 		gc:        guildchannels.New(pg.Conn()),
 		ch:        channel.New(pg.Conn()),

@@ -313,7 +313,7 @@ func (h *Handler) sendGatewayReady(ctx context.Context, user pgmodel.User, membe
 		if err != nil {
 			return fmt.Errorf("load gateway ready guilds: %w", err)
 		}
-		guildDTOs = guildModelsToDTOs(guilds)
+		guildDTOs = h.guildModelsToDTOs(ctx, guilds)
 	}
 
 	var settings *pgmodel.UserSettingsData
@@ -491,17 +491,61 @@ func (h *Handler) loadGatewayReadyReadState(ctx context.Context, userID int64, g
 	return readStates, guildsLastMessages, threadsLastMessages, joinedThreads
 }
 
-func guildModelsToDTOs(guilds []pgmodel.Guild) []dto.Guild {
+func (h *Handler) guildModelsToDTOs(ctx context.Context, guilds []pgmodel.Guild) []dto.Guild {
 	out := make([]dto.Guild, len(guilds))
 	for i, g := range guilds {
-		out[i] = dto.Guild{
-			Id:              g.Id,
-			Name:            g.Name,
-			Owner:           g.OwnerId,
-			Public:          g.Public,
-			Permissions:     g.Permissions,
-			SystemChannelId: g.SystemMessages,
+		out[i] = h.guildModelToDTO(ctx, g)
+	}
+	return out
+}
+
+func (h *Handler) guildModelToDTO(ctx context.Context, g pgmodel.Guild) dto.Guild {
+	out := dto.Guild{
+		Id:              g.Id,
+		Name:            g.Name,
+		Owner:           g.OwnerId,
+		Public:          g.Public,
+		Permissions:     g.Permissions,
+		SystemChannelId: g.SystemMessages,
+	}
+	if g.Icon == nil {
+		return out
+	}
+
+	key := fmt.Sprintf("icons:%d:%d", g.Id, *g.Icon)
+	if h.cache != nil {
+		var cached dto.Icon
+		if err := h.cache.GetJSON(ctx, key, &cached); err == nil && cached.URL != "" {
+			out.Icon = &cached
+			return out
 		}
+	}
+
+	if h.ico == nil {
+		return out
+	}
+	icon, err := h.ico.GetIcon(ctx, *g.Icon, g.Id)
+	if err != nil || icon.URL == nil {
+		return out
+	}
+
+	var width, height int64
+	if icon.Width != nil {
+		width = *icon.Width
+	}
+	if icon.Height != nil {
+		height = *icon.Height
+	}
+	resolved := dto.Icon{
+		Id:       *g.Icon,
+		URL:      *icon.URL,
+		Filesize: icon.FileSize,
+		Width:    width,
+		Height:   height,
+	}
+	out.Icon = &resolved
+	if h.cache != nil {
+		_ = h.cache.SetJSON(ctx, key, resolved)
 	}
 	return out
 }
