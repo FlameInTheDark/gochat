@@ -24,6 +24,7 @@ import (
 
 const ephemeralResponseKeyPrefix = "appcmd:ephemeral:"
 const autocompleteResponseKeyPrefix = "appcmd:autocomplete:"
+const avatarCacheTTLSeconds = 3600
 
 func parseInt64Param(c *fiber.Ctx, name string) (int64, error) {
 	id, err := strconv.ParseInt(c.Params(name), 10, 64)
@@ -96,7 +97,7 @@ func (e *Entity) publicUser(ctx context.Context, userID int64) (dto.User, error)
 	if d, err := e.disc.GetDiscriminatorByUserId(ctx, userID); err == nil {
 		disc = d.Discriminator
 	}
-	return dto.User{
+	out := dto.User{
 		Id:            u.Id,
 		Name:          u.Name,
 		Discriminator: disc,
@@ -104,7 +105,47 @@ func (e *Entity) publicUser(ctx context.Context, userID int64) (dto.User, error)
 		BannerColor:   u.BannerColor,
 		PanelColor:    u.PanelColor,
 		IsBot:         u.IsBot(),
-	}, nil
+	}
+	if u.Avatar != nil {
+		if avatar, err := e.getAvatarDataCached(ctx, u.Id, *u.Avatar); err == nil && avatar != nil {
+			out.Avatar = avatar
+		}
+	}
+	return out, nil
+}
+
+func (e *Entity) getAvatarDataCached(ctx context.Context, userID, avatarID int64) (*dto.AvatarData, error) {
+	key := fmt.Sprintf("avatars:%d:%d", userID, avatarID)
+	var cached dto.AvatarData
+	if e.cache != nil {
+		if err := e.cache.GetJSON(ctx, key, &cached); err == nil && cached.URL != "" {
+			return &cached, nil
+		}
+	}
+
+	if e.av == nil {
+		return nil, nil
+	}
+	avatar, err := e.av.GetAvatar(ctx, avatarID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if !avatar.Done || avatar.URL == nil || *avatar.URL == "" {
+		return nil, nil
+	}
+
+	resolved := dto.AvatarData{
+		Id:          avatar.Id,
+		URL:         *avatar.URL,
+		ContentType: avatar.ContentType,
+		Width:       avatar.Width,
+		Height:      avatar.Height,
+		Size:        avatar.FileSize,
+	}
+	if e.cache != nil {
+		_ = e.cache.SetTimedJSON(ctx, key, resolved, avatarCacheTTLSeconds)
+	}
+	return &resolved, nil
 }
 
 func (e *Entity) messageDTO(ctx context.Context, msg model.Message) (dto.Message, error) {
