@@ -259,12 +259,6 @@ func (s *Session) ChannelMessageDelete(ctx context.Context, channelID, messageID
 	return s.Request(ctx, http.MethodDelete, path, nil, nil, nil, options...)
 }
 
-// ChannelMessageAck marks a channel read as the bot.
-func (s *Session) ChannelMessageAck(ctx context.Context, channelID, messageID int64, options ...RequestOption) error {
-	path := EndpointChannelMessageAck(formatID(channelID), formatID(messageID))
-	return s.Request(ctx, http.MethodPost, path, nil, nil, nil, options...)
-}
-
 // ChannelTyping sends a typing indicator as the bot.
 func (s *Session) ChannelTyping(ctx context.Context, channelID int64, options ...RequestOption) error {
 	return s.Request(ctx, http.MethodPost, EndpointChannelTyping(formatID(channelID)), nil, nil, nil, options...)

@@ -181,7 +181,7 @@ func (a *App) presenceTTLSeconds() int64 {
 	if a == nil || a.cfg == nil {
 		return 60
 	}
-	ttl := a.cfg.HearthBeatTimeout * 2 / 1000
+	ttl := int64((wsHeartbeatDeadline(a.cfg.HearthBeatTimeout) * 2) / time.Second)
 	if ttl < 1 {
 		return 1
 	}

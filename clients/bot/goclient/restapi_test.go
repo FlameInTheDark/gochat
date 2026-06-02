@@ -33,7 +33,6 @@ func TestBotRESTMethodsUseCurrentRuntimeRoutes(t *testing.T) {
 		{method: http.MethodPost, path: "/bot/api/v1/message/channel/2230469276416868353", body: `{"content":"hello"}`, reply: `{"id":2230469276416868355,"channel_id":2230469276416868353,"author":{"id":1,"name":"bot","discriminator":"0001","is_bot":true},"content":"hello","type":0}`},
 		{method: http.MethodPatch, path: "/bot/api/v1/message/channel/2230469276416868353/2230469276416868355", body: `{"content":"edited"}`, reply: `{"id":2230469276416868355,"channel_id":2230469276416868353,"author":{"id":1,"name":"bot","discriminator":"0001","is_bot":true},"content":"edited","type":0}`},
 		{method: http.MethodDelete, path: "/bot/api/v1/message/channel/2230469276416868353/2230469276416868355", status: http.StatusNoContent},
-		{method: http.MethodPost, path: "/bot/api/v1/message/channel/2230469276416868353/2230469276416868355/ack", status: http.StatusNoContent},
 		{method: http.MethodPost, path: "/bot/api/v1/message/channel/2230469276416868353/typing", status: http.StatusNoContent},
 		{method: http.MethodPut, path: "/bot/api/v1/message/channel/2230469276416868353/2230469276416868355/reactions/smile:123", reply: `{"count":1,"me":true,"emoji":{"id":123,"name":"smile"}}`},
 		{method: http.MethodDelete, path: "/bot/api/v1/message/channel/2230469276416868353/2230469276416868355/reactions/smile:123", status: http.StatusNoContent},
@@ -100,9 +99,6 @@ func TestBotRESTMethodsUseCurrentRuntimeRoutes(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := s.ChannelMessageDelete(ctx, 2230469276416868353, 2230469276416868355); err != nil {
-		t.Fatal(err)
-	}
-	if err := s.ChannelMessageAck(ctx, 2230469276416868353, 2230469276416868355); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.ChannelTyping(ctx, 2230469276416868353); err != nil {

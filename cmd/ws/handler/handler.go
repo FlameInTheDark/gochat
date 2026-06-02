@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"reflect"
 	"sort"
+	"sync/atomic"
 	"time"
 
 	"github.com/FlameInTheDark/gochat/internal/database/pgentities/rolecheck"
@@ -103,6 +104,7 @@ type Handler struct {
 	generation       int64
 	lastEventId      int64
 	hbTimeout        int64
+	closed           atomic.Bool
 	// Whether we successfully set presence after hello
 	presenceSet bool
 }
@@ -168,36 +170,36 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			log.Warn("Error unmarshalling heart beat msg", "error", err)
 			return
 		}
-		if m.LastEventId >= h.lastEventId {
+		if h.hTimer != nil {
+			h.hTimer.Reset(h.heartbeatDeadline())
+		}
+		accepted := m.LastEventId >= h.lastEventId
+		if accepted {
 			h.telemetry.Heartbeat(ctx, "accepted")
-			// add grace to tolerate network jitter (10s)
-			h.hTimer.Reset(time.Millisecond * time.Duration(h.hbTimeout+10000))
-			if h.gstate != nil && h.connectionID != "" {
-				opCtx, cancel := context.WithTimeout(ctx, time.Second)
-				ttl := h.connectionTTLSeconds()
-				_ = h.gstate.TouchConnection(opCtx, h.connectionID, m.LastEventId, ttl)
-				cancel()
-			}
-			// Refresh this session TTL: heartbeat_interval * 2
-			// Throttled: skip if we touched within the last 10s.
-			if h.user != nil && h.pstore != nil && h.sessionID != "" && h.presenceSet &&
-				time.Since(h.lastPresenceTouch) > 10*time.Second {
-				opCtx, cancel := context.WithTimeout(ctx, time.Second*2)
-				// TTL expects seconds
-				ttl := h.presenceTTLSeconds()
-				if h.connectionID != "" && h.generation > 0 {
-					_ = h.pstore.TouchSessionTTLIfOwner(opCtx, h.user.Id, h.sessionID, h.connectionID, h.generation, ttl)
-				} else {
-					_ = h.pstore.TouchSessionTTL(opCtx, h.user.Id, h.sessionID, ttl)
-				}
-				cancel()
-				h.lastPresenceTouch = time.Now()
-			}
 			h.lastEventId = m.LastEventId
-			_ = h.sendHeartbeatAck(m.LastEventId)
 		} else {
 			h.telemetry.Heartbeat(ctx, "stale")
 		}
+		if h.gstate != nil && h.connectionID != "" {
+			opCtx, cancel := context.WithTimeout(ctx, time.Second)
+			ttl := h.connectionTTLSeconds()
+			_ = h.gstate.TouchConnection(opCtx, h.connectionID, h.lastEventId, ttl)
+			cancel()
+		}
+		// Refresh this session TTL. Throttled: skip if we touched within the last 10s.
+		if h.user != nil && h.pstore != nil && h.sessionID != "" && h.presenceSet &&
+			time.Since(h.lastPresenceTouch) > 10*time.Second {
+			opCtx, cancel := context.WithTimeout(ctx, time.Second*2)
+			ttl := h.presenceTTLSeconds()
+			if h.connectionID != "" && h.generation > 0 {
+				_ = h.pstore.TouchSessionTTLIfOwner(opCtx, h.user.Id, h.sessionID, h.connectionID, h.generation, ttl)
+			} else {
+				_ = h.pstore.TouchSessionTTL(opCtx, h.user.Id, h.sessionID, ttl)
+			}
+			cancel()
+			h.lastPresenceTouch = time.Now()
+		}
+		_ = h.sendHeartbeatAck(m.LastEventId)
 	case mqmsg.OPCodeChannelSubscription:
 		var m mqmsg.Subscribe
 		err := json.Unmarshal(e.Data, &m)
@@ -323,7 +325,7 @@ func (h *Handler) HandleMessage(e mqmsg.Message) {
 			}
 			agg, _, _ := h.pstore.Aggregate(opCtx, h.user.Id, time.Now().Unix())
 			// cache aggregated presence and publish
-			_ = h.pstore.SetAggregated(opCtx, agg, h.hbTimeout*2/1000)
+			_ = h.pstore.SetAggregated(opCtx, agg, h.presenceTTLSeconds())
 			h.publishPresence(agg)
 		}
 		cancel()
@@ -592,6 +594,15 @@ func (h *Handler) canSubscribeChannel(ctx context.Context, channelID int64) bool
 }
 
 func (h *Handler) Close() error {
+	if h.closed.Swap(true) {
+		return nil
+	}
+	if h.initTimer != nil {
+		h.initTimer.Stop()
+	}
+	if h.hTimer != nil {
+		h.hTimer.Stop()
+	}
 	h.OnWSClosed()
 	h.closer()
 	return nil
@@ -691,7 +702,7 @@ func (h *Handler) publishPresence(agg presence.Presence) {
 }
 
 func (h *Handler) presenceTTLSeconds() int64 {
-	ttl := h.hbTimeout * 2 / 1000
+	ttl := int64((h.heartbeatDeadline() * 2) / time.Second)
 	if ttl < 1 {
 		return 1
 	}
@@ -699,11 +710,26 @@ func (h *Handler) presenceTTLSeconds() int64 {
 }
 
 func (h *Handler) connectionTTLSeconds() int64 {
-	ttl := (h.hbTimeout + 10000) * 2 / 1000
+	ttl := int64((h.heartbeatDeadline() * 2) / time.Second)
 	if ttl < 1 {
 		return 1
 	}
 	return ttl
+}
+
+func (h *Handler) heartbeatDeadline() time.Duration {
+	base := time.Duration(h.hbTimeout) * time.Millisecond
+	if base <= 0 {
+		return 60 * time.Second
+	}
+	deadline := base + 10*time.Second
+	if minimum := base * 3; deadline < minimum {
+		deadline = minimum
+	}
+	if deadline < 60*time.Second {
+		return 60 * time.Second
+	}
+	return deadline
 }
 
 func (h *Handler) clientStateTTLSeconds() int64 {

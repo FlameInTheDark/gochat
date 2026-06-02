@@ -276,36 +276,6 @@ func (e *Entity) Delete(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-// Ack
-//
-//	@Summary	Mark a channel read as the bot
-//	@Produce	json
-//	@Tags		Bot Message
-//	@Security	BotToken
-//	@Param		channel_id	path	int64	true	"Channel id"
-//	@Param		message_id	path	int64	true	"Message id"
-//	@Success	204
-//	@Failure	400	{string}	string	"Bad request"
-//	@Failure	401	{string}	string	"Unauthorized"
-//	@Failure	403	{string}	string	"Forbidden"
-//	@Failure	500	{string}	string	"Internal server error"
-//	@Router		/bot/api/v1/message/channel/{channel_id}/{message_id}/ack [post]
-func (e *Entity) Ack(c *fiber.Ctx) error {
-	principal, channel, _, err := e.requireChannel(c, permissions.PermServerViewChannels, permissions.PermTextReadMessageHistory)
-	if err != nil {
-		return err
-	}
-	msgID, err := parseParamInt64(c, "message_id")
-	if err != nil {
-		return err
-	}
-	if err := e.rs.SetReadState(c.UserContext(), principal.BotUserID, channel.Id, msgID); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "unable to update read state")
-	}
-	_ = mq.SendUserUpdate(c.UserContext(), e.mqt, principal.BotUserID, &mqmsg.UpdateReadState{ChannelId: channel.Id, MessageId: msgID})
-	return c.SendStatus(fiber.StatusNoContent)
-}
-
 // Typing
 //
 //	@Summary	Send a typing indicator as the bot

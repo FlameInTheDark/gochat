@@ -151,6 +151,7 @@ const (
 
 const (
 	EventTypeApplicationCommandInteractionCreate EventType = 600 + iota
+	EventTypeApplicationCommandInteractionStatus
 )
 
 type Message struct {

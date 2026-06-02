@@ -239,6 +239,27 @@ func (e *Entity) deleteEphemeralResponse(ctx context.Context, interactionID int6
 	}
 }
 
+func (e *Entity) notifyInteractionStatus(ctx context.Context, record appcmd.InteractionRecord, state string, data *appcmd.InteractionResponseData, message *dto.Message) {
+	commandName := ""
+	if payload, err := e.payload.GetInteractionPayload(ctx, record.ID); err == nil {
+		if parsed := appcmd.ParseCommandData(payload.DataJSON); parsed != nil {
+			commandName = parsed.Name
+		}
+	}
+	_ = mq.SendUserUpdate(ctx, e.mqt, record.InvokerUserID, &mqmsg.ApplicationCommandInteractionStatus{
+		InteractionID: record.ID,
+		ApplicationID: record.ApplicationID,
+		CommandID:     record.CommandID,
+		CommandName:   commandName,
+		ChannelID:     record.ChannelID,
+		GuildID:       record.GuildID,
+		UserID:        record.InvokerUserID,
+		State:         state,
+		Response:      data,
+		Message:       message,
+	})
+}
+
 func (e *Entity) setAutocompleteResponse(ctx context.Context, interactionID int64, choices []appcmd.ApplicationCommandChoice) error {
 	if e.cache == nil {
 		return nil

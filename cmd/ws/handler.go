@@ -276,10 +276,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 			pingInterval = half
 		}
 	}
-	readDeadline := time.Duration(a.cfg.HearthBeatTimeout+15000) * time.Millisecond
-	if readDeadline <= 0 {
-		readDeadline = 60 * time.Second
-	}
+	readDeadline := wsReadDeadline(a.cfg.HearthBeatTimeout)
 	_ = c.SetReadDeadline(time.Now().Add(readDeadline))
 	c.SetPongHandler(func(string) error {
 		return c.SetReadDeadline(time.Now().Add(readDeadline))
@@ -317,6 +314,7 @@ func (a *App) wsHandler(c *websocket.Conn) {
 			connLog.Error("Read WS message error", "error", err)
 			return
 		}
+		_ = c.SetReadDeadline(time.Now().Add(readDeadline))
 
 		switch mt {
 		case websocket.TextMessage:
@@ -355,4 +353,23 @@ func isExpectedWSReadError(err error) bool {
 	}
 
 	return errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, net.ErrClosed)
+}
+
+func wsReadDeadline(heartbeatTimeoutMs int64) time.Duration {
+	return wsHeartbeatDeadline(heartbeatTimeoutMs) + 15*time.Second
+}
+
+func wsHeartbeatDeadline(heartbeatTimeoutMs int64) time.Duration {
+	base := time.Duration(heartbeatTimeoutMs) * time.Millisecond
+	if base <= 0 {
+		return 60 * time.Second
+	}
+	deadline := base + 10*time.Second
+	if minimum := base * 3; deadline < minimum {
+		deadline = minimum
+	}
+	if deadline < 60*time.Second {
+		return 60 * time.Second
+	}
+	return deadline
 }
