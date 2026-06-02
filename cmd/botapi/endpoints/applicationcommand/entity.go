@@ -6,6 +6,7 @@ import (
 	"github.com/FlameInTheDark/gochat/internal/cache/kvs"
 	"github.com/FlameInTheDark/gochat/internal/database/db"
 	cqlappcmd "github.com/FlameInTheDark/gochat/internal/database/entities/applicationcommand"
+	avatardb "github.com/FlameInTheDark/gochat/internal/database/entities/avatar"
 	guildchannelmessagesdb "github.com/FlameInTheDark/gochat/internal/database/entities/guildchannelmessages"
 	messagedb "github.com/FlameInTheDark/gochat/internal/database/entities/message"
 	readstatesdb "github.com/FlameInTheDark/gochat/internal/database/entities/readstates"
@@ -30,6 +31,7 @@ type Entity struct {
 
 	appcmd  appcmdrepo.ApplicationCommand
 	payload cqlappcmd.ApplicationCommandInteraction
+	av      avatardb.Avatar
 	user    user.User
 	disc    discriminator.Discriminator
 	ch      channel.Channel
@@ -48,6 +50,7 @@ func New(cql *db.CQLCon, pg *pgdb.DB, t mq.SendTransporter, cache *kvs.Cache, lo
 		cache:   cache,
 		appcmd:  appcmdrepo.New(pg.Conn()),
 		payload: cqlappcmd.New(cql),
+		av:      avatardb.New(cql),
 		user:    user.New(pg.Conn()),
 		disc:    discriminator.New(pg.Conn()),
 		ch:      channel.New(pg.Conn()),
