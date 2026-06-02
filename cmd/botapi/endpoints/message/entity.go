@@ -63,7 +63,6 @@ func (e *Entity) Init(router fiber.Router) {
 	router.Get("/channel/:channel_id<int>", e.List)
 	router.Patch("/channel/:channel_id<int>/:message_id<int>", e.Update)
 	router.Delete("/channel/:channel_id<int>/:message_id<int>", e.Delete)
-	router.Post("/channel/:channel_id<int>/:message_id<int>/ack", e.Ack)
 	router.Post("/channel/:channel_id<int>/typing", e.Typing)
 	router.Put("/channel/:channel_id<int>/:message_id<int>/reactions/:reaction_name", e.AddReaction)
 	router.Delete("/channel/:channel_id<int>/:message_id<int>/reactions/:reaction_name", e.RemoveReaction)

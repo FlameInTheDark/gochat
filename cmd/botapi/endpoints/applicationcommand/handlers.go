@@ -1,10 +1,9 @@
 package applicationcommand
 
 import (
-	"time"
-
 	appcmd "github.com/FlameInTheDark/gochat/internal/applicationcommands"
 	"github.com/FlameInTheDark/gochat/internal/botauth"
+	"github.com/FlameInTheDark/gochat/internal/dto"
 	"github.com/FlameInTheDark/gochat/internal/idgen"
 	"github.com/gofiber/fiber/v2"
 )
@@ -190,9 +189,6 @@ func (e *Entity) RespondInteraction(c *fiber.Ctx) error {
 	if err := requireInteractionID(c, record); err != nil {
 		return err
 	}
-	if time.Now().After(record.CreatedAt.Add(appcmd.InteractionDeadline)) {
-		return fiber.NewError(fiber.StatusNotFound, "unknown interaction")
-	}
 	var response appcmd.InteractionResponse
 	if err := c.BodyParser(&response); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid interaction response")
@@ -202,21 +198,30 @@ func (e *Entity) RespondInteraction(c *fiber.Ctx) error {
 		if err := e.appcmd.AckInteraction(c.UserContext(), record.ID, appcmd.AckStateResponded, nil); err != nil {
 			return duplicateAckError()
 		}
+		e.notifyInteractionStatus(c.UserContext(), record, "responded", response.Data, nil)
 		return c.SendStatus(fiber.StatusNoContent)
 	case appcmd.ResponseTypeDeferredChannelMessageSource:
+		var deferredData *appcmd.InteractionResponseData
 		if response.Data != nil && appcmd.HasResponseFlag(response.Data, appcmd.MessageFlagEphemeral) {
-			_ = e.setEphemeralResponse(c.UserContext(), record.ID, &appcmd.InteractionResponseData{Flags: response.Data.Flags | appcmd.MessageFlagLoading})
+			deferredData = &appcmd.InteractionResponseData{Flags: response.Data.Flags | appcmd.MessageFlagLoading}
+			_ = e.setEphemeralResponse(c.UserContext(), record.ID, deferredData)
+		} else {
+			deferredData = response.Data
 		}
 		if err := e.appcmd.AckInteraction(c.UserContext(), record.ID, appcmd.AckStateDeferred, nil); err != nil {
 			return duplicateAckError()
 		}
+		e.notifyInteractionStatus(c.UserContext(), record, "deferred", deferredData, nil)
 		return c.SendStatus(fiber.StatusNoContent)
 	case appcmd.ResponseTypeChannelMessageWithSource:
 		var messageID *int64
+		var message *dto.Message
+		state := "responded"
 		if appcmd.HasResponseFlag(response.Data, appcmd.MessageFlagEphemeral) {
 			if err := e.setEphemeralResponse(c.UserContext(), record.ID, response.Data); err != nil {
 				return fiber.NewError(fiber.StatusInternalServerError, "unable to store ephemeral response")
 			}
+			state = "ephemeral"
 		} else {
 			msg, err := e.createPublicInteractionMessage(c, record, response.Data)
 			if err != nil {
@@ -224,10 +229,12 @@ func (e *Entity) RespondInteraction(c *fiber.Ctx) error {
 			}
 			id := msg.Id
 			messageID = &id
+			message = &msg
 		}
 		if err := e.appcmd.AckInteraction(c.UserContext(), record.ID, appcmd.AckStateResponded, messageID); err != nil {
 			return duplicateAckError()
 		}
+		e.notifyInteractionStatus(c.UserContext(), record, state, response.Data, message)
 		return c.SendStatus(fiber.StatusNoContent)
 	case appcmd.ResponseTypeAutocompleteResult:
 		if response.Data == nil {
@@ -247,6 +254,7 @@ func (e *Entity) RespondInteraction(c *fiber.Ctx) error {
 		if err := e.appcmd.AckInteraction(c.UserContext(), record.ID, appcmd.AckStateResponded, nil); err != nil {
 			return duplicateAckError()
 		}
+		e.notifyInteractionStatus(c.UserContext(), record, "modal", response.Data, nil)
 		return c.JSON(response)
 	default:
 		return fiber.NewError(fiber.StatusBadRequest, "unsupported interaction response type")
@@ -294,6 +302,7 @@ func (e *Entity) EditOriginalInteractionResponse(c *fiber.Ctx) error {
 		if err := e.setEphemeralResponse(c.UserContext(), record.ID, &data); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "unable to store ephemeral response")
 		}
+		e.notifyInteractionStatus(c.UserContext(), record, "ephemeral", &data, nil)
 		return c.JSON(data)
 	}
 	if record.InitialResponseID == nil {
@@ -303,6 +312,7 @@ func (e *Entity) EditOriginalInteractionResponse(c *fiber.Ctx) error {
 			if err := e.setEphemeralResponse(c.UserContext(), record.ID, &data); err != nil {
 				return fiber.NewError(fiber.StatusInternalServerError, "unable to store ephemeral response")
 			}
+			e.notifyInteractionStatus(c.UserContext(), record, "ephemeral", &data, nil)
 			return c.JSON(data)
 		}
 		out, err := e.createPublicInteractionMessage(c, record, &data)
@@ -313,12 +323,14 @@ func (e *Entity) EditOriginalInteractionResponse(c *fiber.Ctx) error {
 			_ = e.deleteMessageResponse(c, record, out.Id)
 			return duplicateAckError()
 		}
+		e.notifyInteractionStatus(c.UserContext(), record, "responded", &data, &out)
 		return c.JSON(out)
 	}
 	out, err := e.editMessageResponse(c, record, *record.InitialResponseID, &data)
 	if err != nil {
 		return err
 	}
+	e.notifyInteractionStatus(c.UserContext(), record, "responded", &data, &out)
 	return c.JSON(out)
 }
 
@@ -357,12 +369,14 @@ func (e *Entity) CreateFollowupMessage(c *fiber.Ctx) error {
 		if err := e.setEphemeralResponse(c.UserContext(), idgen.Next(), &data); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "unable to store ephemeral followup")
 		}
+		e.notifyInteractionStatus(c.UserContext(), record, "ephemeral_followup", &data, nil)
 		return c.Status(fiber.StatusCreated).JSON(data)
 	}
 	out, err := e.createPublicInteractionMessage(c, record, &data)
 	if err != nil {
 		return err
 	}
+	e.notifyInteractionStatus(c.UserContext(), record, "responded", &data, &out)
 	return c.Status(fiber.StatusCreated).JSON(out)
 }
 

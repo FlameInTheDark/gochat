@@ -84,7 +84,7 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 	}
 
 	// --- Parallel DB fetch: user + guilds ---
-	ctx, cancel := context.WithTimeout(helper.ContextWithUserID(ctx, token.UserID), time.Second*time.Duration(h.hbTimeout))
+	ctx, cancel := context.WithTimeout(helper.ContextWithUserID(ctx, token.UserID), time.Millisecond*time.Duration(h.hbTimeout))
 	defer cancel()
 
 	type userResult struct {
@@ -191,7 +191,10 @@ func (h *Handler) hello(msg *mqmsg.Message) {
 		log.Error("Error sending hello message", "error", err)
 		return
 	}
-	h.hTimer = time.AfterFunc(time.Millisecond*time.Duration(h.hbTimeout+10000), func() {
+	h.hTimer = time.AfterFunc(h.heartbeatDeadline(), func() {
+		if h.closed.Load() {
+			return
+		}
 		timeoutCtx := h.baseContext()
 		h.telemetry.HeartbeatTimeout(timeoutCtx)
 		helper.WithContext(h.log, timeoutCtx).Warn("Heartbeat timeout; closing WS", "user_id", func() any {

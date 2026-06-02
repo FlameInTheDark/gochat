@@ -22,11 +22,10 @@ var (
 	EndpointGuilds        = EndpointAPIPath + "/guild"
 	EndpointGuildChannels = func(guildID string) string { return EndpointGuilds + "/" + guildID + "/channels" }
 
-	EndpointChannelMessages   = func(channelID string) string { return EndpointAPIPath + "/message/channel/" + channelID }
-	EndpointChannelMessage    = func(channelID, messageID string) string { return EndpointChannelMessages(channelID) + "/" + messageID }
-	EndpointChannelMessageAck = func(channelID, messageID string) string { return EndpointChannelMessage(channelID, messageID) + "/ack" }
-	EndpointChannelTyping     = func(channelID string) string { return EndpointChannelMessages(channelID) + "/typing" }
-	EndpointMessageReactions  = func(channelID, messageID, reaction string) string {
+	EndpointChannelMessages  = func(channelID string) string { return EndpointAPIPath + "/message/channel/" + channelID }
+	EndpointChannelMessage   = func(channelID, messageID string) string { return EndpointChannelMessages(channelID) + "/" + messageID }
+	EndpointChannelTyping    = func(channelID string) string { return EndpointChannelMessages(channelID) + "/typing" }
+	EndpointMessageReactions = func(channelID, messageID, reaction string) string {
 		return EndpointChannelMessage(channelID, messageID) + "/reactions/" + url.PathEscape(reaction)
 	}
 	EndpointMessageReactionAll = func(channelID, messageID string) string {

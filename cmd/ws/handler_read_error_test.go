@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"testing"
+	"time"
 
 	fws "github.com/fasthttp/websocket"
 )
@@ -53,5 +54,13 @@ func TestIsExpectedWSReadError(t *testing.T) {
 				t.Fatalf("isExpectedWSReadError(%v) = %v, want %v", tt.err, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestWSReadDeadlineUsesHeartbeatGrace(t *testing.T) {
+	t.Parallel()
+
+	if got, want := wsReadDeadline(35_000), 120*time.Second; got != want {
+		t.Fatalf("wsReadDeadline() = %s, want %s", got, want)
 	}
 }
