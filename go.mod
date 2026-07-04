@@ -47,7 +47,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.40.0
 	go.opentelemetry.io/proto/otlp v1.10.0
 	golang.org/x/crypto v0.48.0
-	golang.org/x/image v0.38.0
+	golang.org/x/image v0.41.0
 	resty.dev/v3 v3.0.0-beta.3
 )
 
@@ -150,7 +150,7 @@ require (
 	go.uber.org/zap v1.17.0 // indirect
 	golang.org/x/net v0.51.0
 	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/time v0.10.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260209200024-4cfbd4190f57 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57 // indirect
